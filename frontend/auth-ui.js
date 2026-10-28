@@ -139,7 +139,12 @@
         window.HMApp.toast(mode === 'register' ? '注册成功，欢迎加入绘梦' : '登录成功', 'success');
       }
     } catch (err) {
-      setError(err && err.message ? err.message : '操作失败，请稍后重试');
+      var msg = (err && err.message) ? err.message : '操作失败，请稍后重试';
+      /* 网络错误通常意味着后端未启动或证书未信任 */
+      if (/Failed to fetch|NetworkError|网络错误|load failed/i.test(msg) || (err && err.status === 0)) {
+        msg = '无法连接后端，请确认：\n1. 本地已启动后端（cd server && node src/index.js）\n2. 首次使用请访问 https://localhost:8443 信任自签证书';
+      }
+      setError(msg);
     } finally {
       setSubmitting(false);
     }

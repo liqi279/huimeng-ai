@@ -6647,6 +6647,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   padding: 9px 12px; border-radius: 10px; font-size: 12.5px;
   background: rgba(251, 113, 133, 0.1); color: var(--danger);
   border: 1px solid rgba(251, 113, 133, 0.25);
+  white-space: pre-line; line-height: 1.6;
 }
 .hm-auth-submit {
   position: relative; height: 46px; margin-top: 4px;

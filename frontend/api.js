@@ -17,7 +17,12 @@
     override = new URLSearchParams(location.search).get('api') || '';
   } catch (err) { override = ''; }
 
-  var base = String(override || (META && META.content) || '/api').replace(/\/+$/, '');
+  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向本地 HTTPS 后端，
+   * 避免用户手动添加 ?api= 参数。本地运行时仍走同源 /api。 */
+  var isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(location.hostname);
+  var autoBase = isLocalHost ? '/api' : 'https://localhost:8443/api';
+
+  var base = String(override || (META && META.content) || autoBase).replace(/\/+$/, '');
   var origin = '';
   if (/^https?:/i.test(base)) {
     try { origin = new URL(base).origin; } catch (err) { origin = ''; }

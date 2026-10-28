@@ -6655,6 +6655,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   padding: 9px 12px; border-radius: 10px; font-size: 12.5px;
   background: rgba(251, 113, 133, 0.1); color: var(--danger);
   border: 1px solid rgba(251, 113, 133, 0.25);
+  white-space: pre-line; line-height: 1.6;
 }
 .hm-auth-submit {
   position: relative; height: 46px; margin-top: 4px;
@@ -7680,7 +7681,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     override = new URLSearchParams(location.search).get('api') || '';
   } catch (err) { override = ''; }
 
-  var base = String(override || (META && META.content) || '/api').replace(/\/+$/, '');
+  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向本地 HTTPS 后端，
+   * 避免用户手动添加 ?api= 参数。本地运行时仍走同源 /api。 */
+  var isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(location.hostname);
+  var autoBase = isLocalHost ? '/api' : 'https://localhost:8443/api';
+
+  var base = String(override || (META && META.content) || autoBase).replace(/\/+$/, '');
   var origin = '';
   if (/^https?:/i.test(base)) {
     try { origin = new URL(base).origin; } catch (err) { origin = ''; }
@@ -8013,7 +8019,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         window.HMApp.toast(mode === 'register' ? '注册成功，欢迎加入绘梦' : '登录成功', 'success');
       }
     } catch (err) {
-      setError(err && err.message ? err.message : '操作失败，请稍后重试');
+      var msg = (err && err.message) ? err.message : '操作失败，请稍后重试';
+      /* 网络错误通常意味着后端未启动或证书未信任 */
+      if (/Failed to fetch|NetworkError|网络错误|load failed/i.test(msg) || (err && err.status === 0)) {
+        msg = '无法连接后端，请确认：\n1. 本地已启动后端（cd server && node src/index.js）\n2. 首次使用请访问 https://localhost:8443 信任自签证书';
+      }
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
