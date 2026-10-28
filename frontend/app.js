@@ -347,6 +347,9 @@ if (!storedApi.gptModel || /gpt-image-2-all|gpt-image-lite/.test(storedApi.gptMo
   storedApi.gptModel = 'gpt-image-1';
 }
 
+/* 后端 API 客户端快捷引用（api.js 挂载在 window.HM.api） */
+var api = window.HM && window.HM.api;
+
 const state = {
   view: 'create',
   modelId: MODEL_INDEX.some(function (m) { return m.id === storedPrefs.modelId; }) ? storedPrefs.modelId : MODEL_INDEX[0].id,
@@ -1659,6 +1662,12 @@ function saveWorks() {
   });
   state.works = stripped;
   saveJSON(LS_WORKS, state.works);
+  /* 已登录用户同步到后端（按用户隔离） */
+  if (window.HMApp && window.HMApp.user && api && api.online) {
+    state.works.forEach(function (w) {
+      api.saveWork(w).catch(function () {});
+    });
+  }
 }
 
 async function makeThumb(url) {
@@ -2482,6 +2491,38 @@ function bindEvents() {
 }
 
 /* ---------------- 启动 ---------------- */
+/* ---------------- 认证引导 ---------------- */
+async function authBoot() {
+  var token = (api && api.getToken) ? api.getToken() : '';
+  if (!token) {
+    window.HMApp = window.HMApp || {};
+    window.HMApp.user = null;
+    if (typeof showLogin === 'function') showLogin();
+    return;
+  }
+  try {
+    await api.ping();
+    var me = await api.me();
+    window.HMApp.user = me.user;
+    /* 从后端加载该用户的作品 */
+    try {
+      var data = await api.listWorks();
+      if (data && Array.isArray(data.items)) {
+        state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
+        saveJSON(LS_WORKS, state.works);
+      }
+    } catch (e) {}
+    renderWorks();
+    if (typeof hideLogin === 'function') hideLogin();
+    if (typeof updateUserUI === 'function') updateUserUI();
+  } catch (err) {
+    /* token 失效 */
+    if (api && api.logout) api.logout();
+    window.HMApp.user = null;
+    if (typeof showLogin === 'function') showLogin();
+  }
+}
+
 function boot() {
   bindEls();
   renderModels('');
@@ -2491,6 +2532,11 @@ function boot() {
   bindEvents();
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();
+
+  /* 认证引导（先探测后端，再登录态校验） */
+  api.ping().finally(function () {
+    authBoot();
+  });
 
   // 首次打开时给出轻量引导提示
   if (!storedPrefs || !storedPrefs.modelId) {

@@ -47,15 +47,26 @@
     return error;
   }
 
+  function authToken() {
+    try { return localStorage.getItem('hm.token') || ''; } catch (e) { return ''; }
+  }
+  function setAuthToken(token) {
+    try {
+      if (token) localStorage.setItem('hm.token', token);
+      else localStorage.removeItem('hm.token');
+    } catch (e) {}
+  }
+
   async function request(path, options, timeoutMs) {
     var opts = options || {};
     var controller = new AbortController();
     var timer = setTimeout(function () { controller.abort(); }, timeoutMs || 30000);
 
     try {
+      var token = authToken();
       var init = {
         method: opts.method || 'GET',
-        headers: Object.assign({ Accept: 'application/json' }, opts.headers || {}),
+        headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}, opts.headers || {}),
         signal: controller.signal
       };
       if (opts.body !== undefined) {
@@ -157,6 +168,39 @@
     if (/^(https?:|data:|blob:)/i.test(value)) return value;
     if (value.charAt(0) === '/' && origin) return origin + value;
     return value;
+  };
+
+  /* -------------- 用户认证 -------------- */
+  api.setToken = setAuthToken;
+  api.getToken = authToken;
+
+  api.register = function (username, password) {
+    return request('/auth/register', { method: 'POST', body: { username: username, password: password } }, 15000);
+  };
+  api.login = function (username, password) {
+    return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 15000);
+  };
+  api.me = function () {
+    return request('/auth/me', {}, 10000);
+  };
+  api.logout = function () {
+    setAuthToken('');
+    try { localStorage.removeItem('hm.user'); } catch (e) {}
+  };
+
+  /* 管理员：用户管理 */
+  api.listUsers = function () { return request('/auth/users', {}, 15000); };
+  api.createUser = function (username, password, role) {
+    return request('/auth/users', { method: 'POST', body: { username: username, password: password, role: role } }, 15000);
+  };
+  api.setUserRole = function (id, role) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/role', { method: 'PATCH', body: { role: role } }, 15000);
+  };
+  api.resetUserPassword = function (id, password) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/password', { method: 'PATCH', body: { password: password } }, 15000);
+  };
+  api.deleteUser = function (id) {
+    return request('/auth/users/' + encodeURIComponent(id), { method: 'DELETE' }, 15000);
   };
 
   HM.api = api;

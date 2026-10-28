@@ -2125,7 +2125,8 @@
     tidy: tidy,
     openHistory: openHistory,
     openParam: openParam,
-    deleteWork: deleteWork
+    deleteWork: deleteWork,
+    sync: syncServer
   };
 
   init();

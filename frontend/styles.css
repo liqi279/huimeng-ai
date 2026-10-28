@@ -6539,4 +6539,173 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   .desk-sel-btn { padding: 0 7px; font-size: 10px; }
 }
 
+/* ============ 用户头像/菜单 ============ */
+.hm-user-wrap { position: relative; }
+.hm-user-pill {
+  display: flex; align-items: center; gap: 8px;
+  height: 38px; padding: 0 10px 0 5px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; color: var(--text);
+  transition: border-color .2s, background .2s;
+}
+.hm-user-pill:hover { border-color: var(--line-strong); background: var(--surface-2); }
+.hm-user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  color: #fff; font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.hm-user-name { font-size: 13px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-user-role {
+  font-size: 10px; padding: 1px 7px; border-radius: 999px;
+  background: rgba(244, 114, 182, 0.16); color: var(--pink);
+  border: 1px solid rgba(244, 114, 182, 0.3);
+}
+.hm-user-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px;
+  background: var(--surface-2); border: 1px solid var(--line-strong);
+  border-radius: 14px; padding: 6px; box-shadow: var(--shadow);
+  display: none; flex-direction: column; z-index: 200;
+}
+.hm-user-menu.is-open { display: flex; }
+.hm-user-menu button {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 10px; font-size: 13px; color: var(--text-2);
+  text-align: left; transition: background .15s;
+}
+.hm-user-menu button:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.hm-user-menu button.is-danger:hover { background: rgba(251, 113, 133, 0.12); color: var(--danger); }
+
+/* ============ 登录 / 注册页 ============ */
+.hm-auth {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: #07060d;
+}
+.hm-auth[hidden] { display: none; }
+.hm-auth-bg { position: absolute; inset: 0; overflow: hidden; }
+.hm-auth-blob {
+  position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.45;
+}
+.hm-auth-blob.b1 { width: 540px; height: 540px; background: #7c3aed; top: -160px; left: -120px; }
+.hm-auth-blob.b2 { width: 480px; height: 480px; background: #ec4899; bottom: -140px; right: -100px; }
+.hm-auth-blob.b3 { width: 420px; height: 420px; background: #22d3ee; top: 40%; left: 55%; opacity: 0.25; }
+
+.hm-auth-card {
+  position: relative; z-index: 1;
+  width: min(420px, calc(100vw - 36px));
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 24px;
+  padding: 36px 32px 30px;
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow);
+}
+.hm-auth-brand { text-align: center; margin-bottom: 26px; }
+.hm-auth-logo {
+  width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 18px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  color: #fff; box-shadow: 0 12px 30px rgba(139, 92, 246, 0.4);
+}
+.hm-auth-logo svg { width: 32px; height: 32px; }
+.hm-auth-brand h1 {
+  margin: 0 0 6px; font-size: 20px; font-weight: 700;
+  background: linear-gradient(90deg, var(--text), var(--violet));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hm-auth-brand p { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+.hm-auth-tabs {
+  display: flex; gap: 4px; padding: 4px; margin-bottom: 22px;
+  background: rgba(255,255,255,0.04); border-radius: 12px;
+}
+.hm-auth-tabs button {
+  flex: 1; padding: 9px 0; font-size: 13.5px; border-radius: 9px;
+  color: var(--muted); transition: all .2s;
+}
+.hm-auth-tabs button.is-active {
+  background: var(--surface-2); color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.hm-auth-form { display: flex; flex-direction: column; gap: 14px; }
+.hm-auth-form h2 { margin: 0; font-size: 18px; }
+.hm-auth-sub { margin: -8px 0 4px; font-size: 12.5px; color: var(--muted); }
+.hm-auth-field { display: flex; flex-direction: column; gap: 6px; }
+.hm-auth-field > span { font-size: 12px; color: var(--text-2); padding-left: 2px; }
+.hm-auth-field input, .hm-admin-create input, .hm-admin-create select {
+  height: 42px; padding: 0 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+  border-radius: 12px; color: var(--text); font-size: 14px;
+  transition: border-color .2s, background .2s;
+}
+.hm-auth-field input:focus, .hm-admin-create input:focus, .hm-admin-create select:focus {
+  border-color: var(--violet); background: rgba(139, 92, 246, 0.06);
+}
+.hm-auth-error {
+  padding: 9px 12px; border-radius: 10px; font-size: 12.5px;
+  background: rgba(251, 113, 133, 0.1); color: var(--danger);
+  border: 1px solid rgba(251, 113, 133, 0.25);
+}
+.hm-auth-submit {
+  position: relative; height: 46px; margin-top: 4px;
+  border-radius: 12px; font-size: 15px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  box-shadow: 0 10px 26px rgba(139, 92, 246, 0.35);
+  transition: transform .12s, box-shadow .2s, opacity .2s;
+}
+.hm-auth-submit:hover { transform: translateY(-1px); box-shadow: 0 14px 32px rgba(139, 92, 246, 0.45); }
+.hm-auth-submit:active { transform: translateY(0); }
+.hm-auth-submit[disabled] { opacity: 0.7; cursor: not-allowed; transform: none; }
+.hm-auth-spin {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
+  animation: hm-spin .7s linear infinite;
+}
+@keyframes hm-spin { to { transform: rotate(360deg); } }
+.hm-auth-switch {
+  margin: 4px 0 0; text-align: center; font-size: 13px; color: var(--muted);
+}
+.hm-auth-link {
+  color: var(--violet); font-weight: 600; padding: 0 4px;
+}
+.hm-auth-link:hover { text-decoration: underline; }
+
+/* ============ 管理员 - 用户管理 ============ */
+.hm-admin-card { max-width: 640px; }
+.hm-admin-create {
+  display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0 14px;
+  padding: 14px; background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line); border-radius: 14px;
+}
+.hm-admin-create input { flex: 1 1 140px; }
+.hm-admin-create select { flex: 0 0 120px; }
+.hm-admin-list {
+  display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto;
+}
+.hm-admin-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.hm-admin-row .hm-user-avatar { width: 34px; height: 34px; font-size: 13px; }
+.hm-admin-info { flex: 1; min-width: 0; }
+.hm-admin-uname { font-size: 14px; font-weight: 600; }
+.hm-admin-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.hm-admin-role-tag {
+  font-size: 11px; padding: 2px 9px; border-radius: 999px;
+  background: rgba(139, 92, 246, 0.16); color: var(--violet);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+.hm-admin-role-tag.is-user { background: rgba(34, 211, 238, 0.12); color: var(--cyan); border-color: rgba(34, 211, 238, 0.3); }
+.hm-admin-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.hm-admin-actions button {
+  font-size: 12px; padding: 6px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.05); color: var(--text-2);
+  border: 1px solid var(--line); transition: all .15s;
+}
+.hm-admin-actions button:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.hm-admin-actions button.is-danger:hover { background: rgba(251, 113, 133, 0.12); color: var(--danger); border-color: rgba(251, 113, 133, 0.3); }
+
 

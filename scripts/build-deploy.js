@@ -32,7 +32,7 @@ if (!html.includes(styleTag.slice(0, 40))) {
   throw new Error('未找到 styles.css 的 link 标签');
 }
 
-const scripts = ['jszip.min.js', 'api.js', 'app.js', 'ui.js', 'desk.js'];
+const scripts = ['jszip.min.js', 'api.js', 'auth-ui.js', 'app.js', 'ui.js', 'desk.js'];
 for (const file of scripts) {
   const re = new RegExp('<script[^>]*src=["\']' + file.replace(/\./g, '\\.') + '["\'][^>]*></script>', 'i');
   if (!re.test(html)) throw new Error('未找到脚本标签：' + file);

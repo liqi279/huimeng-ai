@@ -100,6 +100,20 @@
     </div>
 
     <div class="hm-top-right">
+      <div class="hm-user-wrap" id="hmUserWrap" hidden>
+        <button class="hm-user-pill" id="hmUserPill" title="账号">
+          <span class="hm-user-avatar" id="hmUserAvatar">我</span>
+          <span class="hm-user-name" id="hmUserName">未登录</span>
+          <span class="hm-user-role" id="hmUserRole" hidden>管理员</span>
+        </button>
+        <div class="hm-user-menu" id="hmUserMenu" aria-hidden="true">
+          <button data-ucmd="profile"><span class="hm-ctx-ico">◉</span>账号信息</button>
+          <button data-ucmd="admin" id="hmUserAdminBtn" hidden><span class="hm-ctx-ico">⚙</span>用户管理</button>
+          <div class="hm-ctx-line"></div>
+          <button data-ucmd="logout" class="is-danger"><span class="hm-ctx-ico">⏻</span>退出登录</button>
+        </div>
+      </div>
+
       <div class="hm-menu-wrap">
         <button class="hm-pill hm-select" id="worksSortBtn" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.6V12l3 1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -839,10 +853,88 @@
     </div>
   </div>
 
+  <div class="modal" id="userAdminModal" aria-hidden="true">
+    <div class="modal-card hm-admin-card">
+      <button class="modal-close" id="userAdminClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">SUPER ADMIN</span>
+      <h2>用户管理</h2>
+      <p class="api-desc">查看所有账号，创建新用户、调整角色或重置密码。</p>
+
+      <div class="hm-admin-create">
+        <input id="adminNewUser" type="text" placeholder="新用户名（≥3 字符）" autocomplete="off">
+        <input id="adminNewPass" type="password" placeholder="密码（≥6 字符）" autocomplete="off">
+        <select id="adminNewRole">
+          <option value="user">普通用户</option>
+          <option value="admin">超级管理员</option>
+        </select>
+        <button class="hm-pill hm-pill-primary" id="adminCreateBtn">创建</button>
+      </div>
+
+      <div class="hm-admin-list" id="adminUserList"></div>
+    </div>
+  </div>
+
+  <div class="hm-auth" id="hmAuth" aria-hidden="true">
+    <div class="hm-auth-bg" aria-hidden="true">
+      <span class="hm-auth-blob b1"></span>
+      <span class="hm-auth-blob b2"></span>
+      <span class="hm-auth-blob b3"></span>
+    </div>
+    <div class="hm-auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <div class="hm-auth-brand">
+        <div class="hm-auth-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>绘梦 · AI 动漫创作</h1>
+        <p>登录后作品与桌面布局在所有设备同步</p>
+      </div>
+
+      <div class="hm-auth-tabs">
+        <button class="is-active" data-auth-tab="login" id="authTabLogin">登录</button>
+        <button data-auth-tab="register" id="authTabRegister">注册</button>
+      </div>
+
+      <form class="hm-auth-form" id="authForm" autocomplete="off">
+        <h2 id="authTitle">欢迎回来</h2>
+        <p class="hm-auth-sub" id="authSub">登录你的账号继续创作</p>
+
+        <label class="hm-auth-field">
+          <span>用户名</span>
+          <input id="authUsername" type="text" placeholder="请输入用户名" autocomplete="username">
+        </label>
+
+        <label class="hm-auth-field">
+          <span>密码</span>
+          <input id="authPassword" type="password" placeholder="请输入密码" autocomplete="current-password">
+        </label>
+
+        <label class="hm-auth-field" id="authConfirmWrap" hidden>
+          <span>确认密码</span>
+          <input id="authConfirm" type="password" placeholder="再次输入密码" autocomplete="new-password">
+        </label>
+
+        <div class="hm-auth-error" id="authError" hidden></div>
+
+        <button type="submit" class="hm-auth-submit" id="authSubmit">
+          <span id="authSubmitText">登录</span>
+          <span class="hm-auth-spin" hidden aria-hidden="true"></span>
+        </button>
+
+        <p class="hm-auth-switch">
+          <span id="authSwitchHint">还没有账号？</span>
+          <button type="button" class="hm-auth-link" id="authSwitchBtn">立即注册</button>
+        </p>
+      </form>
+    </div>
+  </div>
+
   <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
 
   <script src="jszip.min.js"></script>
   <script src="api.js"></script>
+  <script src="auth-ui.js"></script>
   <script src="app.js"></script>
   <script src="ui.js"></script>
   <script src="desk.js"></script>

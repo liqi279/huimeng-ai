@@ -6547,6 +6547,175 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   .desk-sel-btn { padding: 0 7px; font-size: 10px; }
 }
 
+/* ============ 用户头像/菜单 ============ */
+.hm-user-wrap { position: relative; }
+.hm-user-pill {
+  display: flex; align-items: center; gap: 8px;
+  height: 38px; padding: 0 10px 0 5px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; color: var(--text);
+  transition: border-color .2s, background .2s;
+}
+.hm-user-pill:hover { border-color: var(--line-strong); background: var(--surface-2); }
+.hm-user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  color: #fff; font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.hm-user-name { font-size: 13px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-user-role {
+  font-size: 10px; padding: 1px 7px; border-radius: 999px;
+  background: rgba(244, 114, 182, 0.16); color: var(--pink);
+  border: 1px solid rgba(244, 114, 182, 0.3);
+}
+.hm-user-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px;
+  background: var(--surface-2); border: 1px solid var(--line-strong);
+  border-radius: 14px; padding: 6px; box-shadow: var(--shadow);
+  display: none; flex-direction: column; z-index: 200;
+}
+.hm-user-menu.is-open { display: flex; }
+.hm-user-menu button {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 10px; font-size: 13px; color: var(--text-2);
+  text-align: left; transition: background .15s;
+}
+.hm-user-menu button:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.hm-user-menu button.is-danger:hover { background: rgba(251, 113, 133, 0.12); color: var(--danger); }
+
+/* ============ 登录 / 注册页 ============ */
+.hm-auth {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: #07060d;
+}
+.hm-auth[hidden] { display: none; }
+.hm-auth-bg { position: absolute; inset: 0; overflow: hidden; }
+.hm-auth-blob {
+  position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.45;
+}
+.hm-auth-blob.b1 { width: 540px; height: 540px; background: #7c3aed; top: -160px; left: -120px; }
+.hm-auth-blob.b2 { width: 480px; height: 480px; background: #ec4899; bottom: -140px; right: -100px; }
+.hm-auth-blob.b3 { width: 420px; height: 420px; background: #22d3ee; top: 40%; left: 55%; opacity: 0.25; }
+
+.hm-auth-card {
+  position: relative; z-index: 1;
+  width: min(420px, calc(100vw - 36px));
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 24px;
+  padding: 36px 32px 30px;
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow);
+}
+.hm-auth-brand { text-align: center; margin-bottom: 26px; }
+.hm-auth-logo {
+  width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 18px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  color: #fff; box-shadow: 0 12px 30px rgba(139, 92, 246, 0.4);
+}
+.hm-auth-logo svg { width: 32px; height: 32px; }
+.hm-auth-brand h1 {
+  margin: 0 0 6px; font-size: 20px; font-weight: 700;
+  background: linear-gradient(90deg, var(--text), var(--violet));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hm-auth-brand p { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+.hm-auth-tabs {
+  display: flex; gap: 4px; padding: 4px; margin-bottom: 22px;
+  background: rgba(255,255,255,0.04); border-radius: 12px;
+}
+.hm-auth-tabs button {
+  flex: 1; padding: 9px 0; font-size: 13.5px; border-radius: 9px;
+  color: var(--muted); transition: all .2s;
+}
+.hm-auth-tabs button.is-active {
+  background: var(--surface-2); color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.hm-auth-form { display: flex; flex-direction: column; gap: 14px; }
+.hm-auth-form h2 { margin: 0; font-size: 18px; }
+.hm-auth-sub { margin: -8px 0 4px; font-size: 12.5px; color: var(--muted); }
+.hm-auth-field { display: flex; flex-direction: column; gap: 6px; }
+.hm-auth-field > span { font-size: 12px; color: var(--text-2); padding-left: 2px; }
+.hm-auth-field input, .hm-admin-create input, .hm-admin-create select {
+  height: 42px; padding: 0 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+  border-radius: 12px; color: var(--text); font-size: 14px;
+  transition: border-color .2s, background .2s;
+}
+.hm-auth-field input:focus, .hm-admin-create input:focus, .hm-admin-create select:focus {
+  border-color: var(--violet); background: rgba(139, 92, 246, 0.06);
+}
+.hm-auth-error {
+  padding: 9px 12px; border-radius: 10px; font-size: 12.5px;
+  background: rgba(251, 113, 133, 0.1); color: var(--danger);
+  border: 1px solid rgba(251, 113, 133, 0.25);
+}
+.hm-auth-submit {
+  position: relative; height: 46px; margin-top: 4px;
+  border-radius: 12px; font-size: 15px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  box-shadow: 0 10px 26px rgba(139, 92, 246, 0.35);
+  transition: transform .12s, box-shadow .2s, opacity .2s;
+}
+.hm-auth-submit:hover { transform: translateY(-1px); box-shadow: 0 14px 32px rgba(139, 92, 246, 0.45); }
+.hm-auth-submit:active { transform: translateY(0); }
+.hm-auth-submit[disabled] { opacity: 0.7; cursor: not-allowed; transform: none; }
+.hm-auth-spin {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
+  animation: hm-spin .7s linear infinite;
+}
+@keyframes hm-spin { to { transform: rotate(360deg); } }
+.hm-auth-switch {
+  margin: 4px 0 0; text-align: center; font-size: 13px; color: var(--muted);
+}
+.hm-auth-link {
+  color: var(--violet); font-weight: 600; padding: 0 4px;
+}
+.hm-auth-link:hover { text-decoration: underline; }
+
+/* ============ 管理员 - 用户管理 ============ */
+.hm-admin-card { max-width: 640px; }
+.hm-admin-create {
+  display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0 14px;
+  padding: 14px; background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line); border-radius: 14px;
+}
+.hm-admin-create input { flex: 1 1 140px; }
+.hm-admin-create select { flex: 0 0 120px; }
+.hm-admin-list {
+  display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto;
+}
+.hm-admin-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.hm-admin-row .hm-user-avatar { width: 34px; height: 34px; font-size: 13px; }
+.hm-admin-info { flex: 1; min-width: 0; }
+.hm-admin-uname { font-size: 14px; font-weight: 600; }
+.hm-admin-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.hm-admin-role-tag {
+  font-size: 11px; padding: 2px 9px; border-radius: 999px;
+  background: rgba(139, 92, 246, 0.16); color: var(--violet);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+.hm-admin-role-tag.is-user { background: rgba(34, 211, 238, 0.12); color: var(--cyan); border-color: rgba(34, 211, 238, 0.3); }
+.hm-admin-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.hm-admin-actions button {
+  font-size: 12px; padding: 6px 10px; border-radius: 8px;
+  background: rgba(255,255,255,0.05); color: var(--text-2);
+  border: 1px solid var(--line); transition: all .15s;
+}
+.hm-admin-actions button:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.hm-admin-actions button.is-danger:hover { background: rgba(251, 113, 133, 0.12); color: var(--danger); border-color: rgba(251, 113, 133, 0.3); }
+
 
 
 </style>
@@ -6644,6 +6813,20 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
     </div>
 
     <div class="hm-top-right">
+      <div class="hm-user-wrap" id="hmUserWrap" hidden>
+        <button class="hm-user-pill" id="hmUserPill" title="账号">
+          <span class="hm-user-avatar" id="hmUserAvatar">我</span>
+          <span class="hm-user-name" id="hmUserName">未登录</span>
+          <span class="hm-user-role" id="hmUserRole" hidden>管理员</span>
+        </button>
+        <div class="hm-user-menu" id="hmUserMenu" aria-hidden="true">
+          <button data-ucmd="profile"><span class="hm-ctx-ico">◉</span>账号信息</button>
+          <button data-ucmd="admin" id="hmUserAdminBtn" hidden><span class="hm-ctx-ico">⚙</span>用户管理</button>
+          <div class="hm-ctx-line"></div>
+          <button data-ucmd="logout" class="is-danger"><span class="hm-ctx-ico">⏻</span>退出登录</button>
+        </div>
+      </div>
+
       <div class="hm-menu-wrap">
         <button class="hm-pill hm-select" id="worksSortBtn" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.6V12l3 1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -7383,6 +7566,83 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
     </div>
   </div>
 
+  <div class="modal" id="userAdminModal" aria-hidden="true">
+    <div class="modal-card hm-admin-card">
+      <button class="modal-close" id="userAdminClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">SUPER ADMIN</span>
+      <h2>用户管理</h2>
+      <p class="api-desc">查看所有账号，创建新用户、调整角色或重置密码。</p>
+
+      <div class="hm-admin-create">
+        <input id="adminNewUser" type="text" placeholder="新用户名（≥3 字符）" autocomplete="off">
+        <input id="adminNewPass" type="password" placeholder="密码（≥6 字符）" autocomplete="off">
+        <select id="adminNewRole">
+          <option value="user">普通用户</option>
+          <option value="admin">超级管理员</option>
+        </select>
+        <button class="hm-pill hm-pill-primary" id="adminCreateBtn">创建</button>
+      </div>
+
+      <div class="hm-admin-list" id="adminUserList"></div>
+    </div>
+  </div>
+
+  <div class="hm-auth" id="hmAuth" aria-hidden="true">
+    <div class="hm-auth-bg" aria-hidden="true">
+      <span class="hm-auth-blob b1"></span>
+      <span class="hm-auth-blob b2"></span>
+      <span class="hm-auth-blob b3"></span>
+    </div>
+    <div class="hm-auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <div class="hm-auth-brand">
+        <div class="hm-auth-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>绘梦 · AI 动漫创作</h1>
+        <p>登录后作品与桌面布局在所有设备同步</p>
+      </div>
+
+      <div class="hm-auth-tabs">
+        <button class="is-active" data-auth-tab="login" id="authTabLogin">登录</button>
+        <button data-auth-tab="register" id="authTabRegister">注册</button>
+      </div>
+
+      <form class="hm-auth-form" id="authForm" autocomplete="off">
+        <h2 id="authTitle">欢迎回来</h2>
+        <p class="hm-auth-sub" id="authSub">登录你的账号继续创作</p>
+
+        <label class="hm-auth-field">
+          <span>用户名</span>
+          <input id="authUsername" type="text" placeholder="请输入用户名" autocomplete="username">
+        </label>
+
+        <label class="hm-auth-field">
+          <span>密码</span>
+          <input id="authPassword" type="password" placeholder="请输入密码" autocomplete="current-password">
+        </label>
+
+        <label class="hm-auth-field" id="authConfirmWrap" hidden>
+          <span>确认密码</span>
+          <input id="authConfirm" type="password" placeholder="再次输入密码" autocomplete="new-password">
+        </label>
+
+        <div class="hm-auth-error" id="authError" hidden></div>
+
+        <button type="submit" class="hm-auth-submit" id="authSubmit">
+          <span id="authSubmitText">登录</span>
+          <span class="hm-auth-spin" hidden aria-hidden="true"></span>
+        </button>
+
+        <p class="hm-auth-switch">
+          <span id="authSwitchHint">还没有账号？</span>
+          <button type="button" class="hm-auth-link" id="authSwitchBtn">立即注册</button>
+        </p>
+      </form>
+    </div>
+  </div>
+
   <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
 
   <script>
@@ -7450,15 +7710,26 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return error;
   }
 
+  function authToken() {
+    try { return localStorage.getItem('hm.token') || ''; } catch (e) { return ''; }
+  }
+  function setAuthToken(token) {
+    try {
+      if (token) localStorage.setItem('hm.token', token);
+      else localStorage.removeItem('hm.token');
+    } catch (e) {}
+  }
+
   async function request(path, options, timeoutMs) {
     var opts = options || {};
     var controller = new AbortController();
     var timer = setTimeout(function () { controller.abort(); }, timeoutMs || 30000);
 
     try {
+      var token = authToken();
       var init = {
         method: opts.method || 'GET',
-        headers: Object.assign({ Accept: 'application/json' }, opts.headers || {}),
+        headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}, opts.headers || {}),
         signal: controller.signal
       };
       if (opts.body !== undefined) {
@@ -7562,7 +7833,407 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return value;
   };
 
+  /* -------------- 用户认证 -------------- */
+  api.setToken = setAuthToken;
+  api.getToken = authToken;
+
+  api.register = function (username, password) {
+    return request('/auth/register', { method: 'POST', body: { username: username, password: password } }, 15000);
+  };
+  api.login = function (username, password) {
+    return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 15000);
+  };
+  api.me = function () {
+    return request('/auth/me', {}, 10000);
+  };
+  api.logout = function () {
+    setAuthToken('');
+    try { localStorage.removeItem('hm.user'); } catch (e) {}
+  };
+
+  /* 管理员：用户管理 */
+  api.listUsers = function () { return request('/auth/users', {}, 15000); };
+  api.createUser = function (username, password, role) {
+    return request('/auth/users', { method: 'POST', body: { username: username, password: password, role: role } }, 15000);
+  };
+  api.setUserRole = function (id, role) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/role', { method: 'PATCH', body: { role: role } }, 15000);
+  };
+  api.resetUserPassword = function (id, password) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/password', { method: 'PATCH', body: { password: password } }, 15000);
+  };
+  api.deleteUser = function (id) {
+    return request('/auth/users/' + encodeURIComponent(id), { method: 'DELETE' }, 15000);
+  };
+
   HM.api = api;
+})();
+
+</script>
+  <script>
+'use strict';
+
+/* =============================================================
+ * 绘梦 · 登录 / 注册 / 用户管理 UI
+ * 依赖 api.js（window.HM.api）与 app.js（window.HMApp）
+ * 暴露全局函数：showLogin / hideLogin / updateUserUI
+ * ============================================================= */
+(function () {
+  var api = (window.HM && window.HM.api) ? window.HM.api : null;
+
+  var mode = 'login'; /* 'login' | 'register' */
+  var submitting = false;
+
+  var els = {};
+  function cache() {
+    els.auth = document.getElementById('hmAuth');
+    els.form = document.getElementById('authForm');
+    els.title = document.getElementById('authTitle');
+    els.sub = document.getElementById('authSub');
+    els.username = document.getElementById('authUsername');
+    els.password = document.getElementById('authPassword');
+    els.confirmWrap = document.getElementById('authConfirmWrap');
+    els.confirm = document.getElementById('authConfirm');
+    els.error = document.getElementById('authError');
+    els.submit = document.getElementById('authSubmit');
+    els.submitText = document.getElementById('authSubmitText');
+    els.spin = document.querySelector('#authSubmit .hm-auth-spin');
+    els.switchHint = document.getElementById('authSwitchHint');
+    els.switchBtn = document.getElementById('authSwitchBtn');
+    els.tabLogin = document.getElementById('authTabLogin');
+    els.tabRegister = document.getElementById('authTabRegister');
+
+    els.userWrap = document.getElementById('hmUserWrap');
+    els.userPill = document.getElementById('hmUserPill');
+    els.userAvatar = document.getElementById('hmUserAvatar');
+    els.userName = document.getElementById('hmUserName');
+    els.userRole = document.getElementById('hmUserRole');
+    els.userMenu = document.getElementById('hmUserMenu');
+    els.adminBtn = document.getElementById('hmUserAdminBtn');
+
+    els.adminModal = document.getElementById('userAdminModal');
+    els.adminClose = document.getElementById('userAdminClose');
+    els.adminList = document.getElementById('adminUserList');
+    els.adminNewUser = document.getElementById('adminNewUser');
+    els.adminNewPass = document.getElementById('adminNewPass');
+    els.adminNewRole = document.getElementById('adminNewRole');
+    els.adminCreateBtn = document.getElementById('adminCreateBtn');
+  }
+
+  /* ---------- 认证页显隐 ---------- */
+  function showLogin(tab) {
+    if (!els.auth) return;
+    mode = tab === 'register' ? 'register' : 'login';
+    els.auth.hidden = false;
+    els.auth.setAttribute('aria-hidden', 'false');
+    applyMode();
+    clearError();
+    setTimeout(function () { els.username && els.username.focus(); }, 50);
+  }
+
+  function hideLogin() {
+    if (!els.auth) return;
+    els.auth.hidden = true;
+    els.auth.setAttribute('aria-hidden', 'true');
+  }
+
+  function applyMode() {
+    var isReg = mode === 'register';
+    els.tabLogin.classList.toggle('is-active', !isReg);
+    els.tabRegister.classList.toggle('is-active', isReg);
+    els.confirmWrap.hidden = !isReg;
+    if (isReg) {
+      els.title.textContent = '创建账号';
+      els.sub.textContent = '注册后你的作品将云端同步';
+      els.submitText.textContent = '注册并登录';
+      els.switchHint.textContent = '已有账号？';
+      els.switchBtn.textContent = '去登录';
+      els.password.setAttribute('autocomplete', 'new-password');
+    } else {
+      els.title.textContent = '欢迎回来';
+      els.sub.textContent = '登录你的账号继续创作';
+      els.submitText.textContent = '登录';
+      els.switchHint.textContent = '还没有账号？';
+      els.switchBtn.textContent = '立即注册';
+      els.password.setAttribute('autocomplete', 'current-password');
+    }
+  }
+
+  function setError(msg) {
+    if (!msg) { clearError(); return; }
+    els.error.textContent = msg;
+    els.error.hidden = false;
+  }
+  function clearError() { els.error.hidden = true; els.error.textContent = ''; }
+
+  function setSubmitting(on) {
+    submitting = on;
+    els.submit.disabled = on;
+    els.spin.hidden = !on;
+    els.submitText.hidden = on;
+  }
+
+  /* ---------- 提交 ---------- */
+  async function handleSubmit(ev) {
+    ev.preventDefault();
+    if (submitting) return;
+    var username = (els.username.value || '').trim();
+    var password = els.password.value || '';
+    var confirm = els.confirm.value || '';
+
+    if (!username || !password) { setError('请输入用户名和密码'); return; }
+    if (username.length < 3) { setError('用户名至少 3 个字符'); return; }
+    if (password.length < 6) { setError('密码至少 6 个字符'); return; }
+    if (mode === 'register' && password !== confirm) { setError('两次输入的密码不一致'); return; }
+
+    setSubmitting(true);
+    clearError();
+    try {
+      var res = mode === 'register'
+        ? await api.register(username, password)
+        : await api.login(username, password);
+      if (res && res.token) api.setToken(res.token);
+      var me = await api.me();
+      window.HMApp = window.HMApp || {};
+      window.HMApp.user = me.user;
+      try { localStorage.setItem('hm.user', JSON.stringify(me.user)); } catch (e) {}
+
+      /* 拉取该用户作品并刷新 */
+      await refreshUserWorks();
+
+      /* 同步该用户的桌面布局 */
+      if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
+        try { window.HMDesk.sync(); } catch (e) {}
+      }
+
+      hideLogin();
+      updateUserUI();
+      if (window.HMApp && window.HMApp.toast) {
+        window.HMApp.toast(mode === 'register' ? '注册成功，欢迎加入绘梦' : '登录成功', 'success');
+      }
+    } catch (err) {
+      setError(err && err.message ? err.message : '操作失败，请稍后重试');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function refreshUserWorks() {
+    if (!api || !api.online) return;
+    try {
+      var data = await api.listWorks();
+      if (data && Array.isArray(data.items) && window.HMApp && window.HMApp.state) {
+        var MAX = window.HMApp.state.MAX_WORKS || 200;
+        window.HMApp.state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX);
+        try { localStorage.setItem('anidream.works.v1', JSON.stringify(window.HMApp.state.works)); } catch (e) {}
+        if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+      }
+    } catch (e) {}
+  }
+
+  /* ---------- 用户头像 UI ---------- */
+  function updateUserUI() {
+    if (!els.userWrap) return;
+    var user = (window.HMApp && window.HMApp.user) || null;
+    if (!user) {
+      els.userWrap.hidden = true;
+      return;
+    }
+    els.userWrap.hidden = false;
+    els.userAvatar.textContent = String(user.username || '?').charAt(0).toUpperCase();
+    els.userName.textContent = user.username || '用户';
+    var isAdmin = user.role === 'admin';
+    els.userRole.hidden = !isAdmin;
+    els.adminBtn.hidden = !isAdmin;
+  }
+
+  function toggleUserMenu(force) {
+    var open = typeof force === 'boolean' ? force : !els.userMenu.classList.contains('is-open');
+    els.userMenu.classList.toggle('is-open', open);
+    els.userMenu.setAttribute('aria-hidden', open ? 'false' : 'true');
+  }
+
+  async function handleLogout() {
+    if (api && api.logout) api.logout();
+    window.HMApp = window.HMApp || {};
+    window.HMApp.user = null;
+    toggleUserMenu(false);
+    updateUserUI();
+    showLogin('login');
+  }
+
+  /* ---------- 管理员 - 用户管理 ---------- */
+  function openAdminModal() {
+    if (!els.adminModal) return;
+    els.adminModal.classList.add('is-open');
+    els.adminModal.setAttribute('aria-hidden', 'false');
+    loadAdminUsers();
+  }
+  function closeAdminModal() {
+    if (!els.adminModal) return;
+    els.adminModal.classList.remove('is-open');
+    els.adminModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function roleLabel(role) { return role === 'admin' ? '超级管理员' : '普通用户'; }
+  function formatTime(ts) {
+    if (!ts) return '';
+    try { return new Date(ts).toLocaleString('zh-CN', { hour12: false }); } catch (e) { return ''; }
+  }
+
+  async function loadAdminUsers() {
+    if (!api) return;
+    els.adminList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">加载中…</div>';
+    try {
+      var data = await api.listUsers();
+      var users = (data && data.users) || [];
+      var me = (window.HMApp && window.HMApp.user) || null;
+      if (!users.length) {
+        els.adminList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">暂无用户</div>';
+        return;
+      }
+      els.adminList.innerHTML = users.map(function (u) {
+        var isMe = me && me.id === u.id;
+        var avatar = String(u.username || '?').charAt(0).toUpperCase();
+        var roleCls = u.role === 'admin' ? '' : 'is-user';
+        return '' +
+          '<div class="hm-admin-row" data-uid="' + u.id + '">' +
+            '<span class="hm-user-avatar">' + avatar + '</span>' +
+            '<div class="hm-admin-info">' +
+              '<div class="hm-admin-uname">' + escapeHtml(u.username) + (isMe ? ' <span style="color:var(--muted);font-weight:400;font-size:12px;">（你）</span>' : '') + '</div>' +
+              '<div class="hm-admin-meta">创建于 ' + formatTime(u.createdAt) + '</div>' +
+            '</div>' +
+            '<span class="hm-admin-role-tag ' + roleCls + '">' + roleLabel(u.role) + '</span>' +
+            '<div class="hm-admin-actions">' +
+              (u.role === 'admin'
+                ? '<button data-acmd="demote"' + (isMe ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>降为用户</button>'
+                : '<button data-acmd="promote"' + (isMe ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>升为管理员</button>') +
+              '<button data-acmd="reset">重置密码</button>' +
+              '<button data-acmd="delete" class="is-danger"' + (isMe ? ' disabled style="opacity:.4;cursor:not-allowed;"' : '') + '>删除</button>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    } catch (err) {
+      els.adminList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--danger);font-size:13px;">加载失败：' + escapeHtml(err.message || '未知错误') + '</div>';
+    }
+  }
+
+  async function handleAdminAction(uid, cmd) {
+    var me = (window.HMApp && window.HMApp.user) || null;
+    if (me && me.id === uid) return;
+    try {
+      if (cmd === 'promote') {
+        await api.setUserRole(uid, 'admin');
+        toast('已提升为管理员', 'success');
+      } else if (cmd === 'demote') {
+        await api.setUserRole(uid, 'user');
+        toast('已降为普通用户', 'success');
+      } else if (cmd === 'reset') {
+        var pwd = window.prompt('请输入新密码（至少 6 位）：');
+        if (pwd === null) return;
+        if (pwd.length < 6) { toast('密码至少 6 位', 'error'); return; }
+        await api.resetUserPassword(uid, pwd);
+        toast('密码已重置', 'success');
+      } else if (cmd === 'delete') {
+        if (!window.confirm('确定删除该用户？该用户的所有作品与桌面数据将被清除，且不可恢复。')) return;
+        await api.deleteUser(uid);
+        toast('用户已删除', 'success');
+      }
+      loadAdminUsers();
+    } catch (err) {
+      toast(err && err.message ? err.message : '操作失败', 'error');
+    }
+  }
+
+  async function handleAdminCreate() {
+    var username = (els.adminNewUser.value || '').trim();
+    var password = els.adminNewPass.value || '';
+    var role = els.adminNewRole.value || 'user';
+    if (username.length < 3) { toast('用户名至少 3 个字符', 'error'); return; }
+    if (password.length < 6) { toast('密码至少 6 个字符', 'error'); return; }
+    try {
+      await api.createUser(username, password, role);
+      els.adminNewUser.value = '';
+      els.adminNewPass.value = '';
+      toast('用户创建成功', 'success');
+      loadAdminUsers();
+    } catch (err) {
+      toast(err && err.message ? err.message : '创建失败', 'error');
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function toast(msg, type) {
+    if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type);
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  function bind() {
+    cache();
+    if (!els.auth) return;
+
+    els.tabLogin.addEventListener('click', function () { mode = 'login'; applyMode(); clearError(); });
+    els.tabRegister.addEventListener('click', function () { mode = 'register'; applyMode(); clearError(); });
+    els.switchBtn.addEventListener('click', function () {
+      mode = mode === 'login' ? 'register' : 'login';
+      applyMode();
+      clearError();
+    });
+    els.form.addEventListener('submit', handleSubmit);
+
+    /* 用户菜单 */
+    els.userPill.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      toggleUserMenu();
+    });
+    document.addEventListener('click', function (ev) {
+      if (els.userMenu && !els.userMenu.contains(ev.target) && ev.target !== els.userPill) {
+        toggleUserMenu(false);
+      }
+    });
+    els.userMenu.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('button[data-ucmd]');
+      if (!btn) return;
+      var cmd = btn.dataset.ucmd;
+      if (cmd === 'logout') handleLogout();
+      else if (cmd === 'admin') { toggleUserMenu(false); openAdminModal(); }
+      else if (cmd === 'profile') {
+        toggleUserMenu(false);
+        var u = (window.HMApp && window.HMApp.user) || {};
+        toast('当前账号：' + (u.username || '') + '（' + roleLabel(u.role) + '）', 'info');
+      }
+    });
+
+    /* 管理员弹窗 */
+    els.adminClose.addEventListener('click', closeAdminModal);
+    els.adminModal.addEventListener('click', function (ev) {
+      if (ev.target === els.adminModal) closeAdminModal();
+    });
+    els.adminCreateBtn.addEventListener('click', handleAdminCreate);
+    els.adminList.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('button[data-acmd]');
+      if (!btn || btn.disabled) return;
+      var row = btn.closest('.hm-admin-row');
+      if (!row) return;
+      handleAdminAction(row.dataset.uid, btn.dataset.acmd);
+    });
+
+    /* 暴露到全局，供 app.js 的 authBoot 调用 */
+    window.showLogin = showLogin;
+    window.hideLogin = hideLogin;
+    window.updateUserUI = updateUserUI;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind);
+  } else {
+    bind();
+  }
 })();
 
 </script>
@@ -7915,6 +8586,9 @@ if (!storedApi.gptModel || /gpt-image-2-all|gpt-image-lite/.test(storedApi.gptMo
 } else if (storedApi.gptModel === 'gpt-image-1') {
   storedApi.gptModel = 'gpt-image-1';
 }
+
+/* 后端 API 客户端快捷引用（api.js 挂载在 window.HM.api） */
+var api = window.HM && window.HM.api;
 
 const state = {
   view: 'create',
@@ -9228,6 +9902,12 @@ function saveWorks() {
   });
   state.works = stripped;
   saveJSON(LS_WORKS, state.works);
+  /* 已登录用户同步到后端（按用户隔离） */
+  if (window.HMApp && window.HMApp.user && api && api.online) {
+    state.works.forEach(function (w) {
+      api.saveWork(w).catch(function () {});
+    });
+  }
 }
 
 async function makeThumb(url) {
@@ -10051,6 +10731,38 @@ function bindEvents() {
 }
 
 /* ---------------- 启动 ---------------- */
+/* ---------------- 认证引导 ---------------- */
+async function authBoot() {
+  var token = (api && api.getToken) ? api.getToken() : '';
+  if (!token) {
+    window.HMApp = window.HMApp || {};
+    window.HMApp.user = null;
+    if (typeof showLogin === 'function') showLogin();
+    return;
+  }
+  try {
+    await api.ping();
+    var me = await api.me();
+    window.HMApp.user = me.user;
+    /* 从后端加载该用户的作品 */
+    try {
+      var data = await api.listWorks();
+      if (data && Array.isArray(data.items)) {
+        state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
+        saveJSON(LS_WORKS, state.works);
+      }
+    } catch (e) {}
+    renderWorks();
+    if (typeof hideLogin === 'function') hideLogin();
+    if (typeof updateUserUI === 'function') updateUserUI();
+  } catch (err) {
+    /* token 失效 */
+    if (api && api.logout) api.logout();
+    window.HMApp.user = null;
+    if (typeof showLogin === 'function') showLogin();
+  }
+}
+
 function boot() {
   bindEls();
   renderModels('');
@@ -10060,6 +10772,11 @@ function boot() {
   bindEvents();
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();
+
+  /* 认证引导（先探测后端，再登录态校验） */
+  api.ping().finally(function () {
+    authBoot();
+  });
 
   // 首次打开时给出轻量引导提示
   if (!storedPrefs || !storedPrefs.modelId) {
@@ -13589,7 +14306,8 @@ window.HMApp = {
     tidy: tidy,
     openHistory: openHistory,
     openParam: openParam,
-    deleteWork: deleteWork
+    deleteWork: deleteWork,
+    sync: syncServer
   };
 
   init();

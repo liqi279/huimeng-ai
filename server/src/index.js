@@ -14,6 +14,7 @@ const assetsRoutes = require('./routes/assets');
 const presetsRoutes = require('./routes/presets');
 const rayinRoutes = require('./routes/rayin');
 const generateRoutes = require('./routes/generate');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '25mb' }));
 
 app.use('/api', healthRoutes);
+app.use('/api', authRoutes);
 app.use('/api', translateRoutes);
 app.use('/api', worksRoutes);
 app.use('/api', deskRoutes);
@@ -78,7 +80,17 @@ app.use((err, req, res, next) => {
 });
 
 store.ensureDirs()
-  .then(() => {
+  .then(async () => {
+    /* 首次启动若无用户，创建默认超级管理员 */
+    const users = await store.listUsers();
+    if (!users.length) {
+      const adminUser = process.env.ADMIN_USER || 'admin';
+      const adminPass = process.env.ADMIN_PASS || 'admin123';
+      const result = await store.createUser({ username: adminUser, password: adminPass, role: 'admin' });
+      if (result.ok) {
+        console.log(`[init] 默认超级管理员已创建：${adminUser} / ${adminPass}（请尽快修改密码）`);
+      }
+    }
     app.listen(config.PORT, () => {
       console.log(`绘梦 server listening on http://localhost:${config.PORT}`);
     });
