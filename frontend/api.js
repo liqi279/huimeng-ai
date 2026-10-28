@@ -86,7 +86,7 @@
       } catch (err) {
         var netError = new Error(err && err.name === 'AbortError'
           ? '后端请求超时，请稍后重试'
-          : '无法连接后端服务，请确认已运行 npm start');
+          : '无法连接后端服务。请确认：\n1. 已拉取最新代码（git pull）\n2. 已启动后端（npm start）\n3. 首次使用请访问 https://localhost:8443 信任自签证书');
         netError.offline = true;
         throw netError;
       }

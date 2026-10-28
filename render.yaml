@@ -1,0 +1,16 @@
+# Render 部署配置 - 绘梦 AI 后端
+# 使用方法：在 Render.com 仪表盘选择 "Blueprint" 导入本仓库即可
+services:
+  - type: web
+    name: huimeng-ai-backend
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && node src/index.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /api/health
+    autoDeploy: true
