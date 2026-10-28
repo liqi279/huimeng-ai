@@ -890,30 +890,10 @@
     if (!drag) return;
     var current = drag;
     drag = null;
-    var newPositions = {};
-    if (current.moved) {
-      current.items.forEach(function (item) {
-        if (!item.el) return;
-        item.el.classList.remove('is-dragging');
-        var left = typeof item.nextLeft === 'number' ? item.nextLeft : item.left;
-        var top = typeof item.nextTop === 'number' ? item.nextTop : item.top;
-        newPositions[item.id] = { left: left, top: top };
-        var pos = desk.positions[item.id] || {};
-        pos.pxLeft = left;
-        pos.pxTop = Math.max(0, top);
-        pos._userSet = true;
-        delete pos.x;
-        delete pos.y;
-        desk.positions[item.id] = pos;
-      });
-    } else {
-      /* 没实际移动，清掉 is-dragging class 即可 */
-      current.items.forEach(function (item) {
-        if (item.el) item.el.classList.remove('is-dragging');
-      });
-    }
+    var merged = false;
 
-    /* 需求2：拖到另一个卡片上 → 自动合并 */
+    /* 需求2：先查 elementFromPoint —— 保持 .is-dragging 让 pointer-events:none 穿透到目标卡片
+       （如果先 removeClass('is-dragging')，被拖的卡片自身会重新遮挡 elementFromPoint 的命中） */
     if (event && typeof document.elementFromPoint === 'function') {
       var targetEl = document.elementFromPoint(event.clientX, event.clientY);
       var dropCard = targetEl ? targetEl.closest('.desk-card[data-work], .result-card.is-desk-job[data-job], .folder-card[data-folder]') : null;
@@ -939,11 +919,7 @@
           /* 记住 dropCard 的原始位置——新建 folder 要放在这里 */
           var inheritedPos = null;
           if (!dropIsFolder) {
-            /* work/job 卡片的 pxLeft/pxTop */
             inheritedPos = desk.positions[workId] || null;
-            /* 如果 work/job 卡片本身刚被拖过，取拖动后的新位置 */
-            var np = newPositions[dropId];
-            if (np) inheritedPos = { pxLeft: np.left, pxTop: np.top };
           }
           var folder = mergeItemsIntoFolder(draggedIds.concat([dropIsFolder ? [] : [dropId]]), targetFolderId, !dropIsFolder);
           if (folder) {
@@ -960,12 +936,35 @@
             }
             persistNow();
             clearSelection();
-            renderDesktop();
+            renderDesktop(); /* renderDesktop 会重建 DOM，连带清掉残留的 is-dragging */
             A.toast('已合并到「' + folder.name + '」', 'success');
-            return;
+            merged = true;
           }
         }
       }
+    }
+
+    if (merged) return;
+
+    /* 没合并：清 is-dragging + 保存位置 */
+    if (current.moved) {
+      current.items.forEach(function (item) {
+        if (!item.el) return;
+        item.el.classList.remove('is-dragging');
+        var left = typeof item.nextLeft === 'number' ? item.nextLeft : item.left;
+        var top = typeof item.nextTop === 'number' ? item.nextTop : item.top;
+        var pos = desk.positions[item.id] || {};
+        pos.pxLeft = left;
+        pos.pxTop = Math.max(0, top);
+        pos._userSet = true;
+        delete pos.x;
+        delete pos.y;
+        desk.positions[item.id] = pos;
+      });
+    } else {
+      current.items.forEach(function (item) {
+        if (item.el) item.el.classList.remove('is-dragging');
+      });
     }
 
     persistSoon();
