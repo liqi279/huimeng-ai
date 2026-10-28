@@ -865,23 +865,28 @@
     if (!drag) return;
     var current = drag;
     drag = null;
-    /* 先保存新位置（即使要合并也需要） */
     var newPositions = {};
-    if (!current.moved) return;
-    current.items.forEach(function (item) {
-      if (!item.el) return;
-      item.el.classList.remove('is-dragging');
-      var left = typeof item.nextLeft === 'number' ? item.nextLeft : item.left;
-      var top = typeof item.nextTop === 'number' ? item.nextTop : item.top;
-      newPositions[item.id] = { left: left, top: top };
-      var pos = desk.positions[item.id] || {};
-      pos.pxLeft = left;
-      pos.pxTop = Math.max(0, top);
-      pos._userSet = true;
-      delete pos.x;
-      delete pos.y;
-      desk.positions[item.id] = pos;
-    });
+    if (current.moved) {
+      current.items.forEach(function (item) {
+        if (!item.el) return;
+        item.el.classList.remove('is-dragging');
+        var left = typeof item.nextLeft === 'number' ? item.nextLeft : item.left;
+        var top = typeof item.nextTop === 'number' ? item.nextTop : item.top;
+        newPositions[item.id] = { left: left, top: top };
+        var pos = desk.positions[item.id] || {};
+        pos.pxLeft = left;
+        pos.pxTop = Math.max(0, top);
+        pos._userSet = true;
+        delete pos.x;
+        delete pos.y;
+        desk.positions[item.id] = pos;
+      });
+    } else {
+      /* 没实际移动，清掉 is-dragging class 即可 */
+      current.items.forEach(function (item) {
+        if (item.el) item.el.classList.remove('is-dragging');
+      });
+    }
 
     /* 需求2：拖到另一个卡片上 → 自动合并 */
     if (event && typeof document.elementFromPoint === 'function') {
