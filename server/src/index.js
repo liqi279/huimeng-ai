@@ -1,10 +1,12 @@
 'use strict';
 
 const path = require('path');
+const https = require('https');
 const express = require('express');
 const cors = require('cors');
 const config = require('./config');
 const store = require('./store');
+const certUtil = require('./cert');
 
 const healthRoutes = require('./routes/health');
 const translateRoutes = require('./routes/translate');
@@ -94,6 +96,23 @@ store.ensureDirs()
     app.listen(config.PORT, () => {
       console.log(`绘梦 server listening on http://localhost:${config.PORT}`);
     });
+
+    /* 启动 HTTPS 服务器（用于 GitHub Pages 等 HTTPS 前端跨域访问本地后端） */
+    const httpsMode = String(config.HTTPS).toLowerCase();
+    if (httpsMode === 'on' || (httpsMode === 'auto' && certUtil.generate())) {
+      try {
+        const creds = certUtil.load();
+        https.createServer(creds, app).listen(config.HTTPS_PORT, () => {
+          console.log(`绘梦 HTTPS server listening on https://localhost:${config.HTTPS_PORT}`);
+          console.log(`  → 首次使用请在浏览器访问 https://localhost:${config.HTTPS_PORT} 信任自签证书`);
+          console.log(`  → 然后在 GitHub Pages 地址后加 ?api=https://localhost:${config.HTTPS_PORT}/api`);
+        });
+      } catch (err) {
+        console.warn('[https] HTTPS 服务器启动失败：', err.message);
+      }
+    } else {
+      console.log('[https] 未启用 HTTPS（设置 HTTPS=on 强制启用，或安装 openssl）');
+    }
   })
   .catch((err) => {
     console.error('初始化数据目录失败：', err && err.message);

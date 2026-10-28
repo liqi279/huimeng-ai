@@ -11,6 +11,8 @@ function env(name, fallback) {
 
 module.exports = {
   PORT: Number(env('PORT', '8787')),
+  HTTPS_PORT: Number(env('HTTPS_PORT', '8443')),
+  HTTPS: env('HTTPS', 'auto'), /* 'on' | 'off' | 'auto' */
   RAYIN_BASE: env('RAYIN_BASE', 'https://www.rayinai.com/v1'),
   RAYIN_KEY: env('RAYIN_KEY', ''),
   GPT_MODEL: env('GPT_MODEL', 'gpt-image-2'),
