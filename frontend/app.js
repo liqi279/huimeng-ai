@@ -587,6 +587,7 @@ function renderWorks() {
   }
 
   if (window.HMUI && window.HMUI.onRenderWorks) window.HMUI.onRenderWorks(total);
+  if (window.HMDesk && window.HMDesk.onWorksChanged) window.HMDesk.onWorksChanged();
 }
 
 function syncModelUI() {
@@ -833,7 +834,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum'];
+var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'history'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -1816,8 +1817,10 @@ async function handleGenerate() {
   persistPrefs();
 
   els.emptyState.style.display = 'none';
-  els.resultGrid.innerHTML = '';
-  state.jobs.clear();
+  if (!window.HMDesk) {
+    els.resultGrid.innerHTML = '';
+    state.jobs.clear();
+  }
 
   const jobs = [];
   for (let i = 0; i < state.count; i += 1) {
@@ -1847,14 +1850,17 @@ async function handleGenerate() {
     createLoadingCard(job);
   }
 
+  if (window.HMDesk && window.HMDesk.syncJobs) window.HMDesk.syncJobs();
+  if (window.HMDesk) window.HMDesk.clearSelection();
+
   setGenerating(true);
   startTicker();
   updateQueue('准备生成');
   updateAllJobStatus('准备中…');
 
   setTimeout(function () {
-    const first = els.resultGrid.firstElementChild;
-    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const first = els.resultGrid.querySelector('[data-job]:not(.is-done)');
+    if (first && first.scrollIntoView) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, 90);
 
   let successCount = 0;
@@ -2094,6 +2100,10 @@ function bindEvents() {
 
   if (els.resetCanvas) {
     els.resetCanvas.addEventListener('click', function () {
+      if (window.HMDesk && window.HMDesk.tidy) {
+        window.HMDesk.tidy();
+        return;
+      }
       state.jobs.clear();
       els.resultGrid.innerHTML = '';
       els.emptyState.style.display = 'flex';

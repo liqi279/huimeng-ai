@@ -138,6 +138,9 @@
   api.deleteWork = function (id) { return request('/works/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.clearWorks = function () { return request('/works', { method: 'DELETE' }, 15000); };
 
+  api.getDesk = function () { return request('/desk', {}, 15000); };
+  api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
+
   api.listAssets = function () { return request('/assets', {}, 15000); };
   api.addAsset = function (asset) { return request('/assets', { method: 'POST', body: asset }, 60000); };
   api.deleteAsset = function (id) { return request('/assets/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };

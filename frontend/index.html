@@ -134,6 +134,22 @@
     </div>
   </header>
 
+  <div class="hm-proj-pop" id="projPanel" hidden>
+    <div class="hm-proj-head">
+      <strong>项目选择</strong>
+      <div class="hm-proj-head-actions">
+        <button class="hm-proj-new" id="projNewBtn">新建</button>
+        <button class="hm-proj-icon" id="projCloseBtn" aria-label="关闭项目面板">×</button>
+      </div>
+    </div>
+    <div class="hm-proj-search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <input id="projSearch" type="search" placeholder="搜索项目和文件夹" autocomplete="off">
+      <button class="hm-proj-sort" id="projSortBtn">排序</button>
+    </div>
+    <div class="hm-proj-scroll" id="projList"></div>
+  </div>
+
   <main class="hm-canvas" id="view-create" data-canvas>
     <div class="hm-empty" id="emptyState">
       <div class="hm-orb" aria-hidden="true">
@@ -146,6 +162,14 @@
       <p>上传参考图，或直接描述画面 · 免费生成原图</p>
     </div>
     <div class="result-grid hm-grid" id="resultGrid"></div>
+    <div class="desk-selbar" id="deskSelBar" hidden>
+      <span id="deskSelCount">已选 0 项</span>
+      <button class="desk-sel-btn primary" id="deskMergeBtn">合并到新文件夹</button>
+      <button class="desk-sel-btn" id="deskFoldBtn">新建文件夹</button>
+      <button class="desk-sel-btn" id="deskSelectAll">全选</button>
+      <button class="desk-sel-btn" id="deskSelClear">取消</button>
+    </div>
+    <div class="desk-hint" id="deskHint">拖动调整位置 · 右键查看更多操作</div>
   </main>
 
   <section class="hm-works" id="view-works">
@@ -155,6 +179,7 @@
         <p>保存在本地浏览器 · 共 <span id="worksTotal">0</span> 张，随时查看与下载原图</p>
       </div>
       <div class="hm-works-actions">
+        <button class="hm-pill" id="worksHistoryBtn">历史记录</button>
         <button class="hm-pill" id="clearWorks">清空作品</button>
         <button class="hm-pill hm-close-works" data-view="create">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -172,6 +197,49 @@
       <button class="primary-btn" data-view="create">开始创作</button>
     </div>
   </section>
+
+  <main class="hm-page hm-history-page" id="view-history" hidden>
+    <div class="hm-history-head">
+      <div class="hm-history-tabs" id="historyTabs">
+        <button class="is-active" data-htab="history">历史记录</button>
+        <button data-htab="works">生成内容</button>
+      </div>
+      <div class="hm-history-filters">
+        <label class="hm-history-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="historySearch" type="search" placeholder="搜索描述、模型、任务 ID" autocomplete="off">
+        </label>
+        <select class="hm-history-select" id="historyFolder"><option value="all">全部项目</option></select>
+        <select class="hm-history-select" id="historyType">
+          <option value="all">全部类型</option>
+          <option value="image">图片</option>
+          <option value="video">视频</option>
+          <option value="audio">音频</option>
+        </select>
+        <select class="hm-history-select" id="historyModel"><option value="all">全部模型</option></select>
+        <button class="hm-pill" id="historyRefresh">刷新</button>
+        <button class="hm-pill" id="historyClose">返回桌面</button>
+      </div>
+      <div class="hm-history-second">
+        <span class="hm-history-label">卡片</span>
+        <input id="historyZoom" type="range" min="60" max="140" step="10" value="100" aria-label="卡片大小">
+        <span class="hm-history-zoom" id="historyZoomVal">100%</span>
+        <span class="hm-history-count" id="historyCount">共 0 项</span>
+      </div>
+    </div>
+    <div class="hm-history-grid" id="historyGrid"></div>
+    <div class="hm-page-empty" id="historyEmpty">
+      <div class="hm-page-empty-icon">◷</div>
+      <h3>还没有历史记录</h3>
+      <p>生成图片、视频或音频后，会按时间记录在这里</p>
+      <button class="hm-pill hm-pill-primary" data-rail="create">去生成</button>
+    </div>
+    <div class="hm-history-pager">
+      <button class="hm-pill" id="historyPrev">上一页</button>
+      <span class="hm-history-pageinfo" id="historyPageInfo">1 / 1</span>
+      <button class="hm-pill" id="historyNext">下一页</button>
+    </div>
+  </main>
 
   <main class="hm-page" id="view-canvas" hidden>
     <div class="hm-page-head">
@@ -700,10 +768,68 @@
     </div>
   </div>
 
+  <div class="hm-ctx" id="hmCtx" hidden>
+    <button data-cmd="preview"><span class="hm-ctx-ico">◉</span>预览</button>
+    <button data-cmd="restore"><span class="hm-ctx-ico">↻</span>恢复生成参数</button>
+    <button data-cmd="ref"><span class="hm-ctx-ico">▣</span>仅增加参考素材</button>
+    <button data-cmd="prompt"><span class="hm-ctx-ico">文</span>仅增加提示词</button>
+    <button data-cmd="params"><span class="hm-ctx-ico">☰</span>参数查看</button>
+    <div class="hm-ctx-line"></div>
+    <button data-cmd="copy"><span class="hm-ctx-ico">⧉</span>复制</button>
+    <button data-cmd="cut"><span class="hm-ctx-ico">✂</span>剪切</button>
+    <button data-cmd="rename"><span class="hm-ctx-ico">✎</span>重命名</button>
+    <button data-cmd="download"><span class="hm-ctx-ico">↓</span>下载</button>
+    <button data-cmd="canvas"><span class="hm-ctx-ico">▤</span>发送到画布</button>
+    <div class="hm-ctx-line"></div>
+    <button data-cmd="delete" class="is-danger"><span class="hm-ctx-ico">✕</span>删除</button>
+  </div>
+
+  <div class="hm-ctx" id="deskCtx" hidden>
+    <button data-dcmd="paste"><span class="hm-ctx-ico">⧉</span>粘贴</button>
+    <button data-dcmd="newfolder"><span class="hm-ctx-ico">＋</span>新建文件夹</button>
+    <button data-dcmd="tidy"><span class="hm-ctx-ico">▦</span>整理图片</button>
+    <button data-dcmd="selectall"><span class="hm-ctx-ico">✓</span>全选</button>
+  </div>
+
+  <div class="hm-ctx" id="folderCtx" hidden>
+    <button data-fcmd="rename"><span class="hm-ctx-ico">✎</span>重命名文件夹</button>
+    <button data-fcmd="merge"><span class="hm-ctx-ico">＋</span>把选中项移入</button>
+    <button data-fcmd="delete" class="is-danger"><span class="hm-ctx-ico">✕</span>删除文件夹</button>
+  </div>
+
+  <div class="modal" id="paramModal" aria-hidden="true">
+    <div class="modal-card hm-param-card">
+      <button class="modal-close" data-close-param aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">GENERATION INFO</span>
+      <h2 id="paramTitle">参数查看</h2>
+      <div class="hm-param-body" id="paramBody"></div>
+      <div class="hm-param-foot">
+        <button class="hm-pill" id="paramCopy">复制提示词</button>
+        <button class="hm-pill" id="paramRestore">恢复参数</button>
+        <button class="hm-pill hm-pill-primary" id="paramDownload">下载原图</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="renameModal" aria-hidden="true">
+    <div class="modal-card hm-rename-card">
+      <span class="modal-kicker">RENAME</span>
+      <h2 id="renameTitle">重命名</h2>
+      <input id="renameInput" type="text" maxlength="40" autocomplete="off">
+      <div class="hm-rename-foot">
+        <button class="hm-pill" id="renameCancel">取消</button>
+        <button class="hm-pill hm-pill-primary" id="renameOk">确定</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
 
   <script src="api.js"></script>
   <script src="app.js"></script>
   <script src="ui.js"></script>
+  <script src="desk.js"></script>
 </body>
 </html>

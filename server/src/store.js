@@ -17,6 +17,7 @@ const dirs = {
 
 const worksFile = path.join(config.DATA_DIR, 'works.json');
 const assetsFile = path.join(config.DATA_DIR, 'assets.json');
+const deskFile = path.join(config.DATA_DIR, 'desk.json');
 
 async function ensureDirs() {
   await fsp.mkdir(dirs.root, { recursive: true });
@@ -84,6 +85,24 @@ function clearWorks() {
   });
 }
 
+async function getDesk() {
+  return readJson(deskFile, { folders: [], positions: {}, assigns: {}, names: {}, updatedAt: 0 });
+}
+
+function saveDesk(desk) {
+  return enqueue(async () => {
+    const next = {
+      folders: Array.isArray(desk && desk.folders) ? desk.folders : [],
+      positions: (desk && desk.positions) || {},
+      assigns: (desk && desk.assigns) || {},
+      names: (desk && desk.names) || {},
+      updatedAt: Date.now(),
+    };
+    await writeJson(deskFile, next);
+    return next;
+  });
+}
+
 async function listAssets() {
   return readList(assetsFile);
 }
@@ -122,6 +141,8 @@ module.exports = {
   upsertWork,
   removeWork,
   clearWorks,
+  getDesk,
+  saveDesk,
   listAssets,
   getAsset,
   addAsset,
