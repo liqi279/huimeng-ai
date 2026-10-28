@@ -40,7 +40,28 @@
     sizeKey: ''
   };
 
-  var clipboard = { set: null };
+  /* 统一剪贴板（localStorage 持久化，跨项目/文件夹复制剪切粘贴） */
+  var CLIP_LS = 'anidream.clipboard.v1';
+  var clipboard = {
+    data: null,
+    load: function () {
+      try { clipboard.data = JSON.parse(localStorage.getItem(CLIP_LS) || 'null'); }
+      catch (e) { clipboard.data = null; }
+    },
+    save: function () {
+      try { localStorage.setItem(CLIP_LS, JSON.stringify(clipboard.data || null)); } catch (e) {}
+    },
+    clear: function () { clipboard.data = null; clipboard.save(); },
+    setCopy: function (works) {
+      clipboard.data = { type: 'copy', works: works.map(function (w) { return Object.assign({}, w); }), ts: Date.now() };
+      clipboard.save();
+    },
+    setCut: function (works, fromFolder) {
+      clipboard.data = { type: 'cut', works: works.map(function (w) { return Object.assign({}, w); }), fromFolder: fromFolder || null, ts: Date.now() };
+      clipboard.save();
+    },
+    isEmpty: function () { return !clipboard.data || !clipboard.data.works || !clipboard.data.works.length; }
+  };
 
   var hist = {
     page: 1,
@@ -669,6 +690,10 @@
     });
   }
 
+  function selectedWorks() {
+    return selectedIds().map(function (id) { return findWork(id); }).filter(Boolean);
+  }
+
   function syncSelection() {
     var grid = byId('resultGrid');
     var ids = selectedIds();
@@ -1003,24 +1028,70 @@
     A.toast('已复制一份', 'success');
   }
 
+  /* 复制/剪切：支持单张（右键菜单）或多张（Ctrl+C/X、Ctrl+A 后操作） */
+  function copyWork(work) {
+    var works = work ? [work] : selectedWorks();
+    if (!works.length) { clipboard.clear(); return A.toast('没有可复制的项', 'info'); }
+    clipboard.setCopy(works);
+    A.toast('已复制 ' + works.length + ' 项，Ctrl+V 可粘贴到任何项目', 'info');
+  }
+
   function cutWork(work) {
-    view.cut = work.id;
+    var works = work ? [work] : selectedWorks();
+    if (!works.length) { clipboard.clear(); return A.toast('没有可剪切的项', 'info'); }
+    var ids = works.map(function (w) { return w.id; });
+    var fromFolder = view.activeFolder;
+    clipboard.setCut(works, fromFolder);
+    ids.forEach(function (id) { view.cut = id; }); /* 标记半透明 */
     syncSelection();
-    A.toast('已剪切「' + workName(work) + '」，右键桌面空白处可粘贴', 'info');
+    renderDesktop();
+    A.toast('已剪切 ' + works.length + ' 项，Ctrl+V 粘贴到任何项目', 'info');
   }
 
   function pasteWork() {
-    if (!view.cut) {
-      A.toast('剪贴板是空的，先右键作品选择「剪切」', 'info');
-      return;
+    if (clipboard.isEmpty()) return A.toast('剪贴板是空的，先右键或 Ctrl+C 复制', 'info');
+    var data = clipboard.data;
+    var targetFolder = view.activeFolder;
+
+    if (data.type === 'copy') {
+      var newCount = 0;
+      data.works.forEach(function (orig) {
+        var copy = Object.assign({}, orig, { id: 'w' + A.uid(), createdAt: Date.now(), name: workName(orig) + ' 副本' });
+        state.works.push(copy);
+        if (targetFolder) desk.assigns[copy.id] = targetFolder;
+        /* 位置：compactSlot 下一个空位 */
+        grid = byId('resultGrid');
+        desk.positions[copy.id] = compactSlot(state.works.length + newCount, grid);
+        desk.names[copy.id] = copy.name;
+        newCount += 1;
+      });
+      clipboard.clear();
+      persistNow();
+      A.saveWorks();
+      renderDesktop();
+      clearSelection();
+      A.toast('已粘贴 ' + newCount + ' 项到「' + (targetFolder ? folderName(targetFolder) : '个人空间') + '」', 'success');
+    } else if (data.type === 'cut') {
+      data.works.forEach(function (orig) {
+        /* 从源位置移除 */
+        state.works = state.works.filter(function (w) { return w.id !== orig.id; });
+        delete desk.positions[orig.id];
+        delete desk.names[orig.id];
+        view.cut = null;
+        /* 放到目标位置 */
+        state.works.push(orig);
+        if (targetFolder) desk.assigns[orig.id] = targetFolder;
+        else delete desk.assigns[orig.id];
+        grid = byId('resultGrid');
+        desk.positions[orig.id] = compactSlot(state.works.length - 1, grid);
+      });
+      clipboard.clear();
+      persistNow();
+      A.saveWorks();
+      renderDesktop();
+      clearSelection();
+      A.toast('已移动 ' + data.works.length + ' 项到「' + (targetFolder ? folderName(targetFolder) : '个人空间') + '」', 'success');
     }
-    var id = view.cut;
-    view.cut = null;
-    if (view.activeFolder) desk.assigns[id] = view.activeFolder;
-    else delete desk.assigns[id];
-    persistNow();
-    renderAll();
-    A.toast(view.activeFolder ? '已粘贴到「' + folderName(view.activeFolder) + '」' : '已粘贴到个人空间', 'success');
   }
 
   function restoreParams(work) {
@@ -1399,6 +1470,9 @@
           if (work) openWorkMenu(work, event.clientX, event.clientY);
         } else {
           showContext('deskCtx', event.clientX, event.clientY);
+          /* 根据 clipboard 状态禁用/启用粘贴按钮 */
+          var pasteBtn = byId('deskCtxPaste');
+          if (pasteBtn) pasteBtn.disabled = clipboard.isEmpty();
         }
       });
       grid.addEventListener('click', function (event) {
@@ -1627,46 +1701,14 @@
         event.preventDefault();
         tidy();
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c') {
-        /* Ctrl+C：复制选中 */
-        var sels = selectedIds();
-        if (!sels.length) return;
-        var wId = sels.find(function (k) { return !k.indexOf('job:') && findWork(k); });
-        if (wId) {
-          event.preventDefault();
-          clipboard.set = { type: 'copy', ids: [wId] };
-          A.toast('已复制，Ctrl+V 可粘贴', 'info');
-        }
+        event.preventDefault();
+        copyWork(null);
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'x') {
-        var sels2 = selectedIds();
-        var wId2 = sels2.find(function (k) { return !k.indexOf('job:') && findWork(k); });
-        if (wId2) {
-          event.preventDefault();
-          clipboard.set = { type: 'cut', ids: [wId2] };
-          view.cut = wId2;
-          renderDesktop();
-          A.toast('已剪切，Ctrl+V 粘贴', 'info');
-        }
+        event.preventDefault();
+        cutWork(null);
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v') {
-        if (clipboard.set) {
-          event.preventDefault();
-          if (clipboard.set.type === 'copy') {
-            clipboard.set.ids.forEach(function (id) {
-              var w = findWork(id);
-              if (w) duplicateWork(w);
-            });
-            clipboard.set = null;
-          } else if (clipboard.set.type === 'cut') {
-            /* 剪切 = 移动到当前桌面（根视图或当前文件夹） */
-            clipboard.set.ids.forEach(function (id) {
-              if (view.activeFolder) desk.assigns[id] = view.activeFolder;
-              else delete desk.assigns[id];
-            });
-            clipboard.set = null;
-            view.cut = null;
-            persistNow();
-            renderDesktop();
-          }
-        }
+        event.preventDefault();
+        pasteWork();
       }
     });
 
@@ -1874,6 +1916,7 @@
   /* ---------------- 初始化 ---------------- */
   function init() {
     load();
+    clipboard.load();
     bindEvents();
     hookOnView();
     renderPanel();
