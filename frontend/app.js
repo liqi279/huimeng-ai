@@ -523,9 +523,7 @@ function renderRatios() {
 
 function updateRatioLabel() {
   const size = currentSize();
-  const detail = state.engine !== 'flux'
-    ? gptSizeFor({ ratioId: size.ratio.id }).replace('x', '×')
-    : size.scale.label + ' · ' + size.w + '×' + size.h;
+  const detail = size.scale.label + ' · ' + size.w + '×' + size.h;
   els.ratioLabel.textContent = size.ratio.id;
   if (els.ratioBtn) els.ratioBtn.title = '画面比例 ' + size.ratio.id + ' · ' + detail;
 }
@@ -696,7 +694,7 @@ function syncEngineUI() {
     els.engineModelBtn.title = meta.label + (meta.free ? ' · 免费通道' : ' · RayinAPI 按量计费');
   }
   if (els.scaleBtn) {
-    els.scaleBtn.title = meta.free ? '生成清晰度' : 'GPT-image 固定三档尺寸，清晰度由比例决定';
+    els.scaleBtn.title = '生成清晰度：1K / 2K / 4K';
   }
 }
 
@@ -1371,14 +1369,25 @@ function pickImage(data) {
 
 function gptSizeFor(job) {
   const ratio = job.ratioId || '1:1';
-  if (ratio === '1:1') return '1024x1024';
-  if (ratio === '3:4' || ratio === '9:16') return '1024x1536';
-  return '1536x1024';
+  const scale = SCALES.find(function (s) { return s.id === job.scaleId; }) || SCALES[0];
+  const mult = scale.mult;
+  let w, h;
+  if (ratio === '1:1') { w = 1024; h = 1024; }
+  else if (ratio === '3:4' || ratio === '9:16') { w = 1024; h = 1536; }
+  else { w = 1536; h = 1024; }
+  return (w * mult) + 'x' + (h * mult);
+}
+
+function gptQualityFor(job) {
+  if (job.scaleId === '4k') return 'hd';
+  if (job.scaleId === '2k') return 'high';
+  return 'standard';
 }
 
 async function runRayinImage(job, prompt) {
   const model = rayinCfg().gptModel || RAYIN_DEFAULT.gptModel;
   const size = gptSizeFor(job);
+  const quality = gptQualityFor(job);
   let data;
 
   if (job.refImage) {
@@ -1390,6 +1399,7 @@ async function runRayinImage(job, prompt) {
     form.append('image', blob, job.refImage.name || 'reference.jpg');
     form.append('prompt', prompt);
     form.append('size', size);
+    form.append('quality', quality);
     data = await rayinFormRequest('/images/edits', form);
   } else {
     updateJobStatus(job, 'GPT-image 绘制…');
@@ -1397,7 +1407,8 @@ async function runRayinImage(job, prompt) {
       model: model,
       prompt: prompt,
       n: 1,
-      size: size
+      size: size,
+      quality: quality
     });
   }
 
@@ -2258,11 +2269,6 @@ function bindEvents() {
   els.scalePicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-scale]');
     if (!btn) return;
-    if (state.engine !== 'flux') {
-      toast('GPT-image 使用固定三档尺寸，清晰度由比例决定', 'info');
-      closeAllMenus();
-      return;
-    }
     state.scale = btn.dataset.scale;
     els.scalePicker.querySelectorAll('button').forEach(function (el) {
       el.classList.toggle('is-active', el.dataset.scale === state.scale);
