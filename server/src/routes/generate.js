@@ -183,6 +183,9 @@ async function saveRemoteImage(url) {
   if (!res.ok) return url;
 
   const contentType = String(res.headers.get('content-type') || '').toLowerCase();
+  /* 上游返回非图片内容（如 Pollinations "Free limit reached" 文本），不保存 */
+  if (!contentType.startsWith('image/')) return url;
+
   const buffer = Buffer.from(await res.arrayBuffer());
   if (!buffer.length) return url;
 
@@ -347,6 +350,9 @@ async function generateImages(body) {
     }
     /* 将远端图片下载到本地，避免浏览器跨域 403 / 防盗链导致图片不显示 */
     const localUrl = await saveRemoteImage(url);
+    if (!localUrl.startsWith('/uploads/')) {
+      throw jsonError(502, '图片生成失败', '免费算力暂不可用或已达上限，请稍后重试');
+    }
     return { type: 'image', url: localUrl, width, height, seed };
   });
 }
