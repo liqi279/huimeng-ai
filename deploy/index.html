@@ -5561,7 +5561,9 @@ body.hm-light .hm-page-empty {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  /* 整理按钮位置平滑过渡，不闪屏 */
+  transition: left .28s cubic-bezier(.22,.61,.36,1), top .28s cubic-bezier(.22,.61,.36,1), transform .18s ease, border-color .16s ease, box-shadow .16s ease;
+  will-change: left, top;
   animation: fadeUp 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -5576,9 +5578,12 @@ body.hm-light .hm-page-empty {
 }
 
 .desk-card.is-dragging {
+  transition: none !important;
   cursor: grabbing;
   box-shadow: 0 26px 54px rgba(0, 0, 0, 0.55);
   border-color: rgba(56, 189, 248, 0.7);
+  z-index: 9999 !important;
+  transform: scale(1.04);
 }
 
 .desk-card.is-cut { opacity: 0.45; border-style: dashed; }
