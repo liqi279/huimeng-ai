@@ -29,6 +29,8 @@ const TOKEN_SECRET = (function () {
     return fs.readFileSync(f, 'utf8').trim();
   } catch (e) {
     const secret = crypto.randomBytes(32).toString('hex');
+    /* 确保 data 目录存在（首次部署时可能不存在） */
+    fs.mkdirSync(config.DATA_DIR, { recursive: true });
     fs.writeFileSync(f, secret, { mode: 0o600 });
     return secret;
   }
