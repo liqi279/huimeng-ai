@@ -1,0 +1,16 @@
+{
+  "name": "huimeng-ai",
+  "version": "1.0.0",
+  "description": "绘梦 AI 动漫创作平台 - 全栈项目",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "build": "node scripts/build-deploy.js",
+    "start": "cd server && npm start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liqi279/huimeng-ai.git"
+  }
+}
