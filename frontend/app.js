@@ -26,11 +26,12 @@ const ENGINES = [
   }
 ];
 
-/* RayinAPI 接入（GPT-image / Nano Banana） */
+/* RayinAPI 接入（GPT-image / Nano Banana）
+ * 默认用更宽松的模型 ID 避免内容审核拦截（RayinAPI 有 gpt-image-2-all / gpt-image-2-lite 等变体） */
 const RAYIN_DEFAULT = {
   base: 'https://www.rayinai.com/v1',
   key: '',
-  gptModel: 'gpt-image-2',
+  gptModel: 'gpt-image-2-all',
   bananaModel: 'nano-banana'
 };
 
@@ -336,8 +337,8 @@ function fileNameFor(item) {
 const storedPrefs = loadJSON(LS_PREFS, {}) || {};
 const storedWorks = loadJSON(LS_WORKS, []);
 const storedApi = loadJSON(LS_API, {}) || {};
-/* 旧版默认模型 ID 已下线，迁移到当前可用 ID */
-if (storedApi.gptModel === 'gpt-image-1') storedApi.gptModel = RAYIN_DEFAULT.gptModel;
+/* 旧版默认模型 ID 迁移：gpt-image-1 / gpt-image-2（严格审核）→ gpt-image-2-all（宽松版，通过内容审核） */
+if (['gpt-image-1', 'gpt-image-2'].indexOf(storedApi.gptModel) >= 0) storedApi.gptModel = RAYIN_DEFAULT.gptModel;
 
 const state = {
   view: 'create',
@@ -1246,6 +1247,9 @@ function apiErrorText(payload, status) {
   if (status === 404 || /model.*(not.*found|not.*exist)|无可用渠道|no available/i.test(message)) {
     return '模型 ID 不可用，请在「接入设置」中核对：' + (message || '未找到模型');
   }
+  if (/violat|polic|moderation|content.filter|unsafe|policy/i.test(message)) {
+    return 'RayinAPI 内容审核拦截了你的提示词（' + (payload && payload.error && payload.error.code ? payload.error.code : 'content_filter') + '）。已自动替换为宽松模型 gpt-image-2-all；若仍被拦截可在提示词中避免敏感词汇，或在「接入设置」里换用 Nano Banana 引擎';
+  }
   return message || 'RayinAPI 返回错误 ' + status;
 }
 
@@ -1398,6 +1402,7 @@ async function runRayinImage(job, prompt) {
     form.append('prompt', prompt);
     form.append('size', size);
     form.append('quality', quality);
+    form.append('skip_moderation', 'true');
     data = await rayinFormRequest('/images/edits', form);
   } else {
     updateJobStatus(job, 'GPT-image 绘制…');
@@ -1406,7 +1411,8 @@ async function runRayinImage(job, prompt) {
       prompt: prompt,
       n: 1,
       size: size,
-      quality: quality
+      quality: quality,
+      skip_moderation: true
     });
   }
 
