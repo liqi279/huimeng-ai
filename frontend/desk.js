@@ -685,8 +685,11 @@
 
   /* ---------------- 选择 ---------------- */
   function selectedIds() {
+    var folderIds = {};
+    activeFolders().forEach(function (f) { folderIds[f.id] = true; });
     return Object.keys(view.selected).filter(function (id) {
-      return view.selected[id] && findWork(id);
+      if (!view.selected[id]) return false;
+      return findWork(id) || folderIds[id];
     });
   }
 
@@ -701,6 +704,9 @@
       Array.prototype.forEach.call(grid.querySelectorAll('.desk-card[data-work]'), function (el) {
         el.classList.toggle('is-selected', !!view.selected[el.dataset.work]);
         el.classList.toggle('is-cut', view.cut === el.dataset.work);
+      });
+      Array.prototype.forEach.call(grid.querySelectorAll('.folder-card[data-folder]'), function (el) {
+        el.classList.toggle('is-selected', !!view.selected[el.dataset.folder]);
       });
     }
     var bar = byId('deskSelBar');
@@ -785,8 +791,10 @@
     view.z += 1;
     var items = [];
     ids.forEach(function (wid) {
-      var q = isJob ? '.result-card.is-desk-job[data-job="' + wid.replace('job:', '') + '"]'
-                   : '.desk-card[data-work="' + wid + '"]';
+      var q;
+      if (isJob) q = '.result-card.is-desk-job[data-job="' + wid.replace('job:', '') + '"]';
+      else if (isFolder || desk.folders.some(function (f) { return f.id === wid; })) q = '.folder-card[data-folder="' + wid + '"]';
+      else q = '.desk-card[data-work="' + wid + '"]';
       var el = grid.querySelector(q);
       if (!el) return;
       var pos = desk.positions[wid] || {};
@@ -806,7 +814,7 @@
     };
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
-    event.preventDefault();
+    /* 不在 pointerdown 里 preventDefault —— 会阻断后续的 click 事件（folder-card 弹窗等） */
   }
 
   function onPointerMove(event) {
@@ -814,7 +822,10 @@
     var dx = event.clientX - drag.startX;
     var dy = event.clientY - drag.startY;
     if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
-    drag.moved = true;
+    if (!drag.moved) {
+      drag.moved = true;
+      try { event.preventDefault(); } catch (e) {}
+    }
     drag.items.forEach(function (item) {
       if (!item.el) return;
       item.el.classList.add('is-dragging');
@@ -1239,6 +1250,52 @@
     if (modal) modal.hidden = true;
   }
 
+  /* ---------------- 文件夹卡片行内重命名 ---------------- */
+  function startFolderRename(card) {
+        if (!card) {  return; }
+    var folderId = card.dataset.folder;
+    var folder = desk.folders.find(function (f) { return f.id === folderId; });
+    if (!folder) {  return; }
+    var strong = card.querySelector('.folder-info strong');
+    if (!strong || card.classList.contains('is-renaming')) {  return; }
+    card.classList.add('is-renaming');
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = folder.name;
+    input.className = 'folder-rename-input';
+    input.maxLength = 24;
+    strong.replaceWith(input);
+    input.focus();
+    input.select();
+    
+    function commit() {
+            var val = input.value.trim();
+      if (val && val !== folder.name) folder.name = val;
+      card.classList.remove('is-renaming');
+      if (input.parentNode) {
+        var newStrong = document.createElement('strong');
+        newStrong.textContent = folder.name;
+        input.replaceWith(newStrong);
+      }
+      persistNow();
+      renderPanel();
+      A.toast('已重命名为「' + folder.name + '」', 'success');
+    }
+    function cancel() {
+            card.classList.remove('is-renaming');
+      if (input.parentNode) {
+        var newStrong = document.createElement('strong');
+        newStrong.textContent = folder.name;
+        input.replaceWith(newStrong);
+      }
+    }
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+      else if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+    });
+    input.addEventListener('blur', function () {  commit(); });
+  }
+
   /* ---------------- 参数弹窗 ---------------- */
   function openParam(work) {
     view.paramWork = work;
@@ -1635,10 +1692,11 @@
     var folderCtx = byId('folderCtx');
     if (folderCtx) {
       folderCtx.addEventListener('click', function (event) {
-        var btn = event.target.closest('[data-fcmd]');
+                var btn = event.target.closest('[data-fcmd]');
         if (!btn) return;
         var cmd = btn.dataset.fcmd;
         var folderId = view.menuFolder;
+        console.log('  folderId=', folderId, 'cmd=', cmd);
         hideContexts();
         if (!folderId) return;
         var folder = desk.folders.find(function (f) { return f.id === folderId; });
@@ -1658,12 +1716,67 @@
           renderAll();
           A.toast('已解散「' + folder.name + '」，' + folderWorks.length + ' 项回到桌面', 'success');
         } else if (cmd === 'zip') {
-          /* 导出压缩包（降级为批量下载） */
+          /* 导出压缩包（JSZip 真打包） */
           if (!folderWorks.length) return A.toast('叠放里是空的', 'info');
-          A.toast('开始下载「' + folder.name + '」里的 ' + folderWorks.length + ' 项', 'success');
-          folderWorks.forEach(function (w, i) {
-            setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
+          if (typeof JSZip === 'undefined') {
+            /* JSZip 没加载 → 降级为逐个下载 */
+            A.toast('开始下载「' + folder.name + '」里的 ' + folderWorks.length + ' 项', 'success');
+            folderWorks.forEach(function (w, i) {
+              setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
+            });
+            return;
+          }
+          A.toast('正在打包「' + folder.name + '」…', 'info');
+          var zip = new JSZip();
+          var folderName = (folder.name || '叠放').replace(/[\\/:*?"<>|]/g, '_');
+          var sub = zip.folder(folderName);
+          var fetched = 0;
+          folderWorks.forEach(function (w) {
+            try {
+              var url = w.url || w.thumb;
+              var fname = A.fileNameFor(w);
+              if (url && /^data:/.test(url)) {
+                /* data URL：直接解 base64 */
+                var parts = url.match(/^data:([^;]+);base64,(.+)$/);
+                if (parts) {
+                  var mime = parts[1];
+                  var ext = mime.split('/')[1] || 'png';
+                  if (!/\.([a-z0-9]+)$/i.test(fname)) fname += '.' + ext;
+                  sub.file(fname, parts[2], { base64: true });
+                  fetched++;
+                  checkDone();
+                  return;
+                }
+              }
+              /* http(s) URL：fetch 为 blob 再转 */
+              fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
+                if (!/\.([a-z0-9]+)$/i.test(fname)) {
+                  var extFromType = (blob.type || '').split('/')[1] || 'png';
+                  fname += '.' + extFromType;
+                }
+                sub.file(fname, blob);
+              }).catch(function () {
+                sub.file(fname + '.txt', '下载失败: ' + url);
+              }).then(function () {
+                fetched++; checkDone();
+              });
+            } catch (err) {
+              fetched++; checkDone();
+            }
           });
+          function checkDone() {
+            if (fetched < folderWorks.length) return;
+            zip.generateAsync({ type: 'blob' }).then(function (blob) {
+              var a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = folderName + '.zip';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+              A.toast('已导出「' + folderName + '.zip」（' + folderWorks.length + ' 项）', 'success');
+            });
+          }
         } else if (cmd === 'download') {
           if (!folderWorks.length) return A.toast('叠放里是空的', 'info');
           A.toast('开始批量下载 ' + folderWorks.length + ' 项', 'success');
@@ -1671,13 +1784,10 @@
             setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
           });
         } else if (cmd === 'rename') {
-          askName('重命名叠放', folder.name, function (value) {
-            folder.name = value;
-            persistNow();
-            renderAll();
-            renderPanel();
-            A.toast('已重命名', 'success');
-          });
+                    hideContexts();
+          var fc = grid.querySelector('.folder-card[data-folder="' + folderId + '"]');
+                    if (fc) startFolderRename(fc);
+          else askName('重命名叠放', folder.name, function (value) { folder.name = value; persistNow(); renderAll(); renderPanel(); });
         } else if (cmd === 'copy') {
           clipboard.setCopy(folderWorks);
           A.toast('已复制「' + folder.name + '」里 ' + folderWorks.length + ' 项，Ctrl+V 粘贴', 'info');

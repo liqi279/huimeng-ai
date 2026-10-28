@@ -5569,6 +5569,28 @@ body.hm-light .hm-page-empty {
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 16px 38px rgba(0, 0, 0, 0.42);
 }
 
+.folder-card.is-selected {
+  border-color: rgba(56, 189, 248, 0.95);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.5), 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+
+.folder-card.is-renaming {
+  border-color: rgba(34, 197, 94, 0.8);
+}
+.folder-rename-input {
+  width: 100%;
+  background: rgba(10, 20, 36, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.7);
+  border-radius: 5px;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 3px 7px;
+  outline: none;
+  box-sizing: border-box;
+}
+
 .desk-card.is-dragging, .folder-card.is-dragging, .result-card.is-desk-job.is-dragging {
   transition: none !important;
   cursor: grabbing;
@@ -5591,12 +5613,22 @@ body.hm-light .hm-page-empty {
 
 /* ---------- 桌面文件夹卡片 ---------- */
 .folder-card {
-  height: 200px;
+  position: absolute;
   width: 200px;
+  height: 200px;
   background: linear-gradient(180deg, #182840, #0f1c30);
   border: 1.5px solid rgba(96, 165, 250, 0.55);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32), inset 0 0 0 1px rgba(96, 165, 250, 0.08);
   border-radius: 13px;
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  overflow: hidden;
+  transition: left .28s cubic-bezier(.22,.61,.36,1), top .28s cubic-bezier(.22,.61,.36,1), transform .18s ease, border-color .16s ease, box-shadow .16s ease;
+  will-change: left, top;
 }
 .folder-card:hover {
   border-color: rgba(96, 165, 250, 0.9);
