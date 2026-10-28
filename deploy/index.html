@@ -7098,8 +7098,12 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   </div>
 
   <div class="hm-ctx" id="folderCtx" hidden>
+    <button data-fcmd="open"><span class="hm-ctx-ico">📂</span>打开文件夹</button>
+    <button data-fcmd="scatter"><span class="hm-ctx-ico">↩</span>解散（全部移出）</button>
+    <button data-fcmd="download"><span class="hm-ctx-ico">↓</span>批量下载</button>
     <button data-fcmd="rename"><span class="hm-ctx-ico">✎</span>重命名文件夹</button>
     <button data-fcmd="merge"><span class="hm-ctx-ico">＋</span>把选中项移入</button>
+    <button data-fcmd="out"><span class="hm-ctx-ico">→</span>全部移出到个人空间</button>
     <button data-fcmd="delete" class="is-danger"><span class="hm-ctx-ico">✕</span>删除文件夹</button>
   </div>
 
@@ -11636,7 +11640,8 @@ window.HMApp = {
     setDockVar();
 
     var works = activeWorks();
-    works.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    /* 时间升序：最早生成的在最顶行最前，最新的在最底下 */
+    works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
 
     /* ---------- 清理已完成/失败的 job 节点（它们已进 state.works） ---------- */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-job]'), function (node) {
@@ -11742,6 +11747,10 @@ window.HMApp = {
     if (hint) hint.hidden = works.length < 1 && !hasJobs;
 
     syncSelection();
+
+    /* 若用户一直在底部附近，自动滚到底部跟随最新生成的图 */
+    var distFromBottom = grid.scrollHeight - grid.scrollTop - grid.clientHeight;
+    if (distFromBottom < 240) grid.scrollTop = grid.scrollHeight;
   }
 
   function syncJobs() {
@@ -11757,14 +11766,18 @@ window.HMApp = {
   function tidy() {
     var grid = byId('resultGrid');
     if (!grid) return;
+    /* 按时间从早到晚排列：最早生成的在最顶行最前面，最新的在最后面 */
     var works = activeWorks();
-    works.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
     works.forEach(function (w, i) {
-      desk.positions[w.id] = defaultSlot(i, grid);
+      var slot = defaultSlot(i, grid);
+      desk.positions[w.id] = slot;
     });
     persistNow();
     renderDesktop();
-    A.toast('已整理桌面图片', 'success');
+    /* 整理后自动滚到底部（最新生成的在最底） */
+    setTimeout(function () { grid.scrollTop = grid.scrollHeight; }, 30);
+    A.toast('已按时间整理（最早在前）', 'success');
   }
 
   /* ---------------- 选择 ---------------- */
@@ -11900,27 +11913,73 @@ window.HMApp = {
     }
   }
 
-  function onPointerUp() {
+  function onPointerUp(event) {
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', onPointerUp);
     if (!drag) return;
     var current = drag;
     drag = null;
+    /* 先保存新位置（即使要合并也需要） */
+    var newPositions = {};
     if (!current.moved) return;
     current.items.forEach(function (item) {
       if (!item.el) return;
       item.el.classList.remove('is-dragging');
       var left = typeof item.nextLeft === 'number' ? item.nextLeft : item.left;
       var top = typeof item.nextTop === 'number' ? item.nextTop : item.top;
+      newPositions[item.id] = { left: left, top: top };
       var pos = desk.positions[item.id] || {};
-      /* 直接存像素坐标，纵向无限 */
       pos.pxLeft = left;
       pos.pxTop = Math.max(0, top);
       delete pos.x;
       delete pos.y;
       desk.positions[item.id] = pos;
     });
+
+    /* 需求2：拖到另一个卡片上 → 自动合并 */
+    if (event && typeof document.elementFromPoint === 'function') {
+      var targetEl = document.elementFromPoint(event.clientX, event.clientY);
+      var dropCard = targetEl ? targetEl.closest('.desk-card[data-work], .result-card.is-desk-job[data-job]') : null;
+      if (dropCard) {
+        var dropIsJob = dropCard.hasAttribute('data-job');
+        var dropId = dropIsJob ? 'job:' + dropCard.dataset.job : dropCard.dataset.work;
+        var draggedIds = current.items.map(function (i) { return i.id; });
+        /* 不能拖到自己身上 */
+        if (draggedIds.indexOf(dropId) < 0) {
+          /* 如果目标在某文件夹里，也把被拖的放进去；否则新建文件夹 */
+          var workId = dropIsJob ? dropCard.dataset.job : dropCard.dataset.work;
+          var targetFolderId = desk.assigns[workId];
+          var folder = mergeItemsIntoFolder(draggedIds.concat([dropId]), targetFolderId, true);
+          persistNow();
+          clearSelection();
+          renderDesktop();
+          if (folder) A.toast('已把 ' + (draggedIds.length + 1) + ' 项合并到「' + folder.name + '」', 'success');
+          return;
+        }
+      }
+    }
+
     persistSoon();
+  }
+
+  /* 把一组 id 合并进文件夹（create=true 时若无文件夹则新建） */
+  function mergeItemsIntoFolder(ids, folderId, create) {
+    var folder = folderId ? desk.folders.find(function (f) { return f.id === folderId; }) : null;
+    if (!folder && create) {
+      var base = '新建文件夹';
+      var names = desk.folders.map(function (f) { return f.name; });
+      var name = base, idx = 2;
+      while (names.indexOf(name) >= 0) { name = base + ' ' + idx; idx += 1; }
+      folder = { id: 'f' + A.uid(), name: name, createdAt: Date.now() };
+      desk.folders.unshift(folder);
+    }
+    if (!folder) return null;
+    ids.forEach(function (id) {
+      /* job:xxx 转成 work id */
+      var wid = id.indexOf('job:') === 0 ? id.slice(4) : id;
+      desk.assigns[wid] = folder.id;
+    });
+    return folder;
   }
 
   /* ---------------- 作品操作 ---------------- */
@@ -12464,7 +12523,28 @@ window.HMApp = {
         if (!folderId) return;
         var folder = desk.folders.find(function (f) { return f.id === folderId; });
         if (!folder) return;
-        if (cmd === 'rename') {
+
+        /* 找所有属于此文件夹的 work */
+        var folderWorks = state.works.filter(function (w) { return desk.assigns[w.id] === folderId; });
+
+        if (cmd === 'open') {
+          view.activeFolder = folderId;
+          renderAll();
+          A.toast('已切到「' + folder.name + '」文件夹（' + folderWorks.length + ' 项）', 'success');
+        } else if (cmd === 'scatter' || cmd === 'out') {
+          folderWorks.forEach(function (w) { delete desk.assigns[w.id]; });
+          if (cmd === 'delete') return;
+          persistNow();
+          if (view.activeFolder === folderId) view.activeFolder = null;
+          renderAll();
+          A.toast('已把 ' + folderWorks.length + ' 项移出「' + folder.name + '」', 'success');
+        } else if (cmd === 'download') {
+          if (!folderWorks.length) { A.toast('文件夹是空的', 'info'); return; }
+          A.toast('开始批量下载 ' + folderWorks.length + ' 张到「' + folder.name + '」', 'success');
+          folderWorks.forEach(function (w, i) {
+            setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
+          });
+        } else if (cmd === 'rename') {
           askName('重命名文件夹', folder.name, function (value) {
             folder.name = value;
             persistNow();
@@ -12472,10 +12552,7 @@ window.HMApp = {
           });
         } else if (cmd === 'merge') {
           var ids = selectedIds();
-          if (!ids.length) {
-            A.toast('先在桌面上选中要移动的作品', 'info');
-            return;
-          }
+          if (!ids.length) { A.toast('先在桌面上选中要移动的作品', 'info'); return; }
           ids.forEach(function (id) { desk.assigns[id] = folderId; });
           persistNow();
           clearSelection();
