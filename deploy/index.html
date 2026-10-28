@@ -7320,13 +7320,16 @@ const ENGINES = [
 ];
 
 /* RayinAPI 接入（GPT-image / Nano Banana）
- * 默认用更宽松的模型 ID 避免内容审核拦截（RayinAPI 有 gpt-image-2-all / gpt-image-2-lite 等变体） */
+ * 注意：RayinAPI 只认官方 OpenAI 模型 ID，别写 Rayin 自己的展示别名 */
 const RAYIN_DEFAULT = {
   base: 'https://www.rayinai.com/v1',
   key: '',
-  gptModel: 'gpt-image-2-all',
+  gptModel: 'gpt-image-2',
   bananaModel: 'nano-banana'
 };
+
+/* GPT-image 候选模型链（RayinAPI 只认官方 OpenAI ID），第一个不可用自动试下一个 */
+const GPT_IMAGE_FALLBACKS = ['gpt-image-2', 'gpt-image-1'];
 
 const ENGINE_META = {
   flux: { label: 'FLUX.1', pill: 'FLUX.1 · 免费', hint: '免费 · 约 10 秒', meta: 'FLUX.1', free: true },
@@ -7630,8 +7633,12 @@ function fileNameFor(item) {
 const storedPrefs = loadJSON(LS_PREFS, {}) || {};
 const storedWorks = loadJSON(LS_WORKS, []);
 const storedApi = loadJSON(LS_API, {}) || {};
-/* 旧版默认模型 ID 迁移：gpt-image-1 / gpt-image-2（严格审核）→ gpt-image-2-all（宽松版，通过内容审核） */
-if (['gpt-image-1', 'gpt-image-2'].indexOf(storedApi.gptModel) >= 0) storedApi.gptModel = RAYIN_DEFAULT.gptModel;
+/* 历史错误模型 ID 迁移：gpt-image-1 / 伪别名 gpt-image-2-all 等 → 官方 gpt-image-2 */
+if (!storedApi.gptModel || /gpt-image-2-all|gpt-image-lite/.test(storedApi.gptModel)) {
+  storedApi.gptModel = RAYIN_DEFAULT.gptModel;
+} else if (storedApi.gptModel === 'gpt-image-1') {
+  storedApi.gptModel = 'gpt-image-1';
+}
 
 const state = {
   view: 'create',
@@ -8680,48 +8687,61 @@ function gptQualityFor(job) {
 }
 
 async function runRayinImage(job, prompt) {
-  const model = rayinCfg().gptModel || RAYIN_DEFAULT.gptModel;
   const size = gptSizeFor(job);
   const quality = gptQualityFor(job);
-  let data;
+  /* 用户设置的模型 ID 不可用时，按 fallback 链自动重试下一个官方 ID */
+  const userModel = rayinCfg().gptModel || RAYIN_DEFAULT.gptModel;
+  const fallbacks = [userModel].concat(GPT_IMAGE_FALLBACKS.filter(function (m) { return m !== userModel; }));
 
-  if (job.refImage) {
-    /* 图生图：以参考图主体为准，走 OpenAI 兼容的 /images/edits（multipart） */
-    updateJobStatus(job, '参考图绘制…');
-    const blob = await dataUrlBlob(job.refImage.dataUrl);
-    const form = new FormData();
-    form.append('model', model);
-    form.append('image', blob, job.refImage.name || 'reference.jpg');
-    form.append('prompt', prompt);
-    form.append('size', size);
-    form.append('quality', quality);
-    form.append('skip_moderation', 'true');
-    data = await rayinFormRequest('/images/edits', form);
-  } else {
-    updateJobStatus(job, 'GPT-image 绘制…');
-    data = await rayinRequest('/images/generations', {
-      model: model,
-      prompt: prompt,
-      n: 1,
-      size: size,
-      quality: quality,
-      skip_moderation: true
-    });
+  let lastError = null;
+  for (let i = 0; i < fallbacks.length; i += 1) {
+    const model = fallbacks[i];
+    try {
+      if (job.refImage) {
+        /* 图生图：以参考图主体为准，走 OpenAI 兼容的 /images/edits（multipart） */
+        updateJobStatus(job, '参考图绘制…' + (i > 0 ? '（尝试 ' + model + '）' : ''));
+        const blob = await dataUrlBlob(job.refImage.dataUrl);
+        const form = new FormData();
+        form.append('model', model);
+        form.append('image', blob, job.refImage.name || 'reference.jpg');
+        form.append('prompt', prompt);
+        form.append('size', size);
+        form.append('quality', quality);
+        form.append('skip_moderation', 'true');
+        const data = await rayinFormRequest('/images/edits', form);
+        const url = pickImage(data);
+        if (!url) throw new Error('接口未返回图片');
+        const first = data && Array.isArray(data.data) ? data.data[0] : null;
+        if (first && first.width && first.height) { job.width = first.width; job.height = first.height; }
+        if (i > 0) toast('当前模型 ID 不可用，已自动切换到 ' + model, 'info');
+        return { url: url, seed: job.seed };
+      } else {
+        updateJobStatus(job, 'GPT-image 绘制…' + (i > 0 ? '（尝试 ' + model + '）' : ''));
+        const data = await rayinRequest('/images/generations', {
+          model: model,
+          prompt: prompt,
+          n: 1,
+          size: size,
+          quality: quality,
+          skip_moderation: true
+        });
+        const url = pickImage(data);
+        if (!url) throw new Error('接口未返回图片');
+        const first = data && Array.isArray(data.data) ? data.data[0] : null;
+        if (first && first.width && first.height) { job.width = first.width; job.height = first.height; }
+        if (i > 0) toast('当前模型 ID 不可用，已自动切换到 ' + model, 'info');
+        return { url: url, seed: job.seed };
+      }
+    } catch (err) {
+      lastError = err;
+      /* 模型不可用（404 / model not found）才回退；其它错误（审核拦截 / 余额 / 超时）直接向上抛 */
+      if (!/model.*(not.*found|not.*exist)|无可用渠道|no available/i.test(err.hint || err.message || '') &&
+          String(err.message || '').indexOf('HTTP 404') < 0) {
+        throw err;
+      }
+    }
   }
-
-  const url = pickImage(data);
-  if (!url) {
-    const error = new Error('no-image');
-    error.hint = '接口未返回图片，请核对 GPT-image 模型 ID';
-    throw error;
-  }
-  /* gpt-image 只有固定三档尺寸，回填实际返回像素，避免 meta 显示与实物不符 */
-  const first = data && Array.isArray(data.data) ? data.data[0] : null;
-  if (first && first.width && first.height) {
-    job.width = first.width;
-    job.height = first.height;
-  }
-  return { url: url, seed: job.seed };
+  throw lastError || new Error('GPT-image 所有候选模型均不可用');
 }
 
 async function dataUrlBlob(dataUrl) {
