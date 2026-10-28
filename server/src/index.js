@@ -102,7 +102,11 @@ store.ensureDirs()
     if (httpsMode === 'on' || (httpsMode === 'auto' && certUtil.generate())) {
       try {
         const creds = certUtil.load();
-        https.createServer(creds, app).listen(config.HTTPS_PORT, () => {
+        const httpsServer = https.createServer(creds, app);
+        httpsServer.on('error', (err) => {
+          console.warn('[https] HTTPS 服务器启动失败：', err.message);
+        });
+        httpsServer.listen(config.HTTPS_PORT, () => {
           console.log(`绘梦 HTTPS server listening on https://localhost:${config.HTTPS_PORT}`);
           console.log(`  → 首次使用请在浏览器访问 https://localhost:${config.HTTPS_PORT} 信任自签证书`);
           console.log(`  → 然后在 GitHub Pages 地址后加 ?api=https://localhost:${config.HTTPS_PORT}/api`);
