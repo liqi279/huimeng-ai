@@ -8660,21 +8660,19 @@ function pickImage(data) {
   return '';
 }
 
+/* GPT-image 接口 size 仅接受固定枚举白名单，不能自定义像素；
+ * 2K / 4K 档位通过 quality 参数（medium=1K, high=2K, ultra=4K）让 RayinAPI 内部放大 */
 function gptSizeFor(job) {
   const ratio = job.ratioId || '1:1';
-  const scale = SCALES.find(function (s) { return s.id === job.scaleId; }) || SCALES[0];
-  const mult = scale.mult;
-  let w, h;
-  if (ratio === '1:1') { w = 1024; h = 1024; }
-  else if (ratio === '3:4' || ratio === '9:16') { w = 1024; h = 1536; }
-  else { w = 1536; h = 1024; }
-  return (w * mult) + 'x' + (h * mult);
+  if (ratio === '1:1') return '1024x1024';
+  if (ratio === '3:4' || ratio === '9:16') return '1024x1536';
+  return '1536x1024';
 }
 
 function gptQualityFor(job) {
-  if (job.scaleId === '4k') return 'hd';
+  if (job.scaleId === '4k') return 'ultra';
   if (job.scaleId === '2k') return 'high';
-  return 'standard';
+  return 'medium';
 }
 
 async function runRayinImage(job, prompt) {
