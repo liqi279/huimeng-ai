@@ -1604,6 +1604,7 @@ function saveWork(job) {
     scaleId: job.scaleId,
     steps: job.steps,
     duration: job.duration || 0,
+    elapsed: Number(job.elapsed) || 0,
     createdAt: Date.now()
   };
 

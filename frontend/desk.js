@@ -322,9 +322,11 @@
   function available(grid) {
     var size = boardSize(grid);
     var cardW = cardWidth();
+    /* 画板已拉满到 rail 右边缘 + 页面最右侧，卡片允许贴边（留 4px 间隙即可） */
+    var edge = 4;
     return {
-      w: Math.max(1, size.w - cardW - PAD * 2),
-      h: Math.max(1, size.h - CARD_H - PAD * 2)
+      w: Math.max(1, size.w - cardW - edge),
+      h: Math.max(1, size.h - CARD_H - edge)
     };
   }
 
@@ -373,6 +375,7 @@
     var name = workName(work);
     var meta = [work.modelName || 'AI', (work.width && work.height) ? work.width + '×' + work.height : ''];
     if (work.type === 'video' && work.duration) meta.push(work.duration + 's');
+    if (work.elapsed && work.elapsed > 0) meta.push('耗时 ' + work.elapsed.toFixed(1) + 's');
     return '<article class="desk-card" data-work="' + esc(work.id) + '" data-type="' + esc(work.type || 'image') + '">' +
       '<div class="desk-thumb">' + mediaHtml(work, 'desk') +
       '<span class="desk-badge">已完成</span></div>' +
@@ -538,18 +541,25 @@
     if (event.button !== 0) return;
     var grid = byId('resultGrid');
     if (!grid || !grid.contains(event.target)) return;
-    var card = event.target.closest('.desk-card[data-work]');
+    /* 同时识别成品卡片和生成中的 job 卡片 */
+    var card = event.target.closest('.desk-card[data-work], .result-card.is-desk-job[data-job]');
     var avail = available(grid);
 
     if (!card) {
       if (event.target === grid) clearSelection();
       return;
     }
-    if (event.target.closest('.desk-acts') || event.target.closest('button')) return;
+    /* 按钮/链接区域不触发拖动 */
+    if (event.target.closest('button') || event.target.closest('.desk-acts') || event.target.closest('.action-btn')) return;
 
-    var id = card.dataset.work;
-    if (event.ctrlKey || event.metaKey || event.shiftKey) toggleSelect(id);
-    else if (!view.selected[id]) selectOnly(id);
+    /* 选中当前卡片（job 卡片用 job:id 作为选择 key，避免和 work id 冲突） */
+    var key;
+    var isJob = card.hasAttribute('data-job');
+    if (isJob) key = 'job:' + card.dataset.job;
+    else key = card.dataset.work;
+
+    if (event.ctrlKey || event.metaKey || event.shiftKey) toggleSelect(key);
+    else if (!view.selected[key]) selectOnly(key);
 
     var ids = selectedIds();
     if (!ids.length) return;
@@ -557,7 +567,9 @@
     view.z += 1;
     var items = [];
     ids.forEach(function (wid) {
-      var el = grid.querySelector('.desk-card[data-work="' + wid + '"]');
+      var q = isJob ? '.result-card.is-desk-job[data-job="' + wid.replace('job:', '') + '"]'
+                   : '.desk-card[data-work="' + wid + '"]';
+      var el = grid.querySelector(q);
       if (!el) return;
       var pos = desk.positions[wid] || {};
       pos.z = view.z;
@@ -1410,6 +1422,29 @@
       renderPanel();
       if (deskDirty && document.body.getAttribute('data-view') === 'create') renderDesktop();
     }, 900);
+    /* 生成中卡片实时耗时刷新 */
+    startJobTimer();
+  }
+
+  var jobTimer = null;
+  function startJobTimer() {
+    if (jobTimer) return;
+    jobTimer = setInterval(function () {
+      if (document.body.getAttribute('data-view') !== 'create') return;
+      var grid = byId('resultGrid');
+      if (!grid) return;
+      var cards = grid.querySelectorAll('.result-card[data-job]:not(.is-done):not(.is-error)');
+      if (!cards.length) return;
+      cards.forEach(function (card) {
+        var timeEl = card.querySelector('[data-time]');
+        if (!timeEl) return;
+        var id = card.dataset.job;
+        var job = A.state.jobs.find(function (j) { return j.id === id; });
+        if (!job || !job.startedAt) return;
+        var secs = (Date.now() - job.startedAt) / 1000;
+        timeEl.textContent = secs.toFixed(1) + 's';
+      });
+    }, 400);
   }
 
   window.HMDesk = {
