@@ -417,34 +417,25 @@
     if (!grid.classList.contains('is-board')) grid.classList.add('is-board');
     setDockVar();
 
-    /* ---------- 保留生成中卡片，丢弃已完成/失败的 job 节点（它们已进 state.works） ---------- */
-    var liveJobs = [];
+    var works = activeWorks();
+    works.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+
+    /* ---------- 清理已完成/失败的 job 节点（它们已进 state.works） ---------- */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-job]'), function (node) {
-      if (node.classList.contains('is-loading')) {
-        liveJobs.push(node);
-        node.parentNode.removeChild(node);
-      } else {
-        /* 已完成 / 失败的 job 卡片直接从 DOM 移除，避免和 state.works 里的 desk-card 重复 */
+      if (!node.classList.contains('is-loading')) {
         if (node.parentNode) node.parentNode.removeChild(node);
       }
     });
 
-    var works = activeWorks();
-    works.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
-
-    /* ---------- 增量更新 desk-card：不 innerHTML，增删改只动必要节点（防闪屏） ---------- */
+    /* ---------- 增量更新 desk-card ---------- */
     var needIds = {};
     works.forEach(function (w) { needIds[w.id] = true; });
 
-    /* 删除多余的 desk-card */
     Array.prototype.forEach.call(grid.querySelectorAll('.desk-card'), function (node) {
       var id = node.dataset.work;
-      if (!needIds[id] && !desk.positions['job:' + id]) {
-        node.parentNode.removeChild(node);
-      }
+      if (!needIds[id]) node.parentNode.removeChild(node);
     });
 
-    /* 新增或更新 desk-card */
     works.forEach(function (w, i) {
       var existing = grid.querySelector('.desk-card[data-work="' + w.id + '"]');
       if (!existing) {
@@ -454,12 +445,11 @@
         existing.dataset.type = (w.type || 'image');
         grid.appendChild(existing);
       }
-      /* 软重建：更新 innerHTML（单节点更新，不会闪屏） */
       existing.innerHTML = deskCardHtmlInner(w);
       placeCard(existing, w.id, i, grid);
     });
 
-    /* ---------- 新增 / 更新生成中卡片 ---------- */
+    /* ---------- 原地处理 loading 卡片：不再 removeChild + appendChild ---------- */
     var loadingJobs = [];
     if (A && A.state && A.state.jobs) {
       A.state.jobs.forEach(function (j) {
@@ -467,37 +457,36 @@
       });
     }
 
-    /* 清掉 DOM 中已不在 state 的 loading job */
+    /* 清掉 DOM 中已不在 state 的 loading job（不应存在但保险） */
     Array.prototype.forEach.call(grid.querySelectorAll('.result-card.is-desk-job[data-job]'), function (node) {
       var still = loadingJobs.some(function (j) { return j.id === node.dataset.job; });
-      if (!still) node.parentNode.removeChild(node);
+      if (!still && node.parentNode) node.parentNode.removeChild(node);
     });
 
     loadingJobs.forEach(function (job, i) {
       var id = job.id;
-      var existing = grid.querySelector('.result-card.is-desk-job[data-job="' + id + '"]');
+      /* 找 grid 中已存在的 loading 节点（可能是 createLoadingCard 刚 append 的，
+         也可能是上次 renderDesktop 标记过的 is-desk-job） */
+      var existing = grid.querySelector('.result-card.is-desk-job[data-job="' + id + '"]')
+                 || grid.querySelector('.result-card[data-job="' + id + '"]');
       if (!existing) {
-        /* 刚进入 loading 的 job，先尝试复用 createLoadingCard 已 append 到 grid 的节点
-           （createLoadingCard 是直接 appendChild 到 resultGrid，不会带 is-desk-job class） */
-        var fresh = grid.querySelector('.result-card[data-job="' + id + '"]');
-        if (fresh) existing = fresh;
-        else {
-          existing = document.createElement('article');
-          existing.className = 'result-card is-loading';
-          existing.dataset.job = id;
-        }
+        /* 极端兜底 */
+        existing = document.createElement('article');
+        existing.className = 'result-card is-loading';
+        existing.dataset.job = id;
       }
       existing.classList.add('is-desk-job');
+      /* 关键：确保节点在 grid 里（如果之前被误移除则 append 回来） */
+      if (!existing.parentNode) grid.appendChild(existing);
       var pos = desk.positions['job:' + id];
       if (!pos) {
-        pos = defaultSlot(works.length + liveJobs.length + i, grid);
+        pos = defaultSlot(works.length + i, grid);
         desk.positions['job:' + id] = pos;
       }
       var avail = available(grid);
       existing.style.left = Math.round(Math.min(1, Math.max(0, pos.x)) * avail.w) + 'px';
       existing.style.top = Math.round(Math.min(1, Math.max(0, pos.y)) * avail.h) + 'px';
       existing.style.zIndex = String(30 + i);
-      if (!existing.parentNode) grid.appendChild(existing);
     });
 
     /* 首帧可能早于画板完成布局，待布局稳定后按真实尺寸重排一次（只动位置，不重建 DOM） */

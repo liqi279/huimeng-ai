@@ -1784,15 +1784,22 @@ function closeLightbox() {
 }
 
 /* ---------------- 生成流程 ---------------- */
+var activeBatches = 0;
 function setGenerating(flag) {
-  state.generating = flag;
-  els.generateBtn.disabled = flag;
-  els.generateBtn.classList.toggle('is-loading', flag);
+  if (flag) {
+    activeBatches += 1;
+  } else {
+    activeBatches = Math.max(0, activeBatches - 1);
+  }
+  state.generating = activeBatches > 0;
+  /* 不再锁死按钮 —— 支持多批次并发生成 */
+  els.generateBtn.disabled = false;
+  els.generateBtn.classList.toggle('is-loading', state.generating);
   const strong = els.generateBtn.querySelector('.gen-text strong');
   const small = els.generateBtn.querySelector('.gen-text small');
-  if (flag) {
-    strong.textContent = '正在绘制…';
-    small.textContent = state.engine === 'flux' ? '免费通道 · 请稍候' : (ENGINE_META[state.engine] || {}).label + ' · 请稍候';
+  if (state.generating) {
+    strong.textContent = '正在绘制（' + activeBatches + ' 批）…';
+    small.textContent = (state.engine === 'flux' ? '免费通道' : (ENGINE_META[state.engine] || {}).label) + ' · 点击可继续追加生成';
   } else {
     strong.textContent = '开始生成';
     small.textContent = (ENGINE_META[state.engine] || ENGINE_META.flux).hint;
@@ -1950,10 +1957,8 @@ async function handleGenerate() {
 }
 
 async function retryJob(job) {
-  if (state.generating) {
-    toast('请等待当前任务完成', 'info');
-    return;
-  }
+  /* 允许和其他批次并发，不再因 state.generating 拒绝 */
+  if (!job) return;
 
   if (job.type && job.type !== 'image') {
     toast('视频 / 音频任务请重新生成', 'info');
