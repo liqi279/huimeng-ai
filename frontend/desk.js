@@ -336,14 +336,23 @@
     return v > 0 ? v : CARD_W;
   }
 
-  /* 找现有卡片占用的最大 bottom px，新卡片从下面追加 */
+  /* 紧凑网格：从顶部 0,0 开始按行列排，无视已拖散的卡片位置 */
+  function compactSlot(idx, grid) {
+    var size = boardSize(grid);
+    var cardW = cardWidth();
+    var cols = Math.max(1, Math.floor((size.w - PAD * 2 + GAP) / (cardW + GAP)));
+    var col = idx % cols;
+    var row = Math.floor(idx / cols);
+    return { pxLeft: PAD + col * (cardW + GAP), pxTop: PAD + row * (CARD_H + GAP), z: idx + 1 };
+  }
+
+  /* 找现有卡片占用的最大 bottom px */
   function maxCardBottom(grid) {
     var max = 0;
     grid.querySelectorAll('.desk-card, .result-card.is-desk-job').forEach(function (el) {
       var top = parseInt(el.style.top, 10) || 0;
       max = Math.max(max, top + CARD_H + GAP);
     });
-    /* 再看 desk.positions 里已存的坐标（px） */
     Object.keys(desk.positions).forEach(function (key) {
       var p = desk.positions[key];
       if (p && typeof p.pxTop === 'number') {
@@ -353,24 +362,23 @@
     return max || (PAD + CARD_H);
   }
 
+  /* 默认布局：有现存卡片时从底部追加，否则从顶部紧凑排 */
   function defaultSlot(idx, grid) {
+    var bottom = maxCardBottom(grid);
+    /* 如果所有卡片都在顶部附近（没被拖散），直接紧凑排 */
+    if (bottom <= PAD + CARD_H + GAP * 2) return compactSlot(idx, grid);
+    /* 否则在现有最底部之下开新行 */
     var size = boardSize(grid);
     var cardW = cardWidth();
     var cols = Math.max(1, Math.floor((size.w - PAD * 2 + GAP) / (cardW + GAP)));
-    /* 从底部追加：新卡片排到已有卡片下面 */
-    var startTop = maxCardBottom(grid);
-    /* 计算当前 bottom 位置在第几行（让新卡片从下一行开始） */
-    var rowOffset = Math.max(0, Math.floor((startTop - PAD) / (CARD_H + GAP)));
+    var rowOffset = Math.max(0, Math.floor((bottom - PAD) / (CARD_H + GAP)));
     var col = idx % cols;
     var row = rowOffset + Math.floor(idx / cols);
-    var left = PAD + col * (cardW + GAP);
-    var top = PAD + row * (CARD_H + GAP);
-    return { pxLeft: left, pxTop: top, z: idx + 1 };
+    return { pxLeft: PAD + col * (cardW + GAP), pxTop: PAD + row * (CARD_H + GAP), z: idx + 1 };
   }
 
   function placeCard(el, id, idx, grid) {
     if (!el) return;
-    /* 优先用像素坐标；兼容旧的百分比坐标（首次启动迁移） */
     var pos = desk.positions[id] || desk.positions['job:' + id];
     if (!pos || (typeof pos.pxTop !== 'number' && typeof pos.y !== 'number')) {
       pos = defaultSlot(idx, grid);
@@ -380,7 +388,6 @@
       left = Math.round(pos.pxLeft || 0);
       top = Math.round(pos.pxTop);
     } else {
-      /* 旧百分比坐标：换算成 px 并迁移 */
       left = Math.round(Math.min(1, Math.max(0, pos.x || 0)) * (grid.clientWidth - cardWidth() - 4));
       top = Math.round(Math.min(1, Math.max(0, pos.y || 0)) * grid.clientHeight);
       pos.pxLeft = left;
@@ -391,7 +398,6 @@
     el.style.left = left + 'px';
     el.style.top = top + 'px';
     el.style.zIndex = String(pos.z || idx + 1);
-    /* 继承坐标到 work id（去 job: 前缀），后续拖动用同一套 */
     if (!desk.positions[id]) desk.positions[id] = { pxLeft: left, pxTop: top, z: pos.z || idx + 1 };
   }
 
@@ -565,18 +571,19 @@
   function tidy() {
     var grid = byId('resultGrid');
     if (!grid) return;
-    /* 按时间从早到晚排列：最早生成的在最顶行最前面，最新的在最后面 */
+    /* 按时间从早到晚排列，强制紧凑网格（无视任何拖动过的旧位置） */
     var works = activeWorks();
     works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
     works.forEach(function (w, i) {
-      var slot = defaultSlot(i, grid);
-      desk.positions[w.id] = slot;
+      desk.positions[w.id] = compactSlot(i, grid);
+    });
+    Object.keys(desk.positions).forEach(function (k) {
+      if (k.indexOf('job:') === 0) delete desk.positions[k];
     });
     persistNow();
     renderDesktop();
-    /* 整理后自动滚到底部（最新生成的在最底） */
-    setTimeout(function () { grid.scrollTop = grid.scrollHeight; }, 30);
-    A.toast('已按时间整理（最早在前）', 'success');
+    setTimeout(function () { grid.scrollTop = 0; }, 30);
+    A.toast('已按时间紧凑整理（最早在顶）', 'success');
   }
 
   /* ---------------- 选择 ---------------- */
