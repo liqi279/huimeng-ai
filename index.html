@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07060d">
+  <title>绘梦 · AI 动漫创作平台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="create">
+  <div class="aurora" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+    <span class="blob b4"></span>
+  </div>
+
+  <header class="topbar">
+    <button class="brand" data-view="create" aria-label="返回创作台">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.3l2.25 6.47L21 11l-6.75 2.23L12 19.7l-2.25-6.47L3 11l6.75-2.23L12 2.3Z" fill="currentColor"/>
+          <circle cx="18.6" cy="5.2" r="1.5" fill="currentColor" opacity=".8"/>
+        </svg>
+      </span>
+      <span class="brand-copy">
+        <span class="brand-name">绘梦</span>
+        <span class="brand-en">DREAMCANVAS</span>
+      </span>
+    </button>
+
+    <nav class="nav-tabs" aria-label="主导航">
+      <button class="nav-tab is-active" data-view="create">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4.2-1 9.1-9.1a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13.5 7.5l3 3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+        <span>创作台</span>
+      </button>
+      <button class="nav-tab" data-view="works">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><path d="M5 17l4.4-4.2 3.4 3 2.6-2.4L19 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span>我的作品</span>
+        <span class="nav-badge" id="worksBadge">0</span>
+      </button>
+    </nav>
+
+    <div class="topbar-right">
+      <div class="engine-pill" id="enginePill" title="当前生图引擎">
+        <span class="engine-dot"></span>
+        <span id="enginePillText">FLUX.1 · 免费</span>
+      </div>
+      <button class="ghost-icon" id="helpBtn" aria-label="使用指南">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.6v.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>
+      </button>
+      <button class="ghost-icon mobile-only" id="modelsToggle" aria-label="选择风格模型">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div>
+          <h2>风格模型</h2>
+          <p>按动漫类型分组选择</p>
+        </div>
+        <span class="count-pill" id="modelCount">16 款</span>
+      </div>
+
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.7" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M16 16l4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input id="modelSearch" type="search" placeholder="搜索风格，如 水墨 / Q版" autocomplete="off">
+      </div>
+
+      <div class="model-groups" id="modelGroups"></div>
+
+      <div class="sidebar-foot">
+        <div class="mini-promo">
+          <span class="promo-spark">✦</span>
+          <div>
+            <strong>免费 · 无水印</strong>
+            <p>FLUX.1 云端算力<br>生成图片可直接下载</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="view view-create is-active" id="view-create">
+      <div class="stage">
+        <div class="stage-head">
+          <div class="stage-title">
+            <span class="live-dot"></span>
+            <h2 id="stageModelName">星野动漫</h2>
+            <span class="stage-tag" id="stageModelTag">二次元动漫</span>
+          </div>
+          <div class="stage-meta">
+            <span id="queueText">空闲</span>
+            <span class="dot-sep"></span>
+            <span id="stageResultCount">0 张作品</span>
+          </div>
+        </div>
+
+        <div class="canvas" id="canvas">
+          <div class="empty-state" id="emptyState">
+            <div class="orb-stage" aria-hidden="true">
+              <span class="orb-ring ring-1"></span>
+              <span class="orb-ring ring-2"></span>
+              <span class="orb-wrap"><span class="orb"></span><span class="orb-core"></span></span>
+              <span class="orb-star st1">✦</span>
+              <span class="orb-star st2">✦</span>
+              <span class="orb-star st3">✧</span>
+              <span class="orb-star st4">✦</span>
+            </div>
+            <h3>把想象，画成动漫</h3>
+            <p>选择一种风格，描述你脑海里的画面<br>免费生成，原图一键下载</p>
+          </div>
+
+          <div class="result-grid" id="resultGrid"></div>
+        </div>
+      </div>
+    </main>
+
+    <section class="view view-works" id="view-works">
+      <div class="works-head">
+        <div>
+          <h2>我的作品</h2>
+          <p>保存在本地浏览器 · 随时查看与下载原图</p>
+        </div>
+        <button class="subtle-btn" id="clearWorks">清空作品</button>
+      </div>
+      <div class="works-grid" id="worksGrid"></div>
+      <div class="works-empty" id="worksEmpty">
+        <div class="works-empty-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><path d="M5 17l4.4-4.2 3.4 3 2.6-2.4L19 17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>还没有作品</h3>
+        <p>去创作台生成第一张动漫图片吧</p>
+        <button class="primary-btn" data-view="create">开始创作</button>
+      </div>
+    </section>
+
+    <aside class="composer">
+      <div class="panel-head">
+        <div>
+          <h2>创作参数</h2>
+          <p id="composerEngineNote">FLUX.1 · 免费算力</p>
+        </div>
+        <span class="beta-tag" id="planTag">FREE</span>
+      </div>
+
+      <div class="composer-body">
+        <div class="control">
+          <div class="control-head">
+            <label for="engineSelect">生图模型</label>
+            <button class="text-btn" id="apiConfigBtn">接入设置</button>
+          </div>
+          <div class="engine-select">
+            <select id="engineSelect" aria-label="选择生图模型">
+              <option value="flux">FLUX.1 · 免费（无需密钥）</option>
+              <option value="gpt-image">GPT-image · RayinAPI</option>
+              <option value="banana">Nano Banana · RayinAPI</option>
+            </select>
+            <svg class="engine-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p class="engine-note" id="engineNote">免费通道，无需配置即可生成</p>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label for="promptInput">画面描述</label>
+            <button class="text-btn" id="inspireBtn">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.7 5L19 9.7l-5.3 1.8L12 17l-1.7-5.5L5 9.7l5.3-1.7L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" fill="currentColor" opacity=".8"/></svg>
+              灵感
+            </button>
+          </div>
+          <div class="prompt-wrap">
+            <textarea id="promptInput" maxlength="800" placeholder="例如：银发少女站在樱花树下，水手服，阳光穿过花瓣，日系动漫赛璐璐风格"></textarea>
+            <div class="prompt-foot">
+              <span id="charCount">0 / 800</span>
+              <span class="shortcut"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control ref-control">
+          <div class="control-head">
+            <label>参考图 · 图生图</label>
+            <span class="control-value" id="refState">未添加</span>
+          </div>
+          <div class="ref-drop" id="refDrop" role="button" tabindex="0" aria-label="上传或拖入参考图片">
+            <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp" hidden>
+            <div class="ref-empty" id="refEmpty">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5m0 0L8 9m4-4l4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 16v2.2c0 .99.8 1.8 1.8 1.8h10.4c1 0 1.8-.81 1.8-1.8V16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <strong>上传或拖入参考图</strong>
+              <span>以图中主体为参考生成新画面</span>
+            </div>
+            <div class="ref-preview" id="refPreview" hidden>
+              <img id="refImage" alt="参考图预览">
+              <button class="ref-remove" id="refRemove" type="button" aria-label="移除参考图">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <p class="engine-note" id="refNote">仅 GPT-image 引擎支持参考图（图生图）</p>
+        </div>
+
+        <div class="control">
+          <div class="control-head">
+            <label>画面比例</label>
+            <span class="control-value" id="ratioLabel">1:1 · 1024×1024</span>
+          </div>
+          <div class="ratio-grid" id="ratioPicker"></div>
+          <div class="segmented scale-picker" id="scalePicker" title="GPT-image 引擎仅支持固定三档尺寸">
+            <button data-scale="1k" class="is-active">标清 1K</button>
+            <button data-scale="2k">高清 2K</button>
+            <button data-scale="4k">超清 4K</button>
+          </div>
+        </div>
+
+        <div class="split-controls">
+          <div class="control">
+            <label>生成张数</label>
+            <div class="segmented" id="countPicker">
+              <button data-count="1" class="is-active">1</button>
+              <button data-count="2">2</button>
+              <button data-count="4">4</button>
+            </div>
+          </div>
+          <div class="control seed-control">
+            <div class="control-head">
+              <label for="seedInput">种子</label>
+              <button class="icon-mini" id="seedRandom" aria-label="随机种子">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <input class="seed-input" id="seedInput" type="number" min="1" max="2147483647" inputmode="numeric">
+          </div>
+        </div>
+
+        <div class="control steps-control">
+          <div class="control-head">
+            <label for="stepsRange">精细度</label>
+            <span class="control-value" id="stepsLabel">标准 · 8 步</span>
+          </div>
+          <input type="range" id="stepsRange" min="4" max="12" step="1" value="8">
+          <div class="range-labels"><span>极速</span><span>精细</span></div>
+        </div>
+
+        <div class="toggle-row translate-row">
+          <div class="toggle-copy">
+            <strong>中文智能英译</strong>
+            <small>自动翻译描述，画面更准确</small>
+          </div>
+          <button class="switch is-on" id="translateToggle" role="switch" aria-checked="true" aria-label="中文智能英译">
+            <span></span>
+          </button>
+        </div>
+
+        <div class="notice">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 10.5v5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1" fill="currentColor"/></svg>
+          <p id="composerNotice">免费通道 · 无水印 · 生成后可直接下载原图</p>
+        </div>
+      </div>
+
+      <div class="composer-footer">
+        <button class="generate-btn" id="generateBtn">
+          <span class="gen-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M18.5 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z" fill="currentColor"/></svg>
+          </span>
+          <span class="gen-text"><strong>开始生成</strong><small id="genHint">免费 · 约 10 秒</small></span>
+          <span class="gen-shine" aria-hidden="true"></span>
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lb-close" id="lbClose" aria-label="关闭">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="lb-inner">
+      <img id="lbImage" alt="生成的作品">
+      <div class="lb-bar">
+        <div class="lb-copy">
+          <p id="lbPrompt"></p>
+          <span id="lbMeta"></span>
+        </div>
+        <button class="primary-btn" id="lbDownload">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l4-4m-4 4l-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          下载原图
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="helpModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="helpClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">QUICK START</span>
+      <h2>三步画出你的想象</h2>
+      <div class="guide-list">
+        <div class="guide-item">
+          <span class="guide-index">01</span>
+          <div><strong>选择风格模型</strong><p>左侧 4 组、16 款动漫风格，涵盖赛璐璐、国风、机甲与电影光影。</p></div>
+        </div>
+        <div class="guide-item">
+          <span class="guide-index">02</span>
+          <div><strong>写下画面描述</strong><p>中文也可以。开启智能英译后，描述会自动转为更精准的英文提示词。</p></div>
+        </div>
+        <div class="guide-item">
+          <span class="guide-index">03</span>
+          <div><strong>生成并下载原图</strong><p>生成完成后点击下载按钮，即可保存原图；作品会同步到「我的作品」。</p></div>
+        </div>
+      </div>
+      <p class="guide-note">免费算力由 FLUX.1 提供，偶尔可能需要排队。也可在「接入设置」填入 RayinAPI 密钥，切换 GPT-image / Nano Banana。请勿生成违法违规内容。</p>
+      <button class="primary-btn wide" id="helpDone">开始创作</button>
+    </div>
+  </div>
+
+  <div class="modal" id="apiModal" aria-hidden="true">
+    <div class="modal-card api-card">
+      <button class="modal-close" id="apiClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">RAYINAPI</span>
+      <h2>接入 GPT-image 与 Banana</h2>
+      <p class="api-desc">在 <a href="https://www.rayinai.com/usage" target="_blank" rel="noopener">rayinai.com</a> 控制台创建 API Key 后填入下方，密钥仅保存在本浏览器。</p>
+
+      <div class="api-form">
+        <label class="field">
+          <span>API 地址</span>
+          <input id="apiBaseInput" type="text" placeholder="https://www.rayinai.com/v1" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>API Key</span>
+          <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off">
+        </label>
+        <label class="field">
+          <span>GPT-image 模型 ID</span>
+          <input id="gptModelInput" type="text" placeholder="gpt-image-2" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>Nano Banana 模型 ID</span>
+          <input id="bananaModelInput" type="text" placeholder="nano-banana" autocomplete="off">
+        </label>
+      </div>
+
+      <p class="api-hint" id="apiHint">保存后即可在上方面板下拉切换模型。</p>
+
+      <div class="api-actions">
+        <button class="subtle-btn" id="fetchModelsBtn">读取账号模型</button>
+        <button class="primary-btn" id="apiSave">保存并启用</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
