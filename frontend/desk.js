@@ -322,11 +322,11 @@
   function available(grid) {
     var size = boardSize(grid);
     var cardW = cardWidth();
-    /* 画板已拉满到 rail 右边缘 + 页面最右侧，卡片允许贴边（留 4px 间隙即可） */
     var edge = 4;
+    /* 横向允许贴 rail 边缘，纵向无限（可滚动） */
     return {
       w: Math.max(1, size.w - cardW - edge),
-      h: Math.max(1, size.h - CARD_H - edge)
+      h: 99999
     };
   }
 
@@ -336,42 +336,63 @@
     return v > 0 ? v : CARD_W;
   }
 
+  /* 找现有卡片占用的最大 bottom px，新卡片从下面追加 */
+  function maxCardBottom(grid) {
+    var max = 0;
+    grid.querySelectorAll('.desk-card, .result-card.is-desk-job').forEach(function (el) {
+      var top = parseInt(el.style.top, 10) || 0;
+      max = Math.max(max, top + CARD_H + GAP);
+    });
+    /* 再看 desk.positions 里已存的坐标（px） */
+    Object.keys(desk.positions).forEach(function (key) {
+      var p = desk.positions[key];
+      if (p && typeof p.pxTop === 'number') {
+        max = Math.max(max, p.pxTop + CARD_H + GAP);
+      }
+    });
+    return max || (PAD + CARD_H);
+  }
+
   function defaultSlot(idx, grid) {
     var size = boardSize(grid);
     var cardW = cardWidth();
     var cols = Math.max(1, Math.floor((size.w - PAD * 2 + GAP) / (cardW + GAP)));
-    var rows = Math.max(1, Math.floor((size.h - PAD * 2 + GAP) / (CARD_H + GAP)));
-    var cap = Math.max(1, cols * rows);
-    var cell = idx % cap;
-    var layer = Math.floor(idx / cap);
-    var col = cell % cols;
-    var row = Math.floor(cell / cols) % rows;
-    var avail = available(grid);
-    var shift = layer * 24;
-    var left = PAD + col * (cardW + GAP) + shift;
-    var top = PAD + row * (CARD_H + GAP) + shift;
-    return {
-      x: Math.min(1, Math.max(0, left / avail.w)),
-      y: Math.min(1, Math.max(0, top / avail.h)),
-      z: idx + 1
-    };
+    /* 从底部追加：新卡片排到已有卡片下面 */
+    var startTop = maxCardBottom(grid);
+    /* 计算当前 bottom 位置在第几行（让新卡片从下一行开始） */
+    var rowOffset = Math.max(0, Math.floor((startTop - PAD) / (CARD_H + GAP)));
+    var col = idx % cols;
+    var row = rowOffset + Math.floor(idx / cols);
+    var left = PAD + col * (cardW + GAP);
+    var top = PAD + row * (CARD_H + GAP);
+    return { pxLeft: left, pxTop: top, z: idx + 1 };
   }
 
   function placeCard(el, id, idx, grid) {
     if (!el) return;
-    /* 优先用 desk-card 专属位置；若刚从 job 完成，继承 job 卡片的位置 */
+    /* 优先用像素坐标；兼容旧的百分比坐标（首次启动迁移） */
     var pos = desk.positions[id] || desk.positions['job:' + id];
-    if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') {
+    if (!pos || (typeof pos.pxTop !== 'number' && typeof pos.y !== 'number')) {
       pos = defaultSlot(idx, grid);
     }
-    var avail = available(grid);
-    var left = Math.round(Math.min(1, Math.max(0, pos.x)) * avail.w);
-    var top = Math.round(Math.min(1, Math.max(0, pos.y)) * avail.h);
+    var left, top;
+    if (typeof pos.pxTop === 'number') {
+      left = Math.round(pos.pxLeft || 0);
+      top = Math.round(pos.pxTop);
+    } else {
+      /* 旧百分比坐标：换算成 px 并迁移 */
+      left = Math.round(Math.min(1, Math.max(0, pos.x || 0)) * (grid.clientWidth - cardWidth() - 4));
+      top = Math.round(Math.min(1, Math.max(0, pos.y || 0)) * grid.clientHeight);
+      pos.pxLeft = left;
+      pos.pxTop = top;
+      delete pos.x;
+      delete pos.y;
+    }
     el.style.left = left + 'px';
     el.style.top = top + 'px';
     el.style.zIndex = String(pos.z || idx + 1);
-    /* 同步正式坐标（去 job: 前缀），让后续拖动持久化 */
-    if (!desk.positions[id]) desk.positions[id] = { x: pos.x, y: pos.y, z: pos.z };
+    /* 继承坐标到 work id（去 job: 前缀），后续拖动用同一套 */
+    if (!desk.positions[id]) desk.positions[id] = { pxLeft: left, pxTop: top, z: pos.z || idx + 1 };
   }
 
   function deskCardHtml(work) {
@@ -483,9 +504,20 @@
         pos = defaultSlot(works.length + i, grid);
         desk.positions['job:' + id] = pos;
       }
-      var avail = available(grid);
-      existing.style.left = Math.round(Math.min(1, Math.max(0, pos.x)) * avail.w) + 'px';
-      existing.style.top = Math.round(Math.min(1, Math.max(0, pos.y)) * avail.h) + 'px';
+      /* px 坐标渲染 */
+      var leftPx = typeof pos.pxLeft === 'number' ? pos.pxLeft : 0;
+      var topPx = typeof pos.pxTop === 'number' ? pos.pxTop : 0;
+      if (typeof pos.x === 'number' && typeof pos.y === 'number') {
+        /* 迁移旧百分比坐标 */
+        leftPx = Math.round(Math.min(1, Math.max(0, pos.x)) * (grid.clientWidth - cardWidth() - 4));
+        topPx = Math.round(Math.min(1, Math.max(0, pos.y)) * grid.clientHeight);
+        pos.pxLeft = leftPx;
+        pos.pxTop = topPx;
+        delete pos.x;
+        delete pos.y;
+      }
+      existing.style.left = leftPx + 'px';
+      existing.style.top = topPx + 'px';
       existing.style.zIndex = String(30 + i);
     });
 
@@ -594,7 +626,8 @@
     if (!grid || !grid.contains(event.target)) return;
     /* 同时识别成品卡片和生成中的 job 卡片 */
     var card = event.target.closest('.desk-card[data-work], .result-card.is-desk-job[data-job]');
-    var avail = available(grid);
+    var cardW = cardWidth();
+    var maxLeft = grid.clientWidth - cardW - 4;
 
     if (!card) {
       if (event.target === grid) clearSelection();
@@ -633,7 +666,7 @@
       startX: event.clientX,
       startY: event.clientY,
       items: items,
-      avail: avail,
+      maxLeft: Math.max(1, maxLeft),
       moved: false,
       pointerId: event.pointerId
     };
@@ -651,13 +684,23 @@
     drag.items.forEach(function (item) {
       if (!item.el) return;
       item.el.classList.add('is-dragging');
-      var left = Math.max(0, Math.min(drag.avail.w, item.left + dx));
-      var top = Math.max(0, Math.min(drag.avail.h, item.top + dy));
+      /* 横向限死 rail 边缘，纵向允许无限向下（grid 自动滚动） */
+      var left = Math.max(0, Math.min(drag.maxLeft, item.left + dx));
+      var top = Math.max(-CARD_H, item.top + dy);
       item.el.style.left = left + 'px';
       item.el.style.top = top + 'px';
       item.nextLeft = left;
       item.nextTop = top;
     });
+    /* 拖动时让 grid 自动跟随滚动 */
+    var grid = byId('resultGrid');
+    if (grid && drag.items[0]) {
+      var t = drag.items[0].nextTop;
+      var visibleTop = grid.scrollTop;
+      var visibleBottom = visibleTop + grid.clientHeight;
+      if (t < visibleTop + 40) grid.scrollTop = Math.max(0, t - 80);
+      else if (t > visibleBottom - CARD_H - 40) grid.scrollTop = Math.min(grid.scrollHeight, t - grid.clientHeight + CARD_H + 40);
+    }
   }
 
   function onPointerUp() {
@@ -667,15 +710,17 @@
     var current = drag;
     drag = null;
     if (!current.moved) return;
-    var avail = current.avail;
     current.items.forEach(function (item) {
       if (!item.el) return;
       item.el.classList.remove('is-dragging');
       var left = typeof item.nextLeft === 'number' ? item.nextLeft : item.left;
       var top = typeof item.nextTop === 'number' ? item.nextTop : item.top;
       var pos = desk.positions[item.id] || {};
-      pos.x = avail.w > 0 ? left / avail.w : 0;
-      pos.y = avail.h > 0 ? top / avail.h : 0;
+      /* 直接存像素坐标，纵向无限 */
+      pos.pxLeft = left;
+      pos.pxTop = Math.max(0, top);
+      delete pos.x;
+      delete pos.y;
       desk.positions[item.id] = pos;
     });
     persistSoon();

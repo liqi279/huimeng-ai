@@ -5522,9 +5522,15 @@ body.hm-light .hm-page-empty {
     linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px) 0 0 / 100% 62px,
     linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px) 0 0 / 62px 100%,
     rgba(9, 17, 28, 0.4);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   touch-action: none;
+  align-content: flex-start;
 }
+
+#resultGrid.is-board::-webkit-scrollbar { width: 10px; }
+#resultGrid.is-board::-webkit-scrollbar-thumb { background: rgba(148,163,184,.22); border-radius: 5px; }
+#resultGrid.is-board::-webkit-scrollbar-track { background: transparent; }
 
 #resultGrid.is-board > .result-card[data-job] {
   position: absolute;
