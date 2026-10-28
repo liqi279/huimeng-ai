@@ -5531,7 +5531,7 @@ body.hm-light .hm-page-empty {
     linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px) 0 0 / 62px 100%,
     rgba(9, 17, 28, 0.4);
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   touch-action: none;
   align-content: flex-start;
 }
@@ -11547,35 +11547,8 @@ window.HMApp = {
     return { pxLeft: PAD + col * (cardW + GAP), pxTop: PAD + row * (CARD_H + GAP), z: idx + 1 };
   }
 
-  /* 找现有卡片占用的最大 bottom px */
-  function maxCardBottom(grid) {
-    var max = 0;
-    grid.querySelectorAll('.desk-card, .result-card.is-desk-job').forEach(function (el) {
-      var top = parseInt(el.style.top, 10) || 0;
-      max = Math.max(max, top + CARD_H + GAP);
-    });
-    Object.keys(desk.positions).forEach(function (key) {
-      var p = desk.positions[key];
-      if (p && typeof p.pxTop === 'number') {
-        max = Math.max(max, p.pxTop + CARD_H + GAP);
-      }
-    });
-    return max || (PAD + CARD_H);
-  }
-
-  /* 默认布局：有现存卡片时从底部追加，否则从顶部紧凑排 */
   function defaultSlot(idx, grid) {
-    var bottom = maxCardBottom(grid);
-    /* 如果所有卡片都在顶部附近（没被拖散），直接紧凑排 */
-    if (bottom <= PAD + CARD_H + GAP * 2) return compactSlot(idx, grid);
-    /* 否则在现有最底部之下开新行 */
-    var size = boardSize(grid);
-    var cardW = cardWidth();
-    var cols = Math.max(1, Math.floor((size.w - PAD * 2 + GAP) / (cardW + GAP)));
-    var rowOffset = Math.max(0, Math.floor((bottom - PAD) / (CARD_H + GAP)));
-    var col = idx % cols;
-    var row = rowOffset + Math.floor(idx / cols);
-    return { pxLeft: PAD + col * (cardW + GAP), pxTop: PAD + row * (CARD_H + GAP), z: idx + 1 };
+    return compactSlot(idx, grid);
   }
 
   function placeCard(el, id, idx, grid) {
