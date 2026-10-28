@@ -1192,6 +1192,51 @@
     showContext('hmCtx', x, y);
   }
 
+  /* ---------------- 文件夹预览弹窗 ---------------- */
+  function openFolderPreview(folder) {
+    var modal = byId('folderPreviewModal');
+    if (!modal) return;
+    var items = state.works.filter(function (w) { return desk.assigns[w.id] === folder.id; });
+    items.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+
+    var title = byId('folderPrevTitle');
+    if (title) title.textContent = folder.name + '（' + items.length + ' 项）';
+
+    var body = byId('folderPrevBody');
+    if (!body) return;
+    if (!items.length) {
+      body.innerHTML = '<p class="folder-prev-empty">文件夹里还没有作品</p>';
+    } else {
+      body.innerHTML = items.map(function (w) {
+        var url = esc(w.thumb || w.url || '');
+        var cls = w.type === 'video' ? 'is-video' : (w.type === 'audio' ? 'is-audio' : '');
+        var inner;
+        if (w.type === 'video') inner = '<video src="' + url + '" muted playsinline preload="metadata"></video><span class="media-play">▶</span>';
+        else if (w.type === 'audio') inner = '<span>♪</span><small>音频</small>';
+        else inner = '<img src="' + url + '" alt="' + esc(w.prompt) + '" loading="lazy" draggable="false">';
+        return '<div class="folder-prev-cell" data-fp="' + esc(w.id) + '">' +
+          '<div class="folder-prev-media ' + cls + '">' + inner + '</div>' +
+          '<div class="folder-prev-meta"><strong>' + esc(workName(w)) + '</strong><small>' + typeLabel(w.type) + ' · ' + (w.width || 0) + '×' + (w.height || 0) + '</small></div>' +
+          '</div>';
+      }).join('');
+    }
+
+    modal.hidden = false;
+
+    /* 点击弹窗内的缩略图 → 打开原图 lightbox */
+    body.onclick = function (ev) {
+      var cell = ev.target.closest('.folder-prev-cell');
+      if (!cell) return;
+      var w = findWork(cell.dataset.fp);
+      if (w && typeof A.openLightbox === 'function') A.openLightbox(w);
+    };
+  }
+
+  function closeFolderPreview() {
+    var modal = byId('folderPreviewModal');
+    if (modal) modal.hidden = true;
+  }
+
   /* ---------------- 参数弹窗 ---------------- */
   function openParam(work) {
     view.paramWork = work;
@@ -1476,16 +1521,12 @@
         }
       });
       grid.addEventListener('click', function (event) {
-        /* 左键 folder-card → 进入文件夹 */
+        /* 左键 folder-card → 弹窗预览文件夹内容 */
         var folderCard = event.target.closest('.folder-card[data-folder]');
         if (folderCard) {
           if (event.target.closest('button')) return;
           var folder = desk.folders.find(function (f) { return f.id === folderCard.dataset.folder; });
-          if (folder) {
-            view.activeFolder = folder.id;
-            renderAll();
-            A.toast('已进入「' + folder.name + '」', 'info');
-          }
+          if (folder) openFolderPreview(folder);
           return;
         }
         var card = event.target.closest('.desk-card[data-work]');
@@ -1652,6 +1693,7 @@
         closePanel();
         closeParam();
         closeRename();
+        closeFolderPreview();
         clearSelection();
         return;
       }
@@ -1719,6 +1761,15 @@
         if (event.target === paramModal || event.target.closest('[data-close-param]')) closeParam();
       });
     }
+
+    /* 文件夹预览弹窗 */
+    var folderPrevModal = byId('folderPreviewModal');
+    if (folderPrevModal) {
+      folderPrevModal.addEventListener('click', function (event) {
+        if (event.target === folderPrevModal || event.target.closest('[data-close-folder-prev]')) closeFolderPreview();
+      });
+    }
+
     var paramCopy = byId('paramCopy');
     if (paramCopy) {
       paramCopy.addEventListener('click', function () {

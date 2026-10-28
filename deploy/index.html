@@ -5667,6 +5667,116 @@ body.hm-light .hm-page-empty {
   margin-top: 1px;
 }
 
+/* 文件夹预览弹窗 */
+.hm-folder-preview-card {
+  width: min(920px, 92vw);
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+}
+.hm-folder-prev-head {
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hm-folder-prev-head h2 {
+  flex: 1 1 auto;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 0;
+}
+.modal-close {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.5);
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.modal-close:hover { border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
+.hm-folder-prev-body {
+  padding: 18px 22px 24px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+.folder-prev-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(148, 163, 184, 0.7);
+  padding: 36px 0;
+}
+.folder-prev-cell {
+  background: linear-gradient(180deg, #1a2a3e, #111c2c);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: zoom-in;
+  transition: transform .15s ease, border-color .15s ease;
+  display: flex;
+  flex-direction: column;
+}
+.folder-prev-cell:hover {
+  transform: translateY(-2px);
+  border-color: rgba(96, 165, 250, 0.5);
+}
+.folder-prev-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: #0c1a2b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.folder-prev-media img,
+.folder-prev-media video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.folder-prev-media.is-audio {
+  background: linear-gradient(135deg, rgba(168,85,247,.15), rgba(59,130,246,.15));
+  color: #e2e8f0;
+  font-size: 32px;
+  flex-direction: column;
+  gap: 6px;
+}
+.folder-prev-media .media-play {
+  position: absolute;
+  inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; color: white;
+  text-shadow: 0 2px 6px rgba(0,0,0,.6);
+  pointer-events: none;
+}
+.folder-prev-meta {
+  padding: 8px 10px;
+  text-align: left;
+}
+.folder-prev-meta strong {
+  display: block;
+  font-size: 12px;
+  color: #e2e8f0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.folder-prev-meta small {
+  display: block;
+  font-size: 10px;
+  color: rgba(148, 163, 184, 0.8);
+  margin-top: 2px;
+}
+
 /* 退出文件夹的返回按钮 */
 .desk-back-hint {
   align-self: flex-start;
@@ -7226,6 +7336,17 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         <button class="hm-pill" id="renameCancel">取消</button>
         <button class="hm-pill hm-pill-primary" id="renameOk">确定</button>
       </div>
+    </div>
+  </div>
+
+  <div class="modal" id="folderPreviewModal" aria-hidden="true" hidden>
+    <div class="modal-card hm-folder-preview-card">
+      <div class="modal-head hm-folder-prev-head">
+        <span class="modal-kicker">FOLDER</span>
+        <h2 id="folderPrevTitle">文件夹预览</h2>
+        <button class="modal-close" data-close-folder-prev aria-label="关闭">✕</button>
+      </div>
+      <div class="hm-folder-prev-body" id="folderPrevBody"></div>
     </div>
   </div>
 
@@ -12487,6 +12608,51 @@ window.HMApp = {
     showContext('hmCtx', x, y);
   }
 
+  /* ---------------- 文件夹预览弹窗 ---------------- */
+  function openFolderPreview(folder) {
+    var modal = byId('folderPreviewModal');
+    if (!modal) return;
+    var items = state.works.filter(function (w) { return desk.assigns[w.id] === folder.id; });
+    items.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+
+    var title = byId('folderPrevTitle');
+    if (title) title.textContent = folder.name + '（' + items.length + ' 项）';
+
+    var body = byId('folderPrevBody');
+    if (!body) return;
+    if (!items.length) {
+      body.innerHTML = '<p class="folder-prev-empty">文件夹里还没有作品</p>';
+    } else {
+      body.innerHTML = items.map(function (w) {
+        var url = esc(w.thumb || w.url || '');
+        var cls = w.type === 'video' ? 'is-video' : (w.type === 'audio' ? 'is-audio' : '');
+        var inner;
+        if (w.type === 'video') inner = '<video src="' + url + '" muted playsinline preload="metadata"></video><span class="media-play">▶</span>';
+        else if (w.type === 'audio') inner = '<span>♪</span><small>音频</small>';
+        else inner = '<img src="' + url + '" alt="' + esc(w.prompt) + '" loading="lazy" draggable="false">';
+        return '<div class="folder-prev-cell" data-fp="' + esc(w.id) + '">' +
+          '<div class="folder-prev-media ' + cls + '">' + inner + '</div>' +
+          '<div class="folder-prev-meta"><strong>' + esc(workName(w)) + '</strong><small>' + typeLabel(w.type) + ' · ' + (w.width || 0) + '×' + (w.height || 0) + '</small></div>' +
+          '</div>';
+      }).join('');
+    }
+
+    modal.hidden = false;
+
+    /* 点击弹窗内的缩略图 → 打开原图 lightbox */
+    body.onclick = function (ev) {
+      var cell = ev.target.closest('.folder-prev-cell');
+      if (!cell) return;
+      var w = findWork(cell.dataset.fp);
+      if (w && typeof A.openLightbox === 'function') A.openLightbox(w);
+    };
+  }
+
+  function closeFolderPreview() {
+    var modal = byId('folderPreviewModal');
+    if (modal) modal.hidden = true;
+  }
+
   /* ---------------- 参数弹窗 ---------------- */
   function openParam(work) {
     view.paramWork = work;
@@ -12771,16 +12937,12 @@ window.HMApp = {
         }
       });
       grid.addEventListener('click', function (event) {
-        /* 左键 folder-card → 进入文件夹 */
+        /* 左键 folder-card → 弹窗预览文件夹内容 */
         var folderCard = event.target.closest('.folder-card[data-folder]');
         if (folderCard) {
           if (event.target.closest('button')) return;
           var folder = desk.folders.find(function (f) { return f.id === folderCard.dataset.folder; });
-          if (folder) {
-            view.activeFolder = folder.id;
-            renderAll();
-            A.toast('已进入「' + folder.name + '」', 'info');
-          }
+          if (folder) openFolderPreview(folder);
           return;
         }
         var card = event.target.closest('.desk-card[data-work]');
@@ -12947,6 +13109,7 @@ window.HMApp = {
         closePanel();
         closeParam();
         closeRename();
+        closeFolderPreview();
         clearSelection();
         return;
       }
@@ -13014,6 +13177,15 @@ window.HMApp = {
         if (event.target === paramModal || event.target.closest('[data-close-param]')) closeParam();
       });
     }
+
+    /* 文件夹预览弹窗 */
+    var folderPrevModal = byId('folderPreviewModal');
+    if (folderPrevModal) {
+      folderPrevModal.addEventListener('click', function (event) {
+        if (event.target === folderPrevModal || event.target.closest('[data-close-folder-prev]')) closeFolderPreview();
+      });
+    }
+
     var paramCopy = byId('paramCopy');
     if (paramCopy) {
       paramCopy.addEventListener('click', function () {
