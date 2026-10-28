@@ -14,7 +14,6 @@ const {
   fetchWithTimeout,
   fetchJson,
   readJsonResponse,
-  pickImage,
   dataUrlToBuffer,
   extFromMime,
   randomToken,
@@ -39,8 +38,7 @@ const RATIO_SIZE = {
   '16:9': [1344, 768],
 };
 
-const FLUX_PRIMARY = 'https://multimodalart-flux-1-merged.hf.space/gradio_api/call/infer';
-const FLUX_FALLBACK = 'https://black-forest-labs-flux-1-schnell.hf.space/gradio_api/call/infer';
+const FLUX_PRIMARY = 'https://image.pollinations.ai/prompt/';
 
 function readPrompt(value, label = '提示词') {
   assert(typeof value === 'string' && value.trim().length > 0, 400, `请输入${label}`, `${label}不能为空`);
@@ -171,86 +169,38 @@ async function mapLimited(items, limit, task) {
   return results;
 }
 
-async function gradioSubmit(callUrl, data, timeoutMs) {
-  const res = await fetchWithTimeout(
-    callUrl,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) },
-    timeoutMs,
-  );
-  const text = await res.text();
-  if (!res.ok) throw new Error(apiErrorText(res.status, text));
+/* 下载远端图片并保存到本地 media 目录，返回同源 URL（避免跨域 403 / 防盗链） */
+async function saveRemoteImage(url) {
+  if (!url || typeof url !== 'string') return url;
+  if (url.startsWith('data:') || url.startsWith('/uploads/')) return url;
 
-  let job;
+  let res;
   try {
-    job = JSON.parse(text);
+    res = await fetchWithTimeout(url, { headers: { Accept: 'image/*' } }, 60000);
   } catch (err) {
-    throw new Error('FLUX 接口返回异常');
+    return url; /* 下载失败则保留原 URL，让前端尝试直连 */
   }
-  if (!job || !job.event_id) throw new Error('FLUX 接口缺少 event_id');
-  return job.event_id;
-}
+  if (!res.ok) return url;
 
-async function gradioListen(callUrl, eventId, timeoutMs) {
-  const res = await fetchWithTimeout(
-    `${callUrl}/${encodeURIComponent(eventId)}`,
-    { headers: { Accept: 'text/event-stream' } },
-    timeoutMs,
-  );
-  const raw = await res.text();
-  if (!res.ok) throw new Error(apiErrorText(res.status, raw));
+  const contentType = String(res.headers.get('content-type') || '').toLowerCase();
+  const buffer = Buffer.from(await res.arrayBuffer());
+  if (!buffer.length) return url;
 
-  let currentEvent = '';
-  let lastData = null;
-  let errorText = '';
-
-  for (const line of raw.split(/\r?\n/)) {
-    if (line.startsWith('event:')) {
-      currentEvent = line.slice('event:'.length).trim();
-      continue;
-    }
-    if (!line.startsWith('data:')) continue;
-    const payload = line.slice('data:'.length).trim();
-    if (!payload || payload === 'null') continue;
-
-    let parsed;
-    try {
-      parsed = JSON.parse(payload);
-    } catch (err) {
-      parsed = payload;
-    }
-
-    if (currentEvent === 'error') {
-      errorText = (parsed && (parsed.error || parsed.message)) || String(parsed);
-    } else if (currentEvent === 'complete') {
-      lastData = parsed;
-    } else if (lastData == null) {
-      lastData = parsed;
-    }
+  const ext = extFromMime(contentType) || 'webp';
+  const fileName = `${Date.now()}-${randomToken()}.${ext}`;
+  try {
+    await fsp.writeFile(path.join(store.dirs.media, fileName), buffer);
+  } catch (err) {
+    return url;
   }
-
-  const image = pickImage(lastData);
-  if (!image) {
-    throw new Error(errorText ? `FLUX 生成失败：${errorText}` : 'FLUX 未返回图片');
-  }
-  return image;
+  return `/uploads/media/${fileName}`;
 }
 
 async function runFlux(prompt, seed, width, height, steps) {
-  try {
-    const eventId = await gradioSubmit(FLUX_PRIMARY, [prompt, seed, false, width, height, 3.5, steps], IMAGE_TIMEOUT);
-    return await gradioListen(FLUX_PRIMARY, eventId, IMAGE_TIMEOUT);
-  } catch (primaryErr) {
-    try {
-      const eventId = await gradioSubmit(FLUX_FALLBACK, [prompt, seed, false, width, height, steps], IMAGE_TIMEOUT);
-      return await gradioListen(FLUX_FALLBACK, eventId, IMAGE_TIMEOUT);
-    } catch (fallbackErr) {
-      throw jsonError(
-        502,
-        'FLUX 生成失败',
-        (fallbackErr && fallbackErr.message) || '免费算力暂不可用，请稍后重试',
-      );
-    }
-  }
+  const encoded = encodeURIComponent(String(prompt).slice(0, 900));
+  const url = `${FLUX_PRIMARY}${encoded}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true`;
+  /* Pollinations 直接返回图片，URL 本身即可访问；saveRemoteImage 会下载到本地 */
+  return url;
 }
 
 function extractOpenAIImage(data) {
@@ -395,7 +345,9 @@ async function generateImages(body) {
         ref: refs[0],
       });
     }
-    return { type: 'image', url, width, height, seed };
+    /* 将远端图片下载到本地，避免浏览器跨域 403 / 防盗链导致图片不显示 */
+    const localUrl = await saveRemoteImage(url);
+    return { type: 'image', url: localUrl, width, height, seed };
   });
 }
 

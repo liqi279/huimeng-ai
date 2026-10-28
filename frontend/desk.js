@@ -2108,7 +2108,7 @@
         var timeEl = card.querySelector('[data-time]');
         if (!timeEl) return;
         var id = card.dataset.job;
-        var job = A.state.jobs.find(function (j) { return j.id === id; });
+        var job = A.state.jobs.get(id);
         if (!job || !job.startedAt) return;
         var secs = (Date.now() - job.startedAt) / 1000;
         timeEl.textContent = secs.toFixed(1) + 's';
