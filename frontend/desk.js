@@ -353,20 +353,25 @@
   function placeCard(el, id, idx, grid) {
     if (!el) return;
     var pos = desk.positions[id] || desk.positions['job:' + id];
-    if (!pos || (typeof pos.pxTop !== 'number' && typeof pos.y !== 'number')) {
-      pos = defaultSlot(idx, grid);
+    /* 只在用户明确拖过（_userSet=true）时才用存储坐标，否则一律紧凑网格 */
+    if (!pos || !pos._userSet) {
+      pos = compactSlot(idx, grid);
     }
     var left, top;
     if (typeof pos.pxTop === 'number') {
       left = Math.round(pos.pxLeft || 0);
       top = Math.round(pos.pxTop);
-    } else {
+    } else if (typeof pos.y === 'number') {
       left = Math.round(Math.min(1, Math.max(0, pos.x || 0)) * (grid.clientWidth - cardWidth() - 4));
-      top = Math.round(Math.min(1, Math.max(0, pos.y || 0)) * grid.clientHeight);
+      top = Math.round(Math.min(1, Math.max(0, pos.y)) * grid.clientHeight);
       pos.pxLeft = left;
       pos.pxTop = top;
       delete pos.x;
       delete pos.y;
+    } else {
+      var slot = compactSlot(idx, grid);
+      left = slot.pxLeft;
+      top = slot.pxTop;
     }
     el.style.left = left + 'px';
     el.style.top = top + 'px';
@@ -544,11 +549,12 @@
   function tidy() {
     var grid = byId('resultGrid');
     if (!grid) return;
-    /* 按时间从早到晚排列，强制紧凑网格（无视任何拖动过的旧位置） */
     var works = activeWorks();
     works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
     works.forEach(function (w, i) {
-      desk.positions[w.id] = compactSlot(i, grid);
+      var slot = compactSlot(i, grid);
+      slot._userSet = false;
+      desk.positions[w.id] = slot;
     });
     Object.keys(desk.positions).forEach(function (k) {
       if (k.indexOf('job:') === 0) delete desk.positions[k];
@@ -710,6 +716,7 @@
       var pos = desk.positions[item.id] || {};
       pos.pxLeft = left;
       pos.pxTop = Math.max(0, top);
+      pos._userSet = true;
       delete pos.x;
       delete pos.y;
       desk.positions[item.id] = pos;
