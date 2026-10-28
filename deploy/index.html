@@ -5599,24 +5599,23 @@ body.hm-light .hm-page-empty {
 
 /* ---------- 桌面文件夹卡片 ---------- */
 .folder-card {
-  /* 复用 desk-card 的高度但视觉改为正方形 */
   height: 200px;
   width: 200px;
-  background: linear-gradient(180deg, #1a2a3e, #111c2c);
-  border: 1px solid rgba(250, 204, 21, 0.18);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32), inset 0 2px 0 rgba(250, 204, 21, 0.1);
+  background: linear-gradient(180deg, #182840, #0f1c30);
+  border: 1.5px solid rgba(96, 165, 250, 0.55);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32), inset 0 0 0 1px rgba(96, 165, 250, 0.08);
   border-radius: 13px;
 }
 .folder-card:hover {
-  border-color: rgba(250, 204, 21, 0.45);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42), 0 0 0 2px rgba(250, 204, 21, 0.16);
+  border-color: rgba(96, 165, 250, 0.9);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42), 0 0 0 2px rgba(96, 165, 250, 0.2);
 }
 .folder-card .folder-thumb {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  background: repeating-linear-gradient(45deg, rgba(250,204,21,.04) 0 6px, transparent 6px 12px), #0c1a2b;
+  background: rgba(15, 27, 48, 0.7);
   padding: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -5638,22 +5637,25 @@ body.hm-light .hm-page-empty {
 .folder-card .folder-more {
   position: absolute;
   right: 10px; bottom: 10px;
-  background: rgba(15, 23, 42, 0.85);
-  color: #facc15;
-  border-radius: 6px;
-  padding: 2px 7px;
-  font-size: 11px;
+  background: rgba(37, 99, 235, 0.92);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 10px;
   font-weight: 600;
   backdrop-filter: blur(4px);
+  min-width: 18px;
+  text-align: center;
+  line-height: 14px;
 }
 .folder-card .folder-info {
   padding: 8px 10px 10px;
   text-align: left;
-  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.25));
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.2));
 }
 .folder-card .folder-info strong {
   display: block;
-  color: #facc15;
+  color: #e2e8f0;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
@@ -7302,13 +7304,12 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   </div>
 
   <div class="hm-ctx" id="folderCtx" hidden>
-    <button data-fcmd="open"><span class="hm-ctx-ico">📂</span>打开文件夹</button>
-    <button data-fcmd="scatter"><span class="hm-ctx-ico">↩</span>解散（全部移出）</button>
-    <button data-fcmd="download"><span class="hm-ctx-ico">↓</span>批量下载</button>
-    <button data-fcmd="rename"><span class="hm-ctx-ico">✎</span>重命名文件夹</button>
-    <button data-fcmd="merge"><span class="hm-ctx-ico">＋</span>把选中项移入</button>
-    <button data-fcmd="out"><span class="hm-ctx-ico">→</span>全部移出到个人空间</button>
-    <button data-fcmd="delete" class="is-danger"><span class="hm-ctx-ico">✕</span>删除文件夹</button>
+    <button data-fcmd="open"><span class="hm-ctx-ico">📂</span>打开叠放</button>
+    <button data-fcmd="scatter"><span class="hm-ctx-ico">🗂️</span>解散叠放</button>
+    <button data-fcmd="zip"><span class="hm-ctx-ico">📦</span>导出压缩包</button>
+    <button data-fcmd="download"><span class="hm-ctx-ico">📥</span>批量下载</button>
+    <button data-fcmd="rename"><span class="hm-ctx-ico">✏️</span>重命名</button>
+    <button data-fcmd="copy"><span class="hm-ctx-ico">📋</span>复制</button>
   </div>
 
   <div class="modal" id="paramModal" aria-hidden="true">
@@ -12391,11 +12392,10 @@ window.HMApp = {
   function mergeItemsIntoFolder(ids, folderId, create) {
     var folder = folderId ? desk.folders.find(function (f) { return f.id === folderId; }) : null;
     if (!folder && create) {
-      var base = '新建文件夹';
-      var names = desk.folders.map(function (f) { return f.name; });
-      var name = base, idx = 2;
-      while (names.indexOf(name) >= 0) { name = base + ' ' + idx; idx += 1; }
-      folder = { id: 'f' + A.uid(), name: name, createdAt: Date.now() };
+      var base = '叠放';
+      var count = ids.length;
+      /* 先创建空 folder，之后用叠放数量更新名称 */
+      folder = { id: 'f' + A.uid(), name: base + ' (' + count + ')', createdAt: Date.now() };
       desk.folders.unshift(folder);
     }
     if (!folder) return null;
@@ -12404,6 +12404,10 @@ window.HMApp = {
       var wid = id.indexOf('job:') === 0 ? id.slice(4) : id;
       desk.assigns[wid] = folder.id;
     });
+    /* 更新叠放里的总数，自动刷新名称 */
+    var total = state.works.filter(function (w) { return desk.assigns[w.id] === folder.id; }).length;
+    var base2 = /叠放|文件夹/.test(folder.name) ? '' : folder.name + ' · ';
+    if (!base2) folder.name = '叠放 (' + total + ')';
     return folder;
   }
 
@@ -13058,42 +13062,43 @@ window.HMApp = {
         var folder = desk.folders.find(function (f) { return f.id === folderId; });
         if (!folder) return;
 
-        /* 找所有属于此文件夹的 work */
         var folderWorks = state.works.filter(function (w) { return desk.assigns[w.id] === folderId; });
 
         if (cmd === 'open') {
-          view.activeFolder = folderId;
-          renderAll();
-          A.toast('已切到「' + folder.name + '」文件夹（' + folderWorks.length + ' 项）', 'success');
-        } else if (cmd === 'scatter' || cmd === 'out') {
+          /* 视频里的"打开叠放" —— 弹窗预览 */
+          openFolderPreview(folder);
+        } else if (cmd === 'scatter') {
+          if (!window.confirm('解散「' + folder.name + '」？里面 ' + folderWorks.length + ' 项作品将回到桌面。')) return;
           folderWorks.forEach(function (w) { delete desk.assigns[w.id]; });
-          if (cmd === 'delete') return;
-          persistNow();
+          desk.folders = desk.folders.filter(function (f) { return f.id !== folderId; });
           if (view.activeFolder === folderId) view.activeFolder = null;
+          persistNow();
           renderAll();
-          A.toast('已把 ' + folderWorks.length + ' 项移出「' + folder.name + '」', 'success');
+          A.toast('已解散「' + folder.name + '」，' + folderWorks.length + ' 项回到桌面', 'success');
+        } else if (cmd === 'zip') {
+          /* 导出压缩包（降级为批量下载） */
+          if (!folderWorks.length) return A.toast('叠放里是空的', 'info');
+          A.toast('开始下载「' + folder.name + '」里的 ' + folderWorks.length + ' 项', 'success');
+          folderWorks.forEach(function (w, i) {
+            setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
+          });
         } else if (cmd === 'download') {
-          if (!folderWorks.length) { A.toast('文件夹是空的', 'info'); return; }
-          A.toast('开始批量下载 ' + folderWorks.length + ' 张到「' + folder.name + '」', 'success');
+          if (!folderWorks.length) return A.toast('叠放里是空的', 'info');
+          A.toast('开始批量下载 ' + folderWorks.length + ' 项', 'success');
           folderWorks.forEach(function (w, i) {
             setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
           });
         } else if (cmd === 'rename') {
-          askName('重命名文件夹', folder.name, function (value) {
+          askName('重命名叠放', folder.name, function (value) {
             folder.name = value;
             persistNow();
             renderAll();
+            renderPanel();
+            A.toast('已重命名', 'success');
           });
-        } else if (cmd === 'merge') {
-          var ids = selectedIds();
-          if (!ids.length) { A.toast('先在桌面上选中要移动的作品', 'info'); return; }
-          ids.forEach(function (id) { desk.assigns[id] = folderId; });
-          persistNow();
-          clearSelection();
-          renderAll();
-          A.toast('已移动 ' + ids.length + ' 项到「' + folder.name + '」', 'success');
-        } else if (cmd === 'delete') {
-          deleteFolder(folderId);
+        } else if (cmd === 'copy') {
+          clipboard.setCopy(folderWorks);
+          A.toast('已复制「' + folder.name + '」里 ' + folderWorks.length + ' 项，Ctrl+V 粘贴', 'info');
         }
       });
     }

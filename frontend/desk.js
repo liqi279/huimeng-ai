@@ -975,11 +975,10 @@
   function mergeItemsIntoFolder(ids, folderId, create) {
     var folder = folderId ? desk.folders.find(function (f) { return f.id === folderId; }) : null;
     if (!folder && create) {
-      var base = '新建文件夹';
-      var names = desk.folders.map(function (f) { return f.name; });
-      var name = base, idx = 2;
-      while (names.indexOf(name) >= 0) { name = base + ' ' + idx; idx += 1; }
-      folder = { id: 'f' + A.uid(), name: name, createdAt: Date.now() };
+      var base = '叠放';
+      var count = ids.length;
+      /* 先创建空 folder，之后用叠放数量更新名称 */
+      folder = { id: 'f' + A.uid(), name: base + ' (' + count + ')', createdAt: Date.now() };
       desk.folders.unshift(folder);
     }
     if (!folder) return null;
@@ -988,6 +987,10 @@
       var wid = id.indexOf('job:') === 0 ? id.slice(4) : id;
       desk.assigns[wid] = folder.id;
     });
+    /* 更新叠放里的总数，自动刷新名称 */
+    var total = state.works.filter(function (w) { return desk.assigns[w.id] === folder.id; }).length;
+    var base2 = /叠放|文件夹/.test(folder.name) ? '' : folder.name + ' · ';
+    if (!base2) folder.name = '叠放 (' + total + ')';
     return folder;
   }
 
@@ -1642,42 +1645,43 @@
         var folder = desk.folders.find(function (f) { return f.id === folderId; });
         if (!folder) return;
 
-        /* 找所有属于此文件夹的 work */
         var folderWorks = state.works.filter(function (w) { return desk.assigns[w.id] === folderId; });
 
         if (cmd === 'open') {
-          view.activeFolder = folderId;
-          renderAll();
-          A.toast('已切到「' + folder.name + '」文件夹（' + folderWorks.length + ' 项）', 'success');
-        } else if (cmd === 'scatter' || cmd === 'out') {
+          /* 视频里的"打开叠放" —— 弹窗预览 */
+          openFolderPreview(folder);
+        } else if (cmd === 'scatter') {
+          if (!window.confirm('解散「' + folder.name + '」？里面 ' + folderWorks.length + ' 项作品将回到桌面。')) return;
           folderWorks.forEach(function (w) { delete desk.assigns[w.id]; });
-          if (cmd === 'delete') return;
-          persistNow();
+          desk.folders = desk.folders.filter(function (f) { return f.id !== folderId; });
           if (view.activeFolder === folderId) view.activeFolder = null;
+          persistNow();
           renderAll();
-          A.toast('已把 ' + folderWorks.length + ' 项移出「' + folder.name + '」', 'success');
+          A.toast('已解散「' + folder.name + '」，' + folderWorks.length + ' 项回到桌面', 'success');
+        } else if (cmd === 'zip') {
+          /* 导出压缩包（降级为批量下载） */
+          if (!folderWorks.length) return A.toast('叠放里是空的', 'info');
+          A.toast('开始下载「' + folder.name + '」里的 ' + folderWorks.length + ' 项', 'success');
+          folderWorks.forEach(function (w, i) {
+            setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
+          });
         } else if (cmd === 'download') {
-          if (!folderWorks.length) { A.toast('文件夹是空的', 'info'); return; }
-          A.toast('开始批量下载 ' + folderWorks.length + ' 张到「' + folder.name + '」', 'success');
+          if (!folderWorks.length) return A.toast('叠放里是空的', 'info');
+          A.toast('开始批量下载 ' + folderWorks.length + ' 项', 'success');
           folderWorks.forEach(function (w, i) {
             setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
           });
         } else if (cmd === 'rename') {
-          askName('重命名文件夹', folder.name, function (value) {
+          askName('重命名叠放', folder.name, function (value) {
             folder.name = value;
             persistNow();
             renderAll();
+            renderPanel();
+            A.toast('已重命名', 'success');
           });
-        } else if (cmd === 'merge') {
-          var ids = selectedIds();
-          if (!ids.length) { A.toast('先在桌面上选中要移动的作品', 'info'); return; }
-          ids.forEach(function (id) { desk.assigns[id] = folderId; });
-          persistNow();
-          clearSelection();
-          renderAll();
-          A.toast('已移动 ' + ids.length + ' 项到「' + folder.name + '」', 'success');
-        } else if (cmd === 'delete') {
-          deleteFolder(folderId);
+        } else if (cmd === 'copy') {
+          clipboard.setCopy(folderWorks);
+          A.toast('已复制「' + folder.name + '」里 ' + folderWorks.length + ' 项，Ctrl+V 粘贴', 'info');
         }
       });
     }

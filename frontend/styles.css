@@ -5591,24 +5591,23 @@ body.hm-light .hm-page-empty {
 
 /* ---------- 桌面文件夹卡片 ---------- */
 .folder-card {
-  /* 复用 desk-card 的高度但视觉改为正方形 */
   height: 200px;
   width: 200px;
-  background: linear-gradient(180deg, #1a2a3e, #111c2c);
-  border: 1px solid rgba(250, 204, 21, 0.18);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32), inset 0 2px 0 rgba(250, 204, 21, 0.1);
+  background: linear-gradient(180deg, #182840, #0f1c30);
+  border: 1.5px solid rgba(96, 165, 250, 0.55);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32), inset 0 0 0 1px rgba(96, 165, 250, 0.08);
   border-radius: 13px;
 }
 .folder-card:hover {
-  border-color: rgba(250, 204, 21, 0.45);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42), 0 0 0 2px rgba(250, 204, 21, 0.16);
+  border-color: rgba(96, 165, 250, 0.9);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42), 0 0 0 2px rgba(96, 165, 250, 0.2);
 }
 .folder-card .folder-thumb {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  background: repeating-linear-gradient(45deg, rgba(250,204,21,.04) 0 6px, transparent 6px 12px), #0c1a2b;
+  background: rgba(15, 27, 48, 0.7);
   padding: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -5630,22 +5629,25 @@ body.hm-light .hm-page-empty {
 .folder-card .folder-more {
   position: absolute;
   right: 10px; bottom: 10px;
-  background: rgba(15, 23, 42, 0.85);
-  color: #facc15;
-  border-radius: 6px;
-  padding: 2px 7px;
-  font-size: 11px;
+  background: rgba(37, 99, 235, 0.92);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 10px;
   font-weight: 600;
   backdrop-filter: blur(4px);
+  min-width: 18px;
+  text-align: center;
+  line-height: 14px;
 }
 .folder-card .folder-info {
   padding: 8px 10px 10px;
   text-align: left;
-  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.25));
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.2));
 }
 .folder-card .folder-info strong {
   display: block;
-  color: #facc15;
+  color: #e2e8f0;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
