@@ -307,9 +307,22 @@
   function activeWorks() {
     var list = state.works.slice();
     if (view.activeFolder) {
+      /* 正在查看某个文件夹内部 */
       list = list.filter(function (w) { return desk.assigns[w.id] === view.activeFolder; });
+    } else {
+      /* 桌面根视图：只显示散落（没有被任何文件夹收走）的作品 */
+      list = list.filter(function (w) { return !desk.assigns[w.id]; });
     }
     return list;
+  }
+
+  /* 桌面上要显示的文件夹（有内容、且不是正在"进入"的那一个） */
+  function activeFolders() {
+    return desk.folders.filter(function (f) {
+      if (!f || !f.id) return false;
+      if (f.id === view.activeFolder) return false;
+      return state.works.some(function (w) { return desk.assigns[w.id] === f.id; });
+    });
   }
 
   function boardSize(grid) {
@@ -401,6 +414,27 @@
       '<span class="desk-check" aria-hidden="true"></span>';
   }
 
+  /* 文件夹卡片 HTML：正方形，顶部缩略图网格 + 名称 + 数量角标 */
+  function folderCardHtmlInner(folder) {
+    var items = state.works.filter(function (w) { return desk.assigns[w.id] === folder.id; });
+    var thumbs = items.slice(0, 4).map(function (w) { return esc(w.thumb || w.url || ''); });
+    var more = Math.max(0, items.length - 4);
+    var gridHtml = '';
+    if (thumbs.length === 0) {
+      gridHtml = '<div class="folder-grid-empty">📂</div>';
+    } else if (thumbs.length === 1) {
+      gridHtml = '<img src="' + thumbs[0] + '" class="folder-t" alt="">';
+    } else {
+      gridHtml = thumbs.map(function (t, i) {
+        return '<img src="' + t + '" class="folder-t folder-t-' + i + '" alt="">';
+      }).join('');
+    }
+    var moreHtml = more > 0 ? '<span class="folder-more">+' + more + '</span>' : '';
+    return '<div class="folder-thumb">' + gridHtml + moreHtml + '</div>' +
+      '<div class="folder-info"><strong>' + esc(folder.name) + '</strong><small>' + items.length + ' 项</small></div>' +
+      '<span class="desk-check" aria-hidden="true"></span>';
+  }
+
   function setDockVar() {
     var dock = $('.hm-dock');
     var h = dock ? dock.offsetHeight : 210;
@@ -422,16 +456,34 @@
     if (!grid.classList.contains('is-board')) grid.classList.add('is-board');
     setDockVar();
 
-    var works = activeWorks();
-    /* 时间升序：最早生成的在最顶行最前，最新的在最底下 */
-    works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
-
-    /* ---------- 清理已完成/失败的 job 节点（它们已进 state.works） ---------- */
+    /* ---------- 清理已完成/失败的 job 节点 ---------- */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-job]'), function (node) {
       if (!node.classList.contains('is-loading')) {
         if (node.parentNode) node.parentNode.removeChild(node);
       }
     });
+
+    var works = activeWorks();
+    works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+    var folders = activeFolders();
+
+    /* ---------- 退出文件夹：返回按钮 ---------- */
+    var backHint = byId('deskBackHint');
+    if (view.activeFolder) {
+      if (!backHint) {
+        backHint = document.createElement('button');
+        backHint.id = 'deskBackHint';
+        backHint.className = 'desk-back-hint';
+        backHint.innerHTML = '← 返回桌面';
+        backHint.addEventListener('click', function () {
+          view.activeFolder = null;
+          renderAll();
+        });
+        grid.parentNode.insertBefore(backHint, grid);
+      }
+    } else if (backHint) {
+      if (backHint.parentNode) backHint.parentNode.removeChild(backHint);
+    }
 
     /* ---------- 增量更新 desk-card ---------- */
     var needIds = {};
@@ -442,7 +494,8 @@
       if (!needIds[id]) node.parentNode.removeChild(node);
     });
 
-    works.forEach(function (w, i) {
+    var idx = 0;
+    works.forEach(function (w) {
       var existing = grid.querySelector('.desk-card[data-work="' + w.id + '"]');
       if (!existing) {
         existing = document.createElement('article');
@@ -452,8 +505,43 @@
         grid.appendChild(existing);
       }
       existing.innerHTML = deskCardHtmlInner(w);
-      placeCard(existing, w.id, i, grid);
+      placeCard(existing, w.id, idx, grid);
+      idx += 1;
     });
+
+    /* ---------- 增量更新 folder-card（根视图才显示） ---------- */
+    var needFolderIds = {};
+    if (!view.activeFolder) {
+      folders.forEach(function (f) { needFolderIds[f.id] = true; });
+    }
+
+    Array.prototype.forEach.call(grid.querySelectorAll('.folder-card'), function (node) {
+      var id = node.dataset.folder;
+      if (!needFolderIds[id]) node.parentNode.removeChild(node);
+    });
+
+    if (!view.activeFolder) {
+      folders.forEach(function (f) {
+        var existing = grid.querySelector('.folder-card[data-folder="' + f.id + '"]');
+        if (!existing) {
+          existing = document.createElement('article');
+          existing.className = 'folder-card';
+          existing.dataset.folder = f.id;
+          grid.appendChild(existing);
+        }
+        existing.innerHTML = folderCardHtmlInner(f);
+        var pos = desk.positions[f.id];
+        if (!pos) {
+          pos = compactSlot(works.length + folders.indexOf(f), grid);
+          desk.positions[f.id] = pos;
+        }
+        var left = typeof pos.pxLeft === 'number' ? pos.pxLeft : PAD;
+        var top = typeof pos.pxTop === 'number' ? pos.pxTop : PAD;
+        existing.style.left = left + 'px';
+        existing.style.top = top + 'px';
+        existing.style.zIndex = String(pos.z || idx + 1);
+      });
+    }
 
     /* ---------- 原地处理 loading 卡片：不再 removeChild + appendChild ---------- */
     var loadingJobs = [];
@@ -549,12 +637,19 @@
   function tidy() {
     var grid = byId('resultGrid');
     if (!grid) return;
+    /* 根视图：works + folders 合并紧凑排；文件夹内部：只排 works */
     var works = activeWorks();
     works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
-    works.forEach(function (w, i) {
+    var items = works.map(function (w) { return { key: w.id, createdAt: w.createdAt || 0 }; });
+    if (!view.activeFolder) {
+      var folders = activeFolders();
+      folders.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+      items = items.concat(folders.map(function (f) { return { key: f.id, createdAt: f.createdAt || 0 }; }));
+    }
+    items.forEach(function (it, i) {
       var slot = compactSlot(i, grid);
       slot._userSet = false;
-      desk.positions[w.id] = slot;
+      desk.positions[it.key] = slot;
     });
     Object.keys(desk.positions).forEach(function (k) {
       if (k.indexOf('job:') === 0) delete desk.positions[k];
@@ -619,8 +714,8 @@
     if (event.button !== 0) return;
     var grid = byId('resultGrid');
     if (!grid || !grid.contains(event.target)) return;
-    /* 同时识别成品卡片和生成中的 job 卡片 */
-    var card = event.target.closest('.desk-card[data-work], .result-card.is-desk-job[data-job]');
+    /* 同时识别成品卡片、生成中的 job 卡片、文件夹卡片 */
+    var card = event.target.closest('.desk-card[data-work], .result-card.is-desk-job[data-job], .folder-card[data-folder]');
     var cardW = cardWidth();
     var maxLeft = grid.clientWidth - cardW - 4;
 
@@ -631,10 +726,12 @@
     /* 按钮/链接区域不触发拖动 */
     if (event.target.closest('button') || event.target.closest('.desk-acts') || event.target.closest('.action-btn')) return;
 
-    /* 选中当前卡片（job 卡片用 job:id 作为选择 key，避免和 work id 冲突） */
+    /* 选中当前卡片 */
     var key;
     var isJob = card.hasAttribute('data-job');
+    var isFolder = card.classList.contains('folder-card');
     if (isJob) key = 'job:' + card.dataset.job;
+    else if (isFolder) key = card.dataset.folder;
     else key = card.dataset.work;
 
     if (event.ctrlKey || event.metaKey || event.shiftKey) toggleSelect(key);
@@ -725,22 +822,44 @@
     /* 需求2：拖到另一个卡片上 → 自动合并 */
     if (event && typeof document.elementFromPoint === 'function') {
       var targetEl = document.elementFromPoint(event.clientX, event.clientY);
-      var dropCard = targetEl ? targetEl.closest('.desk-card[data-work], .result-card.is-desk-job[data-job]') : null;
+      var dropCard = targetEl ? targetEl.closest('.desk-card[data-work], .result-card.is-desk-job[data-job], .folder-card[data-folder]') : null;
       if (dropCard) {
         var dropIsJob = dropCard.hasAttribute('data-job');
-        var dropId = dropIsJob ? 'job:' + dropCard.dataset.job : dropCard.dataset.work;
+        var dropIsFolder = dropCard.classList.contains('folder-card');
+        var dropId, workId, targetFolderId;
+        if (dropIsFolder) {
+          dropId = dropCard.dataset.folder;
+          targetFolderId = dropId; /* 拖到文件夹上 → 直接合并进这个文件夹 */
+        } else if (dropIsJob) {
+          dropId = 'job:' + dropCard.dataset.job;
+          workId = dropCard.dataset.job;
+          targetFolderId = desk.assigns[workId];
+        } else {
+          dropId = dropCard.dataset.work;
+          workId = dropCard.dataset.work;
+          targetFolderId = desk.assigns[workId];
+        }
         var draggedIds = current.items.map(function (i) { return i.id; });
-        /* 不能拖到自己身上 */
-        if (draggedIds.indexOf(dropId) < 0) {
-          /* 如果目标在某文件夹里，也把被拖的放进去；否则新建文件夹 */
-          var workId = dropIsJob ? dropCard.dataset.job : dropCard.dataset.work;
-          var targetFolderId = desk.assigns[workId];
-          var folder = mergeItemsIntoFolder(draggedIds.concat([dropId]), targetFolderId, true);
-          persistNow();
-          clearSelection();
-          renderDesktop();
-          if (folder) A.toast('已把 ' + (draggedIds.length + 1) + ' 项合并到「' + folder.name + '」', 'success');
-          return;
+        /* 不能拖到自己身上（folder 被拖也不能拖进自己） */
+        if (draggedIds.indexOf(dropId) < 0 && !draggedIds.some(function (d) { return d === targetFolderId; })) {
+          /* 如果目标是已存在文件夹 → 合并进去；否则新建文件夹，并继承 drop 的位置 */
+          var folder = mergeItemsIntoFolder(draggedIds.concat([dropIsFolder ? [] : [dropId]]), targetFolderId, !dropIsFolder);
+          if (folder) {
+            /* 合并后：folder 继承 drop 原来的位置（新建文件夹时） */
+            if (!dropIsFolder && desk.positions[workId]) {
+              desk.positions[folder.id] = {
+                pxLeft: desk.positions[workId].pxLeft,
+                pxTop: desk.positions[workId].pxTop,
+                z: desk.positions[workId].z || view.z + 1,
+                _userSet: true
+              };
+            }
+            persistNow();
+            clearSelection();
+            renderDesktop();
+            A.toast('已合并到「' + folder.name + '」', 'success');
+            return;
+          }
         }
       }
     }
@@ -1188,6 +1307,13 @@
       grid.addEventListener('pointerdown', onPointerDown);
       grid.addEventListener('contextmenu', function (event) {
         event.preventDefault();
+        /* 右键 folder-card → folderCtx */
+        var folderCard = event.target.closest('.folder-card[data-folder]');
+        if (folderCard) {
+          view.menuFolder = folderCard.dataset.folder;
+          showContext('folderCtx', event.clientX, event.clientY);
+          return;
+        }
         var card = event.target.closest('.desk-card[data-work]');
         if (card) {
           var work = findWork(card.dataset.work);
@@ -1197,6 +1323,18 @@
         }
       });
       grid.addEventListener('click', function (event) {
+        /* 左键 folder-card → 进入文件夹 */
+        var folderCard = event.target.closest('.folder-card[data-folder]');
+        if (folderCard) {
+          if (event.target.closest('button')) return;
+          var folder = desk.folders.find(function (f) { return f.id === folderCard.dataset.folder; });
+          if (folder) {
+            view.activeFolder = folder.id;
+            renderAll();
+            A.toast('已进入「' + folder.name + '」', 'info');
+          }
+          return;
+        }
         var card = event.target.closest('.desk-card[data-work]');
         if (!card) return;
         var work = findWork(card.dataset.work);
