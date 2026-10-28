@@ -363,7 +363,12 @@ const state = {
   prompts: ['', ''],
   activePrompt: 0,
   worksSort: 'newest',
-  worksFilter: 'all'
+  worksFilter: 'all',
+  mode: 'image',
+  duration: 5,
+  voice: 'alloy',
+  audioFormat: 'wav',
+  sampleRate: 48000
 };
 
 /* ---------------- DOM ---------------- */
@@ -540,33 +545,48 @@ function filteredWorks() {
   return list;
 }
 
+/* 作品卡片按类型渲染图片 / 视频 / 音频 */
+function workMediaHtml(work) {
+  var url = esc(work.url || work.thumb || '');
+  if (work.type === 'video') {
+    return '<video class="work-video" src="' + url + '" muted playsinline preload="metadata"></video>';
+  }
+  if (work.type === 'audio') {
+    return '<div class="work-audio">♪</div>';
+  }
+  return '<img src="' + esc(work.thumb || work.url) + '" alt="' + esc(work.prompt) + '" loading="lazy">';
+}
+
 function renderWorks() {
   const total = state.works.length;
   els.worksBadge.textContent = String(total);
   if (els.worksTotal) els.worksTotal.textContent = String(total);
   els.stageResultCount.textContent = total + ' 张作品';
 
+  const railBadge = document.getElementById('railWorksBadge');
+  if (railBadge) railBadge.textContent = String(total);
+
   const list = filteredWorks();
 
   if (!list.length) {
     els.worksGrid.innerHTML = '';
     els.worksEmpty.style.display = 'flex';
-    return;
+  } else {
+    els.worksEmpty.style.display = 'none';
+    els.worksGrid.innerHTML = list.map(function (work) {
+      return '<article class="work-card" data-work="' + work.id + '">' +
+        workMediaHtml(work) +
+        '<div class="work-overlay">' +
+          '<button data-waction="download" title="下载原图">' + ICONS.download + '</button>' +
+          '<button data-waction="view" title="查看大图">' + ICONS.eye + '</button>' +
+          '<button data-waction="delete" title="删除">' + ICONS.trash + '</button>' +
+        '</div>' +
+        '<div class="work-meta"><span>' + esc(work.modelName || 'AI') + '</span><span>' + esc(work.seed || '') + '</span></div>' +
+      '</article>';
+    }).join('');
   }
 
-  els.worksEmpty.style.display = 'none';
-  els.worksGrid.innerHTML = list.map(function (work) {
-    const src = work.thumb || work.url;
-    return '<article class="work-card" data-work="' + work.id + '">' +
-      '<img src="' + esc(src) + '" alt="' + esc(work.prompt) + '" loading="lazy">' +
-      '<div class="work-overlay">' +
-        '<button data-waction="download" title="下载原图">' + ICONS.download + '</button>' +
-        '<button data-waction="view" title="查看大图">' + ICONS.eye + '</button>' +
-        '<button data-waction="delete" title="删除">' + ICONS.trash + '</button>' +
-      '</div>' +
-      '<div class="work-meta"><span>' + esc(work.modelName || 'AI') + '</span><span>#' + esc(work.seed) + '</span></div>' +
-    '</article>';
-  }).join('');
+  if (window.HMUI && window.HMUI.onRenderWorks) window.HMUI.onRenderWorks(total);
 }
 
 function syncModelUI() {
@@ -813,23 +833,28 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
+var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum'];
+
 function switchView(view) {
-  if (view !== 'create' && view !== 'works') return;
+  if (VIEW_IDS.indexOf(view) < 0) return;
   state.view = view;
   document.body.dataset.view = view;
+
+  VIEW_IDS.forEach(function (name) {
+    var node = document.getElementById('view-' + name);
+    if (!node) return;
+    var active = name === view;
+    node.hidden = !active;
+    node.classList.toggle('is-active', active);
+    node.setAttribute('aria-hidden', active ? 'false' : 'true');
+  });
 
   document.querySelectorAll('.nav-tab').forEach(function (tab) {
     tab.classList.toggle('is-active', tab.dataset.view === view);
   });
 
-  const createView = document.getElementById('view-create');
-  if (view === 'create') {
-    createView.classList.add('is-active');
-  } else {
-    createView.classList.remove('is-active');
-    renderWorks();
-  }
-
+  if (view === 'works') renderWorks();
+  if (window.HMUI && window.HMUI.onView) window.HMUI.onView(view);
   closeSidebar();
 }
 
@@ -921,6 +946,17 @@ function updateAllJobStatus(text) {
 async function translatePrompt(text) {
   if (!hasChinese(text)) return text;
   if (state.translationCache.has(text)) return state.translationCache.get(text);
+
+  // 后端在线时优先使用服务端翻译
+  if (window.HM && window.HM.api && window.HM.api.online) {
+    try {
+      const remote = await window.HM.api.translate(text);
+      if (remote && !hasChinese(remote)) {
+        state.translationCache.set(text, remote);
+        return remote;
+      }
+    } catch (err) { /* 回退到浏览器直连 */ }
+  }
 
   const instruction = 'You are an expert anime image prompt translator. Translate and enrich the following Chinese description into concise English Danbooru-style tags. Keep all details about character, hair, clothing, pose, scene, lighting and composition. Add "anime illustration" if no style is specified. Output ONLY comma-separated English tags, without quotes, notes or explanations.\nDescription: ' + text;
   const url = TRANSLATE_API + encodeURIComponent(instruction) + '?model=openai-fast';
@@ -1038,6 +1074,21 @@ async function generateOne(job, prompt) {
 
   updateJobStatus(job, '提交任务…');
 
+  // 已连接后端时优先走服务端代理（前后端分离）；FLUX 失败可回退浏览器直连
+  if (window.HM && window.HM.api && window.HM.api.online) {
+    try {
+      const remote = await runBackendImage(job, prompt);
+      const remoteElapsed = (Date.now() - job.startedAt) / 1000;
+      markJobDone(job, remote.url, remote.seed, remoteElapsed);
+      return;
+    } catch (err) {
+      if (job.engine !== 'flux') {
+        err.hint = err.hint || ('后端生成失败：' + (err.message || '请检查接入设置'));
+        throw err;
+      }
+    }
+  }
+
   if (job.engine === 'gpt-image' || job.engine === 'banana') {
     const image = job.engine === 'gpt-image'
       ? await runRayinImage(job, prompt)
@@ -1077,6 +1128,31 @@ async function generateOne(job, prompt) {
   }
 
   throw lastError || new Error('生成失败');
+}
+
+/* 通过 Node 后端生成单张图片（同源 /api 或 ?api= 指定的后端） */
+async function runBackendImage(job, prompt) {
+  updateJobStatus(job, '后端生成中…');
+  const payload = {
+    mode: 'image',
+    engine: job.engine,
+    prompt: prompt,
+    ratio: job.ratioId,
+    scale: job.scaleId,
+    count: 1,
+    steps: job.steps || 8,
+    seed: job.seed,
+    refImages: job.refImage && job.refImage.dataUrl ? [job.refImage.dataUrl] : [],
+    rayin: state.api
+  };
+
+  const data = await window.HM.api.generate(payload, 180000);
+  const item = data && data.items && data.items[0];
+  if (!item || !item.url) throw new Error('后端未返回图片');
+  return {
+    url: window.HM.api.mediaUrl ? window.HM.api.mediaUrl(item.url) : item.url,
+    seed: item.seed || job.seed
+  };
 }
 
 async function runEngine(engine, job, prompt) {
@@ -1441,9 +1517,21 @@ function markJobDone(job, url, seed, elapsed) {
 
   card.classList.remove('is-loading', 'is-error');
   card.classList.add('is-done');
+
+  var ratio = job.width + ' / ' + job.height;
+  var inner;
+  if (job.type === 'video') {
+    inner = '<video src="' + esc(url) + '" controls playsinline preload="metadata"></video>';
+  } else if (job.type === 'audio') {
+    inner = '<div class="hm-audio-result"><strong>语音合成完成</strong>' +
+      '<audio src="' + esc(url) + '" controls preload="metadata"></audio></div>';
+  } else {
+    inner = '<img src="' + esc(url) + '" alt="' + esc(job.prompt) + '">';
+  }
+
   card.innerHTML =
-    '<div class="result-media" style="aspect-ratio:' + job.width + ' / ' + job.height + '">' +
-      '<img src="' + esc(url) + '" alt="' + esc(job.prompt) + '">' +
+    '<div class="result-media" style="aspect-ratio:' + ratio + '">' +
+      inner +
       '<span class="media-badge">AI 生成</span>' +
       '<span class="media-model">' + esc(job.modelName) + '</span>' +
       '<div class="media-actions">' +
@@ -1454,7 +1542,7 @@ function markJobDone(job, url, seed, elapsed) {
     '</div>' +
     '<div class="result-info">' +
       '<p class="result-prompt">' + esc(job.prompt) + '</p>' +
-      '<div class="result-meta"><span>' + esc(job.modelName) + '</span><span>' + job.width + '×' + job.height + '</span><span>#' + seed + '</span><span>' + elapsed.toFixed(1) + 's</span></div>' +
+      '<div class="result-meta"><span>' + esc(job.modelName) + '</span><span>' + job.width + '×' + job.height + '</span><span>#' + esc(seed) + '</span><span>' + elapsed.toFixed(1) + 's</span></div>' +
     '</div>';
 
   saveWork(job);
@@ -1462,8 +1550,10 @@ function markJobDone(job, url, seed, elapsed) {
 
 /* ---------------- 作品库 ---------------- */
 function saveWork(job) {
+  var type = job.type || 'image';
   const work = {
     id: job.id,
+    type: type,
     url: job.url,
     thumb: null,
     prompt: job.prompt,
@@ -1477,6 +1567,7 @@ function saveWork(job) {
     ratioId: job.ratioId,
     scaleId: job.scaleId,
     steps: job.steps,
+    duration: job.duration || 0,
     createdAt: Date.now()
   };
 
@@ -1484,6 +1575,8 @@ function saveWork(job) {
   state.works = state.works.slice(0, MAX_WORKS);
   saveWorks();
   renderWorks();
+
+  if (type !== 'image') return;
 
   // GPT-image 常返回 base64 内联图，直接存会超出 localStorage 容量，压缩后再落盘
   if (job.url.indexOf('data:') === 0) {
@@ -1564,10 +1657,17 @@ async function downloadImage(url, filename) {
 
     const blob = await res.blob();
     let finalBlob = blob;
-    let ext = blob.type.indexOf('webp') >= 0 ? 'webp' : blob.type.indexOf('png') >= 0 ? 'png' : 'jpg';
+    let ext = 'jpg';
+    if (blob.type.indexOf('webp') >= 0) ext = 'webp';
+    else if (blob.type.indexOf('png') >= 0) ext = 'png';
+    else if (blob.type.indexOf('mp4') >= 0) ext = 'mp4';
+    else if (blob.type.indexOf('webm') >= 0) ext = 'webm';
+    else if (blob.type.indexOf('wav') >= 0) ext = 'wav';
+    else if (blob.type.indexOf('mpeg') >= 0 || blob.type.indexOf('mp3') >= 0) ext = 'mp3';
+    else if (/^(video|audio)\//.test(blob.type)) ext = 'bin';
 
     try {
-      if (window.createImageBitmap && blob.type.indexOf('png') < 0) {
+      if (blob.type.indexOf('image/') === 0 && window.createImageBitmap && blob.type.indexOf('png') < 0) {
         const bitmap = await createImageBitmap(blob);
         const canvas = document.createElement('canvas');
         canvas.width = bitmap.width;
@@ -1602,16 +1702,35 @@ async function downloadImage(url, filename) {
 /* ---------------- 大图预览 ---------------- */
 function openLightbox(item) {
   state.activeItem = item;
-  els.lbImage.src = item.url || item.thumb || '';
-  els.lbImage.onerror = function () {
-    if (item.thumb && els.lbImage.src !== item.thumb) els.lbImage.src = item.thumb;
-  };
+  var type = item.type || 'image';
+  var inner = els.lightbox.querySelector('.lb-inner');
+  inner.querySelectorAll('.lb-media-el').forEach(function (node) { node.remove(); });
+
+  if (type === 'image') {
+    els.lbImage.style.display = '';
+    els.lbImage.src = item.url || item.thumb || '';
+    els.lbImage.onerror = function () {
+      if (item.thumb && els.lbImage.src !== item.thumb) els.lbImage.src = item.thumb;
+    };
+  } else {
+    els.lbImage.style.display = 'none';
+    var media = document.createElement(type === 'video' ? 'video' : 'audio');
+    media.className = 'lb-media-el';
+    media.controls = true;
+    media.autoplay = true;
+    if (type === 'video') media.setAttribute('playsinline', '');
+    media.src = item.url || '';
+    inner.insertBefore(media, inner.querySelector('.lb-bar'));
+  }
+
   els.lbPrompt.textContent = item.prompt || '';
   els.lbMeta.textContent = [
+    type === 'video' ? '视频' : type === 'audio' ? '音频' : '',
     item.modelName || 'AI',
     item.engine ? (ENGINE_META[item.engine] || {}).meta || '' : '',
     item.width && item.height ? item.width + '×' + item.height : '',
-    'Seed ' + item.seed,
+    item.duration ? item.duration + ' 秒' : '',
+    item.seed ? 'Seed ' + item.seed : '',
     item.steps ? item.steps + ' 步' : ''
   ].filter(Boolean).join(' · ');
 
@@ -1664,6 +1783,12 @@ function stopTicker() {
 
 async function handleGenerate() {
   if (state.generating) return;
+
+  // 视频 / 音频模式交给 V3 工作台（走后端接口）
+  if (state.mode && state.mode !== 'image') {
+    if (window.HMUI && window.HMUI.runMedia) window.HMUI.runMedia(state.mode);
+    return;
+  }
 
   const rawPrompt = els.promptInput.value.trim();
   if (!rawPrompt) {
@@ -1788,6 +1913,11 @@ async function retryJob(job) {
     return;
   }
 
+  if (job.type && job.type !== 'image') {
+    toast('视频 / 音频任务请重新生成', 'info');
+    return;
+  }
+
   if (job.engine && job.engine !== 'flux' && !hasRayinKey()) {
     toast('请先在「接入设置」中填写 RayinAPI 密钥', 'error');
     openApiModal();
@@ -1825,6 +1955,10 @@ async function retryJob(job) {
 }
 
 function reuseJob(job) {
+  if (job.type && job.type !== 'image') {
+    toast('视频 / 音频暂不支持复用参数', 'info');
+    return;
+  }
   state.modelId = job.modelId;
   state.engine = ENGINE_META[job.engine] ? job.engine : 'flux';
   state.ratio = job.ratioId || state.ratio;
@@ -2310,6 +2444,8 @@ function boot() {
   syncSettingsUI();
   bindEvents();
 
+  if (window.HMUI && window.HMUI.init) window.HMUI.init();
+
   // 首次打开时给出轻量引导提示
   if (!storedPrefs || !storedPrefs.modelId) {
     setTimeout(function () {
@@ -2319,3 +2455,45 @@ function boot() {
 }
 
 boot();
+
+/* 供 ui.js（V3 工作台）复用核心状态与能力 */
+window.HMApp = {
+  state: state,
+  els: els,
+  ENGINE_META: ENGINE_META,
+  switchView: switchView,
+  toast: toast,
+  renderWorks: renderWorks,
+  saveWorks: saveWorks,
+  renderRef: renderRef,
+  translatePrompt: translatePrompt,
+  syncSettingsUI: syncSettingsUI,
+  persistPrefs: persistPrefs,
+  updateCharCount: updateCharCount,
+  currentSize: currentSize,
+  getModel: getModel,
+  hasRayinKey: hasRayinKey,
+  openApiModal: openApiModal,
+  closeApiModal: closeApiModal,
+  closeAllMenus: closeAllMenus,
+  closeSidebar: closeSidebar,
+  setGenerating: setGenerating,
+  startTicker: startTicker,
+  stopTicker: stopTicker,
+  updateQueue: updateQueue,
+  updateJobStatus: updateJobStatus,
+  updateAllJobStatus: updateAllJobStatus,
+  jobMediaLoading: jobMediaLoading,
+  jobInfo: jobInfo,
+  createLoadingCard: createLoadingCard,
+  markJobDone: markJobDone,
+  markJobError: markJobError,
+  downloadImage: downloadImage,
+  fileNameFor: fileNameFor,
+  openLightbox: openLightbox,
+  errorText: errorText,
+  buildPrompt: buildPrompt,
+  uid: uid,
+  randomSeed: randomSeed,
+  esc: esc
+};

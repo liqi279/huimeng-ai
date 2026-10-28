@@ -8,6 +8,58 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body data-view="create">
+  <aside class="hm-rail" id="hmRail" aria-label="主导航">
+    <div class="hm-rail-top">
+      <button class="hm-rail-item is-active" data-rail="create" title="桌面">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 20h6M12 16.5V20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>桌面</span>
+      </button>
+      <button class="hm-rail-item" data-rail="canvas" title="画布">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span>画布</span>
+      </button>
+      <button class="hm-rail-item" data-rail="works" title="成片">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><path d="M10.5 10.2l4 1.8-4 1.8v-3.6Z" fill="currentColor"/></svg>
+        <span>成片</span>
+      </button>
+      <button class="hm-rail-item" data-rail="tools" title="工具">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5a4 4 0 0 0 5 5L10 19a2.5 2.5 0 0 1-3.5-3.5L16 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>工具</span>
+      </button>
+      <button class="hm-rail-item" data-rail="assets" title="资产">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 6.5v11c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
+        <span>资产</span>
+      </button>
+      <button class="hm-rail-item" data-rail="writing" title="写作">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19l4-1 10.5-10.5a2 2 0 0 0-3-3L5 15l-1 4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>写作</span>
+      </button>
+      <button class="hm-rail-item" data-rail="forum" title="论坛">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h10.5a2 2 0 0 1 2 2v4.6a2 2 0 0 1-2 2H9l-3.5 3v-3H4a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 9.5h2a2 2 0 0 1 2 2v4.3a2 2 0 0 1-2 2h-1v2.7l-3-2.7h-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" opacity=".65"/></svg>
+        <span>论坛</span>
+      </button>
+    </div>
+
+    <div class="hm-rail-bottom">
+      <button class="hm-rail-personal" data-rail="works" title="个人空间">
+        <span class="hm-rail-avatar">我</span>
+        <span class="hm-rail-badge" id="railWorksBadge">0</span>
+      </button>
+      <div class="hm-rail-credit" id="railCredit" title="剩余积分">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 13h5l-1 8 8-10h-5l1-8Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span id="creditValue">∞</span>
+      </div>
+      <button class="hm-rail-item hm-rail-mini" id="themeBtn" title="主题">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 4v16a8 8 0 0 0 0-16Z" fill="currentColor" opacity=".55"/></svg>
+        <span>主题</span>
+      </button>
+      <button class="hm-rail-item hm-rail-mini" id="settingsBtn" title="设置">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3.6v2.2M12 18.2v2.2M3.6 12h2.2M18.2 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>设置</span>
+      </button>
+    </div>
+  </aside>
+
   <header class="hm-top">
     <div class="hm-top-left">
       <button class="hm-pill hm-project" data-view="create" aria-label="返回创作台">
@@ -121,6 +173,153 @@
     </div>
   </section>
 
+  <main class="hm-page" id="view-canvas" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>画布</h2>
+        <p>把本次与历史生成的结果铺在画布上比对、缩放与复用</p>
+      </div>
+      <div class="hm-page-actions">
+        <div class="hm-zoom">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20M8 11h6M11 8v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input type="range" id="canvasZoom" min="60" max="160" step="10" value="100" aria-label="画布缩放">
+          <span id="canvasZoomVal">100%</span>
+        </div>
+        <button class="hm-pill" id="canvasClear">清空画布</button>
+        <button class="hm-pill hm-pill-primary" data-rail="create">回到桌面</button>
+      </div>
+    </div>
+    <div class="hm-board" id="canvasBoard"></div>
+    <div class="hm-page-empty" id="canvasEmpty">
+      <div class="hm-page-empty-icon">✦</div>
+      <h3>画布还是空的</h3>
+      <p>在桌面生成图片、视频或音频后，会自动铺到这里</p>
+      <button class="hm-pill hm-pill-primary" data-rail="create">去生成</button>
+    </div>
+  </main>
+
+  <main class="hm-page" id="view-tools" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>工具</h2>
+        <p>创作过程中常用的效率工具，随取随用</p>
+      </div>
+    </div>
+    <div class="hm-tool-grid">
+      <button class="hm-tool-card" data-tool="translate">
+        <span class="hm-tool-icon">译</span>
+        <strong>智能翻译</strong>
+        <p>中文描述一键转英文提示词，保留角色与光影细节</p>
+      </button>
+      <button class="hm-tool-card" data-tool="inspire">
+        <span class="hm-tool-icon">✦</span>
+        <strong>灵感骰子</strong>
+        <p>随机注入一条动漫画面描述，快速开局</p>
+      </button>
+      <button class="hm-tool-card" data-tool="presets">
+        <span class="hm-tool-icon">风</span>
+        <strong>风格预设</strong>
+        <p>风格 / 滤镜 / 运镜 / 自定义四类预设</p>
+      </button>
+      <button class="hm-tool-card" data-tool="assets">
+        <span class="hm-tool-icon">资</span>
+        <strong>资产库</strong>
+        <p>管理参考图、成片与音频素材</p>
+      </button>
+      <button class="hm-tool-card" data-tool="batch">
+        <span class="hm-tool-icon">↓</span>
+        <strong>批量下载</strong>
+        <p>一次下载全部成片，自动按时间命名</p>
+      </button>
+      <button class="hm-tool-card" data-tool="clean">
+        <span class="hm-tool-icon">清</span>
+        <strong>清理缓存</strong>
+        <p>清理本地作品与草稿，释放浏览器空间</p>
+      </button>
+      <button class="hm-tool-card" data-tool="api">
+        <span class="hm-tool-icon">接</span>
+        <strong>接入设置</strong>
+        <p>配置 RayinAPI，启用视频、音频与付费模型</p>
+      </button>
+      <button class="hm-tool-card" data-tool="help">
+        <span class="hm-tool-icon">?</span>
+        <strong>使用指南</strong>
+        <p>三步上手，查看提示词与参考图技巧</p>
+      </button>
+    </div>
+  </main>
+
+  <main class="hm-page" id="view-assets" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>资产</h2>
+        <p>参考图、成片与音频素材统一管理 · 共 <span id="assetsTotal">0</span> 项</p>
+      </div>
+      <div class="hm-page-actions">
+        <label class="hm-asset-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="assetsSearch" type="search" placeholder="搜索资产..." autocomplete="off">
+        </label>
+        <button class="hm-pill hm-pill-primary" id="assetsImportBtn">导入素材</button>
+        <input type="file" id="assetsImportInput" accept="image/*,video/*,audio/*" hidden>
+      </div>
+    </div>
+    <div class="hm-asset-grid" id="assetsGrid"></div>
+    <div class="hm-page-empty" id="assetsEmpty">
+      <div class="hm-page-empty-icon">资</div>
+      <h3>还没有资产</h3>
+      <p>导入参考图、视频或音频，生成时可直接取用</p>
+      <button class="hm-pill hm-pill-primary" id="assetsEmptyImport">导入素材</button>
+    </div>
+  </main>
+
+  <main class="hm-page" id="view-writing" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>写作</h2>
+        <p>先写清楚角色、场景与镜头，再一键送去生成</p>
+      </div>
+      <div class="hm-page-actions">
+        <button class="hm-pill" id="writingCopy">复制文本</button>
+        <button class="hm-pill" id="writingSave">保存草稿</button>
+        <button class="hm-pill hm-pill-primary" id="writingSend">送去生图</button>
+      </div>
+    </div>
+    <div class="hm-writing">
+      <div class="hm-writing-templates" id="writingTemplates">
+        <button data-template="storyboard">分镜脚本</button>
+        <button data-template="character">角色设定</button>
+        <button data-template="scene">场景描述</button>
+        <button data-template="camera">镜头语言</button>
+      </div>
+      <textarea id="writingInput" maxlength="6000" placeholder="在这里写分镜、角色或场景描述..."></textarea>
+      <div class="hm-writing-foot">
+        <span id="writingCount">0 / 6000</span>
+        <span id="writingSaved">草稿自动保存在本地</span>
+      </div>
+    </div>
+  </main>
+
+  <main class="hm-page" id="view-forum" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>论坛</h2>
+        <p>分享提示词与作品，和同好一起交流</p>
+      </div>
+    </div>
+    <div class="hm-forum">
+      <div class="hm-forum-compose">
+        <input id="forumTitle" type="text" maxlength="60" placeholder="帖子标题">
+        <textarea id="forumBody" maxlength="600" placeholder="分享你的提示词、参数或创作心得..."></textarea>
+        <div class="hm-forum-actions">
+          <span id="forumCount">0 / 600</span>
+          <button class="hm-pill hm-pill-primary" id="forumPublish">发布</button>
+        </div>
+      </div>
+      <div class="hm-forum-list" id="forumList"></div>
+    </div>
+  </main>
+
   <div class="hm-dock">
     <div class="hm-tabs" id="promptTabs">
       <button class="hm-tab is-active" data-tab="0">1</button>
@@ -157,7 +356,7 @@
           <button class="hm-sq" id="refPickBtn" title="上传参考图" aria-label="上传参考图">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
           </button>
-          <button class="hm-chip hm-chip-accent" data-view="works" title="资产库">
+          <button class="hm-chip hm-chip-accent" id="assetsBtn" title="资产库">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h16M6.5 4.5h11L20 8.5v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9l2.5-4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13.5h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             <span>资产库</span>
           </button>
@@ -167,6 +366,10 @@
           <button class="hm-chip hm-chip-accent" id="modelsToggle" title="选择风格模型">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.1 5.9L20 11l-5.9 2.1L12 19l-2.1-5.9L4 11l5.9-2.1L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
             <span id="styleChipText">风格</span>
+          </button>
+          <button class="hm-chip" id="presetBtn" title="风格预设（风格 / 滤镜 / 运镜）">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M7 12h10M9 18h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <span id="presetChipText">预设</span>
           </button>
           <button class="hm-chip" id="inspireBtn" title="随机注入一条灵感描述">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/><circle cx="15" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="15" r="1.2" fill="currentColor"/></svg>
@@ -182,13 +385,30 @@
           <div class="hm-menu-wrap">
             <button class="hm-chip" id="engineBtn" aria-haspopup="true" aria-expanded="false">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l4-1 9.2-9.2a2 2 0 0 0-2.8-2.8L5 13.2 4 17Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.5 18.5h13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-              <span>生图</span>
+              <span id="engineModeText">生图</span>
               <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <div class="hm-menu hm-menu-up" id="engineMenu" aria-hidden="true">
-              <button data-engine="flux" class="is-active">FLUX.1 · 免费</button>
-              <button data-engine="gpt-image">GPT-image · RayinAPI</button>
-              <button data-engine="banana">Nano Banana · RayinAPI</button>
+            <div class="hm-menu hm-menu-up hm-engine-menu" id="engineMenu" aria-hidden="true">
+              <div class="hm-mode-tabs" id="modeTabs">
+                <button data-mode="image" class="is-active">图片</button>
+                <button data-mode="video">视频</button>
+                <button data-mode="audio">音频</button>
+              </div>
+              <div class="hm-menu-group" data-mode-panel="image">
+                <span class="hm-menu-label">免费通道</span>
+                <button data-engine="flux" class="is-active">FLUX.1 · 免费</button>
+                <span class="hm-menu-label">RayinAPI</span>
+                <button data-engine="gpt-image">GPT-image · RayinAPI</button>
+                <button data-engine="banana">Nano Banana · RayinAPI</button>
+              </div>
+              <div class="hm-menu-group" data-mode-panel="video" hidden>
+                <span class="hm-menu-label">视频模型</span>
+                <p class="hm-menu-note">视频生成为异步任务，需启动 Node 后端并配置视频模型 ID（默认 sora-2）。</p>
+              </div>
+              <div class="hm-menu-group" data-mode-panel="audio" hidden>
+                <span class="hm-menu-label">音频模型</span>
+                <p class="hm-menu-note">音频走 TTS 接口，需启动 Node 后端并配置音频模型 ID（默认 tts-1）。</p>
+              </div>
             </div>
           </div>
 
@@ -197,7 +417,7 @@
             <span id="enginePillText">FLUX.1 · 免费</span>
           </button>
 
-          <div class="hm-menu-wrap">
+          <div class="hm-menu-wrap hm-av-only">
             <button class="hm-chip" id="ratioBtn" aria-haspopup="true" aria-expanded="false">
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
               <span id="ratioLabel">1:1</span>
@@ -206,7 +426,7 @@
             <div class="hm-menu hm-menu-up hm-ratio-menu" id="ratioPicker" aria-hidden="true"></div>
           </div>
 
-          <div class="hm-menu-wrap">
+          <div class="hm-menu-wrap hm-av-only">
             <button class="hm-chip" id="scaleBtn" aria-haspopup="true" aria-expanded="false">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
               <span id="scaleChipText">2K</span>
@@ -219,7 +439,55 @@
             </div>
           </div>
 
-          <div class="hm-menu-wrap">
+          <div class="hm-menu-wrap hm-video-only" hidden>
+            <button class="hm-chip" id="durationBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="durationChipText">5秒</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="durationMenu" aria-hidden="true">
+              <button data-duration="5" class="is-active">5 秒</button>
+              <button data-duration="10">10 秒</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-audio-only" hidden>
+            <button class="hm-chip" id="voiceBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="voiceChipText">音色 · alloy</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="voiceMenu" aria-hidden="true">
+              <button data-voice="alloy" class="is-active">alloy</button>
+              <button data-voice="echo">echo</button>
+              <button data-voice="fable">fable</button>
+              <button data-voice="onyx">onyx</button>
+              <button data-voice="nova">nova</button>
+              <button data-voice="shimmer">shimmer</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-audio-only" hidden>
+            <button class="hm-chip" id="audioFmtBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="audioFmtText">WAV</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="audioFmtMenu" aria-hidden="true">
+              <button data-format="wav" class="is-active">WAV</button>
+              <button data-format="mp3">MP3</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-audio-only" hidden>
+            <button class="hm-chip" id="sampleRateBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="sampleRateText">48k</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="sampleRateMenu" aria-hidden="true">
+              <button data-rate="24000">24k</button>
+              <button data-rate="48000" class="is-active">48k</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-av-only">
             <button class="hm-chip" id="seedBtn" aria-haspopup="true" aria-expanded="false">
               <span id="seedChipText">自动</span>
               <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -231,7 +499,7 @@
             </div>
           </div>
 
-          <div class="hm-stepper" id="countPicker">
+          <div class="hm-stepper hm-av-only" id="countPicker">
             <button data-step="-1" aria-label="减少张数">−</button>
             <span id="countValue">1</span>
             <button data-step="1" aria-label="增加张数">+</button>
@@ -282,6 +550,72 @@
     </div>
     <div class="model-groups" id="modelGroups"></div>
   </aside>
+
+  <div class="modal hm-modal-wide" id="presetModal" aria-hidden="true">
+    <div class="modal-card hm-preset-card">
+      <button class="modal-close" id="presetClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="hm-preset-head">
+        <div class="hm-preset-tabs" id="presetTabs">
+          <button data-cat="风格" class="is-active">风格</button>
+          <button data-cat="滤镜">滤镜</button>
+          <button data-cat="运镜">运镜</button>
+          <button data-cat="自定义">自定义</button>
+        </div>
+        <label class="hm-preset-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="presetSearch" type="search" placeholder="搜索预设..." autocomplete="off">
+        </label>
+      </div>
+      <p class="hm-preset-section" id="presetSectionTitle">点击预设</p>
+      <div class="hm-preset-grid" id="presetGrid"></div>
+      <div class="hm-preset-foot">
+        <span id="presetHint">选择后会把预设关键词写进提示词，可继续手动修改。</span>
+        <button class="hm-pill" id="presetClear">清除预设</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hm-modal-wide" id="assetModal" aria-hidden="true">
+    <div class="modal-card hm-asset-card">
+      <button class="modal-close" id="assetModalClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="hm-asset-head">
+        <h2>资产库</h2>
+        <label class="hm-preset-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="assetModalSearch" type="search" placeholder="搜索资产..." autocomplete="off">
+        </label>
+        <span class="hm-zoom-badge" id="assetModalCount">0 项</span>
+        <button class="hm-pill hm-pill-primary" id="assetModalImport">导入素材</button>
+      </div>
+      <div class="hm-asset-grid" id="assetModalGrid"></div>
+      <div class="hm-page-empty hm-asset-empty" id="assetModalEmpty">
+        <div class="hm-page-empty-icon">资</div>
+        <h3>还没有资产</h3>
+        <p>导入参考图、视频或音频，生成时可直接取用</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hm-editor" id="promptEditor" aria-hidden="true">
+    <div class="hm-editor-inner">
+      <div class="hm-editor-head">
+        <span>画面描述</span>
+        <button class="hm-icon-btn" id="promptEditorClose" aria-label="关闭编辑器">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <textarea id="promptEditorInput" maxlength="1800" placeholder="描述你想生成的画面..."></textarea>
+      <div class="hm-editor-foot">
+        <span id="promptEditorCount">0 / 1800</span>
+        <span class="hm-editor-tip">支持中文，开启「中文」后自动英译</span>
+        <button class="hm-pill hm-pill-primary" id="promptEditorApply">完成</button>
+      </div>
+    </div>
+  </div>
 
   <div class="lightbox" id="lightbox" aria-hidden="true">
     <button class="lb-close" id="lbClose" aria-label="关闭">
@@ -357,6 +691,7 @@
       </div>
 
       <p class="api-hint" id="apiHint">保存后即可在底部「生图」菜单切换模型。</p>
+      <p class="api-hint" id="backendStatus">后端状态检测中…</p>
 
       <div class="api-actions">
         <button class="subtle-btn" id="fetchModelsBtn">读取账号模型</button>
@@ -367,6 +702,8 @@
 
   <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
 
+  <script src="api.js"></script>
   <script src="app.js"></script>
+  <script src="ui.js"></script>
 </body>
 </html>
