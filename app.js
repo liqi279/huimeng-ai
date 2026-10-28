@@ -359,7 +359,11 @@ const state = {
   activeItem: null,
   collapsed: new Set(),
   translationCache: new Map(),
-  refImage: null
+  refImage: null,
+  prompts: ['', ''],
+  activePrompt: 0,
+  worksSort: 'newest',
+  worksFilter: 'all'
 };
 
 /* ---------------- DOM ---------------- */
@@ -375,7 +379,7 @@ function bindEls() {
   els.queueText = document.getElementById('queueText');
   els.emptyState = document.getElementById('emptyState');
   els.resultGrid = document.getElementById('resultGrid');
-  els.canvas = document.getElementById('canvas');
+  els.viewCreate = document.getElementById('view-create');
   els.promptInput = document.getElementById('promptInput');
   els.charCount = document.getElementById('charCount');
   els.inspireBtn = document.getElementById('inspireBtn');
@@ -433,6 +437,32 @@ function bindEls() {
   els.apiHint = document.getElementById('apiHint');
   els.apiSave = document.getElementById('apiSave');
   els.fetchModelsBtn = document.getElementById('fetchModelsBtn');
+
+  /* V2 布局新增控件 */
+  els.composer = document.getElementById('composer');
+  els.promptTabs = document.getElementById('promptTabs');
+  els.addPromptTab = document.getElementById('addPromptTab');
+  els.expandPrompt = document.getElementById('expandPrompt');
+  els.refPickBtn = document.getElementById('refPickBtn');
+  els.engineBtn = document.getElementById('engineBtn');
+  els.engineMenu = document.getElementById('engineMenu');
+  els.engineModelBtn = document.getElementById('engineModelBtn');
+  els.ratioBtn = document.getElementById('ratioBtn');
+  els.scaleBtn = document.getElementById('scaleBtn');
+  els.scaleChipText = document.getElementById('scaleChipText');
+  els.seedBtn = document.getElementById('seedBtn');
+  els.seedPop = document.getElementById('seedPop');
+  els.countValue = document.getElementById('countValue');
+  els.styleChipText = document.getElementById('styleChipText');
+  els.resetCanvas = document.getElementById('resetCanvas');
+  els.sidebarClose = document.getElementById('sidebarClose');
+  els.worksSortBtn = document.getElementById('worksSortBtn');
+  els.worksSortMenu = document.getElementById('worksSortMenu');
+  els.worksSortText = document.getElementById('worksSortText');
+  els.worksFilterBtn = document.getElementById('worksFilterBtn');
+  els.worksFilterMenu = document.getElementById('worksFilterMenu');
+  els.worksFilterText = document.getElementById('worksFilterText');
+  els.worksTotal = document.getElementById('worksTotal');
 }
 
 /* ---------------- 渲染 ---------------- */
@@ -488,27 +518,44 @@ function renderRatios() {
 
 function updateRatioLabel() {
   const size = currentSize();
-  if (state.engine !== 'flux') {
-    /* 付费引擎尺寸固定三档，显示实际生效尺寸 */
-    els.ratioLabel.textContent = size.ratio.id + ' · ' + gptSizeFor({ ratioId: size.ratio.id }).replace('x', '×');
-    return;
+  const detail = state.engine !== 'flux'
+    ? gptSizeFor({ ratioId: size.ratio.id }).replace('x', '×')
+    : size.scale.label + ' · ' + size.w + '×' + size.h;
+  els.ratioLabel.textContent = size.ratio.id;
+  if (els.ratioBtn) els.ratioBtn.title = '画面比例 ' + size.ratio.id + ' · ' + detail;
+}
+
+function filteredWorks() {
+  let list = state.works.slice();
+  if (state.worksFilter === 'free') {
+    list = list.filter(function (w) { return (w.engine || 'flux') === 'flux'; });
+  } else if (state.worksFilter === 'paid') {
+    list = list.filter(function (w) { return (w.engine || 'flux') !== 'flux'; });
   }
-  els.ratioLabel.textContent = size.ratio.id + ' · ' + size.scale.label + ' · ' + size.w + '×' + size.h;
+  list.sort(function (a, b) {
+    const da = a.createdAt || 0;
+    const db = b.createdAt || 0;
+    return state.worksSort === 'oldest' ? da - db : db - da;
+  });
+  return list;
 }
 
 function renderWorks() {
-  const count = state.works.length;
-  els.worksBadge.textContent = String(count);
-  els.stageResultCount.textContent = count + ' 张作品';
+  const total = state.works.length;
+  els.worksBadge.textContent = String(total);
+  if (els.worksTotal) els.worksTotal.textContent = String(total);
+  els.stageResultCount.textContent = total + ' 张作品';
 
-  if (!count) {
+  const list = filteredWorks();
+
+  if (!list.length) {
     els.worksGrid.innerHTML = '';
     els.worksEmpty.style.display = 'flex';
     return;
   }
 
   els.worksEmpty.style.display = 'none';
-  els.worksGrid.innerHTML = state.works.map(function (work) {
+  els.worksGrid.innerHTML = list.map(function (work) {
     const src = work.thumb || work.url;
     return '<article class="work-card" data-work="' + work.id + '">' +
       '<img src="' + esc(src) + '" alt="' + esc(work.prompt) + '" loading="lazy">' +
@@ -526,24 +573,59 @@ function syncModelUI() {
   const model = getModel(state.modelId);
   els.stageModelName.textContent = model.name;
   els.stageModelTag.textContent = model.groupName;
-  els.promptInput.placeholder = '例如：' + model.example;
+  els.promptInput.placeholder = '描述你想生成的画面...';
+  if (els.styleChipText) els.styleChipText.textContent = model.name;
+  if (els.modelsToggle) els.modelsToggle.title = '当前风格：' + model.name + ' · 点击切换';
   document.querySelectorAll('.model-item').forEach(function (el) {
     el.classList.toggle('is-active', el.dataset.model === state.modelId);
   });
+}
+
+const COUNT_OPTIONS = [1, 2, 4];
+
+/* 描述多标签：1 / 2 / +，每个标签保存一份草稿 */
+function renderPromptTabs() {
+  if (!els.promptTabs || !els.addPromptTab) return;
+  els.promptTabs.querySelectorAll('.hm-tab[data-tab]').forEach(function (node) { node.remove(); });
+  state.prompts.forEach(function (_, index) {
+    const btn = document.createElement('button');
+    btn.className = 'hm-tab' + (index === state.activePrompt ? ' is-active' : '');
+    btn.dataset.tab = String(index);
+    btn.textContent = String(index + 1);
+    btn.setAttribute('aria-label', '描述 ' + (index + 1));
+    els.promptTabs.insertBefore(btn, els.addPromptTab);
+  });
+  els.addPromptTab.hidden = state.prompts.length >= 5;
+}
+
+function switchPromptTab(index) {
+  if (index === state.activePrompt) return;
+  state.prompts[state.activePrompt] = els.promptInput.value;
+  if (typeof state.prompts[index] !== 'string') state.prompts[index] = '';
+  state.activePrompt = index;
+  els.promptInput.value = state.prompts[index];
+  renderPromptTabs();
+  updateCharCount();
 }
 
 function syncSettingsUI() {
   els.seedInput.value = String(state.seed);
   els.stepsRange.value = String(state.steps);
   updateStepsUI();
-  els.countPicker.querySelectorAll('button').forEach(function (btn) {
-    btn.classList.toggle('is-active', Number(btn.dataset.count) === state.count);
+  const countIndex = COUNT_OPTIONS.indexOf(state.count);
+  if (els.countValue) els.countValue.textContent = String(state.count);
+  els.countPicker.querySelectorAll('[data-step]').forEach(function (btn) {
+    const step = Number(btn.dataset.step);
+    btn.disabled = step < 0 ? countIndex <= 0 : countIndex >= COUNT_OPTIONS.length - 1;
   });
   els.scalePicker.querySelectorAll('button').forEach(function (btn) {
     btn.classList.toggle('is-active', btn.dataset.scale === state.scale);
   });
+  if (els.scaleChipText) els.scaleChipText.textContent = state.scale.toUpperCase();
+  if (els.seedBtn) els.seedBtn.title = '当前种子 #' + state.seed + '，点击手动指定';
   els.translateToggle.classList.toggle('is-on', state.translate);
   els.translateToggle.setAttribute('aria-checked', state.translate ? 'true' : 'false');
+  renderPromptTabs();
   renderRatios();
   syncModelUI();
   syncEngineUI();
@@ -583,10 +665,22 @@ function syncEngineUI() {
 
   updateRatioLabel();
   syncRefNote();
+
+  if (els.engineMenu) {
+    els.engineMenu.querySelectorAll('[data-engine]').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.dataset.engine === state.engine);
+    });
+  }
+  if (els.engineModelBtn) {
+    els.engineModelBtn.title = meta.label + (meta.free ? ' · 免费通道' : ' · RayinAPI 按量计费');
+  }
+  if (els.scaleBtn) {
+    els.scaleBtn.title = meta.free ? '生成清晰度' : 'GPT-image 固定三档尺寸，清晰度由比例决定';
+  }
 }
 
 /* ---------------- 参考图（图生图） ---------------- */
-const REF_MAX_BYTES = 8 * 1024 * 1024;
+const REF_MAX_BYTES = 10 * 1024 * 1024;
 const REF_MAX_SIDE = 1280;
 
 function syncRefNote() {
@@ -653,7 +747,7 @@ async function pickRefFile(file) {
     return;
   }
   if (file.size > REF_MAX_BYTES) {
-    toast('参考图不能超过 8MB', 'error');
+    toast('参考图不能超过 10MB', 'error');
     return;
   }
 
@@ -693,15 +787,16 @@ async function pickRefFile(file) {
 function updateStepsUI() {
   const value = state.steps;
   const label = value <= 5 ? '极速' : value <= 8 ? '标准' : '精细';
-  els.stepsLabel.textContent = label + ' · ' + value + ' 步';
+  els.stepsLabel.textContent = String(value);
+  els.stepsRange.title = '精细度：' + label + ' · ' + value + ' 步';
   const p = ((value - 4) / 8) * 100;
   els.stepsRange.style.setProperty('--p', p + '%');
 }
 
 function updateCharCount() {
   const length = els.promptInput.value.length;
-  els.charCount.textContent = length + ' / 800';
-  els.charCount.style.color = length > 760 ? '#fda4af' : '';
+  els.charCount.textContent = length + ' / 1800';
+  els.charCount.style.color = length > 1740 ? '#fda4af' : '';
 }
 
 function persistPrefs() {
@@ -740,12 +835,35 @@ function switchView(view) {
 
 function openSidebar() {
   els.sidebar.classList.add('is-open');
+  els.sidebar.setAttribute('aria-hidden', 'false');
   els.sidebarScrim.classList.add('is-visible');
 }
 
 function closeSidebar() {
   els.sidebar.classList.remove('is-open');
+  els.sidebar.setAttribute('aria-hidden', 'true');
   els.sidebarScrim.classList.remove('is-visible');
+}
+
+/* V2 菜单：生图 / 比例 / 档位 / 种子 / 作品筛选 */
+function closeAllMenus() {
+  document.querySelectorAll('.hm-menu.is-open').forEach(function (menu) {
+    menu.classList.remove('is-open');
+    menu.setAttribute('aria-hidden', 'true');
+  });
+  document.querySelectorAll('[aria-haspopup]').forEach(function (btn) {
+    btn.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function toggleMenu(menu, btn) {
+  if (!menu) return;
+  const willOpen = !menu.classList.contains('is-open');
+  closeAllMenus();
+  if (!willOpen) return;
+  menu.classList.add('is-open');
+  menu.setAttribute('aria-hidden', 'false');
+  if (btn) btn.setAttribute('aria-expanded', 'true');
 }
 
 /* ---------------- 模型选择 ---------------- */
@@ -1808,6 +1926,75 @@ function bindEvents() {
 
   els.modelsToggle.addEventListener('click', openSidebar);
   els.sidebarScrim.addEventListener('click', closeSidebar);
+  if (els.sidebarClose) els.sidebarClose.addEventListener('click', closeSidebar);
+
+  if (els.refPickBtn) {
+    els.refPickBtn.addEventListener('click', function () { els.refInput.click(); });
+  }
+
+  if (els.promptTabs) {
+    els.promptTabs.addEventListener('click', function (event) {
+      const addBtn = event.target.closest('#addPromptTab');
+      if (addBtn) {
+        if (state.prompts.length >= 5) return;
+        state.prompts[state.activePrompt] = els.promptInput.value;
+        state.prompts.push('');
+        state.activePrompt = state.prompts.length - 1;
+        els.promptInput.value = '';
+        renderPromptTabs();
+        updateCharCount();
+        els.promptInput.focus();
+        return;
+      }
+      const tab = event.target.closest('[data-tab]');
+      if (tab) switchPromptTab(Number(tab.dataset.tab));
+    });
+  }
+
+  if (els.expandPrompt) {
+    els.expandPrompt.addEventListener('click', function () {
+      const expanded = els.composer.classList.toggle('is-expanded');
+      els.expandPrompt.setAttribute('aria-pressed', expanded ? 'true' : 'false');
+    });
+  }
+
+  if (els.resetCanvas) {
+    els.resetCanvas.addEventListener('click', function () {
+      state.jobs.clear();
+      els.resultGrid.innerHTML = '';
+      els.emptyState.style.display = 'flex';
+      els.queueText.textContent = '空闲';
+      toast('画布已清空', 'info');
+    });
+  }
+
+  /* 通用下拉：按钮 + 同容器内的 .hm-menu */
+  document.addEventListener('click', function (event) {
+    const trigger = event.target.closest('.hm-menu-wrap > button[aria-haspopup]');
+    if (trigger) {
+      const menu = trigger.parentElement.querySelector('.hm-menu');
+      toggleMenu(menu, trigger);
+      event.stopPropagation();
+      return;
+    }
+    if (!event.target.closest('.hm-menu')) closeAllMenus();
+  });
+
+  if (els.engineModelBtn) {
+    els.engineModelBtn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      toggleMenu(els.engineMenu, els.engineBtn);
+    });
+  }
+  if (els.engineMenu) {
+    els.engineMenu.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-engine]');
+      if (!btn || !ENGINE_META[btn.dataset.engine]) return;
+      els.engineSelect.value = btn.dataset.engine;
+      els.engineSelect.dispatchEvent(new Event('change'));
+      closeAllMenus();
+    });
+  }
 
   els.engineSelect.addEventListener('change', function () {
     const value = els.engineSelect.value;
@@ -1831,7 +2018,10 @@ function bindEvents() {
     if (event.target === els.apiModal) closeApiModal();
   });
 
+  els.modelSearch.addEventListener('focus', openSidebar);
+
   els.modelSearch.addEventListener('input', function (event) {
+    openSidebar();
     renderModels(event.target.value);
   });
 
@@ -1918,25 +2108,37 @@ function bindEvents() {
     });
     updateRatioLabel();
     persistPrefs();
+    closeAllMenus();
   });
 
   els.scalePicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-scale]');
-    if (!btn || state.engine !== 'flux') return;
+    if (!btn) return;
+    if (state.engine !== 'flux') {
+      toast('GPT-image 使用固定三档尺寸，清晰度由比例决定', 'info');
+      closeAllMenus();
+      return;
+    }
     state.scale = btn.dataset.scale;
     els.scalePicker.querySelectorAll('button').forEach(function (el) {
       el.classList.toggle('is-active', el.dataset.scale === state.scale);
     });
     updateRatioLabel();
     persistPrefs();
+    syncSettingsUI();
+    closeAllMenus();
   });
 
   els.countPicker.addEventListener('click', function (event) {
-    const btn = event.target.closest('[data-count]');
-    if (!btn) return;
-    state.count = Number(btn.dataset.count);
-    els.countPicker.querySelectorAll('button').forEach(function (el) {
-      el.classList.toggle('is-active', Number(el.dataset.count) === state.count);
+    const btn = event.target.closest('[data-step]');
+    if (!btn || btn.disabled) return;
+    const next = COUNT_OPTIONS.indexOf(state.count) + Number(btn.dataset.step);
+    state.count = COUNT_OPTIONS[clamp(next, 0, COUNT_OPTIONS.length - 1)];
+    if (els.countValue) els.countValue.textContent = String(state.count);
+    els.countPicker.querySelectorAll('[data-step]').forEach(function (el) {
+      const step = Number(el.dataset.step);
+      const index = COUNT_OPTIONS.indexOf(state.count);
+      el.disabled = step < 0 ? index <= 0 : index >= COUNT_OPTIONS.length - 1;
     });
     persistPrefs();
   });
@@ -1944,6 +2146,7 @@ function bindEvents() {
   els.seedRandom.addEventListener('click', function () {
     state.seed = randomSeed();
     els.seedInput.value = String(state.seed);
+    if (els.seedBtn) els.seedBtn.title = '当前种子 #' + state.seed;
     persistPrefs();
     toast('已换一个随机种子', 'info');
   });
@@ -1951,6 +2154,7 @@ function bindEvents() {
   els.seedInput.addEventListener('change', function () {
     state.seed = clamp(Number(els.seedInput.value) || randomSeed(), 1, 2147483647);
     els.seedInput.value = String(state.seed);
+    if (els.seedBtn) els.seedBtn.title = '当前种子 #' + state.seed;
     persistPrefs();
   });
 
@@ -2020,6 +2224,37 @@ function bindEvents() {
     toast('已清空作品', 'info');
   });
 
+  if (els.worksSortMenu) {
+    els.worksSortMenu.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-sort]');
+      if (!btn) return;
+      state.worksSort = btn.dataset.sort;
+      els.worksSortMenu.querySelectorAll('[data-sort]').forEach(function (el) {
+        el.classList.toggle('is-active', el.dataset.sort === state.worksSort);
+      });
+      renderWorks();
+      closeAllMenus();
+      switchView('works');
+    });
+  }
+
+  if (els.worksFilterMenu) {
+    els.worksFilterMenu.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-filter]');
+      if (!btn) return;
+      state.worksFilter = btn.dataset.filter;
+      els.worksFilterMenu.querySelectorAll('[data-filter]').forEach(function (el) {
+        el.classList.toggle('is-active', el.dataset.filter === state.worksFilter);
+      });
+      if (els.worksFilterText) {
+        els.worksFilterText.textContent = btn.textContent;
+      }
+      renderWorks();
+      closeAllMenus();
+      switchView('works');
+    });
+  }
+
   els.lbClose.addEventListener('click', closeLightbox);
   els.lightbox.addEventListener('click', function (event) {
     if (event.target === els.lightbox) closeLightbox();
@@ -2056,6 +2291,7 @@ function bindEvents() {
       els.helpModal.setAttribute('aria-hidden', 'true');
       closeApiModal();
       closeSidebar();
+      closeAllMenus();
     }
 
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {

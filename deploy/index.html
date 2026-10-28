@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#07060d">
+  <meta name="theme-color" content="#0a111c">
   <title>绘梦 · AI 动漫创作平台</title>
   <style>
 /* ============ 基础 ============ */
@@ -2879,275 +2879,1434 @@ body[data-engine="banana"] .split-controls {
   cursor: not-allowed;
 }
 
+/* =============================================================
+   V2 布局：全屏画布 + 底部悬浮生成面板
+   （对齐目标样式的深蓝工作台；Edge / Chrome 均可正常渲染）
+   ============================================================= */
+[hidden] {
+  display: none !important;
+}
 
-</style>
+body {
+  background: #0a111c;
+  color: #dbe7f3;
+}
+
+.hm-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- 顶栏 ---------- */
+.hm-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px 0 18px;
+  background: #0b1421;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.hm-top-left,
+.hm-top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hm-top-right {
+  gap: 9px;
+}
+
+.hm-pill {
+  height: 30px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  background: rgba(255, 255, 255, 0.035);
+  color: #c2d2e2;
+  font-size: 11.5px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.hm-pill:hover {
+  border-color: rgba(96, 165, 250, 0.42);
+  background: rgba(56, 132, 200, 0.14);
+  color: #e8f4ff;
+}
+
+.hm-pill svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  opacity: 0.85;
+}
+
+.hm-project {
+  color: #e2edf8;
+  font-weight: 600;
+}
+
+.hm-search {
+  width: 182px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.032);
+  color: #6c7f96;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.hm-search:focus-within {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.hm-search svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+.hm-search input {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #dbe7f3;
+  font-size: 11.5px;
+}
+
+.hm-search input::placeholder {
+  color: #6c7f96;
+}
+
+.hm-slider {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.032);
+  color: #7d90a6;
+}
+
+.hm-slider svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+.hm-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 82px;
+  height: 4px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #3b82f6 var(--p, 50%), rgba(255, 255, 255, 0.13) var(--p, 50%));
+  outline: none;
+  cursor: pointer;
+}
+
+.hm-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.hm-slider input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: #93c5fd;
+}
+
+.hm-slider-val {
+  min-width: 12px;
+  font-size: 11px;
+  color: #9fb3c8;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-text-btn {
+  height: 30px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 7px;
+  color: #9fb0c4;
+  font-size: 11.5px;
+  white-space: nowrap;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.hm-text-btn:hover {
+  color: #e2edf8;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hm-text-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.hm-history {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.hm-icon-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 6px;
+  color: #7d8da3;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.hm-icon-btn:hover {
+  color: #dceaf8;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hm-icon-btn:disabled {
+  opacity: 0.32;
+  cursor: default;
+  background: none;
+  color: #6c7c92;
+}
+
+.hm-icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.hm-personal {
+  height: 30px;
+  padding: 0 6px 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 7px;
+  color: #bcd0e4;
+  font-size: 11.5px;
+  white-space: nowrap;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.hm-personal:hover {
+  color: #f0f8ff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hm-personal svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.85;
+}
+
+.hm-badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 99px;
+  background: rgba(56, 189, 248, 0.16);
+  color: #7dd3fc;
+  font-size: 9.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-select {
+  padding-right: 8px;
+}
+
+.hm-chev {
+  width: 11px !important;
+  height: 11px !important;
+  opacity: 0.65;
+}
+
+.hm-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.hm-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 80;
+  min-width: 152px;
+  padding: 5px;
+  display: none;
+  border-radius: 9px;
+  border: 1px solid rgba(120, 170, 210, 0.2);
+  background: rgba(16, 27, 41, 0.98);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.hm-menu.is-open {
+  display: block;
+  animation: hmMenuIn 0.16s ease both;
+}
+
+.hm-menu-up {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
+.hm-menu > button {
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 6px;
+  text-align: left;
+  color: #b9c9db;
+  font-size: 11.5px;
+  white-space: nowrap;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.hm-menu > button:hover {
+  background: rgba(56, 189, 248, 0.11);
+  color: #eaf6ff;
+}
+
+.hm-menu > button.is-active {
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.13);
+}
+
+@keyframes hmMenuIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- 画布 ---------- */
+.hm-canvas {
+  position: fixed;
+  top: 46px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 30px 32px 250px;
+  background:
+    radial-gradient(ellipse 62% 46% at 50% 0%, rgba(38, 86, 128, 0.14), transparent 62%),
+    #0a111c;
+}
+
+.hm-canvas::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hm-empty {
+  margin: auto;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  user-select: none;
+}
+
+.hm-orb {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+}
+
+.hm-orb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px dashed rgba(125, 211, 252, 0.22);
+  animation: hmSpin 26s linear infinite;
+}
+
+.hm-orb-core {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.92), rgba(147, 197, 253, 0.55) 32%, rgba(59, 130, 246, 0.5) 62%, rgba(15, 23, 42, 0) 74%),
+    radial-gradient(circle at 70% 78%, rgba(34, 211, 238, 0.55), transparent 62%);
+  box-shadow: 0 0 38px rgba(56, 132, 200, 0.35), inset 0 0 16px rgba(255, 255, 255, 0.28);
+  filter: blur(0.2px);
+}
+
+.hm-orb-star {
+  position: absolute;
+  color: #93c5fd;
+  font-size: 11px;
+  opacity: 0.7;
+  animation: hmTwinkle 3.6s ease-in-out infinite;
+}
+
+.hm-orb-star.s1 { top: 4px; right: 12px; animation-delay: 0.4s; }
+.hm-orb-star.s2 { bottom: 10px; left: 6px; font-size: 9px; animation-delay: 1.3s; }
+
+.hm-empty h3 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: #d8e6f4;
+}
+
+.hm-empty p {
+  margin: 0;
+  font-size: 11.5px;
+  color: #7286a0;
+  letter-spacing: 0.01em;
+}
+
+@keyframes hmSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hmTwinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.9); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+
+.hm-grid {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* ---------- 底部生成面板 ---------- */
+.hm-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 0 24px 16px;
+  pointer-events: none;
+}
+
+.hm-dock > * {
+  pointer-events: auto;
+}
+
+.hm-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 27px;
+  padding-left: 12px;
+}
+
+.hm-tab {
+  height: 25px;
+  min-width: 40px;
+  padding: 0 10px;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  background: rgba(18, 31, 47, 0.86);
+  color: #7f93aa;
+  font-size: 11px;
+  line-height: 1;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.hm-tab:hover {
+  color: #cfe4f7;
+}
+
+.hm-tab.is-active {
+  background: #111d2c;
+  color: #e8f5ff;
+  border-color: rgba(56, 189, 248, 0.3);
+  border-top: 2px solid #38bdf8;
+  box-shadow: 0 -6px 16px rgba(56, 189, 248, 0.1);
+}
+
+.hm-tab-add {
+  color: #9fb3c8;
+  font-size: 13px;
+}
+
+.hm-composer {
+  position: relative;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 170, 210, 0.16);
+  background: rgba(15, 25, 38, 0.97);
+  box-shadow: 0 -2px 0 rgba(56, 189, 248, 0.08), 0 20px 48px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.hm-ref {
+  margin: 10px 12px 0;
+  min-height: 44px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.012);
+  color: #93a7bd;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.hm-ref:hover,
+.hm-ref.is-over {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: rgba(56, 189, 248, 0.07);
+}
+
+.hm-ref-empty {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+.hm-ref-empty svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.75;
+}
+
+.hm-ref.has-ref {
+  justify-content: flex-start;
+  border-style: solid;
+  border-color: rgba(56, 189, 248, 0.34);
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.hm-ref-preview {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.hm-ref-preview img {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  flex: none;
+}
+
+.hm-ref-state {
+  font-size: 10.5px;
+  color: #8fa4ba;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-ref-remove {
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #93a7bd;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hm-ref-remove:hover {
+  color: #fecdd3;
+  background: rgba(251, 113, 133, 0.14);
+}
+
+.hm-ref-remove svg {
+  width: 12px;
+  height: 12px;
+}
+
+.hm-prompt {
+  position: relative;
+  padding: 8px 40px 22px 14px;
+}
+
+.hm-prompt textarea {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  max-height: 120px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: #dbe7f3;
+  font-size: 12.5px;
+  line-height: 1.75;
+  overflow-y: auto;
+}
+
+.hm-prompt textarea::placeholder {
+  color: #5f7288;
+}
+
+.hm-composer.is-expanded .hm-prompt textarea {
+  max-height: 260px;
+  min-height: 160px;
+}
+
+.hm-count {
+  position: absolute;
+  right: 40px;
+  bottom: 6px;
+  font-size: 9.5px;
+  color: #64778e;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-expand {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: #7f93aa;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.hm-expand:hover {
+  color: #dceaf8;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hm-expand svg {
+  width: 13px;
+  height: 13px;
+}
+
+.hm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 4px 12px 10px;
+}
+
+.hm-actions-left,
+.hm-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hm-chip {
+  height: 28px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 7px;
+  border: 1px solid rgba(120, 170, 210, 0.14);
+  background: rgba(25, 41, 59, 0.82);
+  color: #a9bccf;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.hm-chip:hover {
+  border-color: rgba(96, 165, 250, 0.4);
+  color: #e6f2ff;
+  background: rgba(34, 58, 82, 0.9);
+}
+
+.hm-chip svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  opacity: 0.85;
+}
+
+.hm-chip-accent {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.26);
+  background: rgba(21, 48, 70, 0.78);
+}
+
+.hm-chip.is-on {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.42);
+  background: rgba(56, 189, 248, 0.13);
+}
+
+.hm-chip-model {
+  color: #67e8f9;
+  border-color: rgba(34, 211, 238, 0.26);
+  background: rgba(18, 48, 64, 0.8);
+  font-size: 10.5px;
+}
+
+.hm-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hm-chip:disabled:hover {
+  border-color: rgba(120, 170, 210, 0.14);
+  background: rgba(25, 41, 59, 0.82);
+  color: #a9bccf;
+}
+
+.hm-sq {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid rgba(120, 170, 210, 0.16);
+  background: rgba(25, 41, 59, 0.82);
+  color: #a9bccf;
+  transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+}
+
+.hm-sq:hover {
+  border-color: rgba(96, 165, 250, 0.42);
+  color: #e6f2ff;
+  background: rgba(34, 58, 82, 0.9);
+}
+
+.hm-sq svg {
+  width: 13px;
+  height: 13px;
+}
+
+.hm-stepper {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 7px;
+  border: 1px solid rgba(120, 170, 210, 0.14);
+  background: rgba(25, 41, 59, 0.82);
+}
+
+.hm-stepper button {
+  width: 23px;
+  height: 100%;
+  color: #93a7bd;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.hm-stepper button:hover {
+  color: #e6f2ff;
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.hm-stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: none;
+}
+
+.hm-stepper span {
+  min-width: 16px;
+  text-align: center;
+  color: #dbe7f3;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-send {
+  width: 32px;
+  height: 32px;
+  margin-left: 2px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.95), rgba(29, 78, 216, 0.95));
+  color: #eff8ff;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.34);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+}
+
+.hm-send:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 9px 22px rgba(56, 132, 255, 0.42);
+}
+
+.hm-send:active {
+  transform: translateY(0);
+}
+
+.hm-send:disabled {
+  opacity: 0.62;
+  cursor: default;
+  transform: none;
+}
+
+.hm-send svg {
+  width: 16px;
+  height: 16px;
+}
+
+.hm-send.is-loading {
+  animation: hmPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes hmPulse {
+  0%, 100% { box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3); }
+  50% { box-shadow: 0 6px 26px rgba(56, 189, 248, 0.6); }
+}
+
+/* 比例 / 档位 / 种子菜单 */
+.hm-ratio-menu {
+  width: 246px;
+  padding: 7px;
+  display: none;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.hm-ratio-menu.is-open {
+  display: grid;
+}
+
+.hm-ratio-menu .ratio-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  color: #93a7bd;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.hm-ratio-menu .ratio-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #dceaf8;
+}
+
+.hm-ratio-menu .ratio-btn.is-active {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.36);
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.hm-ratio-menu .ratio-shape {
+  border: 1.4px solid currentColor;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+.hm-ratio-menu .ratio-name {
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-scale-menu {
+  width: 128px;
+}
+
+.hm-seed-menu {
+  width: 212px;
+  padding: 9px;
+  text-align: left;
+}
+
+.hm-seed-menu label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: #7f93aa;
+}
+
+.hm-seed-menu .seed-input {
+  width: 100%;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 16, 26, 0.9);
+  color: #dbe7f3;
+  font-size: 11px;
+  outline: none;
+}
+
+.hm-seed-menu .seed-input:focus {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.hm-seed-menu p {
+  margin: 6px 1px 0;
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: #64778e;
+}
+
+/* ---------- 风格面板 ---------- */
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 62;
+  background: rgba(4, 9, 16, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.sidebar-scrim.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hm-panel {
+  position: fixed;
+  top: 58px;
+  right: 16px;
+  bottom: 124px;
+  z-index: 70;
+  width: 372px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(120, 170, 210, 0.2);
+  background: rgba(15, 26, 40, 0.98);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(6px) scale(0.99);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hm-panel.is-open {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.hm-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hm-panel-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: #e4f0fb;
+}
+
+.hm-panel-head p {
+  margin: 3px 0 0;
+  font-size: 10px;
+  color: #7f93aa;
+}
+
+.hm-panel-head-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hm-panel .model-groups {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 10px 16px;
+  gap: 8px;
+}
+
+.hm-panel .model-item {
+  border-radius: 9px;
+  padding: 6px 7px;
+}
+
+.hm-panel .group-head {
+  padding: 5px 6px;
+}
+
+/* ---------- 我的作品 ---------- */
+.hm-works {
+  position: fixed;
+  top: 46px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  display: none;
+  overflow-y: auto;
+  padding: 26px 32px 40px;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(38, 86, 128, 0.1), transparent 60%),
+    #0a111c;
+}
+
+body[data-view="works"] .hm-works {
+  display: block;
+}
+
+body[data-view="works"] .hm-dock {
+  display: none;
+}
+
+.hm-works-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+}
+
+.hm-works-head h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  color: #e4f0fb;
+}
+
+.hm-works-head p {
+  margin: 5px 0 0;
+  font-size: 10.5px;
+  color: #7f93aa;
+}
+
+.hm-works-head p span {
+  color: #9fb3c8;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-works-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hm-close-works {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.hm-works .works-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+}
+
+.hm-works .works-empty {
+  min-height: 46vh;
+}
+
+.hm-works .works-head {
+  display: none;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 1280px) {
+  .hm-search { width: 150px; }
+  .hm-slider input[type="range"] { width: 64px; }
+}
+
+@media (max-width: 1120px) {
+  .hm-history { display: none; }
+  .hm-text-btn span { display: none; }
+  .hm-text-btn { padding: 0 6px; }
+  .hm-panel { width: 348px; }
+}
+
+@media (max-width: 980px) {
+  .hm-slider { display: none; }
+  .hm-search { width: 132px; }
+  .hm-top { padding: 0 12px; }
+  .hm-canvas { padding: 24px 20px 260px; }
+  .hm-dock { padding: 0 14px 12px; }
+  .hm-actions-right { gap: 5px; }
+  .hm-chip { padding: 0 8px; }
+}
+
+@media (max-width: 820px) {
+  .hm-search { display: none; }
+  .hm-personal span:not(.hm-badge) { display: none; }
+  .hm-actions { gap: 8px; }
+  .hm-actions-left .hm-chip span { display: none; }
+  .hm-actions-left .hm-chip { width: 28px; padding: 0; justify-content: center; }
+  .hm-panel { top: 54px; bottom: 16px; right: 10px; width: calc(100vw - 20px); }
+  .hm-works { padding: 20px 16px 32px; }
+}
+
+@media (max-width: 640px) {
+  .hm-top-right .hm-menu-wrap { display: none; }
+  .hm-top-right { gap: 4px; }
+  .hm-project span { display: none; }
+  .hm-project { padding: 0 8px; }
+  .hm-actions { justify-content: flex-start; }
+  .hm-actions-left { order: 2; width: 100%; }
+  .hm-actions-right { order: 1; width: 100%; justify-content: space-between; }
+  .hm-chip-model { flex: 1; justify-content: center; min-width: 0; overflow: hidden; }
+  .hm-chip-model span { overflow: hidden; text-overflow: ellipsis; }
+  .hm-canvas { padding: 18px 12px 300px; }
+  .hm-works .works-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hm-works-head { flex-direction: column; }
+}
+
+@supports (height: 100dvh) {
+  .hm-canvas,
+  .hm-works {
+    bottom: 0;
+  }
+}
+
+
+  </style>
 </head>
 <body data-view="create">
-  <div class="aurora" aria-hidden="true">
-    <span class="blob b1"></span>
-    <span class="blob b2"></span>
-    <span class="blob b3"></span>
-    <span class="blob b4"></span>
-  </div>
-
-  <header class="topbar">
-    <button class="brand" data-view="create" aria-label="返回创作台">
-      <span class="logo-mark">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 2.3l2.25 6.47L21 11l-6.75 2.23L12 19.7l-2.25-6.47L3 11l6.75-2.23L12 2.3Z" fill="currentColor"/>
-          <circle cx="18.6" cy="5.2" r="1.5" fill="currentColor" opacity=".8"/>
-        </svg>
-      </span>
-      <span class="brand-copy">
-        <span class="brand-name">绘梦</span>
-        <span class="brand-en">DREAMCANVAS</span>
-      </span>
-    </button>
-
-    <nav class="nav-tabs" aria-label="主导航">
-      <button class="nav-tab is-active" data-view="create">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4.2-1 9.1-9.1a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13.5 7.5l3 3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-        <span>创作台</span>
+  <header class="hm-top">
+    <div class="hm-top-left">
+      <button class="hm-pill hm-project" data-view="create" aria-label="返回创作台">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>项目选择</span>
       </button>
-      <button class="nav-tab" data-view="works">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><path d="M5 17l4.4-4.2 3.4 3 2.6-2.4L19 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
-        <span>我的作品</span>
-        <span class="nav-badge" id="worksBadge">0</span>
-      </button>
-    </nav>
 
-    <div class="topbar-right">
-      <div class="engine-pill" id="enginePill" title="当前生图引擎">
-        <span class="engine-dot"></span>
-        <span id="enginePillText">FLUX.1 · 免费</span>
+      <label class="hm-search" for="modelSearch">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.8 15.8L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input id="modelSearch" type="search" placeholder="搜索..." autocomplete="off">
+      </label>
+
+      <div class="hm-slider" title="精细度（FLUX.1 有效）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18l6-6 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="15" r="1.6" fill="currentColor"/></svg>
+        <input type="range" id="stepsRange" min="4" max="12" step="1" value="8" aria-label="精细度">
+        <span class="hm-slider-val" id="stepsLabel">8</span>
       </div>
-      <button class="ghost-icon" id="helpBtn" aria-label="使用指南">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.6v.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>
+
+      <button class="hm-text-btn" id="resetCanvas" title="清空当前画布">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>整理</span>
       </button>
-      <button class="ghost-icon mobile-only" id="modelsToggle" aria-label="选择风格模型">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+
+      <div class="hm-history" aria-hidden="true">
+        <button class="hm-icon-btn" disabled title="暂不可用">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7L4 12l5 5M4 12h9a6 6 0 0 1 6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="hm-icon-btn" disabled title="暂不可用">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7l5 5-5 5M20 12h-9a6 6 0 0 0-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <button class="hm-personal" data-view="works" title="我的作品">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5 17l4.4-4.2 3.4 3 2.6-2.4L19 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>个人空间</span>
+        <span class="hm-badge" id="worksBadge">0</span>
+      </button>
+    </div>
+
+    <div class="hm-top-right">
+      <div class="hm-menu-wrap">
+        <button class="hm-pill hm-select" id="worksSortBtn" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.6V12l3 1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span id="worksSortText">时间筛选</span>
+          <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="hm-menu" id="worksSortMenu" aria-hidden="true">
+          <button data-sort="newest" class="is-active">最新优先</button>
+          <button data-sort="oldest">最早优先</button>
+        </div>
+      </div>
+
+      <div class="hm-menu-wrap">
+        <button class="hm-pill hm-select" id="worksFilterBtn" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span id="worksFilterText">全部显示</span>
+          <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="hm-menu" id="worksFilterMenu" aria-hidden="true">
+          <button data-filter="all" class="is-active">全部显示</button>
+          <button data-filter="free">仅免费</button>
+          <button data-filter="paid">仅付费</button>
+        </div>
+      </div>
+
+      <button class="hm-icon-btn" id="helpBtn" aria-label="使用指南">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.6v.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>
+      </button>
+      <button class="hm-icon-btn" id="apiConfigBtn" aria-label="接入设置">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3.6v2.2M12 18.2v2.2M3.6 12h2.2M18.2 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
     </div>
   </header>
 
-  <div class="shell">
-    <div class="sidebar-scrim" id="sidebarScrim"></div>
+  <main class="hm-canvas" id="view-create" data-canvas>
+    <div class="hm-empty" id="emptyState">
+      <div class="hm-orb" aria-hidden="true">
+        <span class="hm-orb-ring"></span>
+        <span class="hm-orb-core"></span>
+        <span class="hm-orb-star s1">✦</span>
+        <span class="hm-orb-star s2">✧</span>
+      </div>
+      <h3>把想象，画成动漫</h3>
+      <p>上传参考图，或直接描述画面 · 免费生成原图</p>
+    </div>
+    <div class="result-grid hm-grid" id="resultGrid"></div>
+  </main>
 
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-head">
-        <div>
-          <h2>风格模型</h2>
-          <p>按动漫类型分组选择</p>
+  <section class="hm-works" id="view-works">
+    <div class="hm-works-head">
+      <div>
+        <h2>我的作品</h2>
+        <p>保存在本地浏览器 · 共 <span id="worksTotal">0</span> 张，随时查看与下载原图</p>
+      </div>
+      <div class="hm-works-actions">
+        <button class="hm-pill" id="clearWorks">清空作品</button>
+        <button class="hm-pill hm-close-works" data-view="create">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          返回创作台
+        </button>
+      </div>
+    </div>
+    <div class="works-grid" id="worksGrid"></div>
+    <div class="works-empty" id="worksEmpty">
+      <div class="works-empty-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><path d="M5 17l4.4-4.2 3.4 3 2.6-2.4L19 17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>还没有作品</h3>
+      <p>去创作台生成第一张动漫图片吧</p>
+      <button class="primary-btn" data-view="create">开始创作</button>
+    </div>
+  </section>
+
+  <div class="hm-dock">
+    <div class="hm-tabs" id="promptTabs">
+      <button class="hm-tab is-active" data-tab="0">1</button>
+      <button class="hm-tab" data-tab="1">2</button>
+      <button class="hm-tab hm-tab-add" id="addPromptTab" aria-label="新增描述">+</button>
+    </div>
+
+    <div class="hm-composer" id="composer">
+      <div class="hm-ref" id="refDrop" role="button" tabindex="0" aria-label="上传或拖入参考图片">
+        <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp" hidden>
+        <div class="hm-ref-empty" id="refEmpty">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="13" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5.5 16.5l4.2-4 3.2 2.8 2.5-2.3 3.1 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <span>上传参考图，参考图片大小不超过 10MB。</span>
         </div>
-        <span class="count-pill" id="modelCount">16 款</span>
+        <div class="hm-ref-preview" id="refPreview" hidden>
+          <img id="refImage" alt="参考图预览">
+          <span class="hm-ref-state" id="refState">未添加</span>
+          <button class="hm-ref-remove" id="refRemove" type="button" aria-label="移除参考图">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
       </div>
 
-      <div class="search-box">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.7" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M16 16l4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        <input id="modelSearch" type="search" placeholder="搜索风格，如 水墨 / Q版" autocomplete="off">
+      <div class="hm-prompt prompt-wrap">
+        <textarea id="promptInput" maxlength="1800" placeholder="描述你想生成的画面..."></textarea>
+        <span class="hm-count" id="charCount">0 / 1800</span>
+        <button class="hm-expand" id="expandPrompt" aria-label="展开输入区">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
 
-      <div class="model-groups" id="modelGroups"></div>
-
-      <div class="sidebar-foot">
-        <div class="mini-promo">
-          <span class="promo-spark">✦</span>
-          <div>
-            <strong>免费 · 无水印</strong>
-            <p>FLUX.1 云端算力<br>生成图片可直接下载</p>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <main class="view view-create is-active" id="view-create">
-      <div class="stage">
-        <div class="stage-head">
-          <div class="stage-title">
-            <span class="live-dot"></span>
-            <h2 id="stageModelName">星野动漫</h2>
-            <span class="stage-tag" id="stageModelTag">二次元动漫</span>
-          </div>
-          <div class="stage-meta">
-            <span id="queueText">空闲</span>
-            <span class="dot-sep"></span>
-            <span id="stageResultCount">0 张作品</span>
-          </div>
-        </div>
-
-        <div class="canvas" id="canvas">
-          <div class="empty-state" id="emptyState">
-            <div class="orb-stage" aria-hidden="true">
-              <span class="orb-ring ring-1"></span>
-              <span class="orb-ring ring-2"></span>
-              <span class="orb-wrap"><span class="orb"></span><span class="orb-core"></span></span>
-              <span class="orb-star st1">✦</span>
-              <span class="orb-star st2">✦</span>
-              <span class="orb-star st3">✧</span>
-              <span class="orb-star st4">✦</span>
-            </div>
-            <h3>把想象，画成动漫</h3>
-            <p>选择一种风格，描述你脑海里的画面<br>免费生成，原图一键下载</p>
-          </div>
-
-          <div class="result-grid" id="resultGrid"></div>
-        </div>
-      </div>
-    </main>
-
-    <section class="view view-works" id="view-works">
-      <div class="works-head">
-        <div>
-          <h2>我的作品</h2>
-          <p>保存在本地浏览器 · 随时查看与下载原图</p>
-        </div>
-        <button class="subtle-btn" id="clearWorks">清空作品</button>
-      </div>
-      <div class="works-grid" id="worksGrid"></div>
-      <div class="works-empty" id="worksEmpty">
-        <div class="works-empty-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><path d="M5 17l4.4-4.2 3.4 3 2.6-2.4L19 17" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-        </div>
-        <h3>还没有作品</h3>
-        <p>去创作台生成第一张动漫图片吧</p>
-        <button class="primary-btn" data-view="create">开始创作</button>
-      </div>
-    </section>
-
-    <aside class="composer">
-      <div class="panel-head">
-        <div>
-          <h2>创作参数</h2>
-          <p id="composerEngineNote">FLUX.1 · 免费算力</p>
-        </div>
-        <span class="beta-tag" id="planTag">FREE</span>
-      </div>
-
-      <div class="composer-body">
-        <div class="control">
-          <div class="control-head">
-            <label for="engineSelect">生图模型</label>
-            <button class="text-btn" id="apiConfigBtn">接入设置</button>
-          </div>
-          <div class="engine-select">
-            <select id="engineSelect" aria-label="选择生图模型">
-              <option value="flux">FLUX.1 · 免费（无需密钥）</option>
-              <option value="gpt-image">GPT-image · RayinAPI</option>
-              <option value="banana">Nano Banana · RayinAPI</option>
-            </select>
-            <svg class="engine-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <p class="engine-note" id="engineNote">免费通道，无需配置即可生成</p>
-        </div>
-
-        <div class="control">
-          <div class="control-head">
-            <label for="promptInput">画面描述</label>
-            <button class="text-btn" id="inspireBtn">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.7 5L19 9.7l-5.3 1.8L12 17l-1.7-5.5L5 9.7l5.3-1.7L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" fill="currentColor" opacity=".8"/></svg>
-              灵感
-            </button>
-          </div>
-          <div class="prompt-wrap">
-            <textarea id="promptInput" maxlength="800" placeholder="例如：银发少女站在樱花树下，水手服，阳光穿过花瓣，日系动漫赛璐璐风格"></textarea>
-            <div class="prompt-foot">
-              <span id="charCount">0 / 800</span>
-              <span class="shortcut"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
-            </div>
-          </div>
-        </div>
-
-        <div class="control ref-control">
-          <div class="control-head">
-            <label>参考图 · 图生图</label>
-            <span class="control-value" id="refState">未添加</span>
-          </div>
-          <div class="ref-drop" id="refDrop" role="button" tabindex="0" aria-label="上传或拖入参考图片">
-            <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp" hidden>
-            <div class="ref-empty" id="refEmpty">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5m0 0L8 9m4-4l4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 16v2.2c0 .99.8 1.8 1.8 1.8h10.4c1 0 1.8-.81 1.8-1.8V16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-              <strong>上传或拖入参考图</strong>
-              <span>以图中主体为参考生成新画面</span>
-            </div>
-            <div class="ref-preview" id="refPreview" hidden>
-              <img id="refImage" alt="参考图预览">
-              <button class="ref-remove" id="refRemove" type="button" aria-label="移除参考图">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              </button>
-            </div>
-          </div>
-          <p class="engine-note" id="refNote">仅 GPT-image 引擎支持参考图（图生图）</p>
-        </div>
-
-        <div class="control">
-          <div class="control-head">
-            <label>画面比例</label>
-            <span class="control-value" id="ratioLabel">1:1 · 1024×1024</span>
-          </div>
-          <div class="ratio-grid" id="ratioPicker"></div>
-          <div class="segmented scale-picker" id="scalePicker" title="GPT-image 引擎仅支持固定三档尺寸">
-            <button data-scale="1k" class="is-active">标清 1K</button>
-            <button data-scale="2k">高清 2K</button>
-            <button data-scale="4k">超清 4K</button>
-          </div>
-        </div>
-
-        <div class="split-controls">
-          <div class="control">
-            <label>生成张数</label>
-            <div class="segmented" id="countPicker">
-              <button data-count="1" class="is-active">1</button>
-              <button data-count="2">2</button>
-              <button data-count="4">4</button>
-            </div>
-          </div>
-          <div class="control seed-control">
-            <div class="control-head">
-              <label for="seedInput">种子</label>
-              <button class="icon-mini" id="seedRandom" aria-label="随机种子">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-            <input class="seed-input" id="seedInput" type="number" min="1" max="2147483647" inputmode="numeric">
-          </div>
-        </div>
-
-        <div class="control steps-control">
-          <div class="control-head">
-            <label for="stepsRange">精细度</label>
-            <span class="control-value" id="stepsLabel">标准 · 8 步</span>
-          </div>
-          <input type="range" id="stepsRange" min="4" max="12" step="1" value="8">
-          <div class="range-labels"><span>极速</span><span>精细</span></div>
-        </div>
-
-        <div class="toggle-row translate-row">
-          <div class="toggle-copy">
-            <strong>中文智能英译</strong>
-            <small>自动翻译描述，画面更准确</small>
-          </div>
-          <button class="switch is-on" id="translateToggle" role="switch" aria-checked="true" aria-label="中文智能英译">
-            <span></span>
+      <div class="hm-actions">
+        <div class="hm-actions-left">
+          <button class="hm-sq" id="refPickBtn" title="上传参考图" aria-label="上传参考图">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+          </button>
+          <button class="hm-chip hm-chip-accent" data-view="works" title="资产库">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h16M6.5 4.5h11L20 8.5v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9l2.5-4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13.5h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>资产库</span>
+          </button>
+          <button class="hm-sq" id="seedRandom" title="换一个随机种子" aria-label="随机种子">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="hm-chip hm-chip-accent" id="modelsToggle" title="选择风格模型">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.1 5.9L20 11l-5.9 2.1L12 19l-2.1-5.9L4 11l5.9-2.1L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span id="styleChipText">风格</span>
+          </button>
+          <button class="hm-chip" id="inspireBtn" title="随机注入一条灵感描述">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/><circle cx="15" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="15" r="1.2" fill="currentColor"/></svg>
+            <span>随机</span>
+          </button>
+          <button class="hm-chip is-on" id="translateToggle" role="switch" aria-checked="true" title="中文智能英译">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h8M9 4v2M11 8c0 3.2-2.4 5.6-6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 11c1.2 2 2.8 3.4 5 4.4M13.5 20l3.6-9 3.6 9M14.8 17.2h4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>中文</span>
           </button>
         </div>
 
-        <div class="notice">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 10.5v5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1" fill="currentColor"/></svg>
-          <p id="composerNotice">免费通道 · 无水印 · 生成后可直接下载原图</p>
+        <div class="hm-actions-right">
+          <div class="hm-menu-wrap">
+            <button class="hm-chip" id="engineBtn" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l4-1 9.2-9.2a2 2 0 0 0-2.8-2.8L5 13.2 4 17Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.5 18.5h13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <span>生图</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="engineMenu" aria-hidden="true">
+              <button data-engine="flux" class="is-active">FLUX.1 · 免费</button>
+              <button data-engine="gpt-image">GPT-image · RayinAPI</button>
+              <button data-engine="banana">Nano Banana · RayinAPI</button>
+            </div>
+          </div>
+
+          <button class="hm-chip hm-chip-model" id="engineModelBtn" title="当前生图模型">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l7.5 4.3v8.4L12 20.5l-7.5-4.3V7.8L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12l7.5-4.2M12 12v8.5M12 12L4.5 7.8" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+            <span id="enginePillText">FLUX.1 · 免费</span>
+          </button>
+
+          <div class="hm-menu-wrap">
+            <button class="hm-chip" id="ratioBtn" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span id="ratioLabel">1:1</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-ratio-menu" id="ratioPicker" aria-hidden="true"></div>
+          </div>
+
+          <div class="hm-menu-wrap">
+            <button class="hm-chip" id="scaleBtn" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+              <span id="scaleChipText">2K</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-scale-menu" id="scalePicker" aria-hidden="true">
+              <button data-scale="1k" class="is-active">标清 1K</button>
+              <button data-scale="2k">高清 2K</button>
+              <button data-scale="4k">超清 4K</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap">
+            <button class="hm-chip" id="seedBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="seedChipText">自动</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-seed-menu" id="seedPop" aria-hidden="true">
+              <label for="seedInput">种子</label>
+              <input class="seed-input" id="seedInput" type="number" min="1" max="2147483647" inputmode="numeric">
+              <p>留空或点击旋转按钮使用随机种子</p>
+            </div>
+          </div>
+
+          <div class="hm-stepper" id="countPicker">
+            <button data-step="-1" aria-label="减少张数">−</button>
+            <span id="countValue">1</span>
+            <button data-step="1" aria-label="增加张数">+</button>
+          </div>
+
+          <button class="hm-send" id="generateBtn" aria-label="开始生成">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="gen-text" hidden><strong>开始生成</strong><small id="genHint">免费 · 约 10 秒</small></span>
+          </button>
         </div>
       </div>
 
-      <div class="composer-footer">
-        <button class="generate-btn" id="generateBtn">
-          <span class="gen-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M18.5 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z" fill="currentColor"/></svg>
-          </span>
-          <span class="gen-text"><strong>开始生成</strong><small id="genHint">免费 · 约 10 秒</small></span>
-          <span class="gen-shine" aria-hidden="true"></span>
+      <select id="engineSelect" class="hm-visually-hidden" aria-label="选择生图模型" tabindex="-1">
+        <option value="flux">FLUX.1 · 免费（无需密钥）</option>
+        <option value="gpt-image">GPT-image · RayinAPI</option>
+        <option value="banana">Nano Banana · RayinAPI</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="hm-meta" hidden>
+    <span id="stageModelName">星野动漫</span>
+    <span id="stageModelTag">二次元动漫</span>
+    <span id="stageResultCount">0 张作品</span>
+    <span id="queueText">空闲</span>
+    <span id="composerEngineNote">FLUX.1 · 免费算力</span>
+    <span id="planTag">FREE</span>
+    <p id="composerNotice">免费通道 · 无水印 · 生成后可直接下载原图</p>
+    <p id="engineNote">免费通道，无需配置即可生成</p>
+    <p id="refNote">仅 GPT-image 引擎支持参考图（图生图）</p>
+    <span id="worksTotalHidden">0</span>
+  </div>
+
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+  <aside class="hm-panel" id="sidebar" aria-hidden="true">
+    <div class="hm-panel-head">
+      <div>
+        <h2>风格模型</h2>
+        <p>按动漫类型分组选择</p>
+      </div>
+      <div class="hm-panel-head-right">
+        <span class="count-pill" id="modelCount">16 款</span>
+        <button class="hm-icon-btn" id="sidebarClose" aria-label="关闭风格面板">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </button>
       </div>
-    </aside>
-  </div>
+    </div>
+    <div class="model-groups" id="modelGroups"></div>
+  </aside>
 
   <div class="lightbox" id="lightbox" aria-hidden="true">
     <button class="lb-close" id="lbClose" aria-label="关闭">
@@ -3178,18 +4337,18 @@ body[data-engine="banana"] .split-controls {
       <div class="guide-list">
         <div class="guide-item">
           <span class="guide-index">01</span>
-          <div><strong>选择风格模型</strong><p>左侧 4 组、16 款动漫风格，涵盖赛璐璐、国风、机甲与电影光影。</p></div>
+          <div><strong>选择风格模型</strong><p>点击底部「风格」，4 组 16 款动漫风格，涵盖赛璐璐、国风、机甲与电影光影。</p></div>
         </div>
         <div class="guide-item">
           <span class="guide-index">02</span>
-          <div><strong>写下画面描述</strong><p>中文也可以。开启智能英译后，描述会自动转为更精准的英文提示词。</p></div>
+          <div><strong>写下画面描述</strong><p>中文也可以。开启「中文」智能英译后，描述会自动转为更精准的英文提示词。</p></div>
         </div>
         <div class="guide-item">
           <span class="guide-index">03</span>
-          <div><strong>生成并下载原图</strong><p>生成完成后点击下载按钮，即可保存原图；作品会同步到「我的作品」。</p></div>
+          <div><strong>生成并下载原图</strong><p>生成完成后点击下载按钮保存原图；作品会同步到右上「个人空间」。</p></div>
         </div>
       </div>
-      <p class="guide-note">免费算力由 FLUX.1 提供，偶尔可能需要排队。也可在「接入设置」填入 RayinAPI 密钥，切换 GPT-image / Nano Banana。请勿生成违法违规内容。</p>
+      <p class="guide-note">免费算力由 FLUX.1 提供，偶尔可能需要排队。也可在右上齿轮「接入设置」填入 RayinAPI 密钥，切换 GPT-image / Nano Banana；上传参考图即可图生图。请勿生成违法违规内容。</p>
       <button class="primary-btn wide" id="helpDone">开始创作</button>
     </div>
   </div>
@@ -3222,7 +4381,7 @@ body[data-engine="banana"] .split-controls {
         </label>
       </div>
 
-      <p class="api-hint" id="apiHint">保存后即可在上方面板下拉切换模型。</p>
+      <p class="api-hint" id="apiHint">保存后即可在底部「生图」菜单切换模型。</p>
 
       <div class="api-actions">
         <button class="subtle-btn" id="fetchModelsBtn">读取账号模型</button>
@@ -3595,7 +4754,11 @@ const state = {
   activeItem: null,
   collapsed: new Set(),
   translationCache: new Map(),
-  refImage: null
+  refImage: null,
+  prompts: ['', ''],
+  activePrompt: 0,
+  worksSort: 'newest',
+  worksFilter: 'all'
 };
 
 /* ---------------- DOM ---------------- */
@@ -3611,7 +4774,7 @@ function bindEls() {
   els.queueText = document.getElementById('queueText');
   els.emptyState = document.getElementById('emptyState');
   els.resultGrid = document.getElementById('resultGrid');
-  els.canvas = document.getElementById('canvas');
+  els.viewCreate = document.getElementById('view-create');
   els.promptInput = document.getElementById('promptInput');
   els.charCount = document.getElementById('charCount');
   els.inspireBtn = document.getElementById('inspireBtn');
@@ -3669,6 +4832,32 @@ function bindEls() {
   els.apiHint = document.getElementById('apiHint');
   els.apiSave = document.getElementById('apiSave');
   els.fetchModelsBtn = document.getElementById('fetchModelsBtn');
+
+  /* V2 布局新增控件 */
+  els.composer = document.getElementById('composer');
+  els.promptTabs = document.getElementById('promptTabs');
+  els.addPromptTab = document.getElementById('addPromptTab');
+  els.expandPrompt = document.getElementById('expandPrompt');
+  els.refPickBtn = document.getElementById('refPickBtn');
+  els.engineBtn = document.getElementById('engineBtn');
+  els.engineMenu = document.getElementById('engineMenu');
+  els.engineModelBtn = document.getElementById('engineModelBtn');
+  els.ratioBtn = document.getElementById('ratioBtn');
+  els.scaleBtn = document.getElementById('scaleBtn');
+  els.scaleChipText = document.getElementById('scaleChipText');
+  els.seedBtn = document.getElementById('seedBtn');
+  els.seedPop = document.getElementById('seedPop');
+  els.countValue = document.getElementById('countValue');
+  els.styleChipText = document.getElementById('styleChipText');
+  els.resetCanvas = document.getElementById('resetCanvas');
+  els.sidebarClose = document.getElementById('sidebarClose');
+  els.worksSortBtn = document.getElementById('worksSortBtn');
+  els.worksSortMenu = document.getElementById('worksSortMenu');
+  els.worksSortText = document.getElementById('worksSortText');
+  els.worksFilterBtn = document.getElementById('worksFilterBtn');
+  els.worksFilterMenu = document.getElementById('worksFilterMenu');
+  els.worksFilterText = document.getElementById('worksFilterText');
+  els.worksTotal = document.getElementById('worksTotal');
 }
 
 /* ---------------- 渲染 ---------------- */
@@ -3724,27 +4913,44 @@ function renderRatios() {
 
 function updateRatioLabel() {
   const size = currentSize();
-  if (state.engine !== 'flux') {
-    /* 付费引擎尺寸固定三档，显示实际生效尺寸 */
-    els.ratioLabel.textContent = size.ratio.id + ' · ' + gptSizeFor({ ratioId: size.ratio.id }).replace('x', '×');
-    return;
+  const detail = state.engine !== 'flux'
+    ? gptSizeFor({ ratioId: size.ratio.id }).replace('x', '×')
+    : size.scale.label + ' · ' + size.w + '×' + size.h;
+  els.ratioLabel.textContent = size.ratio.id;
+  if (els.ratioBtn) els.ratioBtn.title = '画面比例 ' + size.ratio.id + ' · ' + detail;
+}
+
+function filteredWorks() {
+  let list = state.works.slice();
+  if (state.worksFilter === 'free') {
+    list = list.filter(function (w) { return (w.engine || 'flux') === 'flux'; });
+  } else if (state.worksFilter === 'paid') {
+    list = list.filter(function (w) { return (w.engine || 'flux') !== 'flux'; });
   }
-  els.ratioLabel.textContent = size.ratio.id + ' · ' + size.scale.label + ' · ' + size.w + '×' + size.h;
+  list.sort(function (a, b) {
+    const da = a.createdAt || 0;
+    const db = b.createdAt || 0;
+    return state.worksSort === 'oldest' ? da - db : db - da;
+  });
+  return list;
 }
 
 function renderWorks() {
-  const count = state.works.length;
-  els.worksBadge.textContent = String(count);
-  els.stageResultCount.textContent = count + ' 张作品';
+  const total = state.works.length;
+  els.worksBadge.textContent = String(total);
+  if (els.worksTotal) els.worksTotal.textContent = String(total);
+  els.stageResultCount.textContent = total + ' 张作品';
 
-  if (!count) {
+  const list = filteredWorks();
+
+  if (!list.length) {
     els.worksGrid.innerHTML = '';
     els.worksEmpty.style.display = 'flex';
     return;
   }
 
   els.worksEmpty.style.display = 'none';
-  els.worksGrid.innerHTML = state.works.map(function (work) {
+  els.worksGrid.innerHTML = list.map(function (work) {
     const src = work.thumb || work.url;
     return '<article class="work-card" data-work="' + work.id + '">' +
       '<img src="' + esc(src) + '" alt="' + esc(work.prompt) + '" loading="lazy">' +
@@ -3762,24 +4968,59 @@ function syncModelUI() {
   const model = getModel(state.modelId);
   els.stageModelName.textContent = model.name;
   els.stageModelTag.textContent = model.groupName;
-  els.promptInput.placeholder = '例如：' + model.example;
+  els.promptInput.placeholder = '描述你想生成的画面...';
+  if (els.styleChipText) els.styleChipText.textContent = model.name;
+  if (els.modelsToggle) els.modelsToggle.title = '当前风格：' + model.name + ' · 点击切换';
   document.querySelectorAll('.model-item').forEach(function (el) {
     el.classList.toggle('is-active', el.dataset.model === state.modelId);
   });
+}
+
+const COUNT_OPTIONS = [1, 2, 4];
+
+/* 描述多标签：1 / 2 / +，每个标签保存一份草稿 */
+function renderPromptTabs() {
+  if (!els.promptTabs || !els.addPromptTab) return;
+  els.promptTabs.querySelectorAll('.hm-tab[data-tab]').forEach(function (node) { node.remove(); });
+  state.prompts.forEach(function (_, index) {
+    const btn = document.createElement('button');
+    btn.className = 'hm-tab' + (index === state.activePrompt ? ' is-active' : '');
+    btn.dataset.tab = String(index);
+    btn.textContent = String(index + 1);
+    btn.setAttribute('aria-label', '描述 ' + (index + 1));
+    els.promptTabs.insertBefore(btn, els.addPromptTab);
+  });
+  els.addPromptTab.hidden = state.prompts.length >= 5;
+}
+
+function switchPromptTab(index) {
+  if (index === state.activePrompt) return;
+  state.prompts[state.activePrompt] = els.promptInput.value;
+  if (typeof state.prompts[index] !== 'string') state.prompts[index] = '';
+  state.activePrompt = index;
+  els.promptInput.value = state.prompts[index];
+  renderPromptTabs();
+  updateCharCount();
 }
 
 function syncSettingsUI() {
   els.seedInput.value = String(state.seed);
   els.stepsRange.value = String(state.steps);
   updateStepsUI();
-  els.countPicker.querySelectorAll('button').forEach(function (btn) {
-    btn.classList.toggle('is-active', Number(btn.dataset.count) === state.count);
+  const countIndex = COUNT_OPTIONS.indexOf(state.count);
+  if (els.countValue) els.countValue.textContent = String(state.count);
+  els.countPicker.querySelectorAll('[data-step]').forEach(function (btn) {
+    const step = Number(btn.dataset.step);
+    btn.disabled = step < 0 ? countIndex <= 0 : countIndex >= COUNT_OPTIONS.length - 1;
   });
   els.scalePicker.querySelectorAll('button').forEach(function (btn) {
     btn.classList.toggle('is-active', btn.dataset.scale === state.scale);
   });
+  if (els.scaleChipText) els.scaleChipText.textContent = state.scale.toUpperCase();
+  if (els.seedBtn) els.seedBtn.title = '当前种子 #' + state.seed + '，点击手动指定';
   els.translateToggle.classList.toggle('is-on', state.translate);
   els.translateToggle.setAttribute('aria-checked', state.translate ? 'true' : 'false');
+  renderPromptTabs();
   renderRatios();
   syncModelUI();
   syncEngineUI();
@@ -3819,10 +5060,22 @@ function syncEngineUI() {
 
   updateRatioLabel();
   syncRefNote();
+
+  if (els.engineMenu) {
+    els.engineMenu.querySelectorAll('[data-engine]').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.dataset.engine === state.engine);
+    });
+  }
+  if (els.engineModelBtn) {
+    els.engineModelBtn.title = meta.label + (meta.free ? ' · 免费通道' : ' · RayinAPI 按量计费');
+  }
+  if (els.scaleBtn) {
+    els.scaleBtn.title = meta.free ? '生成清晰度' : 'GPT-image 固定三档尺寸，清晰度由比例决定';
+  }
 }
 
 /* ---------------- 参考图（图生图） ---------------- */
-const REF_MAX_BYTES = 8 * 1024 * 1024;
+const REF_MAX_BYTES = 10 * 1024 * 1024;
 const REF_MAX_SIDE = 1280;
 
 function syncRefNote() {
@@ -3889,7 +5142,7 @@ async function pickRefFile(file) {
     return;
   }
   if (file.size > REF_MAX_BYTES) {
-    toast('参考图不能超过 8MB', 'error');
+    toast('参考图不能超过 10MB', 'error');
     return;
   }
 
@@ -3929,15 +5182,16 @@ async function pickRefFile(file) {
 function updateStepsUI() {
   const value = state.steps;
   const label = value <= 5 ? '极速' : value <= 8 ? '标准' : '精细';
-  els.stepsLabel.textContent = label + ' · ' + value + ' 步';
+  els.stepsLabel.textContent = String(value);
+  els.stepsRange.title = '精细度：' + label + ' · ' + value + ' 步';
   const p = ((value - 4) / 8) * 100;
   els.stepsRange.style.setProperty('--p', p + '%');
 }
 
 function updateCharCount() {
   const length = els.promptInput.value.length;
-  els.charCount.textContent = length + ' / 800';
-  els.charCount.style.color = length > 760 ? '#fda4af' : '';
+  els.charCount.textContent = length + ' / 1800';
+  els.charCount.style.color = length > 1740 ? '#fda4af' : '';
 }
 
 function persistPrefs() {
@@ -3976,12 +5230,35 @@ function switchView(view) {
 
 function openSidebar() {
   els.sidebar.classList.add('is-open');
+  els.sidebar.setAttribute('aria-hidden', 'false');
   els.sidebarScrim.classList.add('is-visible');
 }
 
 function closeSidebar() {
   els.sidebar.classList.remove('is-open');
+  els.sidebar.setAttribute('aria-hidden', 'true');
   els.sidebarScrim.classList.remove('is-visible');
+}
+
+/* V2 菜单：生图 / 比例 / 档位 / 种子 / 作品筛选 */
+function closeAllMenus() {
+  document.querySelectorAll('.hm-menu.is-open').forEach(function (menu) {
+    menu.classList.remove('is-open');
+    menu.setAttribute('aria-hidden', 'true');
+  });
+  document.querySelectorAll('[aria-haspopup]').forEach(function (btn) {
+    btn.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function toggleMenu(menu, btn) {
+  if (!menu) return;
+  const willOpen = !menu.classList.contains('is-open');
+  closeAllMenus();
+  if (!willOpen) return;
+  menu.classList.add('is-open');
+  menu.setAttribute('aria-hidden', 'false');
+  if (btn) btn.setAttribute('aria-expanded', 'true');
 }
 
 /* ---------------- 模型选择 ---------------- */
@@ -5044,6 +6321,75 @@ function bindEvents() {
 
   els.modelsToggle.addEventListener('click', openSidebar);
   els.sidebarScrim.addEventListener('click', closeSidebar);
+  if (els.sidebarClose) els.sidebarClose.addEventListener('click', closeSidebar);
+
+  if (els.refPickBtn) {
+    els.refPickBtn.addEventListener('click', function () { els.refInput.click(); });
+  }
+
+  if (els.promptTabs) {
+    els.promptTabs.addEventListener('click', function (event) {
+      const addBtn = event.target.closest('#addPromptTab');
+      if (addBtn) {
+        if (state.prompts.length >= 5) return;
+        state.prompts[state.activePrompt] = els.promptInput.value;
+        state.prompts.push('');
+        state.activePrompt = state.prompts.length - 1;
+        els.promptInput.value = '';
+        renderPromptTabs();
+        updateCharCount();
+        els.promptInput.focus();
+        return;
+      }
+      const tab = event.target.closest('[data-tab]');
+      if (tab) switchPromptTab(Number(tab.dataset.tab));
+    });
+  }
+
+  if (els.expandPrompt) {
+    els.expandPrompt.addEventListener('click', function () {
+      const expanded = els.composer.classList.toggle('is-expanded');
+      els.expandPrompt.setAttribute('aria-pressed', expanded ? 'true' : 'false');
+    });
+  }
+
+  if (els.resetCanvas) {
+    els.resetCanvas.addEventListener('click', function () {
+      state.jobs.clear();
+      els.resultGrid.innerHTML = '';
+      els.emptyState.style.display = 'flex';
+      els.queueText.textContent = '空闲';
+      toast('画布已清空', 'info');
+    });
+  }
+
+  /* 通用下拉：按钮 + 同容器内的 .hm-menu */
+  document.addEventListener('click', function (event) {
+    const trigger = event.target.closest('.hm-menu-wrap > button[aria-haspopup]');
+    if (trigger) {
+      const menu = trigger.parentElement.querySelector('.hm-menu');
+      toggleMenu(menu, trigger);
+      event.stopPropagation();
+      return;
+    }
+    if (!event.target.closest('.hm-menu')) closeAllMenus();
+  });
+
+  if (els.engineModelBtn) {
+    els.engineModelBtn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      toggleMenu(els.engineMenu, els.engineBtn);
+    });
+  }
+  if (els.engineMenu) {
+    els.engineMenu.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-engine]');
+      if (!btn || !ENGINE_META[btn.dataset.engine]) return;
+      els.engineSelect.value = btn.dataset.engine;
+      els.engineSelect.dispatchEvent(new Event('change'));
+      closeAllMenus();
+    });
+  }
 
   els.engineSelect.addEventListener('change', function () {
     const value = els.engineSelect.value;
@@ -5067,7 +6413,10 @@ function bindEvents() {
     if (event.target === els.apiModal) closeApiModal();
   });
 
+  els.modelSearch.addEventListener('focus', openSidebar);
+
   els.modelSearch.addEventListener('input', function (event) {
+    openSidebar();
     renderModels(event.target.value);
   });
 
@@ -5154,25 +6503,37 @@ function bindEvents() {
     });
     updateRatioLabel();
     persistPrefs();
+    closeAllMenus();
   });
 
   els.scalePicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-scale]');
-    if (!btn || state.engine !== 'flux') return;
+    if (!btn) return;
+    if (state.engine !== 'flux') {
+      toast('GPT-image 使用固定三档尺寸，清晰度由比例决定', 'info');
+      closeAllMenus();
+      return;
+    }
     state.scale = btn.dataset.scale;
     els.scalePicker.querySelectorAll('button').forEach(function (el) {
       el.classList.toggle('is-active', el.dataset.scale === state.scale);
     });
     updateRatioLabel();
     persistPrefs();
+    syncSettingsUI();
+    closeAllMenus();
   });
 
   els.countPicker.addEventListener('click', function (event) {
-    const btn = event.target.closest('[data-count]');
-    if (!btn) return;
-    state.count = Number(btn.dataset.count);
-    els.countPicker.querySelectorAll('button').forEach(function (el) {
-      el.classList.toggle('is-active', Number(el.dataset.count) === state.count);
+    const btn = event.target.closest('[data-step]');
+    if (!btn || btn.disabled) return;
+    const next = COUNT_OPTIONS.indexOf(state.count) + Number(btn.dataset.step);
+    state.count = COUNT_OPTIONS[clamp(next, 0, COUNT_OPTIONS.length - 1)];
+    if (els.countValue) els.countValue.textContent = String(state.count);
+    els.countPicker.querySelectorAll('[data-step]').forEach(function (el) {
+      const step = Number(el.dataset.step);
+      const index = COUNT_OPTIONS.indexOf(state.count);
+      el.disabled = step < 0 ? index <= 0 : index >= COUNT_OPTIONS.length - 1;
     });
     persistPrefs();
   });
@@ -5180,6 +6541,7 @@ function bindEvents() {
   els.seedRandom.addEventListener('click', function () {
     state.seed = randomSeed();
     els.seedInput.value = String(state.seed);
+    if (els.seedBtn) els.seedBtn.title = '当前种子 #' + state.seed;
     persistPrefs();
     toast('已换一个随机种子', 'info');
   });
@@ -5187,6 +6549,7 @@ function bindEvents() {
   els.seedInput.addEventListener('change', function () {
     state.seed = clamp(Number(els.seedInput.value) || randomSeed(), 1, 2147483647);
     els.seedInput.value = String(state.seed);
+    if (els.seedBtn) els.seedBtn.title = '当前种子 #' + state.seed;
     persistPrefs();
   });
 
@@ -5256,6 +6619,37 @@ function bindEvents() {
     toast('已清空作品', 'info');
   });
 
+  if (els.worksSortMenu) {
+    els.worksSortMenu.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-sort]');
+      if (!btn) return;
+      state.worksSort = btn.dataset.sort;
+      els.worksSortMenu.querySelectorAll('[data-sort]').forEach(function (el) {
+        el.classList.toggle('is-active', el.dataset.sort === state.worksSort);
+      });
+      renderWorks();
+      closeAllMenus();
+      switchView('works');
+    });
+  }
+
+  if (els.worksFilterMenu) {
+    els.worksFilterMenu.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-filter]');
+      if (!btn) return;
+      state.worksFilter = btn.dataset.filter;
+      els.worksFilterMenu.querySelectorAll('[data-filter]').forEach(function (el) {
+        el.classList.toggle('is-active', el.dataset.filter === state.worksFilter);
+      });
+      if (els.worksFilterText) {
+        els.worksFilterText.textContent = btn.textContent;
+      }
+      renderWorks();
+      closeAllMenus();
+      switchView('works');
+    });
+  }
+
   els.lbClose.addEventListener('click', closeLightbox);
   els.lightbox.addEventListener('click', function (event) {
     if (event.target === els.lightbox) closeLightbox();
@@ -5292,6 +6686,7 @@ function bindEvents() {
       els.helpModal.setAttribute('aria-hidden', 'true');
       closeApiModal();
       closeSidebar();
+      closeAllMenus();
     }
 
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
@@ -5320,6 +6715,6 @@ function boot() {
 
 boot();
 
-</script>
+  </script>
 </body>
 </html>
