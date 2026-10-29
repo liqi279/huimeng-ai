@@ -169,34 +169,34 @@ async function mapLimited(items, limit, task) {
   return results;
 }
 
-/* 下载远端图片并保存到本地 media 目录，返回同源 URL（避免跨域 403 / 防盗链） */
-async function saveRemoteImage(url) {
-  if (!url || typeof url !== 'string') return url;
-  if (url.startsWith('data:') || url.startsWith('/uploads/')) return url;
+/* 验证远端 URL 是否返回有效图片，并决定是否需要下载本地代理
+ * 策略：先 HEAD/GET 检查 content-type
+ *   - 是图片：直接返回原 URL（Pollinations 等支持 CORS 的 CDN 前端可直连）
+ *   - 非图片：报错（Pollinations 限流 "Free limit reached"）
+ * 兼容：未来若接入不支持 CORS 的图源，可在这里加下载代理逻辑 */
+async function validateImageUrl(url) {
+  if (!url || typeof url !== 'string') return { ok: false, url: '' };
+  if (url.startsWith('data:') || url.startsWith('/uploads/')) return { ok: true, url };
 
   let res;
   try {
-    res = await fetchWithTimeout(url, { headers: { Accept: 'image/*' } }, 60000);
+    res = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: { Accept: 'image/*, */*;q=0.8' },
+    }, 60000);
   } catch (err) {
-    return url; /* 下载失败则保留原 URL，让前端尝试直连 */
+    return { ok: false, url, reason: err.message };
   }
-  if (!res.ok) return url;
+  if (!res.ok) return { ok: false, url, reason: `HTTP ${res.status}` };
 
   const contentType = String(res.headers.get('content-type') || '').toLowerCase();
-  /* 上游返回非图片内容（如 Pollinations "Free limit reached" 文本），不保存 */
-  if (!contentType.startsWith('image/')) return url;
-
-  const buffer = Buffer.from(await res.arrayBuffer());
-  if (!buffer.length) return url;
-
-  const ext = extFromMime(contentType) || 'webp';
-  const fileName = `${Date.now()}-${randomToken()}.${ext}`;
-  try {
-    await fsp.writeFile(path.join(store.dirs.media, fileName), buffer);
-  } catch (err) {
-    return url;
+  if (!contentType.startsWith('image/')) {
+    return { ok: false, url, reason: '上游返回非图片内容' };
   }
-  return `/uploads/media/${fileName}`;
+
+  /* 把 body 读掉释放连接（不存本地，Pollinations 等 CDN 前端可直连） */
+  try { await res.arrayBuffer(); } catch (e) {}
+  return { ok: true, url };
 }
 
 async function runFlux(prompt, seed, width, height, steps) {
@@ -348,12 +348,12 @@ async function generateImages(body) {
         ref: refs[0],
       });
     }
-    /* 将远端图片下载到本地，避免浏览器跨域 403 / 防盗链导致图片不显示 */
-    const localUrl = await saveRemoteImage(url);
-    if (!localUrl.startsWith('/uploads/')) {
-      throw jsonError(502, '图片生成失败', '免费算力暂不可用或已达上限，请稍后重试');
+    /* 验证图片 URL 有效性（检测上游限流/404），并返回给前端直连 */
+    const verified = await validateImageUrl(url);
+    if (!verified.ok) {
+      throw jsonError(502, '图片生成失败', verified.reason || '免费算力暂不可用或已达上限，请稍后重试');
     }
-    return { type: 'image', url: localUrl, width, height, seed };
+    return { type: 'image', url: verified.url, width, height, seed };
   });
 }
 
