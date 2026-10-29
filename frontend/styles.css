@@ -6185,6 +6185,42 @@ body.hm-light .hm-page-empty {
 .hm-proj-folder.is-active .hm-proj-more { opacity: 1; }
 .hm-proj-more:hover { background: rgba(255, 255, 255, 0.09); color: #e8f4ff; }
 
+/* 树形折叠/展开箭头 */
+.hm-tree-toggle {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #5d6f85;
+  font-size: 10px;
+  line-height: 1;
+  transition: transform 0.18s ease, color 0.18s ease;
+  user-select: none;
+}
+
+.hm-tree-toggle.is-open { transform: rotate(90deg); color: #87a0bd; }
+.hm-tree-toggle.is-leaf { visibility: hidden; }
+
+/* 文件夹 ＋ 子文件夹按钮 */
+.hm-proj-plus {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  color: #4b8e7a;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.hm-proj-folder:hover .hm-proj-plus { opacity: 1; }
+.hm-proj-plus:hover { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; }
+
 /* ---------- 桌面画板 ---------- */
 #resultGrid.is-board {
   position: relative;

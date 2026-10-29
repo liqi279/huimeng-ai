@@ -6193,6 +6193,42 @@ body.hm-light .hm-page-empty {
 .hm-proj-folder.is-active .hm-proj-more { opacity: 1; }
 .hm-proj-more:hover { background: rgba(255, 255, 255, 0.09); color: #e8f4ff; }
 
+/* 树形折叠/展开箭头 */
+.hm-tree-toggle {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #5d6f85;
+  font-size: 10px;
+  line-height: 1;
+  transition: transform 0.18s ease, color 0.18s ease;
+  user-select: none;
+}
+
+.hm-tree-toggle.is-open { transform: rotate(90deg); color: #87a0bd; }
+.hm-tree-toggle.is-leaf { visibility: hidden; }
+
+/* 文件夹 ＋ 子文件夹按钮 */
+.hm-proj-plus {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  color: #4b8e7a;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.hm-proj-folder:hover .hm-proj-plus { opacity: 1; }
+.hm-proj-plus:hover { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; }
+
 /* ---------- 桌面画板 ---------- */
 #resultGrid.is-board {
   position: relative;
@@ -7544,7 +7580,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029081737-680aee7";</script>
+<script>window.HM_BUILD = "20261029084248-45ca22e";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8431,12 +8467,13 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   </div>
 
   <div class="hm-ctx" id="folderCtx" hidden>
-    <button data-fcmd="open"><span class="hm-ctx-ico">📂</span>打开叠放</button>
-    <button data-fcmd="scatter"><span class="hm-ctx-ico">🗂️</span>解散叠放</button>
+    <button data-fcmd="open"><span class="hm-ctx-ico">📂</span>打开项目</button>
+    <button data-fcmd="newsub"><span class="hm-ctx-ico">📁</span>新建子文件夹</button>
     <button data-fcmd="zip"><span class="hm-ctx-ico">📦</span>导出压缩包</button>
     <button data-fcmd="download"><span class="hm-ctx-ico">📥</span>批量下载</button>
     <button data-fcmd="rename"><span class="hm-ctx-ico">✏️</span>重命名</button>
     <button data-fcmd="copy"><span class="hm-ctx-ico">📋</span>复制</button>
+    <button data-fcmd="delete"><span class="hm-ctx-ico">🗑️</span>删除项目</button>
   </div>
 
   <div class="modal" id="paramModal" aria-hidden="true">
@@ -14678,6 +14715,7 @@ window.HMApp = {
 
   var view = {
     activeFolder: null,
+    parentFolder: null,  /* 进入某文件夹时，保留它的父路径（面包屑） */
     sort: 'newest',
     search: '',
     selected: {},
@@ -14687,7 +14725,8 @@ window.HMApp = {
     menuFolder: null,
     paramWork: null,
     renameCb: null,
-    sizeKey: ''
+    sizeKey: '',
+    expanded: {}   /* { folderId: true/false } 记录树形展开状态 */
   };
 
   /* 统一剪贴板（localStorage 持久化，跨项目/文件夹复制剪切粘贴） */
@@ -14732,7 +14771,12 @@ window.HMApp = {
       stored = null;
     }
     if (!stored || typeof stored !== 'object') return;
-    desk.folders = Array.isArray(stored.folders) ? stored.folders.filter(function (f) { return f && f.id && f.name; }) : [];
+    desk.folders = Array.isArray(stored.folders) ? stored.folders.filter(function (f) { return f && f.id && f.name; }).map(function (f) {
+      /* 给旧数据补 parentId（默认根目录）+ createdAt */
+      f.parentId = f.parentId || null;
+      f.createdAt = Number(f.createdAt) || 0;
+      return f;
+    }) : [];
     desk.positions = stored.positions && typeof stored.positions === 'object' ? stored.positions : {};
     desk.assigns = stored.assigns && typeof stored.assigns === 'object' ? stored.assigns : {};
     desk.names = stored.names && typeof stored.names === 'object' ? stored.names : {};
@@ -14858,32 +14902,107 @@ window.HMApp = {
     return 1;
   }
 
-  /* ---------------- 项目文件夹 ---------------- */
-  function visibleFolders() {
-    var list = desk.folders.slice();
+  /* ---------------- 项目文件夹（树形） ---------------- */
+
+  /* 把扁平 folders 数组转成树：
+     [{ id, name, parentId, createdAt, children: [...] }] */
+  function buildTree() {
     var q = view.search.trim().toLowerCase();
+    var all = desk.folders.slice();
+    /* 搜索时：如果匹配某节点，把它所有祖先也带上 */
     if (q) {
-      list = list.filter(function (f) {
+      all = all.filter(function (f) {
         return String(f.name).toLowerCase().indexOf(q) >= 0;
       });
+      var matchedIds = {};
+      all.forEach(function (f) { matchedIds[f.id] = true; });
+      /* 把匹配节点的父链条也加回来 */
+      var extra = [];
+      desk.folders.forEach(function (f) {
+        if (!matchedIds[f.id]) {
+          var p = f.parentId;
+          while (p) {
+            if (matchedIds[p]) { extra.push(f); break; }
+            p = desk.folders.find(function (x) { return x.id === p; })?.parentId || null;
+          }
+        }
+      });
+      all = all.concat(extra.filter(function (f) {
+        return !all.some(function (a) { return a.id === f.id; });
+      }));
     }
-    list.sort(function (a, b) {
+
+    /* 排序 */
+    all.sort(function (a, b) {
       if (view.sort === 'name') return String(a.name).localeCompare(String(b.name), 'zh-Hans-CN');
       return (b.createdAt || 0) - (a.createdAt || 0);
     });
-    return list;
-  }
 
-  function folderCount(id) {
-    return state.works.filter(function (w) { return desk.assigns[w.id] === id; }).length;
-  }
-
-  function folderCredit(id) {
-    var total = 0;
-    state.works.forEach(function (w) {
-      if (desk.assigns[w.id] === id) total += creditOf(w);
+    /* 构建 parentId → children 索引 */
+    var byParent = {};
+    all.forEach(function (f) {
+      var pid = f.parentId || null;
+      if (!byParent[pid]) byParent[pid] = [];
+      byParent[pid].push(Object.assign({}, f, { children: [] }));
     });
-    return total;
+    /* 递归挂 children */
+    function attach(roots) {
+      roots.forEach(function (n) {
+        n.children = byParent[n.id] ? byParent[n.id].slice() : [];
+        attach(n.children);
+      });
+    }
+    var roots = byParent[null] || [];
+    attach(roots);
+    return roots;
+  }
+
+  /* 收集一个 folder 及其所有子孙 folder 的 id */
+  function collectDescendantIds(id) {
+    var ids = [id];
+    var stack = [id];
+    while (stack.length) {
+      var cur = stack.pop();
+      desk.folders.forEach(function (f) {
+        if (f.parentId === cur) { ids.push(f.id); stack.push(f.id); }
+      });
+    }
+    return ids;
+  }
+
+  /* 递归渲染一个 folder 节点（及其 children） */
+  function renderFolderNode(node, depth) {
+    var html = '';
+    var hasChildren = node.children && node.children.length > 0;
+    var count = folderCount(node.id);
+    var credit = folderCredit(node.id);
+    var isActive = view.activeFolder === node.id;
+    var expanded = view.expanded[node.id] !== false;  /* 默认展开 */
+
+    html += '<div class="hm-proj-folder ' + (isActive ? 'is-active' : '') +
+      '" data-folder-row="' + esc(node.id) + '" style="padding-left:' + (10 + depth * 14) + 'px">' +
+
+      /* 折叠/展开箭头（只有有子节点时才显示） */
+      '<span class="hm-tree-toggle' + (hasChildren ? '' : ' is-leaf') +
+        (expanded ? ' is-open' : '') + '" data-folder-toggle="' + esc(node.id) + '">' +
+        (hasChildren ? '▸' : '·') +
+      '</span>' +
+
+      '<button class="hm-proj-folder-main" data-folder-open="' + esc(node.id) + '">' +
+      '<span class="hm-folder-ico">📁</span>' +
+      '<span class="hm-proj-txt"><strong>' + esc(node.name) + '</strong><small>' + count + ' 项</small></span>' +
+      '</button>' +
+      '<button class="hm-proj-plus" data-folder-plus="' + esc(node.id) + '" title="在此新建子文件夹">＋</button>' +
+      '<span class="hm-proj-credit ' + (credit > 0 ? 'is-plus' : '') + '">+' + credit + '</span>' +
+      '<button class="hm-proj-more" data-folder-more="' + esc(node.id) + '" aria-label="项目操作">⋯</button>' +
+      '</div>';
+
+    if (hasChildren && expanded) {
+      node.children.forEach(function (child) {
+        html += renderFolderNode(child, depth + 1);
+      });
+    }
+    return html;
   }
 
   function renderPanel() {
@@ -14891,10 +15010,14 @@ window.HMApp = {
     if (!list) return;
     var total = state.works.length;
     var html = '';
+
+    /* 历史记录（固定在最顶） */
     html += '<button class="hm-proj-row is-history" data-proj="history">' +
       '<span class="hm-proj-ico">◷</span>' +
       '<span class="hm-proj-txt"><strong>历史记录</strong><small>最近 10 分钟 / 项目 / 人员</small></span>' +
       '</button>';
+
+    /* 个人空间 */
     html += '<div class="hm-proj-space">';
     html += '<button class="hm-proj-row is-space ' + (view.activeFolder === null ? 'is-active' : '') + '" data-proj="space">' +
       '<span class="hm-proj-ico">▫</span>' +
@@ -14902,28 +15025,21 @@ window.HMApp = {
       '<span class="hm-proj-lock">⌾</span>' +
       '</button>';
     html += '<button class="hm-proj-row is-new" data-proj="new">' +
-      '<span class="hm-proj-ico">＋</span><span class="hm-proj-txt"><strong>新建文件夹</strong><small>把作品归档到新文件夹</small></span>' +
+      '<span class="hm-proj-ico">＋</span><span class="hm-proj-txt"><strong>新建文件夹</strong><small>在根目录创建新项目</small></span>' +
       '</button>';
     html += '</div>';
+
     html += '<div class="hm-proj-folders">';
-    var folders = visibleFolders();
-    if (!folders.length) {
-      html += '<p class="hm-proj-none">' + (view.search ? '没有匹配的文件夹' : '还没有文件夹，点击「新建文件夹」开始整理') + '</p>';
+    var tree = buildTree();
+    if (!tree.length) {
+      html += '<p class="hm-proj-none">' + (view.search ? '没有匹配的项目' : '还没有项目文件夹，点击「新建文件夹」开始整理') + '</p>';
     }
-    folders.forEach(function (f) {
-      var count = folderCount(f.id);
-      var credit = folderCredit(f.id);
-      html += '<div class="hm-proj-folder ' + (view.activeFolder === f.id ? 'is-active' : '') + '" data-folder-row="' + esc(f.id) + '">' +
-        '<button class="hm-proj-folder-main" data-folder-open="' + esc(f.id) + '">' +
-        '<span class="hm-folder-ico">▸</span>' +
-        '<span class="hm-proj-txt"><strong>' + esc(f.name) + '</strong><small>' + count + ' 项</small></span>' +
-        '</button>' +
-        '<span class="hm-proj-credit ' + (credit > 0 ? 'is-plus' : '') + '">+' + credit + '</span>' +
-        '<button class="hm-proj-more" data-folder-more="' + esc(f.id) + '" aria-label="文件夹操作">⋯</button>' +
-        '</div>';
+    tree.forEach(function (node) {
+      html += renderFolderNode(node, 0);
     });
     html += '</div>';
     list.innerHTML = html;
+
     var sortBtn = byId('projSortBtn');
     if (sortBtn) sortBtn.textContent = view.sort === 'name' ? '排序 · 名称' : '排序 · 最新';
   }
@@ -14942,38 +15058,56 @@ window.HMApp = {
     if (panel) panel.hidden = true;
   }
 
-  function newFolder(cb) {
+  function newFolder(parentId, cb) {
+    /* newFolder(cb) 兼容旧调用 → 根目录创建 */
+    if (typeof parentId === 'function') { cb = parentId; parentId = null; }
     var base = '新建文件夹';
-    var names = desk.folders.map(function (f) { return f.name; });
+    /* 同级（同一个 parentId 下）的 folder 名字不能重复 */
+    var siblings = desk.folders.filter(function (f) { return (f.parentId || null) === (parentId || null); });
+    var names = siblings.map(function (f) { return f.name; });
     var name = base;
     var index = 2;
     while (names.indexOf(name) >= 0) {
       name = base + ' ' + index;
       index += 1;
     }
-    askName('新建文件夹', name, function (value) {
+    var parentName = null;
+    if (parentId) {
+      var parent = desk.folders.find(function (f) { return f.id === parentId; });
+      parentName = parent ? parent.name : null;
+    }
+    askName(parentName ? '在「' + parentName + '」下新建子文件夹' : '新建文件夹', name, function (value) {
       if (!value) return;
-      var folder = { id: 'f' + A.uid(), name: value, createdAt: Date.now() };
+      var folder = { id: 'f' + A.uid(), name: value, parentId: parentId || null, createdAt: Date.now() };
       desk.folders.unshift(folder);
+      /* 自动展开父节点，让新子文件夹可见 */
+      if (parentId) view.expanded[parentId] = true;
       persistNow();
       renderPanel();
       if (cb) cb(folder);
-      A.toast('已创建文件夹「' + value + '」', 'success');
+      A.toast('已创建文件夹「' + value + '」' + (parentName ? '（在「' + parentName + '」下）' : ''), 'success');
     });
   }
 
   function deleteFolder(id) {
     var folder = desk.folders.find(function (f) { return f.id === id; });
     if (!folder) return;
-    if (!window.confirm('删除文件夹「' + folder.name + '」？其中的作品会回到个人空间。')) return;
-    desk.folders = desk.folders.filter(function (f) { return f.id !== id; });
-    Object.keys(desk.assigns).forEach(function (wid) {
-      if (desk.assigns[wid] === id) delete desk.assigns[wid];
+    var descendantIds = collectDescendantIds(id);
+    var totalWorks = 0;
+    descendantIds.forEach(function (fid) {
+      Object.keys(desk.assigns).forEach(function (wid) {
+        if (desk.assigns[wid] === fid) { delete desk.assigns[wid]; totalWorks++; }
+      });
     });
-    if (view.activeFolder === id) view.activeFolder = null;
+    desk.folders = desk.folders.filter(function (f) { return descendantIds.indexOf(f.id) < 0; });
+    if (view.activeFolder && descendantIds.indexOf(view.activeFolder) >= 0) view.activeFolder = folder.parentId || null;
+    var msg = '删除「' + folder.name + '」？';
+    if (descendantIds.length > 1) msg += '（包含 ' + (descendantIds.length - 1) + ' 个子文件夹）';
+    msg += '\n其中 ' + totalWorks + ' 项作品将回到个人空间。';
+    if (!window.confirm(msg)) return;
     persistNow();
     renderAll();
-    A.toast('文件夹已删除', 'info');
+    A.toast('已删除 ' + descendantIds.length + ' 个文件夹，' + totalWorks + ' 项作品回到个人空间', 'info');
   }
 
   /* ---------------- 桌面 ---------------- */
@@ -15635,10 +15769,8 @@ window.HMApp = {
   function mergeItemsIntoFolder(ids, folderId, create) {
     var folder = folderId ? desk.folders.find(function (f) { return f.id === folderId; }) : null;
     if (!folder && create) {
-      var base = '叠放';
       var count = ids.length;
-      /* 先创建空 folder，之后用叠放数量更新名称 */
-      folder = { id: 'f' + A.uid(), name: base + ' (' + count + ')', createdAt: Date.now() };
+      folder = { id: 'f' + A.uid(), name: '文件夹 (' + count + ')', createdAt: Date.now(), parentId: null };
       desk.folders.unshift(folder);
     }
     if (!folder) return null;
@@ -15647,10 +15779,6 @@ window.HMApp = {
       var wid = id.indexOf('job:') === 0 ? id.slice(4) : id;
       desk.assigns[wid] = folder.id;
     });
-    /* 更新叠放里的总数，自动刷新名称 */
-    var total = state.works.filter(function (w) { return desk.assigns[w.id] === folder.id; }).length;
-    var base2 = /叠放|文件夹/.test(folder.name) ? '' : folder.name + ' · ';
-    if (!base2) folder.name = '叠放 (' + total + ')';
     return folder;
   }
 
@@ -16172,6 +16300,22 @@ window.HMApp = {
     var projList = byId('projList');
     if (projList) {
       projList.addEventListener('click', function (event) {
+        /* 折叠/展开 toggle */
+        var toggle = event.target.closest('[data-folder-toggle]');
+        if (toggle) {
+          event.stopPropagation();
+          var tid = toggle.dataset.folderToggle;
+          view.expanded[tid] = view.expanded[tid] === false;
+          renderPanel();
+          return;
+        }
+        /* ＋号：在该文件夹下创建子文件夹 */
+        var plus = event.target.closest('[data-folder-plus]');
+        if (plus) {
+          event.stopPropagation();
+          newFolder(plus.dataset.folderPlus, function () { renderDesktop(); });
+          return;
+        }
         var more = event.target.closest('[data-folder-more]');
         if (more) {
           event.stopPropagation();
@@ -16200,7 +16344,7 @@ window.HMApp = {
           renderPanel();
           renderDesktop();
         } else if (action === 'new') {
-          newFolder(function () { renderDesktop(); });
+          newFolder(null, function () { renderDesktop(); });
         }
       });
     }
@@ -16355,19 +16499,22 @@ window.HMApp = {
         var folderWorks = state.works.filter(function (w) { return desk.assigns[w.id] === folderId; });
 
         if (cmd === 'open') {
-          /* 视频里的"打开叠放" —— 弹窗预览 */
-          openFolderPreview(folder);
-        } else if (cmd === 'scatter') {
-          if (!window.confirm('解散「' + folder.name + '」？里面 ' + folderWorks.length + ' 项作品将回到桌面。')) return;
-          folderWorks.forEach(function (w) { delete desk.assigns[w.id]; });
-          desk.folders = desk.folders.filter(function (f) { return f.id !== folderId; });
-          if (view.activeFolder === folderId) view.activeFolder = null;
-          persistNow();
-          renderAll();
-          A.toast('已解散「' + folder.name + '」，' + folderWorks.length + ' 项回到桌面', 'success');
+          /* 打开项目 → 进入该文件夹 */
+          view.activeFolder = folderId;
+          clearSelection();
+          renderPanel();
+          renderDesktop();
+          hideContexts();
+          A.toast('已进入「' + folder.name + '」', 'info');
+        } else if (cmd === 'newsub') {
+          hideContexts();
+          newFolder(folderId, function () { renderDesktop(); });
+        } else if (cmd === 'delete') {
+          hideContexts();
+          deleteFolder(folderId);
         } else if (cmd === 'zip') {
           /* 导出压缩包（JSZip 真打包） */
-          if (!folderWorks.length) return A.toast('叠放里是空的', 'info');
+          if (!folderWorks.length) return A.toast('项目里是空的', 'info');
           if (typeof JSZip === 'undefined') {
             /* JSZip 没加载 → 降级为逐个下载 */
             A.toast('开始下载「' + folder.name + '」里的 ' + folderWorks.length + ' 项', 'success');
@@ -16378,7 +16525,7 @@ window.HMApp = {
           }
           A.toast('正在打包「' + folder.name + '」…', 'info');
           var zip = new JSZip();
-          var folderName = (folder.name || '叠放').replace(/[\\/:*?"<>|]/g, '_');
+          var folderName = (folder.name || '项目').replace(/[\\/:*?"<>|]/g, '_');
           var sub = zip.folder(folderName);
           var fetched = 0;
           folderWorks.forEach(function (w) {
@@ -16428,7 +16575,7 @@ window.HMApp = {
             });
           }
         } else if (cmd === 'download') {
-          if (!folderWorks.length) return A.toast('叠放里是空的', 'info');
+          if (!folderWorks.length) return A.toast('项目里是空的', 'info');
           A.toast('开始批量下载 ' + folderWorks.length + ' 项', 'success');
           folderWorks.forEach(function (w, i) {
             setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
@@ -16437,7 +16584,7 @@ window.HMApp = {
                     hideContexts();
           var fc = grid.querySelector('.folder-card[data-folder="' + folderId + '"]');
                     if (fc) startFolderRename(fc);
-          else askName('重命名叠放', folder.name, function (value) { folder.name = value; persistNow(); renderAll(); renderPanel(); });
+          else askName('重命名', folder.name, function (value) { folder.name = value; persistNow(); renderAll(); renderPanel(); });
         } else if (cmd === 'copy') {
           clipboard.setCopy(folderWorks);
           A.toast('已复制「' + folder.name + '」里 ' + folderWorks.length + ' 项，Ctrl+V 粘贴', 'info');
