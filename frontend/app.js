@@ -2428,15 +2428,7 @@ function mergeWorks(serverItems, localItems) {
   return out.slice(0, MAX_WORKS);
 }
 
-/* 服务端丢掉的作品，自动补传回去（下次换设备也能看到） */
-function uploadMissingWorks(list, serverItems) {
-  if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
-  var have = Object.create(null);
-  (serverItems || []).forEach(function (w) { if (w && w.id) have[w.id] = 1; });
-  list.forEach(function (w) {
-    if (!have[w.id] && w.url && w.url.indexOf('data:') !== 0) api.saveWork(w).catch(function () {});
-  });
-}
+/* （已废弃）旧版只传远程 URL 作品，被 syncAllWorksToServer 取代 */
 
 function saveWork(job) {
   var type = job.type || 'image';
@@ -2539,11 +2531,41 @@ function saveWorks() {
   syncWorksToServer();
 }
 
+/* 把本地全部作品（含 base64）上传到服务端，分批并发避免卡顿。
+   Render 免费层重启会清空 data/，下次用户打开时本地存的图自动补回去。 */
+var _syncingAll = false;
+async function syncAllWorksToServer(serverItems) {
+  if (_syncingAll) return;
+  if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
+  _syncingAll = true;
+  try {
+    await hydrateWorks(); /* 先把 IndexedDB 里的原图补回 */
+    var have = Object.create(null);
+    (serverItems || []).forEach(function (w) { if (w && w.id) have[w.id] = 1; });
+
+    var missing = state.works.filter(function (w) { return w && !have[w.id] && w.url; });
+    if (!missing.length) return;
+
+    /* base64 图体积大，并发 3 条，避免同时发把浏览器/后端打爆 */
+    var concurrency = 3;
+    var idx = 0;
+    async function worker() {
+      while (idx < missing.length) {
+        var w = missing[idx++];
+        try { await api.saveWork(w); } catch (e) { /* 静默，失败下次启动再补 */ }
+      }
+    }
+    await Promise.all(Array.from({ length: concurrency }, worker));
+    console.log('[syncAllWorksToServer] 已补传', missing.length, '张到服务端');
+  } finally {
+    _syncingAll = false;
+  }
+}
+
 function syncWorksToServer() {
   if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
-  state.works.forEach(function (w) {
-    if (w.url && w.url.indexOf('data:') !== 0) api.saveWork(w).catch(function () {});
-  });
+  /* 这里也传 base64 —— Render 磁盘够放，base64 随作品 JSON 一起存 */
+  state.works.forEach(function (w) { api.saveWork(w).catch(function () {}); });
 }
 
 async function makeThumb(url) {
@@ -3526,19 +3548,25 @@ async function authBoot() {
     try { saveJSON('hm.user', me.user); } catch (e) {}
 
     /* 从后端拉最新作品（不能覆盖本地：服务端可能因重启丢数据） */
+    var serverItems = [];
     try {
       var data = await api.listWorks();
       if (data && Array.isArray(data.items)) {
+        serverItems = data.items;
         state.works = mergeWorks(data.items, state.works);
-        saveJSON(LS_WORKS, state.works.map(function (w) {
-          if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
-          return w;
-        }));
-        uploadMissingWorks(state.works, data.items);
       }
     } catch (e) { /* listWorks 失败不影响登录态 */ }
 
     await hydrateWorks();
+
+    /* 启动时把本地缺失的作品（含 base64）上传到服务端，
+       Render 重启清空 data/ 后自动恢复，换设备也能看到 */
+    syncAllWorksToServer(serverItems);
+
+    saveJSON(LS_WORKS, state.works.map(function (w) {
+      if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
+      return w;
+    }));
 
     hideLogin();
     updateUserUI();
@@ -3594,7 +3622,8 @@ async function authBoot() {
             if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
             return w;
           }));
-          uploadMissingWorks(state.works, data.items);
+          /* Render 刚唤醒时 data/ 可能已被清，补传本地全部 */
+          syncAllWorksToServer(data.items);
           renderWorks();
         }
         updateUserUI();
