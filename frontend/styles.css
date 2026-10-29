@@ -3330,10 +3330,24 @@ body {
   z-index: 40;
   padding: 0 24px 16px;
   pointer-events: none;
+  /* ↓↓↓ 关键：纵向 flex 布局，让内部元素高度联动 ↓↓↓ */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .hm-dock > * {
   pointer-events: auto;
+}
+
+/* tabs 高度固定，不被压缩 */
+.hm-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 27px;
+  padding-left: 12px;
+  flex-shrink: 0;
 }
 
 /* ========== 可拖动分隔条 ========== */
@@ -3345,6 +3359,7 @@ body {
   pointer-events: auto;
   user-select: none;
   z-index: 10;
+  flex-shrink: 0; /* 固定分隔条高度，不被压缩 */
 }
 
 .hm-resizer-bar {
@@ -3412,6 +3427,7 @@ body.hm-resizing * {
   gap: 4px;
   height: 27px;
   padding-left: 12px;
+  flex-shrink: 0; /* 固定 tabs 高度，不被压缩 */
 }
 
 .hm-tab {
@@ -3453,6 +3469,11 @@ body.hm-resizing * {
   box-shadow: 0 -2px 0 rgba(56, 189, 248, 0.08), 0 20px 48px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  /* ↓↓↓ 关键：自动填充 dock 剩余高度 ↓↓↓ */
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* flex 子元素要能缩小，必须设 min-height:0 */
 }
 
 .hm-ref {
@@ -3461,6 +3482,7 @@ body.hm-resizing * {
   padding: 6px 8px 4px;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0; /* 参考图区域高度固定，不被压缩 */
   gap: 4px;
   align-items: stretch;
   border-radius: 8px;
@@ -3762,13 +3784,19 @@ body.hm-resizing * {
 .hm-prompt {
   position: relative;
   padding: 8px 40px 22px 14px;
+  /* ↓↓↓ 关键：自动填充 composer 剩余高度 ↓↓↓ */
+  flex: 1 1 auto;
+  min-height: 46px; /* 最小 46px，保证至少一行 */
+  display: flex;
+  flex-direction: column;
 }
 
 .hm-prompt textarea {
   display: block;
   width: 100%;
+  height: 100%; /* 填充 prompt 容器高度 */
   min-height: 46px;
-  max-height: 120px;
+  max-height: none; /* 取消固定上限，让 flex 接管 */
   padding: 0;
   border: 0;
   outline: none;
@@ -3784,9 +3812,8 @@ body.hm-resizing * {
   color: #5f7288;
 }
 
-.hm-composer.is-expanded .hm-prompt textarea {
-  max-height: 260px;
-  min-height: 160px;
+.hm-composer.is-expanded .hm-prompt {
+  min-height: 160px; /* expanded 时给 prompt 一个最低高度 */
 }
 
 .hm-count {
@@ -3828,6 +3855,7 @@ body.hm-resizing * {
   gap: 10px;
   flex-wrap: wrap;
   padding: 4px 12px 10px;
+  flex-shrink: 0; /* 按钮工具条高度固定，不被压缩 */
 }
 
 .hm-actions-left,

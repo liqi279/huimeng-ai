@@ -2865,7 +2865,8 @@ function initResizer() {
   function onMove(ev) {
     if (!dragging) return;
     var y = ev.clientY || (ev.touches && ev.touches[0].clientY) || startY;
-    var delta = startY - y; /* 鼠标上拖 → dock 变大 */
+    /* 鼠标上拖（y变小）→ dock 顶部上移 → dock 变高 */
+    var delta = y - startY;
     var newTop = startTop + delta;
     var winH = window.innerHeight;
     var newH = winH - newTop;
