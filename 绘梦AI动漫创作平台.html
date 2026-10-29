@@ -7122,7 +7122,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029033732-a09d74d";</script>
+<script>window.HM_BUILD = "20261029034100-36be935";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8014,7 +8014,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
     </div>
   </div>
 
-  <div class="hm-auth" id="hmAuth" aria-hidden="true">
+  <div class="hm-auth" id="hmAuth" hidden aria-hidden="true">
     <div class="hm-auth-bg" aria-hidden="true">
       <span class="hm-auth-blob b1"></span>
       <span class="hm-auth-blob b2"></span>
@@ -11348,15 +11348,32 @@ async function authBoot() {
   if (!token) {
     window.HMApp = window.HMApp || {};
     window.HMApp.user = null;
+    /* 没 token，也先确保登录弹窗是隐藏起始，再 showLogin */
+    if (typeof hideLogin === 'function') hideLogin();
     if (typeof showLogin === 'function') showLogin();
     return;
   }
 
-  /* 先显示桌面（hideLogin 后面会用），这样即使 ping 失败也不会闪登录页 */
-  try { if (typeof hideLogin === 'function') hideLogin(); } catch (e) {}
+  /* ========== 有 token：先同步渲染桌面（零闪烁） ==========
+     用 localStorage 缓存的 hm.user / works 立即铺好，
+     让用户瞬间看到自己的界面，不等待后端响应 */
+  var cachedUser = loadJSON('hm.user', null);
+  var cachedWorks = loadJSON(LS_WORKS, null);
+  if (cachedUser) {
+    window.HMApp = window.HMApp || {};
+    window.HMApp.user = cachedUser;
+    if (cachedWorks && cachedWorks.length) {
+      state.works = cachedWorks.slice(0, MAX_WORKS);
+    }
+    if (typeof hideLogin === 'function') hideLogin();
+    if (typeof updateUserUI === 'function') updateUserUI();
+    renderWorks();
+  }
 
+  /* ========== 后台异步验证 token ========== */
   var retries = 2;
   var lastErr = null;
+  var authed = false;
   while (retries > 0) {
     try {
       await api.ping();
@@ -11374,12 +11391,14 @@ async function authBoot() {
       renderWorks();
       if (typeof hideLogin === 'function') hideLogin();
       if (typeof updateUserUI === 'function') updateUserUI();
-      return; /* 成功，直接返回 */
+      authed = true;
+      break; /* 成功，跳出 */
     } catch (err) {
       lastErr = err;
       var kind = classifyAuthErr(err);
       if (kind === 'auth') {
-        /* 真的是 token 过期 → 清掉 → 弹登录 */
+        /* 真的 token 过期 → 清 token → 弹登录
+           但保留 localStorage 里的用户数据（登出后也不丢） */
         if (api && api.logout) api.logout();
         window.HMApp.user = null;
         if (typeof showLogin === 'function') showLogin();
@@ -11393,21 +11412,26 @@ async function authBoot() {
     }
   }
 
-  /* 2 次重试都失败 → 网络问题（Render 休眠 / 后端挂了 / 断网）
-     绝对不要清 token！显示桌面 + toast 提示 */
-  var savedUser = loadJSON('hm.user', null);
-  if (savedUser) {
-    window.HMApp.user = savedUser;
-    state.works = loadJSON(LS_WORKS, state.works || []);
-  }
-  renderWorks();
-  if (typeof hideLogin === 'function') hideLogin();
-  if (typeof updateUserUI === 'function') updateUserUI();
+  if (authed) return; /* 已经验证成功了 */
 
-  /* 延迟 toast，让用户先看到桌面 */
+  /* ========== 2 次重试都失败 → 网络问题 ==========
+     之前已经同步渲染了缓存桌面，这里只需要 toast 提示 + 后台持续重试 */
+  /* 如果之前没缓存（极少情况），兜底 */
+  if (!window.HMApp || !window.HMApp.user) {
+    if (cachedUser) {
+      window.HMApp = window.HMApp || {};
+      window.HMApp.user = cachedUser;
+      state.works = cachedWorks || state.works || [];
+    }
+    renderWorks();
+    if (typeof hideLogin === 'function') hideLogin();
+    if (typeof updateUserUI === 'function') updateUserUI();
+  }
+
+  /* Toast 提示（延迟让用户先看到桌面） */
   setTimeout(function () {
-    toast('暂时无法连接后端，正在自动重试…  (' + (lastErr && lastErr.message ? lastErr.message : String(lastErr)) + ')', 'warn');
-  }, 600);
+    toast('暂时无法连接后端，正在自动重试…', 'warn');
+  }, 500);
 
   /* 后台持续重试，成功后自动恢复 */
   var bgRetries = 0;
@@ -11418,9 +11442,8 @@ async function authBoot() {
       return api.me();
     }).then(function (me) {
       window.HMApp.user = me.user;
-      try {
-        return api.listWorks();
-      } catch (e) { return null; }
+      try { saveJSON('hm.user', me.user); } catch (e) {}
+      try { return api.listWorks(); } catch (e) { return null; }
     }).then(function (data) {
       if (data && Array.isArray(data.items)) {
         state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
