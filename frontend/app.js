@@ -2717,6 +2717,74 @@ function checkUpdate() {
   } catch (e) { /* localStorage 不可用时静默忽略 */ }
 }
 
+/* ========== 输入区高度拖动 ========== */
+/* 默认 dock 高度 250px，范围 150~520px */
+var DOCK_MIN = 140, DOCK_MAX = 560, DOCK_DEFAULT = 250;
+
+function applyDockHeight(h) {
+  var dock = document.getElementById('hmDock');
+  if (!dock) return;
+  var clamped = Math.max(DOCK_MIN, Math.min(DOCK_MAX, Number(h) || DOCK_DEFAULT));
+  /* dock 高度 = body 底部到 resizer 顶部的距离 */
+  var winH = window.innerHeight;
+  var top = winH - clamped;
+  dock.style.top = top + 'px';
+  dock.style.bottom = '0';
+  /* 通过 CSS 变量让 canvas padding-bottom 跟着变 */
+  document.documentElement.style.setProperty('--hm-dock-h', clamped + 'px');
+}
+
+function initResizer() {
+  var dock = document.getElementById('hmDock');
+  var bar = document.getElementById('dockResizer');
+  if (!dock || !bar) return;
+
+  /* 恢复用户上次保存的高度 */
+  var saved = Number(localStorage.getItem('hm.dock.h') || 0);
+  var initial = saved > 0 ? saved : DOCK_DEFAULT;
+  applyDockHeight(initial);
+
+  var dragging = false, startY = 0, startTop = 0;
+
+  function onDown(ev) {
+    dragging = true;
+    startY = ev.clientY || (ev.touches && ev.touches[0].clientY) || 0;
+    startTop = dock.getBoundingClientRect().top;
+    document.body.classList.add('hm-resizing');
+    ev.preventDefault();
+  }
+  function onMove(ev) {
+    if (!dragging) return;
+    var y = ev.clientY || (ev.touches && ev.touches[0].clientY) || startY;
+    var delta = startY - y; /* 鼠标上拖 → dock 变大 */
+    var newTop = startTop + delta;
+    var winH = window.innerHeight;
+    var newH = winH - newTop;
+    applyDockHeight(newH);
+    ev.preventDefault();
+  }
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('hm-resizing');
+    /* 持久化 */
+    var h = dock.getBoundingClientRect().height;
+    localStorage.setItem('hm.dock.h', String(Math.round(h)));
+  }
+
+  bar.addEventListener('mousedown', onDown);
+  bar.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+  /* 窗口 resize 时保证 dock top 不越界 */
+  window.addEventListener('resize', function () {
+    var h = Number(localStorage.getItem('hm.dock.h') || DOCK_DEFAULT);
+    applyDockHeight(h);
+  });
+}
+
 function boot() {
   bindEls();
   renderModels('');
@@ -2724,6 +2792,7 @@ function boot() {
   renderWorks();
   syncSettingsUI();
   bindEvents();
+  initResizer();
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();
 

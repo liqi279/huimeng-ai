@@ -402,7 +402,15 @@
     </div>
   </main>
 
-  <div class="hm-dock">
+  <div class="hm-dock" id="hmDock">
+    <!-- 可上下拖动的分隔条 -->
+    <div class="hm-resizer" id="dockResizer" role="separator" aria-orientation="horizontal" aria-label="拖动调整输入区高度" title="上下拖动调整输入区域大小">
+      <div class="hm-resizer-bar"></div>
+      <div class="hm-resizer-handle">
+        <span></span><span></span>
+      </div>
+    </div>
+
     <div class="hm-tabs" id="promptTabs">
       <button class="hm-tab is-active" data-tab="0">1</button>
       <button class="hm-tab" data-tab="1">2</button>

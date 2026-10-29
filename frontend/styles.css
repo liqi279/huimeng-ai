@@ -3336,6 +3336,76 @@ body {
   pointer-events: auto;
 }
 
+/* ========== 可拖动分隔条 ========== */
+.hm-resizer {
+  position: relative;
+  height: 14px;
+  margin: -4px 24px 0;
+  cursor: ns-resize;
+  pointer-events: auto;
+  user-select: none;
+  z-index: 10;
+}
+
+.hm-resizer-bar {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.5), transparent);
+  border-radius: 1px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease, height 0.15s ease;
+}
+
+.hm-resizer-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.hm-resizer-handle span {
+  width: 2px;
+  height: 6px;
+  border-radius: 1px;
+  background: #7dd3fc;
+  opacity: 0.85;
+}
+
+.hm-resizer:hover .hm-resizer-bar {
+  opacity: 0.8;
+  height: 3px;
+}
+
+.hm-resizer:hover .hm-resizer-handle {
+  opacity: 1;
+}
+
+/* 拖动中：全局 cursor + 禁止选中 */
+body.hm-resizing {
+  cursor: ns-resize !important;
+  user-select: none !important;
+}
+
+body.hm-resizing * {
+  cursor: ns-resize !important;
+  user-select: none !important;
+}
+
 .hm-tabs {
   display: flex;
   align-items: flex-end;
