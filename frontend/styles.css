@@ -3928,6 +3928,77 @@ body.hm-resizing * {
   height: 12px;
 }
 
+/* 参考主体限制说明条（refDrop 下方） */
+.hm-ref-limits {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(167, 139, 250, 0.2);
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.hm-ref-limits-text {
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: #9d95bf;
+}
+
+/* 时长滑块（视频模式专属） */
+.hm-duration-slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  min-width: 160px;
+}
+
+.hm-duration-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 16px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hm-duration-slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hm-duration-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.hm-duration-slider input[type="range"]::-moz-range-track {
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hm-duration-slider input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: #a78bfa;
+}
+
+.hm-duration-slider .hm-duration-label {
+  font-size: 10px;
+  color: #c4b5fd;
+  font-variant-numeric: tabular-nums;
+  min-width: 34px;
+  text-align: right;
+}
+
 .hm-prompt {
   position: relative;
   padding: 2px 40px 18px 14px;
@@ -5565,6 +5636,30 @@ body[data-mode="audio"] .hm-chip-mode .hm-mode-ico[data-ico="audio"] {
   color: #8fd8f5;
   border-color: rgba(94, 196, 238, 0.5);
   background: rgba(94, 196, 238, 0.1);
+}
+
+/* 模型菜单中的免费 / 付费标签 */
+.hm-chip-grid button .hm-free-badge,
+.hm-chip-grid button .hm-pay-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  vertical-align: middle;
+}
+
+.hm-chip-grid button .hm-free-badge {
+  color: #064e3b;
+  background: #10b981;
+}
+
+.hm-chip-grid button .hm-pay-badge {
+  color: #e2e8f0;
+  background: #64748b;
 }
 
 /* 免费模型 / LoRA 列表由脚本动态渲染 */

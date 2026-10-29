@@ -418,18 +418,24 @@
     </div>
 
     <div class="hm-composer" id="composer">
-      <div class="hm-ref" id="refDrop" role="button" tabindex="0" aria-label="上传或拖入参考图片（最多 10 张）">
-        <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp" hidden multiple>
+      <!-- 多模态参考主体上传区：生图 → 图片；视频 → 图片/视频/音频；音频 → 音频 -->
+      <div class="hm-ref" id="refDrop" role="button" tabindex="0" aria-label="上传或拖入参考主体" hidden>
+        <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp3,audio/wav,audio/ogg" hidden multiple>
         <div class="hm-ref-empty" id="refEmpty">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="13" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5.5 16.5l4.2-4 3.2 2.8 2.5-2.3 3.1 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-          <span>拖入或上传参考图（最多 10 张）· 支持多张批量</span>
-          <span class="hm-ref-hint">点击参考图上的 @1 @2 … 可插入提示词指定主体</span>
+          <span id="refEmptyText">拖入或上传参考图（最多 10 张）</span>
+          <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 @1 @2 … 引用</span>
         </div>
         <div class="hm-ref-grid" id="refGrid" hidden></div>
         <span class="hm-ref-state" id="refState">未添加</span>
-        <button class="hm-ref-remove" id="refRemove" type="button" aria-label="清空所有参考图" title="清空全部参考图">
+        <button class="hm-ref-remove" id="refRemove" type="button" aria-label="清空所有参考" title="清空全部参考">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
+      </div>
+
+      <!-- 参考主体限制说明（动态显示） -->
+      <div class="hm-ref-limits" id="refLimits" hidden>
+        <span id="refLimitsText" class="hm-ref-limits-text"></span>
       </div>
 
       <div class="hm-prompt prompt-wrap">
@@ -579,6 +585,12 @@
               <button data-duration="5" class="is-active">5 秒</button>
               <button data-duration="10">10 秒</button>
             </div>
+          </div>
+
+          <!-- 视频时长滑块（轮滑选择） -->
+          <div class="hm-duration-slider hm-video-only" hidden>
+            <input type="range" id="durationSlider" min="5" max="15" step="5" value="5" aria-label="视频时长">
+            <span class="hm-duration-label" id="durationSliderLabel">5秒</span>
           </div>
 
           <div class="hm-menu-wrap hm-audio-only" hidden>

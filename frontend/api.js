@@ -166,6 +166,7 @@
 
   api.presets = function () { return request('/presets', {}, 15000); };
   api.catalog = function () { return request('/catalog', {}, 15000); };
+  api.mediaModels = function () { return request('/media-models', {}, 15000); };
   api.models = function (cfg) {
     return request('/rayin/models', { method: 'POST', body: cfg || {} }, 45000);
   };

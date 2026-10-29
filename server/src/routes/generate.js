@@ -23,6 +23,7 @@ const {
 } = require('../http');
 
 const router = express.Router();
+const edgetts = require('../edgetts');
 
 const MAX_PROMPT_CHARS = 1800;
 const MAX_REF_BYTES = 10 * 1024 * 1024;
@@ -499,19 +500,48 @@ function extractVideoTaskId(payload) {
   return '';
 }
 
-const VIDEO_MODELS = ['sora-2', 'sora-2-pro', 'veo-3'];
-const AUDIO_MODELS = ['tts-1', 'tts-1-hd', 'gpt-4o-mini-tts'];
+/* 视频模型定义：每个模型有独立的 duration 范围（秒） */
+const VIDEO_MODELS = [
+  { id: 'sora-2',      name: 'Sora 2',       minDuration: 5, maxDuration: 15, resolutions: ['720p', '1080p', '2k'], free: false },
+  { id: 'sora-2-pro',  name: 'Sora 2 Pro',   minDuration: 5, maxDuration: 15, resolutions: ['720p', '1080p', '2k'], free: false },
+  { id: 'veo-3',       name: 'Veo 3',        minDuration: 5, maxDuration: 30, resolutions: ['720p', '1080p'],       free: false },
+];
+
+/* 音频模型定义：区分免费（Edge-TTS）和付费（RayinAPI） */
+const AUDIO_MODELS = [
+  { id: 'edgetts',             name: 'Edge-TTS（免费）',   source: 'edgetts',  free: true },
+  { id: 'tts-1',               name: 'TTS-1',              source: 'rayin',    free: false },
+  { id: 'tts-1-hd',            name: 'TTS-1 HD',           source: 'rayin',    free: false },
+  { id: 'gpt-4o-mini-tts',     name: 'GPT-4o mini TTS',    source: 'rayin',    free: false },
+];
+
+/* 参考主体最大限制 */
+const REF_VIDEO_MAX_BYTES = 50 * 1024 * 1024;
+const REF_AUDIO_MAX_BYTES = 10 * 1024 * 1024;
+const REF_VIDEO_MAX_COUNT = 3;
+const REF_AUDIO_MAX_COUNT = 3;
 
 function pickMediaModel(value, allowed, fallback) {
-  return typeof value === 'string' && allowed.includes(value) ? value : fallback;
+  const ids = allowed.map((m) => (typeof m === 'string' ? m : m.id));
+  return typeof value === 'string' && ids.includes(value) ? value : fallback;
 }
 
 function videoModel(v) {
-  return pickMediaModel(v, VIDEO_MODELS, config.VIDEO_MODEL);
+  const found = VIDEO_MODELS.find((m) => m.id === v);
+  return found ? found.id : VIDEO_MODELS[0].id;
+}
+
+function videoModelMeta(v) {
+  return VIDEO_MODELS.find((m) => m.id === v) || VIDEO_MODELS[0];
 }
 
 function audioModel(v) {
-  return pickMediaModel(v, AUDIO_MODELS, config.AUDIO_MODEL);
+  const found = AUDIO_MODELS.find((m) => m.id === v);
+  return found ? found.id : AUDIO_MODELS[0].id;
+}
+
+function audioModelMeta(v) {
+  return AUDIO_MODELS.find((m) => m.id === v) || AUDIO_MODELS[0];
 }
 
 function videoUnavailable() {
@@ -524,15 +554,48 @@ function videoUnavailable() {
 
 async function generateVideo(body) {
   const prompt = readPrompt(body.prompt, '提示词');
+  const modelId = videoModel(body.model);
+  const modelMeta = videoModelMeta(modelId);
   const ratio = RATIO_SIZE[body.ratio] ? body.ratio : '16:9';
-  const resolution = ['720p', '1080p', '2k'].includes(body.resolution) ? body.resolution : '720p';
-  if (body.duration != null && body.duration !== '') {
-    assert([5, 10].includes(Number(body.duration)), 400, '视频时长需为 5 或 10 秒', 'duration 仅支持 5 或 10');
+  const resolution = modelMeta.resolutions.includes(body.resolution) ? body.resolution : '720p';
+
+  /* 时长按模型动态校验 */
+  let duration = body.duration != null && body.duration !== '' ? Number(body.duration) : modelMeta.minDuration;
+  if (!Number.isFinite(duration) || duration < modelMeta.minDuration || duration > modelMeta.maxDuration) {
+    throw jsonError(
+      400,
+      `视频时长 ${duration} 秒超出范围`,
+      `模型 ${modelMeta.name} 支持 ${modelMeta.minDuration}-${modelMeta.maxDuration} 秒`,
+    );
   }
-  const duration = Number(body.duration) === 10 ? 10 : 5;
+  /* 取整到 5 的倍数，避免 RayinAPI 报错 */
+  duration = Math.round(duration / 5) * 5 || modelMeta.minDuration;
+
   const seedInput = readSeed(body.seed);
   const seed = seedInput || randomSeed();
+
+  /* 参考主体校验：图片 + 视频 + 音频 各有独立上限 */
   readRefImages(body.refImages);
+
+  /* refVideos: data URL 数组，视频不超过 50MB 每个，最多 3 个 */
+  const refVideos = Array.isArray(body.refVideos) ? body.refVideos : [];
+  assert(refVideos.length <= REF_VIDEO_MAX_COUNT, 400, '参考视频过多', `最多 ${REF_VIDEO_MAX_COUNT} 个参考视频`);
+  for (let i = 0; i < refVideos.length; i += 1) {
+    const item = refVideos[i];
+    assert(typeof item === 'string' && item.startsWith('data:'), 400, `参考视频 ${i + 1} 格式不正确`);
+    const decoded = dataUrlToBuffer(item);
+    assert(decoded.buffer.length <= REF_VIDEO_MAX_BYTES, 413, `参考视频 ${i + 1} 过大`, `单视频不能超过 ${Math.round(REF_VIDEO_MAX_BYTES / 1024 / 1024)}MB`);
+  }
+
+  /* refAudios: data URL 数组 */
+  const refAudios = Array.isArray(body.refAudios) ? body.refAudios : [];
+  assert(refAudios.length <= REF_AUDIO_MAX_COUNT, 400, '参考音频过多', `最多 ${REF_AUDIO_MAX_COUNT} 个参考音频`);
+  for (let i = 0; i < refAudios.length; i += 1) {
+    const item = refAudios[i];
+    assert(typeof item === 'string' && item.startsWith('data:'), 400, `参考音频 ${i + 1} 格式不正确`);
+    const decoded = dataUrlToBuffer(item);
+    assert(decoded.buffer.length <= REF_AUDIO_MAX_BYTES, 413, `参考音频 ${i + 1} 过大`, `单音频不能超过 ${Math.round(REF_AUDIO_MAX_BYTES / 1024 / 1024)}MB`);
+  }
 
   const rayin = resolveRayin(body.rayin);
   requireKey(rayin.key);
@@ -548,12 +611,15 @@ async function generateVideo(body) {
 
   let initial;
   try {
+    const payload = { model: modelId, prompt, size, seconds: duration, seed };
+    if (refVideos.length) payload.refVideos = refVideos;
+    if (refAudios.length) payload.refAudios = refAudios;
     initial = await fetchJson(
       `${base}${videoPath}`,
       {
         method: 'POST',
         headers: authHeaders,
-        body: JSON.stringify({ model: videoModel(body.model), prompt, size, seconds: duration, seed }),
+        body: JSON.stringify(payload),
       },
       60000,
       '视频任务创建失败',
@@ -601,21 +667,87 @@ async function generateVideo(body) {
 
 async function generateAudio(body) {
   const text = readPrompt(body.text, '配音文本');
-  const voice = typeof body.voice === 'string' && body.voice.trim() ? body.voice.trim() : 'alloy';
-  const format = body.format === 'wav' ? 'wav' : 'mp3';
+  const modelId = audioModel(body.model);
+  const modelMeta = audioModelMeta(modelId);
+
+  /* === 免费引擎：Edge-TTS === */
+  if (modelMeta.source === 'edgetts') {
+    const edVoice = edgetts.resolveVoice(body.voice);
+    const edFormat = edgetts.resolveFormat(body.format);
+
+    let audioBuffer;
+    try {
+      const result = await edgetts.synthesize({
+        text,
+        voice: edVoice,
+        format: edFormat,
+        timeout: 45000,
+      });
+      audioBuffer = result.audio;
+    } catch (err) {
+      /* Edge-TTS 失败时，给出友好提示；同时如果用户配置了 RayinAPI Key，可选降级 */
+      const rayin = resolveRayin(body.rayin);
+      if (rayin.key) {
+        try {
+          audioBuffer = await generateAudioViaRayin({
+            text,
+            model: 'tts-1',
+            voice: 'alloy',
+            format: 'mp3',
+            rayin,
+          });
+        } catch (fallbackErr) {
+          throw jsonError(502, 'Edge-TTS 不可用，备用通道也失败', err.message || '免费通道当前繁忙或端点被封，请稍后重试');
+        }
+      } else {
+        throw jsonError(502, 'Edge-TTS 免费通道暂不可用', err.message ? String(err.message).slice(0, 160) : '微软端点当前繁忙或被封锁，请稍后重试或切换付费模型');
+      }
+    }
+
+    /* 保存到本地文件 */
+    const ext = edFormat.includes('pcm') || edFormat.includes('wav') ? 'wav' : 'mp3';
+    const fileName = `${Date.now()}-${randomToken()}.${ext}`;
+    await fsp.writeFile(path.join(store.dirs.media, fileName), audioBuffer);
+    const duration = Math.max(1, Math.round(text.length / 4 / 3)); /* 粗估：中文每秒 ~3 字，英文 ~4 */
+
+    return { items: [{ type: 'audio', url: `/uploads/media/${fileName}`, duration }] };
+  }
+
+  /* === 付费引擎：RayinAPI === */
   const rayin = resolveRayin(body.rayin);
   requireKey(rayin.key);
+  const voice = typeof body.voice === 'string' && body.voice.trim() ? body.voice.trim() : 'alloy';
+  const format = body.format === 'wav' ? 'wav' : 'mp3';
 
+  const audioBuffer = await generateAudioViaRayin({
+    text,
+    model: modelId,
+    voice,
+    format,
+    rayin,
+    sampleRate: body.sampleRate,
+  });
+
+  const ext = format === 'wav' ? 'wav' : 'mp3';
+  const fileName = `${Date.now()}-${randomToken()}.${ext}`;
+  await fsp.writeFile(path.join(store.dirs.media, fileName), audioBuffer);
+  const duration = Math.max(1, Math.round(text.length / 4 / 3));
+
+  return { items: [{ type: 'audio', url: `/uploads/media/${fileName}`, duration }] };
+}
+
+/* 从 RayinAPI 获取音频二进制并保存 */
+async function generateAudioViaRayin({ text, model, voice, format, rayin, sampleRate }) {
   const payload = {
-    model: audioModel(body.model),
+    model,
     input: text,
     voice,
     response_format: format,
     speed: 1,
   };
-  if (body.sampleRate != null && body.sampleRate !== '') {
-    const sampleRate = Number(body.sampleRate);
-    if (Number.isFinite(sampleRate) && sampleRate > 0) payload.sample_rate = Math.floor(sampleRate);
+  if (sampleRate != null && sampleRate !== '') {
+    const rate = Number(sampleRate);
+    if (Number.isFinite(rate) && rate > 0) payload.sample_rate = Math.floor(rate);
   }
 
   const res = await fetchWithTimeout(
@@ -628,35 +760,58 @@ async function generateAudio(body) {
     AUDIO_TIMEOUT,
   );
 
-  let url = '';
   const contentType = String(res.headers.get('content-type') || '').toLowerCase();
-
   if (!res.ok) {
     const raw = await res.text();
-    throw jsonError(502, apiErrorText(res.status, raw), '语音合成失败');
+    throw new Error(apiErrorText(res.status, raw));
   }
 
   if (contentType.startsWith('audio/') || contentType.includes('application/octet-stream')) {
-    const buffer = Buffer.from(await res.arrayBuffer());
-    const fileName = `${Date.now()}-${randomToken()}.${format}`;
-    await fsp.writeFile(path.join(store.dirs.media, fileName), buffer);
-    url = `/uploads/media/${fileName}`;
-  } else {
-    let data;
-    try {
-      data = JSON.parse(await res.text());
-    } catch (err) {
-      throw jsonError(502, '语音接口返回异常', '请检查 AUDIO_MODEL 与账号权限');
-    }
-    url = (data && data.data && data.data[0] && data.data[0].url) || (data && data.url) || '';
-    if (typeof url !== 'string' || !url) {
-      throw jsonError(502, '语音接口未返回音频', '请检查 AUDIO_MODEL 与账号权限');
-    }
+    return Buffer.from(await res.arrayBuffer());
   }
 
-  const duration = Math.max(1, Math.round(text.length / 4 / 3));
-  return { items: [{ type: 'audio', url, duration }] };
+  /* 某些中转返回 JSON 包含 url */
+  const data = JSON.parse(await res.text());
+  const url = (data && data.data && data.data[0] && data.data[0].url) || (data && data.url) || '';
+  if (!url) throw new Error('语音接口未返回音频');
+
+  const media = await fetchWithTimeout(url, {}, 30000);
+  if (!media.ok) throw new Error('下载音频文件失败: HTTP ' + media.status);
+  return Buffer.from(await media.arrayBuffer());
 }
+
+/* 视频 / 音频模型目录接口 —— 前端用来动态渲染时长滑块和参考主体限制 */
+router.get('/media-models', wrap(async (req, res) => {
+  res.json({
+    video: VIDEO_MODELS.map((m) => ({
+      id: m.id,
+      name: m.name,
+      minDuration: m.minDuration,
+      maxDuration: m.maxDuration,
+      resolutions: m.resolutions,
+      free: m.free,
+      /* 参考主体限制（视频场景可上传图片 / 视频 / 音频作为参考） */
+      refLimits: {
+        images: { count: 10, maxBytes: 10 * 1024 * 1024, mime: ['image/jpeg', 'image/png', 'image/webp'] },
+        videos: { count: 3, maxBytes: 50 * 1024 * 1024, mime: ['video/mp4', 'video/webm', 'video/quicktime'] },
+        audios: { count: 3, maxBytes: 10 * 1024 * 1024, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4'] },
+      },
+    })),
+    audio: {
+      models: AUDIO_MODELS.map((m) => ({
+        id: m.id,
+        name: m.name,
+        source: m.source,
+        free: m.free,
+      })),
+      refLimits: {
+        audios: { count: 3, maxBytes: 10 * 1024 * 1024, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'] },
+      },
+      /* Edge-TTS 声音列表（免费引擎才用到） */
+      edgeVoices: edgetts.listVoices(),
+    },
+  });
+}));
 
 router.post('/generate', wrap(async (req, res) => {
   const body = req.body || {};

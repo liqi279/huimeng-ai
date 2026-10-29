@@ -274,10 +274,9 @@
 
     var imageOnly = mode === 'image';
     if (A.els.modelsToggle) A.els.modelsToggle.hidden = !imageOnly;
-    if (A.els.refDrop) A.els.refDrop.hidden = !imageOnly;
-
-    var pill = document.getElementById('enginePillText');
-    if (pill && A.modeModelLabel) pill.textContent = A.modeModelLabel(mode);
+    /* refDrop 在所有模式下都显示（上传参考主体），但内容/accept 动态变化 */
+    if (A.els.refDrop) A.els.refDrop.hidden = false;
+    updateRefDropForMode(mode);
 
     var hint = document.getElementById('genHint');
     if (hint && !state.generating) {
@@ -292,10 +291,13 @@
         notice.textContent = state.engine === 'flux'
           ? '免费通道 · 无水印 · 生成后可直接下载原图'
           : 'RayinAPI 按量计费 · 生成后可直接下载原图';
+      } else if (mode === 'video') {
+        notice.textContent = '视频为异步任务 · 由 Node 后端代理生成（暂无完全免费视频模型）';
       } else {
-        notice.textContent = mode === 'video'
-          ? '视频为异步任务 · 由 Node 后端代理生成'
-          : '语音由 Node 后端 TTS 合成 · 保存到服务端';
+        var audioFree = modeFreeFor('audio');
+        notice.textContent = audioFree
+          ? 'Edge-TTS 完全免费无额度 · 200+ 声音 · 支持中文 / 英文等 50+ 语言'
+          : 'RayinAPI 按量计费 · 切换到 Edge-TTS（免费）免密钥使用';
       }
     }
 
@@ -323,6 +325,38 @@
     }
   }
 
+  /* 参考主体上传区：按模式动态更新提示文案、accept 格式、限制说明 */
+  function updateRefDropForMode(mode) {
+    var emptyText = document.getElementById('refEmptyText');
+    var hintText = document.getElementById('refHintText');
+    var input = document.getElementById('refInput');
+    var limits = document.getElementById('refLimits');
+    var limitsText = document.getElementById('refLimitsText');
+
+    if (mode === 'video') {
+      if (emptyText) emptyText.textContent = '拖入或上传参考主体（图片/视频/音频）';
+      if (hintText) hintText.textContent = '图片 ≤10MB·最多10张 · 视频 ≤50MB·最多3个 · 音频 ≤10MB·最多3个';
+      if (input) input.setAttribute('accept', 'image/*,video/*,audio/*');
+      if (limits && limitsText) {
+        limits.hidden = false;
+        limitsText.textContent = '视频参考主体：图片 ≤10MB 最多10张 · 视频 ≤50MB 最多3个 · 音频 ≤10MB 最多3个';
+      }
+    } else if (mode === 'audio') {
+      if (emptyText) emptyText.textContent = '拖入或上传参考音频（可选）';
+      if (hintText) hintText.textContent = '音频参考 ≤10MB · 最多 3 个';
+      if (input) input.setAttribute('accept', 'audio/*');
+      if (limits && limitsText) {
+        limits.hidden = false;
+        limitsText.textContent = '音频参考主体：音频文件 ≤10MB 最多 3 个（Edge-TTS 免费通道暂不支持参考音频）';
+      }
+    } else {
+      if (emptyText) emptyText.textContent = '拖入或上传参考图（最多 10 张）· 支持多张批量';
+      if (hintText) hintText.textContent = '参考图可指定主体 · 提示词中用 @1 @2 … 引用';
+      if (input) input.setAttribute('accept', 'image/*');
+      if (limits) limits.hidden = true;
+    }
+  }
+
   function persistMode() {
     writeJSON(LS.mode, {
       mode: state.mode,
@@ -331,6 +365,191 @@
       audioFormat: state.audioFormat,
       sampleRate: state.sampleRate
     });
+  }
+
+  /* ---------------- 免费模型目录（视频 / 音频） ---------------- */
+  var mediaCatalog = {
+    video: [
+      { id: 'sora-2', name: 'Sora 2', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p', '2k'] },
+      { id: 'sora-2-pro', name: 'Sora 2 Pro', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p', '2k'] },
+      { id: 'veo-3', name: 'Veo 3', minDuration: 5, maxDuration: 30, free: false, resolutions: ['720p', '1080p'] },
+    ],
+    audio: {
+      models: [
+        { id: 'edgetts', name: 'Edge-TTS（免费）', source: 'edgetts', free: true },
+        { id: 'tts-1', name: 'TTS-1', source: 'rayin', free: false },
+        { id: 'tts-1-hd', name: 'TTS-1 HD', source: 'rayin', free: false },
+        { id: 'gpt-4o-mini-tts', name: 'GPT-4o mini TTS', source: 'rayin', free: false },
+      ],
+      edgeVoices: null, /* 从后端加载 */
+      refLimits: {
+        audios: { count: 3, maxBytes: 10 * 1024 * 1024 }
+      }
+    }
+  };
+
+  async function loadMediaCatalog() {
+    if (!(api && api.online)) return;
+    try {
+      var data = await api.mediaModels();
+      if (!data) return;
+      if (data.video) mediaCatalog.video = data.video;
+      if (data.audio) mediaCatalog.audio = Object.assign({}, mediaCatalog.audio, data.audio);
+      renderVideoModels();
+      renderAudioModels();
+      renderDurationControls();
+      renderVoiceMenu();
+    } catch (err) { /* 保持内置兜底 */ }
+  }
+
+  function renderVideoModels() {
+    var menu = document.querySelector('#modelMenu [data-mode-panel="video"]');
+    if (!menu) return;
+    menu.innerHTML = '<span class="hm-menu-label">视频模型</span>' +
+      '<div class="hm-chip-grid">' +
+      mediaCatalog.video.map(function (m) {
+        var badge = m.free ? '<small class="hm-free-badge">免费</small>' : '<small class="hm-pay-badge">RayinAPI</small>';
+        return '<button data-vmodel="' + m.id + '">' + m.name + badge + '</button>';
+      }).join('') +
+      '</div>' +
+      '<p class="hm-menu-note">视频为异步任务 · 由 Node 后端代理生成</p>';
+
+    menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.videoModel = btn.getAttribute('data-vmodel');
+        A.persistPrefs();
+        A.syncEngineUI();
+        renderDurationControls();
+        renderVideoModels();
+      });
+    });
+  }
+
+  function renderAudioModels() {
+    var menu = document.querySelector('#modelMenu [data-mode-panel="audio"]');
+    if (!menu) return;
+    menu.innerHTML = '<span class="hm-menu-label">音频模型</span>' +
+      '<div class="hm-chip-grid">' +
+      mediaCatalog.audio.models.map(function (m) {
+        var badge = m.free ? '<small class="hm-free-badge">免费</small>' : '<small class="hm-pay-badge">RayinAPI</small>';
+        return '<button data-amodel="' + m.id + '">' + m.name + badge + '</button>';
+      }).join('') +
+      '</div>' +
+      '<p class="hm-menu-note">Edge-TTS 完全免费无额度 · RayinAPI 需密钥</p>';
+
+    menu.querySelectorAll('[data-amodel]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.audioModel = btn.getAttribute('data-amodel');
+        A.persistPrefs();
+        A.syncEngineUI();
+        renderVoiceMenu();
+        renderAudioModels();
+      });
+    });
+  }
+
+  /* 绑定视频时长滑块的 input/change 事件（只绑一次，避免重复） */
+  function bindDurationSlider() {
+    var slider = document.getElementById('durationSlider');
+    if (!slider || slider._hmBound) return;
+    slider._hmBound = true;
+
+    var label = document.getElementById('durationSliderLabel');
+    var update = function () {
+      var val = Number(slider.value);
+      state.duration = val;
+      if (label) label.textContent = val + '秒';
+      syncChoiceLabels();
+    };
+
+    slider.addEventListener('input', update);
+    slider.addEventListener('change', function () {
+      update();
+      persistMode();
+      A.persistPrefs();
+    });
+  }
+
+  /* duration 控件：按当前模型动态范围渲染 slider */
+  function renderDurationControls() {
+    var modelId = state.videoModel;
+    var meta = mediaCatalog.video.find(function (m) { return m.id === modelId; }) || mediaCatalog.video[0];
+    var min = meta.minDuration || 5;
+    var max = meta.maxDuration || 10;
+
+    /* 更新下拉菜单（保留用于兼容） */
+    var menu = document.getElementById('durationMenu');
+    if (menu) {
+      menu.innerHTML = '';
+      /* 生成 5 秒间隔的选项 */
+      for (var d = min; d <= max; d += 5) {
+        var btn = document.createElement('button');
+        btn.setAttribute('data-duration', d);
+        btn.textContent = d + ' 秒';
+        if (d === state.duration) btn.classList.add('is-active');
+        btn.addEventListener('click', function () {
+          state.duration = Number(this.getAttribute('data-duration'));
+          syncChoiceLabels();
+          A.persistPrefs();
+        });
+        menu.appendChild(btn);
+      }
+    }
+    /* 同时更新 slider（如果存在） */
+    var slider = document.getElementById('durationSlider');
+    if (slider) {
+      slider.min = min;
+      slider.max = max;
+      slider.value = Math.max(min, Math.min(max, state.duration));
+      slider.step = 5;
+      var label = document.getElementById('durationSliderLabel');
+      if (label) label.textContent = slider.value + ' 秒';
+    }
+
+    syncChoiceLabels();
+  }
+
+  /* voice 菜单：Edge-TTS 模式显示中文/英文常用声，付费模式显示 alloy/echo 等 */
+  function renderVoiceMenu() {
+    var menu = document.getElementById('voiceMenu');
+    if (!menu) return;
+    var isEdge = state.audioModel === 'edgetts';
+
+    if (isEdge && mediaCatalog.audio.edgeVoices) {
+      /* Edge-TTS：按语言分组显示 */
+      var zh = mediaCatalog.audio.edgeVoices.filter(function (v) { return v.language === 'zh'; });
+      var en = mediaCatalog.audio.edgeVoices.filter(function (v) { return v.language === 'en'; });
+      menu.innerHTML =
+        '<span class="hm-menu-label">中文</span>' +
+        zh.slice(0, 6).map(function (v) { return '<button data-voice="' + v.name + '">' + v.name.replace('zh-CN-', '').replace('Neural', '') + '</button>'; }).join('') +
+        '<span class="hm-menu-label">英文</span>' +
+        en.slice(0, 4).map(function (v) { return '<button data-voice="' + v.name + '">' + v.name.replace('en-US-', '').replace('Neural', '') + '</button>'; }).join('');
+    } else {
+      /* 付费模型：固定 OpenAI 音色 */
+      menu.innerHTML =
+        '<button data-voice="alloy">alloy</button>' +
+        '<button data-voice="echo">echo</button>' +
+        '<button data-voice="fable">fable</button>' +
+        '<button data-voice="onyx">onyx</button>' +
+        '<button data-voice="nova">nova</button>' +
+        '<button data-voice="shimmer">shimmer</button>';
+    }
+
+    menu.querySelectorAll('[data-voice]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.voice = btn.getAttribute('data-voice');
+        syncChoiceLabels();
+        A.persistPrefs();
+        menu.querySelectorAll('[data-voice]').forEach(function (b) { b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+      });
+    });
+    /* 同步当前 active 状态 */
+    menu.querySelectorAll('[data-voice]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-voice') === state.voice);
+    });
+
+    syncChoiceLabels();
   }
 
   /* ---------------- 多模态生成（后端） ---------------- */
@@ -342,15 +561,30 @@
       return;
     }
     if (!api || !api.online) {
-      A.toast('视频 / 音频生成需要先启动本地 Node 后端（cd server && npm start）', 'error');
+      A.toast('视频 / 音频生成需要后端在线（当前无法连接 Render 服务器）', 'error');
       return;
     }
 
-    var key = String((state.api && state.api.key) || '').trim();
-    if (!key && !api.hasServerKey()) {
-      A.toast('视频 / 音频为付费接口，请在「接入设置」填写 RayinAPI 密钥', 'error');
-      A.openApiModal();
-      return;
+    /* 免费 Edge-TTS 通道不需要 RayinAPI key，付费通道才要 */
+    var modelId = mode === 'video' ? state.videoModel : state.audioModel;
+    var modelMeta = null;
+    if (mode === 'audio') {
+      modelMeta = mediaCatalog.audio.models.find(function (m) { return m.id === modelId; });
+    }
+    var isFree = mode === 'audio' && modelMeta && modelMeta.free;
+    if (!isFree && !modeFreeFor(mode)) {
+      var hasUserKey = !!String((state.api && state.api.key) || '').trim();
+      var hasServerKey = api.hasServerKey();
+      if (!hasUserKey && !hasServerKey) {
+        A.toast(mode === 'video'
+          ? '视频生成需要 RayinAPI 密钥（暂无完全免费视频模型可用）'
+          : '请先在「接入设置」填写 RayinAPI 密钥，或切换到 Edge-TTS 免费模型', 'error');
+        if (mode === 'audio') {
+          A.toast('切换到模型菜单 → Edge-TTS（免费）即可免密钥使用', 'info');
+        }
+        if (!isFree) A.openApiModal();
+        return;
+      }
     }
 
     A.els.emptyState.style.display = 'none';
@@ -363,10 +597,10 @@
       type: mode,
       prompt: text,
       promptEn: '',
-      modelId: mode === 'video' ? 'video' : 'audio',
-      modelName: mode === 'video' ? '视频生成' : '语音合成',
-      engine: 'rayin',
-      metaLabel: mode === 'video' ? '视频' : '音频',
+      modelId: mode === 'video' ? modelId : modelId,
+      modelName: modeModelLabelSimple(mode),
+      engine: isFree ? 'edgetts' : (mode === 'audio' ? 'rayin-tts' : 'rayin-video'),
+      metaLabel: mode === 'video' ? '视频' : (isFree ? 'Edge-TTS 免费' : '音频'),
       width: mode === 'video' ? size.w : 960,
       height: mode === 'video' ? size.h : 720,
       ratioId: state.ratio,
@@ -384,7 +618,7 @@
 
     A.setGenerating(true);
     A.startTicker();
-    A.updateQueue(mode === 'video' ? '视频生成中' : '语音合成中');
+    A.updateQueue(mode === 'video' ? '视频生成中' : (isFree ? 'Edge-TTS 合成中（免费）' : '语音合成中'));
 
     try {
       var data;
@@ -397,7 +631,6 @@
           resolution: state.scale === '1k' ? '720p' : '1080p',
           duration: state.duration,
           seed: state.seed,
-          refImages: state.refImage && state.refImage.dataUrl ? [state.refImage.dataUrl] : [],
           rayin: state.api
         }, 200000);
       } else {
@@ -421,8 +654,7 @@
 
       var elapsed = (Date.now() - job.startedAt) / 1000;
       A.markJobDone(job, item.url, item.seed || state.seed, elapsed);
-      spendCredit(mode === 'video' ? 60 : 10);
-      A.toast(mode === 'video' ? '视频已生成，可下载或到「画布」查看' : '语音已合成，已保存到资产库', 'success');
+      A.toast(mode === 'video' ? '视频已生成，可下载' : (isFree ? 'Edge-TTS 语音已合成（免费）' : '语音已合成'), 'success');
     } catch (err) {
       A.markJobError(job, err);
       A.toast(A.errorText(err), 'error');
@@ -431,8 +663,21 @@
       A.stopTicker();
       A.updateQueue('空闲');
       A.renderWorks();
-      if (mode === 'audio') loadAssets();
     }
+  }
+
+  function modeFreeFor(mode) {
+    if (mode !== 'audio') return false; /* 视频暂未提供免费模型 */
+    var meta = mediaCatalog.audio.models.find(function (m) { return m.id === state.audioModel; });
+    return !!(meta && meta.free);
+  }
+
+  function modeModelLabelSimple(mode) {
+    var m = mediaCatalog.audio.models.find(function (x) { return x.id === state.audioModel; });
+    if (mode === 'audio' && m) return m.name;
+    var vm = mediaCatalog.video.find(function (x) { return x.id === state.videoModel; });
+    if (mode === 'video' && vm) return vm.name;
+    return mode === 'video' ? '视频生成' : '语音合成';
   }
 
   /* ---------------- 全屏提示词编辑器 ---------------- */
@@ -1312,8 +1557,16 @@
     renderAssetModal();
     loadDraft();
 
+    /* 初始化视频/音频模型菜单（先用内置兜底，后端在线时覆盖） */
+    renderVideoModels();
+    renderAudioModels();
+    renderDurationControls();
+    renderVoiceMenu();
+    bindDurationSlider();
+
     await detectBackend();
     await loadAssets();
+    await loadMediaCatalog();
   }
 
   window.HMUI = {
