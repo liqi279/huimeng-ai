@@ -953,17 +953,21 @@
 
   <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
 
-  <!-- 版本更新弹窗 -->
-  <div class="hm-update-modal" id="updateModal" hidden>
+  <!-- 版本更新通知（右下角浮动卡片，不遮罩页面） -->
+  <div class="hm-update-modal" id="updateModal" hidden role="dialog" aria-label="绘梦 AI 更新通知">
     <div class="hm-update-card">
       <div class="hm-update-icon">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-      <h3 class="hm-update-title">绘梦 AI 已更新</h3>
-      <p class="hm-update-desc">新版本已发布，点击下方按钮刷新页面即可体验。<br>登录状态和所有数据不会丢失。</p>
+      <div class="hm-update-body">
+        <h3 class="hm-update-title">绘梦 AI 已更新</h3>
+        <p class="hm-update-desc">新版本已发布，点击下方按钮刷新页面即可体验。</p>
+      </div>
       <div class="hm-update-actions">
-        <button class="hm-update-later" id="updateLater" type="button">稍后再说</button>
         <button class="hm-update-confirm" id="updateConfirm" type="button">立即更新</button>
+        <button class="hm-update-close" id="updateClose" type="button" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
       </div>
     </div>
   </div>

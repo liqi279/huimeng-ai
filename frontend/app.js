@@ -2766,34 +2766,32 @@ async function authBoot() {
 
 function showUpdateModal() {
   var modal = document.getElementById('updateModal');
-  var later = document.getElementById('updateLater');
+  var close = document.getElementById('updateClose');
   var confirmBtn = document.getElementById('updateConfirm');
   if (!modal) return;
 
   modal.hidden = false;
-  document.body.style.overflow = 'hidden';
+  /* 不冻结页面滚动！这是右下角通知卡片，不是全屏模态 */
 
   function cleanup() {
-    if (later) later.removeEventListener('click', onLater);
+    if (close) close.removeEventListener('click', onClose);
     if (confirmBtn) confirmBtn.removeEventListener('click', onConfirm);
   }
-  function closeModal() {
-    modal.hidden = true;
-    document.body.style.overflow = '';
-    cleanup();
-  }
-  function onLater() {
+  function onClose() {
+    /* 关闭 = 24h 内不再弹（同之前的"稍后再说"） */
     localStorage.setItem('hm.build.remindAt', String(Date.now() + 24 * 60 * 60 * 1000));
-    closeModal();
+    modal.hidden = true;
+    cleanup();
   }
   function onConfirm() {
     localStorage.setItem('hm.build', window.HM_BUILD || '');
     localStorage.removeItem('hm.build.remindAt');
-    closeModal();
+    modal.hidden = true;
+    cleanup();
     toast('正在更新页面…', 'success');
     setTimeout(function () { location.reload(); }, 500);
   }
-  if (later) later.addEventListener('click', onLater);
+  if (close) close.addEventListener('click', onClose);
   if (confirmBtn) confirmBtn.addEventListener('click', onConfirm);
 }
 
