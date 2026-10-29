@@ -11,7 +11,7 @@ router.get('/health', (req, res) => {
     ok: true,
     version: '1.0.0',
     rayinConfigured: Boolean(config.RAYIN_KEY),
-    engines: ['flux', 'gpt-image', 'banana'],
+    engines: ['flux', 'openai', 'gpt-image', 'banana'],
     modes: ['image', 'video', 'audio'],
   });
 });

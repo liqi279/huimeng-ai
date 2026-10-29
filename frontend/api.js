@@ -165,6 +165,7 @@
   api.deleteAsset = function (id) { return request('/assets/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
 
   api.presets = function () { return request('/presets', {}, 15000); };
+  api.catalog = function () { return request('/catalog', {}, 15000); };
   api.models = function (cfg) {
     return request('/rayin/models', { method: 'POST', body: cfg || {} }, 45000);
   };

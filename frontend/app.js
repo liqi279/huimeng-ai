@@ -40,8 +40,16 @@ const GPT_IMAGE_FALLBACKS = ['gpt-image-2', 'gpt-image-1'];
 
 const ENGINE_META = {
   flux: { label: 'FLUX.1', pill: 'FLUX.1 · 免费', hint: '免费 · 约 10 秒', meta: 'FLUX.1', free: true },
+  openai: { label: '免费模型平台', pill: '免费额度 · 第三方', hint: '免费额度 · 需平台密钥', meta: 'Third-party', free: true },
   'gpt-image': { label: 'GPT-image', pill: 'GPT-image · RayinAPI', hint: 'RayinAPI · 按量计费', meta: 'GPT-image', free: false },
   banana: { label: 'Nano Banana', pill: 'Nano Banana · RayinAPI', hint: 'RayinAPI · 按量计费', meta: 'Nano Banana', free: false }
+};
+
+/* 免费模型目录（启动时从后端 /catalog 拉取，拉不到就用内置兜底） */
+const CATALOG_FALLBACK = {
+  keyless: [{ id: 'sana', engine: 'flux', model: 'sana', name: 'SANA 动漫', badge: '免密钥', hint: '免费 · 秒级出图' }],
+  providers: [],
+  loras: []
 };
 
 const TRANSLATE_API = 'https://text.pollinations.ai/';
@@ -51,6 +59,7 @@ const FALLBACK_API = 'https://image.pollinations.ai/prompt/';
 const LS_WORKS = 'anidream.works.v1';
 const LS_PREFS = 'anidream.prefs.v1';
 const LS_API = 'anidream.rayin.v1';
+const LS_PROVIDERS = 'anidream.providers.v1';
 const MAX_WORKS = 48;
 
 /* ---------------- 风格模型分组 ---------------- */
@@ -360,6 +369,15 @@ const state = {
   seed: Number(storedPrefs.seed) || randomSeed(),
   translate: storedPrefs.translate !== false,
   engine: ENGINE_META[storedPrefs.engine] ? storedPrefs.engine : 'flux',
+  channelModel: typeof storedPrefs.channelModel === 'string' && storedPrefs.channelModel
+    ? storedPrefs.channelModel
+    : 'sana',                          // 免费通道模型 ID（sana / 第三方模型 ID）
+  lora: typeof storedPrefs.lora === 'string' ? storedPrefs.lora : '',   // 动漫 LoRA 风格包 ID
+  providerId: typeof storedPrefs.providerId === 'string' && storedPrefs.providerId
+    ? storedPrefs.providerId
+    : 'siliconflow',
+  providers: loadJSON(LS_PROVIDERS, {}) || {},
+  catalog: CATALOG_FALLBACK,
   api: Object.assign({}, RAYIN_DEFAULT, storedApi),
   works: Array.isArray(storedWorks)
     ? storedWorks.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS)
@@ -504,6 +522,14 @@ function bindEls() {
   els.refPickBtn = document.getElementById('refPickBtn');
   els.engineBtn = document.getElementById('engineBtn');
   els.engineMenu = document.getElementById('engineMenu');
+  els.freeModelList = document.getElementById('freeModelList');
+  els.loraList = document.getElementById('loraList');
+  els.providerSelect = document.getElementById('providerSelect');
+  els.providerBaseInput = document.getElementById('providerBaseInput');
+  els.providerKeyInput = document.getElementById('providerKeyInput');
+  els.providerModelInput = document.getElementById('providerModelInput');
+  els.providerKeyLink = document.getElementById('providerKeyLink');
+  els.providerSave = document.getElementById('providerSave');
   els.engineModelBtn = document.getElementById('engineModelBtn');
   els.ratioBtn = document.getElementById('ratioBtn');
   els.scaleBtn = document.getElementById('scaleBtn');
@@ -732,11 +758,159 @@ function hasRayinKey() {
   return !!String(rayinCfg().key || '').trim();
 }
 
+/* ---------------- 免费模型目录 ---------------- */
+function catalogData() {
+  return state.catalog || CATALOG_FALLBACK;
+}
+
+function findChannelModel(modelId) {
+  const keyless = catalogData().keyless || [];
+  const hit = keyless.find(function (m) { return m.model === modelId || m.id === modelId; });
+  if (hit) return hit;
+  let found = null;
+  (catalogData().providers || []).forEach(function (p) {
+    (p.models || []).forEach(function (m) {
+      if (!found && m.id === modelId) found = Object.assign({ providerId: p.id }, m);
+    });
+  });
+  return found;
+}
+
+function findLora(id) {
+  return (catalogData().loras || []).find(function (l) { return l.id === id; }) || null;
+}
+
+function providerConfig(providerId) {
+  const id = providerId || state.providerId;
+  const preset = (catalogData().providers || []).find(function (p) { return p.id === id; }) || null;
+  const saved = (state.providers && state.providers[id]) || {};
+  return {
+    id: id,
+    preset: preset,
+    base: saved.base || (preset && preset.base) || '',
+    key: saved.key || '',
+    model: saved.model || (preset && preset.models && preset.models[0] ? preset.models[0].id : '')
+  };
+}
+
+/* ---------------- 免费额度平台设置 ---------------- */
+function normalizeProviderBase(value) {
+  const base = String(value || '').trim().replace(/\/+$/, '');
+  if (!base) return '';
+  return /\/v\d+[a-z]*$/i.test(base) ? base : base + '/v1';
+}
+
+function renderProviderSelect() {
+  if (!els.providerSelect) return;
+  const providers = catalogData().providers || [];
+  const rows = providers.map(function (p) {
+    return '<option value="' + p.id + '">' + p.name + ' · 免费额度</option>';
+  });
+  rows.push('<option value="custom">自定义 OpenAI 兼容平台</option>');
+  els.providerSelect.innerHTML = rows.join('');
+  els.providerSelect.value = state.providerId;
+}
+
+function fillProviderFields(providerId) {
+  const cfg = providerConfig(providerId);
+  if (els.providerBaseInput) els.providerBaseInput.value = cfg.base || '';
+  if (els.providerKeyInput) els.providerKeyInput.value = cfg.key || '';
+  if (els.providerModelInput) els.providerModelInput.value = cfg.model || '';
+  if (els.providerKeyLink) {
+    const url = (cfg.preset && cfg.preset.keyUrl) || 'https://cloud.siliconflow.cn/account/ak';
+    els.providerKeyLink.href = url;
+    els.providerKeyLink.textContent = cfg.preset
+      ? '前往 ' + cfg.preset.name + ' 获取密钥'
+      : '获取密钥';
+  }
+}
+
+function saveProviderConfig() {
+  if (!els.providerSelect) return;
+  const id = els.providerSelect.value;
+  const base = normalizeProviderBase(els.providerBaseInput.value);
+  const key = els.providerKeyInput.value.trim();
+  const model = els.providerModelInput.value.trim();
+
+  if (!base) { toast('请填写平台接口地址', 'error'); els.providerBaseInput.focus(); return; }
+  if (!key) { toast('请填写该平台的 API Key', 'error'); els.providerKeyInput.focus(); return; }
+
+  state.providers[id] = { base: base, key: key, model: model };
+  state.providerId = id;
+  if (model) state.channelModel = model;
+  saveJSON(LS_PROVIDERS, state.providers);
+  persistPrefs();
+  syncEngineUI();
+  toast('平台配置已保存，可在「生图」菜单选择该平台模型', 'success');
+}
+
+/* 当前模型显示名（胶囊 / 提示用） */
+function currentModelLabel() {
+  const lora = findLora(state.lora);
+  let base = '';
+  if (state.engine === 'flux') {
+    const ch = findChannelModel(state.channelModel);
+    base = ch ? ch.name : 'SANA 动漫';
+  } else if (state.engine === 'openai') {
+    const model = findChannelModel(state.channelModel);
+    const cfg = providerConfig();
+    base = model ? model.name : (cfg.preset ? cfg.preset.name : '免费模型平台');
+  } else {
+    base = ENGINE_META[state.engine] ? ENGINE_META[state.engine].label : 'FLUX.1';
+  }
+  return lora ? base + ' · ' + lora.name : base;
+}
+
+/* 模型菜单：免密钥通道 + 免费额度平台模型 + 动漫 LoRA 风格 */
+function renderCatalogMenus() {
+  const data = catalogData();
+
+  if (els.freeModelList) {
+    const rows = [];
+    (data.keyless || []).forEach(function (m) {
+      rows.push('<button data-engine="flux" data-model="' + m.model + '">' +
+        m.name + ' · ' + (m.badge || '免密钥') + '</button>');
+    });
+    (data.providers || []).forEach(function (p) {
+      (p.models || []).forEach(function (m) {
+        rows.push('<button data-engine="openai" data-provider="' + p.id + '" data-model="' + m.id + '">' +
+          m.name + ' · ' + p.name + ' · ' + (m.badge || '免费') + '</button>');
+      });
+    });
+    els.freeModelList.innerHTML = rows.join('') ||
+      '<p class="hm-menu-note">后端离线，暂无在线模型目录</p>';
+  }
+
+  if (els.loraList) {
+    const rows = ['<button data-lora="">不启用风格</button>'];
+    (data.loras || []).forEach(function (l) {
+      rows.push('<button data-lora="' + l.id + '">' + l.name + ' · ' + (l.tag || 'LoRA') + '</button>');
+    });
+    els.loraList.innerHTML = rows.join('');
+  }
+
+  syncEngineUI();
+}
+
+async function loadCatalog() {
+  if (!window.HM || !window.HM.api || !window.HM.api.online) return;
+  try {
+    const data = await window.HM.api.catalog();
+    if (!data) return;
+    state.catalog = {
+      keyless: data.keyless || [],
+      providers: data.providers || [],
+      loras: data.loras || []
+    };
+    renderCatalogMenus();
+  } catch (err) { /* 保留内置兜底目录 */ }
+}
+
 function syncEngineUI() {
   const meta = ENGINE_META[state.engine] || ENGINE_META.flux;
   els.engineSelect.value = state.engine;
-  els.enginePillText.textContent = meta.pill;
-  els.composerEngineNote.textContent = meta.free ? 'FLUX.1 · 免费算力' : meta.label + ' · RayinAPI';
+  els.enginePillText.textContent = currentModelLabel();
+  els.composerEngineNote.textContent = meta.free ? currentModelLabel() + ' · 免费' : meta.label + ' · RayinAPI';
   if (!state.generating) els.genHint.textContent = meta.hint;
   els.planTag.textContent = meta.free ? 'FREE' : 'API';
   els.composerNotice.textContent = meta.free
@@ -744,9 +918,20 @@ function syncEngineUI() {
     : 'RayinAPI 按量计费 · 生成后可直接下载原图';
   document.body.dataset.engine = state.engine;
 
-  if (meta.free) {
-    els.engineNote.textContent = '免费通道，无需配置即可生成';
+  if (state.engine === 'flux') {
+    els.engineNote.textContent = '免费通道，无需密钥即可生成';
     els.engineNote.classList.remove('is-warn');
+  } else if (state.engine === 'openai') {
+    const cfg = providerConfig();
+    if (cfg.key) {
+      els.engineNote.textContent = cfg.preset
+        ? cfg.preset.name + ' · ' + cfg.model + ' · 密钥仅保存在本机'
+        : '免费额度平台 · 密钥仅保存在本机';
+      els.engineNote.classList.remove('is-warn');
+    } else {
+      els.engineNote.textContent = '尚未配置该平台 API Key，点击右上「接入设置」';
+      els.engineNote.classList.add('is-warn');
+    }
   } else if (hasRayinKey()) {
     els.engineNote.textContent = '密钥已配置 · 按量计费，仅保存在本机';
     els.engineNote.classList.remove('is-warn');
@@ -760,11 +945,16 @@ function syncEngineUI() {
 
   if (els.engineMenu) {
     els.engineMenu.querySelectorAll('[data-engine]').forEach(function (btn) {
-      btn.classList.toggle('is-active', btn.dataset.engine === state.engine);
+      const sameEngine = btn.dataset.engine === state.engine;
+      const sameModel = !btn.dataset.model || btn.dataset.model === state.channelModel;
+      btn.classList.toggle('is-active', sameEngine && sameModel);
+    });
+    els.engineMenu.querySelectorAll('[data-lora]').forEach(function (btn) {
+      btn.classList.toggle('is-active', (btn.dataset.lora || '') === (state.lora || ''));
     });
   }
   if (els.engineModelBtn) {
-    els.engineModelBtn.title = meta.label + (meta.free ? ' · 免费通道' : ' · RayinAPI 按量计费');
+    els.engineModelBtn.title = currentModelLabel() + (meta.free ? ' · 免费通道' : ' · RayinAPI 按量计费');
   }
   if (els.scaleBtn) {
     els.scaleBtn.title = '生成清晰度：1K / 2K / 4K';
@@ -1269,7 +1459,10 @@ function persistPrefs() {
     steps: state.steps,
     seed: state.seed,
     translate: state.translate,
-    engine: state.engine
+    engine: state.engine,
+    channelModel: state.channelModel,
+    lora: state.lora,
+    providerId: state.providerId
   });
 }
 
@@ -1563,6 +1756,13 @@ async function generateOne(job, prompt) {
     }
   }
 
+  if (job.engine === 'openai') {
+    const offlineError = new Error('免费额度模型需要后端代理，当前后端未连接');
+    offlineError.hint = '请确认后端服务已启动，或在「接入设置」检查接口地址';
+    markJobError(job, offlineError);
+    throw offlineError;
+  }
+
   if (job.engine === 'gpt-image' || job.engine === 'banana') {
     const image = job.engine === 'gpt-image'
       ? await runRayinImage(job, prompt)
@@ -1574,9 +1774,13 @@ async function generateOne(job, prompt) {
 
   let lastError = null;
 
+  /* 浏览器直连通道（后端离线时的免费兜底）：LoRA 风格在本地拼进提示词 */
+  const loraPreset = findLora(state.lora);
+  const localPrompt = loraPreset ? (prompt + ', ' + loraPreset.prompt) : prompt;
+
   for (let i = 0; i < ENGINES.length; i += 1) {
     try {
-      const image = await runEngine(ENGINES[i], job, prompt);
+      const image = await runEngine(ENGINES[i], job, localPrompt);
       const elapsed = (Date.now() - job.startedAt) / 1000;
       markJobDone(job, image.url, image.seed, elapsed);
       return;
@@ -1589,7 +1793,7 @@ async function generateOne(job, prompt) {
 
   if (!isAbortError(lastError)) {
     try {
-      const image = await runFallback(job, prompt);
+      const image = await runFallback(job, localPrompt);
       job.metaLabel = '备用通道';
       const elapsed = (Date.now() - job.startedAt) / 1000;
       markJobDone(job, image.url, image.seed, elapsed);
@@ -1617,8 +1821,17 @@ async function runBackendImage(job, prompt) {
     steps: job.steps || 8,
     seed: job.seed,
     refImages: (job.refImages || []).map(function (r) { return r.dataUrl; }),
-    rayin: state.api
+    rayin: state.api,
+    style: state.lora || ''
   };
+
+  if (job.engine === 'flux') {
+    payload.model = state.channelModel || 'sana';
+  } else if (job.engine === 'openai') {
+    const cfg = providerConfig();
+    payload.model = cfg.model;
+    payload.provider = { id: cfg.id, base: cfg.base, key: cfg.key, model: cfg.model };
+  }
 
   const data = await window.HM.api.generate(payload, 180000);
   const item = data && data.items && data.items[0];
@@ -2504,6 +2717,8 @@ function openApiModal() {
   els.gptModelInput.value = rayinCfg().gptModel || RAYIN_DEFAULT.gptModel;
   els.bananaModelInput.value = rayinCfg().bananaModel || RAYIN_DEFAULT.bananaModel;
   els.apiHint.textContent = '保存后即可在上方面板下拉切换模型。';
+  renderProviderSelect();
+  fillProviderFields(state.providerId);
   els.apiModal.classList.add('is-open');
   els.apiModal.setAttribute('aria-hidden', 'false');
 }
@@ -2642,8 +2857,20 @@ function bindEvents() {
   }
   if (els.engineMenu) {
     els.engineMenu.addEventListener('click', function (event) {
+      const loraBtn = event.target.closest('[data-lora]');
+      if (loraBtn) {
+        state.lora = loraBtn.dataset.lora || '';
+        persistPrefs();
+        syncEngineUI();
+        const preset = findLora(state.lora);
+        toast(preset ? '已启用风格：' + preset.name : '已关闭风格增强', 'success');
+        return;
+      }
+
       const btn = event.target.closest('[data-engine]');
       if (!btn || !ENGINE_META[btn.dataset.engine]) return;
+      if (btn.dataset.provider) state.providerId = btn.dataset.provider;
+      if (btn.dataset.model) state.channelModel = btn.dataset.model;
       els.engineSelect.value = btn.dataset.engine;
       els.engineSelect.dispatchEvent(new Event('change'));
       closeAllMenus();
@@ -2656,17 +2883,35 @@ function bindEvents() {
     state.engine = value;
     persistPrefs();
     syncEngineUI();
-    if (value !== 'flux' && !hasRayinKey()) {
+
+    if (value === 'openai') {
+      const cfg = providerConfig();
+      if (!cfg.key) {
+        toast('该模型来自免费额度平台，需先填写平台 API Key', 'info');
+        openApiModal();
+      } else {
+        toast('已切换到 ' + currentModelLabel(), 'success');
+      }
+      return;
+    }
+
+    if ((value === 'gpt-image' || value === 'banana') && !hasRayinKey()) {
       toast('该模型需要 RayinAPI 密钥，先完成接入设置', 'info');
       openApiModal();
     } else {
-      toast('已切换到 ' + ENGINE_META[value].label, 'success');
+      toast('已切换到 ' + currentModelLabel(), 'success');
     }
   });
 
   els.apiConfigBtn.addEventListener('click', openApiModal);
   els.apiClose.addEventListener('click', closeApiModal);
   els.apiSave.addEventListener('click', saveRayinConfig);
+  if (els.providerSave) els.providerSave.addEventListener('click', saveProviderConfig);
+  if (els.providerSelect) {
+    els.providerSelect.addEventListener('change', function () {
+      fillProviderFields(els.providerSelect.value);
+    });
+  }
   els.fetchModelsBtn.addEventListener('click', fetchRayinModels);
   els.apiModal.addEventListener('click', function (event) {
     if (event.target === els.apiModal) closeApiModal();
@@ -3286,12 +3531,14 @@ function boot() {
   bindRefAutocomplete(); /* ← @ 自动补全 */
   bindPromptOverlayEvents(); /* ← overlay chip 视觉化 */
   renderRef();          /* ← 每个 tab 独立的 refs 渲染 */
+  renderCatalogMenus(); /* ← 免费模型 / LoRA 风格列表（先用内置兜底） */
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();
 
   /* 认证引导（先探测后端，再登录态校验） */
   api.ping().finally(function () {
     authBoot();
+    loadCatalog();      /* ← 后端在线时拉取完整免费模型目录 */
   });
 
   /* 版本更新检测（不影响登录态） */

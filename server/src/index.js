@@ -14,6 +14,7 @@ const worksRoutes = require('./routes/works');
 const deskRoutes = require('./routes/desk');
 const assetsRoutes = require('./routes/assets');
 const presetsRoutes = require('./routes/presets');
+const catalogRoutes = require('./routes/catalog');
 const rayinRoutes = require('./routes/rayin');
 const generateRoutes = require('./routes/generate');
 const authRoutes = require('./routes/auth');
@@ -34,6 +35,7 @@ app.use('/api', worksRoutes);
 app.use('/api', deskRoutes);
 app.use('/api', assetsRoutes);
 app.use('/api', presetsRoutes);
+app.use('/api', catalogRoutes);
 app.use('/api', rayinRoutes);
 app.use('/api', generateRoutes);
 

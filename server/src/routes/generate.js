@@ -5,6 +5,7 @@ const fsp = require('fs').promises;
 const express = require('express');
 const config = require('../config');
 const store = require('../store');
+const catalog = require('../catalog');
 const {
   jsonError,
   assert,
@@ -199,10 +200,69 @@ async function validateImageUrl(url) {
   return { ok: true, url };
 }
 
-async function runFlux(prompt, seed, width, height, steps) {
+async function runFlux(prompt, seed, width, height, steps, options) {
+  const opts = options || {};
   const encoded = encodeURIComponent(String(prompt).slice(0, 900));
-  const url = `${FLUX_PRIMARY}${encoded}?width=${width}&height=${height}&seed=${seed}&model=flux&nologo=true`;
-  /* Pollinations 直接返回图片，URL 本身即可访问；saveRemoteImage 会下载到本地 */
+  const params = new URLSearchParams({
+    width: String(width),
+    height: String(height),
+    seed: String(seed),
+    model: opts.model || 'sana',
+    nologo: 'true',
+    referrer: 'huimeng-ai',
+  });
+  if (opts.negative) params.set('negative_prompt', String(opts.negative).slice(0, 300));
+  /* Pollinations 直接返回图片，URL 本身即可访问 */
+  return `${FLUX_PRIMARY}${encoded}?${params.toString()}`;
+}
+
+/* 各家 OpenAI 兼容平台返回结构不同（data / images / output），统一提取 */
+function extractAnyImage(data) {
+  if (!data) return '';
+  const list = Array.isArray(data.data)
+    ? data.data
+    : Array.isArray(data.images)
+      ? data.images
+      : Array.isArray(data.output)
+        ? data.output
+        : [];
+  for (const item of list) {
+    if (typeof item === 'string' && item) return item;
+    if (item && typeof item.url === 'string' && item.url) return item.url;
+    if (item && typeof item.b64_json === 'string' && item.b64_json) {
+      return `data:image/png;base64,${item.b64_json}`;
+    }
+  }
+  if (typeof data.url === 'string' && data.url) return data.url;
+  return '';
+}
+
+/* 免费额度平台（硅基流动 / 魔搭 / Together 等 OpenAI 兼容接口） */
+async function generateOpenAICompat({ base, key, model, prompt, width, height, sizeMode, negative }) {
+  const payload = { model, prompt, n: 1 };
+  if (sizeMode === 'wh') {
+    payload.width = width;
+    payload.height = height;
+  } else if (sizeMode === 'image_size') {
+    payload.image_size = `${width}x${height}`;
+  } else {
+    payload.size = `${width}x${height}`;
+  }
+  if (negative) payload.negative_prompt = negative;
+
+  const data = await fetchJson(
+    `${base}/images/generations`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    IMAGE_TIMEOUT,
+    '请检查平台模型 ID、密钥与免费额度是否可用',
+  );
+
+  const url = extractAnyImage(data);
+  if (!url) throw jsonError(502, '模型未返回图片', '该模型可能不支持文生图接口，请更换模型 ID');
   return url;
 }
 
@@ -304,8 +364,32 @@ async function generateBanana({ base, key, model, prompt, refs }) {
   return url;
 }
 
+/* 免费额度平台配置（密钥仅由前端保存在本机，随请求带上） */
+function resolveProvider(input, modelId) {
+  const raw = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+  const base = normalizeBase(raw.base);
+  const configured = catalog.findProvider(raw.id);
+  return {
+    id: (raw.id && String(raw.id)) || '',
+    base,
+    key: typeof raw.key === 'string' ? raw.key.trim() : '',
+    model: (typeof raw.model === 'string' && raw.model.trim()) || modelId || '',
+    sizeMode: (configured && configured.sizeMode) || 'size',
+  };
+}
+
+/* 动漫 LoRA / 风格包：把触发词并入提示词，负面词单独返回 */
+function applyStyle(prompt, lora) {
+  if (!lora) return { prompt, negative: '' };
+  const merged = `${prompt}, ${lora.prompt}`.trim();
+  return {
+    prompt: merged.slice(0, MAX_PROMPT_CHARS),
+    negative: lora.negative || '',
+  };
+}
+
 async function generateImages(body) {
-  const engine = ['flux', 'gpt-image', 'banana'].includes(body.engine) ? body.engine : 'flux';
+  const engine = ['flux', 'openai', 'gpt-image', 'banana'].includes(body.engine) ? body.engine : 'flux';
   const prompt = readPrompt(body.prompt, '提示词');
   const ratio = RATIO_SIZE[body.ratio] ? body.ratio : '1:1';
   const scale = ['1k', '2k', '4k'].includes(body.scale) ? body.scale : '2k';
@@ -315,11 +399,20 @@ async function generateImages(body) {
   const refs = readRefImages(body.refImages);
   const rayin = resolveRayin(body.rayin);
 
-  if (engine !== 'flux') requireKey(rayin.key);
+  const lora = catalog.findLora(body.style);
+  const styled = applyStyle(prompt, lora);
+
+  const model = typeof body.model === 'string' && body.model.trim() ? body.model.trim() : '';
+  const provider = engine === 'openai' ? resolveProvider(body.provider, model) : null;
+
+  if (engine === 'gpt-image' || engine === 'banana') requireKey(rayin.key);
+  if (engine === 'openai') {
+    assert(provider.key, 400, '未配置该平台的 API Key', '在「接入设置 · 免费模型平台」中填写密钥');
+    assert(provider.model, 400, '未选择模型', '请选择一个模型 ID');
+  }
 
   const { width, height } = scaledImageSize(ratio, scale);
   const size = gptSize(ratio);
-  const model = typeof body.model === 'string' && body.model.trim() ? body.model.trim() : '';
   const seeds = Array.from({ length: count }, (_, index) => (
     seedInput ? Math.min(seedInput + index, 2147483647) : randomSeed()
   ));
@@ -327,14 +420,28 @@ async function generateImages(body) {
   return mapLimited(seeds, 2, async (seed) => {
     let url;
     if (engine === 'flux') {
-      url = await runFlux(prompt, seed, width, height, steps);
+      url = await runFlux(styled.prompt, seed, width, height, steps, {
+        model: model || 'sana',
+        negative: styled.negative,
+      });
+    } else if (engine === 'openai') {
+      url = await generateOpenAICompat({
+        base: provider.base,
+        key: provider.key,
+        model: provider.model,
+        prompt: styled.prompt,
+        width,
+        height,
+        sizeMode: provider.sizeMode,
+        negative: styled.negative,
+      });
     } else if (engine === 'gpt-image') {
       /* GPT-image /images/generations 不支持多 reference 图，传第一张 */
       url = await generateGptImage({
         base: rayin.base,
         key: rayin.key,
         model: model || rayin.gptModel,
-        prompt,
+        prompt: styled.prompt,
         size,
         ref: refs[0],
       });
@@ -344,7 +451,7 @@ async function generateImages(body) {
         base: rayin.base,
         key: rayin.key,
         model: rayin.bananaModel,
-        prompt,
+        prompt: styled.prompt,
         refs,
       });
     }

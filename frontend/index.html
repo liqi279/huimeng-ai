@@ -504,6 +504,12 @@
                 <button data-engine="gpt-image">GPT-image · RayinAPI</button>
                 <button data-engine="banana">Nano Banana · RayinAPI</button>
               </div>
+              <div class="hm-menu-group" data-mode-panel="image" id="freeModelGroup">
+                <span class="hm-menu-label">免费动漫模型</span>
+                <div id="freeModelList"></div>
+                <span class="hm-menu-label">动漫 LoRA 风格</span>
+                <div id="loraList"></div>
+              </div>
               <div class="hm-menu-group" data-mode-panel="video" hidden>
                 <span class="hm-menu-label">视频模型</span>
                 <p class="hm-menu-note">视频生成为异步任务，需启动 Node 后端并配置视频模型 ID（默认 sora-2）。</p>
@@ -617,6 +623,7 @@
 
       <select id="engineSelect" class="hm-visually-hidden" aria-label="选择生图模型" tabindex="-1">
         <option value="flux">FLUX.1 · 免费（无需密钥）</option>
+        <option value="openai">免费额度平台模型</option>
         <option value="gpt-image">GPT-image · RayinAPI</option>
         <option value="banana">Nano Banana · RayinAPI</option>
       </select>
@@ -760,7 +767,7 @@
           <div><strong>生成并下载原图</strong><p>生成完成后点击下载按钮保存原图；作品会同步到右上「个人空间」。</p></div>
         </div>
       </div>
-      <p class="guide-note">免费算力由 FLUX.1 提供，偶尔可能需要排队。也可在右上齿轮「接入设置」填入 RayinAPI 密钥，切换 GPT-image / Nano Banana；上传参考图即可图生图。请勿生成违法违规内容。</p>
+      <p class="guide-note">免密钥通道由 SANA 提供，秒级出图。也可在「接入设置」填入免费额度平台（硅基流动 / 魔搭 / Together）的密钥，使用 FLUX、Kolors 等动漫模型；再叠加「动漫 LoRA 风格」即可获得番剧质感。请勿生成违法违规内容。</p>
       <button class="primary-btn wide" id="helpDone">开始创作</button>
     </div>
   </div>
@@ -800,6 +807,30 @@
         <button class="subtle-btn" id="fetchModelsBtn">读取账号模型</button>
         <button class="primary-btn" id="apiSave">保存并启用</button>
       </div>
+
+      <div class="api-divider">免费额度平台（可选 · 注册即送额度）</div>
+      <div class="api-form">
+        <label class="field">
+          <span>平台</span>
+          <select id="providerSelect"></select>
+        </label>
+        <label class="field">
+          <span>接口地址</span>
+          <input id="providerBaseInput" type="text" placeholder="https://api.siliconflow.cn/v1" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>API Key</span>
+          <input id="providerKeyInput" type="password" placeholder="免费注册后获取" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>默认模型 ID</span>
+          <input id="providerModelInput" type="text" placeholder="Kwai-Kolors/Kolors" autocomplete="off">
+        </label>
+      </div>
+      <p class="api-hint" id="providerHint">密钥仅保存在本浏览器。
+        <a id="providerKeyLink" href="https://cloud.siliconflow.cn/account/ak" target="_blank" rel="noopener">获取密钥</a>
+      </p>
+      <button class="subtle-btn wide" id="providerSave">保存平台配置</button>
     </div>
   </div>
 
