@@ -57,6 +57,7 @@ const TRANSLATE_API = 'https://text.pollinations.ai/';
 const FALLBACK_API = 'https://image.pollinations.ai/prompt/';
 
 const LS_WORKS = 'anidream.works.v1';
+const LS_WORKS_BAK = 'anidream.works.v1.bak';
 const LS_PREFS = 'anidream.prefs.v1';
 const LS_API = 'anidream.rayin.v1';
 const LS_PROVIDERS = 'anidream.providers.v1';
@@ -386,7 +387,7 @@ const state = {
   catalog: CATALOG_FALLBACK,
   api: Object.assign({}, RAYIN_DEFAULT, storedApi),
   works: Array.isArray(storedWorks)
-    ? storedWorks.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS)
+    ? storedWorks.filter(function (w) { return w && (w.url || w.blob); }).slice(0, MAX_WORKS)
     : [],
   generating: false,
   jobs: new Map(),
@@ -2331,7 +2332,112 @@ function markJobDone(job, url, seed, elapsed) {
   saveWork(job);
 }
 
+/* ---------------- 本地大图仓库（IndexedDB） ----------------
+ * 生成图的 base64 动辄 200KB，48 张远超 localStorage 5MB 上限，
+ * 之前直接塞 localStorage 会静默写入失败 → 刷新后作品消失。
+ * 现在元数据（提示词/尺寸/缩略图）走 localStorage，原图放 IndexedDB。 */
+var _blobDbPromise = null;
+function _blobDb() {
+  if (_blobDbPromise) return _blobDbPromise;
+  _blobDbPromise = new Promise(function (resolve) {
+    if (!window.indexedDB) return resolve(null);
+    var req = indexedDB.open('anidream', 1);
+    req.onupgradeneeded = function () {
+      var db = req.result;
+      if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+    };
+    req.onsuccess = function () { resolve(req.result); };
+    req.onerror = function () { resolve(null); };
+  });
+  return _blobDbPromise;
+}
+
+function idbPutBlob(id, url) {
+  _blobDb().then(function (db) {
+    if (!db) return;
+    try { db.transaction('blobs', 'readwrite').objectStore('blobs').put(url, id); } catch (e) {}
+  });
+}
+function idbDelBlob(id) {
+  _blobDb().then(function (db) {
+    if (!db) return;
+    try { db.transaction('blobs', 'readwrite').objectStore('blobs').delete(id); } catch (e) {}
+  });
+}
+function idbAllBlobs() {
+  return _blobDb().then(function (db) {
+    if (!db) return {};
+    return new Promise(function (resolve) {
+      var out = {};
+      try {
+        var req = db.transaction('blobs', 'readonly').objectStore('blobs').openCursor();
+        req.onsuccess = function () {
+          var cur = req.result;
+          if (cur) { out[cur.key] = cur.value; cur.continue(); } else resolve(out);
+        };
+        req.onerror = function () { resolve(out); };
+      } catch (e) { resolve(out); }
+    });
+  });
+}
+
+/* 把 localStorage 里标记为 blob 的作品补回原图 */
+function hydrateWorks() {
+  return idbAllBlobs().then(function (map) {
+    var changed = false;
+    state.works.forEach(function (w) {
+      if (!w) return;
+      if (!w.url && map[w.id]) { w.url = map[w.id]; changed = true; }
+    });
+    return changed;
+  });
+}
+
 /* ---------------- 作品库 ---------------- */
+function workTime(w) {
+  var v = w && w.createdAt;
+  if (typeof v === 'number') return v;
+  var t = Date.parse(v);
+  return isNaN(t) ? 0 : t;
+}
+
+/* 服务端与本地合并：Render 免费层每次重启都会清空 data/，
+   ！绝不能！用服务端的空列表覆盖用户本地缓存（这正是"刷新后图片全消失"的原因）。 */
+function mergeWorks(serverItems, localItems) {
+  var map = Object.create(null);
+  var out = [];
+  function add(list) {
+    (list || []).forEach(function (w) {
+      if (!w || (!w.url && !w.blob)) return;
+      var id = w.id || ('w_' + workTime(w) + '_' + out.length);
+      var hit = map[id];
+      if (hit) {
+        Object.keys(w).forEach(function (k) {
+          if (w[k] !== null && w[k] !== undefined && w[k] !== '') hit[k] = w[k];
+        });
+        return;
+      }
+      var copy = Object.assign({}, w, { id: id });
+      map[id] = copy;
+      out.push(copy);
+    });
+  }
+  add(serverItems);
+  add(localItems);
+  out.sort(function (a, b) { return workTime(b) - workTime(a); });
+  return out.slice(0, MAX_WORKS);
+}
+
+/* 服务端丢掉的作品，自动补传回去（下次换设备也能看到） */
+function uploadMissingWorks(list, serverItems) {
+  if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
+  var have = Object.create(null);
+  (serverItems || []).forEach(function (w) { if (w && w.id) have[w.id] = 1; });
+  list.forEach(function (w) {
+    if (!have[w.id] && w.url && w.url.indexOf('data:') !== 0) api.saveWork(w).catch(function () {});
+  });
+}
+
 function saveWork(job) {
   var type = job.type || 'image';
   const work = {
@@ -2399,19 +2505,45 @@ async function compressDataUrl(dataUrl, maxW, quality) {
 }
 
 function saveWorks() {
-  if (saveJSON(LS_WORKS, state.works)) return;
+  /* 覆盖前先备份一份，便于误清后恢复 */
+  try {
+    var prev = localStorage.getItem(LS_WORKS);
+    if (prev && prev !== '[]' && prev.length > 40) localStorage.setItem(LS_WORKS_BAK, prev);
+  } catch (e) {}
 
-  const stripped = state.works.map(function (work, index) {
+  /* base64 原图写进 IndexedDB，localStorage 只留元数据（否则 5MB 配额会写失败） */
+  var meta = state.works.map(function (work) {
+    if (work.url && work.url.indexOf('data:') === 0) {
+      idbPutBlob(work.id, work.url);
+      return Object.assign({}, work, { url: '', blob: true });
+    }
+    return work;
+  });
+
+  if (saveJSON(LS_WORKS, meta)) {
+    syncWorksToServer();
+    return;
+  }
+
+  /* 还是超限：缩略图从第 9 张起丢掉再试 */
+  state.works = state.works.map(function (work, index) {
     return index > 8 ? Object.assign({}, work, { thumb: null }) : work;
   });
-  state.works = stripped;
-  saveJSON(LS_WORKS, state.works);
-  /* 已登录用户同步到后端（按用户隔离） */
-  if (window.HMApp && window.HMApp.user && api && api.online) {
-    state.works.forEach(function (w) {
-      api.saveWork(w).catch(function () {});
-    });
-  }
+  saveJSON(LS_WORKS, state.works.map(function (work) {
+    if (work.url && work.url.indexOf('data:') === 0) {
+      idbPutBlob(work.id, work.url);
+      return Object.assign({}, work, { url: '', blob: true });
+    }
+    return work;
+  }));
+  syncWorksToServer();
+}
+
+function syncWorksToServer() {
+  if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
+  state.works.forEach(function (w) {
+    if (w.url && w.url.indexOf('data:') !== 0) api.saveWork(w).catch(function () {});
+  });
 }
 
 async function makeThumb(url) {
@@ -3226,6 +3358,7 @@ function bindEvents() {
       else if (action === 'view') openLightbox(work);
       else if (action === 'delete') {
         state.works = state.works.filter(function (w) { return w.id !== work.id; });
+        idbDelBlob(work.id);
         saveWorks();
         renderWorks();
         toast('作品已删除', 'info');
@@ -3358,6 +3491,15 @@ async function authBoot() {
   /* ========== Step 1: 同步渲染缓存桌面（零闪烁） ========== */
   var cachedUser = loadJSON('hm.user', null);
   var cachedWorks = loadJSON(LS_WORKS, null);
+  /* 主缓存为空时尝试备份，避免一次误清就永久丢失 */
+  if ((!cachedWorks || !cachedWorks.length)) {
+    var bakWorks = loadJSON(LS_WORKS_BAK, null);
+    if (bakWorks && bakWorks.length) {
+      cachedWorks = bakWorks;
+      saveJSON(LS_WORKS, bakWorks);
+      console.log('[authBoot] 主缓存为空，已从备份恢复', bakWorks.length, '张');
+    }
+  }
   console.log('[authBoot] cachedUser:', cachedUser ? cachedUser.username : '无', 'cachedWorks:', cachedWorks ? cachedWorks.length : 0);
 
   if (cachedUser) {
@@ -3368,6 +3510,8 @@ async function authBoot() {
     updateUserUI();
     renderWorks();
     console.log('[authBoot] 已用缓存渲染桌面');
+    /* 本地 JSON 里的原图存在 IndexedDB，异步补回后再渲染一次 */
+    hydrateWorks().then(function (changed) { if (changed) renderWorks(); });
   } else {
     hideLogin(); /* 至少先隐藏登录弹窗，等 me() 返回再决定 */
   }
@@ -3381,14 +3525,20 @@ async function authBoot() {
     window.HMApp.user = me.user;
     try { saveJSON('hm.user', me.user); } catch (e) {}
 
-    /* 从后端拉最新作品 */
+    /* 从后端拉最新作品（不能覆盖本地：服务端可能因重启丢数据） */
     try {
       var data = await api.listWorks();
       if (data && Array.isArray(data.items)) {
-        state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
-        saveJSON(LS_WORKS, state.works);
+        state.works = mergeWorks(data.items, state.works);
+        saveJSON(LS_WORKS, state.works.map(function (w) {
+          if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
+          return w;
+        }));
+        uploadMissingWorks(state.works, data.items);
       }
     } catch (e) { /* listWorks 失败不影响登录态 */ }
+
+    await hydrateWorks();
 
     hideLogin();
     updateUserUI();
@@ -3438,8 +3588,13 @@ async function authBoot() {
         return api.listWorks().catch(function () { return null; });
       }).then(function (data) {
         if (data && Array.isArray(data.items)) {
-          state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
-          saveJSON(LS_WORKS, state.works);
+          /* 同样只合并，不用空列表覆盖本地 */
+          state.works = mergeWorks(data.items, state.works);
+          saveJSON(LS_WORKS, state.works.map(function (w) {
+            if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
+            return w;
+          }));
+          uploadMissingWorks(state.works, data.items);
           renderWorks();
         }
         updateUserUI();
