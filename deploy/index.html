@@ -7122,7 +7122,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029033411-6f6192f";</script>
+<script>window.HM_BUILD = "20261029033732-a09d74d";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -11324,6 +11324,25 @@ function bindEvents() {
 
 /* ---------------- 启动 ---------------- */
 /* ---------------- 认证引导 ---------------- */
+function classifyAuthErr(err) {
+  /* 返回 'auth' | 'network' | 'other' */
+  if (!err) return 'other';
+  var msg = String(err.message || err || '').toLowerCase();
+  var status = err.status || err.statusCode;
+  if (status === 401 || status === 403 ||
+      msg.indexOf('unauthorized') >= 0 || msg.indexOf('forbidden') >= 0 ||
+      msg.indexOf('token') >= 0 || msg.indexOf('expired') >= 0) {
+    return 'auth';
+  }
+  if (msg.indexOf('fetch') >= 0 || msg.indexOf('network') >= 0 ||
+      msg.indexOf('abort') >= 0 || msg.indexOf('timeout') >= 0 ||
+      msg.indexOf('failed to fetch') >= 0 ||
+      status === 502 || status === 503 || status === 504) {
+    return 'network';
+  }
+  return 'other';
+}
+
 async function authBoot() {
   var token = (api && api.getToken) ? api.getToken() : '';
   if (!token) {
@@ -11332,27 +11351,87 @@ async function authBoot() {
     if (typeof showLogin === 'function') showLogin();
     return;
   }
-  try {
-    await api.ping();
-    var me = await api.me();
-    window.HMApp.user = me.user;
-    /* 从后端加载该用户的作品 */
+
+  /* 先显示桌面（hideLogin 后面会用），这样即使 ping 失败也不会闪登录页 */
+  try { if (typeof hideLogin === 'function') hideLogin(); } catch (e) {}
+
+  var retries = 2;
+  var lastErr = null;
+  while (retries > 0) {
     try {
-      var data = await api.listWorks();
+      await api.ping();
+      var me = await api.me();
+      window.HMApp.user = me.user;
+      try { saveJSON('hm.user', me.user); } catch (e) {}
+      /* 从后端加载该用户的作品 */
+      try {
+        var data = await api.listWorks();
+        if (data && Array.isArray(data.items)) {
+          state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
+          saveJSON(LS_WORKS, state.works);
+        }
+      } catch (e) {}
+      renderWorks();
+      if (typeof hideLogin === 'function') hideLogin();
+      if (typeof updateUserUI === 'function') updateUserUI();
+      return; /* 成功，直接返回 */
+    } catch (err) {
+      lastErr = err;
+      var kind = classifyAuthErr(err);
+      if (kind === 'auth') {
+        /* 真的是 token 过期 → 清掉 → 弹登录 */
+        if (api && api.logout) api.logout();
+        window.HMApp.user = null;
+        if (typeof showLogin === 'function') showLogin();
+        return;
+      }
+      /* network / other → 重试 */
+      retries--;
+      if (retries > 0) {
+        await new Promise(function (r) { setTimeout(r, 1500); });
+      }
+    }
+  }
+
+  /* 2 次重试都失败 → 网络问题（Render 休眠 / 后端挂了 / 断网）
+     绝对不要清 token！显示桌面 + toast 提示 */
+  var savedUser = loadJSON('hm.user', null);
+  if (savedUser) {
+    window.HMApp.user = savedUser;
+    state.works = loadJSON(LS_WORKS, state.works || []);
+  }
+  renderWorks();
+  if (typeof hideLogin === 'function') hideLogin();
+  if (typeof updateUserUI === 'function') updateUserUI();
+
+  /* 延迟 toast，让用户先看到桌面 */
+  setTimeout(function () {
+    toast('暂时无法连接后端，正在自动重试…  (' + (lastErr && lastErr.message ? lastErr.message : String(lastErr)) + ')', 'warn');
+  }, 600);
+
+  /* 后台持续重试，成功后自动恢复 */
+  var bgRetries = 0;
+  var bgTimer = setInterval(function () {
+    bgRetries++;
+    if (bgRetries > 60) { clearInterval(bgTimer); return; } /* 最多等 5 分钟 */
+    api.ping().then(function () {
+      return api.me();
+    }).then(function (me) {
+      window.HMApp.user = me.user;
+      try {
+        return api.listWorks();
+      } catch (e) { return null; }
+    }).then(function (data) {
       if (data && Array.isArray(data.items)) {
         state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
         saveJSON(LS_WORKS, state.works);
+        renderWorks();
       }
-    } catch (e) {}
-    renderWorks();
-    if (typeof hideLogin === 'function') hideLogin();
-    if (typeof updateUserUI === 'function') updateUserUI();
-  } catch (err) {
-    /* token 失效 */
-    if (api && api.logout) api.logout();
-    window.HMApp.user = null;
-    if (typeof showLogin === 'function') showLogin();
-  }
+      if (typeof updateUserUI === 'function') updateUserUI();
+      toast('后端已恢复连接 ✅', 'success');
+      clearInterval(bgTimer);
+    }).catch(function () { /* 继续等 */ });
+  }, 5000);
 }
 
 function showUpdateModal() {
@@ -11429,8 +11508,8 @@ function checkUpdate() {
 
     /* 无论如何，再 fetch 一次远端最新 index.html 确认（处理首次访问 + 长时间挂着的情况） */
     pollRemoteBuild();
-    /* 每 5 分钟轮询一次 */
-    setInterval(pollRemoteBuild, 5 * 60 * 1000);
+    /* 每 2 分钟轮询一次（更快发现更新） */
+    setInterval(pollRemoteBuild, 2 * 60 * 1000);
   } catch (e) { /* localStorage 不可用时静默忽略 */ }
 }
 
