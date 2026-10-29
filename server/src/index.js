@@ -18,6 +18,7 @@ const catalogRoutes = require('./routes/catalog');
 const rayinRoutes = require('./routes/rayin');
 const generateRoutes = require('./routes/generate');
 const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use(express.json({ limit: '25mb' }));
 
 app.use('/api', healthRoutes);
 app.use('/api', authRoutes);
+app.use('/api', adminRoutes);
 app.use('/api', translateRoutes);
 app.use('/api', worksRoutes);
 app.use('/api', deskRoutes);

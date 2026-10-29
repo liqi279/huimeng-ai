@@ -3135,7 +3135,13 @@ function bindEvents() {
     }
   });
 
-  els.apiConfigBtn.addEventListener('click', openApiModal);
+  els.apiConfigBtn.addEventListener('click', function () {
+    if (window.HMAdmin && HMAdmin.isAdmin()) {
+      HMAdmin.open();
+    } else {
+      openApiModal();
+    }
+  });
   els.apiClose.addEventListener('click', closeApiModal);
   els.apiSave.addEventListener('click', saveRayinConfig);
   if (els.providerSave) els.providerSave.addEventListener('click', saveProviderConfig);

@@ -1,0 +1,369 @@
+/* =============================================================
+ * 绘梦 AI · 管理台样式（独立全屏覆盖层）
+ * 参考 Figma 深色科技风设计稿
+ * ============================================================= */
+
+.hm-admin-root {
+  position: fixed; inset: 0; z-index: 2000;
+  display: flex; flex-direction: column;
+  background: #0b1220;
+  color: #e2e8f0;
+  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft Yahei", sans-serif;
+  animation: hmAdminFadeIn 0.18s ease-out;
+  overflow: hidden;
+}
+@keyframes hmAdminFadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+/* ============ 顶栏 ============ */
+.hm-admin-header {
+  display: flex; align-items: center;
+  height: 52px; padding: 0 24px;
+  background: linear-gradient(180deg, #121a2c, #0e1524);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.hm-admin-brand { display: flex; align-items: center; gap: 12px; }
+.hm-admin-logo {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #fff;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+}
+.hm-admin-title h1 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 0; letter-spacing: 0.3px; }
+.hm-admin-title { display: flex; align-items: center; }
+
+.hm-admin-top-tabs { display: flex; gap: 4px; margin-left: 40px; }
+.hm-admin-top-tab {
+  padding: 7px 16px; font-size: 13px; color: #64748b;
+  border-radius: 8px; background: transparent;
+  border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
+}
+.hm-admin-top-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.03); }
+.hm-admin-top-tab.is-active {
+  color: #e2e8f0; background: rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.4);
+}
+
+.hm-admin-header-right { margin-left: auto; }
+.hm-admin-close {
+  width: 32px; height: 32px; border-radius: 8px; background: transparent;
+  border: 1px solid rgba(255,255,255,0.08); color: #94a3b8;
+  font-size: 18px; line-height: 1; cursor: pointer; transition: all 0.15s;
+}
+.hm-admin-close:hover { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.4); }
+
+/* ============ 子 Tab ============ */
+.hm-admin-topbar {
+  display: flex; gap: 4px; padding: 12px 24px 0;
+  flex-shrink: 0;
+}
+.hm-admin-tab {
+  padding: 7px 14px; font-size: 13px; color: #64748b;
+  border-radius: 6px 6px 0 0; background: transparent;
+  border: 1px solid transparent; border-bottom: none;
+  cursor: pointer; transition: all 0.15s;
+}
+.hm-admin-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.02); }
+.hm-admin-tab.is-active {
+  color: #e2e8f0; background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
+}
+
+/* ============ 主体 ============ */
+.hm-admin-body {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 20px 24px 40px;
+}
+.hm-admin-body::-webkit-scrollbar { width: 8px; }
+.hm-admin-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+.hm-admin-loading { padding: 80px; text-align: center; color: #64748b; font-size: 13px; }
+.hm-admin-error { padding: 60px; text-align: center; }
+.hm-admin-error h3 { color: #f87171; margin: 0 0 10px; }
+.hm-admin-placeholder {
+  padding: 80px 20px; text-align: center;
+}
+.hm-admin-ph-ico { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.hm-admin-placeholder h2 { color: #94a3b8; margin: 0 0 8px; font-weight: 500; }
+.hm-admin-placeholder p { color: #475569; margin: 0; }
+
+/* ============ 统计卡 ============ */
+.hm-admin-cards {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 12px; margin-bottom: 16px;
+}
+@media (max-width: 1400px) { .hm-admin-cards { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px)  { .hm-admin-cards { grid-template-columns: repeat(2, 1fr); } }
+
+.hm-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(34,211,238,0.05));
+  border: 1px solid rgba(99,102,241,0.2);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.hm-card:hover { border-color: rgba(99,102,241,0.5); transform: translateY(-1px); }
+.hm-card-ico { font-size: 20px; line-height: 1; }
+.hm-card-body { display: flex; flex-direction: column; }
+.hm-card-body strong { font-size: 18px; font-weight: 600; color: #e2e8f0; letter-spacing: -0.3px; }
+.hm-card-body span { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+/* ============ 面板 ============ */
+.hm-admin-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+}
+@media (max-width: 1200px) { .hm-admin-row { grid-template-columns: 1fr; } }
+
+.hm-admin-panel {
+  background: linear-gradient(180deg, #141c2e, #0f1727);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px; padding: 16px 18px;
+}
+.hm-admin-panel-wide { grid-column: 1 / -1; }
+
+.hm-admin-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.hm-admin-panel-head h3 {
+  font-size: 13px; font-weight: 600; color: #e2e8f0; margin: 0;
+  letter-spacing: 0.3px;
+}
+.hm-admin-panel-head span { font-size: 11px; color: #64748b; }
+
+/* ============ 环形图 ============ */
+.hm-admin-ring-wrap {
+  position: relative; height: 260px;
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+}
+.hm-admin-ring-total {
+  position: absolute; left: 130px; top: 50%; transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none;
+}
+.hm-admin-ring-total span { font-size: 11px; color: #64748b; }
+.hm-admin-ring-total strong {
+  display: block; font-size: 24px; font-weight: 700; color: #22d3ee;
+  margin-top: 4px;
+}
+.hm-admin-ring-legend { list-style: none; margin: 0; padding: 0; }
+.hm-admin-ring-legend li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; font-size: 12px; color: #cbd5e1;
+}
+.hm-admin-ring-legend i {
+  width: 10px; height: 10px; border-radius: 3px;
+}
+.hm-admin-ring-legend b { margin-left: auto; color: #94a3b8; font-weight: 500; }
+
+/* ============ Top 列表 ============ */
+.hm-admin-top-list { list-style: none; margin: 0; padding: 0; }
+.hm-admin-top-list li {
+  display: grid; grid-template-columns: 24px 1fr auto auto;
+  gap: 12px; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 12px;
+}
+.hm-admin-top-list li:last-child { border-bottom: none; }
+.hm-admin-top-list em {
+  font-style: normal; font-weight: 700; color: #6366f1; font-size: 11px;
+}
+.hm-admin-top-name { color: #e2e8f0; font-weight: 500; }
+.hm-admin-top-list li b { color: #22d3ee; font-weight: 600; }
+.hm-admin-top-list li small { color: #64748b; font-size: 11px; }
+
+.hm-admin-share-bar {
+  height: 6px; border-radius: 3px; flex: 1; background: rgba(255,255,255,0.05);
+  overflow: hidden;
+}
+.hm-admin-share-bar i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #6366f1, #22d3ee);
+  border-radius: 3px;
+}
+
+/* ============ 图表 Legend 按钮 ============ */
+.hm-admin-legend-btns { display: flex; gap: 6px; }
+.hm-admin-legend-btn {
+  padding: 3px 10px; font-size: 11px; color: #64748b;
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px; cursor: pointer;
+}
+.hm-admin-legend-btn.is-active { color: #22d3ee; border-color: rgba(34,211,238,0.5); }
+
+/* ============ 消耗排行 ============ */
+.hm-admin-rank-list { display: flex; flex-direction: column; gap: 2px; }
+.hm-admin-rank-row {
+  display: grid;
+  grid-template-columns: 40px 80px 1fr 180px 90px 80px;
+  gap: 12px; align-items: center;
+  padding: 10px 8px; border-radius: 6px;
+  font-size: 12px; color: #cbd5e1;
+}
+.hm-admin-rank-row:hover { background: rgba(255,255,255,0.03); }
+.hm-admin-rank-no { font-size: 18px; font-weight: 700; color: #475569; }
+.hm-admin-rank-row:nth-child(1) .hm-admin-rank-no { color: #f59e0b; }
+.hm-admin-rank-row:nth-child(2) .hm-admin-rank-no { color: #cbd5e1; }
+.hm-admin-rank-row:nth-child(3) .hm-admin-rank-no { color: #d97706; }
+.hm-admin-rank-name { font-weight: 500; color: #e2e8f0; }
+.hm-admin-rank-bar-wrap { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.hm-admin-rank-bar {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+}
+.hm-admin-rank-cost { color: #22d3ee; font-weight: 600; text-align: right; }
+.hm-admin-rank-calls { color: #64748b; font-size: 11px; text-align: right; }
+
+.hm-pill {
+  display: inline-block; padding: 2px 8px; font-size: 10px;
+  border-radius: 3px; background: rgba(99,102,241,0.15);
+  color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3);
+}
+.hm-pill.is-free { background: rgba(34,211,238,0.12); color: #67e8f9; border-color: rgba(34,211,238,0.3); }
+.hm-pill.is-member { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
+
+/* ============ 日志表 ============ */
+.hm-admin-log-table-wrap { overflow-x: auto; }
+.hm-admin-log-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+  color: #cbd5e1;
+}
+.hm-admin-log-table th, .hm-admin-log-table td {
+  padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  white-space: nowrap;
+}
+.hm-admin-log-table th {
+  font-size: 11px; font-weight: 500; color: #64748b;
+  background: rgba(255,255,255,0.02);
+  position: sticky; top: 0;
+}
+.hm-admin-log-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.hm-td-time { color: #64748b; font-family: "SF Mono", Consolas, monospace; font-size: 11px; }
+.hm-td-code { font-family: "SF Mono", Consolas, monospace; color: #64748b; font-size: 11px; }
+.hm-td-status { font-weight: 600; }
+
+/* ============ 账号卡片 ============ */
+.hm-admin-account-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.hm-admin-account-card {
+  background: linear-gradient(180deg, #141c2e, #0f1727);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px; padding: 14px 16px;
+  transition: border-color 0.15s;
+}
+.hm-admin-account-card:hover { border-color: rgba(99,102,241,0.4); }
+
+.hm-admin-account-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.hm-admin-account-avatar {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 600; color: #fff;
+}
+.hm-admin-account-info { display: flex; flex-direction: column; }
+.hm-admin-account-info strong { font-size: 14px; color: #e2e8f0; }
+.hm-admin-account-status {
+  margin-left: auto; font-size: 11px; color: #64748b;
+  display: flex; align-items: center; gap: 5px;
+}
+.hm-admin-account-status i {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.hm-admin-account-status.is-online { color: #10b981; }
+.hm-admin-account-status.is-online i { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+.hm-admin-account-status.is-offline { color: #475569; }
+.hm-admin-account-status.is-offline i { background: #475569; }
+
+.hm-admin-account-bars { margin-bottom: 10px; }
+.hm-admin-account-item {
+  display: grid; grid-template-columns: 40px 1fr auto; gap: 8px; align-items: center;
+  font-size: 11px; color: #64748b; margin-bottom: 4px;
+}
+.hm-admin-mini-bar {
+  height: 6px; background: rgba(255,255,255,0.06);
+  border-radius: 3px; overflow: hidden;
+}
+.hm-admin-mini-bar i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #22d3ee, #6366f1);
+  border-radius: 3px;
+}
+.hm-admin-account-item b { color: #94a3b8; font-size: 11px; font-family: "SF Mono", Consolas, monospace; }
+
+.hm-admin-account-meta {
+  display: flex; gap: 12px; font-size: 11px; color: #64748b;
+  padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ============ 项目卡片 ============ */
+.hm-admin-project-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.hm-admin-project-card {
+  background: linear-gradient(180deg, #141c2e, #0f1727);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px; padding: 14px 16px;
+  transition: border-color 0.15s;
+  display: flex; flex-direction: column;
+}
+.hm-admin-project-card:hover { border-color: rgba(99,102,241,0.4); }
+.hm-admin-project-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.hm-admin-project-top strong { font-size: 14px; color: #e2e8f0; }
+.hm-admin-project-members { font-size: 11px; color: #64748b; }
+.hm-admin-project-status { font-size: 12px; margin-bottom: 12px; font-weight: 500; }
+
+.hm-admin-project-budget { margin-bottom: 10px; }
+.hm-admin-project-budget-row {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: #64748b; margin-bottom: 4px;
+}
+.hm-admin-project-budget-row b { color: #94a3b8; font-weight: 500; }
+
+.hm-admin-project-footer {
+  display: flex; gap: 10px; padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  font-size: 11px; color: #64748b; margin-bottom: 10px;
+}
+.hm-admin-project-footer span { cursor: pointer; transition: color 0.15s; }
+.hm-admin-project-footer span:hover { color: #22d3ee; }
+
+.hm-admin-project-notice {
+  font-size: 11px; color: #f59e0b; padding: 6px 10px;
+  background: rgba(245,158,11,0.1); border-radius: 4px;
+  border: 1px solid rgba(245,158,11,0.2);
+}
+
+/* ============ Filter tabs ============ */
+.hm-admin-filter-tabs { display: flex; gap: 4px; }
+.hm-admin-filter-tab {
+  padding: 4px 10px; font-size: 11px; color: #64748b;
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px; cursor: pointer;
+}
+.hm-admin-filter-tab.is-active { color: #e2e8f0; border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.1); }
+
+/* ============ pill 按钮 ============ */
+.hm-pill {
+  padding: 6px 12px; border-radius: 6px; font-size: 12px;
+  background: rgba(255,255,255,0.04); color: #cbd5e1;
+  border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+  transition: all 0.15s;
+}
+.hm-pill:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+.hm-pill.hm-pill-primary {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff; border-color: transparent;
+}
+.hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
+
+/* ============ body 全局状态 ============ */
+body.is-admin-open { overflow: hidden; }
