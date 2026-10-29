@@ -1113,6 +1113,12 @@ function _ensurePromptOverlay() {
 
   _promptOverlayEl = document.createElement('div');
   _promptOverlayEl.className = 'hm-prompt-overlay';
+  /* 字号/行高/字体必须与 textarea 完全一致（含内联样式），否则 chip 与光标错位 */
+  var cs = window.getComputedStyle(ta);
+  _promptOverlayEl.style.fontSize = cs.fontSize;
+  _promptOverlayEl.style.lineHeight = cs.lineHeight;
+  _promptOverlayEl.style.fontFamily = cs.fontFamily;
+  _promptOverlayEl.style.letterSpacing = cs.letterSpacing;
   /* 插在 textarea 前面，保证 textarea 在 overlay 之上 */
   wrap.insertBefore(_promptOverlayEl, ta);
   return _promptOverlayEl;
@@ -1142,7 +1148,10 @@ function _ensureChipCache(refs) {
   if (key === _chipCacheKey) return _chipCacheHtml;
   _chipCacheKey = key;
   _chipCacheHtml = refs.map(function (ref, i) {
-    return '<span class="chip"><img src="' + ref.dataUrl + '" alt="">@' + (i + 1) + '</span>';
+    /* chip 宽度必须等于 "@N" 文本自身宽度，否则光标会落在 chip 左边（错位）：
+       所以用 @N 文字撑宽度、缩略图做背景，而不是插入 <img> 撑宽 */
+    var u = ref.thumb || ref.dataUrl;
+    return '<span class="chip" style="background-image:url(' + u + ')">@' + (i + 1) + '</span>';
   });
   return _chipCacheHtml;
 }
@@ -1277,7 +1286,7 @@ function showRefAutocomplete() {
     _acKey = key;
     _acEl.innerHTML = filtered.map(function (item, i) {
       return '<div class="hm-ref-ac-item' + (i === 0 ? ' is-active' : '') + '" data-idx="' + item.idx + '">' +
-        '<div class="hm-ref-ac-thumb"><img src="' + item.ref.dataUrl + '" alt=""></div>' +
+        '<div class="hm-ref-ac-thumb"><img src="' + (item.ref.thumb || item.ref.dataUrl) + '" alt=""></div>' +
         '<div class="hm-ref-ac-info">' +
           '<div class="hm-ref-ac-name"><span class="hm-ref-ac-tag">@' + (item.idx + 1) + '</span> 主体图</div>' +
           '<div class="hm-ref-ac-meta">' + item.ref.width + '×' + item.ref.height + ' · 强度 ' +
@@ -1462,9 +1471,18 @@ async function pickRefFile(file) {
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(img, 0, 0, width, height);
 
+    /* 小缩略图：chip / 补全卡片用它，避免每次渲染都解码整张大图 */
+    var tCanvas = document.createElement('canvas');
+    tCanvas.width = 48;
+    tCanvas.height = 48;
+    var tCtx = tCanvas.getContext('2d');
+    var side = Math.min(width, height);
+    tCtx.drawImage(canvas, (width - side) / 2, (height - side) / 2, side, side, 0, 0, 48, 48);
+
     var arr = currentRefs();
     arr.push({
       dataUrl: canvas.toDataURL('image/jpeg', 0.92),
+      thumb: tCanvas.toDataURL('image/jpeg', 0.7),
       name: 'reference_' + (arr.length + 1) + '.jpg',
       width: width,
       height: height,
@@ -3065,9 +3083,18 @@ function bindEvents() {
   var fsLabel = document.getElementById('fontSizeLabel');
   if (fsSlider) {
     function applyFontSize(v) {
+      /* 行高必须是像素值：早先写成无单位数字会被当成倍数（17.55 × 13px = 228px），
+         导致光标和文字严重错位、首行文字被压到中间 */
+      var lh = Math.round(Number(v) * 1.6 * 10) / 10 + 'px';
       if (els.promptInput) {
         els.promptInput.style.fontSize = v + 'px';
-        els.promptInput.style.lineHeight = (Math.round(Number(v) * 1.35 * 10) / 10) + '';
+        els.promptInput.style.lineHeight = lh;
+      }
+      /* overlay 与 textarea 必须同字号同行高，否则 chip 会和光标错位 */
+      var ov = document.querySelector('.hm-prompt-overlay');
+      if (ov) {
+        ov.style.fontSize = v + 'px';
+        ov.style.lineHeight = lh;
       }
       if (fsLabel) fsLabel.textContent = String(v);
     }

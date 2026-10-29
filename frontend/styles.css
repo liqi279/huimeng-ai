@@ -3954,6 +3954,7 @@ body.hm-resizing * {
   color: #dbe7f3;
   font-size: 12.5px;
   line-height: 1.6;
+  font-family: inherit; /* textarea 默认是等宽字体，会和 overlay 宽度不一致导致光标错位 */
   overflow-y: auto;
   vertical-align: top;
   box-sizing: border-box;
@@ -3981,27 +3982,20 @@ body.hm-resizing * {
   overflow-wrap: break-word;
   font-family: inherit;
 }
+/* chip 不能改变宽度：宽度由 @N 文本本身撑开，缩略图只做背景，
+   这样 textarea 里的光标始终落在 chip 正后方（否则 caret 会错位） */
 .hm-prompt-overlay .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 5px 1px 2px;
-  border-radius: 10px;
-  background: rgba(56, 189, 248, 0.18);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  color: #bae6fd;
-  font-size: 11.5px;
-  font-weight: 600;
-  margin: 0 1px;
-  vertical-align: baseline;
-  white-space: nowrap;
-}
-.hm-prompt-overlay .chip img {
-  width: 14px;
-  height: 14px;
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+  color: transparent;
   border-radius: 3px;
-  object-fit: cover;
-  display: block;
+  background-color: rgba(56, 189, 248, 0.22);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 1.06em 1.06em;
+  box-shadow: inset 0 0 0 1px rgba(94, 196, 238, 0.55);
+  vertical-align: baseline;
 }
 
 .hm-prompt textarea::placeholder {
