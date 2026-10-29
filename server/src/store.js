@@ -23,18 +23,10 @@ function userDeskFile(userId) {
   return path.join(userDir(userId), 'desk.json');
 }
 
-const TOKEN_SECRET = (function () {
-  const f = path.join(config.DATA_DIR, '.token-secret');
-  try {
-    return fs.readFileSync(f, 'utf8').trim();
-  } catch (e) {
-    const secret = crypto.randomBytes(32).toString('hex');
-    /* 确保 data 目录存在（首次部署时可能不存在） */
-    fs.mkdirSync(config.DATA_DIR, { recursive: true });
-    fs.writeFileSync(f, secret, { mode: 0o600 });
-    return secret;
-  }
-})();
+/* token 签名密钥：从 config 来（优先环境变量，fallback 内置固定值）
+   这样无论 Render 怎么重启/重新部署，secret 永远不变 → token 永不过期
+   （token 本身 30 天有效期，但 secret 不换所以签名验证永远通过） */
+const TOKEN_SECRET = config.TOKEN_SECRET;
 
 /* pbkdf2 密码哈希 */
 function hashPassword(password) {
