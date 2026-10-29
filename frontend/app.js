@@ -373,6 +373,12 @@ const state = {
     ? storedPrefs.channelModel
     : 'sana',                          // 免费通道模型 ID（sana / 第三方模型 ID）
   lora: typeof storedPrefs.lora === 'string' ? storedPrefs.lora : '',   // 动漫 LoRA 风格包 ID
+  videoModel: typeof storedPrefs.videoModel === 'string' && storedPrefs.videoModel
+    ? storedPrefs.videoModel
+    : 'sora-2',
+  audioModel: typeof storedPrefs.audioModel === 'string' && storedPrefs.audioModel
+    ? storedPrefs.audioModel
+    : 'tts-1',
   providerId: typeof storedPrefs.providerId === 'string' && storedPrefs.providerId
     ? storedPrefs.providerId
     : 'siliconflow',
@@ -521,7 +527,8 @@ function bindEls() {
   els.expandPrompt = document.getElementById('expandPrompt');
   els.refPickBtn = document.getElementById('refPickBtn');
   els.engineBtn = document.getElementById('engineBtn');
-  els.engineMenu = document.getElementById('engineMenu');
+  els.modeMenu = document.getElementById('modeMenu');
+  els.modelMenu = document.getElementById('modelMenu');
   els.freeModelList = document.getElementById('freeModelList');
   els.loraList = document.getElementById('loraList');
   els.providerSelect = document.getElementById('providerSelect');
@@ -861,6 +868,32 @@ function currentModelLabel() {
   return lora ? base + ' · ' + lora.name : base;
 }
 
+/* 视频 / 音频可选模型 */
+const MEDIA_MODELS = {
+  video: [['sora-2', 'Sora 2'], ['sora-2-pro', 'Sora 2 Pro'], ['veo-3', 'Veo 3']],
+  audio: [['tts-1', 'TTS-1'], ['tts-1-hd', 'TTS-1 HD'], ['gpt-4o-mini-tts', 'GPT-4o mini TTS']]
+};
+
+/* 当前模式对应的模型显示名（图片 / 视频 / 音频各一套） */
+function modeModelLabel(mode) {
+  const m = mode || state.mode || 'image';
+  if (m === 'image') return currentModelLabel();
+  const list = MEDIA_MODELS[m] || [];
+  const id = m === 'video' ? state.videoModel : state.audioModel;
+  const hit = list.filter(function (x) { return x[0] === id; })[0];
+  return hit ? hit[1] : id;
+}
+
+/* 菜单里用的短名，避免胶囊被撑长 */
+function shortModelName(name) {
+  return String(name || '')
+    .replace(' 中文动漫', '')
+    .replace('FLUX.1 schnell Free', 'FLUX Free')
+    .replace('FLUX.1 schnell', 'FLUX schnell')
+    .replace('FLUX.1-', 'FLUX ')
+    .trim();
+}
+
 /* 模型菜单：免密钥通道 + 免费额度平台模型 + 动漫 LoRA 风格 */
 function renderCatalogMenus() {
   const data = catalogData();
@@ -868,13 +901,13 @@ function renderCatalogMenus() {
   if (els.freeModelList) {
     const rows = [];
     (data.keyless || []).forEach(function (m) {
-      rows.push('<button data-engine="flux" data-model="' + m.model + '">' +
-        m.name + ' · ' + (m.badge || '免密钥') + '</button>');
+      rows.push('<button data-engine="flux" data-model="' + m.model + '" title="' +
+        (m.desc || m.name) + '">' + shortModelName(m.name) + '</button>');
     });
     (data.providers || []).forEach(function (p) {
       (p.models || []).forEach(function (m) {
-        rows.push('<button data-engine="openai" data-provider="' + p.id + '" data-model="' + m.id + '">' +
-          m.name + ' · ' + p.name + ' · ' + (m.badge || '免费') + '</button>');
+        rows.push('<button data-engine="openai" data-provider="' + p.id + '" data-model="' + m.id +
+          '" title="' + p.name + ' · ' + m.id + '">' + shortModelName(m.name) + '</button>');
       });
     });
     els.freeModelList.innerHTML = rows.join('') ||
@@ -882,9 +915,9 @@ function renderCatalogMenus() {
   }
 
   if (els.loraList) {
-    const rows = ['<button data-lora="">不启用风格</button>'];
+    const rows = ['<button data-lora="">无</button>'];
     (data.loras || []).forEach(function (l) {
-      rows.push('<button data-lora="' + l.id + '">' + l.name + ' · ' + (l.tag || 'LoRA') + '</button>');
+      rows.push('<button data-lora="' + l.id + '" title="' + (l.tag || 'LoRA') + '">' + l.name + '</button>');
     });
     els.loraList.innerHTML = rows.join('');
   }
@@ -909,7 +942,6 @@ async function loadCatalog() {
 function syncEngineUI() {
   const meta = ENGINE_META[state.engine] || ENGINE_META.flux;
   els.engineSelect.value = state.engine;
-  els.enginePillText.textContent = currentModelLabel();
   els.composerEngineNote.textContent = meta.free ? currentModelLabel() + ' · 免费' : meta.label + ' · RayinAPI';
   if (!state.generating) els.genHint.textContent = meta.hint;
   els.planTag.textContent = meta.free ? 'FREE' : 'API';
@@ -943,18 +975,27 @@ function syncEngineUI() {
   updateRatioLabel();
   syncRefNote();
 
-  if (els.engineMenu) {
-    els.engineMenu.querySelectorAll('[data-engine]').forEach(function (btn) {
+  if (els.enginePillText) els.enginePillText.textContent = shortModelName(modeModelLabel().split(' · ')[0]);
+
+  if (els.modelMenu) {
+    els.modelMenu.querySelectorAll('[data-engine]').forEach(function (btn) {
       const sameEngine = btn.dataset.engine === state.engine;
       const sameModel = !btn.dataset.model || btn.dataset.model === state.channelModel;
       btn.classList.toggle('is-active', sameEngine && sameModel);
     });
-    els.engineMenu.querySelectorAll('[data-lora]').forEach(function (btn) {
+    els.modelMenu.querySelectorAll('[data-lora]').forEach(function (btn) {
       btn.classList.toggle('is-active', (btn.dataset.lora || '') === (state.lora || ''));
     });
+    els.modelMenu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.dataset.vmodel === state.videoModel);
+    });
+    els.modelMenu.querySelectorAll('[data-amodel]').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.dataset.amodel === state.audioModel);
+    });
   }
+
   if (els.engineModelBtn) {
-    els.engineModelBtn.title = currentModelLabel() + (meta.free ? ' · 免费通道' : ' · RayinAPI 按量计费');
+    els.engineModelBtn.title = modeModelLabel() + (meta.free ? ' · 免费通道' : ' · RayinAPI 按量计费');
   }
   if (els.scaleBtn) {
     els.scaleBtn.title = '生成清晰度：1K / 2K / 4K';
@@ -1462,6 +1503,8 @@ function persistPrefs() {
     engine: state.engine,
     channelModel: state.channelModel,
     lora: state.lora,
+    videoModel: state.videoModel,
+    audioModel: state.audioModel,
     providerId: state.providerId
   });
 }
@@ -2849,14 +2892,27 @@ function bindEvents() {
     if (!event.target.closest('.hm-menu')) closeAllMenus();
   });
 
-  if (els.engineModelBtn) {
-    els.engineModelBtn.addEventListener('click', function (event) {
-      event.stopPropagation();
-      toggleMenu(els.engineMenu, els.engineBtn);
-    });
-  }
-  if (els.engineMenu) {
-    els.engineMenu.addEventListener('click', function (event) {
+  if (els.modelMenu) {
+    els.modelMenu.addEventListener('click', function (event) {
+      const vBtn = event.target.closest('[data-vmodel]');
+      if (vBtn) {
+        state.videoModel = vBtn.dataset.vmodel;
+        persistPrefs();
+        syncEngineUI();
+        closeAllMenus();
+        toast('视频模型：' + modeModelLabel('video'), 'success');
+        return;
+      }
+      const aBtn = event.target.closest('[data-amodel]');
+      if (aBtn) {
+        state.audioModel = aBtn.dataset.amodel;
+        persistPrefs();
+        syncEngineUI();
+        closeAllMenus();
+        toast('音频模型：' + modeModelLabel('audio'), 'success');
+        return;
+      }
+
       const loraBtn = event.target.closest('[data-lora]');
       if (loraBtn) {
         state.lora = loraBtn.dataset.lora || '';
@@ -3569,6 +3625,8 @@ window.HMApp = {
   persistPrefs: persistPrefs,
   updateCharCount: updateCharCount,
   currentSize: currentSize,
+  modeModelLabel: modeModelLabel,
+  currentModelLabel: currentModelLabel,
   getModel: getModel,
   hasRayinKey: hasRayinKey,
   openApiModal: openApiModal,

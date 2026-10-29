@@ -499,6 +499,21 @@ function extractVideoTaskId(payload) {
   return '';
 }
 
+const VIDEO_MODELS = ['sora-2', 'sora-2-pro', 'veo-3'];
+const AUDIO_MODELS = ['tts-1', 'tts-1-hd', 'gpt-4o-mini-tts'];
+
+function pickMediaModel(value, allowed, fallback) {
+  return typeof value === 'string' && allowed.includes(value) ? value : fallback;
+}
+
+function videoModel(v) {
+  return pickMediaModel(v, VIDEO_MODELS, config.VIDEO_MODEL);
+}
+
+function audioModel(v) {
+  return pickMediaModel(v, AUDIO_MODELS, config.AUDIO_MODEL);
+}
+
 function videoUnavailable() {
   return jsonError(
     502,
@@ -538,7 +553,7 @@ async function generateVideo(body) {
       {
         method: 'POST',
         headers: authHeaders,
-        body: JSON.stringify({ model: config.VIDEO_MODEL, prompt, size, seconds: duration, seed }),
+        body: JSON.stringify({ model: videoModel(body.model), prompt, size, seconds: duration, seed }),
       },
       60000,
       '视频任务创建失败',
@@ -592,7 +607,7 @@ async function generateAudio(body) {
   requireKey(rayin.key);
 
   const payload = {
-    model: config.AUDIO_MODEL,
+    model: audioModel(body.model),
     input: text,
     voice,
     response_format: format,

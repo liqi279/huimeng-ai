@@ -4110,6 +4110,13 @@ body.hm-resizing * {
   font-size: 10.5px;
 }
 
+.hm-chip-model span {
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .hm-chip:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -5464,40 +5471,66 @@ input[type="range"]::-moz-range-thumb {
 .hm-editor-tip { margin-right: auto; margin-left: 10px; color: #6d7f94; }
 
 /* ---------- 引擎菜单（模式切换 + 分组） ---------- */
-.hm-engine-menu {
-  min-width: 232px;
+.hm-model-menu {
+  min-width: 264px;
+  max-width: min(360px, 88vw);
+  max-height: 58vh;
+  overflow-y: auto;
+  padding: 4px 6px 6px;
+}
+
+/* 模式切换：竖排图标列表（生图 / 视频 / 音频） */
+.hm-mode-menu {
+  min-width: 132px;
   padding: 6px;
 }
 
-.hm-mode-tabs {
+.hm-mode-menu button {
   display: flex;
-  gap: 3px;
-  padding: 3px;
-  margin-bottom: 5px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.045);
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: #a9bccd;
+  font-size: 11.5px;
+  text-align: left;
+  transition: background 0.16s ease, color 0.16s ease;
 }
 
-.hm-mode-tabs button {
-  flex: 1;
-  height: 26px;
-  border-radius: 5px;
-  font-size: 10.5px;
-  color: #94a8bd;
+.hm-mode-menu button svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  opacity: 0.75;
 }
 
-.hm-mode-tabs button.is-active {
-  background: rgba(59, 130, 246, 0.26);
-  color: #dbeafe;
-  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.28);
+.hm-mode-menu button:hover {
+  color: #eaf6ff;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.hm-mode-menu button.is-active {
+  color: #9fdcff;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.hm-mode-menu button.is-active svg { opacity: 1; }
+
+/* 模式按钮内的图标随当前模式切换 */
+.hm-chip-mode .hm-mode-ico { display: none; }
+body[data-mode="image"] .hm-chip-mode .hm-mode-ico[data-ico="image"],
+body[data-mode="video"] .hm-chip-mode .hm-mode-ico[data-ico="video"],
+body[data-mode="audio"] .hm-chip-mode .hm-mode-ico[data-ico="audio"] {
+  display: block;
 }
 
 .hm-menu-label {
   display: block;
   padding: 6px 8px 3px;
-  font-size: 9px;
+  font-size: 9.5px;
   letter-spacing: 0.06em;
-  color: #64788e;
+  color: #5ec4ee;
   text-transform: uppercase;
 }
 
@@ -5508,37 +5541,42 @@ input[type="range"]::-moz-range-thumb {
   color: #7f8ea3;
 }
 
-.hm-engine-menu .hm-menu-group[hidden] { display: none; }
+.hm-model-menu [data-mode-panel][hidden] { display: none; }
 
-/* 免费模型 / LoRA 列表由脚本动态渲染，样式与菜单按钮保持一致 */
-#freeModelList,
-#loraList {
+/* 模型菜单：横向胶囊网格（紧凑排版） */
+.hm-chip-grid {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 6px 7px;
 }
 
-#freeModelList button,
-#loraList button {
-  width: 100%;
-  padding: 7px 9px;
+.hm-chip-grid button {
+  padding: 4px 9px;
   border-radius: 6px;
-  text-align: left;
-  color: #b9c9db;
-  font-size: 11.5px;
+  border: 1px solid transparent;
+  color: #a9bccd;
+  font-size: 10.5px;
+  line-height: 1.5;
   white-space: nowrap;
-  transition: background 0.16s ease, color 0.16s ease;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
 }
 
-#freeModelList button:hover,
-#loraList button:hover {
-  background: rgba(56, 189, 248, 0.11);
+.hm-chip-grid button:hover {
   color: #eaf6ff;
+  background: rgba(56, 189, 248, 0.1);
 }
 
-#freeModelList button.is-active,
-#loraList button.is-active {
-  color: #7dd3fc;
-  background: rgba(56, 189, 248, 0.13);
+.hm-chip-grid button.is-active {
+  color: #8fd8f5;
+  border-color: rgba(94, 196, 238, 0.5);
+  background: rgba(94, 196, 238, 0.1);
+}
+
+/* 免费模型 / LoRA 列表由脚本动态渲染 */
+#freeModelList:empty,
+#loraList:empty {
+  display: none;
 }
 
 /* 接入设置：免费额度平台分隔条 */

@@ -486,45 +486,67 @@
 
         <div class="hm-actions-right">
           <div class="hm-menu-wrap">
-            <button class="hm-chip" id="engineBtn" aria-haspopup="true" aria-expanded="false">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l4-1 9.2-9.2a2 2 0 0 0-2.8-2.8L5 13.2 4 17Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.5 18.5h13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <button class="hm-chip hm-chip-mode" id="engineBtn" aria-haspopup="true" aria-expanded="false">
+              <svg class="hm-mode-ico" data-ico="image" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 16l4.2-4.2 3.3 3 2.8-2.4 4.7 4.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8.8" cy="9.2" r="1.2" fill="currentColor"/></svg>
+              <svg class="hm-mode-ico" data-ico="video" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6.5" width="12.5" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 10.5l4-2.2v7.4l-4-2.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              <svg class="hm-mode-ico" data-ico="audio" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 3.2V6.8L8 10H5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 9.2a4 4 0 010 5.6M17.8 7a7 7 0 010 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
               <span id="engineModeText">生图</span>
               <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <div class="hm-menu hm-menu-up hm-engine-menu" id="engineMenu" aria-hidden="true">
-              <div class="hm-mode-tabs" id="modeTabs">
-                <button data-mode="image" class="is-active">图片</button>
-                <button data-mode="video">视频</button>
-                <button data-mode="audio">音频</button>
-              </div>
-              <div class="hm-menu-group" data-mode-panel="image">
-                <span class="hm-menu-label">免费通道</span>
-                <button data-engine="flux" class="is-active">FLUX.1 · 免费</button>
-                <span class="hm-menu-label">RayinAPI</span>
-                <button data-engine="gpt-image">GPT-image · RayinAPI</button>
-                <button data-engine="banana">Nano Banana · RayinAPI</button>
-              </div>
-              <div class="hm-menu-group" data-mode-panel="image" id="freeModelGroup">
-                <span class="hm-menu-label">免费动漫模型</span>
-                <div id="freeModelList"></div>
-                <span class="hm-menu-label">动漫 LoRA 风格</span>
-                <div id="loraList"></div>
-              </div>
-              <div class="hm-menu-group" data-mode-panel="video" hidden>
-                <span class="hm-menu-label">视频模型</span>
-                <p class="hm-menu-note">视频生成为异步任务，需启动 Node 后端并配置视频模型 ID（默认 sora-2）。</p>
-              </div>
-              <div class="hm-menu-group" data-mode-panel="audio" hidden>
-                <span class="hm-menu-label">音频模型</span>
-                <p class="hm-menu-note">音频走 TTS 接口，需启动 Node 后端并配置音频模型 ID（默认 tts-1）。</p>
-              </div>
+            <div class="hm-menu hm-menu-up hm-mode-menu" id="modeMenu" aria-hidden="true">
+              <button data-mode="audio">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 3.2V6.8L8 10H5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 9.2a4 4 0 010 5.6M17.8 7a7 7 0 010 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <span>音频</span>
+              </button>
+              <button data-mode="image" class="is-active">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 16l4.2-4.2 3.3 3 2.8-2.4 4.7 4.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8.8" cy="9.2" r="1.2" fill="currentColor"/></svg>
+                <span>生图</span>
+              </button>
+              <button data-mode="video">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6.5" width="12.5" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 10.5l4-2.2v7.4l-4-2.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                <span>视频</span>
+              </button>
             </div>
           </div>
 
-          <button class="hm-chip hm-chip-model" id="engineModelBtn" title="当前生图模型">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l7.5 4.3v8.4L12 20.5l-7.5-4.3V7.8L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12l7.5-4.2M12 12v8.5M12 12L4.5 7.8" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
-            <span id="enginePillText">FLUX.1 · 免费</span>
-          </button>
+          <div class="hm-menu-wrap">
+            <button class="hm-chip hm-chip-model" id="engineModelBtn" aria-haspopup="true" aria-expanded="false" title="当前模型">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l7.5 4.3v8.4L12 20.5l-7.5-4.3V7.8L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12l7.5-4.2M12 12v8.5M12 12L4.5 7.8" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+              <span id="enginePillText">SANA 动漫</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-model-menu" id="modelMenu" aria-hidden="true">
+              <div data-mode-panel="image">
+                <span class="hm-menu-label">免费模型</span>
+                <div class="hm-chip-grid" id="freeModelList"></div>
+                <span class="hm-menu-label">RayinAPI</span>
+                <div class="hm-chip-grid">
+                  <button data-engine="gpt-image">GPT-image</button>
+                  <button data-engine="banana">Nano Banana</button>
+                </div>
+                <span class="hm-menu-label">LoRA 风格</span>
+                <div class="hm-chip-grid" id="loraList"></div>
+              </div>
+              <div data-mode-panel="video" hidden>
+                <span class="hm-menu-label">视频模型</span>
+                <div class="hm-chip-grid">
+                  <button data-vmodel="sora-2">Sora 2</button>
+                  <button data-vmodel="sora-2-pro">Sora 2 Pro</button>
+                  <button data-vmodel="veo-3">Veo 3</button>
+                </div>
+                <p class="hm-menu-note">视频为异步任务，需 Node 后端代理生成</p>
+              </div>
+              <div data-mode-panel="audio" hidden>
+                <span class="hm-menu-label">音频模型</span>
+                <div class="hm-chip-grid">
+                  <button data-amodel="tts-1">TTS-1</button>
+                  <button data-amodel="tts-1-hd">TTS-1 HD</button>
+                  <button data-amodel="gpt-4o-mini-tts">GPT-4o mini TTS</button>
+                </div>
+                <p class="hm-menu-note">语音由 Node 后端 TTS 合成</p>
+              </div>
+            </div>
+          </div>
 
           <div class="hm-menu-wrap hm-av-only">
             <button class="hm-chip" id="ratioBtn" aria-haspopup="true" aria-expanded="false">

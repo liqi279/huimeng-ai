@@ -191,7 +191,7 @@
 
   /* ---------------- 生成模式 ---------------- */
   function bindModes() {
-    var tabs = document.getElementById('modeTabs');
+    var tabs = document.getElementById('modeMenu');
     if (tabs) {
       tabs.addEventListener('click', function (event) {
         var btn = event.target.closest('[data-mode]');
@@ -244,10 +244,10 @@
     if (['image', 'video', 'audio'].indexOf(mode) < 0) return;
     state.mode = mode;
 
-    document.querySelectorAll('#modeTabs [data-mode]').forEach(function (el) {
+    document.querySelectorAll('#modeMenu [data-mode]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-mode') === mode);
     });
-    document.querySelectorAll('#engineMenu [data-mode-panel]').forEach(function (el) {
+    document.querySelectorAll('#modelMenu [data-mode-panel]').forEach(function (el) {
       el.hidden = el.getAttribute('data-mode-panel') !== mode;
     });
 
@@ -273,22 +273,11 @@
     });
 
     var imageOnly = mode === 'image';
-    ['modelsToggle', 'engineModelBtn'].forEach(function (key) {
-      var el = A.els[key];
-      if (!el) return;
-      el.hidden = !imageOnly;
-    });
+    if (A.els.modelsToggle) A.els.modelsToggle.hidden = !imageOnly;
     if (A.els.refDrop) A.els.refDrop.hidden = !imageOnly;
 
     var pill = document.getElementById('enginePillText');
-    if (pill) {
-      if (imageOnly) {
-        var meta = A.ENGINE_META ? A.ENGINE_META[state.engine] : null;
-        pill.textContent = meta ? meta.pill : 'FLUX.1 · 免费';
-      } else {
-        pill.textContent = mode === 'video' ? '视频 · sora-2' : '音频 · tts-1';
-      }
-    }
+    if (pill && A.modeModelLabel) pill.textContent = A.modeModelLabel(mode);
 
     var hint = document.getElementById('genHint');
     if (hint && !state.generating) {
@@ -402,6 +391,7 @@
       if (mode === 'video') {
         data = await api.generate({
           mode: 'video',
+          model: state.videoModel,
           prompt: text,
           ratio: state.ratio,
           resolution: state.scale === '1k' ? '720p' : '1080p',
@@ -413,6 +403,7 @@
       } else {
         data = await api.generate({
           mode: 'audio',
+          model: state.audioModel,
           text: text,
           voice: state.voice,
           format: state.audioFormat,
