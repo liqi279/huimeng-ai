@@ -3930,7 +3930,7 @@ body.hm-resizing * {
 
 .hm-prompt {
   position: relative;
-  padding: 8px 40px 22px 14px;
+  padding: 2px 40px 18px 14px;
   /* ↓↓↓ 关键：自动填充 composer 剩余高度 ↓↓↓ */
   flex: 1 1 auto;
   min-height: 46px; /* 最小 46px，保证至少一行 */
@@ -3953,7 +3953,7 @@ body.hm-resizing * {
   background: transparent;
   color: #dbe7f3;
   font-size: 12.5px;
-  line-height: 1.75;
+  line-height: 1.6;
   overflow-y: auto;
   vertical-align: top;
   box-sizing: border-box;
@@ -3971,10 +3971,10 @@ body.hm-resizing * {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  padding: 0 40px 22px 14px; /* 和 .hm-prompt padding 对齐 */
+  padding: 2px 40px 18px 14px; /* 和 .hm-prompt padding 对齐 */
   overflow: hidden;
   font-size: 12.5px;
-  line-height: 1.75;
+  line-height: 1.6;
   color: #dbe7f3;
   white-space: pre-wrap;
   word-wrap: break-word;

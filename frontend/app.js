@@ -436,6 +436,9 @@ function setCurrentRefs(arr) {
   ensureTabSlots();
   state.tabRefs[state.activePrompt] = arr || [];
   state.refImages = state.tabRefs[0].slice(); /* 兼容旧字段 */
+  _acKey = ''; /* 参考图变了，补全列表与 chip 缓存失效 */
+  _chipCacheKey = '';
+  schedulePromptOverlay();
 }
 function currentTabRefWeight() {
   ensureTabSlots();
@@ -1115,6 +1118,35 @@ function _ensurePromptOverlay() {
   return _promptOverlayEl;
 }
 
+/* chip 的 HTML 只在参考图变化时重建一次，避免每次输入都重新解码图片 */
+var _chipCacheKey = '';
+var _chipCacheHtml = [];
+
+function _escPromptHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function _refsSignature(refs) {
+  var s = '';
+  for (var i = 0; i < refs.length; i++) {
+    var url = refs[i].dataUrl || '';
+    s += i + ':' + url.length + ':' + url.slice(-16) + ';';
+  }
+  return s;
+}
+
+function _ensureChipCache(refs) {
+  var key = _refsSignature(refs);
+  if (key === _chipCacheKey) return _chipCacheHtml;
+  _chipCacheKey = key;
+  _chipCacheHtml = refs.map(function (ref, i) {
+    return '<span class="chip"><img src="' + ref.dataUrl + '" alt="">@' + (i + 1) + '</span>';
+  });
+  return _chipCacheHtml;
+}
+
 function renderPromptOverlay() {
   var ta = els.promptInput;
   if (!ta) return;
@@ -1134,59 +1166,29 @@ function renderPromptOverlay() {
   overlay.style.display = 'block';
   overlay.scrollTop = ta.scrollTop;
 
-  var container = document.createElement('div');
-  var lines = text.split('\n');
-  lines.forEach(function (line, lineIdx) {
-    var re = /@(\d+)(?=\s|$|[^\d])/g;  /* @N 后面跟空格/结尾/非数字，防止 @12 匹配 @1 */
-    var lastIdx = 0;
-    var match;
-    var lineSpan = document.createElement('span');
-    re.lastIndex = 0;
-    while ((match = re.exec(line)) !== null) {
-      var fullMatch = match[0];
-      /* 处理 re 里的前瞻：lastIndex 要前进到 match 结束 */
-      if (match.index > lastIdx) {
-        lineSpan.appendChild(document.createTextNode(line.slice(lastIdx, match.index)));
-      }
-      var n = Number(match[1]);
-      var ref = refs[n - 1];
-      if (ref) {
-        var chip = document.createElement('span');
-        chip.className = 'chip';
-        var img = document.createElement('img');
-        img.src = ref.dataUrl;
-        img.alt = '';
-        chip.appendChild(img);
-        chip.appendChild(document.createTextNode('@' + n));
-        /* 如果原匹配包含末尾非数字字符（空格），把它加回去 */
-        var tail = fullMatch.slice(match[0].lastIndexOf(match[1]) + String(match[1]).length);
-        lineSpan.appendChild(chip);
-        if (tail) lineSpan.appendChild(document.createTextNode(tail));
-      } else {
-        lineSpan.appendChild(document.createTextNode(fullMatch));
-      }
-      lastIdx = match.index + fullMatch.length;
-    }
-    if (lastIdx < line.length) {
-      lineSpan.appendChild(document.createTextNode(line.slice(lastIdx)));
-    }
-    container.appendChild(lineSpan);
-    if (lineIdx < lines.length - 1) {
-      container.appendChild(document.createElement('br'));
-    }
+  var chips = _ensureChipCache(refs);
+  var html = _escPromptHtml(text).replace(/@(\d+)(?![0-9])/g, function (match, n) {
+    return chips[Number(n) - 1] || match;
   });
+  overlay.innerHTML = html || ' ';
+}
 
-  overlay.innerHTML = '';
-  overlay.appendChild(container);
+var _overlayRaf = 0;
+function schedulePromptOverlay() {
+  if (_overlayRaf) return;
+  _overlayRaf = window.requestAnimationFrame(function () {
+    _overlayRaf = 0;
+    renderPromptOverlay();
+  });
 }
 
 function bindPromptOverlayEvents() {
   var ta = els.promptInput;
   if (!ta) return;
-  ta.addEventListener('input', renderPromptOverlay);
-  ta.addEventListener('scroll', renderPromptOverlay);
+  ta.addEventListener('input', schedulePromptOverlay);
+  ta.addEventListener('scroll', schedulePromptOverlay);
   ta.addEventListener('paste', function () {
-    setTimeout(renderPromptOverlay, 0);
+    schedulePromptOverlay();
   });
 }
 
@@ -1218,13 +1220,20 @@ function insertPromptAt(text) {
 }
 
 /* ========== @ 自动补全弹窗 ========== */
-var _acEl = null, _acActiveIdx = -1, _acQuery = '', _acRange = null;
+var _acEl = null, _acActiveIdx = -1, _acQuery = '', _acRange = null, _acKey = '';
 
 function _ensureAcEl() {
   if (_acEl && document.body.contains(_acEl)) return _acEl;
   _acEl = document.createElement('div');
   _acEl.className = 'hm-ref-autocomplete';
   _acEl.hidden = true;
+  /* 事件委托：列表重绘后不用重新绑定 */
+  _acEl.addEventListener('mousedown', function (ev) {
+    var item = ev.target.closest('.hm-ref-ac-item');
+    if (!item) return;
+    ev.preventDefault(); /* 不丢 input focus */
+    _commitRefAc(Number(item.dataset.idx));
+  });
   document.body.appendChild(_acEl);
   return _acEl;
 }
@@ -1262,25 +1271,20 @@ function showRefAutocomplete() {
 
   if (!filtered.length) { hideRefAutocomplete(); return; }
 
-  /* 渲染弹窗 */
-  _acEl.innerHTML = '';
-  filtered.forEach(function (item, i) {
-    var div = document.createElement('div');
-    div.className = 'hm-ref-ac-item' + (i === 0 ? ' is-active' : '');
-    div.dataset.idx = String(item.idx);
-    div.innerHTML =
-      '<div class="hm-ref-ac-thumb"><img alt=""></div>' +
-      '<div class="hm-ref-ac-info">' +
-        '<div class="hm-ref-ac-name"><span class="hm-ref-ac-tag">@' + (item.idx + 1) + '</span> 主体图</div>' +
-        '<div class="hm-ref-ac-meta">' + item.ref.width + '×' + item.ref.height + ' · 强度 ' + (item.ref.weight != null ? item.ref.weight : 70) + '%</div>' +
-      '</div>';
-    div.querySelector('img').src = item.ref.dataUrl;
-    div.addEventListener('mousedown', function (ev) {
-      ev.preventDefault(); /* 不丢 input focus */
-      _commitRefAc(item.idx);
-    });
-    _acEl.appendChild(div);
-  });
+  /* 渲染弹窗：同一组参考图 + 同一 query 只重绘一次 */
+  var key = _refsSignature(refs) + '|' + _acQuery;
+  if (_acKey !== key) {
+    _acKey = key;
+    _acEl.innerHTML = filtered.map(function (item, i) {
+      return '<div class="hm-ref-ac-item' + (i === 0 ? ' is-active' : '') + '" data-idx="' + item.idx + '">' +
+        '<div class="hm-ref-ac-thumb"><img src="' + item.ref.dataUrl + '" alt=""></div>' +
+        '<div class="hm-ref-ac-info">' +
+          '<div class="hm-ref-ac-name"><span class="hm-ref-ac-tag">@' + (item.idx + 1) + '</span> 主体图</div>' +
+          '<div class="hm-ref-ac-meta">' + item.ref.width + '×' + item.ref.height + ' · 强度 ' +
+            (item.ref.weight != null ? item.ref.weight : 70) + '%</div>' +
+        '</div></div>';
+    }).join('');
+  }
 
   /* 定位：textarea 光标附近 */
   var rect = ta.getBoundingClientRect();
