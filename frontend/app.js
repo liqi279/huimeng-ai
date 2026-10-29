@@ -370,7 +370,7 @@ const state = {
   activeItem: null,
   collapsed: new Set(),
   translationCache: new Map(),
-  refImage: null,
+  refImages: [],
   prompts: ['', ''],
   activePrompt: 0,
   worksSort: 'newest',
@@ -401,6 +401,7 @@ function bindEls() {
   els.inspireBtn = document.getElementById('inspireBtn');
   els.refDrop = document.getElementById('refDrop');
   els.refInput = document.getElementById('refInput');
+  els.refGrid = document.getElementById('refGrid');
   els.refEmpty = document.getElementById('refEmpty');
   els.refPreview = document.getElementById('refPreview');
   els.refImage = document.getElementById('refImage');
@@ -712,46 +713,116 @@ function syncEngineUI() {
 /* ---------------- 参考图（图生图） ---------------- */
 const REF_MAX_BYTES = 10 * 1024 * 1024;
 const REF_MAX_SIDE = 1280;
+const REF_MAX_COUNT = 10;
 
 function syncRefNote() {
   if (!els.refNote) return;
-  const has = !!state.refImage;
-  const supported = state.engine === 'gpt-image';
+  const count = state.refImages.length;
 
-  if (!has) {
-    els.refNote.textContent = '仅 GPT-image 引擎支持参考图（图生图）';
-    els.refNote.classList.remove('is-warn');
-  } else if (supported) {
-    els.refNote.textContent = '已启用图生图 · 按参考图主体生成';
+  if (count === 0) {
+    els.refNote.textContent = '支持多参考图 · 提示词中用 @1 @2 @3 等引用（最多 ' + REF_MAX_COUNT + ' 张）';
     els.refNote.classList.remove('is-warn');
   } else {
-    els.refNote.textContent = '当前引擎不支持参考图，请切换到 GPT-image 引擎';
-    els.refNote.classList.add('is-warn');
+    els.refNote.textContent = '已添加 ' + count + ' 张参考图 · 第一张为主体，其余为风格参考 · 用 @1~@' + count + ' 在提示词中指定';
+    els.refNote.classList.remove('is-warn');
   }
 }
 
 function renderRef() {
-  const ref = state.refImage;
-  if (ref) {
-    els.refImage.src = ref.dataUrl;
-    els.refPreview.hidden = false;
-    els.refEmpty.hidden = true;
-    els.refDrop.classList.add('has-ref');
-  } else {
-    els.refImage.removeAttribute('src');
-    els.refPreview.hidden = true;
-    els.refEmpty.hidden = false;
-    els.refDrop.classList.remove('has-ref');
+  const list = state.refImages;
+  /* 渲染多图网格 */
+  if (els.refGrid) {
+    els.refGrid.innerHTML = '';
+    list.forEach(function (ref, idx) {
+      const cell = document.createElement('div');
+      cell.className = 'hm-ref-cell';
+      cell.dataset.idx = String(idx);
+      cell.innerHTML =
+        '<img alt="参考图 ' + (idx + 1) + '">' +
+        '<span class="hm-ref-idx">@' + (idx + 1) + '</span>' +
+        '<span class="hm-ref-size">' + ref.width + '×' + ref.height + '</span>' +
+        '<button class="hm-ref-cell-remove" type="button" aria-label="删除参考图 ' + (idx + 1) + '">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+        '</button>';
+      const img = cell.querySelector('img');
+      img.src = ref.dataUrl;
+      /* 点击序号自动在 prompt 里插入 @N */
+      cell.querySelector('.hm-ref-idx').addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        insertPromptAt('@' + (idx + 1));
+      });
+      cell.querySelector('.hm-ref-cell-remove').addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        removeRefAt(idx);
+      });
+      els.refGrid.appendChild(cell);
+    });
+
+    /* 添加新图的槽位（未满时显示） */
+    if (list.length < REF_MAX_COUNT) {
+      const addCell = document.createElement('div');
+      addCell.className = 'hm-ref-cell hm-ref-add';
+      addCell.innerHTML =
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>' +
+        '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
+      addCell.addEventListener('click', function () { els.refInput.click(); });
+      addCell.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); els.refInput.click(); }
+      });
+      els.refGrid.appendChild(addCell);
+    }
+
+    els.refGrid.hidden = list.length === 0;
   }
-  els.refState.textContent = ref ? ref.width + '×' + ref.height : '未添加';
-  els.refState.style.color = ref ? '#c4b5fd' : '';
+
+  /* 顶部状态：已添加 X 张 / 最多 10 张 */
+  if (els.refState) {
+    if (list.length > 0) {
+      els.refState.textContent = list.length + '/' + REF_MAX_COUNT;
+      els.refState.style.color = '#c4b5fd';
+    } else {
+      els.refState.textContent = '未添加';
+      els.refState.style.color = '';
+    }
+  }
+
+  /* 拖入区域视觉 */
+  if (els.refDrop) {
+    if (list.length > 0) {
+      els.refDrop.classList.add('has-ref');
+      if (els.refEmpty) els.refEmpty.hidden = true;
+    } else {
+      els.refDrop.classList.remove('has-ref');
+      if (els.refEmpty) els.refEmpty.hidden = false;
+    }
+  }
+
   syncRefNote();
 }
 
-function clearRefImage() {
-  state.refImage = null;
+function removeRefAt(idx) {
+  state.refImages.splice(idx, 1);
   els.refInput.value = '';
   renderRef();
+  toast('已删除参考图 #' + (idx + 1), 'info');
+}
+
+function clearRefImages() {
+  state.refImages = [];
+  els.refInput.value = '';
+  renderRef();
+}
+
+function insertPromptAt(text) {
+  const ta = els.promptInput;
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const val = ta.value;
+  ta.value = val.slice(0, start) + text + val.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + text.length;
+  updateCharCount();
+  ta.focus();
 }
 
 function loadImageFile(file) {
@@ -772,6 +843,10 @@ function loadImageFile(file) {
 
 async function pickRefFile(file) {
   if (!file) return;
+  if (state.refImages.length >= REF_MAX_COUNT) {
+    toast('最多添加 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+    return;
+  }
   if (!/^image\/(png|jpe?g|webp)$/i.test(file.type || '')) {
     toast('参考图仅支持 PNG / JPG / WebP 格式', 'error');
     return;
@@ -796,19 +871,16 @@ async function pickRefFile(file) {
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(img, 0, 0, width, height);
 
-    state.refImage = {
+    state.refImages.push({
       dataUrl: canvas.toDataURL('image/jpeg', 0.92),
-      name: 'reference.jpg',
+      name: 'reference_' + (state.refImages.length + 1) + '.jpg',
       width: width,
       height: height
-    };
+    });
     els.refInput.value = '';
     renderRef();
-    if (state.engine !== 'gpt-image') {
-      toast('参考图已添加，请切换到 GPT-image 引擎生成', 'info');
-    } else {
-      toast('参考图已添加，将按图中主体生成', 'success');
-    }
+    const n = state.refImages.length;
+    toast('参考图已添加（' + n + '/' + REF_MAX_COUNT + '）· 点击图上的 @' + n + ' 可插入提示词', 'success');
   } catch (err) {
     toast('参考图读取失败，请换一张图片', 'error');
   }
@@ -1152,7 +1224,7 @@ async function runBackendImage(job, prompt) {
     count: 1,
     steps: job.steps || 8,
     seed: job.seed,
-    refImages: job.refImage && job.refImage.dataUrl ? [job.refImage.dataUrl] : [],
+    refImages: (job.refImages || []).map(function (r) { return r.dataUrl; }),
     rayin: state.api
   };
 
@@ -1407,13 +1479,15 @@ async function runRayinImage(job, prompt) {
   for (let i = 0; i < fallbacks.length; i += 1) {
     const model = fallbacks[i];
     try {
-      if (job.refImage) {
-        /* 图生图：以参考图主体为准，走 OpenAI 兼容的 /images/edits（multipart） */
+      const refs = job.refImages || [];
+      const primary = refs[0];
+      if (primary) {
+        /* 图生图：以第一张参考图为主体，走 OpenAI 兼容的 /images/edits（multipart） */
         updateJobStatus(job, '参考图绘制…' + (i > 0 ? '（尝试 ' + model + '）' : ''));
-        const blob = await dataUrlBlob(job.refImage.dataUrl);
+        const blob = await dataUrlBlob(primary.dataUrl);
         const form = new FormData();
         form.append('model', model);
-        form.append('image', blob, job.refImage.name || 'reference.jpg');
+        form.append('image', blob, primary.name || 'reference.jpg');
         form.append('prompt', prompt);
         form.append('size', size);
         form.append('quality', quality);
@@ -1856,8 +1930,9 @@ async function handleGenerate() {
     return;
   }
 
-  if (state.refImage && state.engine !== 'gpt-image') {
-    toast('参考图仅支持 GPT-image 引擎，请先切换引擎或移除参考图', 'error');
+  if (state.refImages.length > 0 && state.engine === 'flux') {
+    /* FLUX 免费引擎走后端 Proxy，不支持多参考图，提示切 GPT-image / Banana */
+    toast('FLUX 免费引擎暂不支持参考图 · 请切换 GPT-image 或 Nano Banana', 'error');
     els.refDrop.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     return;
   }
@@ -1895,7 +1970,7 @@ async function handleGenerate() {
       fullPrompt: '',
       url: '',
       elapsed: 0,
-      refImage: state.refImage
+      refImages: state.refImages.slice()
     };
     jobs.push(job);
     state.jobs.set(job.id, job);
@@ -2255,8 +2330,8 @@ function bindEvents() {
 
   els.refRemove.addEventListener('click', function (event) {
     event.stopPropagation();
-    clearRefImage();
-    toast('已移除参考图', 'info');
+    clearRefImages();
+    toast('已清空所有参考图', 'info');
   });
 
   ['dragenter', 'dragover'].forEach(function (type) {
@@ -2277,8 +2352,9 @@ function bindEvents() {
     event.preventDefault();
     event.stopPropagation();
     els.refDrop.classList.remove('is-over');
-    const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
-    pickRefFile(file);
+    /* 支持拖入多张 */
+    const files = Array.from(event.dataTransfer && event.dataTransfer.files || []);
+    files.slice(0, REF_MAX_COUNT - state.refImages.length).forEach(function (f) { pickRefFile(f); });
   });
 
   els.inspireBtn.addEventListener('click', function () {

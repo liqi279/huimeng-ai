@@ -25,7 +25,7 @@ const router = express.Router();
 
 const MAX_PROMPT_CHARS = 1800;
 const MAX_REF_BYTES = 10 * 1024 * 1024;
-const MAX_REF_COUNT = 3;
+const MAX_REF_COUNT = 10;
 const IMAGE_TIMEOUT = 120000;
 const VIDEO_TIMEOUT = 120000;
 const AUDIO_TIMEOUT = 60000;
@@ -281,13 +281,11 @@ function extractChatImage(message) {
   return '';
 }
 
-async function generateBanana({ base, key, model, prompt, ref }) {
-  const content = ref
-    ? [
-        { type: 'text', text: prompt },
-        { type: 'image_url', image_url: { url: ref.dataUrl } },
-      ]
-    : prompt;
+async function generateBanana({ base, key, model, prompt, refs }) {
+  const content = [
+    { type: 'text', text: prompt },
+    ...refs.map((r) => ({ type: 'image_url', image_url: { url: r.dataUrl } })),
+  ];
 
   const data = await fetchJson(
     `${base}/chat/completions`,
@@ -331,6 +329,7 @@ async function generateImages(body) {
     if (engine === 'flux') {
       url = await runFlux(prompt, seed, width, height, steps);
     } else if (engine === 'gpt-image') {
+      /* GPT-image /images/generations 不支持多 reference 图，传第一张 */
       url = await generateGptImage({
         base: rayin.base,
         key: rayin.key,
@@ -340,12 +339,13 @@ async function generateImages(body) {
         ref: refs[0],
       });
     } else {
+      /* Banana chat/completions 支持多图引用 */
       url = await generateBanana({
         base: rayin.base,
         key: rayin.key,
         model: rayin.bananaModel,
         prompt,
-        ref: refs[0],
+        refs,
       });
     }
     /* 验证图片 URL 有效性（检测上游限流/404），并返回给前端直连 */
