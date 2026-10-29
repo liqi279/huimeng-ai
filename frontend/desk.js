@@ -297,6 +297,43 @@
     return ids;
   }
 
+  /* 环检测：dest 是否是 src 的子孙（src 不能拖进自己或自己的子树里） */
+  function isDescendantOf(srcId, destId) {
+    if (!srcId || !destId) return false;
+    if (srcId === destId) return true;
+    var dest = desk.folders.find(function (f) { return f.id === destId; });
+    if (!dest) return false;
+    /* 从 dest 往上找父链，看能不能走到 src */
+    var p = dest.parentId;
+    while (p) {
+      if (p === srcId) return true;
+      p = desk.folders.find(function (f) { return f.id === p; })?.parentId || null;
+    }
+    return false;
+  }
+
+  /* 移动 folder 到 targetFolder 下（targetFolder=null → 根目录）
+     ★ 只改 folder.parentId，children 自动跟着父层级（不需要批量改 assigns/parentId）
+     folder 内部作品归属 desk.assigns[workId]=folderId 不变 —— 它们属于 folder 本身 */
+  function moveFolder(folderId, targetFolderId) {
+    var folder = desk.folders.find(function (f) { return f.id === folderId; });
+    if (!folder) return false;
+    if (folderId === targetFolderId) return false;
+    if (isDescendantOf(folderId, targetFolderId)) return false;  /* 禁止拖进自己的子树 */
+    folder.parentId = targetFolderId || null;
+    persistNow();
+    return true;
+  }
+
+  /* 把多个 work 从一个 folder 移到另一个 folder（或根目录 targetFolder=null） */
+  function moveWorksFolder(workIds, targetFolderId) {
+    workIds.forEach(function (wid) {
+      if (targetFolderId) desk.assigns[wid] = targetFolderId;
+      else delete desk.assigns[wid];
+    });
+    persistNow();
+  }
+
   /* 递归渲染一个 folder 节点（及其 children） */
   function renderFolderNode(node, depth) {
     var html = '';
@@ -324,8 +361,10 @@
     if (isActive) classes.push('is-active');
     if (isSelected) classes.push('is-selected');
 
-    html += '<div class="' + classes.join(' ') +
-      '" data-folder-row="' + esc(node.id) + '" style="padding-left:' + (10 + depth * 14) + 'px">' +
+    html += '<div class="' + classes.join(' ') + '" draggable="true" droppable="true"' +
+      ' data-folder-row="' + esc(node.id) + '"' +
+      ' data-drag-source="folder" data-drag-id="' + esc(node.id) + '"' +
+      ' style="padding-left:' + (10 + depth * 14) + 'px">' +
 
       '<span class="hm-tree-toggle' + (hasChildren ? '' : ' is-leaf') +
         (expanded ? ' is-open' : '') + '" data-folder-toggle="' + esc(node.id) + '">' +
@@ -403,6 +442,9 @@
     tree.forEach(function (node) {
       html += renderFolderNode(node, 0);  /* renderFolderNode 内部自动处理 inline rename 替换 */
     });
+    /* 根目录 drop zone：拖入 = targetFolder=null */
+    html += '<div class="hm-root-drop-zone" droppable="true" data-root-drop="true">' +
+      '<span>把文件夹拖到这里放回根目录</span></div>';
     html += '</div>';
     list.innerHTML = html;
 
@@ -1851,6 +1893,139 @@
         }
       });
     }
+
+    /* ============== HTML5 Drag & Drop：文件夹 → 文件夹 / 根目录 ============== */
+    var dragSrcId = null;
+    var dragIsFolder = false;
+
+    projList.addEventListener('dragstart', function (e) {
+      var row = e.target.closest('[data-folder-row]');
+      if (!row) { dragSrcId = null; return; }
+      dragSrcId = row.dataset.folderRow;
+      dragIsFolder = true;
+      row.classList.add('is-dragging');
+      /* 使用应用/x-folder 类型；同时也 set text/plain 作为 fallback */
+      try {
+        e.dataTransfer.setData('application/x-folder', dragSrcId);
+        e.dataTransfer.setData('text/plain', dragSrcId);
+        e.dataTransfer.effectAllowed = 'move';
+      } catch (err) {}
+    });
+    projList.addEventListener('dragend', function (e) {
+      /* 清除所有 drop target 的 hover 状态 */
+      projList.querySelectorAll('.is-drop-over').forEach(function (el) { el.classList.remove('is-drop-over'); });
+      projList.querySelectorAll('.is-dragging').forEach(function (el) { el.classList.remove('is-dragging'); });
+      dragSrcId = null;
+      dragIsFolder = false;
+    });
+    projList.addEventListener('dragover', function (e) {
+      if (!dragSrcId) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+
+      var target = e.target.closest('[data-folder-row]');
+      var isRootDrop = !!e.target.closest('[data-root-drop]');
+
+      projList.querySelectorAll('.is-drop-over').forEach(function (el) { el.classList.remove('is-drop-over'); });
+
+      if (isRootDrop) {
+        /* 拖到根目录 drop zone */
+        var rootZone = projList.querySelector('[data-root-drop]');
+        if (rootZone) rootZone.classList.add('is-drop-over');
+      } else if (target && target.dataset.folderRow !== dragSrcId) {
+        var targetId = target.dataset.folderRow;
+        /* 环检测：不能拖进目标的子树里 */
+        if (!isDescendantOf(dragSrcId, targetId)) {
+          target.classList.add('is-drop-over');
+        }
+      }
+    });
+    projList.addEventListener('dragleave', function (e) {
+      /* 鼠标离开 projList 整体时清 drop-over */
+      if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('#' + (projList.id || '_'))) {
+        projList.querySelectorAll('.is-drop-over').forEach(function (el) { el.classList.remove('is-drop-over'); });
+      }
+    });
+    projList.addEventListener('drop', function (e) {
+      e.preventDefault();
+      if (!dragSrcId) return;
+
+      /* 解析 dragSrcId：侧栏 folder→直接 id；桌面 folder-card→'folder:fx'；桌面 work-card→'work:wx' */
+      var actualSrcId = dragSrcId;
+      var dragType = 'folder';
+      if (dragSrcId.indexOf('folder:') === 0) { actualSrcId = dragSrcId.slice(7); dragType = 'folder'; }
+      else if (dragSrcId.indexOf('work:') === 0) { actualSrcId = dragSrcId.slice(5); dragType = 'work'; }
+
+      var targetFolderRow = e.target.closest('[data-folder-row]');
+      var isRootDrop = !!e.target.closest('[data-root-drop]');
+
+      /* drop-over 清理 */
+      projList.querySelectorAll('.is-drop-over').forEach(function (el) { el.classList.remove('is-drop-over'); });
+      projList.querySelectorAll('.is-dragging').forEach(function (el) { el.classList.remove('is-dragging'); });
+
+      if (dragType === 'folder') {
+        /* === 拖的是 folder → 移动文件夹层级 === */
+        if (isRootDrop) {
+          var ok = moveFolder(actualSrcId, null);
+          if (ok) {
+            var draggedFolder = desk.folders.find(function (f) { return f.id === actualSrcId; });
+            A.toast('「' + (draggedFolder ? draggedFolder.name : '文件夹') + '」已移到根目录', 'success');
+          }
+        } else if (targetFolderRow && targetFolderRow.dataset.folderRow !== actualSrcId) {
+          var tgtId = targetFolderRow.dataset.folderRow;
+          if (isDescendantOf(actualSrcId, tgtId)) {
+            A.toast('不能把文件夹拖进它自己的子文件夹里', 'info');
+            return;
+          }
+          var ok2 = moveFolder(actualSrcId, tgtId);
+          if (ok2) {
+            var srcFolder = desk.folders.find(function (f) { return f.id === actualSrcId; });
+            var tgtFolder = desk.folders.find(function (f) { return f.id === tgtId; });
+            A.toast('「' + (srcFolder ? srcFolder.name : '文件夹') + '」已移入「' + (tgtFolder ? tgtFolder.name : '目标') + '」', 'success');
+            view.expanded[tgtId] = true;
+          }
+        } else { return; }
+        /* 如果拖的是当前正在查看的文件夹，更新 activeFolder */
+        if (view.activeFolder === actualSrcId || isDescendantOf(actualSrcId, view.activeFolder)) {
+          view.activeFolder = actualSrcId;
+        }
+        clearSelection();
+        view.selectedFolders[actualSrcId] = true;
+        renderPanel();
+        renderDesktop();
+      } else {
+        /* === 拖的是 work → 移动作品归属（类似 mergeItemsIntoFolder） === */
+        if (isRootDrop) {
+          moveWorksFolder([actualSrcId], null);
+          A.toast('已把 1 项移到根目录', 'success');
+        } else if (targetFolderRow) {
+          var tgtFid = targetFolderRow.dataset.folderRow;
+          moveWorksFolder([actualSrcId], tgtFid);
+          var tgtF2 = desk.folders.find(function (f) { return f.id === tgtFid; });
+          A.toast('已把 1 项移入「' + (tgtF2 ? tgtF2.name : '文件夹') + '」', 'success');
+        } else { return; }
+        renderPanel();
+        renderDesktop();
+      }
+    });
+
+    /* 桌面 folder-card 拖拽也同步支持：拖到侧栏目标文件夹 */
+    grid.addEventListener('dragstart', function (e) {
+      var card = e.target.closest('.folder-card[data-folder], .desk-card[data-work]');
+      if (!card) { dragSrcId = null; return; }
+      if (card.classList.contains('folder-card')) {
+        dragSrcId = 'folder:' + card.dataset.folder;
+        dragIsFolder = true;
+      } else {
+        dragSrcId = 'work:' + card.dataset.work;
+        dragIsFolder = false;
+      }
+      try {
+        e.dataTransfer.setData('text/plain', dragSrcId);
+        e.dataTransfer.setData('application/x-folder', dragSrcId);
+        e.dataTransfer.effectAllowed = 'move';
+      } catch (err) {}
+    });
 
     /* 桌面 */
     var grid = byId('resultGrid');

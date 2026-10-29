@@ -6262,6 +6262,47 @@ body.hm-light .hm-page-empty {
 }
 .hm-inline-cancel:hover { background: rgba(248, 113, 113, 0.15); color: #f87171; }
 
+/* ---------- 文件夹拖拽 Drop Over 高亮 ---------- */
+.hm-proj-folder.is-drop-over {
+  background: rgba(132, 204, 22, 0.18);
+  border-radius: 6px;
+  outline: 2px dashed rgba(132, 204, 22, 0.7);
+  outline-offset: -2px;
+  transform: translateX(2px);
+  transition: background 0.1s ease, outline 0.1s ease, transform 0.1s ease;
+}
+.hm-proj-folder.is-dragging {
+  opacity: 0.5;
+}
+
+/* 根目录 drop zone */
+.hm-root-drop-zone {
+  margin: 10px 6px 20px;
+  padding: 14px 18px;
+  border: 2px dashed rgba(100, 116, 139, 0.45);
+  border-radius: 10px;
+  text-align: center;
+  color: #64748b;
+  font-size: 12px;
+  cursor: default;
+  background: rgba(30, 41, 59, 0.2);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.hm-root-drop-zone.is-drop-over {
+  border-color: rgba(132, 204, 22, 0.8);
+  background: rgba(132, 204, 22, 0.15);
+  color: #a3e635;
+  cursor: grabbing;
+}
+.hm-root-drop-zone span {
+  font-style: italic;
+  letter-spacing: 0.3px;
+}
+
+/* 整个侧栏文件夹可拖（让 draggable=true 生效，鼠标自动变 grab） */
+.hm-proj-folder { cursor: grab; }
+.hm-proj-folder:active { cursor: grabbing; }
+
 /* ---------- 桌面画板 ---------- */
 #resultGrid.is-board {
   position: relative;
