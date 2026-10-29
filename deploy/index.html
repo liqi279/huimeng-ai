@@ -6229,6 +6229,47 @@ body.hm-light .hm-page-empty {
 .hm-proj-folder:hover .hm-proj-plus { opacity: 1; }
 .hm-proj-plus:hover { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; }
 
+/* 多选高亮 */
+.hm-proj-folder.is-selected:not(.is-active) {
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px dashed rgba(56, 189, 248, 0.5);
+}
+
+/* 行内 inline 输入框 */
+.hm-proj-folder.is-inline-new {
+  border: 1px dashed rgba(52, 211, 153, 0.55);
+  background: rgba(52, 211, 153, 0.08);
+  border-radius: 6px;
+}
+.hm-proj-folder.is-renaming {
+  border: 1px dashed rgba(56, 189, 248, 0.55);
+  background: rgba(56, 189, 248, 0.08);
+  border-radius: 6px;
+}
+.hm-inline-plus { color: #4b8e7a; font-size: 13px; font-weight: 700; }
+.hm-inline-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e8f4ff;
+  font-size: 12.5px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  font-family: inherit;
+}
+.hm-inline-input::placeholder { color: #5d6f85; font-style: italic; }
+.hm-inline-cancel {
+  flex: none;
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  color: #7b8ea4;
+  font-size: 10px;
+  line-height: 1;
+}
+.hm-inline-cancel:hover { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+
 /* ---------- 桌面画板 ---------- */
 #resultGrid.is-board {
   position: relative;
@@ -7580,7 +7621,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029084727-10b2575";</script>
+<script>window.HM_BUILD = "20261029085800-37d1770";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -14715,7 +14756,8 @@ window.HMApp = {
 
   var view = {
     activeFolder: null,
-    parentFolder: null,  /* 进入某文件夹时，保留它的父路径（面包屑） */
+    parentFolder: null,
+    selectedFolders: {},  /* { folderId: true } 多选 */
     sort: 'newest',
     search: '',
     selected: {},
@@ -14726,7 +14768,8 @@ window.HMApp = {
     paramWork: null,
     renameCb: null,
     sizeKey: '',
-    expanded: {}   /* { folderId: true/false } 记录树形展开状态 */
+    expanded: {},
+    inline: null  /* { parentId: 'fx'|null, rowId: 'fx', isNew: true, value: '' } 行内输入状态 */
   };
 
   /* 统一剪贴板（localStorage 持久化，跨项目/文件夹复制剪切粘贴） */
@@ -14989,12 +15032,16 @@ window.HMApp = {
     var count = folderCount(node.id);
     var credit = folderCredit(node.id);
     var isActive = view.activeFolder === node.id;
-    var expanded = view.expanded[node.id] !== false;  /* 默认展开 */
+    var isSelected = !!view.selectedFolders[node.id];
+    var expanded = view.expanded[node.id] !== false;
 
-    html += '<div class="hm-proj-folder ' + (isActive ? 'is-active' : '') +
+    var classes = ['hm-proj-folder'];
+    if (isActive) classes.push('is-active');
+    if (isSelected) classes.push('is-selected');
+
+    html += '<div class="' + classes.join(' ') +
       '" data-folder-row="' + esc(node.id) + '" style="padding-left:' + (10 + depth * 14) + 'px">' +
 
-      /* 折叠/展开箭头（只有有子节点时才显示） */
       '<span class="hm-tree-toggle' + (hasChildren ? '' : ' is-leaf') +
         (expanded ? ' is-open' : '') + '" data-folder-toggle="' + esc(node.id) + '">' +
         (hasChildren ? '▸' : '·') +
@@ -15009,12 +15056,40 @@ window.HMApp = {
       '<button class="hm-proj-more" data-folder-more="' + esc(node.id) + '" aria-label="项目操作">⋯</button>' +
       '</div>';
 
+    /* inline 新建子文件夹（在这个父节点下）—— 在 children 之前插入一行 */
+    if (view.inline && view.inline.isNew && view.inline.parentId === node.id) {
+      html += renderInlineRow(node.id, depth + 1);
+    }
+
     if (hasChildren && expanded) {
       node.children.forEach(function (child) {
         html += renderFolderNode(child, depth + 1);
       });
     }
     return html;
+  }
+
+  /* inline 重命名一个已有 folder（替换这行的 name 为 input） */
+  function renderInlineRename(node, depth) {
+    var val = (view.inline && !view.inline.isNew && view.inline.rowId === node.id)
+      ? view.inline.value : node.name;
+    var classes = ['hm-proj-folder', 'is-renaming'];
+    return '<div class="' + classes.join(' ') + '" style="padding-left:' + (10 + depth * 14) + 'px">' +
+      '<span class="hm-tree-toggle is-leaf" style="visibility:hidden">·</span>' +
+      '<span class="hm-folder-ico">📁</span>' +
+      '<input class="hm-inline-input" data-folder-inline="' + esc(node.id) + '" data-inline-kind="rename" value="' + esc(val) + '" maxlength="40" autocomplete="off">' +
+      '</div>';
+  }
+
+  /* inline 新建子文件夹占位行（显示在 children 最前面） */
+  function renderInlineRow(parentId, depth) {
+    var val = (view.inline && view.inline.isNew && view.inline.parentId === parentId) ? view.inline.value : '';
+    return '<div class="hm-proj-folder is-inline-new" style="padding-left:' + (10 + depth * 14) + 'px">' +
+      '<span class="hm-tree-toggle is-leaf" style="visibility:hidden">·</span>' +
+      '<span class="hm-folder-ico hm-inline-plus">＋</span>' +
+      '<input class="hm-inline-input" data-folder-inline-parent="' + esc(parentId || '') + '" data-inline-kind="new" value="' + esc(val) + '" placeholder="新建文件夹..." maxlength="40" autocomplete="off">' +
+      '<button class="hm-inline-cancel" data-inline-cancel="' + esc(parentId || '') + '">✕</button>' +
+      '</div>';
   }
 
   function renderPanel() {
@@ -15043,14 +15118,31 @@ window.HMApp = {
 
     html += '<div class="hm-proj-folders">';
     var tree = buildTree();
-    if (!tree.length) {
+
+    /* inline 根目录新建行（parentId === null && isNew）—— 插在最前 */
+    if (view.inline && view.inline.isNew && !view.inline.parentId) {
+      html += renderInlineRow(null, 0);
+    }
+
+    if (!tree.length && !(view.inline && view.inline.isNew)) {
       html += '<p class="hm-proj-none">' + (view.search ? '没有匹配的项目' : '还没有项目文件夹，点击「新建文件夹」开始整理') + '</p>';
     }
     tree.forEach(function (node) {
-      html += renderFolderNode(node, 0);
+      /* inline 重命名：替换整行 */
+      if (view.inline && !view.inline.isNew && view.inline.rowId === node.id) {
+        html += renderInlineRename(node, 0);
+      } else {
+        html += renderFolderNode(node, 0);
+      }
     });
     html += '</div>';
     list.innerHTML = html;
+
+    /* 自动 focus inline input */
+    if (view.inline) {
+      var ip = list.querySelector('.hm-inline-input');
+      if (ip) { setTimeout(function () { ip.focus(); ip.select(); }, 30); }
+    }
 
     var sortBtn = byId('projSortBtn');
     if (sortBtn) sortBtn.textContent = view.sort === 'name' ? '排序 · 名称' : '排序 · 最新';
@@ -15070,6 +15162,56 @@ window.HMApp = {
     if (panel) panel.hidden = true;
   }
 
+  /* ---------------- 行内 inline 输入 ---------------- */
+
+  /* 开启 inline：在指定 parentId 下新建，或重命名已有 rowId */
+  function startInlineCreate(parentId) {
+    /* 自动展开父节点，让 inline 行可见 */
+    if (parentId) view.expanded[parentId] = true;
+    view.inline = { parentId: parentId || null, rowId: null, isNew: true, value: '' };
+    renderPanel();
+  }
+  function startInlineRename(rowId) {
+    var folder = desk.folders.find(function (f) { return f.id === rowId; });
+    if (!folder) return;
+    view.inline = { parentId: folder.parentId || null, rowId: rowId, isNew: false, value: folder.name };
+    renderPanel();
+  }
+  function cancelInline() {
+    view.inline = null;
+    renderPanel();
+  }
+  function commitInline(value) {
+    value = (value || '').trim();
+    var inline = view.inline;
+    view.inline = null;
+    if (!value || !inline) { renderPanel(); return; }
+    if (inline.isNew) {
+      /* 同级去重 */
+      var parentId = inline.parentId || null;
+      var siblings = desk.folders.filter(function (f) { return (f.parentId || null) === parentId; });
+      var names = siblings.map(function (f) { return f.name; });
+      var name = value;
+      var idx = 2;
+      while (names.indexOf(name) >= 0) { name = value + ' ' + idx; idx++; }
+      var folder = { id: 'f' + A.uid(), name: name, parentId: parentId, createdAt: Date.now() };
+      desk.folders.unshift(folder);
+      persistNow();
+      A.toast('已创建文件夹「' + name + '」', 'success');
+    } else {
+      /* 重命名 */
+      var target = desk.folders.find(function (f) { return f.id === inline.rowId; });
+      if (target) {
+        target.name = value;
+        persistNow();
+        A.toast('已重命名为「' + value + '」', 'success');
+      }
+    }
+    renderPanel();
+    renderDesktop();
+  }
+
+  /* 把旧 askName modal 调用也改成 inline 模式（newFolder / folderCtx newsub / rename） */
   function newFolder(parentId, cb) {
     /* newFolder(cb) 兼容旧调用 → 根目录创建 */
     if (typeof parentId === 'function') { cb = parentId; parentId = null; }
@@ -15101,7 +15243,7 @@ window.HMApp = {
     });
   }
 
-  function deleteFolder(id) {
+  function deleteFolder(id, silent) {
     var folder = desk.folders.find(function (f) { return f.id === id; });
     if (!folder) return;
     var descendantIds = collectDescendantIds(id);
@@ -15111,15 +15253,17 @@ window.HMApp = {
         if (desk.assigns[wid] === fid) { delete desk.assigns[wid]; totalWorks++; }
       });
     });
+    if (!silent) {
+      var msg = '删除「' + folder.name + '」？';
+      if (descendantIds.length > 1) msg += '（包含 ' + (descendantIds.length - 1) + ' 个子文件夹）';
+      msg += '\n其中 ' + totalWorks + ' 项作品将回到个人空间。';
+      if (!window.confirm(msg)) return;
+    }
     desk.folders = desk.folders.filter(function (f) { return descendantIds.indexOf(f.id) < 0; });
     if (view.activeFolder && descendantIds.indexOf(view.activeFolder) >= 0) view.activeFolder = folder.parentId || null;
-    var msg = '删除「' + folder.name + '」？';
-    if (descendantIds.length > 1) msg += '（包含 ' + (descendantIds.length - 1) + ' 个子文件夹）';
-    msg += '\n其中 ' + totalWorks + ' 项作品将回到个人空间。';
-    if (!window.confirm(msg)) return;
     persistNow();
     renderAll();
-    A.toast('已删除 ' + descendantIds.length + ' 个文件夹，' + totalWorks + ' 项作品回到个人空间', 'info');
+    if (!silent) A.toast('已删除 ' + descendantIds.length + ' 个文件夹，' + totalWorks + ' 项作品回到个人空间', 'info');
   }
 
   /* ---------------- 桌面 ---------------- */
@@ -16311,6 +16455,53 @@ window.HMApp = {
 
     var projList = byId('projList');
     if (projList) {
+      /* ============== inline input 事件（在 click 之前，因为是 input 自己冒泡） ============== */
+      projList.addEventListener('input', function (event) {
+        var ip = event.target.closest('.hm-inline-input');
+        if (!ip) return;
+        if (view.inline) view.inline.value = ip.value;
+      });
+      projList.addEventListener('keydown', function (event) {
+        var ip = event.target.closest('.hm-inline-input');
+        if (!ip) return;
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          commitInline(ip.value);
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          cancelInline();
+        }
+      });
+      projList.addEventListener('blur', function (event) {
+        var ip = event.target.closest('.hm-inline-input');
+        if (!ip) return;
+        /* 点击 cancel 按钮 → cancelInline 会先执行 */
+        setTimeout(function () {
+          if (view.inline && document.activeElement !== ip) commitInline(ip.value);
+        }, 150);
+      }, true);  /* 捕获阶段 */
+
+      /* cancel 按钮 */
+      projList.addEventListener('click', function (event) {
+        var cb = event.target.closest('[data-inline-cancel]');
+        if (cb) { event.stopPropagation(); cancelInline(); return; }
+      });
+
+      /* ============== 右键菜单（项目侧栏） ============== */
+      projList.addEventListener('contextmenu', function (event) {
+        var row = event.target.closest('[data-folder-row]');
+        if (row) {
+          event.preventDefault();
+          event.stopPropagation();
+          view.menuFolder = row.dataset.folderRow;
+          showContext('folderCtx', event.clientX, event.clientY);
+          return;
+        }
+        var isSpace = event.target.closest('[data-proj="space"]');
+        if (isSpace) { event.preventDefault(); }
+      });
+
+      /* ============== 主 click 事件 ============== */
       projList.addEventListener('click', function (event) {
         /* 折叠/展开 toggle */
         var toggle = event.target.closest('[data-folder-toggle]');
@@ -16321,13 +16512,14 @@ window.HMApp = {
           renderPanel();
           return;
         }
-        /* ＋号：在该文件夹下创建子文件夹 */
+        /* ＋号：行内在该文件夹下建子文件夹 */
         var plus = event.target.closest('[data-folder-plus]');
         if (plus) {
           event.stopPropagation();
-          newFolder(plus.dataset.folderPlus, function () { renderDesktop(); });
+          startInlineCreate(plus.dataset.folderPlus);
           return;
         }
+        /* ⋯ 更多菜单 */
         var more = event.target.closest('[data-folder-more]');
         if (more) {
           event.stopPropagation();
@@ -16336,27 +16528,58 @@ window.HMApp = {
           showContext('folderCtx', rect.left - 150, rect.bottom + 6);
           return;
         }
-        var open = event.target.closest('[data-folder-open]');
-        if (open) {
-          var id = open.dataset.folderOpen;
-          view.activeFolder = view.activeFolder === id ? null : id;
-          clearSelection();
+        /* 文件夹行 —— 支持 Ctrl/Shift 多选 + 单击同步桌面（不关面板） */
+        var folderRow = event.target.closest('[data-folder-row]');
+        if (folderRow && !event.target.closest('.hm-inline-input')) {
+          event.stopPropagation();
+          var fid = folderRow.dataset.folderRow;
+          if (event.ctrlKey || event.metaKey) {
+            /* 多选：切换 */
+            if (view.selectedFolders[fid]) delete view.selectedFolders[fid];
+            else view.selectedFolders[fid] = true;
+          } else if (event.shiftKey) {
+            /* Shift 多选：先找当前展开可见的顺序 */
+            var visible = [];
+            function collect(nodes) { nodes.forEach(function (n) {
+              visible.push(n.id);
+              if (n.children && n.children.length && view.expanded[n.id] !== false) collect(n.children);
+            }); }
+            collect(buildTree());
+            var curIdx = visible.indexOf(fid);
+            var last = Object.keys(view.selectedFolders).pop() || view.activeFolder || null;
+            var lastIdx = last ? visible.indexOf(last) : curIdx;
+            view.selectedFolders = {};
+            var from = Math.min(curIdx, lastIdx);
+            var to = Math.max(curIdx, lastIdx);
+            for (var i = from; i <= to; i++) view.selectedFolders[visible[i]] = true;
+          } else {
+            /* 单击：清多选 + 设 active + 同步桌面 */
+            view.selectedFolders = {};
+            view.selectedFolders[fid] = true;
+            view.activeFolder = fid;
+            clearSelection();
+            renderPanel();
+            renderDesktop();
+            /* 不关 panel */
+            return;
+          }
           renderPanel();
-          renderDesktop();
           return;
         }
+        /* 个人空间 / 新建按钮 */
         var row = event.target.closest('[data-proj]');
         if (!row) return;
         var action = row.dataset.proj;
         if (action === 'history') {
           openHistory();
         } else if (action === 'space') {
+          view.selectedFolders = {};
           view.activeFolder = null;
           clearSelection();
           renderPanel();
           renderDesktop();
         } else if (action === 'new') {
-          newFolder(null, function () { renderDesktop(); });
+          startInlineCreate(null);
         }
       });
     }
@@ -16502,104 +16725,115 @@ window.HMApp = {
         if (!btn) return;
         var cmd = btn.dataset.fcmd;
         var folderId = view.menuFolder;
-        console.log('  folderId=', folderId, 'cmd=', cmd);
         hideContexts();
         if (!folderId) return;
+
+        /* 多选：操作同时应用到 selectedFolders 里的项 */
+        var multiIds = (cmd === 'delete' || cmd === 'zip' || cmd === 'download' || cmd === 'copy')
+          ? Object.keys(view.selectedFolders).filter(function (id) { return id !== folderId; })
+          : [];
         var folder = desk.folders.find(function (f) { return f.id === folderId; });
         if (!folder) return;
-
-        var folderWorks = state.works.filter(function (w) { return desk.assigns[w.id] === folderId; });
+        var allTargetIds = [folderId].concat(multiIds);
 
         if (cmd === 'open') {
-          /* 打开项目 → 进入该文件夹 */
           view.activeFolder = folderId;
+          view.selectedFolders = {};
+          view.selectedFolders[folderId] = true;
           clearSelection();
           renderPanel();
           renderDesktop();
-          hideContexts();
-          A.toast('已进入「' + folder.name + '」', 'info');
         } else if (cmd === 'newsub') {
-          hideContexts();
-          newFolder(folderId, function () { renderDesktop(); });
+          /* 在该文件夹下行内建子文件夹 */
+          startInlineCreate(folderId);
         } else if (cmd === 'delete') {
-          hideContexts();
-          deleteFolder(folderId);
-        } else if (cmd === 'zip') {
-          /* 导出压缩包（JSZip 真打包） */
-          if (!folderWorks.length) return A.toast('项目里是空的', 'info');
-          if (typeof JSZip === 'undefined') {
-            /* JSZip 没加载 → 降级为逐个下载 */
-            A.toast('开始下载「' + folder.name + '」里的 ' + folderWorks.length + ' 项', 'success');
-            folderWorks.forEach(function (w, i) {
-              setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
-            });
-            return;
+          /* 删除所有选中的文件夹 */
+          if (allTargetIds.length > 1) {
+            if (!window.confirm('删除 ' + allTargetIds.length + ' 个文件夹？所有作品会回到个人空间。')) return;
+            allTargetIds.forEach(function (fid) { deleteFolder(fid, true); });
+            view.selectedFolders = {};
+          } else {
+            deleteFolder(folderId);
           }
-          A.toast('正在打包「' + folder.name + '」…', 'info');
-          var zip = new JSZip();
-          var folderName = (folder.name || '项目').replace(/[\\/:*?"<>|]/g, '_');
-          var sub = zip.folder(folderName);
-          var fetched = 0;
-          folderWorks.forEach(function (w) {
-            try {
-              var url = w.url || w.thumb;
-              var fname = A.fileNameFor(w);
-              if (url && /^data:/.test(url)) {
-                /* data URL：直接解 base64 */
-                var parts = url.match(/^data:([^;]+);base64,(.+)$/);
-                if (parts) {
-                  var mime = parts[1];
-                  var ext = mime.split('/')[1] || 'png';
-                  if (!/\.([a-z0-9]+)$/i.test(fname)) fname += '.' + ext;
-                  sub.file(fname, parts[2], { base64: true });
-                  fetched++;
-                  checkDone();
-                  return;
-                }
-              }
-              /* http(s) URL：fetch 为 blob 再转 */
-              fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
-                if (!/\.([a-z0-9]+)$/i.test(fname)) {
-                  var extFromType = (blob.type || '').split('/')[1] || 'png';
-                  fname += '.' + extFromType;
-                }
-                sub.file(fname, blob);
-              }).catch(function () {
-                sub.file(fname + '.txt', '下载失败: ' + url);
-              }).then(function () {
-                fetched++; checkDone();
-              });
-            } catch (err) {
-              fetched++; checkDone();
-            }
-          });
-          function checkDone() {
-            if (fetched < folderWorks.length) return;
-            zip.generateAsync({ type: 'blob' }).then(function (blob) {
-              var a = document.createElement('a');
-              a.href = URL.createObjectURL(blob);
-              a.download = folderName + '.zip';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
-              A.toast('已导出「' + folderName + '.zip」（' + folderWorks.length + ' 项）', 'success');
-            });
-          }
-        } else if (cmd === 'download') {
-          if (!folderWorks.length) return A.toast('项目里是空的', 'info');
-          A.toast('开始批量下载 ' + folderWorks.length + ' 项', 'success');
-          folderWorks.forEach(function (w, i) {
-            setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
-          });
         } else if (cmd === 'rename') {
-                    hideContexts();
-          var fc = grid.querySelector('.folder-card[data-folder="' + folderId + '"]');
-                    if (fc) startFolderRename(fc);
-          else askName('重命名', folder.name, function (value) { folder.name = value; persistNow(); renderAll(); renderPanel(); });
-        } else if (cmd === 'copy') {
-          clipboard.setCopy(folderWorks);
-          A.toast('已复制「' + folder.name + '」里 ' + folderWorks.length + ' 项，Ctrl+V 粘贴', 'info');
+          startInlineRename(folderId);
+        } else if (cmd === 'zip' || cmd === 'download' || cmd === 'copy') {
+          /* 批量收集作品 */
+          var allWorks = [];
+          allTargetIds.forEach(function (fid) {
+            allWorks = allWorks.concat(state.works.filter(function (w) { return desk.assigns[w.id] === fid; }));
+          });
+          if (!allWorks.length) return A.toast('项目里是空的', 'info');
+          if (cmd === 'zip') {
+            /* 单个 folder zip（多 folder 暂用逐 folder 下载代替） */
+            if (allTargetIds.length > 1) {
+              A.toast('开始下载 ' + allTargetIds.length + ' 个项目共 ' + allWorks.length + ' 项', 'success');
+              allWorks.forEach(function (w, i) {
+                setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 300);
+              });
+              return;
+            }
+            /* 单个 folder 走 JSZip —— 原来的逻辑复用 */
+            var folderWorks = allWorks;
+            if (typeof JSZip === 'undefined') {
+              A.toast('开始下载「' + folder.name + '」里的 ' + folderWorks.length + ' 项', 'success');
+              folderWorks.forEach(function (w, i) {
+                setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
+              });
+              return;
+            }
+            A.toast('正在打包「' + folder.name + '」…', 'info');
+            var zip = new JSZip();
+            var folderName = (folder.name || '项目').replace(/[\\/:*?"<>|]/g, '_');
+            var sub = zip.folder(folderName);
+            var fetched = 0;
+            folderWorks.forEach(function (w) {
+              try {
+                var url = w.url || w.thumb;
+                var fname = A.fileNameFor(w);
+                if (url && /^data:/.test(url)) {
+                  var parts = url.match(/^data:([^;]+);base64,(.+)$/);
+                  if (parts) {
+                    var mime = parts[1];
+                    var ext = mime.split('/')[1] || 'png';
+                    if (!/\.([a-z0-9]+)$/i.test(fname)) fname += '.' + ext;
+                    sub.file(fname, parts[2], { base64: true });
+                    fetched++; checkDone(); return;
+                  }
+                }
+                fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
+                  if (!/\.([a-z0-9]+)$/i.test(fname)) {
+                    var extFromType = (blob.type || '').split('/')[1] || 'png';
+                    fname += '.' + extFromType;
+                  }
+                  sub.file(fname, blob);
+                }).catch(function () {
+                  sub.file(fname + '.txt', '下载失败: ' + url);
+                }).then(function () { fetched++; checkDone(); });
+              } catch (err) { fetched++; checkDone(); }
+            });
+            function checkDone() {
+              if (fetched < folderWorks.length) return;
+              zip.generateAsync({ type: 'blob' }).then(function (blob) {
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = folderName + '.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+                A.toast('已导出「' + folderName + '.zip」（' + folderWorks.length + ' 项）', 'success');
+              });
+            }
+          } else if (cmd === 'download') {
+            A.toast('开始批量下载 ' + allWorks.length + ' 项', 'success');
+            allWorks.forEach(function (w, i) {
+              setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 300);
+            });
+          } else if (cmd === 'copy') {
+            clipboard.setCopy(allWorks);
+            A.toast('已复制 ' + allTargetIds.length + ' 个项目共 ' + allWorks.length + ' 项，Ctrl+V 粘贴', 'info');
+          }
         }
       });
     }

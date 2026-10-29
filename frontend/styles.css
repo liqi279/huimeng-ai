@@ -6221,6 +6221,47 @@ body.hm-light .hm-page-empty {
 .hm-proj-folder:hover .hm-proj-plus { opacity: 1; }
 .hm-proj-plus:hover { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; }
 
+/* 多选高亮 */
+.hm-proj-folder.is-selected:not(.is-active) {
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px dashed rgba(56, 189, 248, 0.5);
+}
+
+/* 行内 inline 输入框 */
+.hm-proj-folder.is-inline-new {
+  border: 1px dashed rgba(52, 211, 153, 0.55);
+  background: rgba(52, 211, 153, 0.08);
+  border-radius: 6px;
+}
+.hm-proj-folder.is-renaming {
+  border: 1px dashed rgba(56, 189, 248, 0.55);
+  background: rgba(56, 189, 248, 0.08);
+  border-radius: 6px;
+}
+.hm-inline-plus { color: #4b8e7a; font-size: 13px; font-weight: 700; }
+.hm-inline-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e8f4ff;
+  font-size: 12.5px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  font-family: inherit;
+}
+.hm-inline-input::placeholder { color: #5d6f85; font-style: italic; }
+.hm-inline-cancel {
+  flex: none;
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  color: #7b8ea4;
+  font-size: 10px;
+  line-height: 1;
+}
+.hm-inline-cancel:hover { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+
 /* ---------- 桌面画板 ---------- */
 #resultGrid.is-board {
   position: relative;
