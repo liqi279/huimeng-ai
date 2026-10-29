@@ -470,6 +470,7 @@
   function closePanel() {
     var panel = byId('projPanel');
     if (panel) panel.hidden = true;
+    hideContexts();  /* 关闭面板时同时关闭所有右键菜单（bug: 菜单留在屏幕中央） */
   }
 
   /* ---------------- 行内 inline 输入 ---------------- */

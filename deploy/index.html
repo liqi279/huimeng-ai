@@ -5954,7 +5954,7 @@ body.hm-light .hm-page-empty {
 
 @keyframes hmPopIn {
   from { opacity: 0; transform: translateY(-6px) scale(0.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 1; transform: none; }
 }
 
 .hm-proj-pop[hidden] { display: none !important; }
@@ -7662,7 +7662,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029091203-5cebea4";</script>
+<script>window.HM_BUILD = "20261029091843-8578fec";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -15239,6 +15239,7 @@ window.HMApp = {
   function closePanel() {
     var panel = byId('projPanel');
     if (panel) panel.hidden = true;
+    hideContexts();  /* 关闭面板时同时关闭所有右键菜单（bug: 菜单留在屏幕中央） */
   }
 
   /* ---------------- 行内 inline 输入 ---------------- */

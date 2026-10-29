@@ -5946,7 +5946,7 @@ body.hm-light .hm-page-empty {
 
 @keyframes hmPopIn {
   from { opacity: 0; transform: translateY(-6px) scale(0.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 1; transform: none; }
 }
 
 .hm-proj-pop[hidden] { display: none !important; }
