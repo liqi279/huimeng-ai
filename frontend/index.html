@@ -456,6 +456,20 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/><circle cx="15" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="15" r="1.2" fill="currentColor"/></svg>
             <span>随机</span>
           </button>
+
+          <!-- 滑动调节组 -->
+          <div class="hm-slider-group">
+            <div class="hm-slider" title="提示词字体大小">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M9 10h6M5 15h14M7 20h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <input type="range" id="fontSizeSlider" min="10" max="22" step="1" value="13">
+              <span id="fontSizeLabel" class="hm-slider-val">13</span>
+            </div>
+            <div class="hm-slider" title="参考主体强度">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+              <input type="range" id="refWeightSlider" min="0" max="100" step="5" value="70">
+              <span id="refWeightLabel" class="hm-slider-val">70%</span>
+            </div>
+          </div>
           <button class="hm-chip is-on" id="translateToggle" role="switch" aria-checked="true" title="中文智能英译">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h8M9 4v2M11 8c0 3.2-2.4 5.6-6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 11c1.2 2 2.8 3.4 5 4.4M13.5 20l3.6-9 3.6 9M14.8 17.2h4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span>中文</span>

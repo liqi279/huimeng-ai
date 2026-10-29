@@ -3387,15 +3387,15 @@ body {
 
 .hm-ref {
   position: relative;
-  margin: 10px 12px 0;
-  padding: 8px 10px;
+  margin: 8px 12px 0;
+  padding: 6px 8px 4px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   align-items: stretch;
   border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.012);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.01);
   color: #93a7bd;
   cursor: pointer;
   transition: border-color 0.18s ease, background 0.18s ease;
@@ -3434,16 +3434,32 @@ body {
   background: rgba(56, 189, 248, 0.05);
 }
 
-/* 多图网格 */
+/* 多图网格 — 紧凑水平滚动 */
 .hm-ref-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
   gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 2px 2px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.4) transparent;
+}
+
+.hm-ref-grid::-webkit-scrollbar {
+  height: 4px;
+}
+
+.hm-ref-grid::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.35);
+  border-radius: 2px;
 }
 
 .hm-ref-cell {
   position: relative;
-  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -3453,8 +3469,9 @@ body {
 }
 
 .hm-ref-cell:hover {
-  border-color: rgba(56, 189, 248, 0.6);
-  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.75);
+  transform: scale(1.05);
+  z-index: 2;
 }
 
 .hm-ref-cell img {
@@ -3466,17 +3483,16 @@ body {
 
 .hm-ref-idx {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  padding: 1px 5px;
-  border-radius: 10px;
+  top: 1px;
+  left: 1px;
+  padding: 0 4px;
+  border-radius: 8px;
   background: rgba(147, 197, 253, 0.92);
   color: #0c2d5b;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-  line-height: 1.3;
+  line-height: 1.4;
   cursor: pointer;
   user-select: none;
   transition: background 0.15s ease;
@@ -3488,12 +3504,12 @@ body {
 
 .hm-ref-size {
   position: absolute;
-  bottom: 3px;
-  left: 3px;
-  font-size: 9px;
-  padding: 0 4px;
+  bottom: 1px;
+  left: 1px;
+  font-size: 8px;
+  padding: 0 3px;
   border-radius: 3px;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   color: #e5e7eb;
   line-height: 1.3;
   pointer-events: none;
@@ -3501,14 +3517,14 @@ body {
 
 .hm-ref-cell-remove {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 18px;
-  height: 18px;
+  top: 1px;
+  right: 1px;
+  width: 16px;
+  height: 16px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.75);
   color: #cbd5e1;
   opacity: 0;
   transition: opacity 0.15s ease, background 0.15s ease;
@@ -3524,8 +3540,8 @@ body {
 }
 
 .hm-ref-cell-remove svg {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
 }
 
 /* 添加槽位 */
@@ -3534,34 +3550,104 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   border-style: dashed;
-  border-color: rgba(56, 189, 248, 0.45);
-  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.05);
   color: #7dd3fc;
   cursor: pointer;
 }
 
 .hm-ref-add:hover {
-  border-color: rgba(56, 189, 248, 0.85);
+  border-color: rgba(56, 189, 248, 0.9);
   background: rgba(56, 189, 248, 0.12);
   color: #bae6fd;
   transform: none;
 }
 
 .hm-ref-add svg {
-  width: 22px;
-  height: 22px;
+  width: 16px;
+  height: 16px;
   opacity: 0.8;
 }
 
 .hm-ref-add span {
-  font-size: 10px;
+  font-size: 9px;
   font-variant-numeric: tabular-nums;
   opacity: 0.8;
 }
 
-/* 单行的状态区 + 清空按钮 */
+/* ========== 紧凑滑动调节组 ========== */
+.hm-slider-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.hm-slider {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: default;
+}
+
+.hm-slider svg {
+  width: 12px;
+  height: 12px;
+  color: #93a7bd;
+  flex-shrink: 0;
+}
+
+.hm-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 58px;
+  height: 3px;
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.hm-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7dd3fc;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 4px rgba(125, 211, 252, 0.55);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.hm-slider input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.hm-slider input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7dd3fc;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.hm-slider-val {
+  font-size: 9.5px;
+  color: #c4b5fd;
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+  text-align: right;
+  line-height: 1;
+}
 .hm-ref.has-ref .hm-ref-state {
   font-size: 10.5px;
   color: #c4b5fd;

@@ -371,6 +371,8 @@ const state = {
   collapsed: new Set(),
   translationCache: new Map(),
   refImages: [],
+  fontSize: 13,
+  refWeight: 70,
   prompts: ['', ''],
   activePrompt: 0,
   worksSort: 'newest',
@@ -1077,7 +1079,30 @@ async function translatePrompt(text) {
  * （风格 booster / 画质修饰 / masterpiece 堆叠均已移除，避免稀释意图、与接入模型冲突）。
  */
 function buildPrompt(userText) {
-  return userText;
+  let prompt = userText;
+  const refs = state.refImages || [];
+  const weight = state.refWeight != null ? state.refWeight : 70;
+
+  if (refs.length > 0) {
+    /* 根据权重生成引导词，让模型理解主体/风格关系 */
+    let tail = '';
+    if (weight >= 85) {
+      tail = refs.length === 1
+        ? ', strictly follow the reference image as the primary subject and composition, keep all key features exactly the same, only enhance artistic quality'
+        : ', strictly adhere to reference @1 as the primary subject and composition, reference @2+ as style guidance, keep key features identical';
+    } else if (weight >= 60) {
+      tail = refs.length === 1
+        ? ', use the reference image as the main visual subject, preserve the key composition and character, apply artistic interpretation'
+        : ', use reference @1 as the main visual subject, reference @2+ for style inspiration, keep overall character consistent';
+    } else if (weight >= 35) {
+      tail = ', use the reference image(s) as loose style and subject inspiration, feel free to reinterpret creatively';
+    } else {
+      tail = ', the reference image(s) are loose mood and style suggestion only, creative interpretation is allowed';
+    }
+    prompt += tail;
+  }
+
+  return prompt.trim();
 }
 
 /* ---------------- 生图 API ---------------- */
@@ -2368,6 +2393,44 @@ function bindEvents() {
     els.promptInput.focus();
     toast('灵感已注入', 'success');
   });
+
+  /* ========== 滑动调节绑定 ========== */
+  /* 字体大小 slider */
+  var fsSlider = document.getElementById('fontSizeSlider');
+  var fsLabel = document.getElementById('fontSizeLabel');
+  if (fsSlider) {
+    function applyFontSize(v) {
+      if (els.promptInput) {
+        els.promptInput.style.fontSize = v + 'px';
+        els.promptInput.style.lineHeight = (Math.round(Number(v) * 1.35 * 10) / 10) + '';
+      }
+      if (fsLabel) fsLabel.textContent = String(v);
+    }
+    fsSlider.addEventListener('input', function () {
+      state.fontSize = Number(fsSlider.value);
+      applyFontSize(state.fontSize);
+      persistPrefs();
+    });
+    /* 初始化 */
+    applyFontSize(state.fontSize || 13);
+    if (state.fontSize) fsSlider.value = String(state.fontSize);
+  }
+
+  /* 参考主体强度 slider —— 写入 state，生成时拼进 prompt */
+  var rwSlider = document.getElementById('refWeightSlider');
+  var rwLabel = document.getElementById('refWeightLabel');
+  if (rwSlider) {
+    function applyRefWeight(v) {
+      if (rwLabel) rwLabel.textContent = v + '%';
+      state.refWeight = Number(v);
+    }
+    rwSlider.addEventListener('input', function () {
+      applyRefWeight(rwSlider.value);
+      persistPrefs();
+    });
+    applyRefWeight(state.refWeight || 70);
+    if (state.refWeight) rwSlider.value = String(state.refWeight);
+  }
 
   els.ratioPicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-ratio]');

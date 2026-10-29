@@ -3395,15 +3395,15 @@ body {
 
 .hm-ref {
   position: relative;
-  margin: 10px 12px 0;
-  padding: 8px 10px;
+  margin: 8px 12px 0;
+  padding: 6px 8px 4px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   align-items: stretch;
   border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.012);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.01);
   color: #93a7bd;
   cursor: pointer;
   transition: border-color 0.18s ease, background 0.18s ease;
@@ -3442,16 +3442,32 @@ body {
   background: rgba(56, 189, 248, 0.05);
 }
 
-/* 多图网格 */
+/* 多图网格 — 紧凑水平滚动 */
 .hm-ref-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
   gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 2px 2px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.4) transparent;
+}
+
+.hm-ref-grid::-webkit-scrollbar {
+  height: 4px;
+}
+
+.hm-ref-grid::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.35);
+  border-radius: 2px;
 }
 
 .hm-ref-cell {
   position: relative;
-  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -3461,8 +3477,9 @@ body {
 }
 
 .hm-ref-cell:hover {
-  border-color: rgba(56, 189, 248, 0.6);
-  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.75);
+  transform: scale(1.05);
+  z-index: 2;
 }
 
 .hm-ref-cell img {
@@ -3474,17 +3491,16 @@ body {
 
 .hm-ref-idx {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  padding: 1px 5px;
-  border-radius: 10px;
+  top: 1px;
+  left: 1px;
+  padding: 0 4px;
+  border-radius: 8px;
   background: rgba(147, 197, 253, 0.92);
   color: #0c2d5b;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-  line-height: 1.3;
+  line-height: 1.4;
   cursor: pointer;
   user-select: none;
   transition: background 0.15s ease;
@@ -3496,12 +3512,12 @@ body {
 
 .hm-ref-size {
   position: absolute;
-  bottom: 3px;
-  left: 3px;
-  font-size: 9px;
-  padding: 0 4px;
+  bottom: 1px;
+  left: 1px;
+  font-size: 8px;
+  padding: 0 3px;
   border-radius: 3px;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   color: #e5e7eb;
   line-height: 1.3;
   pointer-events: none;
@@ -3509,14 +3525,14 @@ body {
 
 .hm-ref-cell-remove {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 18px;
-  height: 18px;
+  top: 1px;
+  right: 1px;
+  width: 16px;
+  height: 16px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.75);
   color: #cbd5e1;
   opacity: 0;
   transition: opacity 0.15s ease, background 0.15s ease;
@@ -3532,8 +3548,8 @@ body {
 }
 
 .hm-ref-cell-remove svg {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
 }
 
 /* 添加槽位 */
@@ -3542,34 +3558,104 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   border-style: dashed;
-  border-color: rgba(56, 189, 248, 0.45);
-  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.05);
   color: #7dd3fc;
   cursor: pointer;
 }
 
 .hm-ref-add:hover {
-  border-color: rgba(56, 189, 248, 0.85);
+  border-color: rgba(56, 189, 248, 0.9);
   background: rgba(56, 189, 248, 0.12);
   color: #bae6fd;
   transform: none;
 }
 
 .hm-ref-add svg {
-  width: 22px;
-  height: 22px;
+  width: 16px;
+  height: 16px;
   opacity: 0.8;
 }
 
 .hm-ref-add span {
-  font-size: 10px;
+  font-size: 9px;
   font-variant-numeric: tabular-nums;
   opacity: 0.8;
 }
 
-/* 单行的状态区 + 清空按钮 */
+/* ========== 紧凑滑动调节组 ========== */
+.hm-slider-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.hm-slider {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: default;
+}
+
+.hm-slider svg {
+  width: 12px;
+  height: 12px;
+  color: #93a7bd;
+  flex-shrink: 0;
+}
+
+.hm-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 58px;
+  height: 3px;
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.hm-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7dd3fc;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 4px rgba(125, 211, 252, 0.55);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.hm-slider input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.hm-slider input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7dd3fc;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.hm-slider-val {
+  font-size: 9.5px;
+  color: #c4b5fd;
+  font-variant-numeric: tabular-nums;
+  min-width: 22px;
+  text-align: right;
+  line-height: 1;
+}
 .hm-ref.has-ref .hm-ref-state {
   font-size: 10.5px;
   color: #c4b5fd;
@@ -7303,6 +7389,20 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/><circle cx="15" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="15" r="1.2" fill="currentColor"/></svg>
             <span>随机</span>
           </button>
+
+          <!-- 滑动调节组 -->
+          <div class="hm-slider-group">
+            <div class="hm-slider" title="提示词字体大小">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M9 10h6M5 15h14M7 20h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <input type="range" id="fontSizeSlider" min="10" max="22" step="1" value="13">
+              <span id="fontSizeLabel" class="hm-slider-val">13</span>
+            </div>
+            <div class="hm-slider" title="参考主体强度">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+              <input type="range" id="refWeightSlider" min="0" max="100" step="5" value="70">
+              <span id="refWeightLabel" class="hm-slider-val">70%</span>
+            </div>
+          </div>
           <button class="hm-chip is-on" id="translateToggle" role="switch" aria-checked="true" title="中文智能英译">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h8M9 4v2M11 8c0 3.2-2.4 5.6-6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 11c1.2 2 2.8 3.4 5 4.4M13.5 20l3.6-9 3.6 9M14.8 17.2h4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span>中文</span>
@@ -8757,6 +8857,8 @@ const state = {
   collapsed: new Set(),
   translationCache: new Map(),
   refImages: [],
+  fontSize: 13,
+  refWeight: 70,
   prompts: ['', ''],
   activePrompt: 0,
   worksSort: 'newest',
@@ -9463,7 +9565,30 @@ async function translatePrompt(text) {
  * （风格 booster / 画质修饰 / masterpiece 堆叠均已移除，避免稀释意图、与接入模型冲突）。
  */
 function buildPrompt(userText) {
-  return userText;
+  let prompt = userText;
+  const refs = state.refImages || [];
+  const weight = state.refWeight != null ? state.refWeight : 70;
+
+  if (refs.length > 0) {
+    /* 根据权重生成引导词，让模型理解主体/风格关系 */
+    let tail = '';
+    if (weight >= 85) {
+      tail = refs.length === 1
+        ? ', strictly follow the reference image as the primary subject and composition, keep all key features exactly the same, only enhance artistic quality'
+        : ', strictly adhere to reference @1 as the primary subject and composition, reference @2+ as style guidance, keep key features identical';
+    } else if (weight >= 60) {
+      tail = refs.length === 1
+        ? ', use the reference image as the main visual subject, preserve the key composition and character, apply artistic interpretation'
+        : ', use reference @1 as the main visual subject, reference @2+ for style inspiration, keep overall character consistent';
+    } else if (weight >= 35) {
+      tail = ', use the reference image(s) as loose style and subject inspiration, feel free to reinterpret creatively';
+    } else {
+      tail = ', the reference image(s) are loose mood and style suggestion only, creative interpretation is allowed';
+    }
+    prompt += tail;
+  }
+
+  return prompt.trim();
 }
 
 /* ---------------- 生图 API ---------------- */
@@ -10754,6 +10879,44 @@ function bindEvents() {
     els.promptInput.focus();
     toast('灵感已注入', 'success');
   });
+
+  /* ========== 滑动调节绑定 ========== */
+  /* 字体大小 slider */
+  var fsSlider = document.getElementById('fontSizeSlider');
+  var fsLabel = document.getElementById('fontSizeLabel');
+  if (fsSlider) {
+    function applyFontSize(v) {
+      if (els.promptInput) {
+        els.promptInput.style.fontSize = v + 'px';
+        els.promptInput.style.lineHeight = (Math.round(Number(v) * 1.35 * 10) / 10) + '';
+      }
+      if (fsLabel) fsLabel.textContent = String(v);
+    }
+    fsSlider.addEventListener('input', function () {
+      state.fontSize = Number(fsSlider.value);
+      applyFontSize(state.fontSize);
+      persistPrefs();
+    });
+    /* 初始化 */
+    applyFontSize(state.fontSize || 13);
+    if (state.fontSize) fsSlider.value = String(state.fontSize);
+  }
+
+  /* 参考主体强度 slider —— 写入 state，生成时拼进 prompt */
+  var rwSlider = document.getElementById('refWeightSlider');
+  var rwLabel = document.getElementById('refWeightLabel');
+  if (rwSlider) {
+    function applyRefWeight(v) {
+      if (rwLabel) rwLabel.textContent = v + '%';
+      state.refWeight = Number(v);
+    }
+    rwSlider.addEventListener('input', function () {
+      applyRefWeight(rwSlider.value);
+      persistPrefs();
+    });
+    applyRefWeight(state.refWeight || 70);
+    if (state.refWeight) rwSlider.value = String(state.refWeight);
+  }
 
   els.ratioPicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-ratio]');
