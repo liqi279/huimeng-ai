@@ -7152,7 +7152,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029035916-29b12ff";</script>
+<script>window.HM_BUILD = "20261029040031-a3789bc";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -11379,116 +11379,101 @@ function classifyAuthErr(err) {
 
 async function authBoot() {
   var token = (api && api.getToken) ? api.getToken() : '';
+  console.log('[authBoot] token:', token ? '存在 (' + token.length + ' chars)' : '不存在！');
+
   if (!token) {
     window.HMApp = window.HMApp || {};
     window.HMApp.user = null;
-    /* 没 token，也先确保登录弹窗是隐藏起始，再 showLogin */
-    if (typeof hideLogin === 'function') hideLogin();
-    if (typeof showLogin === 'function') showLogin();
+    hideLogin();
+    showLogin();
     return;
   }
 
-  /* ========== 有 token：先同步渲染桌面（零闪烁） ==========
-     用 localStorage 缓存的 hm.user / works 立即铺好，
-     让用户瞬间看到自己的界面，不等待后端响应 */
+  /* ========== Step 1: 同步渲染缓存桌面（零闪烁） ========== */
   var cachedUser = loadJSON('hm.user', null);
   var cachedWorks = loadJSON(LS_WORKS, null);
+  console.log('[authBoot] cachedUser:', cachedUser ? cachedUser.username : '无', 'cachedWorks:', cachedWorks ? cachedWorks.length : 0);
+
   if (cachedUser) {
     window.HMApp = window.HMApp || {};
     window.HMApp.user = cachedUser;
-    if (cachedWorks && cachedWorks.length) {
-      state.works = cachedWorks.slice(0, MAX_WORKS);
-    }
-    if (typeof hideLogin === 'function') hideLogin();
-    if (typeof updateUserUI === 'function') updateUserUI();
+    state.works = (cachedWorks && cachedWorks.length ? cachedWorks : state.works || []).slice(0, MAX_WORKS);
+    hideLogin();
+    updateUserUI();
     renderWorks();
+    console.log('[authBoot] 已用缓存渲染桌面');
+  } else {
+    hideLogin(); /* 至少先隐藏登录弹窗，等 me() 返回再决定 */
   }
 
-  /* ========== 后台异步验证 token ========== */
-  var retries = 2;
-  var lastErr = null;
-  var authed = false;
-  while (retries > 0) {
+  /* ========== Step 2: 异步验证 token（只调 me()，不调 ping()） ==========
+     直接试 /auth/me，更精准：只有 401/403 才是真的 token 失效
+     网络问题（Render 休眠 / 断网）不影响缓存桌面 */
+  try {
+    var me = await api.me();
+    console.log('[authBoot] me() 成功:', me.user.username);
+    window.HMApp.user = me.user;
+    try { saveJSON('hm.user', me.user); } catch (e) {}
+
+    /* 从后端拉最新作品 */
     try {
-      await api.ping();
-      var me = await api.me();
-      window.HMApp.user = me.user;
-      try { saveJSON('hm.user', me.user); } catch (e) {}
-      /* 从后端加载该用户的作品 */
-      try {
-        var data = await api.listWorks();
-        if (data && Array.isArray(data.items)) {
-          state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
-          saveJSON(LS_WORKS, state.works);
-        }
-      } catch (e) {}
-      renderWorks();
-      if (typeof hideLogin === 'function') hideLogin();
-      if (typeof updateUserUI === 'function') updateUserUI();
-      authed = true;
-      break; /* 成功，跳出 */
-    } catch (err) {
-      lastErr = err;
-      var kind = classifyAuthErr(err);
-      if (kind === 'auth') {
-        /* 真的 token 过期 → 清 token → 弹登录
-           但保留 localStorage 里的用户数据（登出后也不丢） */
-        if (api && api.logout) api.logout();
-        window.HMApp.user = null;
-        if (typeof showLogin === 'function') showLogin();
-        return;
-      }
-      /* network / other → 重试 */
-      retries--;
-      if (retries > 0) {
-        await new Promise(function (r) { setTimeout(r, 1500); });
-      }
-    }
-  }
-
-  if (authed) return; /* 已经验证成功了 */
-
-  /* ========== 2 次重试都失败 → 网络问题 ==========
-     之前已经同步渲染了缓存桌面，这里只需要 toast 提示 + 后台持续重试 */
-  /* 如果之前没缓存（极少情况），兜底 */
-  if (!window.HMApp || !window.HMApp.user) {
-    if (cachedUser) {
-      window.HMApp = window.HMApp || {};
-      window.HMApp.user = cachedUser;
-      state.works = cachedWorks || state.works || [];
-    }
-    renderWorks();
-    if (typeof hideLogin === 'function') hideLogin();
-    if (typeof updateUserUI === 'function') updateUserUI();
-  }
-
-  /* Toast 提示（延迟让用户先看到桌面） */
-  setTimeout(function () {
-    toast('暂时无法连接后端，正在自动重试…', 'warn');
-  }, 500);
-
-  /* 后台持续重试，成功后自动恢复 */
-  var bgRetries = 0;
-  var bgTimer = setInterval(function () {
-    bgRetries++;
-    if (bgRetries > 60) { clearInterval(bgTimer); return; } /* 最多等 5 分钟 */
-    api.ping().then(function () {
-      return api.me();
-    }).then(function (me) {
-      window.HMApp.user = me.user;
-      try { saveJSON('hm.user', me.user); } catch (e) {}
-      try { return api.listWorks(); } catch (e) { return null; }
-    }).then(function (data) {
+      var data = await api.listWorks();
       if (data && Array.isArray(data.items)) {
         state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
         saveJSON(LS_WORKS, state.works);
-        renderWorks();
       }
-      if (typeof updateUserUI === 'function') updateUserUI();
-      toast('后端已恢复连接 ✅', 'success');
-      clearInterval(bgTimer);
-    }).catch(function () { /* 继续等 */ });
-  }, 5000);
+    } catch (e) { /* listWorks 失败不影响登录态 */ }
+
+    hideLogin();
+    updateUserUI();
+    renderWorks();
+  } catch (err) {
+    console.warn('[authBoot] me() 失败:', err && err.message, 'status:', err && err.status);
+
+    var kind = classifyAuthErr(err);
+    console.warn('[authBoot] 错误分类:', kind);
+
+    if (kind === 'auth') {
+      /* ========== 真的 token 失效（401/403） ==========
+         清 token，但不清 localStorage 的用户数据
+         （用户重新登录后还是原来的账号） */
+      console.warn('[authBoot] token 真的失效 → 清 token → 弹登录');
+      if (api && api.logout) api.logout();
+      window.HMApp.user = null;
+      showLogin();
+      return;
+    }
+
+    /* ========== 网络错误：不清 token！保持缓存桌面 + 后台重试 ========== */
+    console.warn('[authBoot] 网络问题 → 保持缓存桌面，后台重试');
+    /* 如果之前没缓存（极少情况），确保显示登录态的桌面 */
+    if (!window.HMApp || !window.HMApp.user) {
+      hideLogin();
+    }
+
+    setTimeout(function () { toast('暂时无法连接后端，正在自动重试…', 'warn'); }, 500);
+
+    /* 后台每 5 秒重试 me()，成功后自动恢复 */
+    var bgCount = 0;
+    var bgTimer = setInterval(function () {
+      bgCount++;
+      if (bgCount > 60) { clearInterval(bgTimer); return; }
+      api.me().then(function (me) {
+        window.HMApp.user = me.user;
+        try { saveJSON('hm.user', me.user); } catch (e) {}
+        return api.listWorks().catch(function () { return null; });
+      }).then(function (data) {
+        if (data && Array.isArray(data.items)) {
+          state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX_WORKS);
+          saveJSON(LS_WORKS, state.works);
+          renderWorks();
+        }
+        updateUserUI();
+        toast('后端已恢复连接 ✅', 'success');
+        clearInterval(bgTimer);
+      }).catch(function () { /* 继续等 */ });
+    }, 5000);
+  }
 }
 
 function showUpdateModal() {
