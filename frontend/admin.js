@@ -1,20 +1,22 @@
 'use strict';
 
 /* ===========================================================
- * 绘梦 AI · 管理台（独立全屏覆盖层）
- * 5 个主 Tab：概览 / 消耗排行 / 调用日志 / 账号管理 / 项目管理
- * 另有 2 个占位 Tab：创作统计 / 软件设置
+ * 绘梦 AI · 管理台（独立 view page —— 与 create/works 同级）
+ * 5 个子 Tab：概览 / 消耗排行 / 调用日志 / 账号管理 / 项目管理
+ * 2 个占位 Tab：创作统计 / 软件设置（顶栏）
+ * 容器在 index.html 的 #view-admin
  * =========================================================== */
 (function () {
   var A = window.HMUI || {};
   var HM = window.HM;
   if (!HM) return;
 
-  var charts = {};       /* 保存 Chart 实例方便 destroy */
-  var currentTab = 'overview';
-  var adminOpen = false;
+  var charts = {};
+  var currentTopTab = 'admin';
+  var currentSubTab = 'overview';
+  var eventsBound = false;
 
-  /* ============ 打开 / 关闭 ============ */
+  /* ============ 权限检查 ============ */
   function isAdmin() {
     try {
       var t = localStorage.getItem('hm.token');
@@ -26,101 +28,48 @@
     } catch (e) { return false; }
   }
 
+  /* ============ 打开 / 关闭 —— 用 HM.switchView ============ */
   function openAdmin() {
     if (!isAdmin()) {
       HM.toast && HM.toast('管理台仅超级管理员可访问', 'info');
       return;
     }
-    var root = document.getElementById('adminRoot') || buildAdminRoot();
-    root.hidden = false;
-    document.body.classList.add('is-admin-open');
-    adminOpen = true;
-    /* 背景上的主区域也需要隐藏（否则管理台没全屏） */
-    // 但 adminRoot 自己是 position:fixed + z-index: 2000，能盖住一切
-    loadTab('overview');
+    if (HM.switchView) HM.switchView('admin');
   }
 
   function closeAdmin() {
-    var root = document.getElementById('adminRoot');
-    if (root) root.hidden = true;
-    document.body.classList.remove('is-admin-open');
-    adminOpen = false;
     destroyAllCharts();
+    if (HM.switchView) HM.switchView('create');
   }
 
-  /* ============ 构建 DOM ============ */
-  function buildAdminRoot() {
-    var root = document.createElement('div');
-    root.id = 'adminRoot';
-    root.hidden = true;
-    root.innerHTML = '<div class="hm-admin-root" id="adminRootInner"></div>';
-    document.body.appendChild(root);
-    /* 写入骨架 HTML */
-    document.getElementById('adminRootInner').innerHTML = ADMIN_HTML;
-    bindAdminEvents();
-    return root;
-  }
-
-  var ADMIN_HTML = [
-    '<div class="hm-admin-header">',
-      '<div class="hm-admin-brand">',
-        '<div class="hm-admin-logo">绘</div>',
-        '<div class="hm-admin-title">',
-          '<h1>设置</h1>',
-        '</div>',
-      '</div>',
-      '<div class="hm-admin-top-tabs">',
-        '<button class="hm-admin-top-tab is-active" data-top="admin"><span>管理台</span></button>',
-        '<button class="hm-admin-top-tab" data-top="stats"><span>创作统计</span></button>',
-        '<button class="hm-admin-top-tab" data-top="settings"><span>软件设置</span></button>',
-      '</div>',
-      '<div class="hm-admin-header-right">',
-        '<button class="hm-admin-close" data-admin-close aria-label="关闭">×</button>',
-      '</div>',
-    '</div>',
-
-    '<div class="hm-admin-topbar" id="adminSubTabs">',
-      '<button class="hm-admin-tab is-active" data-tab="overview"><span>概览</span></button>',
-      '<button class="hm-admin-tab" data-tab="ranking"><span>消耗排行</span></button>',
-      '<button class="hm-admin-tab" data-tab="logs"><span>调用日志</span></button>',
-      '<button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span></button>',
-      '<button class="hm-admin-tab" data-tab="projects"><span>项目管理</span></button>',
-    '</div>',
-
-    '<div class="hm-admin-body" id="adminBody"></div>',
-  ].join('');
-
-  /* ============ 事件绑定 ============ */
+  /* ============ 一次性事件绑定（到 index.html 里已有的 #view-admin 元素） ============ */
   function bindAdminEvents() {
-    var root = document.getElementById('adminRoot');
-    if (!root) return;
+    if (eventsBound) return;
+    eventsBound = true;
 
-    root.addEventListener('click', function (e) {
-      var closeBtn = e.target.closest('[data-admin-close]');
-      if (closeBtn) { closeAdmin(); return; }
+    var page = document.getElementById('view-admin');
+    if (!page) return;
 
-      var tabBtn = e.target.closest('[data-tab]');
-      if (tabBtn) {
-        e.stopPropagation();
-        var tab = tabBtn.dataset.tab;
-        switchTab(tab);
-        return;
-      }
-
+    page.addEventListener('click', function (e) {
+      /* 顶 Tab：管理台 / 创作统计 / 软件设置 */
       var topBtn = e.target.closest('[data-top]');
       if (topBtn) {
         var top = topBtn.dataset.top;
-        root.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
+        currentTopTab = top;
+        page.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
           t.classList.toggle('is-active', t.dataset.top === top);
         });
+        var subTabsWrap = document.getElementById('adminSubTabs');
+        var body = document.getElementById('adminBody');
         if (top === 'admin') {
-          document.getElementById('adminSubTabs').style.display = '';
-          document.getElementById('adminBody').innerHTML = '';
-          switchTab('overview');
+          subTabsWrap.style.display = '';
+          destroyAllCharts();
+          body.innerHTML = '';
+          switchSubTab('overview');
         } else {
           /* 占位 Tab */
-          document.getElementById('adminSubTabs').style.display = 'none';
-          var body = document.getElementById('adminBody');
+          subTabsWrap.style.display = 'none';
+          destroyAllCharts();
           body.innerHTML = '<div class="hm-admin-placeholder">' +
             '<div class="hm-admin-ph-ico">' + (top === 'stats' ? '📊' : '⚙️') + '</div>' +
             '<h2>' + (top === 'stats' ? '创作统计' : '软件设置') + '</h2>' +
@@ -129,25 +78,57 @@
         }
         return;
       }
+
+      /* 子 Tab：概览 / 消耗排行 / ... */
+      var subBtn = e.target.closest('[data-tab]');
+      if (subBtn) {
+        var tab = subBtn.dataset.tab;
+        page.querySelectorAll('.hm-admin-tab').forEach(function (t) {
+          t.classList.toggle('is-active', t.dataset.tab === tab);
+        });
+        switchSubTab(tab);
+        return;
+      }
     });
 
-    /* ESC 关闭 */
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && adminOpen) { closeAdmin(); }
-    });
+    /* 页面内 Esc 不应该退出到桌面 —— 让 desk.js 等自己处理 */
   }
 
-  /* ============ Tab 切换 ============ */
-  function switchTab(tab) {
-    currentTab = tab;
-    var root = document.getElementById('adminRoot');
-    if (root) {
-      root.querySelectorAll('.hm-admin-tab').forEach(function (t) {
-        t.classList.toggle('is-active', t.dataset.tab === tab);
-      });
-    }
+  /* ============ Tab 切换加载 ============ */
+  function switchSubTab(tab) {
+    currentSubTab = tab;
     loadTab(tab);
   }
+
+  /* ============ onView 钩子 —— switchView('admin') 时触发 ============ */
+  var _origOnView = A.onView;
+  A.onView = function (view) {
+    if (_origOnView) _origOnView(view);
+    if (view === 'admin') {
+      if (!eventsBound) bindAdminEvents();
+      /* 重置 Tab 状态 */
+      currentTopTab = 'admin';
+      var page = document.getElementById('view-admin');
+      if (page) {
+        page.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
+          t.classList.toggle('is-active', t.dataset.top === 'admin');
+        });
+        page.querySelectorAll('.hm-admin-tab').forEach(function (t) {
+          t.classList.toggle('is-active', t.dataset.tab === currentSubTab);
+        });
+      }
+      var subTabsWrap = document.getElementById('adminSubTabs');
+      if (subTabsWrap) subTabsWrap.style.display = '';
+      destroyAllCharts();
+      /* 延迟一帧确保 DOM 可见后再渲染（Chart.js 需要 canvas 有尺寸） */
+      requestAnimationFrame(function () {
+        loadTab(currentSubTab);
+      });
+    } else {
+      /* 离开管理台 —— 销毁所有 Chart 实例 */
+      destroyAllCharts();
+    }
+  };
 
   function destroyAllCharts() {
     Object.keys(charts).forEach(function (k) {

@@ -1,27 +1,24 @@
 /* =============================================================
- * 绘梦 AI · 管理台样式（独立全屏覆盖层）
+ * 绘梦 AI · 管理台样式（独立 view page —— #view-admin 容器）
  * 参考 Figma 深色科技风设计稿
  * ============================================================= */
 
-.hm-admin-root {
-  position: fixed; inset: 0; z-index: 2000;
-  display: flex; flex-direction: column;
-  background: #0b1220;
-  color: #e2e8f0;
-  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft Yahei", sans-serif;
-  animation: hmAdminFadeIn 0.18s ease-out;
-  overflow: hidden;
+.hm-admin-page {
+  padding: 20px 24px 40px;
+  height: 100%;
+  overflow-y: auto;
 }
-@keyframes hmAdminFadeIn { from { opacity: 0 } to { opacity: 1 } }
+.hm-admin-page::-webkit-scrollbar { width: 8px; }
+.hm-admin-page::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 
-/* ============ 顶栏 ============ */
-.hm-admin-header {
-  display: flex; align-items: center;
-  height: 52px; padding: 0 24px;
-  background: linear-gradient(180deg, #121a2c, #0e1524);
+/* ============ 顶栏容器 ============ */
+.hm-admin-topbar-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 0 14px; margin-bottom: 12px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
-  flex-shrink: 0;
 }
+
+/* ============ Brand ============ */
 .hm-admin-brand { display: flex; align-items: center; gap: 12px; }
 .hm-admin-logo {
   width: 30px; height: 30px; border-radius: 8px;
@@ -30,10 +27,10 @@
   font-size: 15px; font-weight: 700; color: #fff;
   box-shadow: 0 4px 14px rgba(99,102,241,0.35);
 }
-.hm-admin-title h1 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 0; letter-spacing: 0.3px; }
-.hm-admin-title { display: flex; align-items: center; }
+.hm-admin-brand h1 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 0; letter-spacing: 0.3px; }
 
-.hm-admin-top-tabs { display: flex; gap: 4px; margin-left: 40px; }
+/* ============ 顶 Tab ============ */
+.hm-admin-top-tabs { display: flex; gap: 4px; }
 .hm-admin-top-tab {
   padding: 7px 16px; font-size: 13px; color: #64748b;
   border-radius: 8px; background: transparent;
@@ -45,38 +42,22 @@
   border-color: rgba(99,102,241,0.4);
 }
 
-.hm-admin-header-right { margin-left: auto; }
-.hm-admin-close {
-  width: 32px; height: 32px; border-radius: 8px; background: transparent;
-  border: 1px solid rgba(255,255,255,0.08); color: #94a3b8;
-  font-size: 18px; line-height: 1; cursor: pointer; transition: all 0.15s;
-}
-.hm-admin-close:hover { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.4); }
-
 /* ============ 子 Tab ============ */
-.hm-admin-topbar {
-  display: flex; gap: 4px; padding: 12px 24px 0;
-  flex-shrink: 0;
+.hm-admin-subtabs-wrap {
+  display: flex; gap: 4px; padding: 0 0 16px;
+  flex-wrap: wrap;
 }
 .hm-admin-tab {
   padding: 7px 14px; font-size: 13px; color: #64748b;
-  border-radius: 6px 6px 0 0; background: transparent;
-  border: 1px solid transparent; border-bottom: none;
+  border-radius: 6px; background: transparent;
+  border: 1px solid rgba(255,255,255,0.06);
   cursor: pointer; transition: all 0.15s;
 }
-.hm-admin-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.02); }
+.hm-admin-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.03); }
 .hm-admin-tab.is-active {
   color: #e2e8f0; background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.15);
 }
-
-/* ============ 主体 ============ */
-.hm-admin-body {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  padding: 20px 24px 40px;
-}
-.hm-admin-body::-webkit-scrollbar { width: 8px; }
-.hm-admin-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 
 .hm-admin-loading { padding: 80px; text-align: center; color: #64748b; font-size: 13px; }
 .hm-admin-error { padding: 60px; text-align: center; }
@@ -364,6 +345,3 @@
   color: #fff; border-color: transparent;
 }
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
-
-/* ============ body 全局状态 ============ */
-body.is-admin-open { overflow: hidden; }

@@ -403,6 +403,28 @@
     </div>
   </main>
 
+  <main class="hm-page hm-admin-page" id="view-admin" hidden>
+    <div class="hm-admin-topbar-wrap">
+      <div class="hm-admin-brand">
+        <div class="hm-admin-logo">绘</div>
+        <h1>设置</h1>
+      </div>
+      <div class="hm-admin-top-tabs">
+        <button class="hm-admin-top-tab is-active" data-top="admin"><span>管理台</span></button>
+        <button class="hm-admin-top-tab" data-top="stats"><span>创作统计</span></button>
+        <button class="hm-admin-top-tab" data-top="settings"><span>软件设置</span></button>
+      </div>
+    </div>
+    <div class="hm-admin-subtabs-wrap" id="adminSubTabs">
+      <button class="hm-admin-tab is-active" data-tab="overview"><span>概览</span></button>
+      <button class="hm-admin-tab" data-tab="ranking"><span>消耗排行</span></button>
+      <button class="hm-admin-tab" data-tab="logs"><span>调用日志</span></button>
+      <button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span></button>
+      <button class="hm-admin-tab" data-tab="projects"><span>项目管理</span></button>
+    </div>
+    <div class="hm-admin-body" id="adminBody"></div>
+  </main>
+
   <div class="hm-dock" id="hmDock">
     <!-- 可上下拖动的分隔条 -->
     <div class="hm-resizer" id="dockResizer" role="separator" aria-orientation="horizontal" aria-label="拖动调整输入区高度" title="上下拖动调整输入区域大小">

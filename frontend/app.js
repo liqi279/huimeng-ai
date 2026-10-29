@@ -1533,7 +1533,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'history'];
+var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -3137,7 +3137,7 @@ function bindEvents() {
 
   els.apiConfigBtn.addEventListener('click', function () {
     if (window.HMAdmin && HMAdmin.isAdmin()) {
-      HMAdmin.open();
+      switchView('admin');
     } else {
       openApiModal();
     }
