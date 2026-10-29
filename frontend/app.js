@@ -2662,6 +2662,61 @@ async function authBoot() {
   }
 }
 
+function checkUpdate() {
+  try {
+    var currentBuild = window.HM_BUILD || '';
+    if (!currentBuild) return;
+    var lastBuild = localStorage.getItem('hm.build') || '';
+    if (!lastBuild) {
+      /* 首次访问，记录当前 build，不弹窗 */
+      localStorage.setItem('hm.build', currentBuild);
+      return;
+    }
+    if (lastBuild === currentBuild) {
+      /* build 相同，没更新 */
+      return;
+    }
+    /* 检查是否点过"稍后再说"（24 小时内不重复弹） */
+    var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
+    if (remindAt && Date.now() < remindAt) {
+      return;
+    }
+    /* 有新版本，弹窗 */
+    var modal = document.getElementById('updateModal');
+    var later = document.getElementById('updateLater');
+    var confirm = document.getElementById('updateConfirm');
+    if (!modal) return;
+
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+
+    function closeModal() {
+      modal.hidden = true;
+      document.body.style.overflow = '';
+      cleanup();
+    }
+    function cleanup() {
+      if (later) later.removeEventListener('click', onLater);
+      if (confirm) confirm.removeEventListener('click', onConfirm);
+    }
+    function onLater() {
+      /* 24 小时内不再弹窗 */
+      localStorage.setItem('hm.build.remindAt', String(Date.now() + 24 * 60 * 60 * 1000));
+      closeModal();
+    }
+    function onConfirm() {
+      /* 记录新 build ID，然后 reload（localStorage 的 token 不会丢） */
+      localStorage.setItem('hm.build', currentBuild);
+      localStorage.removeItem('hm.build.remindAt');
+      closeModal();
+      toast('正在更新页面…', 'success');
+      setTimeout(function () { location.reload(); }, 400);
+    }
+    if (later) later.addEventListener('click', onLater);
+    if (confirm) confirm.addEventListener('click', onConfirm);
+  } catch (e) { /* localStorage 不可用时静默忽略 */ }
+}
+
 function boot() {
   bindEls();
   renderModels('');
@@ -2676,6 +2731,9 @@ function boot() {
   api.ping().finally(function () {
     authBoot();
   });
+
+  /* 版本更新检测（不影响登录态） */
+  checkUpdate();
 
   // 首次打开时给出轻量引导提示
   if (!storedPrefs || !storedPrefs.modelId) {

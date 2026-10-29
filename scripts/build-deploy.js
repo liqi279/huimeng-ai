@@ -8,9 +8,37 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 const FE = path.join(ROOT, 'frontend');
+
+/* 生成唯一构建 ID（时间戳 + 短哈希），供前端版本更新检测 */
+function makeBuildId() {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  const head = fs.readFileSync(path.join(ROOT, '.git', 'HEAD'), 'utf8').trim();
+  let commit = '0000000';
+  try {
+    if (head.startsWith('ref:')) {
+      const refPath = path.join(ROOT, '.git', head.replace('ref: ', '').trim());
+      commit = fs.readFileSync(refPath, 'utf8').trim().slice(0, 7);
+    } else {
+      commit = head.slice(0, 7);
+    }
+  } catch (e) {}
+  return stamp + '-' + commit;
+}
+
+function injectBuildId(html, buildId) {
+  /* 注入 const HM_BUILD = 'xxx' 到 <head> 末尾 */
+  const injection =
+    '<script>window.HM_BUILD = "' + buildId + '";</script>';
+  html = html.replace(
+    /(<\/head>)/i,
+    injection + '\n$1'
+  );
+  return html;
+}
 
 function read(name) {
   return fs.readFileSync(path.join(FE, name), 'utf8');
@@ -23,6 +51,9 @@ function inlineStyle(css) {
 function inlineScript(js) {
   return js.replace(/<\/script/gi, '<\\/script');
 }
+
+const buildId = makeBuildId();
+console.log('构建 ID：' + buildId);
 
 let html = read('index.html');
 
@@ -42,6 +73,8 @@ for (const file of scripts) {
 if (/<script[^>]+src=|<link[^>]+href=/i.test(html)) {
   throw new Error('仍有未内联的外部资源引用');
 }
+
+html = injectBuildId(html, buildId);
 
 const outFiles = [
   path.join(ROOT, 'deploy', 'index.html'),

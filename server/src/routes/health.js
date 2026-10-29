@@ -29,7 +29,7 @@ router.get('/config', (req, res) => {
     },
     limits: {
       refMaxBytes: 10485760,
-      refMaxCount: 3,
+      refMaxCount: 10,
       promptMaxChars: 1800,
     },
     presets: PRESETS,

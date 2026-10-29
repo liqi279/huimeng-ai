@@ -6938,7 +6938,121 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 
 
 
+/* ========== 版本更新弹窗 ========== */
+.hm-update-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 10, 20, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: hmUpdateFadeIn 0.25s ease;
+}
+
+@keyframes hmUpdateFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hm-update-card {
+  width: 380px;
+  max-width: calc(100% - 32px);
+  padding: 28px 26px 22px;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #172642 0%, #0f1a30 100%);
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(125, 211, 252, 0.08);
+  text-align: center;
+  animation: hmUpdatePopIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes hmUpdatePopIn {
+  from { transform: scale(0.92) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.hm-update-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(125, 211, 252, 0.12);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  color: #7dd3fc;
+}
+
+.hm-update-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.hm-update-title {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+}
+
+.hm-update-desc {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.65;
+}
+
+.hm-update-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.hm-update-later {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hm-update-later:hover {
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+}
+
+.hm-update-confirm {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.hm-update-confirm:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
+}
+
+.hm-update-confirm:active {
+  transform: translateY(0);
+}
+
 </style>
+<script>window.HM_BUILD = "20261029032333-da0d0f9";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -7877,6 +7991,21 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   </div>
 
   <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+  <!-- 版本更新弹窗 -->
+  <div class="hm-update-modal" id="updateModal" hidden>
+    <div class="hm-update-card">
+      <div class="hm-update-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="hm-update-title">绘梦 AI 已更新</h3>
+      <p class="hm-update-desc">新版本已发布，点击下方按钮刷新页面即可体验。<br>登录状态和所有数据不会丢失。</p>
+      <div class="hm-update-actions">
+        <button class="hm-update-later" id="updateLater" type="button">稍后再说</button>
+        <button class="hm-update-confirm" id="updateConfirm" type="button">立即更新</button>
+      </div>
+    </div>
+  </div>
 
   <script>
 /*!
@@ -11148,6 +11277,61 @@ async function authBoot() {
   }
 }
 
+function checkUpdate() {
+  try {
+    var currentBuild = window.HM_BUILD || '';
+    if (!currentBuild) return;
+    var lastBuild = localStorage.getItem('hm.build') || '';
+    if (!lastBuild) {
+      /* 首次访问，记录当前 build，不弹窗 */
+      localStorage.setItem('hm.build', currentBuild);
+      return;
+    }
+    if (lastBuild === currentBuild) {
+      /* build 相同，没更新 */
+      return;
+    }
+    /* 检查是否点过"稍后再说"（24 小时内不重复弹） */
+    var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
+    if (remindAt && Date.now() < remindAt) {
+      return;
+    }
+    /* 有新版本，弹窗 */
+    var modal = document.getElementById('updateModal');
+    var later = document.getElementById('updateLater');
+    var confirm = document.getElementById('updateConfirm');
+    if (!modal) return;
+
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+
+    function closeModal() {
+      modal.hidden = true;
+      document.body.style.overflow = '';
+      cleanup();
+    }
+    function cleanup() {
+      if (later) later.removeEventListener('click', onLater);
+      if (confirm) confirm.removeEventListener('click', onConfirm);
+    }
+    function onLater() {
+      /* 24 小时内不再弹窗 */
+      localStorage.setItem('hm.build.remindAt', String(Date.now() + 24 * 60 * 60 * 1000));
+      closeModal();
+    }
+    function onConfirm() {
+      /* 记录新 build ID，然后 reload（localStorage 的 token 不会丢） */
+      localStorage.setItem('hm.build', currentBuild);
+      localStorage.removeItem('hm.build.remindAt');
+      closeModal();
+      toast('正在更新页面…', 'success');
+      setTimeout(function () { location.reload(); }, 400);
+    }
+    if (later) later.addEventListener('click', onLater);
+    if (confirm) confirm.addEventListener('click', onConfirm);
+  } catch (e) { /* localStorage 不可用时静默忽略 */ }
+}
+
 function boot() {
   bindEls();
   renderModels('');
@@ -11162,6 +11346,9 @@ function boot() {
   api.ping().finally(function () {
     authBoot();
   });
+
+  /* 版本更新检测（不影响登录态） */
+  checkUpdate();
 
   // 首次打开时给出轻量引导提示
   if (!storedPrefs || !storedPrefs.modelId) {
