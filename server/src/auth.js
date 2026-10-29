@@ -11,7 +11,24 @@ function authRequired(req, res, next) {
     return res.status(401).json({ error: { message: '未登录或登录已过期' } });
   }
   store.findUserById(payload.uid).then((user) => {
-    if (!user) return res.status(401).json({ error: { message: '账号不存在' } });
+    if (!user) {
+      /* ========== Render 免费层重启 → data/users.json 被清空 ==========
+         Token 签名仍有效（secret 固定），但 DB 用户记录丢了。
+         尝试用 token payload 里的 username 自动重建用户，
+         或退而求其次，trust token payload 直接放行，不让前端误以为 token 过期。 */
+      if (payload.username) {
+        /* 有足够信息 → 自动重建用户（无密码，走内部重建） */
+        return store.reviveUser(payload.uid, payload.username, payload.role || 'user')
+          .then((revived) => {
+            req.user = { id: revived.id, username: revived.username, role: revived.role };
+            next();
+          });
+      }
+      /* 旧 token 只有 uid → trust token payload 直接放行，避免前端强制登出 */
+      req.user = { id: payload.uid, username: 'guest_' + payload.uid.slice(-6), role: 'user' };
+      next();
+      return;
+    }
     req.user = { id: user.id, username: user.username, role: user.role };
     next();
   }).catch(() => res.status(500).json({ error: { message: '认证失败' } }));
@@ -33,6 +50,15 @@ function authOptional(req, res, next) {
   if (payload && payload.uid) {
     store.findUserById(payload.uid).then((user) => {
       if (user) req.user = { id: user.id, username: user.username, role: user.role };
+      else if (payload.username) {
+        /* 自动重建 */
+        store.reviveUser(payload.uid, payload.username, payload.role || 'user')
+          .then((revived) => { req.user = { id: revived.id, username: revived.username, role: revived.role }; })
+          .catch(() => {});
+      } else {
+        /* 旧 token：trust payload */
+        req.user = { id: payload.uid, username: 'guest_' + payload.uid.slice(-6), role: 'user' };
+      }
       next();
     }).catch(() => next());
   } else {

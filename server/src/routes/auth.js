@@ -18,7 +18,7 @@ router.post('/auth/register', wrap(async (req, res) => {
 
   const result = await store.createUser({ username, password, role: 'user' });
   if (!result.ok) return res.status(409).json({ error: { message: result.error } });
-  const token = store.signToken({ uid: result.user.id });
+  const token = store.signToken({ uid: result.user.id, username: result.user.username, role: result.user.role });
   res.json({ user: result.user, token, expiresAt: Date.now() + TOKEN_TTL_MS });
 }));
 
@@ -28,7 +28,7 @@ router.post('/auth/login', wrap(async (req, res) => {
   assert(username && password, 400, '缺少用户名或密码');
   const user = await store.authenticateUser(username, password);
   if (!user) return res.status(401).json({ error: { message: '用户名或密码错误' } });
-  const token = store.signToken({ uid: user.id });
+  const token = store.signToken({ uid: user.id, username: user.username, role: user.role });
   res.json({ user, token, expiresAt: Date.now() + TOKEN_TTL_MS });
 }));
 

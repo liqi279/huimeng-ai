@@ -60,7 +60,6 @@ function verifyToken(token) {
     return null;
   }
 }
-
 const dirs = {
   root: config.DATA_DIR,
   assets: path.join(config.DATA_DIR, 'assets'),
@@ -143,6 +142,31 @@ function createUser({ username, password, role }) {
     await writeJson(userWorksFile(user.id), []);
     await writeJson(userDeskFile(user.id), { folders: [], positions: {}, assigns: {}, names: {}, updatedAt: 0 });
     return { ok: true, user: sanitizeUser(user) };
+  });
+}
+/* 当 Render 免费层重启清空 data/users.json 时，
+   用 token payload 里的 uid + username 自动把用户重建回来。
+   不设密码（token 本身就是凭证），重建后前端下次登录可正常使用。 */
+function reviveUser(uid, username, role) {
+  return enqueue(async () => {
+    let list = await listUsers();
+    let user = list.find((u) => u && u.id === uid);
+    if (!user) {
+      user = {
+        id: uid,
+        username: String(username).trim(),
+        salt: crypto.randomBytes(16).toString('hex'),
+        hash: '', /* 占位，revive 出来的用户下次登录时由 register/login 覆盖 */
+        role: role === 'admin' ? 'admin' : 'user',
+        createdAt: Date.now(),
+      };
+      list.push(user);
+      await writeJson(usersFile, list);
+      await fsp.mkdir(userDir(uid), { recursive: true });
+      await writeJson(userWorksFile(uid), []);
+      await writeJson(userDeskFile(uid), { folders: [], positions: {}, assigns: {}, names: {}, updatedAt: 0 });
+    }
+    return sanitizeUser(user);
   });
 }
 function sanitizeUser(u) {
@@ -280,6 +304,7 @@ module.exports = {
   findUserByUsername,
   findUserById,
   createUser,
+  reviveUser,
   authenticateUser,
   updateUserRole,
   resetUserPassword,

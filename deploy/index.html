@@ -7180,7 +7180,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029040906-545c260";</script>
+<script>window.HM_BUILD = "20261029041501-8101b45";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9742,8 +9742,9 @@ function selectModel(id, options) {
 }
 
 /* ---------------- 提示 ---------------- */
-function toast(message, type) {
+function toast(message, type, duration) {
   const kind = type || 'info';
+  const dur = Number(duration) || 3200;
   const el = document.createElement('div');
   el.className = 'toast ' + kind;
   const icon = kind === 'success' ? ICONS.success : kind === 'error' ? ICONS.error : ICONS.info;
@@ -9752,7 +9753,7 @@ function toast(message, type) {
   setTimeout(function () {
     el.classList.add('is-out');
     setTimeout(function () { el.remove(); }, 260);
-  }, 3200);
+  }, dur);
 }
 
 function shakePrompt() {
@@ -11462,13 +11463,21 @@ async function authBoot() {
     console.warn('[authBoot] 错误分类:', kind);
 
     if (kind === 'auth') {
-      /* ========== 真的 token 失效（401/403） ==========
-         清 token，但不清 localStorage 的用户数据
-         （用户重新登录后还是原来的账号） */
-      console.warn('[authBoot] token 真的失效 → 清 token → 弹登录');
-      if (api && api.logout) api.logout();
-      window.HMApp.user = null;
-      showLogin();
+      /* ========== 401/403 ==========
+         即使后端返回 401（比如 Render 重启用户数据被清），
+         也不要自动 logout —— 保留缓存桌面，让用户手动重新登录。
+         这样刷新不会闪登录页，不会丢视觉状态。 */
+      console.warn('[authBoot] me() 返回 auth 错误，但不清缓存，保持桌面');
+      if (!cachedUser) {
+        /* 真的没任何缓存 → 只能弹登录 */
+        if (api && api.logout) api.logout();
+        window.HMApp.user = null;
+        showLogin();
+      } else {
+        /* 有缓存 → 保持缓存桌面 + Toast 提示 */
+        setTimeout(function () { toast('后端数据暂不可用，请点击右上角头像重新登录', 'warn', 6000); }, 300);
+        /* 不主动清 token，让用户自己决定 */
+      }
       return;
     }
 
@@ -11544,11 +11553,22 @@ function pollRemoteBuild() {
   if (remindAt && Date.now() < remindAt) return;
 
   var url = location.origin + location.pathname + '?hm_poll=' + Date.now();
-  fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+  fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } })
     .then(function (r) { return r.text(); })
     .then(function (html) {
       var m = html.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
-      if (!m) return;
+      if (!m) {
+        /* 可能拿到旧版本，重试一次 */
+        setTimeout(function () {
+          fetch(url + '&retry=1', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store' } })
+            .then(function (r2) { return r2.text(); })
+            .then(function (html2) {
+              var m2 = html2.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
+              if (m2 && m2[1] && m2[1] !== currentBuild) showUpdateModal();
+            }).catch(function () {});
+        }, 1500);
+        return;
+      }
       var remoteBuild = m[1];
       if (remoteBuild && remoteBuild !== currentBuild) {
         showUpdateModal();
@@ -11576,8 +11596,8 @@ function checkUpdate() {
 
     /* 无论如何，再 fetch 一次远端最新 index.html 确认（处理首次访问 + 长时间挂着的情况） */
     pollRemoteBuild();
-    /* 每 2 分钟轮询一次（更快发现更新） */
-    setInterval(pollRemoteBuild, 2 * 60 * 1000);
+    /* 每 30 秒轮询一次（更快发现更新） */
+    setInterval(pollRemoteBuild, 30 * 1000);
   } catch (e) { /* localStorage 不可用时静默忽略 */ }
 }
 
