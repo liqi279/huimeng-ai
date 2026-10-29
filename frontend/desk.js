@@ -301,11 +301,24 @@
   function renderFolderNode(node, depth) {
     var html = '';
     var hasChildren = node.children && node.children.length > 0;
+    var expanded = view.expanded[node.id] !== false;
+
+    /* ★ inline 重命名：整个 node 行替换为 input —— 顶级和子级都能生效 */
+    if (view.inline && !view.inline.isNew && view.inline.rowId === node.id) {
+      var val = view.inline.value;
+      html += '<div class="hm-proj-folder is-renaming" style="padding-left:' + (10 + depth * 14) + 'px">' +
+        '<span class="hm-tree-toggle is-leaf" style="visibility:hidden">·</span>' +
+        '<span class="hm-folder-ico">📁</span>' +
+        '<input class="hm-inline-input" data-folder-inline="' + esc(node.id) + '" data-inline-kind="rename" value="' + esc(val) + '" maxlength="40" autocomplete="off">' +
+        '<button class="hm-inline-cancel" data-inline-cancel="' + esc(node.id) + '">✕</button>' +
+        '</div>';
+      return html;  /* 渲染这一行就停，children 也不画（重命名时整个节点变为纯 input） */
+    }
+
     var count = folderCount(node.id);
     var credit = folderCredit(node.id);
     var isActive = view.activeFolder === node.id;
     var isSelected = !!view.selectedFolders[node.id];
-    var expanded = view.expanded[node.id] !== false;
 
     var classes = ['hm-proj-folder'];
     if (isActive) classes.push('is-active');
@@ -339,18 +352,6 @@
       });
     }
     return html;
-  }
-
-  /* inline 重命名一个已有 folder（替换这行的 name 为 input） */
-  function renderInlineRename(node, depth) {
-    var val = (view.inline && !view.inline.isNew && view.inline.rowId === node.id)
-      ? view.inline.value : node.name;
-    var classes = ['hm-proj-folder', 'is-renaming'];
-    return '<div class="' + classes.join(' ') + '" style="padding-left:' + (10 + depth * 14) + 'px">' +
-      '<span class="hm-tree-toggle is-leaf" style="visibility:hidden">·</span>' +
-      '<span class="hm-folder-ico">📁</span>' +
-      '<input class="hm-inline-input" data-folder-inline="' + esc(node.id) + '" data-inline-kind="rename" value="' + esc(val) + '" maxlength="40" autocomplete="off">' +
-      '</div>';
   }
 
   /* inline 新建子文件夹占位行（显示在 children 最前面） */
@@ -400,12 +401,7 @@
       html += '<p class="hm-proj-none">' + (view.search ? '没有匹配的项目' : '还没有项目文件夹，点击「新建文件夹」开始整理') + '</p>';
     }
     tree.forEach(function (node) {
-      /* inline 重命名：替换整行 */
-      if (view.inline && !view.inline.isNew && view.inline.rowId === node.id) {
-        html += renderInlineRename(node, 0);
-      } else {
-        html += renderFolderNode(node, 0);
-      }
+      html += renderFolderNode(node, 0);  /* renderFolderNode 内部自动处理 inline rename 替换 */
     });
     html += '</div>';
     list.innerHTML = html;
@@ -2118,6 +2114,8 @@
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
         hideContexts();
+        /* inline 优先 cancel（不关面板） */
+        if (view.inline) { cancelInline(); return; }
         closePanel();
         closeParam();
         closeRename();
@@ -2125,6 +2123,57 @@
         clearSelection();
         return;
       }
+
+      /* ===== F2 重命名快捷键（跨所有场景） ===== */
+      if (event.key === 'F2') {
+        /* 如果 inline 已经在编辑 → Enter 提交（复用 commitInline） */
+        if (view.inline) {
+          event.preventDefault();
+          var curInput = projList ? projList.querySelector('.hm-inline-input') : null;
+          commitInline(curInput ? curInput.value : view.inline.value);
+          return;
+        }
+        /* 1. 侧栏 projList 有 active/selected folder → 重命名 */
+        var targetFolder = view.activeFolder;
+        if (!targetFolder) {
+          var selKeys = Object.keys(view.selectedFolders);
+          if (selKeys.length === 1) targetFolder = selKeys[0];
+        }
+        if (targetFolder && desk.folders.some(function (f) { return f.id === targetFolder; })) {
+          event.preventDefault();
+          openPanel();
+          startInlineRename(targetFolder);
+          return;
+        }
+        /* 2. 桌面上选中了 folder-card（桌面多选 selected 里有 folder id） */
+        var keys = selectedIds();
+        var deskFolderIds = keys.filter(function (k) { return desk.folders.some(function (f) { return f.id === k; }); });
+        if (deskFolderIds.length === 1) {
+          event.preventDefault();
+          openPanel();
+          view.activeFolder = deskFolderIds[0];
+          startInlineRename(deskFolderIds[0]);
+          return;
+        }
+        /* 3. 桌面上选中了 work → 重命名 work（原 askName） */
+        var workIds = keys.filter(function (k) { return !k.indexOf('job:') && !desk.folders.some(function (f) { return f.id === k; }); });
+        if (workIds.length === 1) {
+          var work = findWork(workIds[0]);
+          if (work) {
+            event.preventDefault();
+            askName('重命名', workName(work), function (value) {
+              desk.names[work.id] = value;
+              delete work.name;
+              persistNow();
+              renderDesktop();
+              A.toast('已重命名', 'success');
+            });
+          }
+          return;
+        }
+        return;
+      }
+
       /* 只有桌面视图 + 没有在输入框/textarea/select/contenteditable 里，才响应桌面快捷键 */
       var active = document.activeElement;
       var inInput = active && (active.matches('input, textarea, select, [contenteditable="true"]') || active.tagName === 'TEXTAREA');
