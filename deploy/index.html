@@ -7580,7 +7580,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029084248-45ca22e";</script>
+<script>window.HM_BUILD = "20261029084727-10b2575";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -14900,6 +14900,18 @@ window.HMApp = {
     if (work.type === 'video') return 60;
     if (work.type === 'audio') return 10;
     return 1;
+  }
+
+  /* 统计某 folder（不含子文件夹）的作品数和总 credit */
+  function folderCount(id) {
+    return state.works.filter(function (w) { return desk.assigns[w.id] === id; }).length;
+  }
+  function folderCredit(id) {
+    var total = 0;
+    state.works.forEach(function (w) {
+      if (desk.assigns[w.id] === id) total += creditOf(w);
+    });
+    return total;
   }
 
   /* ---------------- 项目文件夹（树形） ---------------- */

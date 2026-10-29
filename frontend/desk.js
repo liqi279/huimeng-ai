@@ -215,6 +215,18 @@
     return 1;
   }
 
+  /* 统计某 folder（不含子文件夹）的作品数和总 credit */
+  function folderCount(id) {
+    return state.works.filter(function (w) { return desk.assigns[w.id] === id; }).length;
+  }
+  function folderCredit(id) {
+    var total = 0;
+    state.works.forEach(function (w) {
+      if (desk.assigns[w.id] === id) total += creditOf(w);
+    });
+    return total;
+  }
+
   /* ---------------- 项目文件夹（树形） ---------------- */
 
   /* 把扁平 folders 数组转成树：
