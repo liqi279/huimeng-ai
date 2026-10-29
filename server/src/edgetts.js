@@ -12,7 +12,10 @@
 const WebSocket = require('ws');
 const crypto = require('crypto');
 
-const WSS_URL = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
+/* 经典端点 speech.platform.bing.com 2025-10 起大量返回 403/401（微软换了签名算法）
+ * 新端点 api.msedgeservices.com 完全兼容同样的 BJSON 协议 —— FluentVoice / edge-tts npm 最新版都已切换 */
+const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+const WSS_URL = `wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1?Ocp-Apim-Subscription-Key=${TRUSTED_CLIENT_TOKEN}`;
 const DEFAULT_VOICE = 'zh-CN-XiaoxiaoNeural';
 const DEFAULT_FORMAT = 'audio-24khz-48kbitrate-mono-mp3';
 
@@ -122,10 +125,11 @@ function synthesize({ text, voice = DEFAULT_VOICE, format = DEFAULT_FORMAT, rate
     const ws = new WebSocket(WSS_URL, {
       protocol: 'speech.v1',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Edg/131.0.0.0',
-        'Origin': 'chrome-extension://jdiccldimpibfdannlmjgnnanpdbafjb',
-        'Host': 'speech.platform.bing.com',
-        'Sec-WebSocket-Extensions': 'permessage-deflate; client_max_window_bits',
+        /* 最新版 edge-tts npm / FluentVoice 使用的 Edge extension ID + User-Agent */
+        'Origin': 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0',
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache',
       },
       timeout: timeout,
       handshakeTimeout: 10000,
