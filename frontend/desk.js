@@ -1981,17 +1981,12 @@
       /* 桌面 folder-card / work-card 拖拽到侧栏文件夹 */
       grid.addEventListener('dragstart', function (e) {
         var card = e.target.closest('.folder-card[data-folder], .desk-card[data-work]');
-        if (!card) { dragSrcId = null; return; }
-        if (card.classList.contains('folder-card')) {
-          dragSrcId = 'folder:' + card.dataset.folder;
-          dragIsFolder = true;
-        } else {
-          dragSrcId = 'work:' + card.dataset.work;
-          dragIsFolder = false;
-        }
+        if (!card) return;
+        var dragType = card.classList.contains('folder-card') ? 'folder' : 'work';
+        var dataId = (dragType + ':' + card.dataset[dragType]);
         try {
-          e.dataTransfer.setData('text/plain', dragSrcId);
-          e.dataTransfer.setData('application/x-folder', dragSrcId);
+          e.dataTransfer.setData('text/plain', dataId);
+          e.dataTransfer.setData('application/x-folder', dataId);
           e.dataTransfer.effectAllowed = 'move';
         } catch (err) {}
       });

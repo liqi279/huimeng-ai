@@ -7662,7 +7662,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029092611-d439ee6";</script>
+<script>window.HM_BUILD = "20261029093007-a0af67d";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -16750,17 +16750,12 @@ window.HMApp = {
       /* 桌面 folder-card / work-card 拖拽到侧栏文件夹 */
       grid.addEventListener('dragstart', function (e) {
         var card = e.target.closest('.folder-card[data-folder], .desk-card[data-work]');
-        if (!card) { dragSrcId = null; return; }
-        if (card.classList.contains('folder-card')) {
-          dragSrcId = 'folder:' + card.dataset.folder;
-          dragIsFolder = true;
-        } else {
-          dragSrcId = 'work:' + card.dataset.work;
-          dragIsFolder = false;
-        }
+        if (!card) return;
+        var dragType = card.classList.contains('folder-card') ? 'folder' : 'work';
+        var dataId = (dragType + ':' + card.dataset[dragType]);
         try {
-          e.dataTransfer.setData('text/plain', dragSrcId);
-          e.dataTransfer.setData('application/x-folder', dragSrcId);
+          e.dataTransfer.setData('text/plain', dataId);
+          e.dataTransfer.setData('application/x-folder', dataId);
           e.dataTransfer.effectAllowed = 'move';
         } catch (err) {}
       });
