@@ -7122,7 +7122,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029033032-d911852";</script>
+<script>window.HM_BUILD = "20261029033411-6f6192f";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -11355,58 +11355,82 @@ async function authBoot() {
   }
 }
 
+function showUpdateModal() {
+  var modal = document.getElementById('updateModal');
+  var later = document.getElementById('updateLater');
+  var confirmBtn = document.getElementById('updateConfirm');
+  if (!modal) return;
+
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+
+  function cleanup() {
+    if (later) later.removeEventListener('click', onLater);
+    if (confirmBtn) confirmBtn.removeEventListener('click', onConfirm);
+  }
+  function closeModal() {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+    cleanup();
+  }
+  function onLater() {
+    localStorage.setItem('hm.build.remindAt', String(Date.now() + 24 * 60 * 60 * 1000));
+    closeModal();
+  }
+  function onConfirm() {
+    localStorage.setItem('hm.build', window.HM_BUILD || '');
+    localStorage.removeItem('hm.build.remindAt');
+    closeModal();
+    toast('正在更新页面…', 'success');
+    setTimeout(function () { location.reload(); }, 500);
+  }
+  if (later) later.addEventListener('click', onLater);
+  if (confirmBtn) confirmBtn.addEventListener('click', onConfirm);
+}
+
+/* 远端 fetch 最新 HM_BUILD，和当前页面比 */
+function pollRemoteBuild() {
+  var currentBuild = window.HM_BUILD || '';
+  if (!currentBuild) return;
+  /* 检查是否点过"稍后再说"（24 小时内不重复弹） */
+  var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
+  if (remindAt && Date.now() < remindAt) return;
+
+  var url = location.origin + location.pathname + '?hm_poll=' + Date.now();
+  fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+      var m = html.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
+      if (!m) return;
+      var remoteBuild = m[1];
+      if (remoteBuild && remoteBuild !== currentBuild) {
+        showUpdateModal();
+      }
+    })
+    .catch(function () { /* 静默忽略（网络问题等） */ });
+}
+
 function checkUpdate() {
   try {
     var currentBuild = window.HM_BUILD || '';
     if (!currentBuild) return;
+
     var lastBuild = localStorage.getItem('hm.build') || '';
     if (!lastBuild) {
-      /* 首次访问，记录当前 build，不弹窗 */
+      /* 首次访问，记录当前 build，不弹（因为没对比基线） */
       localStorage.setItem('hm.build', currentBuild);
-      return;
+    } else if (lastBuild !== currentBuild) {
+      /* 本地记录的 build 和当前页面的不一样 → 有更新 */
+      var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
+      if (!remindAt || Date.now() >= remindAt) {
+        showUpdateModal();
+      }
     }
-    if (lastBuild === currentBuild) {
-      /* build 相同，没更新 */
-      return;
-    }
-    /* 检查是否点过"稍后再说"（24 小时内不重复弹） */
-    var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
-    if (remindAt && Date.now() < remindAt) {
-      return;
-    }
-    /* 有新版本，弹窗 */
-    var modal = document.getElementById('updateModal');
-    var later = document.getElementById('updateLater');
-    var confirm = document.getElementById('updateConfirm');
-    if (!modal) return;
 
-    modal.hidden = false;
-    document.body.style.overflow = 'hidden';
-
-    function closeModal() {
-      modal.hidden = true;
-      document.body.style.overflow = '';
-      cleanup();
-    }
-    function cleanup() {
-      if (later) later.removeEventListener('click', onLater);
-      if (confirm) confirm.removeEventListener('click', onConfirm);
-    }
-    function onLater() {
-      /* 24 小时内不再弹窗 */
-      localStorage.setItem('hm.build.remindAt', String(Date.now() + 24 * 60 * 60 * 1000));
-      closeModal();
-    }
-    function onConfirm() {
-      /* 记录新 build ID，然后 reload（localStorage 的 token 不会丢） */
-      localStorage.setItem('hm.build', currentBuild);
-      localStorage.removeItem('hm.build.remindAt');
-      closeModal();
-      toast('正在更新页面…', 'success');
-      setTimeout(function () { location.reload(); }, 400);
-    }
-    if (later) later.addEventListener('click', onLater);
-    if (confirm) confirm.addEventListener('click', onConfirm);
+    /* 无论如何，再 fetch 一次远端最新 index.html 确认（处理首次访问 + 长时间挂着的情况） */
+    pollRemoteBuild();
+    /* 每 5 分钟轮询一次 */
+    setInterval(pollRemoteBuild, 5 * 60 * 1000);
   } catch (e) { /* localStorage 不可用时静默忽略 */ }
 }
 
