@@ -3678,86 +3678,19 @@ body.hm-resizing * {
 }
 
 /* ========== 每张参考图独立的主体强度 slider ========== */
-/* 覆盖原 .hm-ref-cell 尺寸：加宽放 slider，高度 = 68px 图 + 24px slider */
+/* per-ref slider 已移除，底部全局 refWeightSlider 负责控制 */
+/* ref cell 恢复为紧凑小方格，hover 加轻微放大 */
 .hm-ref-cell {
-  width: 96px;
-  height: 92px;
+  width: 52px;
+  height: 52px;
   overflow: hidden;
+  position: relative;
 }
-
 .hm-ref-cell img {
   width: 100%;
-  height: 68px;
+  height: 100%;
   object-fit: cover;
-  border-radius: 6px 6px 0 0;
   display: block;
-}
-
-.hm-ref-scale-bar {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 22px;
-  padding: 0 5px;
-  border-radius: 0 0 6px 6px;
-  background: rgba(15, 23, 42, 0.88);
-  border-top: 1px solid rgba(56, 189, 248, 0.15);
-}
-
-.hm-ref-scale-label {
-  font-size: 8px;
-  color: #94a3b8;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.hm-ref-scale-val {
-  font-size: 8px;
-  color: #bae6fd;
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-  min-width: 16px;
-  text-align: right;
-}
-
-.hm-ref-scale {
-  flex: 1;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #38bdf8 0%, #38bdf8 var(--p, 70%), rgba(255,255,255,0.15) var(--p, 70%), rgba(255,255,255,0.15) 100%);
-  outline: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-}
-.hm-ref-scale::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #7dd3fc;
-  border: none;
-  box-shadow: 0 0 0 2px rgba(56,189,248,0.35);
-  cursor: pointer;
-}
-.hm-ref-scale::-moz-range-thumb {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #7dd3fc;
-  border: none;
-  box-shadow: 0 0 0 2px rgba(56,189,248,0.35);
-  cursor: pointer;
-}
-.hm-ref-scale:hover {
-  filter: brightness(1.15);
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */
@@ -3989,7 +3922,8 @@ body.hm-resizing * {
   height: 100%; /* 填充 prompt 容器高度 */
   min-height: 46px;
   max-height: none; /* 取消固定上限，让 flex 接管 */
-  padding: 0;
+  /* ↓↓↓ 强制文字顶格书写 ↓↓↓ */
+  padding: 0 !important;      /* 顶格！覆盖掉 #promptInput 的 11px */
   margin: 0;
   border: 0;
   outline: none;
@@ -3999,13 +3933,53 @@ body.hm-resizing * {
   font-size: 12.5px;
   line-height: 1.75;
   overflow-y: auto;
-  /* ↓↓↓ 强制文字顶格书写 ↓↓↓ */
   vertical-align: top;
   box-sizing: border-box;
   text-align: left;
-  /* 禁用 user-agent 的 textarea padding / 居中 */
+  /* 自动换行到下一行时也是顶格 */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   -webkit-appearance: none;
   appearance: none;
+}
+
+/* overlay 层：盖在 textarea 上显示 @N 富文本 chip（纯视觉，不交互） */
+.hm-prompt-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: 0 40px 22px 14px; /* 和 .hm-prompt padding 对齐 */
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: #dbe7f3;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-family: inherit;
+}
+.hm-prompt-overlay .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px 1px 2px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #bae6fd;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin: 0 1px;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+.hm-prompt-overlay .chip img {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  object-fit: cover;
+  display: block;
 }
 
 .hm-prompt textarea::placeholder {
@@ -7372,7 +7346,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 </style>
-<script>window.HM_BUILD = "20261029042831-b71caec";</script>
+<script>window.HM_BUILD = "20261029044044-075e3ac";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9751,30 +9725,17 @@ function renderRef() {
         '<span class="hm-ref-size">' + ref.width + '×' + ref.height + '</span>' +
         '<button class="hm-ref-cell-remove" type="button" aria-label="删除参考图 ' + (idx + 1) + '">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-        '</button>' +
-        '<div class="hm-ref-scale-bar">' +
-          '<span class="hm-ref-scale-label">主体</span>' +
-          '<input type="range" class="hm-ref-scale" min="0" max="100" step="5" value="' + (ref.weight != null ? ref.weight : 70) + '">' +
-          '<span class="hm-ref-scale-val">' + (ref.weight != null ? ref.weight : 70) + '%</span>' +
-        '</div>';
+        '</button>';
       const img = cell.querySelector('img');
       img.src = ref.dataUrl;
       /* 点击序号自动在 prompt 里插入 @N */
       cell.querySelector('.hm-ref-idx').addEventListener('click', function (ev) {
         ev.stopPropagation();
-        insertPromptAt('@' + (idx + 1));
+        insertPromptAt('@' + (idx + 1) + ' ');
       });
       cell.querySelector('.hm-ref-cell-remove').addEventListener('click', function (ev) {
         ev.stopPropagation();
         removeRefAt(idx);
-      });
-      /* per-ref 主体强度 slider */
-      var scaleInput = cell.querySelector('.hm-ref-scale');
-      var scaleVal = cell.querySelector('.hm-ref-scale-val');
-      scaleInput.addEventListener('input', function () {
-        var v = Number(scaleInput.value);
-        scaleVal.textContent = v + '%';
-        ref.weight = v;
       });
       els.refGrid.appendChild(cell);
     });
@@ -9795,6 +9756,9 @@ function renderRef() {
 
     els.refGrid.hidden = list.length === 0;
   }
+
+  /* 更新 overlay chip 层（textarea 上显示带图标的 @N 视觉化） */
+  renderPromptOverlay();
 
   /* 顶部状态：已添加 X 张 / 最多 10 张 */
   if (els.refState) {
@@ -9819,6 +9783,101 @@ function renderRef() {
   }
 
   syncRefNote();
+}
+
+/* ========== @N 富文本 chip overlay ==========
+ * 保留 textarea 原生纯文本 + 光标，在上面盖一层透明 div 把 @N 替换成带图标的 chip。
+ * Slack / Notion 的成熟方案，既保留 textarea 的 selection/undo 又有富文本视觉。 */
+var _promptOverlayEl = null;
+
+function _ensurePromptOverlay() {
+  if (_promptOverlayEl && document.body.contains(_promptOverlayEl)) return _promptOverlayEl;
+  var ta = els.promptInput;
+  if (!ta) return null;
+  var wrap = ta.closest('.hm-prompt');
+  if (!wrap) return null;
+  wrap.style.position = 'relative';
+
+  _promptOverlayEl = document.createElement('div');
+  _promptOverlayEl.className = 'hm-prompt-overlay';
+  /* 插在 textarea 前面，保证 textarea 在 overlay 之上 */
+  wrap.insertBefore(_promptOverlayEl, ta);
+  return _promptOverlayEl;
+}
+
+function renderPromptOverlay() {
+  var ta = els.promptInput;
+  if (!ta) return;
+  var overlay = _ensurePromptOverlay();
+  if (!overlay) return;
+
+  var refs = currentRefs();
+  var text = ta.value || '';
+  if (!refs.length || !text) {
+    overlay.style.display = 'none';
+    ta.style.color = ''; /* 恢复正常颜色 */
+    return;
+  }
+  /* 有 refs：textarea 文字透明（只留光标），overlay 画真实文字 + chip */
+  ta.style.color = 'transparent';
+  ta.style.caretColor = '#dbe7f3';
+  overlay.style.display = 'block';
+  overlay.scrollTop = ta.scrollTop;
+
+  var container = document.createElement('div');
+  var lines = text.split('\n');
+  lines.forEach(function (line, lineIdx) {
+    var re = /@(\d+)(?=\s|$|[^\d])/g;  /* @N 后面跟空格/结尾/非数字，防止 @12 匹配 @1 */
+    var lastIdx = 0;
+    var match;
+    var lineSpan = document.createElement('span');
+    re.lastIndex = 0;
+    while ((match = re.exec(line)) !== null) {
+      var fullMatch = match[0];
+      /* 处理 re 里的前瞻：lastIndex 要前进到 match 结束 */
+      if (match.index > lastIdx) {
+        lineSpan.appendChild(document.createTextNode(line.slice(lastIdx, match.index)));
+      }
+      var n = Number(match[1]);
+      var ref = refs[n - 1];
+      if (ref) {
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        var img = document.createElement('img');
+        img.src = ref.dataUrl;
+        img.alt = '';
+        chip.appendChild(img);
+        chip.appendChild(document.createTextNode('@' + n));
+        /* 如果原匹配包含末尾非数字字符（空格），把它加回去 */
+        var tail = fullMatch.slice(match[0].lastIndexOf(match[1]) + String(match[1]).length);
+        lineSpan.appendChild(chip);
+        if (tail) lineSpan.appendChild(document.createTextNode(tail));
+      } else {
+        lineSpan.appendChild(document.createTextNode(fullMatch));
+      }
+      lastIdx = match.index + fullMatch.length;
+    }
+    if (lastIdx < line.length) {
+      lineSpan.appendChild(document.createTextNode(line.slice(lastIdx)));
+    }
+    container.appendChild(lineSpan);
+    if (lineIdx < lines.length - 1) {
+      container.appendChild(document.createElement('br'));
+    }
+  });
+
+  overlay.innerHTML = '';
+  overlay.appendChild(container);
+}
+
+function bindPromptOverlayEvents() {
+  var ta = els.promptInput;
+  if (!ta) return;
+  ta.addEventListener('input', renderPromptOverlay);
+  ta.addEventListener('scroll', renderPromptOverlay);
+  ta.addEventListener('paste', function () {
+    setTimeout(renderPromptOverlay, 0);
+  });
 }
 
 function removeRefAt(idx) {
@@ -12146,6 +12205,7 @@ function boot() {
   bindEvents();
   initResizer();
   bindRefAutocomplete(); /* ← @ 自动补全 */
+  bindPromptOverlayEvents(); /* ← overlay chip 视觉化 */
   renderRef();          /* ← 每个 tab 独立的 refs 渲染 */
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();

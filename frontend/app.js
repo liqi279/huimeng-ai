@@ -804,30 +804,17 @@ function renderRef() {
         '<span class="hm-ref-size">' + ref.width + '×' + ref.height + '</span>' +
         '<button class="hm-ref-cell-remove" type="button" aria-label="删除参考图 ' + (idx + 1) + '">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-        '</button>' +
-        '<div class="hm-ref-scale-bar">' +
-          '<span class="hm-ref-scale-label">主体</span>' +
-          '<input type="range" class="hm-ref-scale" min="0" max="100" step="5" value="' + (ref.weight != null ? ref.weight : 70) + '">' +
-          '<span class="hm-ref-scale-val">' + (ref.weight != null ? ref.weight : 70) + '%</span>' +
-        '</div>';
+        '</button>';
       const img = cell.querySelector('img');
       img.src = ref.dataUrl;
       /* 点击序号自动在 prompt 里插入 @N */
       cell.querySelector('.hm-ref-idx').addEventListener('click', function (ev) {
         ev.stopPropagation();
-        insertPromptAt('@' + (idx + 1));
+        insertPromptAt('@' + (idx + 1) + ' ');
       });
       cell.querySelector('.hm-ref-cell-remove').addEventListener('click', function (ev) {
         ev.stopPropagation();
         removeRefAt(idx);
-      });
-      /* per-ref 主体强度 slider */
-      var scaleInput = cell.querySelector('.hm-ref-scale');
-      var scaleVal = cell.querySelector('.hm-ref-scale-val');
-      scaleInput.addEventListener('input', function () {
-        var v = Number(scaleInput.value);
-        scaleVal.textContent = v + '%';
-        ref.weight = v;
       });
       els.refGrid.appendChild(cell);
     });
@@ -848,6 +835,9 @@ function renderRef() {
 
     els.refGrid.hidden = list.length === 0;
   }
+
+  /* 更新 overlay chip 层（textarea 上显示带图标的 @N 视觉化） */
+  renderPromptOverlay();
 
   /* 顶部状态：已添加 X 张 / 最多 10 张 */
   if (els.refState) {
@@ -872,6 +862,101 @@ function renderRef() {
   }
 
   syncRefNote();
+}
+
+/* ========== @N 富文本 chip overlay ==========
+ * 保留 textarea 原生纯文本 + 光标，在上面盖一层透明 div 把 @N 替换成带图标的 chip。
+ * Slack / Notion 的成熟方案，既保留 textarea 的 selection/undo 又有富文本视觉。 */
+var _promptOverlayEl = null;
+
+function _ensurePromptOverlay() {
+  if (_promptOverlayEl && document.body.contains(_promptOverlayEl)) return _promptOverlayEl;
+  var ta = els.promptInput;
+  if (!ta) return null;
+  var wrap = ta.closest('.hm-prompt');
+  if (!wrap) return null;
+  wrap.style.position = 'relative';
+
+  _promptOverlayEl = document.createElement('div');
+  _promptOverlayEl.className = 'hm-prompt-overlay';
+  /* 插在 textarea 前面，保证 textarea 在 overlay 之上 */
+  wrap.insertBefore(_promptOverlayEl, ta);
+  return _promptOverlayEl;
+}
+
+function renderPromptOverlay() {
+  var ta = els.promptInput;
+  if (!ta) return;
+  var overlay = _ensurePromptOverlay();
+  if (!overlay) return;
+
+  var refs = currentRefs();
+  var text = ta.value || '';
+  if (!refs.length || !text) {
+    overlay.style.display = 'none';
+    ta.style.color = ''; /* 恢复正常颜色 */
+    return;
+  }
+  /* 有 refs：textarea 文字透明（只留光标），overlay 画真实文字 + chip */
+  ta.style.color = 'transparent';
+  ta.style.caretColor = '#dbe7f3';
+  overlay.style.display = 'block';
+  overlay.scrollTop = ta.scrollTop;
+
+  var container = document.createElement('div');
+  var lines = text.split('\n');
+  lines.forEach(function (line, lineIdx) {
+    var re = /@(\d+)(?=\s|$|[^\d])/g;  /* @N 后面跟空格/结尾/非数字，防止 @12 匹配 @1 */
+    var lastIdx = 0;
+    var match;
+    var lineSpan = document.createElement('span');
+    re.lastIndex = 0;
+    while ((match = re.exec(line)) !== null) {
+      var fullMatch = match[0];
+      /* 处理 re 里的前瞻：lastIndex 要前进到 match 结束 */
+      if (match.index > lastIdx) {
+        lineSpan.appendChild(document.createTextNode(line.slice(lastIdx, match.index)));
+      }
+      var n = Number(match[1]);
+      var ref = refs[n - 1];
+      if (ref) {
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        var img = document.createElement('img');
+        img.src = ref.dataUrl;
+        img.alt = '';
+        chip.appendChild(img);
+        chip.appendChild(document.createTextNode('@' + n));
+        /* 如果原匹配包含末尾非数字字符（空格），把它加回去 */
+        var tail = fullMatch.slice(match[0].lastIndexOf(match[1]) + String(match[1]).length);
+        lineSpan.appendChild(chip);
+        if (tail) lineSpan.appendChild(document.createTextNode(tail));
+      } else {
+        lineSpan.appendChild(document.createTextNode(fullMatch));
+      }
+      lastIdx = match.index + fullMatch.length;
+    }
+    if (lastIdx < line.length) {
+      lineSpan.appendChild(document.createTextNode(line.slice(lastIdx)));
+    }
+    container.appendChild(lineSpan);
+    if (lineIdx < lines.length - 1) {
+      container.appendChild(document.createElement('br'));
+    }
+  });
+
+  overlay.innerHTML = '';
+  overlay.appendChild(container);
+}
+
+function bindPromptOverlayEvents() {
+  var ta = els.promptInput;
+  if (!ta) return;
+  ta.addEventListener('input', renderPromptOverlay);
+  ta.addEventListener('scroll', renderPromptOverlay);
+  ta.addEventListener('paste', function () {
+    setTimeout(renderPromptOverlay, 0);
+  });
 }
 
 function removeRefAt(idx) {
@@ -3199,6 +3284,7 @@ function boot() {
   bindEvents();
   initResizer();
   bindRefAutocomplete(); /* ← @ 自动补全 */
+  bindPromptOverlayEvents(); /* ← overlay chip 视觉化 */
   renderRef();          /* ← 每个 tab 独立的 refs 渲染 */
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();

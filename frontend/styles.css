@@ -3670,86 +3670,19 @@ body.hm-resizing * {
 }
 
 /* ========== 每张参考图独立的主体强度 slider ========== */
-/* 覆盖原 .hm-ref-cell 尺寸：加宽放 slider，高度 = 68px 图 + 24px slider */
+/* per-ref slider 已移除，底部全局 refWeightSlider 负责控制 */
+/* ref cell 恢复为紧凑小方格，hover 加轻微放大 */
 .hm-ref-cell {
-  width: 96px;
-  height: 92px;
+  width: 52px;
+  height: 52px;
   overflow: hidden;
+  position: relative;
 }
-
 .hm-ref-cell img {
   width: 100%;
-  height: 68px;
+  height: 100%;
   object-fit: cover;
-  border-radius: 6px 6px 0 0;
   display: block;
-}
-
-.hm-ref-scale-bar {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 22px;
-  padding: 0 5px;
-  border-radius: 0 0 6px 6px;
-  background: rgba(15, 23, 42, 0.88);
-  border-top: 1px solid rgba(56, 189, 248, 0.15);
-}
-
-.hm-ref-scale-label {
-  font-size: 8px;
-  color: #94a3b8;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.hm-ref-scale-val {
-  font-size: 8px;
-  color: #bae6fd;
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-  min-width: 16px;
-  text-align: right;
-}
-
-.hm-ref-scale {
-  flex: 1;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #38bdf8 0%, #38bdf8 var(--p, 70%), rgba(255,255,255,0.15) var(--p, 70%), rgba(255,255,255,0.15) 100%);
-  outline: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-}
-.hm-ref-scale::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #7dd3fc;
-  border: none;
-  box-shadow: 0 0 0 2px rgba(56,189,248,0.35);
-  cursor: pointer;
-}
-.hm-ref-scale::-moz-range-thumb {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #7dd3fc;
-  border: none;
-  box-shadow: 0 0 0 2px rgba(56,189,248,0.35);
-  cursor: pointer;
-}
-.hm-ref-scale:hover {
-  filter: brightness(1.15);
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */
@@ -3981,7 +3914,8 @@ body.hm-resizing * {
   height: 100%; /* 填充 prompt 容器高度 */
   min-height: 46px;
   max-height: none; /* 取消固定上限，让 flex 接管 */
-  padding: 0;
+  /* ↓↓↓ 强制文字顶格书写 ↓↓↓ */
+  padding: 0 !important;      /* 顶格！覆盖掉 #promptInput 的 11px */
   margin: 0;
   border: 0;
   outline: none;
@@ -3991,13 +3925,53 @@ body.hm-resizing * {
   font-size: 12.5px;
   line-height: 1.75;
   overflow-y: auto;
-  /* ↓↓↓ 强制文字顶格书写 ↓↓↓ */
   vertical-align: top;
   box-sizing: border-box;
   text-align: left;
-  /* 禁用 user-agent 的 textarea padding / 居中 */
+  /* 自动换行到下一行时也是顶格 */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   -webkit-appearance: none;
   appearance: none;
+}
+
+/* overlay 层：盖在 textarea 上显示 @N 富文本 chip（纯视觉，不交互） */
+.hm-prompt-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: 0 40px 22px 14px; /* 和 .hm-prompt padding 对齐 */
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: #dbe7f3;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-family: inherit;
+}
+.hm-prompt-overlay .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px 1px 2px;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #bae6fd;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin: 0 1px;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+.hm-prompt-overlay .chip img {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  object-fit: cover;
+  display: block;
 }
 
 .hm-prompt textarea::placeholder {
