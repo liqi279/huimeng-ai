@@ -766,7 +766,8 @@
     deskDirty = false;
     /* 切换桌面 → 提示词与参考图跟随切换（每个桌面独立、跨刷新保留） */
     if (window.HMComposer && window.HMComposer.onFolderChange) {
-      window.HMComposer.onFolderChange(view.activeFolder);
+      try { window.HMComposer.onFolderChange(view.activeFolder); }
+      catch (err) { console.warn('[desk] composer 同步失败，已忽略：', err); }
     }
     persistSoon(); /* 记住当前停在哪个桌面 */
     if (!grid.classList.contains('is-board')) grid.classList.add('is-board');

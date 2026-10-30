@@ -466,6 +466,16 @@ function setCurrentTabRefWeight(v) {
   state.refWeight = v; /* 兼容旧字段 */
 }
 
+/* 参考主体强度 UI（顶层版本：bindEvents 里那份是局部函数，顶层调用不到会 ReferenceError 导致 boot 中断） */
+function applyRefWeightUI(v) {
+  v = Number(v) || 70;
+  var slider = document.getElementById('refWeightSlider');
+  var label = document.getElementById('refWeightLabel');
+  if (label) label.textContent = v + '%';
+  if (slider) slider.value = String(v);
+  setCurrentTabRefWeight(v);
+}
+
 /* ========== 每个桌面（文件夹）独立的提示词与参考图，且跨刷新保留 ========== */
 const LS_COMPOSER = 'anidream.composer.v1';
 var _composerKey = '__space';       /* 当前已载入的桌面 key：'__space' = 个人空间 */
@@ -537,7 +547,11 @@ function switchComposerFolder(folderId) {
   saveComposer();
   _composerKey = next;
   if (!els.promptInput) return; /* app 还没完成 bindEls，等 boot 时统一恢复 */
-  applyComposer(readComposerStore()[next] || null);
+  try {
+    applyComposer(readComposerStore()[next] || null);
+  } catch (err) {
+    console.warn('[composer] 切换桌面恢复失败，已忽略：', err);
+  }
 }
 
 window.HMComposer = {
@@ -4239,9 +4253,13 @@ function boot() {
   renderCatalogMenus(); /* ← 免费模型 / LoRA 风格列表（先用内置兜底） */
 
   /* 恢复当前桌面（个人空间或上次停留的文件夹）上次的提示词与参考图；随刷新保留 */
-  var bootFolder = window.HMDesk && window.HMDesk.getActiveFolder ? window.HMDesk.getActiveFolder() : null;
-  _composerKey = composerKeyOf(bootFolder);
-  applyComposer(readComposerStore()[_composerKey] || null);
+  try {
+    var bootFolder = window.HMDesk && window.HMDesk.getActiveFolder ? window.HMDesk.getActiveFolder() : null;
+    _composerKey = composerKeyOf(bootFolder);
+    applyComposer(readComposerStore()[_composerKey] || null);
+  } catch (err) {
+    console.warn('[composer] 启动恢复失败，已忽略：', err);
+  }
   window.addEventListener('beforeunload', function () { saveComposer(); });
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();
