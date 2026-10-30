@@ -442,27 +442,77 @@
 
     <div class="hm-composer" id="composer">
       <!-- 多模态参考主体上传区：生图 → 图片；视频 → 图片/视频/音频；音频 → 音频 -->
-      <div class="hm-ref" id="refDrop" role="button" tabindex="0" aria-label="上传或拖入参考主体" hidden>
+      <div class="hm-ref" id="refDrop" aria-label="上传或拖入参考主体" hidden>
         <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp3,audio/wav,audio/ogg" hidden multiple>
+        <!-- 空状态 -->
         <div class="hm-ref-empty" id="refEmpty">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="13" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5.5 16.5l4.2-4 3.2 2.8 2.5-2.3 3.1 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
           <span id="refEmptyText">拖入或上传参考图（最多 10 张）</span>
           <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 @1 @2 … 引用</span>
         </div>
+
+        <!-- 参考图网格 -->
         <div class="hm-ref-grid" id="refGrid" hidden></div>
-        <!-- 点击某个 ref-cell 时展开的大图预览 -->
-        <div class="hm-ref-preview" id="refPreview" hidden>
-          <img alt="参考图预览">
-          <span class="hm-ref-preview-idx"></span>
-          <span class="hm-ref-preview-size"></span>
-          <button class="hm-ref-preview-close" type="button" aria-label="关闭预览" title="关闭预览（点击空白处也可）">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+
+        <!-- 右侧悬浮工具条（图四） -->
+        <div class="hm-ref-right-bar" id="refRightBar" hidden>
+          <button type="button" class="hm-ref-right-btn hm-ref-right-select" id="refSelectBtn" title="选择素材">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>选择素材</span>
           </button>
-          <div class="hm-ref-preview-actions">
-            <button type="button" class="hm-ref-preview-insert" title="插入到提示词">插入 @N</button>
-            <button type="button" class="hm-ref-preview-remove" title="删除此参考图">删除</button>
+          <button type="button" class="hm-ref-right-btn hm-ref-right-clear" id="refClearBtn" title="全部删除">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>全部删除</span>
+          </button>
+        </div>
+
+        <!-- 选择模式顶部工具条（图五） -->
+        <div class="hm-ref-select-toolbar" id="refSelectToolbar" hidden>
+          <span class="hm-ref-select-count" id="refSelectCount">已选 0</span>
+          <button type="button" class="hm-ref-select-cancel" id="refSelectCancel">取消</button>
+          <button type="button" class="hm-ref-select-delete" id="refSelectDelete" title="删除选中">删除选中</button>
+          <button type="button" class="hm-ref-select-clear" id="refSelectClear" title="全部删除">全部删除</button>
+        </div>
+
+        <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
+        <div class="hm-ref-hover" id="refHover" hidden>
+          <img alt="预览">
+          <div class="hm-ref-hover-actions">
+            <button type="button" class="hm-ref-hover-view" title="全屏查看">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              查看
+            </button>
+            <button type="button" class="hm-ref-hover-at" title="@主体">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+              @主体
+            </button>
           </div>
         </div>
+
+        <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
+        <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
+          <button class="hm-ref-fs-close" type="button" aria-label="关闭全屏" title="关闭">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          </button>
+          <div class="hm-ref-fs-idx" id="refFsIdx"></div>
+          <img class="hm-ref-fs-img" id="refFsImg" alt="全屏预览">
+          <!-- 底部控制条：🔍+ ⟳ 🔍- ⬇ -->
+          <div class="hm-ref-fs-controls">
+            <button type="button" class="hm-ref-fs-btn" id="refFsZoomOut" title="缩小">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <button type="button" class="hm-ref-fs-btn" id="refFsReset" title="重置">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="hm-ref-fs-btn" id="refFsZoomIn" title="放大">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <button type="button" class="hm-ref-fs-btn" id="refFsDownload" title="下载">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+
         <span class="hm-ref-state" id="refState">未添加</span>
         <button class="hm-ref-remove" id="refRemove" type="button" aria-label="清空所有参考" title="清空全部参考">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>

@@ -486,11 +486,29 @@ function bindEls() {
   els.refInput = document.getElementById('refInput');
   els.refGrid = document.getElementById('refGrid');
   els.refEmpty = document.getElementById('refEmpty');
-  els.refPreview = document.getElementById('refPreview');
+  els.refPreview = document.getElementById('refPreview'); /* 已废弃，保留兼容 */
   els.refImage = document.getElementById('refImage');
   els.refRemove = document.getElementById('refRemove');
   els.refState = document.getElementById('refState');
   els.refNote = document.getElementById('refNote');
+  /* 新的参考图区域元素 */
+  els.refRightBar = document.getElementById('refRightBar');
+  els.refSelectBtn = document.getElementById('refSelectBtn');
+  els.refClearBtn = document.getElementById('refClearBtn');
+  els.refSelectToolbar = document.getElementById('refSelectToolbar');
+  els.refSelectCount = document.getElementById('refSelectCount');
+  els.refSelectCancel = document.getElementById('refSelectCancel');
+  els.refSelectDelete = document.getElementById('refSelectDelete');
+  els.refSelectClear = document.getElementById('refSelectClear');
+  els.refHover = document.getElementById('refHover');
+  els.refFullscreen = document.getElementById('refFullscreen');
+  els.refFsImg = document.getElementById('refFsImg');
+  els.refFsIdx = document.getElementById('refFsIdx');
+  els.refFsClose = document.getElementById('refFsClose');
+  els.refFsZoomIn = document.getElementById('refFsZoomIn');
+  els.refFsZoomOut = document.getElementById('refFsZoomOut');
+  els.refFsReset = document.getElementById('refFsReset');
+  els.refFsDownload = document.getElementById('refFsDownload');
 
   els.ratioPicker = document.getElementById('ratioPicker');
   els.ratioLabel = document.getElementById('ratioLabel');
@@ -1051,82 +1069,175 @@ function syncRefNote() {
   }
 }
 
+/* ========== 参考图区域状态 ========== */
+var _refSelectMode = false;       /* 是否进入选择素材模式 */
+var _refSelectedSet = {};         /* 已选择索引 {0:true, 2:true, ...} */
+var _refFsIdx = -1;               /* 全屏查看的参考索引 */
+var _refFsScale = 1;              /* 全屏缩放比例 */
+
+function enterRefSelectMode() {
+  _refSelectMode = true;
+  _refSelectedSet = {};
+  document.body.setAttribute('data-ref-select', '1');
+  renderRef();
+}
+function exitRefSelectMode() {
+  _refSelectMode = false;
+  _refSelectedSet = {};
+  document.body.removeAttribute('data-ref-select');
+  renderRef();
+}
+function toggleRefSelected(idx) {
+  if (_refSelectedSet[idx]) delete _refSelectedSet[idx];
+  else _refSelectedSet[idx] = true;
+  renderRef();
+}
+function deleteSelectedRefs() {
+  var list = currentRefs();
+  /* 从大到小删，避免索引错位 */
+  var toDelete = Object.keys(_refSelectedSet).map(Number).sort(function (a, b) { return b - a; });
+  if (!toDelete.length) return;
+  toDelete.forEach(function (idx) { list.splice(idx, 1); });
+  setCurrentRefs(list);
+  exitRefSelectMode();
+  toast('已删除 ' + toDelete.length + ' 张参考图', 'info');
+}
+
+/* ========== 全屏查看 ========== */
+function openRefFullscreen(idx) {
+  var list = currentRefs();
+  if (!list[idx]) return;
+  _refFsIdx = idx;
+  _refFsScale = 1;
+  if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  if (els.refFsImg) els.refFsImg.src = list[idx].dataUrl;
+  if (els.refFsIdx) els.refFsIdx.textContent = '@' + (idx + 1);
+  if (els.refFullscreen) els.refFullscreen.hidden = false;
+}
+function closeRefFullscreen() {
+  _refFsIdx = -1;
+  _refFsScale = 1;
+  if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  if (els.refFullscreen) els.refFullscreen.hidden = true;
+}
+
+/* ========== hover 浮层 ========== */
+var _refHoverIdx = -1;
+var _refHoverEnterTimer = 0;
+function showRefHover(idx, anchorEl) {
+  var list = currentRefs();
+  if (!list[idx] || _refSelectMode) return;
+  _refHoverIdx = idx;
+  if (!els.refHover) return;
+  els.refHover.querySelector('img').src = list[idx].dataUrl;
+  els.refHover.hidden = false;
+  /* 位置：anchorEl 右侧或下侧，避免超出视口 */
+  var r = anchorEl.getBoundingClientRect();
+  var hoverW = 140, hoverH = 156;
+  var top = r.bottom + 6;
+  var left = r.left;
+  if (top + hoverH > window.innerHeight) top = r.top - hoverH - 6;
+  if (left + hoverW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - hoverW - 8);
+  if (left < 8) left = 8;
+  els.refHover.style.top = top + 'px';
+  els.refHover.style.left = left + 'px';
+}
+function hideRefHover() {
+  if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+  _refHoverIdx = -1;
+  if (els.refHover) els.refHover.hidden = true;
+}
+
+/* ========== renderRef（完全重写） ========== */
 function renderRef() {
-  const list = currentRefs();
+  var list = currentRefs();
+  var hasRef = list.length > 0;
 
-  /* 兜底：如果当前展开的索引超出范围（删除导致），自动收起 */
-  if (_refExpandedIdx >= list.length) _refExpandedIdx = -1;
-
-  /* 渲染多图网格 */
+  /* 渲染网格 */
   if (els.refGrid) {
     els.refGrid.innerHTML = '';
     list.forEach(function (ref, idx) {
-      const cell = document.createElement('div');
+      var cell = document.createElement('div');
       cell.className = 'hm-ref-cell';
       cell.dataset.idx = String(idx);
+      if (_refSelectedSet[idx]) cell.classList.add('is-selected');
+
+      var check = _refSelectMode
+        ? '<div class="hm-ref-check' + (_refSelectedSet[idx] ? ' is-on' : '') + '" data-check-idx="' + idx + '">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</div>'
+        : '';
+
       cell.innerHTML =
-        '<img alt="参考图 ' + (idx + 1) + '">' +
-        '<span class="hm-ref-idx">@' + (idx + 1) + '</span>' +
-        '<span class="hm-ref-size">' + ref.width + '×' + ref.height + '</span>' +
-        '<button class="hm-ref-cell-remove" type="button" aria-label="删除参考图 ' + (idx + 1) + '">' +
-          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-        '</button>';
-      const img = cell.querySelector('img');
-      img.src = ref.dataUrl;
-      /* 点击序号自动在 prompt 里插入 @N */
-      cell.querySelector('.hm-ref-idx').addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        insertPromptAt('@' + (idx + 1) + ' ');
-      });
-      cell.querySelector('.hm-ref-cell-remove').addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        removeRefAt(idx);
-      });
-      /* 点击 cell 本身 → 展开大图预览 */
+        '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.thumb || ref.dataUrl) + '">' +
+        '<span class="hm-ref-tag">图' + (idx + 1) + '</span>' +
+        check;
+
+      /* 事件：选择模式下点击 cell = toggle 选中；否则点击 = 打开全屏 */
       cell.addEventListener('click', function (ev) {
-        /* 如果已在预览里点了同一个 cell，就收起 */
-        toggleRefPreview(idx);
+        if (_refSelectMode) {
+          ev.stopPropagation();
+          toggleRefSelected(idx);
+          return;
+        }
+        openRefFullscreen(idx);
       });
+
+      /* hover 浮层（非选择模式才显示）：鼠标enter 延迟一点避免闪烁 */
+      if (!_refSelectMode) {
+        cell.addEventListener('mouseenter', function () {
+          if (_refHoverEnterTimer) clearTimeout(_refHoverEnterTimer);
+          _refHoverEnterTimer = setTimeout(function () {
+            showRefHover(idx, cell);
+          }, 120);
+        });
+        cell.addEventListener('mouseleave', function () {
+          if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+          /* 延迟隐藏，让用户能移到浮层上 */
+          setTimeout(function () {
+            if (_refHoverIdx === idx && els.refHover && !els.refHover.matches(':hover')) hideRefHover();
+          }, 180);
+        });
+      }
+
       els.refGrid.appendChild(cell);
     });
 
-    /* 添加新图的槽位（未满时显示） */
-    if (list.length < REF_MAX_COUNT) {
-      const addCell = document.createElement('div');
+    /* "+" 槽位 */
+    if (list.length < REF_MAX_COUNT && !_refSelectMode) {
+      var addCell = document.createElement('div');
       addCell.className = 'hm-ref-cell hm-ref-add';
       addCell.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>' +
         '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
-      addCell.addEventListener('click', function () { els.refInput.click(); });
-      addCell.addEventListener('keydown', function (ev) {
-        if (ev.key === 'Enter') { ev.preventDefault(); els.refInput.click(); }
+      addCell.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        els.refInput.click();
       });
       els.refGrid.appendChild(addCell);
     }
 
-    /* 有预览展开时，网格隐藏 */
-    els.refGrid.hidden = list.length === 0 || _refExpandedIdx >= 0;
+    els.refGrid.hidden = !hasRef;
   }
 
-  /* ---- 大图预览面板 ---- */
-  if (els.refPreview) {
-    if (_refExpandedIdx >= 0 && list[_refExpandedIdx]) {
-      var ref = list[_refExpandedIdx];
-      els.refPreview.hidden = false;
-      els.refPreview.querySelector('img').src = ref.dataUrl;
-      els.refPreview.querySelector('.hm-ref-preview-idx').textContent = '@' + (_refExpandedIdx + 1);
-      els.refPreview.querySelector('.hm-ref-preview-size').textContent = ref.width + '×' + ref.height;
-    } else {
-      els.refPreview.hidden = true;
+  /* 右侧工具条（有素材且非选择模式时显示） */
+  if (els.refRightBar) els.refRightBar.hidden = !hasRef || _refSelectMode;
+
+  /* 选择模式顶部工具条 */
+  if (els.refSelectToolbar) {
+    els.refSelectToolbar.hidden = !_refSelectMode;
+    if (els.refSelectCount) {
+      var selCount = Object.keys(_refSelectedSet).length;
+      els.refSelectCount.textContent = '已选 ' + selCount;
     }
   }
 
-  /* 更新 overlay chip 层（textarea 上显示带图标的 @N 视觉化） */
+  /* 更新 overlay chip 层 */
   renderPromptOverlay();
 
-  /* 顶部状态：已添加 X 张 / 最多 10 张 */
+  /* 顶部状态文字 */
   if (els.refState) {
-    if (list.length > 0) {
+    if (hasRef) {
       els.refState.textContent = list.length + '/' + REF_MAX_COUNT;
       els.refState.style.color = '#c4b5fd';
     } else {
@@ -1135,9 +1246,9 @@ function renderRef() {
     }
   }
 
-  /* 拖入区域视觉 */
+  /* 空/满 状态 */
   if (els.refDrop) {
-    if (list.length > 0) {
+    if (hasRef) {
       els.refDrop.classList.add('has-ref');
       if (els.refEmpty) els.refEmpty.hidden = true;
     } else {
@@ -1147,24 +1258,6 @@ function renderRef() {
   }
 
   syncRefNote();
-}
-
-/* 参考图大图预览的展开索引（-1 表示收起） */
-var _refExpandedIdx = -1;
-
-function toggleRefPreview(idx) {
-  if (_refExpandedIdx === idx) {
-    _refExpandedIdx = -1;
-  } else {
-    _refExpandedIdx = idx;
-  }
-  renderRef();
-}
-
-function closeRefPreview() {
-  if (_refExpandedIdx < 0) return;
-  _refExpandedIdx = -1;
-  renderRef();
 }
 
 /* ========== @N 富文本 chip overlay ==========
@@ -1217,10 +1310,9 @@ function _ensureChipCache(refs) {
   if (key === _chipCacheKey) return _chipCacheHtml;
   _chipCacheKey = key;
   _chipCacheHtml = refs.map(function (ref, i) {
-    /* chip 宽度必须等于 "@N" 文本自身宽度，否则光标会落在 chip 左边（错位）：
-       所以用 @N 文字撑宽度、缩略图做背景，而不是插入 <img> 撑宽 */
     var u = ref.thumb || ref.dataUrl;
-    return '<span class="chip" style="background-image:url(' + u + ')">@' + (i + 1) + '</span>';
+    /* chip 顺序：图标在前，@图N 在后，整体 inline-flex */
+    return '<span class="chip"><span class="chip-thumb" style="background-image:url(' + u + ')"></span><span class="chip-label">@' + (i + 1) + '</span></span>';
   });
   return _chipCacheHtml;
 }
@@ -1275,9 +1367,17 @@ function removeRefAt(idx) {
   arr.splice(idx, 1);
   setCurrentRefs(arr);
   els.refInput.value = '';
-  /* 预览索引纠偏：删除后如果有图的编号前移，同步调整 */
-  if (_refExpandedIdx === idx) _refExpandedIdx = -1;
-  else if (_refExpandedIdx > idx) _refExpandedIdx--;
+  /* 清除选择态、关闭全屏（如果删的是当前全屏图） */
+  delete _refSelectedSet[idx];
+  var nextSel = {};
+  Object.keys(_refSelectedSet).forEach(function (k) {
+    var ki = Number(k);
+    if (ki < idx) nextSel[ki] = true;
+    else if (ki > idx) nextSel[ki - 1] = true;
+  });
+  _refSelectedSet = nextSel;
+  if (_refFsIdx === idx) closeRefFullscreen();
+  hideRefHover();
   renderRef();
   toast('已删除参考图 #' + (idx + 1), 'info');
 }
@@ -1285,7 +1385,9 @@ function removeRefAt(idx) {
 function clearRefImages() {
   setCurrentRefs([]);
   els.refInput.value = '';
-  _refExpandedIdx = -1;
+  _refSelectedSet = {};
+  hideRefHover();
+  closeRefFullscreen();
   renderRef();
 }
 
@@ -3267,16 +3369,15 @@ function bindEvents() {
 
   els.promptInput.addEventListener('input', updateCharCount);
 
-  els.refDrop.addEventListener('click', function () {
-    els.refInput.click();
-  });
-
-  els.refDrop.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
-      event.preventDefault();
-      els.refInput.click();
-    }
-  });
+  /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 === */
+  if (els.refEmpty) {
+    els.refEmpty.addEventListener('click', function () { els.refInput.click(); });
+    els.refEmpty.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault(); els.refInput.click();
+      }
+    });
+  }
 
   els.refInput.addEventListener('change', async function (event) {
     var files = Array.from(event.target.files || []);
@@ -3290,7 +3391,7 @@ function bindEvents() {
     for (var i = 0; i < Math.min(files.length, remaining); i++) {
       await pickRefFile(files[i]);
     }
-    els.refInput.value = ''; /* 重置，让同一个文件可以再次选择 */
+    els.refInput.value = '';
   });
 
   els.refRemove.addEventListener('click', function (event) {
@@ -3317,7 +3418,6 @@ function bindEvents() {
     event.preventDefault();
     event.stopPropagation();
     els.refDrop.classList.remove('is-over');
-    /* 支持拖入多张 */
     var files = Array.from(event.dataTransfer && event.dataTransfer.files || []);
     var remaining = REF_MAX_COUNT - currentRefs().length;
     for (var i = 0; i < Math.min(files.length, remaining); i++) {
@@ -3325,36 +3425,92 @@ function bindEvents() {
     }
   });
 
-  /* ---- 预览面板事件（事件委托，面板重绘后不用重新绑定） ---- */
-  if (els.refPreview) {
-    els.refPreview.addEventListener('click', function (ev) {
-      var closeBtn = ev.target.closest('.hm-ref-preview-close');
-      if (closeBtn) {
+  /* === 右侧工具条 === */
+  if (els.refSelectBtn) els.refSelectBtn.addEventListener('click', function (ev) {
+    ev.stopPropagation(); enterRefSelectMode();
+  });
+  if (els.refClearBtn) els.refClearBtn.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    if (!currentRefs().length) return;
+    if (confirm('确定要清空所有参考图吗？')) {
+      clearRefImages();
+      toast('已清空所有参考图', 'info');
+    }
+  });
+
+  /* === 选择模式顶部工具条 === */
+  if (els.refSelectCancel) els.refSelectCancel.addEventListener('click', exitRefSelectMode);
+  if (els.refSelectDelete) els.refSelectDelete.addEventListener('click', function (ev) {
+    ev.stopPropagation(); deleteSelectedRefs();
+  });
+  if (els.refSelectClear) els.refSelectClear.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    if (!currentRefs().length) return;
+    if (confirm('确定要清空所有参考图吗？')) { clearRefImages(); exitRefSelectMode(); toast('已清空所有参考图', 'info'); }
+  });
+
+  /* === hover 浮层按钮 === */
+  if (els.refHover) {
+    els.refHover.addEventListener('click', function (ev) {
+      var viewBtn = ev.target.closest('.hm-ref-hover-view');
+      if (viewBtn) {
         ev.stopPropagation();
-        closeRefPreview();
+        if (_refHoverIdx >= 0) openRefFullscreen(_refHoverIdx);
+        hideRefHover();
         return;
       }
-      var insertBtn = ev.target.closest('.hm-ref-preview-insert');
-      if (insertBtn) {
+      var atBtn = ev.target.closest('.hm-ref-hover-at');
+      if (atBtn) {
         ev.stopPropagation();
-        if (_refExpandedIdx >= 0) insertPromptAt('@' + (_refExpandedIdx + 1) + ' ');
-        closeRefPreview();
+        if (_refHoverIdx >= 0) insertPromptAt('@' + (_refHoverIdx + 1) + ' ');
+        hideRefHover();
         return;
       }
-      var removeBtn = ev.target.closest('.hm-ref-preview-remove');
-      if (removeBtn) {
-        ev.stopPropagation();
-        if (_refExpandedIdx >= 0) removeRefAt(_refExpandedIdx);
-        return; /* removeRefAt 内部会 renderRef 并自动收起 */
-      }
-      /* 点击预览面板空白处 → 收起 */
-      var imgWrap = ev.target.closest('img');
-      var idxTag = ev.target.closest('.hm-ref-preview-idx');
-      var sizeTag = ev.target.closest('.hm-ref-preview-size');
-      var actions = ev.target.closest('.hm-ref-preview-actions');
-      if (!imgWrap && !idxTag && !sizeTag && !actions) {
-        closeRefPreview();
-      }
+    });
+    /* 浮层自己 hover 时不要收起 */
+    els.refHover.addEventListener('mouseenter', function () {
+      if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+    });
+    els.refHover.addEventListener('mouseleave', function () {
+      hideRefHover();
+    });
+  }
+
+  /* === 全屏查看控制 === */
+  if (els.refFsClose) els.refFsClose.addEventListener('click', closeRefFullscreen);
+  if (els.refFsZoomIn) els.refFsZoomIn.addEventListener('click', function () {
+    _refFsScale = Math.min(4, +(_refFsScale + 0.25).toFixed(2));
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(' + _refFsScale + ')';
+  });
+  if (els.refFsZoomOut) els.refFsZoomOut.addEventListener('click', function () {
+    _refFsScale = Math.max(0.3, +(_refFsScale - 0.25).toFixed(2));
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(' + _refFsScale + ')';
+  });
+  if (els.refFsReset) els.refFsReset.addEventListener('click', function () {
+    _refFsScale = 1;
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  });
+  if (els.refFsDownload) els.refFsDownload.addEventListener('click', function () {
+    if (_refFsIdx < 0) return;
+    var list = currentRefs();
+    var ref = list[_refFsIdx];
+    if (!ref) return;
+    var a = document.createElement('a');
+    a.href = ref.dataUrl;
+    a.download = ref.name || ('reference_' + (_refFsIdx + 1) + '.jpg');
+    a.click();
+  });
+  /* 全屏：ESC 关闭 + 点击图片外关闭 */
+  document.addEventListener('keydown', function (ev) {
+    if (els.refFullscreen && !els.refFullscreen.hidden && ev.key === 'Escape') {
+      ev.preventDefault();
+      closeRefFullscreen();
+    }
+  });
+  if (els.refFullscreen) {
+    els.refFullscreen.addEventListener('click', function (ev) {
+      /* 点击图片或按钮之外的黑底 → 关闭 */
+      if (ev.target === els.refFullscreen) closeRefFullscreen();
     });
   }
 

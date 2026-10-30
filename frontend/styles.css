@@ -3706,7 +3706,7 @@ body.hm-resizing * {
 .hm-ref-cell {
   width: 52px;
   height: 52px;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 .hm-ref-cell img {
@@ -3714,132 +3714,348 @@ body.hm-resizing * {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 6px;
 }
 
-/* ========== 参考图大图预览（点击 cell 展开） ========== */
-.hm-ref-preview {
-  position: relative;
+/* ========== 参考图单元格左上角标签 图1/图2/... ========== */
+.hm-ref-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1px 5px 1px 6px;
+  border-radius: 5px 0 5px 0;
+  background: rgba(99, 102, 241, 0.92);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+
+/* 选择模式：勾选框 */
+.hm-ref-check {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: rgba(15, 23, 42, 0.85);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  z-index: 3;
+}
+.hm-ref-check svg {
+  width: 9px;
+  height: 9px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+/* 进入选择模式后显示勾选框 */
+body[data-ref-select="1"] .hm-ref-check {
+  opacity: 1;
+  transform: scale(1);
+}
+body[data-ref-select="1"] .hm-ref-check.is-on {
+  background: #6366f1;
+  border-color: #6366f1;
+}
+body[data-ref-select="1"] .hm-ref-check.is-on svg {
+  opacity: 1;
+}
+
+/* 选择模式下 cell 有蓝色选中边框 */
+body[data-ref-select="1"] .hm-ref-cell.is-selected img {
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+/* ========== 右侧悬浮工具条（图四：选择素材 + 全部删除） ========== */
+.hm-ref-right-bar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 5;
+}
+
+.hm-ref-right-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 7px;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  line-height: 1;
+}
+.hm-ref-right-btn svg {
+  width: 12px;
+  height: 12px;
+}
+.hm-ref-right-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  color: #fff;
+}
+.hm-ref-right-select:hover { border-color: rgba(99, 102, 241, 0.55); color: #a5b4fc; }
+.hm-ref-right-clear:hover { border-color: rgba(251, 113, 133, 0.5); color: #fda4af; }
+
+/* ========== 选择模式顶部工具条（图五） ========== */
+.hm-ref-select-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.92), rgba(79, 70, 229, 0.92));
+  border-radius: 6px 6px 0 0;
+  z-index: 4;
+  color: #fff;
+  font-size: 11.5px;
+  animation: hmRefSelectIn 0.18s ease both;
+}
+@keyframes hmRefSelectIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hm-ref-select-count {
+  font-weight: 600;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+.hm-ref-select-toolbar button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.hm-ref-select-toolbar button:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.hm-ref-select-cancel { margin-left: auto; }
+.hm-ref-select-delete { background: rgba(251, 113, 133, 0.28) !important; border-color: rgba(251, 113, 133, 0.5) !important; }
+.hm-ref-select-clear { background: rgba(100, 116, 139, 0.3) !important; border-color: rgba(255, 255, 255, 0.2) !important; }
+
+/* ========== hover 浮层：大图预览 + 查看/@主体（图三） ========== */
+.hm-ref-hover {
+  position: fixed;
+  z-index: 900;
+  width: 140px;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: hmRefHoverIn 0.14s ease both;
+  pointer-events: auto;
+}
+@keyframes hmRefHoverIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.hm-ref-hover img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 5px;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
+}
+.hm-ref-hover-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.hm-ref-hover-actions button {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px;
-  min-height: 140px;
-  max-height: 260px;
-  background: linear-gradient(135deg, rgba(15, 25, 38, 0.96), rgba(20, 35, 55, 0.96));
-  border-radius: 8px;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15), 0 8px 24px rgba(0, 0, 0, 0.35);
-  animation: hmRefPreviewIn 0.18s ease both;
-}
-
-@keyframes hmRefPreviewIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.hm-ref-preview img {
-  max-width: 200px;
-  max-height: 220px;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.3);
-  display: block;
-}
-
-.hm-ref-preview-idx {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  padding: 2px 7px;
-  border-radius: 10px;
-  background: rgba(147, 197, 253, 0.95);
-  color: #0c2d5b;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
-  user-select: none;
-  pointer-events: none;
-}
-
-.hm-ref-preview-size {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
+  gap: 3px;
+  padding: 4px 0;
   font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #e5e7eb;
-  line-height: 1.3;
-  pointer-events: none;
-}
-
-.hm-ref-preview-close {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(15, 23, 42, 0.8);
-  color: #cbd5e1;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.12s ease, transform 0.12s ease;
+  line-height: 1;
 }
-
-.hm-ref-preview-close:hover {
-  background: rgba(251, 113, 133, 0.9);
-  color: #fff;
-}
-
-.hm-ref-preview-close svg {
+.hm-ref-hover-actions button svg {
   width: 11px;
   height: 11px;
 }
-
-.hm-ref-preview-actions {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  display: flex;
-  gap: 6px;
+.hm-ref-hover-view:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: rgba(56, 189, 248, 0.55);
+  color: #bae6fd;
+  transform: translateY(-1px);
+}
+.hm-ref-hover-at:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: #a5b4fc;
+  transform: translateY(-1px);
 }
 
-.hm-ref-preview-actions button {
+/* ========== 全屏查看 modal（图一） ========== */
+.hm-ref-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hmRefFsIn 0.2s ease both;
+}
+@keyframes hmRefFsIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hm-ref-fs-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.hm-ref-fs-close:hover { background: rgba(251, 113, 133, 0.85); }
+.hm-ref-fs-close svg { width: 16px; height: 16px; }
+
+.hm-ref-fs-idx {
+  position: absolute;
+  top: 18px;
+  left: 18px;
   padding: 4px 10px;
-  border-radius: 5px;
-  font-size: 11px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.85);
+  color: #fff;
+  font-size: 12px;
   font-weight: 600;
+}
+
+.hm-ref-fs-img {
+  max-width: 92vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 0.15s ease;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.hm-ref-fs-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.hm-ref-fs-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.12s ease;
 }
-
-.hm-ref-preview-insert {
-  background: rgba(56, 189, 248, 0.18);
-  color: #bae6fd;
-  border: 1px solid rgba(56, 189, 248, 0.45);
+.hm-ref-fs-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.08);
+}
+.hm-ref-fs-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
-.hm-ref-preview-insert:hover {
-  background: rgba(56, 189, 248, 0.32);
-  transform: translateY(-1px);
+/* ========== chip 重写：图标 + @图N ========== */
+/* chip 宽度必须等于自身文字宽度，光标才不会错位 */
+.hm-prompt-overlay .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 4px 0 2px;
+  margin: 0;
+  border-radius: 4px;
+  background-color: rgba(99, 102, 241, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.55);
+  vertical-align: baseline;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  height: 1.4em;
 }
-
-.hm-ref-preview-remove {
-  background: rgba(251, 113, 133, 0.14);
-  color: #fda4af;
-  border: 1px solid rgba(251, 113, 133, 0.4);
+.hm-prompt-overlay .chip .chip-thumb {
+  flex: 0 0 auto;
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 2px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
-
-.hm-ref-preview-remove:hover {
-  background: rgba(251, 113, 133, 0.3);
-  transform: translateY(-1px);
+.hm-prompt-overlay .chip .chip-label {
+  flex: 0 0 auto;
+  color: #c7d2fe;
+  font-weight: 500;
+  font-size: 0.92em;
+  white-space: nowrap;
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */

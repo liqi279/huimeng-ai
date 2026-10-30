@@ -3714,7 +3714,7 @@ body.hm-resizing * {
 .hm-ref-cell {
   width: 52px;
   height: 52px;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 .hm-ref-cell img {
@@ -3722,132 +3722,348 @@ body.hm-resizing * {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 6px;
 }
 
-/* ========== 参考图大图预览（点击 cell 展开） ========== */
-.hm-ref-preview {
-  position: relative;
+/* ========== 参考图单元格左上角标签 图1/图2/... ========== */
+.hm-ref-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1px 5px 1px 6px;
+  border-radius: 5px 0 5px 0;
+  background: rgba(99, 102, 241, 0.92);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+
+/* 选择模式：勾选框 */
+.hm-ref-check {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: rgba(15, 23, 42, 0.85);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  z-index: 3;
+}
+.hm-ref-check svg {
+  width: 9px;
+  height: 9px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+/* 进入选择模式后显示勾选框 */
+body[data-ref-select="1"] .hm-ref-check {
+  opacity: 1;
+  transform: scale(1);
+}
+body[data-ref-select="1"] .hm-ref-check.is-on {
+  background: #6366f1;
+  border-color: #6366f1;
+}
+body[data-ref-select="1"] .hm-ref-check.is-on svg {
+  opacity: 1;
+}
+
+/* 选择模式下 cell 有蓝色选中边框 */
+body[data-ref-select="1"] .hm-ref-cell.is-selected img {
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+/* ========== 右侧悬浮工具条（图四：选择素材 + 全部删除） ========== */
+.hm-ref-right-bar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 5;
+}
+
+.hm-ref-right-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 7px;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  line-height: 1;
+}
+.hm-ref-right-btn svg {
+  width: 12px;
+  height: 12px;
+}
+.hm-ref-right-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  color: #fff;
+}
+.hm-ref-right-select:hover { border-color: rgba(99, 102, 241, 0.55); color: #a5b4fc; }
+.hm-ref-right-clear:hover { border-color: rgba(251, 113, 133, 0.5); color: #fda4af; }
+
+/* ========== 选择模式顶部工具条（图五） ========== */
+.hm-ref-select-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.92), rgba(79, 70, 229, 0.92));
+  border-radius: 6px 6px 0 0;
+  z-index: 4;
+  color: #fff;
+  font-size: 11.5px;
+  animation: hmRefSelectIn 0.18s ease both;
+}
+@keyframes hmRefSelectIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hm-ref-select-count {
+  font-weight: 600;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+.hm-ref-select-toolbar button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.hm-ref-select-toolbar button:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.hm-ref-select-cancel { margin-left: auto; }
+.hm-ref-select-delete { background: rgba(251, 113, 133, 0.28) !important; border-color: rgba(251, 113, 133, 0.5) !important; }
+.hm-ref-select-clear { background: rgba(100, 116, 139, 0.3) !important; border-color: rgba(255, 255, 255, 0.2) !important; }
+
+/* ========== hover 浮层：大图预览 + 查看/@主体（图三） ========== */
+.hm-ref-hover {
+  position: fixed;
+  z-index: 900;
+  width: 140px;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: hmRefHoverIn 0.14s ease both;
+  pointer-events: auto;
+}
+@keyframes hmRefHoverIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.hm-ref-hover img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 5px;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
+}
+.hm-ref-hover-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.hm-ref-hover-actions button {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px;
-  min-height: 140px;
-  max-height: 260px;
-  background: linear-gradient(135deg, rgba(15, 25, 38, 0.96), rgba(20, 35, 55, 0.96));
-  border-radius: 8px;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15), 0 8px 24px rgba(0, 0, 0, 0.35);
-  animation: hmRefPreviewIn 0.18s ease both;
-}
-
-@keyframes hmRefPreviewIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.hm-ref-preview img {
-  max-width: 200px;
-  max-height: 220px;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.3);
-  display: block;
-}
-
-.hm-ref-preview-idx {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  padding: 2px 7px;
-  border-radius: 10px;
-  background: rgba(147, 197, 253, 0.95);
-  color: #0c2d5b;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
-  user-select: none;
-  pointer-events: none;
-}
-
-.hm-ref-preview-size {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
+  gap: 3px;
+  padding: 4px 0;
   font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #e5e7eb;
-  line-height: 1.3;
-  pointer-events: none;
-}
-
-.hm-ref-preview-close {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(15, 23, 42, 0.8);
-  color: #cbd5e1;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.12s ease, transform 0.12s ease;
+  line-height: 1;
 }
-
-.hm-ref-preview-close:hover {
-  background: rgba(251, 113, 133, 0.9);
-  color: #fff;
-}
-
-.hm-ref-preview-close svg {
+.hm-ref-hover-actions button svg {
   width: 11px;
   height: 11px;
 }
-
-.hm-ref-preview-actions {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  display: flex;
-  gap: 6px;
+.hm-ref-hover-view:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: rgba(56, 189, 248, 0.55);
+  color: #bae6fd;
+  transform: translateY(-1px);
+}
+.hm-ref-hover-at:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: #a5b4fc;
+  transform: translateY(-1px);
 }
 
-.hm-ref-preview-actions button {
+/* ========== 全屏查看 modal（图一） ========== */
+.hm-ref-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hmRefFsIn 0.2s ease both;
+}
+@keyframes hmRefFsIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hm-ref-fs-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.hm-ref-fs-close:hover { background: rgba(251, 113, 133, 0.85); }
+.hm-ref-fs-close svg { width: 16px; height: 16px; }
+
+.hm-ref-fs-idx {
+  position: absolute;
+  top: 18px;
+  left: 18px;
   padding: 4px 10px;
-  border-radius: 5px;
-  font-size: 11px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.85);
+  color: #fff;
+  font-size: 12px;
   font-weight: 600;
+}
+
+.hm-ref-fs-img {
+  max-width: 92vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 0.15s ease;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.hm-ref-fs-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.hm-ref-fs-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.12s ease;
 }
-
-.hm-ref-preview-insert {
-  background: rgba(56, 189, 248, 0.18);
-  color: #bae6fd;
-  border: 1px solid rgba(56, 189, 248, 0.45);
+.hm-ref-fs-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.08);
+}
+.hm-ref-fs-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
-.hm-ref-preview-insert:hover {
-  background: rgba(56, 189, 248, 0.32);
-  transform: translateY(-1px);
+/* ========== chip 重写：图标 + @图N ========== */
+/* chip 宽度必须等于自身文字宽度，光标才不会错位 */
+.hm-prompt-overlay .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 4px 0 2px;
+  margin: 0;
+  border-radius: 4px;
+  background-color: rgba(99, 102, 241, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.55);
+  vertical-align: baseline;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  height: 1.4em;
 }
-
-.hm-ref-preview-remove {
-  background: rgba(251, 113, 133, 0.14);
-  color: #fda4af;
-  border: 1px solid rgba(251, 113, 133, 0.4);
+.hm-prompt-overlay .chip .chip-thumb {
+  flex: 0 0 auto;
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 2px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
-
-.hm-ref-preview-remove:hover {
-  background: rgba(251, 113, 133, 0.3);
-  transform: translateY(-1px);
+.hm-prompt-overlay .chip .chip-label {
+  flex: 0 0 auto;
+  color: #c7d2fe;
+  font-weight: 500;
+  font-size: 0.92em;
+  white-space: nowrap;
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */
@@ -8154,7 +8370,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030033831-277f02f";</script>
+<script>window.HM_BUILD = "20261030035112-da3fd40";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8590,27 +8806,77 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 
     <div class="hm-composer" id="composer">
       <!-- 多模态参考主体上传区：生图 → 图片；视频 → 图片/视频/音频；音频 → 音频 -->
-      <div class="hm-ref" id="refDrop" role="button" tabindex="0" aria-label="上传或拖入参考主体" hidden>
+      <div class="hm-ref" id="refDrop" aria-label="上传或拖入参考主体" hidden>
         <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp3,audio/wav,audio/ogg" hidden multiple>
+        <!-- 空状态 -->
         <div class="hm-ref-empty" id="refEmpty">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="13" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5.5 16.5l4.2-4 3.2 2.8 2.5-2.3 3.1 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
           <span id="refEmptyText">拖入或上传参考图（最多 10 张）</span>
           <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 @1 @2 … 引用</span>
         </div>
+
+        <!-- 参考图网格 -->
         <div class="hm-ref-grid" id="refGrid" hidden></div>
-        <!-- 点击某个 ref-cell 时展开的大图预览 -->
-        <div class="hm-ref-preview" id="refPreview" hidden>
-          <img alt="参考图预览">
-          <span class="hm-ref-preview-idx"></span>
-          <span class="hm-ref-preview-size"></span>
-          <button class="hm-ref-preview-close" type="button" aria-label="关闭预览" title="关闭预览（点击空白处也可）">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+
+        <!-- 右侧悬浮工具条（图四） -->
+        <div class="hm-ref-right-bar" id="refRightBar" hidden>
+          <button type="button" class="hm-ref-right-btn hm-ref-right-select" id="refSelectBtn" title="选择素材">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>选择素材</span>
           </button>
-          <div class="hm-ref-preview-actions">
-            <button type="button" class="hm-ref-preview-insert" title="插入到提示词">插入 @N</button>
-            <button type="button" class="hm-ref-preview-remove" title="删除此参考图">删除</button>
+          <button type="button" class="hm-ref-right-btn hm-ref-right-clear" id="refClearBtn" title="全部删除">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>全部删除</span>
+          </button>
+        </div>
+
+        <!-- 选择模式顶部工具条（图五） -->
+        <div class="hm-ref-select-toolbar" id="refSelectToolbar" hidden>
+          <span class="hm-ref-select-count" id="refSelectCount">已选 0</span>
+          <button type="button" class="hm-ref-select-cancel" id="refSelectCancel">取消</button>
+          <button type="button" class="hm-ref-select-delete" id="refSelectDelete" title="删除选中">删除选中</button>
+          <button type="button" class="hm-ref-select-clear" id="refSelectClear" title="全部删除">全部删除</button>
+        </div>
+
+        <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
+        <div class="hm-ref-hover" id="refHover" hidden>
+          <img alt="预览">
+          <div class="hm-ref-hover-actions">
+            <button type="button" class="hm-ref-hover-view" title="全屏查看">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              查看
+            </button>
+            <button type="button" class="hm-ref-hover-at" title="@主体">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+              @主体
+            </button>
           </div>
         </div>
+
+        <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
+        <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
+          <button class="hm-ref-fs-close" type="button" aria-label="关闭全屏" title="关闭">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          </button>
+          <div class="hm-ref-fs-idx" id="refFsIdx"></div>
+          <img class="hm-ref-fs-img" id="refFsImg" alt="全屏预览">
+          <!-- 底部控制条：🔍+ ⟳ 🔍- ⬇ -->
+          <div class="hm-ref-fs-controls">
+            <button type="button" class="hm-ref-fs-btn" id="refFsZoomOut" title="缩小">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <button type="button" class="hm-ref-fs-btn" id="refFsReset" title="重置">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="hm-ref-fs-btn" id="refFsZoomIn" title="放大">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <button type="button" class="hm-ref-fs-btn" id="refFsDownload" title="下载">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+
         <span class="hm-ref-state" id="refState">未添加</span>
         <button class="hm-ref-remove" id="refRemove" type="button" aria-label="清空所有参考" title="清空全部参考">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -10338,11 +10604,29 @@ function bindEls() {
   els.refInput = document.getElementById('refInput');
   els.refGrid = document.getElementById('refGrid');
   els.refEmpty = document.getElementById('refEmpty');
-  els.refPreview = document.getElementById('refPreview');
+  els.refPreview = document.getElementById('refPreview'); /* 已废弃，保留兼容 */
   els.refImage = document.getElementById('refImage');
   els.refRemove = document.getElementById('refRemove');
   els.refState = document.getElementById('refState');
   els.refNote = document.getElementById('refNote');
+  /* 新的参考图区域元素 */
+  els.refRightBar = document.getElementById('refRightBar');
+  els.refSelectBtn = document.getElementById('refSelectBtn');
+  els.refClearBtn = document.getElementById('refClearBtn');
+  els.refSelectToolbar = document.getElementById('refSelectToolbar');
+  els.refSelectCount = document.getElementById('refSelectCount');
+  els.refSelectCancel = document.getElementById('refSelectCancel');
+  els.refSelectDelete = document.getElementById('refSelectDelete');
+  els.refSelectClear = document.getElementById('refSelectClear');
+  els.refHover = document.getElementById('refHover');
+  els.refFullscreen = document.getElementById('refFullscreen');
+  els.refFsImg = document.getElementById('refFsImg');
+  els.refFsIdx = document.getElementById('refFsIdx');
+  els.refFsClose = document.getElementById('refFsClose');
+  els.refFsZoomIn = document.getElementById('refFsZoomIn');
+  els.refFsZoomOut = document.getElementById('refFsZoomOut');
+  els.refFsReset = document.getElementById('refFsReset');
+  els.refFsDownload = document.getElementById('refFsDownload');
 
   els.ratioPicker = document.getElementById('ratioPicker');
   els.ratioLabel = document.getElementById('ratioLabel');
@@ -10903,82 +11187,175 @@ function syncRefNote() {
   }
 }
 
+/* ========== 参考图区域状态 ========== */
+var _refSelectMode = false;       /* 是否进入选择素材模式 */
+var _refSelectedSet = {};         /* 已选择索引 {0:true, 2:true, ...} */
+var _refFsIdx = -1;               /* 全屏查看的参考索引 */
+var _refFsScale = 1;              /* 全屏缩放比例 */
+
+function enterRefSelectMode() {
+  _refSelectMode = true;
+  _refSelectedSet = {};
+  document.body.setAttribute('data-ref-select', '1');
+  renderRef();
+}
+function exitRefSelectMode() {
+  _refSelectMode = false;
+  _refSelectedSet = {};
+  document.body.removeAttribute('data-ref-select');
+  renderRef();
+}
+function toggleRefSelected(idx) {
+  if (_refSelectedSet[idx]) delete _refSelectedSet[idx];
+  else _refSelectedSet[idx] = true;
+  renderRef();
+}
+function deleteSelectedRefs() {
+  var list = currentRefs();
+  /* 从大到小删，避免索引错位 */
+  var toDelete = Object.keys(_refSelectedSet).map(Number).sort(function (a, b) { return b - a; });
+  if (!toDelete.length) return;
+  toDelete.forEach(function (idx) { list.splice(idx, 1); });
+  setCurrentRefs(list);
+  exitRefSelectMode();
+  toast('已删除 ' + toDelete.length + ' 张参考图', 'info');
+}
+
+/* ========== 全屏查看 ========== */
+function openRefFullscreen(idx) {
+  var list = currentRefs();
+  if (!list[idx]) return;
+  _refFsIdx = idx;
+  _refFsScale = 1;
+  if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  if (els.refFsImg) els.refFsImg.src = list[idx].dataUrl;
+  if (els.refFsIdx) els.refFsIdx.textContent = '@' + (idx + 1);
+  if (els.refFullscreen) els.refFullscreen.hidden = false;
+}
+function closeRefFullscreen() {
+  _refFsIdx = -1;
+  _refFsScale = 1;
+  if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  if (els.refFullscreen) els.refFullscreen.hidden = true;
+}
+
+/* ========== hover 浮层 ========== */
+var _refHoverIdx = -1;
+var _refHoverEnterTimer = 0;
+function showRefHover(idx, anchorEl) {
+  var list = currentRefs();
+  if (!list[idx] || _refSelectMode) return;
+  _refHoverIdx = idx;
+  if (!els.refHover) return;
+  els.refHover.querySelector('img').src = list[idx].dataUrl;
+  els.refHover.hidden = false;
+  /* 位置：anchorEl 右侧或下侧，避免超出视口 */
+  var r = anchorEl.getBoundingClientRect();
+  var hoverW = 140, hoverH = 156;
+  var top = r.bottom + 6;
+  var left = r.left;
+  if (top + hoverH > window.innerHeight) top = r.top - hoverH - 6;
+  if (left + hoverW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - hoverW - 8);
+  if (left < 8) left = 8;
+  els.refHover.style.top = top + 'px';
+  els.refHover.style.left = left + 'px';
+}
+function hideRefHover() {
+  if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+  _refHoverIdx = -1;
+  if (els.refHover) els.refHover.hidden = true;
+}
+
+/* ========== renderRef（完全重写） ========== */
 function renderRef() {
-  const list = currentRefs();
+  var list = currentRefs();
+  var hasRef = list.length > 0;
 
-  /* 兜底：如果当前展开的索引超出范围（删除导致），自动收起 */
-  if (_refExpandedIdx >= list.length) _refExpandedIdx = -1;
-
-  /* 渲染多图网格 */
+  /* 渲染网格 */
   if (els.refGrid) {
     els.refGrid.innerHTML = '';
     list.forEach(function (ref, idx) {
-      const cell = document.createElement('div');
+      var cell = document.createElement('div');
       cell.className = 'hm-ref-cell';
       cell.dataset.idx = String(idx);
+      if (_refSelectedSet[idx]) cell.classList.add('is-selected');
+
+      var check = _refSelectMode
+        ? '<div class="hm-ref-check' + (_refSelectedSet[idx] ? ' is-on' : '') + '" data-check-idx="' + idx + '">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</div>'
+        : '';
+
       cell.innerHTML =
-        '<img alt="参考图 ' + (idx + 1) + '">' +
-        '<span class="hm-ref-idx">@' + (idx + 1) + '</span>' +
-        '<span class="hm-ref-size">' + ref.width + '×' + ref.height + '</span>' +
-        '<button class="hm-ref-cell-remove" type="button" aria-label="删除参考图 ' + (idx + 1) + '">' +
-          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-        '</button>';
-      const img = cell.querySelector('img');
-      img.src = ref.dataUrl;
-      /* 点击序号自动在 prompt 里插入 @N */
-      cell.querySelector('.hm-ref-idx').addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        insertPromptAt('@' + (idx + 1) + ' ');
-      });
-      cell.querySelector('.hm-ref-cell-remove').addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        removeRefAt(idx);
-      });
-      /* 点击 cell 本身 → 展开大图预览 */
+        '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.thumb || ref.dataUrl) + '">' +
+        '<span class="hm-ref-tag">图' + (idx + 1) + '</span>' +
+        check;
+
+      /* 事件：选择模式下点击 cell = toggle 选中；否则点击 = 打开全屏 */
       cell.addEventListener('click', function (ev) {
-        /* 如果已在预览里点了同一个 cell，就收起 */
-        toggleRefPreview(idx);
+        if (_refSelectMode) {
+          ev.stopPropagation();
+          toggleRefSelected(idx);
+          return;
+        }
+        openRefFullscreen(idx);
       });
+
+      /* hover 浮层（非选择模式才显示）：鼠标enter 延迟一点避免闪烁 */
+      if (!_refSelectMode) {
+        cell.addEventListener('mouseenter', function () {
+          if (_refHoverEnterTimer) clearTimeout(_refHoverEnterTimer);
+          _refHoverEnterTimer = setTimeout(function () {
+            showRefHover(idx, cell);
+          }, 120);
+        });
+        cell.addEventListener('mouseleave', function () {
+          if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+          /* 延迟隐藏，让用户能移到浮层上 */
+          setTimeout(function () {
+            if (_refHoverIdx === idx && els.refHover && !els.refHover.matches(':hover')) hideRefHover();
+          }, 180);
+        });
+      }
+
       els.refGrid.appendChild(cell);
     });
 
-    /* 添加新图的槽位（未满时显示） */
-    if (list.length < REF_MAX_COUNT) {
-      const addCell = document.createElement('div');
+    /* "+" 槽位 */
+    if (list.length < REF_MAX_COUNT && !_refSelectMode) {
+      var addCell = document.createElement('div');
       addCell.className = 'hm-ref-cell hm-ref-add';
       addCell.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>' +
         '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
-      addCell.addEventListener('click', function () { els.refInput.click(); });
-      addCell.addEventListener('keydown', function (ev) {
-        if (ev.key === 'Enter') { ev.preventDefault(); els.refInput.click(); }
+      addCell.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        els.refInput.click();
       });
       els.refGrid.appendChild(addCell);
     }
 
-    /* 有预览展开时，网格隐藏 */
-    els.refGrid.hidden = list.length === 0 || _refExpandedIdx >= 0;
+    els.refGrid.hidden = !hasRef;
   }
 
-  /* ---- 大图预览面板 ---- */
-  if (els.refPreview) {
-    if (_refExpandedIdx >= 0 && list[_refExpandedIdx]) {
-      var ref = list[_refExpandedIdx];
-      els.refPreview.hidden = false;
-      els.refPreview.querySelector('img').src = ref.dataUrl;
-      els.refPreview.querySelector('.hm-ref-preview-idx').textContent = '@' + (_refExpandedIdx + 1);
-      els.refPreview.querySelector('.hm-ref-preview-size').textContent = ref.width + '×' + ref.height;
-    } else {
-      els.refPreview.hidden = true;
+  /* 右侧工具条（有素材且非选择模式时显示） */
+  if (els.refRightBar) els.refRightBar.hidden = !hasRef || _refSelectMode;
+
+  /* 选择模式顶部工具条 */
+  if (els.refSelectToolbar) {
+    els.refSelectToolbar.hidden = !_refSelectMode;
+    if (els.refSelectCount) {
+      var selCount = Object.keys(_refSelectedSet).length;
+      els.refSelectCount.textContent = '已选 ' + selCount;
     }
   }
 
-  /* 更新 overlay chip 层（textarea 上显示带图标的 @N 视觉化） */
+  /* 更新 overlay chip 层 */
   renderPromptOverlay();
 
-  /* 顶部状态：已添加 X 张 / 最多 10 张 */
+  /* 顶部状态文字 */
   if (els.refState) {
-    if (list.length > 0) {
+    if (hasRef) {
       els.refState.textContent = list.length + '/' + REF_MAX_COUNT;
       els.refState.style.color = '#c4b5fd';
     } else {
@@ -10987,9 +11364,9 @@ function renderRef() {
     }
   }
 
-  /* 拖入区域视觉 */
+  /* 空/满 状态 */
   if (els.refDrop) {
-    if (list.length > 0) {
+    if (hasRef) {
       els.refDrop.classList.add('has-ref');
       if (els.refEmpty) els.refEmpty.hidden = true;
     } else {
@@ -10999,24 +11376,6 @@ function renderRef() {
   }
 
   syncRefNote();
-}
-
-/* 参考图大图预览的展开索引（-1 表示收起） */
-var _refExpandedIdx = -1;
-
-function toggleRefPreview(idx) {
-  if (_refExpandedIdx === idx) {
-    _refExpandedIdx = -1;
-  } else {
-    _refExpandedIdx = idx;
-  }
-  renderRef();
-}
-
-function closeRefPreview() {
-  if (_refExpandedIdx < 0) return;
-  _refExpandedIdx = -1;
-  renderRef();
 }
 
 /* ========== @N 富文本 chip overlay ==========
@@ -11069,10 +11428,9 @@ function _ensureChipCache(refs) {
   if (key === _chipCacheKey) return _chipCacheHtml;
   _chipCacheKey = key;
   _chipCacheHtml = refs.map(function (ref, i) {
-    /* chip 宽度必须等于 "@N" 文本自身宽度，否则光标会落在 chip 左边（错位）：
-       所以用 @N 文字撑宽度、缩略图做背景，而不是插入 <img> 撑宽 */
     var u = ref.thumb || ref.dataUrl;
-    return '<span class="chip" style="background-image:url(' + u + ')">@' + (i + 1) + '</span>';
+    /* chip 顺序：图标在前，@图N 在后，整体 inline-flex */
+    return '<span class="chip"><span class="chip-thumb" style="background-image:url(' + u + ')"></span><span class="chip-label">@' + (i + 1) + '</span></span>';
   });
   return _chipCacheHtml;
 }
@@ -11127,9 +11485,17 @@ function removeRefAt(idx) {
   arr.splice(idx, 1);
   setCurrentRefs(arr);
   els.refInput.value = '';
-  /* 预览索引纠偏：删除后如果有图的编号前移，同步调整 */
-  if (_refExpandedIdx === idx) _refExpandedIdx = -1;
-  else if (_refExpandedIdx > idx) _refExpandedIdx--;
+  /* 清除选择态、关闭全屏（如果删的是当前全屏图） */
+  delete _refSelectedSet[idx];
+  var nextSel = {};
+  Object.keys(_refSelectedSet).forEach(function (k) {
+    var ki = Number(k);
+    if (ki < idx) nextSel[ki] = true;
+    else if (ki > idx) nextSel[ki - 1] = true;
+  });
+  _refSelectedSet = nextSel;
+  if (_refFsIdx === idx) closeRefFullscreen();
+  hideRefHover();
   renderRef();
   toast('已删除参考图 #' + (idx + 1), 'info');
 }
@@ -11137,7 +11503,9 @@ function removeRefAt(idx) {
 function clearRefImages() {
   setCurrentRefs([]);
   els.refInput.value = '';
-  _refExpandedIdx = -1;
+  _refSelectedSet = {};
+  hideRefHover();
+  closeRefFullscreen();
   renderRef();
 }
 
@@ -13119,16 +13487,15 @@ function bindEvents() {
 
   els.promptInput.addEventListener('input', updateCharCount);
 
-  els.refDrop.addEventListener('click', function () {
-    els.refInput.click();
-  });
-
-  els.refDrop.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
-      event.preventDefault();
-      els.refInput.click();
-    }
-  });
+  /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 === */
+  if (els.refEmpty) {
+    els.refEmpty.addEventListener('click', function () { els.refInput.click(); });
+    els.refEmpty.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault(); els.refInput.click();
+      }
+    });
+  }
 
   els.refInput.addEventListener('change', async function (event) {
     var files = Array.from(event.target.files || []);
@@ -13142,7 +13509,7 @@ function bindEvents() {
     for (var i = 0; i < Math.min(files.length, remaining); i++) {
       await pickRefFile(files[i]);
     }
-    els.refInput.value = ''; /* 重置，让同一个文件可以再次选择 */
+    els.refInput.value = '';
   });
 
   els.refRemove.addEventListener('click', function (event) {
@@ -13169,7 +13536,6 @@ function bindEvents() {
     event.preventDefault();
     event.stopPropagation();
     els.refDrop.classList.remove('is-over');
-    /* 支持拖入多张 */
     var files = Array.from(event.dataTransfer && event.dataTransfer.files || []);
     var remaining = REF_MAX_COUNT - currentRefs().length;
     for (var i = 0; i < Math.min(files.length, remaining); i++) {
@@ -13177,36 +13543,92 @@ function bindEvents() {
     }
   });
 
-  /* ---- 预览面板事件（事件委托，面板重绘后不用重新绑定） ---- */
-  if (els.refPreview) {
-    els.refPreview.addEventListener('click', function (ev) {
-      var closeBtn = ev.target.closest('.hm-ref-preview-close');
-      if (closeBtn) {
+  /* === 右侧工具条 === */
+  if (els.refSelectBtn) els.refSelectBtn.addEventListener('click', function (ev) {
+    ev.stopPropagation(); enterRefSelectMode();
+  });
+  if (els.refClearBtn) els.refClearBtn.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    if (!currentRefs().length) return;
+    if (confirm('确定要清空所有参考图吗？')) {
+      clearRefImages();
+      toast('已清空所有参考图', 'info');
+    }
+  });
+
+  /* === 选择模式顶部工具条 === */
+  if (els.refSelectCancel) els.refSelectCancel.addEventListener('click', exitRefSelectMode);
+  if (els.refSelectDelete) els.refSelectDelete.addEventListener('click', function (ev) {
+    ev.stopPropagation(); deleteSelectedRefs();
+  });
+  if (els.refSelectClear) els.refSelectClear.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    if (!currentRefs().length) return;
+    if (confirm('确定要清空所有参考图吗？')) { clearRefImages(); exitRefSelectMode(); toast('已清空所有参考图', 'info'); }
+  });
+
+  /* === hover 浮层按钮 === */
+  if (els.refHover) {
+    els.refHover.addEventListener('click', function (ev) {
+      var viewBtn = ev.target.closest('.hm-ref-hover-view');
+      if (viewBtn) {
         ev.stopPropagation();
-        closeRefPreview();
+        if (_refHoverIdx >= 0) openRefFullscreen(_refHoverIdx);
+        hideRefHover();
         return;
       }
-      var insertBtn = ev.target.closest('.hm-ref-preview-insert');
-      if (insertBtn) {
+      var atBtn = ev.target.closest('.hm-ref-hover-at');
+      if (atBtn) {
         ev.stopPropagation();
-        if (_refExpandedIdx >= 0) insertPromptAt('@' + (_refExpandedIdx + 1) + ' ');
-        closeRefPreview();
+        if (_refHoverIdx >= 0) insertPromptAt('@' + (_refHoverIdx + 1) + ' ');
+        hideRefHover();
         return;
       }
-      var removeBtn = ev.target.closest('.hm-ref-preview-remove');
-      if (removeBtn) {
-        ev.stopPropagation();
-        if (_refExpandedIdx >= 0) removeRefAt(_refExpandedIdx);
-        return; /* removeRefAt 内部会 renderRef 并自动收起 */
-      }
-      /* 点击预览面板空白处 → 收起 */
-      var imgWrap = ev.target.closest('img');
-      var idxTag = ev.target.closest('.hm-ref-preview-idx');
-      var sizeTag = ev.target.closest('.hm-ref-preview-size');
-      var actions = ev.target.closest('.hm-ref-preview-actions');
-      if (!imgWrap && !idxTag && !sizeTag && !actions) {
-        closeRefPreview();
-      }
+    });
+    /* 浮层自己 hover 时不要收起 */
+    els.refHover.addEventListener('mouseenter', function () {
+      if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+    });
+    els.refHover.addEventListener('mouseleave', function () {
+      hideRefHover();
+    });
+  }
+
+  /* === 全屏查看控制 === */
+  if (els.refFsClose) els.refFsClose.addEventListener('click', closeRefFullscreen);
+  if (els.refFsZoomIn) els.refFsZoomIn.addEventListener('click', function () {
+    _refFsScale = Math.min(4, +(_refFsScale + 0.25).toFixed(2));
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(' + _refFsScale + ')';
+  });
+  if (els.refFsZoomOut) els.refFsZoomOut.addEventListener('click', function () {
+    _refFsScale = Math.max(0.3, +(_refFsScale - 0.25).toFixed(2));
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(' + _refFsScale + ')';
+  });
+  if (els.refFsReset) els.refFsReset.addEventListener('click', function () {
+    _refFsScale = 1;
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  });
+  if (els.refFsDownload) els.refFsDownload.addEventListener('click', function () {
+    if (_refFsIdx < 0) return;
+    var list = currentRefs();
+    var ref = list[_refFsIdx];
+    if (!ref) return;
+    var a = document.createElement('a');
+    a.href = ref.dataUrl;
+    a.download = ref.name || ('reference_' + (_refFsIdx + 1) + '.jpg');
+    a.click();
+  });
+  /* 全屏：ESC 关闭 + 点击图片外关闭 */
+  document.addEventListener('keydown', function (ev) {
+    if (els.refFullscreen && !els.refFullscreen.hidden && ev.key === 'Escape') {
+      ev.preventDefault();
+      closeRefFullscreen();
+    }
+  });
+  if (els.refFullscreen) {
+    els.refFullscreen.addEventListener('click', function (ev) {
+      /* 点击图片或按钮之外的黑底 → 关闭 */
+      if (ev.target === els.refFullscreen) closeRefFullscreen();
     });
   }
 
