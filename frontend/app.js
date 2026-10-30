@@ -3009,10 +3009,20 @@ async function fetchRayinModels() {
 }
 
 /* ---------------- 事件绑定 ---------------- */
+var DISABLED_VIEWS = { canvas: true, works: true, tools: true, assets: true, writing: true, forum: true };
+
 function bindEvents() {
   document.addEventListener('click', function (event) {
     const viewBtn = event.target.closest('[data-view]');
-    if (viewBtn) switchView(viewBtn.dataset.view);
+    if (viewBtn) {
+      var view = viewBtn.dataset.view;
+      if (DISABLED_VIEWS[view] || viewBtn.disabled) {
+        var label = viewBtn.querySelector('span')?.textContent || view;
+        HM.toast && HM.toast('「' + label + '」功能开发中，敬请期待', 'info');
+        return;
+      }
+      switchView(view);
+    }
   });
 
   els.modelsToggle.addEventListener('click', openSidebar);

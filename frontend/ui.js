@@ -154,12 +154,18 @@
   }
 
   /* ---------------- 左侧导航 ---------------- */
+  var DISABLED_RAILS = { canvas: true, works: true, tools: true, assets: true, writing: true, forum: true };
+
   function bindRail() {
     document.addEventListener('click', function (event) {
       var item = event.target.closest('[data-rail]');
       if (!item) return;
       var view = item.getAttribute('data-rail');
       if (!view) return;
+      if (item.disabled || DISABLED_RAILS[view]) {
+        A.toast && A.toast('「' + item.querySelector('span')?.textContent + '」功能开发中，敬请期待', 'info');
+        return;
+      }
       event.preventDefault();
       A.switchView(view);
     });
