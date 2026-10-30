@@ -4408,21 +4408,11 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   overflow-wrap: break-word;
   font-family: inherit;
 }
-/* chip 不能改变宽度：宽度由 @N 文本本身撑开，缩略图只做背景，
-   这样 textarea 里的光标始终落在 chip 正后方（否则 caret 会错位） */
-.hm-prompt-overlay .chip {
-  display: inline-block;
-  padding: 0;
-  margin: 0;
-  color: transparent;
-  border-radius: 3px;
-  background-color: rgba(56, 189, 248, 0.22);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 1.06em 1.06em;
-  box-shadow: inset 0 0 0 1px rgba(94, 196, 238, 0.55);
-  vertical-align: baseline;
-}
+/* chip 层叠顺序：图标(.chip-thumb 子元素)在前，@N(.chip-label 子元素)在后，inline-flex 排列。
+   注意：不要再加重复的 .hm-prompt-overlay .chip 规则！
+   之前有人在这里加了 inline-block + color:transparent 的方案（与 flex 子元素方案冲突），
+   已经删掉。app.js 里 chip 的 HTML 结构是 <span class="chip"><span class="chip-thumb">...
+   </span><span class="chip-label">@N</span></span> —— 必须用 inline-flex 才能让两个子元素并排。 */
 
 .hm-prompt textarea::placeholder {
   color: #5f7288;
@@ -8374,7 +8364,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030041914-25207e1";</script>
+<script>window.HM_BUILD = "20261030042437-a52ff8f";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -19082,7 +19072,7 @@ window.HMApp = {
 
   <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
   <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
-    <button class="hm-ref-fs-close" type="button" aria-label="关闭全屏" title="关闭">
+    <button class="hm-ref-fs-close" type="button" id="refFsClose" aria-label="关闭全屏" title="关闭">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
     </button>
     <div class="hm-ref-fs-idx" id="refFsIdx"></div>
