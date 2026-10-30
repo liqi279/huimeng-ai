@@ -17,7 +17,7 @@
 - Trae 云端部署（一键部署插件）需要 `TRAE_PROJECT_ID`，当前沙箱环境不存在该变量，
   CLI 会返回 `MISSING_RUNTIME_CONTEXT`。此步骤只能在 Trae IDE 内触发；
   在沙箱内无法完成时要明确说明"该项被环境限制阻塞"，不能静默跳过。
-- 前端线上产物以 GitHub Pages 为准；后端为 Render（https://huimeng-ai-backend-wel5.onrender.com/api）。
+- 前端线上产物以 GitHub Pages 为准；后端为 Render（https://huimeng-ai-backend.onrender.com/api）。
 
 ## 项目结构要点
 
