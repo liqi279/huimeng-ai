@@ -4160,6 +4160,12 @@ async function authBoot() {
     hideLogin();
     updateUserUI();
     renderWorks();
+    /* 用户确认后，让桌面模块按当前用户 ID 重新对齐服务端数据
+       （解决 desk.js init() 时 window.HMApp.user 尚未就绪、用了访客 key 的问题） */
+    if (window.HMDesk) {
+      if (typeof window.HMDesk.reloadForUser === 'function') window.HMDesk.reloadForUser();
+      else if (typeof window.HMDesk.sync === 'function') window.HMDesk.sync();
+    }
   } catch (err) {
     console.warn('[authBoot] me() 失败:', err && err.message, 'status:', err && err.status);
 
@@ -4428,10 +4434,15 @@ function boot() {
 
 boot();
 
-/* 供 ui.js（V3 工作台）复用核心状态与能力 */
+/* 供 ui.js（V3 工作台）复用核心状态与能力。
+   注意：boot() 内的 authBoot() 已同步把缓存用户写入 window.HMApp.user，
+   这里整体重赋值会把它冲掉 → desk.js 的 getDeskLsKey() 会回退到访客 key，
+   导致刷新后用户专属文件夹读不到。必须把已有 user 保留下来。 */
+var _hmPrevUser = window.HMApp && window.HMApp.user;
 window.HMApp = {
   state: state,
   els: els,
+  user: _hmPrevUser,
   ENGINE_META: ENGINE_META,
   switchView: switchView,
   toast: toast,
