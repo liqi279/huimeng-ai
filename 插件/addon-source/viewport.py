@@ -60,6 +60,7 @@ def capture_window(quality=80):
 
     返回 (jpeg_bytes, width, height)。width/height 为窗口实际像素尺寸。
     使用 bpy.ops.screen.screenshot 捕获窗口，再按 JPEG 编码输出。
+    若整窗截图失败（context 问题等），降级为视口截图。
     """
     import bpy
     scene = bpy.context.scene
@@ -70,16 +71,48 @@ def capture_window(quality=80):
         scene.render.image_settings.quality = int(quality)
         fd, tmp = tempfile.mkstemp(suffix=".jpg")
         os.close(fd)
-        # full=False 仅捕获当前窗口（不含桌面其他区域）
-        bpy.ops.screen.screenshot(filepath=tmp, full=False)
-        with open(tmp, "rb") as f:
-            data = f.read()
+
+        wm = bpy.context.window_manager
+        window = wm.windows[0] if wm and wm.windows else bpy.context.window
+
+        data = None
+        w = getattr(window, "width", 0) or 1920
+        h = getattr(window, "height", 0) or 1080
+
+        # 尝试多种方式调用截图算子（必须用 EXEC_DEFAULT，否则会弹出文件对话框）
+        try:
+            if hasattr(bpy.context, "temp_override"):
+                with bpy.context.temp_override(window=window, screen=window.screen):
+                    bpy.ops.screen.screenshot('EXEC_DEFAULT', filepath=tmp, full=False)
+            else:
+                bpy.ops.screen.screenshot('EXEC_DEFAULT', filepath=tmp, full=False)
+        except Exception as e1:
+            print(f"[Bridge] screenshot temp_override failed: {e1}")
+            try:
+                bpy.ops.screen.screenshot('EXEC_DEFAULT', filepath=tmp, full=False)
+            except Exception as e2:
+                print(f"[Bridge] screenshot fallback failed: {e2}")
+                # 最后尝试 full=True（全屏截图）
+                try:
+                    bpy.ops.screen.screenshot('EXEC_DEFAULT', filepath=tmp, full=True)
+                except Exception as e3:
+                    print(f"[Bridge] screenshot full=True also failed: {e3}")
+
+        if os.path.exists(tmp) and os.path.getsize(tmp) > 0:
+            with open(tmp, "rb") as f:
+                data = f.read()
+
         try:
             os.unlink(tmp)
         except OSError:
             pass
-        w = bpy.context.window.width
-        h = bpy.context.window.height
+
+        if not data:
+            # 降级：用视口离屏渲染代替整窗截图
+            print("[Bridge] window capture empty, fallback to viewport")
+            data, w, h = capture_frame(quality=int(quality))
+            return data, int(w), int(h)
+
         return data, int(w), int(h)
     finally:
         scene.render.image_settings.file_format = prev_fmt

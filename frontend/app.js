@@ -2033,10 +2033,14 @@ var BlenderBridge = (function () {
       var empty = $('mPlatformEmpty');
       if (img && r && r.data_base64) {
         img.src = 'data:image/jpeg;base64,' + r.data_base64;
-        img.hidden = false;
-        if (empty) empty.hidden = true;
+        if (img.hidden) img.hidden = false;
+        if (empty && !empty.hidden) empty.hidden = true;
+      } else {
+        console.warn('[Bridge] screen.capture 无画面数据:', r);
       }
-    }).catch(function () {}).then(function () {
+    }).catch(function (e) {
+      console.warn('[Bridge] screen.capture 失败:', e);
+    }).then(function () {
       capturing = false;
     });
   }

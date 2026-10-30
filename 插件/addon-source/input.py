@@ -23,6 +23,12 @@ def get_window_geometry():
     """返回 Blender 主窗口在屏幕上的几何信息 {x, y, width, height}。"""
     import bpy
     w = bpy.context.window
+    if w is None:
+        wm = bpy.context.window_manager
+        if wm and wm.windows:
+            w = wm.windows[0]
+    if w is None:
+        return {"x": 0, "y": 0, "width": 1920, "height": 1080}
     return {
         "x": int(w.x),
         "y": int(w.y),
