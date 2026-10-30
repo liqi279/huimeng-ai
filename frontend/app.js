@@ -53,7 +53,6 @@ const CATALOG_FALLBACK = {
     { id: 'sana', engine: 'flux', model: 'sana', name: 'SANA 动漫', badge: '免密钥', hint: '免费 · 秒级出图' },
     { id: 'flux', engine: 'flux', model: 'flux', name: 'FLUX.1', badge: '免密钥', hint: '通用大模型 · 高质量' },
     { id: 'flux-realism', engine: 'flux', model: 'flux-realism', name: 'FLUX Realism', badge: '免密钥', hint: '写实质感 · 细腻' },
-    { id: 'dreamshaper', engine: 'flux', model: 'dreamshaper', name: 'DreamShaper', badge: '免密钥', hint: '梦幻氛围 · 艺术化' },
   ],
   providers: [],
   loras: []

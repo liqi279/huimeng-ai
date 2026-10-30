@@ -57,79 +57,10 @@ const KEYLESS = [
     desc: 'FLUX 写实微调版，二次元也能出细腻光影和质感渲染。',
     tags: ['写实', '细腻'],
   },
-  {
-    id: 'dreamshaper',
-    engine: 'flux',
-    model: 'dreamshaper',
-    name: 'DreamShaper',
-    badge: '免密钥',
-    hint: '梦幻氛围 · 艺术化',
-    desc: 'DreamShaper 动漫艺术模型，梦幻光影和艺术氛围营造出色。',
-    tags: ['梦幻', '艺术化'],
-  },
 ];
 
-/* 免费额度平台：注册即送额度，接口与 OpenAI /images/generations 兼容。
- * sizeMode 决定尺寸参数写法：
- *   image_size → { image_size: "1024x1024" }（硅基流动）
- *   size       → { size: "1024x1024" }（OpenAI / 魔搭）
- *   wh         → { width, height }（Together） */
-const PROVIDERS = [
-  {
-    id: 'siliconflow',
-    name: '硅基流动',
-    base: 'https://api.siliconflow.cn/v1',
-    keyUrl: 'https://cloud.siliconflow.cn/account/ak',
-    sizeMode: 'image_size',
-    free: true,
-    models: [
-      {
-        id: 'Kwai-Kolors/Kolors',
-        name: 'Kolors 中文动漫',
-        badge: '免费',
-        hint: '中文提示词理解强 · 国风动漫',
-      },
-      {
-        id: 'black-forest-labs/FLUX.1-schnell',
-        name: 'FLUX.1 schnell',
-        badge: '免费',
-        hint: '免费额度 · 4 步快速出图',
-      },
-    ],
-  },
-  {
-    id: 'modelscope',
-    name: '魔搭 ModelScope',
-    base: 'https://api-inference.modelscope.cn/v1',
-    keyUrl: 'https://modelscope.cn/my/myaccesstoken',
-    sizeMode: 'size',
-    free: true,
-    models: [
-      {
-        id: 'AI-ModelScope/FLUX.1-dev',
-        name: 'FLUX.1-dev',
-        badge: '免费额度',
-        hint: '画质高 · 每日免费额度',
-      },
-    ],
-  },
-  {
-    id: 'together',
-    name: 'Together AI',
-    base: 'https://api.together.xyz/v1',
-    keyUrl: 'https://api.together.ai/settings/api-keys',
-    sizeMode: 'wh',
-    free: true,
-    models: [
-      {
-        id: 'black-forest-labs/FLUX.1-schnell-Free',
-        name: 'FLUX.1 schnell Free',
-        badge: '免费',
-        hint: '官方免费模型 · 生成快',
-      },
-    ],
-  },
-];
+/* PROVIDERS（免费额度平台）— 全部移除：用户明确要纯免密钥通道 */
+const PROVIDERS = [];
 
 /* 动漫 LoRA 风格包：把 LoRA 触发词写进提示词，兼容所有通道 */
 const LORAS = [
