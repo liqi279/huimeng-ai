@@ -49,6 +49,7 @@
 
   /* ---------- 认证页显隐 ---------- */
   function showLogin(tab) {
+    if (!els.auth) cache();
     if (!els.auth) return;
     mode = tab === 'register' ? 'register' : 'login';
     els.auth.hidden = false;
@@ -62,6 +63,7 @@
   }
 
   function hideLogin() {
+    if (!els.auth) cache();
     if (!els.auth) return;
     els.auth.hidden = true;
     els.auth.setAttribute('aria-hidden', 'true');

@@ -4179,8 +4179,12 @@ async function authBoot() {
          这样刷新不会闪登录页，不会丢视觉状态。 */
       console.warn('[authBoot] me() 返回 auth 错误，但不清缓存，保持桌面');
       if (!cachedUser) {
-        /* 真的没任何缓存 → 只能弹登录 */
-        if (api && api.logout) api.logout();
+        /* 真的没任何缓存 → 只能弹登录。
+           关键：不调 api.logout() 清 token！
+           401 可能只是 Render 冷启动/瞬时错误，token 也许仍有效；
+           即使真失效，用户重新登录成功后 setToken 会自动覆盖旧 token。
+           一旦清掉 token，用户的作品/桌面数据（按 userId 隔离的 localStorage key）
+           就无法被关联恢复，是"刷新后数据全没了"的根因。 */
         window.HMApp.user = null;
         showLogin();
       } else {
