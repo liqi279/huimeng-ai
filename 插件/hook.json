@@ -3,7 +3,7 @@
   "hook": {
     "name": "blender-local-bridge",
     "kind": "desktop-bridge-hook",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "title": "本地 Blender 可视化操作平台桥接钩子",
     "description": "让自研网页平台把本地 Blender 渲染到界面并进行可视化操作（视口画面流 + WebSocket 命令控制）的统一接入规范。平台侧只需按本 JSON 声明的能力与协议接入，即可拉起并操作本机 Blender。",
     "author": "Doubao Work",
@@ -91,12 +91,14 @@
         "command_exec",
         "file_io",
         "scene_graph",
-        "addon_autoinstall"
+        "addon_autoinstall",
+        "screen_capture",
+        "os_input_injection"
       ],
       "bridge_addon": {
         "registry_id": "blender_web_bridge",
         "folder": "addon",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "installed": false,
         "enabled": false
       }
@@ -124,7 +126,9 @@
     "command_exec": { "supported": true, "since": "1.0.0" },
     "file_io": { "supported": true, "since": "1.0.0" },
     "scene_graph": { "supported": true, "since": "1.0.0" },
-    "addon_autoinstall": { "supported": true, "since": "1.0.0" }
+    "addon_autoinstall": { "supported": true, "since": "1.0.0" },
+    "screen_capture": { "supported": true, "since": "1.1.0", "note": "截取整个 Blender 窗口，平台操作模式用" },
+    "os_input_injection": { "supported": true, "since": "1.1.0", "platforms": ["win32", "darwin"], "note": "OS 级鼠标/键盘注入，平台操作模式用" }
   },
 
   "api": {
@@ -256,6 +260,39 @@
         "description": "开启/关闭实时画面流推送",
         "params": { "enabled": true, "fps": 15, "width": 960, "height": 540 },
         "result": { "streaming": true, "fps": 15 }
+      },
+      {
+        "method": "screen.info",
+        "description": "获取 Blender 窗口位置与尺寸（平台操作模式用）",
+        "params": {},
+        "result": { "x": 0, "y": 0, "width": 1920, "height": 1080 }
+      },
+      {
+        "method": "screen.capture",
+        "description": "截取整个 Blender 窗口画面（平台操作模式用，返回 JPEG base64）",
+        "params": { "quality": 80 },
+        "result": { "width": 1920, "height": 1080, "format": "jpeg", "data_base64": "..." }
+      },
+      {
+        "method": "input.mouse",
+        "description": "OS 级鼠标输入注入（平台操作模式用）",
+        "params": {
+          "x": 960,
+          "y": 540,
+          "button": "left | middle | right | none",
+          "action": "move | down | up | click | scroll",
+          "delta": 0
+        },
+        "result": { "ok": true }
+      },
+      {
+        "method": "input.key",
+        "description": "OS 级键盘按键注入（平台操作模式用）",
+        "params": {
+          "vk": 71,
+          "action": "down | up | press"
+        },
+        "result": { "ok": true }
       },
       {
         "method": "mode.set",
