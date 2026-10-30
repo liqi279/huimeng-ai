@@ -3522,6 +3522,7 @@ body.hm-resizing * {
   color: #93a7bd;
   cursor: pointer;
   transition: border-color 0.18s ease, background 0.18s ease;
+  /* 关键：让子元素不拦截 drop 事件 */
 }
 
 .hm-ref:hover,
