@@ -128,8 +128,10 @@
       /* 拉取该用户作品并刷新 */
       await refreshUserWorks();
 
-      /* 同步该用户的桌面布局 */
-      if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
+      /* 加载该用户的桌面布局（从用户专属 key 读取，与上个账号隔离） */
+      if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') {
+        try { window.HMDesk.reloadForUser(); } catch (e) {}
+      } else if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
         try { window.HMDesk.sync(); } catch (e) {}
       }
 
@@ -156,9 +158,19 @@
       var data = await api.listWorks();
       if (data && Array.isArray(data.items) && window.HMApp && window.HMApp.state) {
         var A = window.HMApp;
-        /* 合并服务端与本地，绝不用服务端空列表覆盖本地
-           （Render 免费层重启会清空 data/，作品可能只存在本地） */
-        var localWorks = Array.isArray(A.state.works) ? A.state.works : [];
+        /* 手动登录时 state.works 已被登出清空，需先从该用户专属 key 加载本地作品，
+           再与服务端合并（Render 重启会清空 data/，作品可能只存在本地） */
+        var localFromKey = [];
+        try {
+          var key = A.worksLsKey ? A.worksLsKey() : 'anidream.works.v1';
+          var raw = localStorage.getItem(key);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) localFromKey = parsed;
+          }
+        } catch (e) {}
+        var memWorks = Array.isArray(A.state.works) ? A.state.works : [];
+        var localWorks = localFromKey.length ? localFromKey : memWorks;
         A.state.works = (A.mergeWorks
           ? A.mergeWorks(data.items, localWorks)
           : data.items.concat(localWorks));
@@ -196,6 +208,16 @@
   async function handleLogout() {
     if (api && api.logout) api.logout();
     window.HMApp = window.HMApp || {};
+    /* 清空内存中的作品与桌面，避免下个账号看到上个账号的数据。
+       注意：不删 localStorage（按用户隔离的 key 仍保留），
+       同账号再次登录时 authBoot 会从对应用户 key 恢复。 */
+    if (window.HMApp.state) {
+      window.HMApp.state.works = [];
+    }
+    if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+    if (window.HMDesk && typeof window.HMDesk.resetForLogout === 'function') {
+      try { window.HMDesk.resetForLogout(); } catch (e) {}
+    }
     window.HMApp.user = null;
     toggleUserMenu(false);
     updateUserUI();

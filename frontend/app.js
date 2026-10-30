@@ -332,6 +332,22 @@ function saveJSON(key, value) {
   }
 }
 
+/* 按用户隔离的 localStorage key：
+   已登录 → anidream.works.v1.<userId>
+   未登录 → anidream.works.v1（访客共享空间）
+   确保不同账号数据互不干扰，且同账号换设备/重启后能恢复 */
+function currentUserId() {
+  return (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+}
+function worksLsKey(userId) {
+  var uid = userId || currentUserId();
+  return uid ? ('anidream.works.v1.' + uid) : 'anidream.works.v1';
+}
+function worksBakLsKey(userId) {
+  var uid = userId || currentUserId();
+  return uid ? ('anidream.works.v1.' + uid + '.bak') : 'anidream.works.v1.bak';
+}
+
 function getModel(id) {
   return MODEL_INDEX.find(function (m) { return m.id === id; }) || MODEL_INDEX[0];
 }
@@ -362,7 +378,10 @@ function fileNameFor(item) {
 
 /* ---------------- 初始化状态 ---------------- */
 const storedPrefs = loadJSON(LS_PREFS, {}) || {};
-const storedWorks = loadJSON(LS_WORKS, []);
+/* 按缓存用户加载对应作品 key，未登录走访客共享 key */
+var initUser = loadJSON('hm.user', null);
+var initWorksKey = initUser && initUser.id ? ('anidream.works.v1.' + initUser.id) : 'anidream.works.v1';
+const storedWorks = loadJSON(initWorksKey, []);
 const storedApi = loadJSON(LS_API, {}) || {};
 /* 历史错误模型 ID 迁移：gpt-image-1 / 伪别名 gpt-image-2-all 等 → 官方 gpt-image-2 */
 if (!storedApi.gptModel || /gpt-image-2-all|gpt-image-lite/.test(storedApi.gptModel)) {
@@ -2787,10 +2806,12 @@ async function compressDataUrl(dataUrl, maxW, quality) {
 }
 
 function saveWorks() {
+  var key = worksLsKey();
+  var bakKey = worksBakLsKey();
   /* 覆盖前先备份一份，便于误清后恢复 */
   try {
-    var prev = localStorage.getItem(LS_WORKS);
-    if (prev && prev !== '[]' && prev.length > 40) localStorage.setItem(LS_WORKS_BAK, prev);
+    var prev = localStorage.getItem(key);
+    if (prev && prev !== '[]' && prev.length > 40) localStorage.setItem(bakKey, prev);
   } catch (e) {}
 
   /* base64 原图写进 IndexedDB，localStorage 只留元数据（否则 5MB 配额会写失败） */
@@ -2802,7 +2823,7 @@ function saveWorks() {
     return work;
   });
 
-  if (saveJSON(LS_WORKS, meta)) {
+  if (saveJSON(key, meta)) {
     syncWorksToServer();
     return;
   }
@@ -2811,7 +2832,7 @@ function saveWorks() {
   state.works = state.works.map(function (work, index) {
     return index > 8 ? Object.assign({}, work, { thumb: null }) : work;
   });
-  saveJSON(LS_WORKS, state.works.map(function (work) {
+  saveJSON(key, state.works.map(function (work) {
     if (work.url && work.url.indexOf('data:') === 0) {
       idbPutBlob(work.id, work.url);
       return Object.assign({}, work, { url: '', blob: true });
@@ -3981,13 +4002,15 @@ async function authBoot() {
 
   /* ========== Step 1: 同步渲染缓存桌面（零闪烁） ========== */
   var cachedUser = loadJSON('hm.user', null);
-  var cachedWorks = loadJSON(LS_WORKS, null);
+  var cachedKey = cachedUser && cachedUser.id ? worksLsKey(cachedUser.id) : LS_WORKS;
+  var cachedBakKey = cachedUser && cachedUser.id ? worksBakLsKey(cachedUser.id) : LS_WORKS_BAK;
+  var cachedWorks = loadJSON(cachedKey, null);
   /* 主缓存为空时尝试备份，避免一次误清就永久丢失 */
   if ((!cachedWorks || !cachedWorks.length)) {
-    var bakWorks = loadJSON(LS_WORKS_BAK, null);
+    var bakWorks = loadJSON(cachedBakKey, null);
     if (bakWorks && bakWorks.length) {
       cachedWorks = bakWorks;
-      saveJSON(LS_WORKS, bakWorks);
+      saveJSON(cachedKey, bakWorks);
       console.log('[authBoot] 主缓存为空，已从备份恢复', bakWorks.length, '张');
     }
   }
@@ -4016,6 +4039,27 @@ async function authBoot() {
     window.HMApp.user = me.user;
     try { saveJSON('hm.user', me.user); } catch (e) {}
 
+    /* 若 me() 返回的用户与缓存用户不同（换号登录），重新加载该用户的本地作品 */
+    var confirmedKey = worksLsKey(me.user.id);
+    var confirmedBakKey = worksBakLsKey(me.user.id);
+    if (!cachedUser || cachedUser.id !== me.user.id) {
+      var userWorks = loadJSON(confirmedKey, null);
+      if (!userWorks || !userWorks.length) {
+        var userBak = loadJSON(confirmedBakKey, null);
+        if (userBak && userBak.length) userWorks = userBak;
+      }
+      /* 旧版迁移：用户专属 key 为空但访客共享 key 有数据 → 迁移过来 */
+      if ((!userWorks || !userWorks.length)) {
+        var guestWorks = loadJSON(LS_WORKS, null);
+        if (guestWorks && guestWorks.length) {
+          userWorks = guestWorks;
+          saveJSON(confirmedKey, guestWorks);
+          console.log('[authBoot] 已将访客数据迁移到用户', me.user.username, '共', guestWorks.length, '张');
+        }
+      }
+      state.works = (userWorks && userWorks.length ? userWorks : []).slice(0, MAX_WORKS);
+    }
+
     /* 从后端拉最新作品（不能覆盖本地：服务端可能因重启丢数据） */
     var serverItems = [];
     try {
@@ -4032,7 +4076,7 @@ async function authBoot() {
        Render 重启清空 data/ 后自动恢复，换设备也能看到 */
     syncAllWorksToServer(serverItems);
 
-    saveJSON(LS_WORKS, state.works.map(function (w) {
+    saveJSON(confirmedKey, state.works.map(function (w) {
       if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
       return w;
     }));
@@ -4087,7 +4131,7 @@ async function authBoot() {
         if (data && Array.isArray(data.items)) {
           /* 同样只合并，不用空列表覆盖本地 */
           state.works = mergeWorks(data.items, state.works);
-          saveJSON(LS_WORKS, state.works.map(function (w) {
+          saveJSON(worksLsKey(), state.works.map(function (w) {
             if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
             return w;
           }));
@@ -4315,6 +4359,7 @@ window.HMApp = {
   saveWorks: saveWorks,
   mergeWorks: mergeWorks,
   hydrateWorks: hydrateWorks,
+  worksLsKey: worksLsKey,
   renderRef: renderRef,
   translatePrompt: translatePrompt,
   syncSettingsUI: syncSettingsUI,

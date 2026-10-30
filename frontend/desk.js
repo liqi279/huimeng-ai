@@ -10,7 +10,11 @@
   var api = window.HM && window.HM.api;
   var state = A.state;
   var esc = A.esc;
-  var LS_DESK = 'anidream.desk.v1';
+  /* 按用户隔离的桌面 key：已登录用 anidream.desk.v1.<userId>，未登录用访客共享 key */
+  function getDeskLsKey() {
+    var uid = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+    return uid ? ('anidream.desk.v1.' + uid) : 'anidream.desk.v1';
+  }
 
   var CARD_W = 200;
   var CARD_H = 240;
@@ -81,7 +85,7 @@
   function load() {
     var stored = null;
     try {
-      stored = JSON.parse(localStorage.getItem(LS_DESK) || 'null');
+      stored = JSON.parse(localStorage.getItem(getDeskLsKey()) || 'null');
     } catch (err) {
       stored = null;
     }
@@ -117,7 +121,7 @@
   function persistNow() {
     desk.updatedAt = Date.now();
     try {
-      localStorage.setItem(LS_DESK, JSON.stringify(payload()));
+      localStorage.setItem(getDeskLsKey(), JSON.stringify(payload()));
     } catch (err) {
       /* 存储空间不足时静默失败 */
     }
@@ -148,7 +152,7 @@
         desk.names = remote.names || {};
         desk.updatedAt = remoteTime;
         try {
-          localStorage.setItem(LS_DESK, JSON.stringify(payload()));
+          localStorage.setItem(getDeskLsKey(), JSON.stringify(payload()));
         } catch (err) {}
         renderAll();
       } else if (desk.updatedAt) {
@@ -958,6 +962,32 @@
     renderPanel();
     renderDesktop();
     if (document.body.getAttribute('data-view') === 'history') renderHistory();
+  }
+
+  /* 登录后：从当前用户的专属 key 重新加载桌面布局（切换账号时调用） */
+  function reloadForUser() {
+    desk.folders = [];
+    desk.positions = {};
+    desk.assigns = {};
+    desk.names = {};
+    desk.updatedAt = 0;
+    view.activeFolder = null;
+    view.selected = {};
+    load();
+    renderAll();
+    setTimeout(syncServer, 800);
+  }
+
+  /* 登出时：清空桌面内存数据，避免下个账号看到上个账号的文件夹布局 */
+  function resetForLogout() {
+    desk.folders = [];
+    desk.positions = {};
+    desk.assigns = {};
+    desk.names = {};
+    desk.updatedAt = 0;
+    view.activeFolder = null;
+    view.selected = {};
+    renderAll();
   }
 
   function tidy() {
@@ -2794,6 +2824,8 @@
     openParam: openParam,
     deleteWork: deleteWork,
     sync: syncServer,
+    reloadForUser: reloadForUser,
+    resetForLogout: resetForLogout,
     getActiveFolder: function () { return view.activeFolder; },
     /* 顶部「个人空间」按钮：回到根桌面（未归档作品 + 顶层文件夹） */
     goSpace: function () {

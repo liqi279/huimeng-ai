@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030085040-7b4169a";</script>
+<script>window.HM_BUILD = "20261030091029-f2c0510";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9876,8 +9876,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       /* 拉取该用户作品并刷新 */
       await refreshUserWorks();
 
-      /* 同步该用户的桌面布局 */
-      if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
+      /* 加载该用户的桌面布局（从用户专属 key 读取，与上个账号隔离） */
+      if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') {
+        try { window.HMDesk.reloadForUser(); } catch (e) {}
+      } else if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
         try { window.HMDesk.sync(); } catch (e) {}
       }
 
@@ -9904,9 +9906,19 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       var data = await api.listWorks();
       if (data && Array.isArray(data.items) && window.HMApp && window.HMApp.state) {
         var A = window.HMApp;
-        /* 合并服务端与本地，绝不用服务端空列表覆盖本地
-           （Render 免费层重启会清空 data/，作品可能只存在本地） */
-        var localWorks = Array.isArray(A.state.works) ? A.state.works : [];
+        /* 手动登录时 state.works 已被登出清空，需先从该用户专属 key 加载本地作品，
+           再与服务端合并（Render 重启会清空 data/，作品可能只存在本地） */
+        var localFromKey = [];
+        try {
+          var key = A.worksLsKey ? A.worksLsKey() : 'anidream.works.v1';
+          var raw = localStorage.getItem(key);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) localFromKey = parsed;
+          }
+        } catch (e) {}
+        var memWorks = Array.isArray(A.state.works) ? A.state.works : [];
+        var localWorks = localFromKey.length ? localFromKey : memWorks;
         A.state.works = (A.mergeWorks
           ? A.mergeWorks(data.items, localWorks)
           : data.items.concat(localWorks));
@@ -9944,6 +9956,16 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   async function handleLogout() {
     if (api && api.logout) api.logout();
     window.HMApp = window.HMApp || {};
+    /* 清空内存中的作品与桌面，避免下个账号看到上个账号的数据。
+       注意：不删 localStorage（按用户隔离的 key 仍保留），
+       同账号再次登录时 authBoot 会从对应用户 key 恢复。 */
+    if (window.HMApp.state) {
+      window.HMApp.state.works = [];
+    }
+    if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+    if (window.HMDesk && typeof window.HMDesk.resetForLogout === 'function') {
+      try { window.HMDesk.resetForLogout(); } catch (e) {}
+    }
     window.HMApp.user = null;
     toggleUserMenu(false);
     updateUserUI();
@@ -10460,6 +10482,22 @@ function saveJSON(key, value) {
   }
 }
 
+/* 按用户隔离的 localStorage key：
+   已登录 → anidream.works.v1.<userId>
+   未登录 → anidream.works.v1（访客共享空间）
+   确保不同账号数据互不干扰，且同账号换设备/重启后能恢复 */
+function currentUserId() {
+  return (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+}
+function worksLsKey(userId) {
+  var uid = userId || currentUserId();
+  return uid ? ('anidream.works.v1.' + uid) : 'anidream.works.v1';
+}
+function worksBakLsKey(userId) {
+  var uid = userId || currentUserId();
+  return uid ? ('anidream.works.v1.' + uid + '.bak') : 'anidream.works.v1.bak';
+}
+
 function getModel(id) {
   return MODEL_INDEX.find(function (m) { return m.id === id; }) || MODEL_INDEX[0];
 }
@@ -10490,7 +10528,10 @@ function fileNameFor(item) {
 
 /* ---------------- 初始化状态 ---------------- */
 const storedPrefs = loadJSON(LS_PREFS, {}) || {};
-const storedWorks = loadJSON(LS_WORKS, []);
+/* 按缓存用户加载对应作品 key，未登录走访客共享 key */
+var initUser = loadJSON('hm.user', null);
+var initWorksKey = initUser && initUser.id ? ('anidream.works.v1.' + initUser.id) : 'anidream.works.v1';
+const storedWorks = loadJSON(initWorksKey, []);
 const storedApi = loadJSON(LS_API, {}) || {};
 /* 历史错误模型 ID 迁移：gpt-image-1 / 伪别名 gpt-image-2-all 等 → 官方 gpt-image-2 */
 if (!storedApi.gptModel || /gpt-image-2-all|gpt-image-lite/.test(storedApi.gptModel)) {
@@ -12915,10 +12956,12 @@ async function compressDataUrl(dataUrl, maxW, quality) {
 }
 
 function saveWorks() {
+  var key = worksLsKey();
+  var bakKey = worksBakLsKey();
   /* 覆盖前先备份一份，便于误清后恢复 */
   try {
-    var prev = localStorage.getItem(LS_WORKS);
-    if (prev && prev !== '[]' && prev.length > 40) localStorage.setItem(LS_WORKS_BAK, prev);
+    var prev = localStorage.getItem(key);
+    if (prev && prev !== '[]' && prev.length > 40) localStorage.setItem(bakKey, prev);
   } catch (e) {}
 
   /* base64 原图写进 IndexedDB，localStorage 只留元数据（否则 5MB 配额会写失败） */
@@ -12930,7 +12973,7 @@ function saveWorks() {
     return work;
   });
 
-  if (saveJSON(LS_WORKS, meta)) {
+  if (saveJSON(key, meta)) {
     syncWorksToServer();
     return;
   }
@@ -12939,7 +12982,7 @@ function saveWorks() {
   state.works = state.works.map(function (work, index) {
     return index > 8 ? Object.assign({}, work, { thumb: null }) : work;
   });
-  saveJSON(LS_WORKS, state.works.map(function (work) {
+  saveJSON(key, state.works.map(function (work) {
     if (work.url && work.url.indexOf('data:') === 0) {
       idbPutBlob(work.id, work.url);
       return Object.assign({}, work, { url: '', blob: true });
@@ -14109,13 +14152,15 @@ async function authBoot() {
 
   /* ========== Step 1: 同步渲染缓存桌面（零闪烁） ========== */
   var cachedUser = loadJSON('hm.user', null);
-  var cachedWorks = loadJSON(LS_WORKS, null);
+  var cachedKey = cachedUser && cachedUser.id ? worksLsKey(cachedUser.id) : LS_WORKS;
+  var cachedBakKey = cachedUser && cachedUser.id ? worksBakLsKey(cachedUser.id) : LS_WORKS_BAK;
+  var cachedWorks = loadJSON(cachedKey, null);
   /* 主缓存为空时尝试备份，避免一次误清就永久丢失 */
   if ((!cachedWorks || !cachedWorks.length)) {
-    var bakWorks = loadJSON(LS_WORKS_BAK, null);
+    var bakWorks = loadJSON(cachedBakKey, null);
     if (bakWorks && bakWorks.length) {
       cachedWorks = bakWorks;
-      saveJSON(LS_WORKS, bakWorks);
+      saveJSON(cachedKey, bakWorks);
       console.log('[authBoot] 主缓存为空，已从备份恢复', bakWorks.length, '张');
     }
   }
@@ -14144,6 +14189,27 @@ async function authBoot() {
     window.HMApp.user = me.user;
     try { saveJSON('hm.user', me.user); } catch (e) {}
 
+    /* 若 me() 返回的用户与缓存用户不同（换号登录），重新加载该用户的本地作品 */
+    var confirmedKey = worksLsKey(me.user.id);
+    var confirmedBakKey = worksBakLsKey(me.user.id);
+    if (!cachedUser || cachedUser.id !== me.user.id) {
+      var userWorks = loadJSON(confirmedKey, null);
+      if (!userWorks || !userWorks.length) {
+        var userBak = loadJSON(confirmedBakKey, null);
+        if (userBak && userBak.length) userWorks = userBak;
+      }
+      /* 旧版迁移：用户专属 key 为空但访客共享 key 有数据 → 迁移过来 */
+      if ((!userWorks || !userWorks.length)) {
+        var guestWorks = loadJSON(LS_WORKS, null);
+        if (guestWorks && guestWorks.length) {
+          userWorks = guestWorks;
+          saveJSON(confirmedKey, guestWorks);
+          console.log('[authBoot] 已将访客数据迁移到用户', me.user.username, '共', guestWorks.length, '张');
+        }
+      }
+      state.works = (userWorks && userWorks.length ? userWorks : []).slice(0, MAX_WORKS);
+    }
+
     /* 从后端拉最新作品（不能覆盖本地：服务端可能因重启丢数据） */
     var serverItems = [];
     try {
@@ -14160,7 +14226,7 @@ async function authBoot() {
        Render 重启清空 data/ 后自动恢复，换设备也能看到 */
     syncAllWorksToServer(serverItems);
 
-    saveJSON(LS_WORKS, state.works.map(function (w) {
+    saveJSON(confirmedKey, state.works.map(function (w) {
       if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
       return w;
     }));
@@ -14215,7 +14281,7 @@ async function authBoot() {
         if (data && Array.isArray(data.items)) {
           /* 同样只合并，不用空列表覆盖本地 */
           state.works = mergeWorks(data.items, state.works);
-          saveJSON(LS_WORKS, state.works.map(function (w) {
+          saveJSON(worksLsKey(), state.works.map(function (w) {
             if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
             return w;
           }));
@@ -14443,6 +14509,7 @@ window.HMApp = {
   saveWorks: saveWorks,
   mergeWorks: mergeWorks,
   hydrateWorks: hydrateWorks,
+  worksLsKey: worksLsKey,
   renderRef: renderRef,
   translatePrompt: translatePrompt,
   syncSettingsUI: syncSettingsUI,
@@ -16090,7 +16157,11 @@ window.HMApp = {
   var api = window.HM && window.HM.api;
   var state = A.state;
   var esc = A.esc;
-  var LS_DESK = 'anidream.desk.v1';
+  /* 按用户隔离的桌面 key：已登录用 anidream.desk.v1.<userId>，未登录用访客共享 key */
+  function getDeskLsKey() {
+    var uid = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+    return uid ? ('anidream.desk.v1.' + uid) : 'anidream.desk.v1';
+  }
 
   var CARD_W = 200;
   var CARD_H = 240;
@@ -16161,7 +16232,7 @@ window.HMApp = {
   function load() {
     var stored = null;
     try {
-      stored = JSON.parse(localStorage.getItem(LS_DESK) || 'null');
+      stored = JSON.parse(localStorage.getItem(getDeskLsKey()) || 'null');
     } catch (err) {
       stored = null;
     }
@@ -16197,7 +16268,7 @@ window.HMApp = {
   function persistNow() {
     desk.updatedAt = Date.now();
     try {
-      localStorage.setItem(LS_DESK, JSON.stringify(payload()));
+      localStorage.setItem(getDeskLsKey(), JSON.stringify(payload()));
     } catch (err) {
       /* 存储空间不足时静默失败 */
     }
@@ -16228,7 +16299,7 @@ window.HMApp = {
         desk.names = remote.names || {};
         desk.updatedAt = remoteTime;
         try {
-          localStorage.setItem(LS_DESK, JSON.stringify(payload()));
+          localStorage.setItem(getDeskLsKey(), JSON.stringify(payload()));
         } catch (err) {}
         renderAll();
       } else if (desk.updatedAt) {
@@ -17038,6 +17109,32 @@ window.HMApp = {
     renderPanel();
     renderDesktop();
     if (document.body.getAttribute('data-view') === 'history') renderHistory();
+  }
+
+  /* 登录后：从当前用户的专属 key 重新加载桌面布局（切换账号时调用） */
+  function reloadForUser() {
+    desk.folders = [];
+    desk.positions = {};
+    desk.assigns = {};
+    desk.names = {};
+    desk.updatedAt = 0;
+    view.activeFolder = null;
+    view.selected = {};
+    load();
+    renderAll();
+    setTimeout(syncServer, 800);
+  }
+
+  /* 登出时：清空桌面内存数据，避免下个账号看到上个账号的文件夹布局 */
+  function resetForLogout() {
+    desk.folders = [];
+    desk.positions = {};
+    desk.assigns = {};
+    desk.names = {};
+    desk.updatedAt = 0;
+    view.activeFolder = null;
+    view.selected = {};
+    renderAll();
   }
 
   function tidy() {
@@ -18874,6 +18971,8 @@ window.HMApp = {
     openParam: openParam,
     deleteWork: deleteWork,
     sync: syncServer,
+    reloadForUser: reloadForUser,
+    resetForLogout: resetForLogout,
     getActiveFolder: function () { return view.activeFolder; },
     /* 顶部「个人空间」按钮：回到根桌面（未归档作品 + 顶层文件夹） */
     goSpace: function () {
