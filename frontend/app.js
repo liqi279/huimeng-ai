@@ -3400,63 +3400,50 @@ function bindEvents() {
     toast('已清空所有参考图', 'info');
   });
 
-  ['dragenter', 'dragover'].forEach(function (type) {
-    els.refDrop.addEventListener(type, function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      els.refDrop.classList.add('is-over');
-    });
-  });
-
-  els.refDrop.addEventListener('dragleave', function (event) {
-    event.preventDefault();
-    if (els.refDrop.contains(event.relatedTarget)) return;
-    els.refDrop.classList.remove('is-over');
-  });
-
-  /* === window 级别 drag/drop（覆盖所有子元素遮挡的情况） ===
-   * HTML5 DnD 规则：dragover 必须 preventDefault() 浏览器才允许 drop；
-   * 如果直接绑定 refDrop，子元素（cell/right-bar/hover/select-toolbar）会拦截事件
-   * 导致 drop 丢失。所以这里在 window 上统一处理，再通过坐标判断是否在 refDrop 内。 */
+  /* === window 级别 drag/drop ===
+   * HTML5 DnD 规则：拖拽过程中 dragover 必须 preventDefault() 浏览器才允许 drop；
+   * 所以 window 上任何位置都 preventDefault，只在 drop 时再按坐标判断是否在 refDrop 内。 */
   var _lastDragOverRef = false;
   window.addEventListener('dragover', function (ev) {
-    if (!els.refDrop) return;
+    /* 任何位置都 preventDefault —— 这是让 drop 能触发的前提条件 */
     if (!ev.dataTransfer || !ev.dataTransfer.files || !ev.dataTransfer.files.length) return;
+    ev.preventDefault();
+    try { ev.dataTransfer.dropEffect = 'copy'; } catch (e) {}
+    /* 更新 refDrop is-over 视觉 */
+    if (!els.refDrop) return;
     var rect = els.refDrop.getBoundingClientRect();
     var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
                  ev.clientY >= rect.top  && ev.clientY <= rect.bottom;
-    if (inside) {
-      ev.preventDefault();        /* 关键：没有这个 drop 永远不会触发 */
-      ev.stopPropagation();
-      try { ev.dataTransfer.dropEffect = 'copy'; } catch (e) {}
-      if (!_lastDragOverRef) {
-        els.refDrop.classList.add('is-over');
-        _lastDragOverRef = true;
-      }
-    } else if (_lastDragOverRef) {
+    if (inside && !_lastDragOverRef) {
+      els.refDrop.classList.add('is-over');
+      _lastDragOverRef = true;
+    } else if (!inside && _lastDragOverRef) {
       els.refDrop.classList.remove('is-over');
       _lastDragOverRef = false;
     }
   });
 
   window.addEventListener('dragleave', function (ev) {
-    /* 离开整个窗口才清 is-over */
+    if (!els.refDrop) return;
     if (ev.clientX <= 0 || ev.clientY <= 0 ||
         ev.clientX >= window.innerWidth || ev.clientY >= window.innerHeight) {
-      if (els.refDrop) els.refDrop.classList.remove('is-over');
+      els.refDrop.classList.remove('is-over');
       _lastDragOverRef = false;
     }
   });
 
   window.addEventListener('drop', async function (ev) {
-    if (!els.refDrop) return;
     if (!ev.dataTransfer || !ev.dataTransfer.files || !ev.dataTransfer.files.length) return;
+    ev.preventDefault();
+    if (!els.refDrop) return;
     var rect = els.refDrop.getBoundingClientRect();
     var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
                  ev.clientY >= rect.top  && ev.clientY <= rect.bottom;
-    if (!inside) return;
-    ev.preventDefault();
-    ev.stopPropagation();
+    if (!inside) {
+      els.refDrop.classList.remove('is-over');
+      _lastDragOverRef = false;
+      return;
+    }
     els.refDrop.classList.remove('is-over');
     _lastDragOverRef = false;
     /* 只保留图片 */
