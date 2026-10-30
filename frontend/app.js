@@ -2762,6 +2762,8 @@ function saveWork(job) {
     steps: job.steps,
     duration: job.duration || 0,
     elapsed: Number(job.elapsed) || 0,
+    /* 保存参考主体素材，供「恢复参数」时还原参考图 */
+    refImages: Array.isArray(job.refImages) ? job.refImages : null,
     createdAt: Date.now()
   };
 
@@ -3268,6 +3270,22 @@ function reuseJob(job) {
      否则切换标签/刷新后提示词会丢失 */
   els.promptInput.dispatchEvent(new Event('input', { bubbles: true }));
   updateCharCount();
+  /* 恢复参考主体素材：作品里存的是 [{dataUrl,width,height,weight,name}]，
+     旧版可能是纯 dataUrl 字符串数组，这里做兼容归一化 */
+  var refs = job.refImages;
+  if (Array.isArray(refs) && refs.length > 0) {
+    var normalized = refs.map(function (r) {
+      if (typeof r === 'string') return { dataUrl: r, width: 1024, height: 1024, weight: 70, name: '参考图' };
+      return Object.assign({ width: 1024, height: 1024, weight: 70, name: '参考图' }, r);
+    });
+    if (typeof setCurrentRefs === 'function') setCurrentRefs(normalized);
+    else { state.tabRefs[state.activePrompt] = normalized; }
+    if (typeof renderRef === 'function') renderRef();
+  } else {
+    /* 作品没有参考图 → 清空当前参考图，避免上一组残留 */
+    if (typeof setCurrentRefs === 'function') setCurrentRefs([]);
+    if (typeof renderRef === 'function') renderRef();
+  }
   syncSettingsUI();
   persistPrefs();
   switchView('create');
