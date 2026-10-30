@@ -3303,6 +3303,15 @@ function bindEvents() {
     }
   });
 
+  /* 顶栏「个人空间」：回到根桌面（之前被误加入置灰视图，点了没反应） */
+  var personalBtn = document.querySelector('.hm-personal');
+  if (personalBtn) {
+    personalBtn.addEventListener('click', function () {
+      if (window.HMDesk && window.HMDesk.goSpace) window.HMDesk.goSpace();
+      switchView('create');
+    });
+  }
+
   els.modelsToggle.addEventListener('click', openSidebar);
   els.sidebarScrim.addEventListener('click', closeSidebar);
   if (els.sidebarClose) els.sidebarClose.addEventListener('click', closeSidebar);

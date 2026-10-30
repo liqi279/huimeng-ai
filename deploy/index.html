@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030070502-17d6188";</script>
+<script>window.HM_BUILD = "20261030071033-848f54e";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8454,7 +8454,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         </button>
       </div>
 
-      <button class="hm-personal" data-view="works" title="个人空间（开发中）" disabled>
+      <button class="hm-personal" id="hmPersonalBtn" title="个人空间（根桌面）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5 17l4.4-4.2 3.4 3 2.6-2.4L19 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         <span>个人空间</span>
         <span class="hm-badge" id="worksBadge">0</span>
@@ -13422,6 +13422,15 @@ function bindEvents() {
       switchView(view);
     }
   });
+
+  /* 顶栏「个人空间」：回到根桌面（之前被误加入置灰视图，点了没反应） */
+  var personalBtn = document.querySelector('.hm-personal');
+  if (personalBtn) {
+    personalBtn.addEventListener('click', function () {
+      if (window.HMDesk && window.HMDesk.goSpace) window.HMDesk.goSpace();
+      switchView('create');
+    });
+  }
 
   els.modelsToggle.addEventListener('click', openSidebar);
   els.sidebarScrim.addEventListener('click', closeSidebar);
@@ -18699,7 +18708,17 @@ window.HMApp = {
     openParam: openParam,
     deleteWork: deleteWork,
     sync: syncServer,
-    getActiveFolder: function () { return view.activeFolder; }
+    getActiveFolder: function () { return view.activeFolder; },
+    /* 顶部「个人空间」按钮：回到根桌面（未归档作品 + 顶层文件夹） */
+    goSpace: function () {
+      view.selectedFolders = {};
+      view.activeFolder = null;
+      clearSelection();
+      var panel = byId('projPanel');
+      if (panel) panel.hidden = true;
+      renderPanel();
+      renderDesktop();
+    }
   };
 
   init();

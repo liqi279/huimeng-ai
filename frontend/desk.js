@@ -2651,7 +2651,17 @@
     openParam: openParam,
     deleteWork: deleteWork,
     sync: syncServer,
-    getActiveFolder: function () { return view.activeFolder; }
+    getActiveFolder: function () { return view.activeFolder; },
+    /* 顶部「个人空间」按钮：回到根桌面（未归档作品 + 顶层文件夹） */
+    goSpace: function () {
+      view.selectedFolders = {};
+      view.activeFolder = null;
+      clearSelection();
+      var panel = byId('projPanel');
+      if (panel) panel.hidden = true;
+      renderPanel();
+      renderDesktop();
+    }
   };
 
   init();
