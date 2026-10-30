@@ -1,0 +1,299 @@
+{
+  "$schema": "https://doubao.local/schemas/blender-web-bridge-hook-v1.schema.json",
+  "hook": {
+    "name": "blender-local-bridge",
+    "kind": "desktop-bridge-hook",
+    "version": "1.0.0",
+    "title": "本地 Blender 可视化操作平台桥接钩子",
+    "description": "让自研网页平台把本地 Blender 渲染到界面并进行可视化操作（视口画面流 + WebSocket 命令控制）的统一接入规范。平台侧只需按本 JSON 声明的能力与协议接入，即可拉起并操作本机 Blender。",
+    "author": "Doubao Work",
+    "created": "2026-10-31"
+  },
+
+  "target": {
+    "software": "Blender",
+    "kind": "desktop-gui-app",
+    "min_version": "3.6.0",
+    "max_version": null,
+    "channel": "stable",
+    "note": "兼容 Blender 3.6+ 与 4.x；视口画面流依赖 GPU 模块（offscreen render）。"
+  },
+
+  "blender": {
+    "discovery": {
+      "enabled": true,
+      "priority": ["env", "config", "auto"],
+      "env": ["BLENDER_PATH", "BLENDER_EXE"],
+      "config_key": "blender.path",
+      "auto": {
+        "linux": [
+          "cmd:which blender",
+          "/usr/bin/blender",
+          "/usr/local/bin/blender",
+          "/snap/bin/blender",
+          "/opt/blender*/blender",
+          "/opt/blender-*/blender",
+          "~/.local/bin/blender",
+          "glob:/opt/Blender*/blender"
+        ],
+        "darwin": [
+          "/Applications/Blender.app/Contents/MacOS/Blender",
+          "~/Applications/Blender.app/Contents/MacOS/Blender",
+          "/Applications/Blender-*/Blender.app/Contents/MacOS/Blender",
+          "cmd:which blender"
+        ],
+        "win32": [
+          "cmd:where blender",
+          "%ProgramFiles%/Blender Foundation/Blender */blender.exe",
+          "%LOCALAPPDATA%/Programs/Blender Foundation/Blender */blender.exe",
+          "%ProgramFiles(x86)%/Blender Foundation/Blender */blender.exe"
+        ]
+      },
+      "file_check": {
+        "windows_ext": [".exe"],
+        "appimage": ["blender*.AppImage"]
+      }
+    },
+
+    "version": {
+      "parse_method": ["subprocess --version", "addon_report"],
+      "prefer": "addon_report",
+      "cli_args": ["--version"],
+      "regex": "^Blender[\\s]+(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:[\\s]+(?P<edition>[A-Za-z]+))?",
+      "fields": {
+        "full": "主版本号字符串，如 4.2.1",
+        "major": "整数主版本",
+        "minor": "整数次版本",
+        "patch": "整数补丁版本",
+        "edition": "可选：LTS / Beta / Alpha / Release",
+        "api_compatible": "bool，是否满足 min_version 且未超过 max_version",
+        "source": "auto | env | config | manual | addon"
+      }
+    },
+
+    "output": {
+      "detected": true,
+      "source": "auto",
+      "path": "/usr/bin/blender",
+      "binary": "blender",
+      "version": {
+        "full": "4.2.1",
+        "major": 4,
+        "minor": 2,
+        "patch": 1,
+        "edition": "LTS",
+        "api_compatible": true,
+        "source": "auto"
+      },
+      "capabilities": [
+        "websocket_control",
+        "viewport_stream",
+        "command_exec",
+        "file_io",
+        "scene_graph",
+        "addon_autoinstall"
+      ],
+      "bridge_addon": {
+        "registry_id": "blender_web_bridge",
+        "folder": "addon",
+        "version": "1.0.0",
+        "installed": false,
+        "enabled": false
+      }
+    }
+  },
+
+  "connection": {
+    "transport": "websocket",
+    "host": "127.0.0.1",
+    "port": 9876,
+    "protocol": "doubao-blender-bridge/1.0",
+    "ping_interval_ms": 20000,
+    "reconnect": { "max_retries": 10, "backoff_ms": 500 },
+    "auth": {
+      "type": "none",
+      "token_env": "BLENDER_BRIDGE_TOKEN",
+      "token": null,
+      "note": "局域网部署时建议设置 token，客户端须在首次请求带上 auth.token 校验。"
+    }
+  },
+
+  "capabilities": {
+    "websocket_control": { "supported": true, "since": "1.0.0" },
+    "viewport_stream": { "supported": true, "since": "1.0.0", "default_fps": 15, "default_resolution": [960, 540] },
+    "command_exec": { "supported": true, "since": "1.0.0" },
+    "file_io": { "supported": true, "since": "1.0.0" },
+    "scene_graph": { "supported": true, "since": "1.0.0" },
+    "addon_autoinstall": { "supported": true, "since": "1.0.0" }
+  },
+
+  "api": {
+    "envelope": {
+      "v": 1,
+      "type": "request | response | event | error",
+      "id": "uuid（请求与响应一一对应）",
+      "method": "string",
+      "params": {},
+      "result": {},
+      "error": { "code": -32000, "message": "", "data": {} },
+      "ts": 0
+    },
+
+    "commands": [
+      {
+        "method": "ping",
+        "description": "连通性检测",
+        "params": {},
+        "result": { "pong": true, "blender_version": "4.2.1" }
+      },
+      {
+        "method": "auth",
+        "description": "鉴权握手（启用 token 时第一步调用）",
+        "params": { "token": "string" },
+        "result": { "ok": true }
+      },
+      {
+        "method": "get_info",
+        "description": "返回 Blender 版本、能力、插件状态、场景摘要",
+        "params": {},
+        "result": {
+          "blender": { "version": "4.2.1", "path": "/usr/bin/blender" },
+          "capabilities": ["websocket_control", "viewport_stream"],
+          "scene": { "name": "Scene", "objects_count": 3 }
+        }
+      },
+      {
+        "method": "scene.info",
+        "description": "场景信息：名称、对象总数、当前帧、渲染设置",
+        "params": {},
+        "result": { "name": "Scene", "objects": 3, "frame": 1, "renderer": "Cycles" }
+      },
+      {
+        "method": "scene.open",
+        "description": "加载本地 .blend 文件",
+        "params": { "filepath": "/abs/path/to/file.blend", "append": false },
+        "result": { "loaded": true, "objects": 5 }
+      },
+      {
+        "method": "scene.save",
+        "description": "保存当前工程（可指定新路径）",
+        "params": { "filepath": null },
+        "result": { "saved_to": "/abs/path/to/file.blend" }
+      },
+      {
+        "method": "object.list",
+        "description": "列出场景对象",
+        "params": { "filter_type": null, "selected_only": false },
+        "result": { "objects": [{ "name": "Cube", "type": "MESH", "location": [0, 0, 0] }] }
+      },
+      {
+        "method": "object.add",
+        "description": "添加基础对象（几何体/相机/灯光/空物体）",
+        "params": {
+          "type": "cube | sphere | cylinder | plane | cone | torus | camera | light | empty",
+          "name": null,
+          "location": [0, 0, 0],
+          "scale": [1, 1, 1]
+        },
+        "result": { "name": "Cube.001" }
+      },
+      {
+        "method": "object.select",
+        "description": "按名称选择对象",
+        "params": { "name": "Cube", "add": false },
+        "result": { "selected": ["Cube"] }
+      },
+      {
+        "method": "object.transform",
+        "description": "变换：平移/旋转/缩放（绝对或相对）",
+        "params": {
+          "name": "Cube",
+          "location": [0, 1, 0],
+          "rotation": [0, 0, 1.5708],
+          "scale": [1, 1, 1],
+          "relative": true
+        },
+        "result": { "name": "Cube", "location": [0, 1, 0] }
+      },
+      {
+        "method": "object.duplicate",
+        "description": "复制对象",
+        "params": { "name": "Cube" },
+        "result": { "name": "Cube.001" }
+      },
+      {
+        "method": "object.delete",
+        "description": "删除对象",
+        "params": { "name": "Cube" },
+        "result": { "deleted": "Cube" }
+      },
+      {
+        "method": "object.rename",
+        "description": "重命名对象",
+        "params": { "name": "Cube", "new_name": "CubeX" },
+        "result": { "renamed_to": "CubeX" }
+      },
+      {
+        "method": "object.material.set",
+        "description": "设置对象漫反射颜色",
+        "params": { "name": "Cube", "color": [0.8, 0.2, 0.2, 1.0] },
+        "result": { "color_set": true }
+      },
+      {
+        "method": "camera.set",
+        "description": "设置活动相机并切换视图",
+        "params": { "name": "Camera", "view": true },
+        "result": { "active": "Camera" }
+      },
+      {
+        "method": "viewport.frame",
+        "description": "请求一帧离屏渲染视口画面（返回 JPEG base64）",
+        "params": { "width": 960, "height": 540 },
+        "result": { "width": 960, "height": 540, "format": "jpeg", "data_base64": "..." }
+      },
+      {
+        "method": "viewport.stream",
+        "description": "开启/关闭实时画面流推送",
+        "params": { "enabled": true, "fps": 15, "width": 960, "height": 540 },
+        "result": { "streaming": true, "fps": 15 }
+      },
+      {
+        "method": "mode.set",
+        "description": "切换交互模式",
+        "params": { "mode": "OBJECT | EDIT | SCULPT | POSE" },
+        "result": { "mode": "OBJECT" }
+      },
+      { "method": "undo", "description": "撤销", "params": {}, "result": { "done": true } },
+      { "method": "redo", "description": "重做", "params": {}, "result": { "done": true } },
+      { "method": "app.quit", "description": "关闭 Blender", "params": { "force": false }, "result": { "quitting": true } }
+    ],
+
+    "events": [
+      { "type": "ready", "description": "桥接握手成功，随附 get_info 数据", "data": { "blender_version": "4.2.1" } },
+      { "type": "viewport.frame", "description": "实时画面流帧（JPEG base64）", "data": { "width": 960, "height": 540, "data_base64": "..." } },
+      { "type": "selection.changed", "description": "选中对象变化", "data": { "selected": ["Cube"] } },
+      { "type": "scene.updated", "description": "场景内容变更（增删/变换对象）", "data": { "objects": 4 } },
+      { "type": "log", "description": "服务端日志", "data": { "level": "info", "message": "..." } },
+      { "type": "closed", "description": "连接关闭", "data": { "reason": "idle | error | quit" } }
+    ],
+
+    "error_codes": {
+      "-32700": "JSON 解析错误",
+      "-32000": "服务端内部错误",
+      "-32001": "bpy 命令执行失败（脚本异常）",
+      "-32002": "不支持的方法",
+      "-32003": "参数校验失败",
+      "-32004": "未授权（token 缺失/错误）",
+      "-32005": "连接已断开"
+    }
+  },
+
+  "lifecycle": {
+    "launch_mode": "addon",
+    "install_addon": "Blender 偏好设置 → 安装插件 → 选择 addon 目录；或 scripts/detect_blender.py --install",
+    "start_server": "启用插件后：3D 视图侧栏(Doubao Bridge) → Start Bridge Server",
+    "stop_server": "面板 Stop / 卸载插件 / 关闭 Blender",
+    "platform_start_cmd": null,
+    "platform_stop_cmd": null
+  }
+}
