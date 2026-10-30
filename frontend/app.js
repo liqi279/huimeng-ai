@@ -2634,6 +2634,8 @@ function saveWork(job) {
 
   state.works.unshift(work);
   state.works = state.works.slice(0, MAX_WORKS);
+  /* 若当前在某个文件夹桌面内生成，自动把作品归到该文件夹 */
+  if (window.HMDesk && window.HMDesk.onWorkCreated) window.HMDesk.onWorkCreated(work);
   saveWorks();
   renderWorks();
 

@@ -590,6 +590,15 @@
     return list;
   }
 
+  /* 新生成的作品：如果当前正处在某个文件夹的桌面里，自动归入该文件夹 */
+  function onWorkCreated(work) {
+    if (!work || !work.id || !view.activeFolder) return;
+    if (desk.assigns[work.id]) return;
+    desk.assigns[work.id] = view.activeFolder;
+    delete desk.positions[work.id];
+    persistSoon();
+  }
+
   /* 某个文件夹下（含所有子孙文件夹）的全部作品 */
   function worksUnderFolder(id) {
     var ids = {};
@@ -2640,6 +2649,7 @@
     syncJobs: syncJobs,
     clearSelection: clearSelection,
     onWorksChanged: onWorksChanged,
+    onWorkCreated: onWorkCreated,
     tidy: tidy,
     openHistory: openHistory,
     openParam: openParam,

@@ -8385,7 +8385,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030052706-35743c5";</script>
+<script>window.HM_BUILD = "20261030053704-4c573e6";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -12728,6 +12728,8 @@ function saveWork(job) {
 
   state.works.unshift(work);
   state.works = state.works.slice(0, MAX_WORKS);
+  /* 若当前在某个文件夹桌面内生成，自动把作品归到该文件夹 */
+  if (window.HMDesk && window.HMDesk.onWorkCreated) window.HMDesk.onWorkCreated(work);
   saveWorks();
   renderWorks();
 
@@ -16500,6 +16502,15 @@ window.HMApp = {
     return list;
   }
 
+  /* 新生成的作品：如果当前正处在某个文件夹的桌面里，自动归入该文件夹 */
+  function onWorkCreated(work) {
+    if (!work || !work.id || !view.activeFolder) return;
+    if (desk.assigns[work.id]) return;
+    desk.assigns[work.id] = view.activeFolder;
+    delete desk.positions[work.id];
+    persistSoon();
+  }
+
   /* 某个文件夹下（含所有子孙文件夹）的全部作品 */
   function worksUnderFolder(id) {
     var ids = {};
@@ -18550,6 +18561,7 @@ window.HMApp = {
     syncJobs: syncJobs,
     clearSelection: clearSelection,
     onWorksChanged: onWorksChanged,
+    onWorkCreated: onWorkCreated,
     tidy: tidy,
     openHistory: openHistory,
     openParam: openParam,
