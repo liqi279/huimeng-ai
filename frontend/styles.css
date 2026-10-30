@@ -4052,7 +4052,7 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   font-weight: 500;
   font-size: inherit;       /* 和 textarea 同字号，保证 @N 宽度一致 */
   white-space: nowrap;
-  padding: 0 1px;          /* ⚠️ 越紧越好，才能和 textarea 里的 @N 文字宽度对齐 */
+  padding: 0;             /* ⚠️ 必须是 0！任何 padding 都会让 chip-label 宽于 @N 文字 → 光标错位 */
   border-radius: 3px;
   background-color: rgba(99, 102, 241, 0.22);
   box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.55);
