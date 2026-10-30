@@ -3279,13 +3279,11 @@ function reuseJob(job) {
       return Object.assign({ width: 1024, height: 1024, weight: 70, name: '参考图' }, r);
     });
     if (typeof setCurrentRefs === 'function') setCurrentRefs(normalized);
-    else { state.tabRefs[state.activePrompt] = normalized; }
-    if (typeof renderRef === 'function') renderRef();
-  } else {
-    /* 作品没有参考图 → 清空当前参考图，避免上一组残留 */
-    if (typeof setCurrentRefs === 'function') setCurrentRefs([]);
+    else { ensureTabSlots(); state.tabRefs[state.activePrompt] = normalized; }
     if (typeof renderRef === 'function') renderRef();
   }
+  /* 作品没有参考图（旧版作品未存 refImages）→ 不清空当前参考图，
+     避免用户已有的参考素材被误删；@ 引用与当前参考图自然对应 */
   syncSettingsUI();
   persistPrefs();
   switchView('create');
