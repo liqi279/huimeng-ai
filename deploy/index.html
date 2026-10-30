@@ -8374,7 +8374,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030041858-a3bd315";</script>
+<script>window.HM_BUILD = "20261030041914-25207e1";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -13602,6 +13602,16 @@ function bindEvents() {
 
   /* === 全屏查看控制 === */
   if (els.refFsClose) els.refFsClose.addEventListener('click', closeRefFullscreen);
+  /* 点击全屏背景（非图片/按钮区域）也能关闭 */
+  if (els.refFullscreen) els.refFullscreen.addEventListener('click', function (ev) {
+    if (ev.target === els.refFullscreen) closeRefFullscreen();
+  });
+  /* Esc 键关闭 */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && els.refFullscreen && !els.refFullscreen.hidden) {
+      closeRefFullscreen();
+    }
+  });
   if (els.refFsZoomIn) els.refFsZoomIn.addEventListener('click', function () {
     _refFsScale = Math.min(4, +(_refFsScale + 0.25).toFixed(2));
     if (els.refFsImg) els.refFsImg.style.transform = 'scale(' + _refFsScale + ')';

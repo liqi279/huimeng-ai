@@ -3519,6 +3519,16 @@ function bindEvents() {
 
   /* === 全屏查看控制 === */
   if (els.refFsClose) els.refFsClose.addEventListener('click', closeRefFullscreen);
+  /* 点击全屏背景（非图片/按钮区域）也能关闭 */
+  if (els.refFullscreen) els.refFullscreen.addEventListener('click', function (ev) {
+    if (ev.target === els.refFullscreen) closeRefFullscreen();
+  });
+  /* Esc 键关闭 */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && els.refFullscreen && !els.refFullscreen.hidden) {
+      closeRefFullscreen();
+    }
+  });
   if (els.refFsZoomIn) els.refFsZoomIn.addEventListener('click', function () {
     _refFsScale = Math.min(4, +(_refFsScale + 0.25).toFixed(2));
     if (els.refFsImg) els.refFsImg.style.transform = 'scale(' + _refFsScale + ')';
