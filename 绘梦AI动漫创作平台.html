@@ -3208,7 +3208,7 @@ body {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  z-index: 80;
+  z-index: 200;
   min-width: 152px;
   padding: 5px;
   display: none;
@@ -3371,7 +3371,7 @@ body {
   /* ↓↓↓ 关键：纵向 flex 布局，让内部元素高度联动 ↓↓↓ */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible; /* 允许向上弹出的菜单溢出 dock 边界（被弹窗覆盖前的 overflow:hidden 裁剪掉了） */
 }
 
 .hm-dock > * {
@@ -3501,6 +3501,7 @@ body.hm-resizing * {
 
 .hm-composer {
   position: relative;
+  z-index: 50; /* 在 dock 层叠上下文中压过 .hm-resizer(z:10)，因为 backdrop-filter 会强制 composer 创建新的层叠上下文 */
   border-radius: 10px;
   border: 1px solid rgba(120, 170, 210, 0.16);
   background: rgba(15, 25, 38, 0.97);
@@ -3529,6 +3530,7 @@ body.hm-resizing * {
   color: #93a7bd;
   cursor: pointer;
   transition: border-color 0.18s ease, background 0.18s ease;
+  /* 关键：让子元素不拦截 drop 事件 */
 }
 
 .hm-ref:hover,
@@ -3713,7 +3715,7 @@ body.hm-resizing * {
 .hm-ref-cell {
   width: 52px;
   height: 52px;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 .hm-ref-cell img {
@@ -3721,6 +3723,370 @@ body.hm-resizing * {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 6px;
+}
+
+/* ========== 参考图单元格左上角标签 图1/图2/... ========== */
+.hm-ref-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1px 5px 1px 6px;
+  border-radius: 5px 0 5px 0;
+  background: rgba(99, 102, 241, 0.92);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+
+/* 选择模式：勾选框 */
+.hm-ref-check {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: rgba(15, 23, 42, 0.85);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  z-index: 3;
+}
+.hm-ref-check svg {
+  width: 9px;
+  height: 9px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+/* 进入选择模式后显示勾选框 */
+body[data-ref-select="1"] .hm-ref-check {
+  opacity: 1;
+  transform: scale(1);
+}
+body[data-ref-select="1"] .hm-ref-check.is-on {
+  background: #6366f1;
+  border-color: #6366f1;
+}
+body[data-ref-select="1"] .hm-ref-check.is-on svg {
+  opacity: 1;
+}
+
+/* 选择模式下 cell 有蓝色选中边框 */
+body[data-ref-select="1"] .hm-ref-cell.is-selected img {
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+/* ========== 右侧悬浮工具条（图四：选择素材 + 全部删除） ========== */
+.hm-ref-right-bar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 5;
+}
+
+.hm-ref-right-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 7px;
+  border-radius: 5px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  line-height: 1;
+}
+.hm-ref-right-btn svg {
+  width: 12px;
+  height: 12px;
+}
+.hm-ref-right-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  color: #fff;
+}
+.hm-ref-right-select:hover { border-color: rgba(99, 102, 241, 0.55); color: #a5b4fc; }
+.hm-ref-right-clear:hover { border-color: rgba(251, 113, 133, 0.5); color: #fda4af; }
+
+/* ========== 选择模式顶部工具条（图五） ========== */
+.hm-ref-select-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.92), rgba(79, 70, 229, 0.92));
+  border-radius: 6px 6px 0 0;
+  z-index: 4;
+  color: #fff;
+  font-size: 11.5px;
+  animation: hmRefSelectIn 0.18s ease both;
+}
+@keyframes hmRefSelectIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hm-ref-select-count {
+  font-weight: 600;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+.hm-ref-select-toolbar button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.hm-ref-select-toolbar button:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.hm-ref-select-cancel { margin-left: auto; }
+.hm-ref-select-delete { background: rgba(251, 113, 133, 0.28) !important; border-color: rgba(251, 113, 133, 0.5) !important; }
+.hm-ref-select-clear { background: rgba(100, 116, 139, 0.3) !important; border-color: rgba(255, 255, 255, 0.2) !important; }
+
+/* ========== hover 浮层：大图预览 + 查看/@主体（图三） ========== */
+.hm-ref-hover {
+  position: fixed;
+  z-index: 900;
+  width: 140px;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: hmRefHoverIn 0.14s ease both;
+  pointer-events: auto;
+}
+@keyframes hmRefHoverIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.hm-ref-hover img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 5px;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
+}
+.hm-ref-hover-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.hm-ref-hover-actions button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 0;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease;
+  line-height: 1;
+}
+.hm-ref-hover-actions button svg {
+  width: 11px;
+  height: 11px;
+}
+.hm-ref-hover-view:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: rgba(56, 189, 248, 0.55);
+  color: #bae6fd;
+  transform: translateY(-1px);
+}
+.hm-ref-hover-at:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: #a5b4fc;
+  transform: translateY(-1px);
+}
+
+/* ========== 全屏查看 modal（图一） ========== */
+.hm-ref-fullscreen[hidden] {
+  display: none !important; /* class 选择器优先级覆盖 UA 的 [hidden]，必须显式处理 */
+}
+.hm-ref-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hmRefFsIn 0.2s ease both;
+}
+@keyframes hmRefFsIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hm-ref-fs-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.hm-ref-fs-close:hover { background: rgba(251, 113, 133, 0.85); }
+.hm-ref-fs-close svg { width: 16px; height: 16px; }
+
+.hm-ref-fs-idx {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.85);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hm-ref-fs-img {
+  max-width: 92vw;
+  max-height: 82vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 0.15s ease;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.hm-ref-fs-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.hm-ref-fs-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.hm-ref-fs-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.08);
+}
+.hm-ref-fs-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ========== chip：文档流宽度 == @N 文字宽度 + thumb 在内部 ==========
+   设计要点：
+   1. .chip 是 inline-block，宽度完全由 .chip-label 的 @N 文字宽度决定
+   2. .chip-label 是文档流主体，padding=0，宽度严格等于 @N 文字
+   3. .chip-thumb position:absolute INSIDE chip 左边缘，覆盖 "@" 字符位置
+      —— 不溢出到外部 → 不会覆盖前一个/后一个字符
+      —— 不占文档流宽度 → chip 总宽 = @N 文字宽 → 光标 0px 偏差
+   4. thumb z-index 高于 label，所以 "@" 被图标盖住（这是行业标准做法）
+      "1"/"2"/"3" 数字部分仍然可见
+   这是 Slack / Discord / GitHub mention 的实现思路。 */
+.hm-prompt-overlay .chip {
+  position: relative;
+  display: inline-block;
+  vertical-align: baseline;
+  padding: 0;
+  margin: 0;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  overflow: visible;       /* thumb 在内部，visible 也没问题 */
+}
+.hm-prompt-overlay .chip .chip-label {
+  display: inline-block;
+  color: #c7d2fe;
+  font-weight: 500;
+  font-size: inherit;     /* 和 textarea 同字号，@N 宽度才一致 */
+  white-space: nowrap;
+  padding: 0;             /* ⚠️ 必须 0！任何 padding → label 宽于 @N → 光标偏 */
+  border-radius: 3px;
+  background-color: rgba(99, 102, 241, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.55);
+  height: 1.3em;
+  line-height: 1.3em;
+  box-sizing: border-box;
+  /* z-index 比 thumb 低 —— "@" 字符会被 thumb 盖住，"1"/"2" 数字露出来 */
+  position: relative;
+  z-index: 1;
+}
+/* 缩略图：放在 chip 内部左边缘（覆盖 "@" 字符位置），不溢出外部 */
+.hm-prompt-overlay .chip .chip-thumb {
+  position: absolute;
+  left: 0.5px;             /* ← 在 chip 内部，不是外部！0.5px 防止边缘抗锯齿 */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.75em;           /* ← 0.75em ≈ 9.75px，刚好覆盖 "@" 字符（约 8px 宽） */
+  height: 0.75em;
+  border-radius: 2px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 2;              /* ← 在 label 上层，盖住 "@" */
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */
@@ -4052,7 +4418,7 @@ body.hm-resizing * {
   inset: 0;
   pointer-events: none;
   padding: 2px 40px 18px 14px; /* 和 .hm-prompt padding 对齐 */
-  overflow: hidden;
+  overflow: visible;           /* 让 chip-thumb 溢出左侧不被裁剪 */
   font-size: 12.5px;
   line-height: 1.6;
   color: #dbe7f3;
@@ -4061,21 +4427,13 @@ body.hm-resizing * {
   overflow-wrap: break-word;
   font-family: inherit;
 }
-/* chip 不能改变宽度：宽度由 @N 文本本身撑开，缩略图只做背景，
-   这样 textarea 里的光标始终落在 chip 正后方（否则 caret 会错位） */
-.hm-prompt-overlay .chip {
-  display: inline-block;
-  padding: 0;
-  margin: 0;
-  color: transparent;
-  border-radius: 3px;
-  background-color: rgba(56, 189, 248, 0.22);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 1.06em 1.06em;
-  box-shadow: inset 0 0 0 1px rgba(94, 196, 238, 0.55);
-  vertical-align: baseline;
-}
+/* ⚠️⚠️⚠️ chip 宽度规则 —— 绝对不能改！⚠️⚠️⚠️
+   chip 在文档流中的宽度必须严格等于它替换的 @N 文字宽度（约 2 个字符）。
+   之前用 inline-flex + thumb 在流里占空间 → chip 比 @N 宽 → overlay 层
+   文字偏移 → textarea 光标和 overlay 文字对不上（用户指哪打哪不了）。
+   现在方案：chip-label 是文档流主体（宽度=@N），chip-thumb position:absolute
+   溢出到左侧，不影响文档流宽度。这是 Slack/Discord/@mention 的行业标准做法。
+   不要把 thumb 改回 flex 子元素，也不要给 chip 加 padding-left / width。 */
 
 .hm-prompt textarea::placeholder {
   color: #5f7288;
@@ -8027,7 +8385,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030020641-e400b86";</script>
+<script>window.HM_BUILD = "20261030052706-35743c5";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8463,14 +8821,38 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 
     <div class="hm-composer" id="composer">
       <!-- 多模态参考主体上传区：生图 → 图片；视频 → 图片/视频/音频；音频 → 音频 -->
-      <div class="hm-ref" id="refDrop" role="button" tabindex="0" aria-label="上传或拖入参考主体" hidden>
+      <div class="hm-ref" id="refDrop" aria-label="上传或拖入参考主体" hidden>
         <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp3,audio/wav,audio/ogg" hidden multiple>
+        <!-- 空状态 -->
         <div class="hm-ref-empty" id="refEmpty">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="13" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5.5 16.5l4.2-4 3.2 2.8 2.5-2.3 3.1 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
           <span id="refEmptyText">拖入或上传参考图（最多 10 张）</span>
           <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 @1 @2 … 引用</span>
         </div>
+
+        <!-- 参考图网格 -->
         <div class="hm-ref-grid" id="refGrid" hidden></div>
+
+        <!-- 右侧悬浮工具条（图四） -->
+        <div class="hm-ref-right-bar" id="refRightBar" hidden>
+          <button type="button" class="hm-ref-right-btn hm-ref-right-select" id="refSelectBtn" title="选择素材">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>选择素材</span>
+          </button>
+          <button type="button" class="hm-ref-right-btn hm-ref-right-clear" id="refClearBtn" title="全部删除">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>全部删除</span>
+          </button>
+        </div>
+
+        <!-- 选择模式顶部工具条（图五） -->
+        <div class="hm-ref-select-toolbar" id="refSelectToolbar" hidden>
+          <span class="hm-ref-select-count" id="refSelectCount">已选 0</span>
+          <button type="button" class="hm-ref-select-cancel" id="refSelectCancel">取消</button>
+          <button type="button" class="hm-ref-select-delete" id="refSelectDelete" title="删除选中">删除选中</button>
+          <button type="button" class="hm-ref-select-clear" id="refSelectClear" title="全部删除">全部删除</button>
+        </div>
+
         <span class="hm-ref-state" id="refState">未添加</span>
         <button class="hm-ref-remove" id="refRemove" type="button" aria-label="清空所有参考" title="清空全部参考">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -8569,11 +8951,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
               <div data-mode-panel="image">
                 <span class="hm-menu-label">免费模型</span>
                 <div class="hm-chip-grid" id="freeModelList"></div>
-                <span class="hm-menu-label">RayinAPI</span>
-                <div class="hm-chip-grid">
-                  <button data-engine="gpt-image">GPT-image</button>
-                  <button data-engine="banana">Nano Banana</button>
-                </div>
+                <span class="hm-menu-label">RayinAI</span>
+                <div class="hm-chip-grid" id="rayinModelList"></div>
                 <span class="hm-menu-label">LoRA 风格</span>
                 <div class="hm-chip-grid" id="loraList"></div>
               </div>
@@ -8703,7 +9082,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         <option value="flux">FLUX.1 · 免费（无需密钥）</option>
         <option value="openai">免费额度平台模型</option>
         <option value="gpt-image">GPT-image · RayinAPI</option>
-        <option value="banana">Nano Banana · RayinAPI</option>
+        <option value="banana">Gemini Banana · RayinAI</option>
       </select>
     </div>
   </div>
@@ -8856,8 +9235,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
       <span class="modal-kicker">RAYINAPI</span>
-      <h2>接入 GPT-image 与 Banana</h2>
-      <p class="api-desc">在 <a href="https://www.rayinai.com/usage" target="_blank" rel="noopener">rayinai.com</a> 控制台创建 API Key 后填入下方，密钥仅保存在本浏览器。</p>
+      <h2>接入 GPT-image 与 Gemini Banana</h2>
+      <p class="api-desc">后端已预配置 Gemini Banana（gemini-3.1-flash-image），可直接出图。也可在此覆盖 RayinAI 账号与模型。密钥仅保存在本浏览器。</p>
 
       <div class="api-form">
         <label class="field">
@@ -8870,11 +9249,11 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         </label>
         <label class="field">
           <span>GPT-image 模型 ID</span>
-          <input id="gptModelInput" type="text" placeholder="gpt-image-2" autocomplete="off">
+          <input id="gptModelInput" type="text" placeholder="gemini-3-pro-image" autocomplete="off">
         </label>
         <label class="field">
-          <span>Nano Banana 模型 ID</span>
-          <input id="bananaModelInput" type="text" placeholder="nano-banana" autocomplete="off">
+          <span>Gemini Banana 模型 ID</span>
+          <input id="bananaModelInput" type="text" placeholder="gemini-3.1-flash-image" autocomplete="off">
         </label>
       </div>
 
@@ -9741,30 +10120,44 @@ const ENGINES = [
   }
 ];
 
-/* RayinAPI 接入（GPT-image / Nano Banana）
- * 注意：RayinAPI 只认官方 OpenAI 模型 ID，别写 Rayin 自己的展示别名 */
+/* RayinAPI 接入（GPT-image / Gemini Banana）
+ * 后端默认已配置用户提供的 RayinAI key + gemini-3.1-flash-image，
+ * 前端可在「接入设置」里覆盖 key 和模型 ID */
 const RAYIN_DEFAULT = {
   base: 'https://www.rayinai.com/v1',
   key: '',
-  gptModel: 'gpt-image-2',
-  bananaModel: 'nano-banana'
+  gptModel: 'gemini-3-pro-image',
+  bananaModel: 'gemini-3.1-flash-image'
 };
-
-/* GPT-image 候选模型链（RayinAPI 只认官方 OpenAI ID），第一个不可用自动试下一个 */
-const GPT_IMAGE_FALLBACKS = ['gpt-image-2', 'gpt-image-1'];
 
 const ENGINE_META = {
   flux: { label: 'FLUX.1', pill: 'FLUX.1 · 免费', hint: '免费 · 约 10 秒', meta: 'FLUX.1', free: true },
   openai: { label: '免费模型平台', pill: '免费额度 · 第三方', hint: '免费额度 · 需平台密钥', meta: 'Third-party', free: true },
   'gpt-image': { label: 'GPT-image', pill: 'GPT-image · RayinAPI', hint: 'RayinAPI · 按量计费', meta: 'GPT-image', free: false },
-  banana: { label: 'Nano Banana', pill: 'Nano Banana · RayinAPI', hint: 'RayinAPI · 按量计费', meta: 'Nano Banana', free: false }
+  banana: { label: 'Gemini Banana', pill: 'Gemini Banana · RayinAI', hint: 'RayinAI · Gemini 2.0 多模态生图', meta: 'Gemini Banana', free: false }
 };
 
 /* 免费模型目录（启动时从后端 /catalog 拉取，拉不到就用内置兜底） */
 const CATALOG_FALLBACK = {
-  keyless: [{ id: 'sana', engine: 'flux', model: 'sana', name: 'SANA 动漫', badge: '免密钥', hint: '免费 · 秒级出图' }],
+  keyless: [
+    { id: 'flux-anime', engine: 'flux', model: 'flux-anime', name: 'FLUX Anime', badge: '免密钥', hint: '二次元插画 · 高质量' },
+    { id: 'kolors', engine: 'flux', model: 'kolors', name: 'Kolors 中文动漫', badge: '免密钥', hint: '中文提示词强 · 国风' },
+    { id: 'sana', engine: 'flux', model: 'sana', name: 'SANA 动漫', badge: '免密钥', hint: '免费 · 秒级出图' },
+    { id: 'flux', engine: 'flux', model: 'flux', name: 'FLUX.1', badge: '免密钥', hint: '通用大模型 · 高质量' },
+    { id: 'flux-realism', engine: 'flux', model: 'flux-realism', name: 'FLUX Realism', badge: '免密钥', hint: '写实质感 · 细腻' },
+  ],
   providers: [],
-  loras: []
+  loras: [],
+  rayin: [
+    /* GPT 图像模型（OpenAI key → /images/generations） */
+    { id: 'gpt-image-2', engine: 'gpt-image', model: 'gpt-image-2', name: 'GPT Image 2', badge: 'GPT · 标准', hint: '稳定通用 · OpenAI 原生生图' },
+    { id: 'gpt-image-2.5-flare', engine: 'gpt-image', model: 'gpt-image-2.5-flare', name: 'GPT Image 2.5 Flare', badge: 'GPT · 光影增强', hint: '光影绚丽 · 氛围渲染' },
+    { id: 'gpt-image-2.5-sunburst', engine: 'gpt-image', model: 'gpt-image-2.5-sunburst', name: 'GPT Image 2.5 Sunburst', badge: 'GPT · 细节爆发', hint: '高细节 · 锐度爆发' },
+    /* Gemini 图像模型（Gemini key → /chat/completions） */
+    { id: 'gemini-3-pro-image', engine: 'banana', model: 'gemini-3-pro-image', name: 'Gemini 3 Pro Image', badge: 'Gemini · Pro', hint: '最高质量 · 精细渲染' },
+    { id: 'gemini-3.1-flash-image', engine: 'banana', model: 'gemini-3.1-flash-image', name: 'Gemini 3.1 Flash Image', badge: 'Gemini · Flash', hint: '速度最快 · 平衡质量' },
+    { id: 'gemini-3.1-flash-lite-image', engine: 'banana', model: 'gemini-3.1-flash-lite-image', name: 'Gemini 3.1 Flash Lite Image', badge: 'Gemini · Lite', hint: '最轻量 · 秒级响应' },
+  ]
 };
 
 const TRANSLATE_API = 'https://text.pollinations.ai/';
@@ -10187,11 +10580,29 @@ function bindEls() {
   els.refInput = document.getElementById('refInput');
   els.refGrid = document.getElementById('refGrid');
   els.refEmpty = document.getElementById('refEmpty');
-  els.refPreview = document.getElementById('refPreview');
+  els.refPreview = document.getElementById('refPreview'); /* 已废弃，保留兼容 */
   els.refImage = document.getElementById('refImage');
   els.refRemove = document.getElementById('refRemove');
   els.refState = document.getElementById('refState');
   els.refNote = document.getElementById('refNote');
+  /* 新的参考图区域元素 */
+  els.refRightBar = document.getElementById('refRightBar');
+  els.refSelectBtn = document.getElementById('refSelectBtn');
+  els.refClearBtn = document.getElementById('refClearBtn');
+  els.refSelectToolbar = document.getElementById('refSelectToolbar');
+  els.refSelectCount = document.getElementById('refSelectCount');
+  els.refSelectCancel = document.getElementById('refSelectCancel');
+  els.refSelectDelete = document.getElementById('refSelectDelete');
+  els.refSelectClear = document.getElementById('refSelectClear');
+  els.refHover = document.getElementById('refHover');
+  els.refFullscreen = document.getElementById('refFullscreen');
+  els.refFsImg = document.getElementById('refFsImg');
+  els.refFsIdx = document.getElementById('refFsIdx');
+  els.refFsClose = document.getElementById('refFsClose');
+  els.refFsZoomIn = document.getElementById('refFsZoomIn');
+  els.refFsZoomOut = document.getElementById('refFsZoomOut');
+  els.refFsReset = document.getElementById('refFsReset');
+  els.refFsDownload = document.getElementById('refFsDownload');
 
   els.ratioPicker = document.getElementById('ratioPicker');
   els.ratioLabel = document.getElementById('ratioLabel');
@@ -10249,6 +10660,7 @@ function bindEls() {
   els.modeMenu = document.getElementById('modeMenu');
   els.modelMenu = document.getElementById('modelMenu');
   els.freeModelList = document.getElementById('freeModelList');
+  els.rayinModelList = document.getElementById('rayinModelList');
   els.loraList = document.getElementById('loraList');
   els.providerSelect = document.getElementById('providerSelect');
   els.providerBaseInput = document.getElementById('providerBaseInput');
@@ -10633,6 +11045,17 @@ function renderCatalogMenus() {
       '<p class="hm-menu-note">后端离线，暂无在线模型目录</p>';
   }
 
+  /* RayinAI 模型 — 从后端 rayin 数组动态渲染，每个模型独立按钮 */
+  if (els.rayinModelList) {
+    const rows = [];
+    (data.rayin || []).forEach(function (m) {
+      rows.push('<button data-engine="' + m.engine + '" data-model="' + m.model +
+        '" title="' + (m.badge || '') + ' · ' + (m.hint || '') + '">' + m.name + '</button>');
+    });
+    els.rayinModelList.innerHTML = rows.join('') ||
+      '<p class="hm-menu-note">RayinAI 暂无可用图像模型</p>';
+  }
+
   if (els.loraList) {
     const rows = ['<button data-lora="">无</button>'];
     (data.loras || []).forEach(function (l) {
@@ -10652,6 +11075,7 @@ async function loadCatalog() {
     state.catalog = {
       keyless: data.keyless || [],
       providers: data.providers || [],
+      rayin: data.rayin || [],
       loras: data.loras || []
     };
     renderCatalogMenus();
@@ -10739,59 +11163,175 @@ function syncRefNote() {
   }
 }
 
+/* ========== 参考图区域状态 ========== */
+var _refSelectMode = false;       /* 是否进入选择素材模式 */
+var _refSelectedSet = {};         /* 已选择索引 {0:true, 2:true, ...} */
+var _refFsIdx = -1;               /* 全屏查看的参考索引 */
+var _refFsScale = 1;              /* 全屏缩放比例 */
+
+function enterRefSelectMode() {
+  _refSelectMode = true;
+  _refSelectedSet = {};
+  document.body.setAttribute('data-ref-select', '1');
+  renderRef();
+}
+function exitRefSelectMode() {
+  _refSelectMode = false;
+  _refSelectedSet = {};
+  document.body.removeAttribute('data-ref-select');
+  renderRef();
+}
+function toggleRefSelected(idx) {
+  if (_refSelectedSet[idx]) delete _refSelectedSet[idx];
+  else _refSelectedSet[idx] = true;
+  renderRef();
+}
+function deleteSelectedRefs() {
+  var list = currentRefs();
+  /* 从大到小删，避免索引错位 */
+  var toDelete = Object.keys(_refSelectedSet).map(Number).sort(function (a, b) { return b - a; });
+  if (!toDelete.length) return;
+  toDelete.forEach(function (idx) { list.splice(idx, 1); });
+  setCurrentRefs(list);
+  exitRefSelectMode();
+  toast('已删除 ' + toDelete.length + ' 张参考图', 'info');
+}
+
+/* ========== 全屏查看 ========== */
+function openRefFullscreen(idx) {
+  var list = currentRefs();
+  if (!list[idx]) return;
+  _refFsIdx = idx;
+  _refFsScale = 1;
+  if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  if (els.refFsImg) els.refFsImg.src = list[idx].dataUrl;
+  if (els.refFsIdx) els.refFsIdx.textContent = '@' + (idx + 1);
+  if (els.refFullscreen) els.refFullscreen.hidden = false;
+}
+function closeRefFullscreen() {
+  _refFsIdx = -1;
+  _refFsScale = 1;
+  if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  if (els.refFullscreen) els.refFullscreen.hidden = true;
+}
+
+/* ========== hover 浮层 ========== */
+var _refHoverIdx = -1;
+var _refHoverEnterTimer = 0;
+function showRefHover(idx, anchorEl) {
+  var list = currentRefs();
+  if (!list[idx] || _refSelectMode) return;
+  _refHoverIdx = idx;
+  if (!els.refHover) return;
+  els.refHover.querySelector('img').src = list[idx].dataUrl;
+  els.refHover.hidden = false;
+  /* 位置：anchorEl 右侧或下侧，避免超出视口 */
+  var r = anchorEl.getBoundingClientRect();
+  var hoverW = 140, hoverH = 156;
+  var top = r.bottom + 6;
+  var left = r.left;
+  if (top + hoverH > window.innerHeight) top = r.top - hoverH - 6;
+  if (left + hoverW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - hoverW - 8);
+  if (left < 8) left = 8;
+  els.refHover.style.top = top + 'px';
+  els.refHover.style.left = left + 'px';
+}
+function hideRefHover() {
+  if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+  _refHoverIdx = -1;
+  if (els.refHover) els.refHover.hidden = true;
+}
+
+/* ========== renderRef（完全重写） ========== */
 function renderRef() {
-  const list = currentRefs();
-  /* 渲染多图网格 */
+  var list = currentRefs();
+  var hasRef = list.length > 0;
+
+  /* 渲染网格 */
   if (els.refGrid) {
     els.refGrid.innerHTML = '';
     list.forEach(function (ref, idx) {
-      const cell = document.createElement('div');
+      var cell = document.createElement('div');
       cell.className = 'hm-ref-cell';
       cell.dataset.idx = String(idx);
+      if (_refSelectedSet[idx]) cell.classList.add('is-selected');
+
+      var check = _refSelectMode
+        ? '<div class="hm-ref-check' + (_refSelectedSet[idx] ? ' is-on' : '') + '" data-check-idx="' + idx + '">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</div>'
+        : '';
+
       cell.innerHTML =
-        '<img alt="参考图 ' + (idx + 1) + '">' +
-        '<span class="hm-ref-idx">@' + (idx + 1) + '</span>' +
-        '<span class="hm-ref-size">' + ref.width + '×' + ref.height + '</span>' +
-        '<button class="hm-ref-cell-remove" type="button" aria-label="删除参考图 ' + (idx + 1) + '">' +
-          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-        '</button>';
-      const img = cell.querySelector('img');
-      img.src = ref.dataUrl;
-      /* 点击序号自动在 prompt 里插入 @N */
-      cell.querySelector('.hm-ref-idx').addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        insertPromptAt('@' + (idx + 1) + ' ');
+        '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.thumb || ref.dataUrl) + '">' +
+        '<span class="hm-ref-tag">图' + (idx + 1) + '</span>' +
+        check;
+
+      /* 事件：选择模式下点击 cell = toggle 选中；否则点击 = 打开全屏 */
+      cell.addEventListener('click', function (ev) {
+        if (_refSelectMode) {
+          ev.stopPropagation();
+          toggleRefSelected(idx);
+          return;
+        }
+        openRefFullscreen(idx);
       });
-      cell.querySelector('.hm-ref-cell-remove').addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        removeRefAt(idx);
-      });
+
+      /* hover 浮层（非选择模式才显示）：鼠标enter 延迟一点避免闪烁 */
+      if (!_refSelectMode) {
+        cell.addEventListener('mouseenter', function () {
+          if (_refHoverEnterTimer) clearTimeout(_refHoverEnterTimer);
+          _refHoverEnterTimer = setTimeout(function () {
+            showRefHover(idx, cell);
+          }, 120);
+        });
+        cell.addEventListener('mouseleave', function () {
+          if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+          /* 延迟隐藏，让用户能移到浮层上 */
+          setTimeout(function () {
+            if (_refHoverIdx === idx && els.refHover && !els.refHover.matches(':hover')) hideRefHover();
+          }, 180);
+        });
+      }
+
       els.refGrid.appendChild(cell);
     });
 
-    /* 添加新图的槽位（未满时显示） */
-    if (list.length < REF_MAX_COUNT) {
-      const addCell = document.createElement('div');
+    /* "+" 槽位 */
+    if (list.length < REF_MAX_COUNT && !_refSelectMode) {
+      var addCell = document.createElement('div');
       addCell.className = 'hm-ref-cell hm-ref-add';
       addCell.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>' +
         '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
-      addCell.addEventListener('click', function () { els.refInput.click(); });
-      addCell.addEventListener('keydown', function (ev) {
-        if (ev.key === 'Enter') { ev.preventDefault(); els.refInput.click(); }
+      addCell.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        els.refInput.click();
       });
       els.refGrid.appendChild(addCell);
     }
 
-    els.refGrid.hidden = list.length === 0;
+    els.refGrid.hidden = !hasRef;
   }
 
-  /* 更新 overlay chip 层（textarea 上显示带图标的 @N 视觉化） */
+  /* 右侧工具条（有素材且非选择模式时显示） */
+  if (els.refRightBar) els.refRightBar.hidden = !hasRef || _refSelectMode;
+
+  /* 选择模式顶部工具条 */
+  if (els.refSelectToolbar) {
+    els.refSelectToolbar.hidden = !_refSelectMode;
+    if (els.refSelectCount) {
+      var selCount = Object.keys(_refSelectedSet).length;
+      els.refSelectCount.textContent = '已选 ' + selCount;
+    }
+  }
+
+  /* 更新 overlay chip 层 */
   renderPromptOverlay();
 
-  /* 顶部状态：已添加 X 张 / 最多 10 张 */
+  /* 顶部状态文字 */
   if (els.refState) {
-    if (list.length > 0) {
+    if (hasRef) {
       els.refState.textContent = list.length + '/' + REF_MAX_COUNT;
       els.refState.style.color = '#c4b5fd';
     } else {
@@ -10800,9 +11340,9 @@ function renderRef() {
     }
   }
 
-  /* 拖入区域视觉 */
+  /* 空/满 状态 */
   if (els.refDrop) {
-    if (list.length > 0) {
+    if (hasRef) {
       els.refDrop.classList.add('has-ref');
       if (els.refEmpty) els.refEmpty.hidden = true;
     } else {
@@ -10864,10 +11404,9 @@ function _ensureChipCache(refs) {
   if (key === _chipCacheKey) return _chipCacheHtml;
   _chipCacheKey = key;
   _chipCacheHtml = refs.map(function (ref, i) {
-    /* chip 宽度必须等于 "@N" 文本自身宽度，否则光标会落在 chip 左边（错位）：
-       所以用 @N 文字撑宽度、缩略图做背景，而不是插入 <img> 撑宽 */
     var u = ref.thumb || ref.dataUrl;
-    return '<span class="chip" style="background-image:url(' + u + ')">@' + (i + 1) + '</span>';
+    /* chip 顺序：图标在前，@图N 在后，整体 inline-flex */
+    return '<span class="chip"><span class="chip-thumb" style="background-image:url(' + u + ')"></span><span class="chip-label">@' + (i + 1) + '</span></span>';
   });
   return _chipCacheHtml;
 }
@@ -10922,6 +11461,17 @@ function removeRefAt(idx) {
   arr.splice(idx, 1);
   setCurrentRefs(arr);
   els.refInput.value = '';
+  /* 清除选择态、关闭全屏（如果删的是当前全屏图） */
+  delete _refSelectedSet[idx];
+  var nextSel = {};
+  Object.keys(_refSelectedSet).forEach(function (k) {
+    var ki = Number(k);
+    if (ki < idx) nextSel[ki] = true;
+    else if (ki > idx) nextSel[ki - 1] = true;
+  });
+  _refSelectedSet = nextSel;
+  if (_refFsIdx === idx) closeRefFullscreen();
+  hideRefHover();
   renderRef();
   toast('已删除参考图 #' + (idx + 1), 'info');
 }
@@ -10929,6 +11479,9 @@ function removeRefAt(idx) {
 function clearRefImages() {
   setCurrentRefs([]);
   els.refInput.value = '';
+  _refSelectedSet = {};
+  hideRefHover();
+  closeRefFullscreen();
   renderRef();
 }
 
@@ -10941,6 +11494,7 @@ function insertPromptAt(text) {
   ta.value = val.slice(0, start) + text + val.slice(end);
   ta.selectionStart = ta.selectionEnd = start + text.length;
   updateCharCount();
+  schedulePromptOverlay(); /* 程序改值不会触发 input，手动刷新 chip overlay */
   ta.focus();
 }
 
@@ -11043,6 +11597,7 @@ function _commitRefAc(refIdx) {
   var newPos = atIdx + insert.length;
   ta.selectionStart = ta.selectionEnd = newPos;
   updateCharCount();
+  schedulePromptOverlay(); /* 程序改值不会触发 input，手动刷新 chip overlay */
   ta.focus();
 }
 
@@ -11612,6 +12167,9 @@ async function runBackendImage(job, prompt) {
     const cfg = providerConfig();
     payload.model = cfg.model;
     payload.provider = { id: cfg.id, base: cfg.base, key: cfg.key, model: cfg.model };
+  } else if (job.engine === 'banana' || job.engine === 'gpt-image') {
+    /* RayinAI — 前端选的真实模型 ID 必须传给后端覆盖默认值 */
+    if (state.channelModel) payload.model = state.channelModel;
   }
 
   const data = await window.HM.api.generate(payload, 180000);
@@ -12905,20 +13463,29 @@ function bindEvents() {
 
   els.promptInput.addEventListener('input', updateCharCount);
 
-  els.refDrop.addEventListener('click', function () {
-    els.refInput.click();
-  });
+  /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 === */
+  if (els.refEmpty) {
+    els.refEmpty.addEventListener('click', function () { els.refInput.click(); });
+    els.refEmpty.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault(); els.refInput.click();
+      }
+    });
+  }
 
-  els.refDrop.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
-      event.preventDefault();
-      els.refInput.click();
+  els.refInput.addEventListener('change', async function (event) {
+    var files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    var remaining = REF_MAX_COUNT - currentRefs().length;
+    if (remaining <= 0) {
+      toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+      els.refInput.value = '';
+      return;
     }
-  });
-
-  els.refInput.addEventListener('change', function (event) {
-    const file = event.target.files && event.target.files[0];
-    pickRefFile(file);
+    for (var i = 0; i < Math.min(files.length, remaining); i++) {
+      await pickRefFile(files[i]);
+    }
+    els.refInput.value = '';
   });
 
   els.refRemove.addEventListener('click', function (event) {
@@ -12927,28 +13494,170 @@ function bindEvents() {
     toast('已清空所有参考图', 'info');
   });
 
-  ['dragenter', 'dragover'].forEach(function (type) {
-    els.refDrop.addEventListener(type, function (event) {
-      event.preventDefault();
-      event.stopPropagation();
+  /* === window 级别 drag/drop ===
+   * HTML5 DnD 规则：dragover 必须持续 preventDefault() 浏览器才会派发 drop。
+   * 注意：dragover 阶段 dataTransfer.files 是空的（浏览器安全限制，防止网页窥探），
+   * 只有 drop 事件里才有 files —— 所以 dragover 里绝不能用 files.length 做守卫 return！ */
+  var _lastDragOverRef = false;
+  window.addEventListener('dragover', function (ev) {
+    /* 只要有 dataTransfer（有拖拽正在进行）就 preventDefault */
+    if (!ev.dataTransfer) return;
+    ev.preventDefault();
+    try { ev.dataTransfer.dropEffect = 'copy'; } catch (e) {}
+    /* 更新 refDrop is-over 视觉 */
+    if (!els.refDrop) return;
+    var rect = els.refDrop.getBoundingClientRect();
+    var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
+                 ev.clientY >= rect.top  && ev.clientY <= rect.bottom;
+    if (inside && !_lastDragOverRef) {
       els.refDrop.classList.add('is-over');
+      _lastDragOverRef = true;
+    } else if (!inside && _lastDragOverRef) {
+      els.refDrop.classList.remove('is-over');
+      _lastDragOverRef = false;
+    }
+  });
+
+  window.addEventListener('dragleave', function (ev) {
+    if (!els.refDrop) return;
+    if (ev.clientX <= 0 || ev.clientY <= 0 ||
+        ev.clientX >= window.innerWidth || ev.clientY >= window.innerHeight) {
+      els.refDrop.classList.remove('is-over');
+      _lastDragOverRef = false;
+    }
+  });
+
+  window.addEventListener('drop', async function (ev) {
+    if (!ev.dataTransfer) return;
+    ev.preventDefault();
+    var files = Array.from(ev.dataTransfer.files || []);
+    if (!files.length) return; /* 非文件拖拽（HTML5 元素拖放）忽略 */
+    if (!els.refDrop) return;
+    var rect = els.refDrop.getBoundingClientRect();
+    var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
+                 ev.clientY >= rect.top  && ev.clientY <= rect.bottom;
+    if (!inside) {
+      els.refDrop.classList.remove('is-over');
+      _lastDragOverRef = false;
+      return;
+    }
+    els.refDrop.classList.remove('is-over');
+    _lastDragOverRef = false;
+    /* 只保留图片 */
+    var imgs = files.filter(function (f) {
+      return /^image\/(png|jpe?g|webp)$/i.test(f.type || '');
     });
+    if (!imgs.length) {
+      toast('拖入的文件不是图片，请拖 PNG / JPG / WebP', 'error');
+      return;
+    }
+    var remaining = REF_MAX_COUNT - currentRefs().length;
+    for (var i = 0; i < Math.min(imgs.length, remaining); i++) {
+      await pickRefFile(imgs[i]);
+    }
+    if (imgs.length > remaining) {
+      toast('仅添加了前 ' + remaining + ' 张（已达上限 ' + REF_MAX_COUNT + '）', 'info');
+    }
   });
 
-  els.refDrop.addEventListener('dragleave', function (event) {
-    event.preventDefault();
-    if (els.refDrop.contains(event.relatedTarget)) return;
-    els.refDrop.classList.remove('is-over');
+  /* === 右侧工具条 === */
+  if (els.refSelectBtn) els.refSelectBtn.addEventListener('click', function (ev) {
+    ev.stopPropagation(); enterRefSelectMode();
+  });
+  if (els.refClearBtn) els.refClearBtn.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    if (!currentRefs().length) return;
+    if (confirm('确定要清空所有参考图吗？')) {
+      clearRefImages();
+      toast('已清空所有参考图', 'info');
+    }
   });
 
-  els.refDrop.addEventListener('drop', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    els.refDrop.classList.remove('is-over');
-    /* 支持拖入多张 */
-    const files = Array.from(event.dataTransfer && event.dataTransfer.files || []);
-    files.slice(0, REF_MAX_COUNT - currentRefs().length).forEach(function (f) { pickRefFile(f); });
+  /* === 选择模式顶部工具条 === */
+  if (els.refSelectCancel) els.refSelectCancel.addEventListener('click', exitRefSelectMode);
+  if (els.refSelectDelete) els.refSelectDelete.addEventListener('click', function (ev) {
+    ev.stopPropagation(); deleteSelectedRefs();
   });
+  if (els.refSelectClear) els.refSelectClear.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    if (!currentRefs().length) return;
+    if (confirm('确定要清空所有参考图吗？')) { clearRefImages(); exitRefSelectMode(); toast('已清空所有参考图', 'info'); }
+  });
+
+  /* === hover 浮层按钮 === */
+  if (els.refHover) {
+    els.refHover.addEventListener('click', function (ev) {
+      var viewBtn = ev.target.closest('.hm-ref-hover-view');
+      if (viewBtn) {
+        ev.stopPropagation();
+        if (_refHoverIdx >= 0) openRefFullscreen(_refHoverIdx);
+        hideRefHover();
+        return;
+      }
+      var atBtn = ev.target.closest('.hm-ref-hover-at');
+      if (atBtn) {
+        ev.stopPropagation();
+        if (_refHoverIdx >= 0) insertPromptAt('@' + (_refHoverIdx + 1) + ' ');
+        hideRefHover();
+        return;
+      }
+    });
+    /* 浮层自己 hover 时不要收起 */
+    els.refHover.addEventListener('mouseenter', function () {
+      if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
+    });
+    els.refHover.addEventListener('mouseleave', function () {
+      hideRefHover();
+    });
+  }
+
+  /* === 全屏查看控制 === */
+  if (els.refFsClose) els.refFsClose.addEventListener('click', closeRefFullscreen);
+  /* 点击全屏背景（非图片/按钮区域）也能关闭 */
+  if (els.refFullscreen) els.refFullscreen.addEventListener('click', function (ev) {
+    if (ev.target === els.refFullscreen) closeRefFullscreen();
+  });
+  /* Esc 键关闭 */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && els.refFullscreen && !els.refFullscreen.hidden) {
+      closeRefFullscreen();
+    }
+  });
+  if (els.refFsZoomIn) els.refFsZoomIn.addEventListener('click', function () {
+    _refFsScale = Math.min(4, +(_refFsScale + 0.25).toFixed(2));
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(' + _refFsScale + ')';
+  });
+  if (els.refFsZoomOut) els.refFsZoomOut.addEventListener('click', function () {
+    _refFsScale = Math.max(0.3, +(_refFsScale - 0.25).toFixed(2));
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(' + _refFsScale + ')';
+  });
+  if (els.refFsReset) els.refFsReset.addEventListener('click', function () {
+    _refFsScale = 1;
+    if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
+  });
+  if (els.refFsDownload) els.refFsDownload.addEventListener('click', function () {
+    if (_refFsIdx < 0) return;
+    var list = currentRefs();
+    var ref = list[_refFsIdx];
+    if (!ref) return;
+    var a = document.createElement('a');
+    a.href = ref.dataUrl;
+    a.download = ref.name || ('reference_' + (_refFsIdx + 1) + '.jpg');
+    a.click();
+  });
+  /* 全屏：ESC 关闭 + 点击图片外关闭 */
+  document.addEventListener('keydown', function (ev) {
+    if (els.refFullscreen && !els.refFullscreen.hidden && ev.key === 'Escape') {
+      ev.preventDefault();
+      closeRefFullscreen();
+    }
+  });
+  if (els.refFullscreen) {
+    els.refFullscreen.addEventListener('click', function (ev) {
+      /* 点击图片或按钮之外的黑底 → 关闭 */
+      if (ev.target === els.refFullscreen) closeRefFullscreen();
+    });
+  }
 
   els.inspireBtn.addEventListener('click', function () {
     const current = els.promptInput.value.trim();
@@ -15791,12 +16500,34 @@ window.HMApp = {
     return list;
   }
 
-  /* 桌面上要显示的文件夹（有内容、且不是正在"进入"的那一个） */
+  /* 某个文件夹下（含所有子孙文件夹）的全部作品 */
+  function worksUnderFolder(id) {
+    var ids = {};
+    (function collect(fid) {
+      ids[fid] = true;
+      desk.folders.forEach(function (f) {
+        if ((f.parentId || null) === fid && !ids[f.id]) collect(f.id);
+      });
+    })(id);
+    return state.works.filter(function (w) { return ids[desk.assigns[w.id]]; });
+  }
+
+  /* 某文件夹是否"有内容"：自身有作品，或有子文件夹 */
+  function folderHasContent(id) {
+    if (state.works.some(function (w) { return desk.assigns[w.id] === id; })) return true;
+    return desk.folders.some(function (f) { return (f.parentId || null) === id; });
+  }
+
+  /* 当前桌面这一层要显示的文件夹：
+     根桌面 → 顶层文件夹；进入某文件夹 → 它的直接子文件夹。
+     这样每个文件夹都有自己独立的一层桌面，互不混在一起。 */
   function activeFolders() {
+    var parentId = view.activeFolder || null;
     return desk.folders.filter(function (f) {
       if (!f || !f.id) return false;
       if (f.id === view.activeFolder) return false;
-      return state.works.some(function (w) { return desk.assigns[w.id] === f.id; });
+      if ((f.parentId || null) !== parentId) return false;
+      return folderHasContent(f.id);
     });
   }
 
@@ -15891,7 +16622,8 @@ window.HMApp = {
 
   /* 文件夹卡片 HTML：正方形，顶部缩略图网格 + 名称 + 数量角标 */
   function folderCardHtmlInner(folder) {
-    var items = state.works.filter(function (w) { return desk.assigns[w.id] === folder.id; });
+    var items = worksUnderFolder(folder.id);
+    var subCount = desk.folders.filter(function (f) { return (f.parentId || null) === folder.id; }).length;
     var thumbs = items.slice(0, 4).map(function (w) { return esc(w.thumb || w.url || ''); });
     var more = Math.max(0, items.length - 4);
     var gridHtml = '';
@@ -15905,8 +16637,9 @@ window.HMApp = {
       }).join('');
     }
     var moreHtml = more > 0 ? '<span class="folder-more">+' + more + '</span>' : '';
+    var meta = items.length + ' 项' + (subCount ? ' · ' + subCount + ' 个子文件夹' : '');
     return '<div class="folder-thumb">' + gridHtml + moreHtml + '</div>' +
-      '<div class="folder-info"><strong>' + esc(folder.name) + '</strong><small>' + items.length + ' 项</small></div>' +
+      '<div class="folder-info"><strong>' + esc(folder.name) + '</strong><small>' + meta + '</small></div>' +
       '<span class="desk-check" aria-hidden="true"></span>';
   }
 
@@ -15984,39 +16717,35 @@ window.HMApp = {
       idx += 1;
     });
 
-    /* ---------- 增量更新 folder-card（根视图才显示） ---------- */
+    /* ---------- 增量更新 folder-card（每一层桌面都显示本层文件夹） ---------- */
     var needFolderIds = {};
-    if (!view.activeFolder) {
-      folders.forEach(function (f) { needFolderIds[f.id] = true; });
-    }
+    folders.forEach(function (f) { needFolderIds[f.id] = true; });
 
     Array.prototype.forEach.call(grid.querySelectorAll('.folder-card'), function (node) {
       var id = node.dataset.folder;
       if (!needFolderIds[id]) node.parentNode.removeChild(node);
     });
 
-    if (!view.activeFolder) {
-      folders.forEach(function (f) {
-        var existing = grid.querySelector('.folder-card[data-folder="' + f.id + '"]');
-        if (!existing) {
-          existing = document.createElement('article');
-          existing.className = 'folder-card';
-          existing.dataset.folder = f.id;
-          grid.appendChild(existing);
-        }
-        existing.innerHTML = folderCardHtmlInner(f);
-        var pos = desk.positions[f.id];
-        if (!pos) {
-          pos = compactSlot(works.length + folders.indexOf(f), grid);
-          desk.positions[f.id] = pos;
-        }
-        var left = typeof pos.pxLeft === 'number' ? pos.pxLeft : PAD;
-        var top = typeof pos.pxTop === 'number' ? pos.pxTop : PAD;
-        existing.style.left = left + 'px';
-        existing.style.top = top + 'px';
-        existing.style.zIndex = String(pos.z || idx + 1);
-      });
-    }
+    folders.forEach(function (f) {
+      var existing = grid.querySelector('.folder-card[data-folder="' + f.id + '"]');
+      if (!existing) {
+        existing = document.createElement('article');
+        existing.className = 'folder-card';
+        existing.dataset.folder = f.id;
+        grid.appendChild(existing);
+      }
+      existing.innerHTML = folderCardHtmlInner(f);
+      var pos = desk.positions[f.id];
+      if (!pos) {
+        pos = compactSlot(works.length + folders.indexOf(f), grid);
+        desk.positions[f.id] = pos;
+      }
+      var left = typeof pos.pxLeft === 'number' ? pos.pxLeft : PAD;
+      var top = typeof pos.pxTop === 'number' ? pos.pxTop : PAD;
+      existing.style.left = left + 'px';
+      existing.style.top = top + 'px';
+      existing.style.zIndex = String(pos.z || idx + 1);
+    });
 
     /* ---------- 原地处理 loading 卡片：不再 removeChild + appendChild ---------- */
     var loadingJobs = [];
@@ -16112,15 +16841,13 @@ window.HMApp = {
   function tidy() {
     var grid = byId('resultGrid');
     if (!grid) return;
-    /* 根视图：works + folders 合并紧凑排；文件夹内部：只排 works */
+    /* 每一层桌面：works + 本层 folders 合并紧凑排 */
     var works = activeWorks();
     works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
     var items = works.map(function (w) { return { key: w.id, createdAt: w.createdAt || 0 }; });
-    if (!view.activeFolder) {
-      var folders = activeFolders();
-      folders.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
-      items = items.concat(folders.map(function (f) { return { key: f.id, createdAt: f.createdAt || 0 }; }));
-    }
+    var folders = activeFolders();
+    folders.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+    items = items.concat(folders.map(function (f) { return { key: f.id, createdAt: f.createdAt || 0 }; }));
     items.forEach(function (it, i) {
       var slot = compactSlot(i, grid);
       slot._userSet = false;
@@ -18362,5 +19089,48 @@ window.HMApp = {
 })();
 
 </script>
+
+  <!-- ===== 注意：以下两个组件放在 body 直接子元素，不能放 composer 内 =====
+       因为 .hm-composer 有 backdrop-filter，会强制成为 containing block，
+       导致 position:fixed 元素降级为相对于 composer 定位而非视口。 -->
+
+  <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
+  <div class="hm-ref-hover" id="refHover" hidden>
+    <img alt="预览">
+    <div class="hm-ref-hover-actions">
+      <button type="button" class="hm-ref-hover-view" title="全屏查看">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        查看
+      </button>
+      <button type="button" class="hm-ref-hover-at" title="@主体">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        @主体
+      </button>
+    </div>
+  </div>
+
+  <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
+  <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
+    <button class="hm-ref-fs-close" type="button" id="refFsClose" aria-label="关闭全屏" title="关闭">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <div class="hm-ref-fs-idx" id="refFsIdx"></div>
+    <img class="hm-ref-fs-img" id="refFsImg" alt="全屏预览">
+    <!-- 底部控制条：🔍- ⟳ 🔍+ ⬇ -->
+    <div class="hm-ref-fs-controls">
+      <button type="button" class="hm-ref-fs-btn" id="refFsZoomOut" title="缩小">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsReset" title="重置">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsZoomIn" title="放大">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsDownload" title="下载">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
 </body>
 </html>

@@ -590,12 +590,34 @@
     return list;
   }
 
-  /* 桌面上要显示的文件夹（有内容、且不是正在"进入"的那一个） */
+  /* 某个文件夹下（含所有子孙文件夹）的全部作品 */
+  function worksUnderFolder(id) {
+    var ids = {};
+    (function collect(fid) {
+      ids[fid] = true;
+      desk.folders.forEach(function (f) {
+        if ((f.parentId || null) === fid && !ids[f.id]) collect(f.id);
+      });
+    })(id);
+    return state.works.filter(function (w) { return ids[desk.assigns[w.id]]; });
+  }
+
+  /* 某文件夹是否"有内容"：自身有作品，或有子文件夹 */
+  function folderHasContent(id) {
+    if (state.works.some(function (w) { return desk.assigns[w.id] === id; })) return true;
+    return desk.folders.some(function (f) { return (f.parentId || null) === id; });
+  }
+
+  /* 当前桌面这一层要显示的文件夹：
+     根桌面 → 顶层文件夹；进入某文件夹 → 它的直接子文件夹。
+     这样每个文件夹都有自己独立的一层桌面，互不混在一起。 */
   function activeFolders() {
+    var parentId = view.activeFolder || null;
     return desk.folders.filter(function (f) {
       if (!f || !f.id) return false;
       if (f.id === view.activeFolder) return false;
-      return state.works.some(function (w) { return desk.assigns[w.id] === f.id; });
+      if ((f.parentId || null) !== parentId) return false;
+      return folderHasContent(f.id);
     });
   }
 
@@ -690,7 +712,8 @@
 
   /* 文件夹卡片 HTML：正方形，顶部缩略图网格 + 名称 + 数量角标 */
   function folderCardHtmlInner(folder) {
-    var items = state.works.filter(function (w) { return desk.assigns[w.id] === folder.id; });
+    var items = worksUnderFolder(folder.id);
+    var subCount = desk.folders.filter(function (f) { return (f.parentId || null) === folder.id; }).length;
     var thumbs = items.slice(0, 4).map(function (w) { return esc(w.thumb || w.url || ''); });
     var more = Math.max(0, items.length - 4);
     var gridHtml = '';
@@ -704,8 +727,9 @@
       }).join('');
     }
     var moreHtml = more > 0 ? '<span class="folder-more">+' + more + '</span>' : '';
+    var meta = items.length + ' 项' + (subCount ? ' · ' + subCount + ' 个子文件夹' : '');
     return '<div class="folder-thumb">' + gridHtml + moreHtml + '</div>' +
-      '<div class="folder-info"><strong>' + esc(folder.name) + '</strong><small>' + items.length + ' 项</small></div>' +
+      '<div class="folder-info"><strong>' + esc(folder.name) + '</strong><small>' + meta + '</small></div>' +
       '<span class="desk-check" aria-hidden="true"></span>';
   }
 
@@ -783,39 +807,35 @@
       idx += 1;
     });
 
-    /* ---------- 增量更新 folder-card（根视图才显示） ---------- */
+    /* ---------- 增量更新 folder-card（每一层桌面都显示本层文件夹） ---------- */
     var needFolderIds = {};
-    if (!view.activeFolder) {
-      folders.forEach(function (f) { needFolderIds[f.id] = true; });
-    }
+    folders.forEach(function (f) { needFolderIds[f.id] = true; });
 
     Array.prototype.forEach.call(grid.querySelectorAll('.folder-card'), function (node) {
       var id = node.dataset.folder;
       if (!needFolderIds[id]) node.parentNode.removeChild(node);
     });
 
-    if (!view.activeFolder) {
-      folders.forEach(function (f) {
-        var existing = grid.querySelector('.folder-card[data-folder="' + f.id + '"]');
-        if (!existing) {
-          existing = document.createElement('article');
-          existing.className = 'folder-card';
-          existing.dataset.folder = f.id;
-          grid.appendChild(existing);
-        }
-        existing.innerHTML = folderCardHtmlInner(f);
-        var pos = desk.positions[f.id];
-        if (!pos) {
-          pos = compactSlot(works.length + folders.indexOf(f), grid);
-          desk.positions[f.id] = pos;
-        }
-        var left = typeof pos.pxLeft === 'number' ? pos.pxLeft : PAD;
-        var top = typeof pos.pxTop === 'number' ? pos.pxTop : PAD;
-        existing.style.left = left + 'px';
-        existing.style.top = top + 'px';
-        existing.style.zIndex = String(pos.z || idx + 1);
-      });
-    }
+    folders.forEach(function (f) {
+      var existing = grid.querySelector('.folder-card[data-folder="' + f.id + '"]');
+      if (!existing) {
+        existing = document.createElement('article');
+        existing.className = 'folder-card';
+        existing.dataset.folder = f.id;
+        grid.appendChild(existing);
+      }
+      existing.innerHTML = folderCardHtmlInner(f);
+      var pos = desk.positions[f.id];
+      if (!pos) {
+        pos = compactSlot(works.length + folders.indexOf(f), grid);
+        desk.positions[f.id] = pos;
+      }
+      var left = typeof pos.pxLeft === 'number' ? pos.pxLeft : PAD;
+      var top = typeof pos.pxTop === 'number' ? pos.pxTop : PAD;
+      existing.style.left = left + 'px';
+      existing.style.top = top + 'px';
+      existing.style.zIndex = String(pos.z || idx + 1);
+    });
 
     /* ---------- 原地处理 loading 卡片：不再 removeChild + appendChild ---------- */
     var loadingJobs = [];
@@ -911,15 +931,13 @@
   function tidy() {
     var grid = byId('resultGrid');
     if (!grid) return;
-    /* 根视图：works + folders 合并紧凑排；文件夹内部：只排 works */
+    /* 每一层桌面：works + 本层 folders 合并紧凑排 */
     var works = activeWorks();
     works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
     var items = works.map(function (w) { return { key: w.id, createdAt: w.createdAt || 0 }; });
-    if (!view.activeFolder) {
-      var folders = activeFolders();
-      folders.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
-      items = items.concat(folders.map(function (f) { return { key: f.id, createdAt: f.createdAt || 0 }; }));
-    }
+    var folders = activeFolders();
+    folders.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+    items = items.concat(folders.map(function (f) { return { key: f.id, createdAt: f.createdAt || 0 }; }));
     items.forEach(function (it, i) {
       var slot = compactSlot(i, grid);
       slot._userSet = false;
