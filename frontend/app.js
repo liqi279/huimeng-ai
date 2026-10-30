@@ -3401,12 +3401,13 @@ function bindEvents() {
   });
 
   /* === window 级别 drag/drop ===
-   * HTML5 DnD 规则：拖拽过程中 dragover 必须 preventDefault() 浏览器才允许 drop；
-   * 所以 window 上任何位置都 preventDefault，只在 drop 时再按坐标判断是否在 refDrop 内。 */
+   * HTML5 DnD 规则：dragover 必须持续 preventDefault() 浏览器才会派发 drop。
+   * 注意：dragover 阶段 dataTransfer.files 是空的（浏览器安全限制，防止网页窥探），
+   * 只有 drop 事件里才有 files —— 所以 dragover 里绝不能用 files.length 做守卫 return！ */
   var _lastDragOverRef = false;
   window.addEventListener('dragover', function (ev) {
-    /* 任何位置都 preventDefault —— 这是让 drop 能触发的前提条件 */
-    if (!ev.dataTransfer || !ev.dataTransfer.files || !ev.dataTransfer.files.length) return;
+    /* 只要有 dataTransfer（有拖拽正在进行）就 preventDefault */
+    if (!ev.dataTransfer) return;
     ev.preventDefault();
     try { ev.dataTransfer.dropEffect = 'copy'; } catch (e) {}
     /* 更新 refDrop is-over 视觉 */
@@ -3433,8 +3434,10 @@ function bindEvents() {
   });
 
   window.addEventListener('drop', async function (ev) {
-    if (!ev.dataTransfer || !ev.dataTransfer.files || !ev.dataTransfer.files.length) return;
+    if (!ev.dataTransfer) return;
     ev.preventDefault();
+    var files = Array.from(ev.dataTransfer.files || []);
+    if (!files.length) return; /* 非文件拖拽（HTML5 元素拖放）忽略 */
     if (!els.refDrop) return;
     var rect = els.refDrop.getBoundingClientRect();
     var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
@@ -3447,18 +3450,18 @@ function bindEvents() {
     els.refDrop.classList.remove('is-over');
     _lastDragOverRef = false;
     /* 只保留图片 */
-    var files = Array.from(ev.dataTransfer.files).filter(function (f) {
+    var imgs = files.filter(function (f) {
       return /^image\/(png|jpe?g|webp)$/i.test(f.type || '');
     });
-    if (!files.length) {
+    if (!imgs.length) {
       toast('拖入的文件不是图片，请拖 PNG / JPG / WebP', 'error');
       return;
     }
     var remaining = REF_MAX_COUNT - currentRefs().length;
-    for (var i = 0; i < Math.min(files.length, remaining); i++) {
-      await pickRefFile(files[i]);
+    for (var i = 0; i < Math.min(imgs.length, remaining); i++) {
+      await pickRefFile(imgs[i]);
     }
-    if (files.length > remaining) {
+    if (imgs.length > remaining) {
       toast('仅添加了前 ' + remaining + ' 张（已达上限 ' + REF_MAX_COUNT + '）', 'info');
     }
   });
