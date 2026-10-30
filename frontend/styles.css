@@ -4028,51 +4028,57 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   height: 18px;
 }
 
-/* ========== chip：必须让文档流宽度 == @N 文字宽度，才能让光标对上 ==========
-   关键设计：chip-label 是文档流主体（inline-block），宽度 = @N 文字宽度，
-   和 textarea 里的 @1/@2/@3 等宽。缩略图 chip-thumb 用 position:absolute
-   溢出到左侧，不占文档流空间 —— 这样 overlay 和 textarea 的文字位置
-   逐像素对齐，光标指哪打哪。这是 Slack/Discord/@mention 的行业标准做法。 */
+/* ========== chip：文档流宽度 == @N 文字宽度 + thumb 在内部 ==========
+   设计要点：
+   1. .chip 是 inline-block，宽度完全由 .chip-label 的 @N 文字宽度决定
+   2. .chip-label 是文档流主体，padding=0，宽度严格等于 @N 文字
+   3. .chip-thumb position:absolute INSIDE chip 左边缘，覆盖 "@" 字符位置
+      —— 不溢出到外部 → 不会覆盖前一个/后一个字符
+      —— 不占文档流宽度 → chip 总宽 = @N 文字宽 → 光标 0px 偏差
+   4. thumb z-index 高于 label，所以 "@" 被图标盖住（这是行业标准做法）
+      "1"/"2"/"3" 数字部分仍然可见
+   这是 Slack / Discord / GitHub mention 的实现思路。 */
 .hm-prompt-overlay .chip {
-  position: relative;      /* 给内部 thumb absolute 定位的 containing block */
-  display: inline-block;   /* 宽度 = 子元素 label 宽度 */
+  position: relative;
+  display: inline-block;
   vertical-align: baseline;
   padding: 0;
   margin: 0;
   font-size: inherit;
   font-family: inherit;
   line-height: inherit;
-  /* 让 overflow 部分（左侧 thumb）不被裁剪 */
-  overflow: visible;
+  overflow: visible;       /* thumb 在内部，visible 也没问题 */
 }
-/* 视觉背景 + 边框画在 label 上（只覆盖 @N 文字区域，不包括溢出的 thumb） */
 .hm-prompt-overlay .chip .chip-label {
   display: inline-block;
   color: #c7d2fe;
   font-weight: 500;
-  font-size: inherit;       /* 和 textarea 同字号，保证 @N 宽度一致 */
+  font-size: inherit;     /* 和 textarea 同字号，@N 宽度才一致 */
   white-space: nowrap;
-  padding: 0;             /* ⚠️ 必须是 0！任何 padding 都会让 chip-label 宽于 @N 文字 → 光标错位 */
+  padding: 0;             /* ⚠️ 必须 0！任何 padding → label 宽于 @N → 光标偏 */
   border-radius: 3px;
   background-color: rgba(99, 102, 241, 0.22);
   box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.55);
   height: 1.3em;
   line-height: 1.3em;
   box-sizing: border-box;
+  /* z-index 比 thumb 低 —— "@" 字符会被 thumb 盖住，"1"/"2" 数字露出来 */
+  position: relative;
+  z-index: 1;
 }
-/* 缩略图：绝对定位到 label 左侧，宽度 1.1em，溢出不占布局空间 */
+/* 缩略图：放在 chip 内部左边缘（覆盖 "@" 字符位置），不溢出外部 */
 .hm-prompt-overlay .chip .chip-thumb {
   position: absolute;
-  left: -1.25em;            /* 放在 label 左边约 0.15em 的位置 */
+  left: 0.5px;             /* ← 在 chip 内部，不是外部！0.5px 防止边缘抗锯齿 */
   top: 50%;
   transform: translateY(-50%);
-  width: 1.1em;
-  height: 1.1em;
+  width: 0.75em;           /* ← 0.75em ≈ 9.75px，刚好覆盖 "@" 字符（约 8px 宽） */
+  height: 0.75em;
   border-radius: 2px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  flex: none;               /* 防止 inline-block 布局中被影响 */
+  z-index: 2;              /* ← 在 label 上层，盖住 "@" */
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */
