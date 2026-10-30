@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030181013-811e57d";</script>
+<script>window.HM_BUILD = "20261030182105-f818f5d";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -17255,8 +17255,46 @@ window.HMApp = {
     if (document.body.getAttribute('data-view') === 'history') renderHistory();
   }
 
+  /* 把访客共享 key（anidream.desk.v1）里的数据迁移到当前用户专属 key。
+     场景：页面刚加载时 window.HMApp.user 尚未就绪，用户在访客态下创建了文件夹，
+     这些数据进了 anidream.desk.v1；等 me() 确认用户身份后 reloadForUser 切到用户 key，
+     如果不迁移，这些文件夹就"消失"了。 */
+  function migrateGuestToUser() {
+    var uid = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+    if (!uid) return;
+    var guestKey = 'anidream.desk.v1';
+    var userKey = 'anidream.desk.v1.' + uid;
+    if (guestKey === userKey) return;
+    var guest = null;
+    try { guest = JSON.parse(localStorage.getItem(guestKey) || 'null'); } catch (e) { guest = null; }
+    if (!guest || typeof guest !== 'object') return;
+    /* 仅当访客数据里有内容（文件夹或作品归属）时才迁移，避免空数据覆盖用户已有数据 */
+    var hasGuestContent = (Array.isArray(guest.folders) && guest.folders.length > 0) ||
+      (guest.assigns && Object.keys(guest.assigns).length > 0);
+    if (!hasGuestContent) return;
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem(userKey) || 'null'); } catch (e) { user = null; }
+    var hasUserContent = user && ((Array.isArray(user.folders) && user.folders.length > 0) ||
+      (user.assigns && Object.keys(user.assigns).length > 0));
+    if (hasUserContent) return; /* 用户 key 已有内容，不覆盖 */
+    /* 把访客数据写入用户 key（合并：访客文件夹追加到用户文件夹前） */
+    var merged = {
+      folders: (guest.folders || []).slice(),
+      positions: Object.assign({}, guest.positions || {}),
+      assigns: Object.assign({}, guest.assigns || {}),
+      names: Object.assign({}, guest.names || {}),
+      activeFolder: guest.activeFolder || null,
+      updatedAt: Date.now()
+    };
+    try { localStorage.setItem(userKey, JSON.stringify(merged)); } catch (e) {}
+    /* 迁移后清空访客 key，避免下次重复迁移 */
+    try { localStorage.removeItem(guestKey); } catch (e) {}
+  }
+
   /* 登录后：从当前用户的专属 key 重新加载桌面布局（切换账号时调用） */
   function reloadForUser() {
+    /* 先把访客态下创建的文件夹迁移到用户专属 key，防止"刷新后文件夹消失" */
+    migrateGuestToUser();
     desk.folders = [];
     desk.positions = {};
     desk.assigns = {};
