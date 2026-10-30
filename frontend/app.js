@@ -53,7 +53,12 @@ const CATALOG_FALLBACK = {
     { id: 'flux-realism', engine: 'flux', model: 'flux-realism', name: 'FLUX Realism', badge: '免密钥', hint: '写实质感 · 细腻' },
   ],
   providers: [],
-  loras: []
+  loras: [],
+  rayin: [
+    { id: 'gemini-3.1-flash-image', engine: 'banana', model: 'gemini-3.1-flash-image', name: 'Gemini 3.1 Flash Image', badge: 'RayinAI · Flash', hint: '速度最快 · 平衡质量' },
+    { id: 'gemini-3.1-flash-lite-image', engine: 'banana', model: 'gemini-3.1-flash-lite-image', name: 'Gemini 3.1 Flash Lite Image', badge: 'RayinAI · Lite', hint: '最轻量 · 秒级响应' },
+    { id: 'gemini-3-pro-image', engine: 'banana', model: 'gemini-3-pro-image', name: 'Gemini 3 Pro Image', badge: 'RayinAI · Pro', hint: '最高质量 · 精细渲染' },
+  ]
 };
 
 const TRANSLATE_API = 'https://text.pollinations.ai/';
@@ -538,6 +543,7 @@ function bindEls() {
   els.modeMenu = document.getElementById('modeMenu');
   els.modelMenu = document.getElementById('modelMenu');
   els.freeModelList = document.getElementById('freeModelList');
+  els.rayinModelList = document.getElementById('rayinModelList');
   els.loraList = document.getElementById('loraList');
   els.providerSelect = document.getElementById('providerSelect');
   els.providerBaseInput = document.getElementById('providerBaseInput');
@@ -922,6 +928,17 @@ function renderCatalogMenus() {
       '<p class="hm-menu-note">后端离线，暂无在线模型目录</p>';
   }
 
+  /* RayinAI 模型 — 从后端 rayin 数组动态渲染，每个模型独立按钮 */
+  if (els.rayinModelList) {
+    const rows = [];
+    (data.rayin || []).forEach(function (m) {
+      rows.push('<button data-engine="' + m.engine + '" data-model="' + m.model +
+        '" title="' + (m.badge || '') + ' · ' + (m.hint || '') + '">' + m.name + '</button>');
+    });
+    els.rayinModelList.innerHTML = rows.join('') ||
+      '<p class="hm-menu-note">RayinAI 暂无可用图像模型</p>';
+  }
+
   if (els.loraList) {
     const rows = ['<button data-lora="">无</button>'];
     (data.loras || []).forEach(function (l) {
@@ -941,6 +958,7 @@ async function loadCatalog() {
     state.catalog = {
       keyless: data.keyless || [],
       providers: data.providers || [],
+      rayin: data.rayin || [],
       loras: data.loras || []
     };
     renderCatalogMenus();
@@ -1901,6 +1919,9 @@ async function runBackendImage(job, prompt) {
     const cfg = providerConfig();
     payload.model = cfg.model;
     payload.provider = { id: cfg.id, base: cfg.base, key: cfg.key, model: cfg.model };
+  } else if (job.engine === 'banana' || job.engine === 'gpt-image') {
+    /* RayinAI — 前端选的真实模型 ID 必须传给后端覆盖默认值 */
+    if (state.channelModel) payload.model = state.channelModel;
   }
 
   const data = await window.HM.api.generate(payload, 180000);

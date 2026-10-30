@@ -62,6 +62,44 @@ const KEYLESS = [
 /* PROVIDERS（免费额度平台）— 全部移除：用户明确要纯免密钥通道 */
 const PROVIDERS = [];
 
+/* RayinAI 代理的真实模型列表 — 从用户 key 拉到的可用模型（2026-10-30 实测）
+ * 每个 entry 是一个独立生图模型，前端会把它们渲染成各自独立的按钮
+ * engine 字段决定走哪条后端生成链路：
+ *   banana → chat/completions (RayinAI 只开了 chat/completions，没开 /images/generations)
+ *            所有 3 个 Gemini 图像模型都走 banana engine */
+const RAYIN_MODELS = [
+  {
+    id: 'gemini-3.1-flash-image',
+    engine: 'banana',
+    model: 'gemini-3.1-flash-image',
+    name: 'Gemini 3.1 Flash Image',
+    badge: 'RayinAI · Flash',
+    hint: '速度最快 · 平衡质量',
+    desc: 'Gemini 3.1 Flash 图像版，速度最快的生图模型，平衡质量与速度。',
+    tags: ['快速', '通用', 'RayinAI'],
+  },
+  {
+    id: 'gemini-3.1-flash-lite-image',
+    engine: 'banana',
+    model: 'gemini-3.1-flash-lite-image',
+    name: 'Gemini 3.1 Flash Lite Image',
+    badge: 'RayinAI · Lite',
+    hint: '最轻量 · 秒级响应',
+    desc: 'Gemini 3.1 Flash Lite 图像版，最轻量的生图模型，秒级响应。',
+    tags: ['极速', 'RayinAI'],
+  },
+  {
+    id: 'gemini-3-pro-image',
+    engine: 'banana',
+    model: 'gemini-3-pro-image',
+    name: 'Gemini 3 Pro Image',
+    badge: 'RayinAI · Pro',
+    hint: '最高质量 · 精细渲染',
+    desc: 'Gemini 3 Pro 图像版，最高质量生图模型，适合精细插画和写实场景。',
+    tags: ['高质量', 'Pro', 'RayinAI'],
+  },
+];
+
 /* 动漫 LoRA 风格包：把 LoRA 触发词写进提示词，兼容所有通道 */
 const LORAS = [
   {
@@ -137,6 +175,7 @@ function findKeyless(id) {
 module.exports = {
   KEYLESS,
   PROVIDERS,
+  RAYIN_MODELS,
   LORAS,
   findProvider,
   findLora,

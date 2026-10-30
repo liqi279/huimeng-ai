@@ -465,7 +465,7 @@ async function generateImages(body) {
       url = await generateBanana({
         base: rayin.base,
         key: rayin.key,
-        model: rayin.bananaModel,
+        model: model || rayin.bananaModel,
         prompt: styled.prompt,
         refs,
       });
