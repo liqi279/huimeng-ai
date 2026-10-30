@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030160833-d56be9d";</script>
+<script>window.HM_BUILD = "20261030161621-2a6a361";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8431,7 +8431,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 
       <label class="hm-search" for="modelSearch">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.8 15.8L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        <input id="modelSearch" type="search" placeholder="搜索..." autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true">
+        <input id="modelSearch" type="search" placeholder="搜索..." autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true" readonly>
       </label>
 
       <div class="hm-slider" title="精细度（FLUX.1 有效）">
@@ -13660,8 +13660,13 @@ function bindEvents() {
     setTimeout(clearSearchRestore, 300);
   });
 
-  /* 搜索框不再自动弹出「风格模型」侧栏：
-     点击/输入搜索时保持安静，仅在风格面板已打开时才联动筛选 */
+  /* 输入框初始 readonly，浏览器不会对只读字段做自动填充；
+     用户点击/聚焦时再解锁，保证正常输入 */
+  function unlockSearch() {
+    els.modelSearch.removeAttribute('readonly');
+  }
+  els.modelSearch.addEventListener('pointerdown', unlockSearch);
+  els.modelSearch.addEventListener('focus', unlockSearch);
   els.modelSearch.addEventListener('input', function (event) {
     if (els.sidebar && els.sidebar.classList.contains('is-open')) {
       renderModels(event.target.value);

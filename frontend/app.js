@@ -3510,8 +3510,13 @@ function bindEvents() {
     setTimeout(clearSearchRestore, 300);
   });
 
-  /* 搜索框不再自动弹出「风格模型」侧栏：
-     点击/输入搜索时保持安静，仅在风格面板已打开时才联动筛选 */
+  /* 输入框初始 readonly，浏览器不会对只读字段做自动填充；
+     用户点击/聚焦时再解锁，保证正常输入 */
+  function unlockSearch() {
+    els.modelSearch.removeAttribute('readonly');
+  }
+  els.modelSearch.addEventListener('pointerdown', unlockSearch);
+  els.modelSearch.addEventListener('focus', unlockSearch);
   els.modelSearch.addEventListener('input', function (event) {
     if (els.sidebar && els.sidebar.classList.contains('is-open')) {
       renderModels(event.target.value);
