@@ -3363,7 +3363,7 @@ body {
   /* ↓↓↓ 关键：纵向 flex 布局，让内部元素高度联动 ↓↓↓ */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible; /* 允许向上弹出的菜单溢出 dock 边界（被弹窗覆盖前的 overflow:hidden 裁剪掉了） */
 }
 
 .hm-dock > * {

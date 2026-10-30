@@ -3371,7 +3371,7 @@ body {
   /* ↓↓↓ 关键：纵向 flex 布局，让内部元素高度联动 ↓↓↓ */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible; /* 允许向上弹出的菜单溢出 dock 边界（被弹窗覆盖前的 overflow:hidden 裁剪掉了） */
 }
 
 .hm-dock > * {
@@ -8027,7 +8027,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030032226-7dccb76";</script>
+<script>window.HM_BUILD = "20261030032530-5b1b101";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
