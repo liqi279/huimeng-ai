@@ -3485,6 +3485,12 @@ function bindEvents() {
     if (event.target === els.apiModal) closeApiModal();
   });
 
+  /* 清掉浏览器自动填充/刷新恢复残留在搜索框里的文字（例如登录用户名 admin） */
+  els.modelSearch.value = '';
+  window.addEventListener('pageshow', function () {
+    if (els.modelSearch) els.modelSearch.value = '';
+  });
+
   /* 搜索框不再自动弹出「风格模型」侧栏：
      点击/输入搜索时保持安静，仅在风格面板已打开时才联动筛选 */
   els.modelSearch.addEventListener('input', function (event) {

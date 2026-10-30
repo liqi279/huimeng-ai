@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030155202-099e544";</script>
+<script>window.HM_BUILD = "20261030160301-2c783d0";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8431,7 +8431,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 
       <label class="hm-search" for="modelSearch">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.8 15.8L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        <input id="modelSearch" type="search" placeholder="搜索..." autocomplete="off">
+        <input id="modelSearch" type="search" placeholder="搜索..." autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true">
       </label>
 
       <div class="hm-slider" title="精细度（FLUX.1 有效）">
@@ -13633,6 +13633,12 @@ function bindEvents() {
   els.fetchModelsBtn.addEventListener('click', fetchRayinModels);
   els.apiModal.addEventListener('click', function (event) {
     if (event.target === els.apiModal) closeApiModal();
+  });
+
+  /* 清掉浏览器自动填充/刷新恢复残留在搜索框里的文字（例如登录用户名 admin） */
+  els.modelSearch.value = '';
+  window.addEventListener('pageshow', function () {
+    if (els.modelSearch) els.modelSearch.value = '';
   });
 
   /* 搜索框不再自动弹出「风格模型」侧栏：
