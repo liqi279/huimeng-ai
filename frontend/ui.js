@@ -188,6 +188,9 @@
     if (prevView === 'modeling' && view !== 'modeling' && window.BlenderBridge) {
       try { window.BlenderBridge.leave(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'director' && view !== 'director' && window.HMDirector) {
+      try { window.HMDirector.pause(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas') renderCanvas();
@@ -196,6 +199,9 @@
     if (view === 'forum') renderForum();
     if (view === 'modeling' && window.BlenderBridge) {
       try { window.BlenderBridge.enter(); } catch (e) { /* ignore */ }
+    }
+    if (view === 'director' && window.HMDirector) {
+      try { window.HMDirector.onEnter(); } catch (e) { console.error('[Director] onEnter failed', e); }
     }
   }
 
@@ -1583,6 +1589,11 @@
     await detectBackend();
     await loadAssets();
     await loadMediaCatalog();
+
+    /* 导演台初始化 */
+    if (window.HMDirector) {
+      try { window.HMDirector.init(); } catch (e) { console.error('[Director] init failed', e); }
+    }
   }
 
   window.HMUI = {

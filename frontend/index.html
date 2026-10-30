@@ -43,6 +43,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg>
         <span>建模</span>
       </button>
+      <button class="hm-rail-item" data-rail="director" title="导演台（视频剪辑与多轨道合成）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9l5 3-5 3V9Z" fill="currentColor" opacity=".8"/><path d="M3 9h2M3 15h2M19 9h2M19 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/></svg>
+        <span>导演台</span>
+      </button>
     </div>
 
     <div class="hm-rail-bottom">
@@ -539,6 +543,141 @@
           </div>
           <img class="hm-m-platform-img" id="mPlatformImg" alt="Blender window" hidden>
         </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== 导演台 ===================== -->
+  <main class="hm-page hm-director-page" id="view-director" hidden>
+    <style>
+      .hm-director-page{display:flex;flex-direction:column;height:calc(100vh - 60px);min-height:0;background:var(--hm-bg,#0f1320);padding:14px 16px;gap:12px}
+      .hm-dir-top{display:flex;align-items:center;justify-content:space-between;flex:none}
+      .hm-dir-title{display:flex;align-items:center;gap:10px}
+      .hm-dir-logo{font-size:18px;color:#ff5c7a}
+      .hm-dir-title h2{font-size:18px;color:var(--hm-text,#e6e9ef);margin:0}
+      .hm-dir-sub{font-size:12px;color:var(--hm-dim,#8b93a1)}
+      .hm-dir-tools{display:flex;gap:8px}
+      .hm-dir-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;background:var(--hm-accent,#4f8cff);color:#fff}
+      .hm-dir-btn svg{width:16px;height:16px}
+      .hm-dir-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef)}
+      .hm-dir-btn.ghost:hover{background:#242a3a}
+      .hm-dir-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
+      .hm-dir-preview{display:flex;flex-direction:column;flex:1;min-height:0;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;overflow:hidden}
+      .hm-dir-stage{flex:1;min-height:0;position:relative;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+      .hm-dir-empty{text-align:center;color:var(--hm-dim,#8b93a1)}
+      .hm-dir-empty-icon{font-size:48px;margin-bottom:12px}
+      .hm-dir-empty>div{font-size:15px;color:#c8d0e0}
+      .hm-dir-empty>span{font-size:12px}
+      .hm-dir-video{max-width:100%;max-height:100%;object-fit:contain;display:none}
+      .hm-dir-video.is-on{display:block}
+      .hm-dir-overlay{position:absolute;top:0;left:0;pointer-events:none}
+      .hm-dir-controls{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--hm-surface2,#15192a);border-top:1px solid var(--hm-line,#2a3142)}
+      .hm-dir-ctrl{width:36px;height:36px;border:none;border-radius:50%;background:#2a3142;color:var(--hm-text,#e6e9ef);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+      .hm-dir-ctrl:hover{background:#3a4152}
+      .hm-dir-ctrl svg{width:18px;height:18px}
+      .hm-dir-ctrl.hm-dir-play{width:42px;height:42px;background:var(--hm-accent,#4f8cff);color:#fff}
+      .hm-dir-ctrl.hm-dir-play:hover{background:#3d7aee}
+      .hm-dir-time{font-family:monospace;font-size:13px;color:var(--hm-text,#e6e9ef);letter-spacing:.5px}
+      .hm-dir-time-sep{color:var(--hm-dim,#8b93a1);margin:0 4px}
+      .hm-dir-spacer{flex:1}
+      .hm-dir-fps{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--hm-dim,#8b93a1)}
+      .hm-dir-fps select{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;background:#11151f;color:var(--hm-text,#e6e9ef);padding:4px 6px}
+      .hm-dir-filmstrip{position:relative;height:64px;background:#0a0d14;border-top:1px solid var(--hm-line,#2a3142);cursor:pointer;flex:none}
+      .hm-dir-strip-canvas{display:block;width:100%;height:100%}
+      .hm-dir-strip-ruler{position:absolute;top:0;left:0;right:0;height:16px;pointer-events:none;overflow:hidden}
+      .hm-dir-strip-ruler span{position:absolute;top:2px;font-size:9px;color:var(--hm-dim,#8b93a1);font-family:monospace;transform:translateX(-50%)}
+      .hm-dir-playhead{position:absolute;top:0;bottom:0;width:2px;background:#ff5c7a;pointer-events:none;left:0;box-shadow:0 0 4px rgba(255,92,122,.6)}
+      .hm-dir-playhead::before{content:"";position:absolute;top:-2px;left:-5px;width:12px;height:8px;background:#ff5c7a;clip-path:polygon(50% 100%,0 0,100% 0)}
+      .hm-dir-tracks{flex:none;max-height:38%;min-height:160px;display:flex;flex-direction:column;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;overflow:hidden}
+      .hm-dir-track-head{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:12px;color:var(--hm-dim,#8b93a1);border-bottom:1px solid var(--hm-line,#2a3142);flex:none}
+      .hm-dir-track-list{flex:1;overflow:auto;position:relative}
+      .hm-dir-track{display:flex;align-items:stretch;border-bottom:1px solid var(--hm-line,#2a3142);min-height:52px;position:relative}
+      .hm-dir-track-label{width:90px;flex:none;padding:6px 10px;font-size:11px;color:var(--hm-dim,#8b93a1);display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--hm-line,#2a3142);background:var(--hm-surface2,#15192a)}
+      .hm-dir-track-label b{color:var(--hm-text,#e6e9ef);font-size:12px}
+      .hm-dir-track-lane{flex:1;position:relative;min-height:52px;background:repeating-linear-gradient(90deg,transparent 0,transparent 59px,rgba(255,255,255,.03) 59px,rgba(255,255,255,.03) 60px)}
+      .hm-dir-clip{position:absolute;top:6px;bottom:6px;border-radius:6px;cursor:grab;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:11px;color:#fff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.6);user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15)}
+      .hm-dir-clip:active{cursor:grabbing}
+      .hm-dir-clip-name{pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}
+      .hm-dir-clip-handle-l,.hm-dir-clip-handle-r{position:absolute;top:0;bottom:0;width:6px;cursor:ew-resize;background:rgba(255,255,255,.2);opacity:0;transition:opacity .15s}
+      .hm-dir-clip:hover .hm-dir-clip-handle-l,.hm-dir-clip:hover .hm-dir-clip-handle-r{opacity:1}
+      .hm-dir-clip-handle-l{left:0;border-radius:6px 0 0 6px}.hm-dir-clip-handle-r{right:0;border-radius:0 6px 6px 0}
+      .hm-dir-track-ruler{position:absolute;top:0;left:90px;right:0;height:100%;pointer-events:none;z-index:5}
+      .hm-dir-track-ruler-line{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,92,122,.25)}
+    </style>
+    <div class="hm-dir-top">
+      <div class="hm-dir-title">
+        <span class="hm-dir-logo">▶</span>
+        <h2>导演台</h2>
+        <span class="hm-dir-sub">多轨道视频剪辑与合成</span>
+      </div>
+      <div class="hm-dir-tools">
+        <button class="hm-dir-btn" id="dirImportBtn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 21h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          导入视频
+        </button>
+        <input type="file" id="dirFileInput" accept="video/*" multiple hidden>
+        <button class="hm-dir-btn ghost" id="dirAddTrackBtn">+ 添加轨道</button>
+        <button class="hm-dir-btn ghost" id="dirExportBtn">导出合成</button>
+      </div>
+    </div>
+
+    <div class="hm-dir-body">
+      <!-- 标号1: 视频展示区域 -->
+      <div class="hm-dir-preview">
+        <div class="hm-dir-stage" id="dirStage">
+          <div class="hm-dir-empty" id="dirEmpty">
+            <div class="hm-dir-empty-icon">🎬</div>
+            <div>导入视频到下方轨道开始剪辑</div>
+            <span>支持多轨道图层合成 · 逐帧精修</span>
+          </div>
+          <video class="hm-dir-video" id="dirVideo" playsinline></video>
+          <canvas class="hm-dir-overlay" id="dirOverlay" hidden></canvas>
+        </div>
+
+        <!-- 标号3,4,5: 播放控制 -->
+        <div class="hm-dir-controls">
+          <button class="hm-dir-ctrl" id="dirPrevFrame" title="后退一帧">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5L11 12l8 7V5ZM9 5H7v14h2V5Z" fill="currentColor"/></svg>
+          </button>
+          <button class="hm-dir-ctrl hm-dir-play" id="dirPlayBtn" title="播放/暂停">
+            <svg viewBox="0 0 24 24" id="dirPlayIcon" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z" fill="currentColor"/></svg>
+          </button>
+          <button class="hm-dir-ctrl" id="dirNextFrame" title="前进一帧">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l8 7-8 7V5ZM15 5h2v14h-2V5Z" fill="currentColor"/></svg>
+          </button>
+          <div class="hm-dir-time">
+            <span id="dirCurTime">00:00.00</span>
+            <span class="hm-dir-time-sep">/</span>
+            <span id="dirDurTime">00:00.00</span>
+          </div>
+          <div class="hm-dir-spacer"></div>
+          <label class="hm-dir-fps">
+            FPS
+            <select id="dirFps">
+              <option value="24">24</option>
+              <option value="25">25</option>
+              <option value="30" selected>30</option>
+              <option value="50">50</option>
+              <option value="60">60</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- 时间轴帧缩略条 -->
+        <div class="hm-dir-filmstrip" id="dirFilmstrip">
+          <canvas class="hm-dir-strip-canvas" id="dirStripCanvas"></canvas>
+          <div class="hm-dir-strip-ruler" id="dirStripRuler"></div>
+          <div class="hm-dir-playhead" id="dirPlayhead"></div>
+        </div>
+      </div>
+
+      <!-- 标号6: 图层/轨道区域 -->
+      <div class="hm-dir-tracks" id="dirTracks">
+        <div class="hm-dir-track-head">
+          <span>轨道</span>
+          <span class="hm-dir-track-time" id="dirTrackTimeLabel">00:00.00</span>
+        </div>
+        <div class="hm-dir-track-list" id="dirTrackList"></div>
       </div>
     </div>
   </main>
