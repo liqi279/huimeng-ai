@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030165320-4659449";</script>
+<script>window.HM_BUILD = "20261030170227-948d7ac";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8865,10 +8865,6 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
           </button>
           <button class="hm-sq" id="seedRandom" title="换一个随机种子" aria-label="随机种子">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="hm-chip hm-chip-accent" id="modelsToggle" title="选择风格模型">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.1 5.9L20 11l-5.9 2.1L12 19l-2.1-5.9L4 11l5.9-2.1L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-            <span id="styleChipText">风格</span>
           </button>
           <button class="hm-chip" id="presetBtn" title="风格预设（风格 / 滤镜 / 运镜）">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M7 12h10M9 18h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
@@ -13431,13 +13427,19 @@ function reuseJob(job) {
     toast('视频 / 音频暂不支持复用参数', 'info');
     return;
   }
-  state.modelId = job.modelId;
+  /* 模型目录可能随版本更新更换 id：先按 id 精确匹配，再按名称回退，
+     避免把 state.modelId 设成不存在的值导致生成时落到默认模型 */
+  var restoredModel = MODEL_INDEX.find(function (m) { return m.id === job.modelId; });
+  if (!restoredModel && job.modelName) {
+    restoredModel = MODEL_INDEX.find(function (m) { return m.name === job.modelName; });
+  }
+  if (restoredModel) state.modelId = restoredModel.id;
   state.engine = ENGINE_META[job.engine] ? job.engine : 'flux';
-  state.ratio = job.ratioId || state.ratio;
+  if (job.ratioId && RATIOS.some(function (r) { return r.id === job.ratioId; })) state.ratio = job.ratioId;
   if (job.scaleId && SCALES.some(function (s) { return s.id === job.scaleId; })) state.scale = job.scaleId;
-  state.seed = job.seed;
-  state.steps = job.steps || state.steps;
-  els.promptInput.value = job.prompt;
+  if (job.seed) state.seed = job.seed;
+  if (typeof job.steps === 'number' && job.steps > 0) state.steps = clamp(job.steps, 4, 12);
+  els.promptInput.value = job.prompt || job.enPrompt || '';
   updateCharCount();
   syncSettingsUI();
   persistPrefs();
@@ -13551,7 +13553,7 @@ function bindEvents() {
     });
   }
 
-  els.modelsToggle.addEventListener('click', openSidebar);
+  if (els.modelsToggle) els.modelsToggle.addEventListener('click', openSidebar);
   els.sidebarScrim.addEventListener('click', closeSidebar);
   if (els.sidebarClose) els.sidebarClose.addEventListener('click', closeSidebar);
 
@@ -14615,6 +14617,7 @@ window.HMApp = {
   modeModelLabel: modeModelLabel,
   currentModelLabel: currentModelLabel,
   getModel: getModel,
+  reuseJob: reuseJob,
   hasRayinKey: hasRayinKey,
   openApiModal: openApiModal,
   closeApiModal: closeApiModal,
@@ -17687,10 +17690,18 @@ window.HMApp = {
 
   function restoreParams(work) {
     if (!work) return;
-    var input = byId('promptInput');
-    if (input) {
-      input.value = work.prompt || work.enPrompt || '';
-      if (input.dispatchEvent) input.dispatchEvent(new Event('input', { bubbles: true }));
+    /* 统一走 app.js 的 reuseJob：它会校验模型（id 失效时按名称回退）、
+       引擎、比例、倍数、步数与种子，避免恢复成不存在的模型或错误参数 */
+    if (A.reuseJob) {
+      A.reuseJob(work);
+      var input = byId('promptInput');
+      if (input && input.dispatchEvent) input.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+    var inp = byId('promptInput');
+    if (inp) {
+      inp.value = work.prompt || work.enPrompt || '';
+      if (inp.dispatchEvent) inp.dispatchEvent(new Event('input', { bubbles: true }));
     }
     if (work.modelId) state.modelId = work.modelId;
     if (work.ratioId) state.ratio = work.ratioId;

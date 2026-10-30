@@ -1444,10 +1444,18 @@
 
   function restoreParams(work) {
     if (!work) return;
-    var input = byId('promptInput');
-    if (input) {
-      input.value = work.prompt || work.enPrompt || '';
-      if (input.dispatchEvent) input.dispatchEvent(new Event('input', { bubbles: true }));
+    /* 统一走 app.js 的 reuseJob：它会校验模型（id 失效时按名称回退）、
+       引擎、比例、倍数、步数与种子，避免恢复成不存在的模型或错误参数 */
+    if (A.reuseJob) {
+      A.reuseJob(work);
+      var input = byId('promptInput');
+      if (input && input.dispatchEvent) input.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+    var inp = byId('promptInput');
+    if (inp) {
+      inp.value = work.prompt || work.enPrompt || '';
+      if (inp.dispatchEvent) inp.dispatchEvent(new Event('input', { bubbles: true }));
     }
     if (work.modelId) state.modelId = work.modelId;
     if (work.ratioId) state.ratio = work.ratioId;

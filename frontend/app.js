@@ -3225,13 +3225,19 @@ function reuseJob(job) {
     toast('视频 / 音频暂不支持复用参数', 'info');
     return;
   }
-  state.modelId = job.modelId;
+  /* 模型目录可能随版本更新更换 id：先按 id 精确匹配，再按名称回退，
+     避免把 state.modelId 设成不存在的值导致生成时落到默认模型 */
+  var restoredModel = MODEL_INDEX.find(function (m) { return m.id === job.modelId; });
+  if (!restoredModel && job.modelName) {
+    restoredModel = MODEL_INDEX.find(function (m) { return m.name === job.modelName; });
+  }
+  if (restoredModel) state.modelId = restoredModel.id;
   state.engine = ENGINE_META[job.engine] ? job.engine : 'flux';
-  state.ratio = job.ratioId || state.ratio;
+  if (job.ratioId && RATIOS.some(function (r) { return r.id === job.ratioId; })) state.ratio = job.ratioId;
   if (job.scaleId && SCALES.some(function (s) { return s.id === job.scaleId; })) state.scale = job.scaleId;
-  state.seed = job.seed;
-  state.steps = job.steps || state.steps;
-  els.promptInput.value = job.prompt;
+  if (job.seed) state.seed = job.seed;
+  if (typeof job.steps === 'number' && job.steps > 0) state.steps = clamp(job.steps, 4, 12);
+  els.promptInput.value = job.prompt || job.enPrompt || '';
   updateCharCount();
   syncSettingsUI();
   persistPrefs();
@@ -3345,7 +3351,7 @@ function bindEvents() {
     });
   }
 
-  els.modelsToggle.addEventListener('click', openSidebar);
+  if (els.modelsToggle) els.modelsToggle.addEventListener('click', openSidebar);
   els.sidebarScrim.addEventListener('click', closeSidebar);
   if (els.sidebarClose) els.sidebarClose.addEventListener('click', closeSidebar);
 
@@ -4409,6 +4415,7 @@ window.HMApp = {
   modeModelLabel: modeModelLabel,
   currentModelLabel: currentModelLabel,
   getModel: getModel,
+  reuseJob: reuseJob,
   hasRayinKey: hasRayinKey,
   openApiModal: openApiModal,
   closeApiModal: closeApiModal,
