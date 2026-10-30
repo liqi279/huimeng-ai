@@ -3935,6 +3935,9 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 }
 
 /* ========== 全屏查看 modal（图一） ========== */
+.hm-ref-fullscreen[hidden] {
+  display: none !important; /* class 选择器优先级覆盖 UA 的 [hidden]，必须显式处理 */
+}
 .hm-ref-fullscreen {
   position: fixed;
   inset: 0;

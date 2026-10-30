@@ -3943,6 +3943,9 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 }
 
 /* ========== 全屏查看 modal（图一） ========== */
+.hm-ref-fullscreen[hidden] {
+  display: none !important; /* class 选择器优先级覆盖 UA 的 [hidden]，必须显式处理 */
+}
 .hm-ref-fullscreen {
   position: fixed;
   inset: 0;
@@ -8371,7 +8374,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030041553-bd5cc47";</script>
+<script>window.HM_BUILD = "20261030041858-a3bd315";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
