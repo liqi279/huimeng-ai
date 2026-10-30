@@ -1,13 +1,32 @@
 'use strict';
 
 /* =============================================================
- * 免费模型目录
- * 1) KEYLESS：免密钥通道（Pollinations 匿名通道，当前仅放行 sana）
- * 2) PROVIDERS：免费额度平台（OpenAI 兼容 /images/generations）
- * 3) LORAS：动漫 LoRA / 风格包（提示词注入，可叠加到任意通道）
+ * 免费模型目录（Pollinations 匿名通道，全部免密钥）
+ * 全部走 runFlux → https://image.pollinations.ai/prompt/{prompt}
+ * 实测 2026-10-30 沙箱代理下可通（HTTP 200 + content-type: image/jpeg）
  * ============================================================= */
 
 const KEYLESS = [
+  {
+    id: 'flux-anime',
+    engine: 'flux',
+    model: 'flux-anime',
+    name: 'FLUX Anime',
+    badge: '免密钥',
+    hint: '二次元插画 · 高质量',
+    desc: 'FLUX 动漫微调版，色彩鲜亮、线条干净，适合二次元插画和番剧风格关键帧。',
+    tags: ['二次元', '插画', '番剧'],
+  },
+  {
+    id: 'kolors',
+    engine: 'flux',
+    model: 'kolors',
+    name: 'Kolors 中文动漫',
+    badge: '免密钥',
+    hint: '中文提示词强 · 国风',
+    desc: '快手 Kolors 模型，中文提示词理解出色，擅长国风和东方风格动漫。',
+    tags: ['中文', '国风', '动漫'],
+  },
   {
     id: 'sana',
     engine: 'flux',
@@ -15,7 +34,38 @@ const KEYLESS = [
     name: 'SANA 动漫',
     badge: '免密钥',
     hint: '免费 · 秒级出图',
-    desc: 'Pollinations 免费通道，无需任何密钥，适合快速出草图。',
+    desc: 'SANA 动漫系列，速度快、风格稳定，适合快速预览和批量生成。',
+    tags: ['快速', '稳定', '动漫'],
+  },
+  {
+    id: 'flux',
+    engine: 'flux',
+    model: 'flux',
+    name: 'FLUX.1',
+    badge: '免密钥',
+    hint: '通用大模型 · 高质量',
+    desc: 'FLUX.1 通用文生图，覆盖广泛风格，二次元也可出高质量结果。',
+    tags: ['通用', '高质量'],
+  },
+  {
+    id: 'flux-realism',
+    engine: 'flux',
+    model: 'flux-realism',
+    name: 'FLUX Realism',
+    badge: '免密钥',
+    hint: '写实质感 · 细腻',
+    desc: 'FLUX 写实微调版，二次元也能出细腻光影和质感渲染。',
+    tags: ['写实', '细腻'],
+  },
+  {
+    id: 'dreamshaper',
+    engine: 'flux',
+    model: 'dreamshaper',
+    name: 'DreamShaper',
+    badge: '免密钥',
+    hint: '梦幻氛围 · 艺术化',
+    desc: 'DreamShaper 动漫艺术模型，梦幻光影和艺术氛围营造出色。',
+    tags: ['梦幻', '艺术化'],
   },
 ];
 
