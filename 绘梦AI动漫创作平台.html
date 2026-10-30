@@ -4697,6 +4697,21 @@ body {
   box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.32), 0 6px 16px rgba(37, 64, 143, 0.25);
 }
 
+/* 禁用态 —— 开发中暂不可用 */
+.hm-rail-item[disabled],
+.hm-rail-personal[disabled] {
+  color: #475569 !important;
+  cursor: not-allowed !important;
+  opacity: 0.55;
+  pointer-events: auto !important;  /* 保留 disabled 自身阻止，但让 toast 生效靠 JS 守卫 */
+}
+.hm-rail-item[disabled]:hover,
+.hm-rail-personal[disabled]:hover {
+  color: #475569 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .hm-rail-personal {
   position: relative;
   width: 38px;
@@ -7664,29 +7679,26 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 </style>
   <style>
 /* =============================================================
- * 绘梦 AI · 管理台样式（独立全屏覆盖层）
+ * 绘梦 AI · 管理台样式（独立 view page —— #view-admin 容器）
  * 参考 Figma 深色科技风设计稿
  * ============================================================= */
 
-.hm-admin-root {
-  position: fixed; inset: 0; z-index: 2000;
-  display: flex; flex-direction: column;
-  background: #0b1220;
-  color: #e2e8f0;
-  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft Yahei", sans-serif;
-  animation: hmAdminFadeIn 0.18s ease-out;
-  overflow: hidden;
+.hm-admin-page {
+  padding: 20px 24px 40px;
+  height: 100%;
+  overflow-y: auto;
 }
-@keyframes hmAdminFadeIn { from { opacity: 0 } to { opacity: 1 } }
+.hm-admin-page::-webkit-scrollbar { width: 8px; }
+.hm-admin-page::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 
-/* ============ 顶栏 ============ */
-.hm-admin-header {
-  display: flex; align-items: center;
-  height: 52px; padding: 0 24px;
-  background: linear-gradient(180deg, #121a2c, #0e1524);
+/* ============ 顶栏容器 ============ */
+.hm-admin-topbar-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 0 14px; margin-bottom: 12px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
-  flex-shrink: 0;
 }
+
+/* ============ Brand ============ */
 .hm-admin-brand { display: flex; align-items: center; gap: 12px; }
 .hm-admin-logo {
   width: 30px; height: 30px; border-radius: 8px;
@@ -7695,10 +7707,10 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   font-size: 15px; font-weight: 700; color: #fff;
   box-shadow: 0 4px 14px rgba(99,102,241,0.35);
 }
-.hm-admin-title h1 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 0; letter-spacing: 0.3px; }
-.hm-admin-title { display: flex; align-items: center; }
+.hm-admin-brand h1 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 0; letter-spacing: 0.3px; }
 
-.hm-admin-top-tabs { display: flex; gap: 4px; margin-left: 40px; }
+/* ============ 顶 Tab ============ */
+.hm-admin-top-tabs { display: flex; gap: 4px; }
 .hm-admin-top-tab {
   padding: 7px 16px; font-size: 13px; color: #64748b;
   border-radius: 8px; background: transparent;
@@ -7710,38 +7722,22 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   border-color: rgba(99,102,241,0.4);
 }
 
-.hm-admin-header-right { margin-left: auto; }
-.hm-admin-close {
-  width: 32px; height: 32px; border-radius: 8px; background: transparent;
-  border: 1px solid rgba(255,255,255,0.08); color: #94a3b8;
-  font-size: 18px; line-height: 1; cursor: pointer; transition: all 0.15s;
-}
-.hm-admin-close:hover { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.4); }
-
 /* ============ 子 Tab ============ */
-.hm-admin-topbar {
-  display: flex; gap: 4px; padding: 12px 24px 0;
-  flex-shrink: 0;
+.hm-admin-subtabs-wrap {
+  display: flex; gap: 4px; padding: 0 0 16px;
+  flex-wrap: wrap;
 }
 .hm-admin-tab {
   padding: 7px 14px; font-size: 13px; color: #64748b;
-  border-radius: 6px 6px 0 0; background: transparent;
-  border: 1px solid transparent; border-bottom: none;
+  border-radius: 6px; background: transparent;
+  border: 1px solid rgba(255,255,255,0.06);
   cursor: pointer; transition: all 0.15s;
 }
-.hm-admin-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.02); }
+.hm-admin-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.03); }
 .hm-admin-tab.is-active {
   color: #e2e8f0; background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.15);
 }
-
-/* ============ 主体 ============ */
-.hm-admin-body {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  padding: 20px 24px 40px;
-}
-.hm-admin-body::-webkit-scrollbar { width: 8px; }
-.hm-admin-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 
 .hm-admin-loading { padding: 80px; text-align: center; color: #64748b; font-size: 13px; }
 .hm-admin-error { padding: 60px; text-align: center; }
@@ -8030,11 +8026,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
-/* ============ body 全局状态 ============ */
-body.is-admin-open { overflow: hidden; }
-
 </style>
-<script>window.HM_BUILD = "20261029093859-b50aea7";</script>
+<script>window.HM_BUILD = "20261030020641-e400b86";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8043,34 +8036,34 @@ body.is-admin-open { overflow: hidden; }
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 20h6M12 16.5V20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         <span>桌面</span>
       </button>
-      <button class="hm-rail-item" data-rail="canvas" title="画布">
+      <button class="hm-rail-item" data-rail="canvas" title="画布（开发中）" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
         <span>画布</span>
       </button>
-      <button class="hm-rail-item" data-rail="works" title="成片">
+      <button class="hm-rail-item" data-rail="works" title="成片（开发中）" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5"/><path d="M10.5 10.2l4 1.8-4 1.8v-3.6Z" fill="currentColor"/></svg>
         <span>成片</span>
       </button>
-      <button class="hm-rail-item" data-rail="tools" title="工具">
+      <button class="hm-rail-item" data-rail="tools" title="工具（开发中）" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5a4 4 0 0 0 5 5L10 19a2.5 2.5 0 0 1-3.5-3.5L16 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         <span>工具</span>
       </button>
-      <button class="hm-rail-item" data-rail="assets" title="资产">
+      <button class="hm-rail-item" data-rail="assets" title="资产（开发中）" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 6.5v11c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
         <span>资产</span>
       </button>
-      <button class="hm-rail-item" data-rail="writing" title="写作">
+      <button class="hm-rail-item" data-rail="writing" title="写作（开发中）" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19l4-1 10.5-10.5a2 2 0 0 0-3-3L5 15l-1 4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
         <span>写作</span>
       </button>
-      <button class="hm-rail-item" data-rail="forum" title="论坛">
+      <button class="hm-rail-item" data-rail="forum" title="论坛（开发中）" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h10.5a2 2 0 0 1 2 2v4.6a2 2 0 0 1-2 2H9l-3.5 3v-3H4a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 9.5h2a2 2 0 0 1 2 2v4.3a2 2 0 0 1-2 2h-1v2.7l-3-2.7h-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" opacity=".65"/></svg>
         <span>论坛</span>
       </button>
     </div>
 
     <div class="hm-rail-bottom">
-      <button class="hm-rail-personal" data-rail="works" title="个人空间">
+      <button class="hm-rail-personal" data-rail="works" title="个人空间（开发中）" disabled>
         <span class="hm-rail-avatar">我</span>
         <span class="hm-rail-badge" id="railWorksBadge">0</span>
       </button>
@@ -8121,7 +8114,7 @@ body.is-admin-open { overflow: hidden; }
         </button>
       </div>
 
-      <button class="hm-personal" data-view="works" title="我的作品">
+      <button class="hm-personal" data-view="works" title="个人空间（开发中）" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5 17l4.4-4.2 3.4 3 2.6-2.4L19 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         <span>个人空间</span>
         <span class="hm-badge" id="worksBadge">0</span>
@@ -8429,6 +8422,28 @@ body.is-admin-open { overflow: hidden; }
       </div>
       <div class="hm-forum-list" id="forumList"></div>
     </div>
+  </main>
+
+  <main class="hm-page hm-admin-page" id="view-admin" hidden>
+    <div class="hm-admin-topbar-wrap">
+      <div class="hm-admin-brand">
+        <div class="hm-admin-logo">绘</div>
+        <h1>设置</h1>
+      </div>
+      <div class="hm-admin-top-tabs">
+        <button class="hm-admin-top-tab is-active" data-top="admin"><span>管理台</span></button>
+        <button class="hm-admin-top-tab" data-top="stats"><span>创作统计</span></button>
+        <button class="hm-admin-top-tab" data-top="settings"><span>软件设置</span></button>
+      </div>
+    </div>
+    <div class="hm-admin-subtabs-wrap" id="adminSubTabs">
+      <button class="hm-admin-tab is-active" data-tab="overview"><span>概览</span></button>
+      <button class="hm-admin-tab" data-tab="ranking"><span>消耗排行</span></button>
+      <button class="hm-admin-tab" data-tab="logs"><span>调用日志</span></button>
+      <button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span></button>
+      <button class="hm-admin-tab" data-tab="projects"><span>项目管理</span></button>
+    </div>
+    <div class="hm-admin-body" id="adminBody"></div>
   </main>
 
   <div class="hm-dock" id="hmDock">
@@ -11233,7 +11248,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'history'];
+var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -12709,10 +12724,20 @@ async function fetchRayinModels() {
 }
 
 /* ---------------- 事件绑定 ---------------- */
+var DISABLED_VIEWS = { canvas: true, works: true, tools: true, assets: true, writing: true, forum: true };
+
 function bindEvents() {
   document.addEventListener('click', function (event) {
     const viewBtn = event.target.closest('[data-view]');
-    if (viewBtn) switchView(viewBtn.dataset.view);
+    if (viewBtn) {
+      var view = viewBtn.dataset.view;
+      if (DISABLED_VIEWS[view] || viewBtn.disabled) {
+        var label = viewBtn.querySelector('span')?.textContent || view;
+        HM.toast && HM.toast('「' + label + '」功能开发中，敬请期待', 'info');
+        return;
+      }
+      switchView(view);
+    }
   });
 
   els.modelsToggle.addEventListener('click', openSidebar);
@@ -12837,7 +12862,7 @@ function bindEvents() {
 
   els.apiConfigBtn.addEventListener('click', function () {
     if (window.HMAdmin && HMAdmin.isAdmin()) {
-      HMAdmin.open();
+      switchView('admin');
     } else {
       openApiModal();
     }
@@ -13733,12 +13758,18 @@ window.HMApp = {
   }
 
   /* ---------------- 左侧导航 ---------------- */
+  var DISABLED_RAILS = { canvas: true, works: true, tools: true, assets: true, writing: true, forum: true };
+
   function bindRail() {
     document.addEventListener('click', function (event) {
       var item = event.target.closest('[data-rail]');
       if (!item) return;
       var view = item.getAttribute('data-rail');
       if (!view) return;
+      if (item.disabled || DISABLED_RAILS[view]) {
+        A.toast && A.toast('「' + item.querySelector('span')?.textContent + '」功能开发中，敬请期待', 'info');
+        return;
+      }
       event.preventDefault();
       A.switchView(view);
     });
@@ -17807,20 +17838,22 @@ window.HMApp = {
 'use strict';
 
 /* ===========================================================
- * 绘梦 AI · 管理台（独立全屏覆盖层）
- * 5 个主 Tab：概览 / 消耗排行 / 调用日志 / 账号管理 / 项目管理
- * 另有 2 个占位 Tab：创作统计 / 软件设置
+ * 绘梦 AI · 管理台（独立 view page —— 与 create/works 同级）
+ * 5 个子 Tab：概览 / 消耗排行 / 调用日志 / 账号管理 / 项目管理
+ * 2 个占位 Tab：创作统计 / 软件设置（顶栏）
+ * 容器在 index.html 的 #view-admin
  * =========================================================== */
 (function () {
   var A = window.HMUI || {};
   var HM = window.HM;
   if (!HM) return;
 
-  var charts = {};       /* 保存 Chart 实例方便 destroy */
-  var currentTab = 'overview';
-  var adminOpen = false;
+  var charts = {};
+  var currentTopTab = 'admin';
+  var currentSubTab = 'overview';
+  var eventsBound = false;
 
-  /* ============ 打开 / 关闭 ============ */
+  /* ============ 权限检查 ============ */
   function isAdmin() {
     try {
       var t = localStorage.getItem('hm.token');
@@ -17832,101 +17865,48 @@ window.HMApp = {
     } catch (e) { return false; }
   }
 
+  /* ============ 打开 / 关闭 —— 用 HM.switchView ============ */
   function openAdmin() {
     if (!isAdmin()) {
       HM.toast && HM.toast('管理台仅超级管理员可访问', 'info');
       return;
     }
-    var root = document.getElementById('adminRoot') || buildAdminRoot();
-    root.hidden = false;
-    document.body.classList.add('is-admin-open');
-    adminOpen = true;
-    /* 背景上的主区域也需要隐藏（否则管理台没全屏） */
-    // 但 adminRoot 自己是 position:fixed + z-index: 2000，能盖住一切
-    loadTab('overview');
+    if (HM.switchView) HM.switchView('admin');
   }
 
   function closeAdmin() {
-    var root = document.getElementById('adminRoot');
-    if (root) root.hidden = true;
-    document.body.classList.remove('is-admin-open');
-    adminOpen = false;
     destroyAllCharts();
+    if (HM.switchView) HM.switchView('create');
   }
 
-  /* ============ 构建 DOM ============ */
-  function buildAdminRoot() {
-    var root = document.createElement('div');
-    root.id = 'adminRoot';
-    root.hidden = true;
-    root.innerHTML = '<div class="hm-admin-root" id="adminRootInner"></div>';
-    document.body.appendChild(root);
-    /* 写入骨架 HTML */
-    document.getElementById('adminRootInner').innerHTML = ADMIN_HTML;
-    bindAdminEvents();
-    return root;
-  }
-
-  var ADMIN_HTML = [
-    '<div class="hm-admin-header">',
-      '<div class="hm-admin-brand">',
-        '<div class="hm-admin-logo">绘</div>',
-        '<div class="hm-admin-title">',
-          '<h1>设置</h1>',
-        '</div>',
-      '</div>',
-      '<div class="hm-admin-top-tabs">',
-        '<button class="hm-admin-top-tab is-active" data-top="admin"><span>管理台</span></button>',
-        '<button class="hm-admin-top-tab" data-top="stats"><span>创作统计</span></button>',
-        '<button class="hm-admin-top-tab" data-top="settings"><span>软件设置</span></button>',
-      '</div>',
-      '<div class="hm-admin-header-right">',
-        '<button class="hm-admin-close" data-admin-close aria-label="关闭">×</button>',
-      '</div>',
-    '</div>',
-
-    '<div class="hm-admin-topbar" id="adminSubTabs">',
-      '<button class="hm-admin-tab is-active" data-tab="overview"><span>概览</span></button>',
-      '<button class="hm-admin-tab" data-tab="ranking"><span>消耗排行</span></button>',
-      '<button class="hm-admin-tab" data-tab="logs"><span>调用日志</span></button>',
-      '<button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span></button>',
-      '<button class="hm-admin-tab" data-tab="projects"><span>项目管理</span></button>',
-    '</div>',
-
-    '<div class="hm-admin-body" id="adminBody"></div>',
-  ].join('');
-
-  /* ============ 事件绑定 ============ */
+  /* ============ 一次性事件绑定（到 index.html 里已有的 #view-admin 元素） ============ */
   function bindAdminEvents() {
-    var root = document.getElementById('adminRoot');
-    if (!root) return;
+    if (eventsBound) return;
+    eventsBound = true;
 
-    root.addEventListener('click', function (e) {
-      var closeBtn = e.target.closest('[data-admin-close]');
-      if (closeBtn) { closeAdmin(); return; }
+    var page = document.getElementById('view-admin');
+    if (!page) return;
 
-      var tabBtn = e.target.closest('[data-tab]');
-      if (tabBtn) {
-        e.stopPropagation();
-        var tab = tabBtn.dataset.tab;
-        switchTab(tab);
-        return;
-      }
-
+    page.addEventListener('click', function (e) {
+      /* 顶 Tab：管理台 / 创作统计 / 软件设置 */
       var topBtn = e.target.closest('[data-top]');
       if (topBtn) {
         var top = topBtn.dataset.top;
-        root.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
+        currentTopTab = top;
+        page.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
           t.classList.toggle('is-active', t.dataset.top === top);
         });
+        var subTabsWrap = document.getElementById('adminSubTabs');
+        var body = document.getElementById('adminBody');
         if (top === 'admin') {
-          document.getElementById('adminSubTabs').style.display = '';
-          document.getElementById('adminBody').innerHTML = '';
-          switchTab('overview');
+          subTabsWrap.style.display = '';
+          destroyAllCharts();
+          body.innerHTML = '';
+          switchSubTab('overview');
         } else {
           /* 占位 Tab */
-          document.getElementById('adminSubTabs').style.display = 'none';
-          var body = document.getElementById('adminBody');
+          subTabsWrap.style.display = 'none';
+          destroyAllCharts();
           body.innerHTML = '<div class="hm-admin-placeholder">' +
             '<div class="hm-admin-ph-ico">' + (top === 'stats' ? '📊' : '⚙️') + '</div>' +
             '<h2>' + (top === 'stats' ? '创作统计' : '软件设置') + '</h2>' +
@@ -17935,25 +17915,57 @@ window.HMApp = {
         }
         return;
       }
+
+      /* 子 Tab：概览 / 消耗排行 / ... */
+      var subBtn = e.target.closest('[data-tab]');
+      if (subBtn) {
+        var tab = subBtn.dataset.tab;
+        page.querySelectorAll('.hm-admin-tab').forEach(function (t) {
+          t.classList.toggle('is-active', t.dataset.tab === tab);
+        });
+        switchSubTab(tab);
+        return;
+      }
     });
 
-    /* ESC 关闭 */
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && adminOpen) { closeAdmin(); }
-    });
+    /* 页面内 Esc 不应该退出到桌面 —— 让 desk.js 等自己处理 */
   }
 
-  /* ============ Tab 切换 ============ */
-  function switchTab(tab) {
-    currentTab = tab;
-    var root = document.getElementById('adminRoot');
-    if (root) {
-      root.querySelectorAll('.hm-admin-tab').forEach(function (t) {
-        t.classList.toggle('is-active', t.dataset.tab === tab);
-      });
-    }
+  /* ============ Tab 切换加载 ============ */
+  function switchSubTab(tab) {
+    currentSubTab = tab;
     loadTab(tab);
   }
+
+  /* ============ onView 钩子 —— switchView('admin') 时触发 ============ */
+  var _origOnView = A.onView;
+  A.onView = function (view) {
+    if (_origOnView) _origOnView(view);
+    if (view === 'admin') {
+      if (!eventsBound) bindAdminEvents();
+      /* 重置 Tab 状态 */
+      currentTopTab = 'admin';
+      var page = document.getElementById('view-admin');
+      if (page) {
+        page.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
+          t.classList.toggle('is-active', t.dataset.top === 'admin');
+        });
+        page.querySelectorAll('.hm-admin-tab').forEach(function (t) {
+          t.classList.toggle('is-active', t.dataset.tab === currentSubTab);
+        });
+      }
+      var subTabsWrap = document.getElementById('adminSubTabs');
+      if (subTabsWrap) subTabsWrap.style.display = '';
+      destroyAllCharts();
+      /* 延迟一帧确保 DOM 可见后再渲染（Chart.js 需要 canvas 有尺寸） */
+      requestAnimationFrame(function () {
+        loadTab(currentSubTab);
+      });
+    } else {
+      /* 离开管理台 —— 销毁所有 Chart 实例 */
+      destroyAllCharts();
+    }
+  };
 
   function destroyAllCharts() {
     Object.keys(charts).forEach(function (k) {
