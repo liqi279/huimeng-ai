@@ -2748,6 +2748,9 @@ function saveWork(job) {
     enPrompt: job.promptEn || '',
     modelId: job.modelId,
     modelName: job.modelName,
+    /* 记录实际使用的免费通道模型（sana / flux-anime / kolors …），
+       否则「恢复参数」只能恢复风格而恢复不了通道模型 */
+    channelModel: job.channelModel || state.channelModel || '',
     engine: job.engine || 'flux',
     seed: job.seed,
     width: job.width,
@@ -3092,6 +3095,7 @@ async function handleGenerate() {
       promptEn: '',
       modelId: model.id,
       modelName: model.name,
+      channelModel: state.channelModel || '',
       engine: state.engine,
       metaLabel: (ENGINE_META[state.engine] || ENGINE_META.flux).meta,
       width: size.w,
@@ -3237,6 +3241,11 @@ function reuseJob(job) {
     restoredModel = MODEL_INDEX.find(function (m) { return m.name === job.modelName; });
   }
   if (restoredModel) state.modelId = restoredModel.id;
+  /* 通道模型（SANA / FLUX Anime / Kolors …）：仅当目录里仍存在时恢复，
+     否则保持当前选择，避免恢复到已下线的模型 */
+  if (job.channelModel && findChannelModel(job.channelModel)) {
+    state.channelModel = job.channelModel;
+  }
   state.engine = ENGINE_META[job.engine] ? job.engine : 'flux';
   if (job.ratioId && RATIOS.some(function (r) { return r.id === job.ratioId; })) state.ratio = job.ratioId;
   if (job.scaleId && SCALES.some(function (s) { return s.id === job.scaleId; })) state.scale = job.scaleId;
