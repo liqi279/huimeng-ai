@@ -1827,7 +1827,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'history', 'admin'];
+var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'modeling', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -1851,6 +1851,267 @@ function switchView(view) {
   if (window.HMUI && window.HMUI.onView) window.HMUI.onView(view);
   closeSidebar();
 }
+
+/* ---------------- Blender Web Bridge (3D 建模) ---------------- */
+var BlenderBridge = (function () {
+  var ws = null;
+  var nextId = 1;
+  var pending = new Map();
+  var streaming = false;
+  var bound = false;
+  var viewActive = false;
+  var pingTimer = null;
+
+  function $(id) { return document.getElementById(id); }
+  function logEl() { return $('mLog'); }
+  function statusEl() { return $('mStatus'); }
+  function dotEl() { return $('mDot'); }
+
+  function log(msg, isErr) {
+    var el = logEl();
+    if (!el) return;
+    var d = document.createElement('div');
+    d.textContent = msg;
+    if (isErr) d.className = 'err';
+    el.appendChild(d);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function setStatus(txt, cls) {
+    if (statusEl()) statusEl().textContent = txt;
+    if (dotEl()) dotEl().className = 'hm-m-dot ' + (cls || '');
+  }
+
+  function rpc(method, params) {
+    return new Promise(function (resolve, reject) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        reject(new Error('未连接 Blender 桥接服务'));
+        return;
+      }
+      var id = String(nextId++);
+      pending.set(id, { resolve: resolve, reject: reject });
+      ws.send(JSON.stringify({ v: 1, type: 'request', id: id, method: method, params: params || {} }));
+      setTimeout(function () {
+        if (pending.delete(id)) reject(new Error('请求超时: ' + method));
+      }, 8000);
+    });
+  }
+
+  function connect() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    var hostVal = ($('mHost') || {}).value || '127.0.0.1:9876';
+    var parts = hostVal.split(':');
+    var h = parts[0] || '127.0.0.1';
+    var port = parts[1] || '9876';
+    var token = ($('mToken') || {}).value || '';
+    var url = 'ws://' + h + ':' + port;
+    setStatus('连接中…', 'conn');
+    log('正在连接 ' + url + ' …');
+
+    try {
+      ws = new WebSocket(url);
+    } catch (e) {
+      setStatus('连接失败', 'err');
+      log('WebSocket 创建失败: ' + e.message, true);
+      return;
+    }
+
+    ws.onopen = function () {
+      setStatus('已连接', 'on');
+      log('已连接 ' + url);
+      startPing();
+      var p = Promise.resolve();
+      if (token) {
+        p = p.then(function () { return rpc('auth', { token: token }); })
+          .catch(function (e) { log('鉴权失败: ' + e.message, true); });
+      }
+      p.then(refreshInfo);
+    };
+    ws.onclose = function () {
+      setStatus('已断开', 'err');
+      streaming = false;
+      if ($('mBtnStream')) $('mBtnStream').textContent = '开启实时流';
+      stopPing();
+      log('连接已断开');
+    };
+    ws.onerror = function () {
+      setStatus('连接错误', 'err');
+    };
+    ws.onmessage = function (ev) {
+      var msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.type === 'response' || msg.type === 'error') {
+        var q = pending.get(msg.id);
+        if (!q) return;
+        pending.delete(msg.id);
+        if (msg.type === 'error') q.reject(new Error((msg.error && msg.error.message) || '未知错误'));
+        else q.resolve(msg.result || {});
+      } else if (msg.type === 'event') {
+        handleEvent(msg);
+      }
+    };
+  }
+
+  function disconnect() {
+    streaming = false;
+    stopPing();
+    if (ws) {
+      try { ws.close(); } catch (e) { /* ignore */ }
+      ws = null;
+    }
+  }
+
+  function handleEvent(msg) {
+    if (msg.event === 'viewport.frame' && msg.data && msg.data.data_base64) {
+      var cv = $('mCanvas');
+      var empty = $('mEmpty');
+      if (cv) { cv.src = 'data:image/jpeg;base64,' + msg.data.data_base64; cv.hidden = false; }
+      if (empty) empty.hidden = true;
+    } else if (msg.event === 'log') {
+      log('[Blender] ' + (msg.data && msg.data.message));
+    } else if (msg.event === 'scene.updated') {
+      refreshObjects();
+    } else if (msg.event === 'ready') {
+      log('桥接就绪' + (msg.data && msg.data.blender_version ? ' · Blender ' + msg.data.blender_version : ''));
+    }
+  }
+
+  function startPing() {
+    stopPing();
+    pingTimer = setInterval(function () {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        rpc('ping').catch(function () {});
+      }
+    }, 20000);
+  }
+  function stopPing() {
+    if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+  }
+
+  function refreshInfo() {
+    return rpc('get_info').then(function (info) {
+      var v = info && info.blender && info.blender.version;
+      var cnt = info && info.scene && info.scene.objects_count;
+      log('Blender ' + (v || '?') + ' | 对象 ' + (cnt != null ? cnt : '?'));
+      return refreshObjects();
+    }).catch(function (e) { log('获取信息失败: ' + e.message, true); });
+  }
+
+  function refreshObjects() {
+    return rpc('object.list').then(function (r) {
+      var sel = $('mObjSel');
+      if (!sel) return;
+      sel.innerHTML = '';
+      (r.objects || []).forEach(function (o) {
+        var opt = document.createElement('option');
+        opt.value = o.name;
+        opt.textContent = o.name + ' (' + o.type + ')';
+        sel.appendChild(opt);
+      });
+    }).catch(function (e) { log('对象列表失败: ' + e.message, true); });
+  }
+
+  function bind() {
+    if (bound) return;
+    bound = true;
+    var btn = $('mConnect');
+    if (btn) btn.onclick = connect;
+
+    var bInfo = $('mBtnInfo');
+    if (bInfo) bInfo.onclick = function () {
+      rpc('scene.info').then(function (i) { log(JSON.stringify(i)); }).catch(function (e) { log(e.message, true); });
+    };
+    var bList = $('mBtnList');
+    if (bList) bList.onclick = refreshObjects;
+    var bOpen = $('mBtnOpen');
+    if (bOpen) bOpen.onclick = function () {
+      var fp = ($('mFilepath') || {}).value;
+      if (!fp) { log('请输入 .blend 文件路径', true); return; }
+      rpc('scene.open', { filepath: fp }).then(function (r) {
+        log('已加载 ' + r.objects + ' 个对象');
+        return refreshObjects();
+      }).catch(function (e) { log(e.message, true); });
+    };
+    var bDel = $('mBtnDel');
+    if (bDel) bDel.onclick = function () {
+      var name = ($('mObjSel') || {}).value;
+      if (!name) return;
+      rpc('object.delete', { name: name }).then(refreshObjects).catch(function (e) { log(e.message, true); });
+    };
+    var bMove = $('mBtnMove');
+    if (bMove) bMove.onclick = function () {
+      var name = ($('mObjSel') || {}).value;
+      if (!name) return;
+      rpc('object.transform', {
+        name: name, relative: true,
+        location: [+$('mTx').value, +$('mTy').value, +$('mTz').value]
+      }).then(function (r) { log('移动 ' + r.name + ' -> ' + JSON.stringify(r.location)); })
+        .catch(function (e) { log(e.message, true); });
+    };
+    var bMat = $('mBtnMat');
+    if (bMat) bMat.onclick = function () {
+      var name = ($('mObjSel') || {}).value;
+      if (!name) return;
+      var hex = $('mMatColor').value;
+      var c = [parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255, 1];
+      rpc('object.material.set', { name: name, color: c }).then(function () { log('已上色 ' + name); })
+        .catch(function (e) { log(e.message, true); });
+    };
+    var bAdd = $('mBtnAdd');
+    if (bAdd) bAdd.onclick = function () {
+      var type = ($('mAddType') || {}).value;
+      rpc('object.add', { type: type, location: [0, 0, 0] }).then(function (r) {
+        log('已添加 ' + r.name);
+        return refreshObjects();
+      }).catch(function (e) { log(e.message, true); });
+    };
+    var bFrame = $('mBtnFrame');
+    if (bFrame) bFrame.onclick = function () {
+      rpc('viewport.frame', { width: 960, height: 540 }).then(function (r) {
+        var cv = $('mCanvas');
+        var empty = $('mEmpty');
+        if (cv) { cv.src = 'data:image/jpeg;base64,' + r.data_base64; cv.hidden = false; }
+        if (empty) empty.hidden = true;
+        log('已抓帧');
+      }).catch(function (e) { log(e.message, true); });
+    };
+    var bStream = $('mBtnStream');
+    if (bStream) bStream.onclick = function () {
+      rpc('viewport.stream', { enabled: !streaming, fps: 15, width: 960, height: 540 }).then(function (r) {
+        streaming = r.streaming;
+        bStream.textContent = streaming ? '关闭实时流' : '开启实时流';
+        log(streaming ? '实时流已开启' : '实时流已关闭');
+      }).catch(function (e) { log(e.message, true); });
+    };
+    var bUndo = $('mBtnUndo');
+    if (bUndo) bUndo.onclick = function () { rpc('undo').catch(function (e) { log(e.message, true); }); };
+    var bRedo = $('mBtnRedo');
+    if (bRedo) bRedo.onclick = function () { rpc('redo').catch(function (e) { log(e.message, true); }); };
+  }
+
+  function enter() {
+    viewActive = true;
+    bind();
+    setStatus('未连接', '');
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      log('准备连接本地 Blender 桥接服务 …');
+      connect();
+    }
+  }
+
+  function leave() {
+    viewActive = false;
+    // 离开建模视图时保持连接（切回时无需重连），但停止实时流以省资源
+    if (streaming) {
+      rpc('viewport.stream', { enabled: false }).catch(function () {});
+      streaming = false;
+      var bs = $('mBtnStream');
+      if (bs) bs.textContent = '开启实时流';
+    }
+  }
+
+  return { enter: enter, leave: leave, connect: connect, disconnect: disconnect };
+})();
 
 function openSidebar() {
   els.sidebar.classList.add('is-open');

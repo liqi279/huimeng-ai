@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030190154-9aa242a";</script>
+<script>window.HM_BUILD = "20261030191758-0b93eeb";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8399,6 +8399,10 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
       <button class="hm-rail-item" data-rail="forum" title="论坛（开发中）" disabled>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h10.5a2 2 0 0 1 2 2v4.6a2 2 0 0 1-2 2H9l-3.5 3v-3H4a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M18 9.5h2a2 2 0 0 1 2 2v4.3a2 2 0 0 1-2 2h-1v2.7l-3-2.7h-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" opacity=".65"/></svg>
         <span>论坛</span>
+      </button>
+      <button class="hm-rail-item" data-rail="modeling" title="3D建模（Blender 远程操作）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg>
+        <span>建模</span>
       </button>
     </div>
 
@@ -8761,6 +8765,122 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         </div>
       </div>
       <div class="hm-forum-list" id="forumList"></div>
+    </div>
+  </main>
+
+  <main class="hm-page" id="view-modeling" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>3D 建模 · Blender 远程操作</h2>
+        <p>连接本地 Blender 桥接服务，实时渲染视口并进行建模操作</p>
+      </div>
+    </div>
+    <div class="hm-modeling" id="hmModeling">
+      <style>
+        .hm-modeling{display:flex;flex-direction:column;gap:12px;height:calc(100vh - 140px);min-height:480px}
+        .hm-m-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;flex-wrap:wrap}
+        .hm-m-dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}
+        .hm-m-dot.on{background:#3ecf6e}.hm-m-dot.err{background:#ff5c5c}.hm-m-dot.conn{background:#f5a623}
+        .hm-m-status{font-size:12px;color:var(--hm-dim,#8b93a1);white-space:nowrap}
+        .hm-m-bar .hm-m-spacer{flex:1}
+        .hm-m-bar input{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:8px;background:#11151f;color:var(--hm-text,#e6e9ef);padding:7px 10px}
+        .hm-m-bar input[type=text]{width:150px}
+        .hm-m-body{display:flex;gap:12px;flex:1;min-height:0}
+        .hm-m-viewport{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;overflow:hidden}
+        .hm-m-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:repeating-conic-gradient(#1e2433 0 25%,#181d2a 0 50%) 0 0/24px 24px}
+        .hm-m-canvas{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+        .hm-m-empty{color:var(--hm-dim,#8b93a1);font-size:13px;text-align:center;padding:20px}
+        .hm-m-side{width:300px;flex:none;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;padding:14px;overflow:auto}
+        .hm-m-side h3{margin:4px 0 10px;font-size:13px;color:var(--hm-dim,#8b93a1);font-weight:600;letter-spacing:.3px}
+        .hm-m-group{margin-bottom:16px}
+        .hm-m-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+        .hm-m-row label{font-size:12px;color:var(--hm-dim,#8b93a1);width:56px;flex:none}
+        .hm-m-row input,.hm-m-row select{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;background:#11151f;color:var(--hm-text,#e6e9ef);padding:6px 8px}
+        .hm-m-row input[type=text],.hm-m-row input[type=number],.hm-m-row select{flex:1;min-width:0}
+        .hm-m-btn{font-size:12px;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;background:var(--hm-accent,#4f8cff);color:#fff;white-space:nowrap}
+        .hm-m-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef)}
+        .hm-m-btn.ghost:hover{background:#242a3a}
+        .hm-m-grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+        .hm-m-log{max-height:110px;overflow:auto;font-size:11px;color:var(--hm-dim,#8b93a1);background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:6px;margin-top:4px;line-height:1.5}
+        .hm-m-log div.err{color:#ff7c7c}
+        .hm-m-color{width:36px;padding:2px;height:30px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;background:#11151f}
+      </style>
+      <div class="hm-m-bar">
+        <span class="hm-m-dot" id="mDot"></span>
+        <span class="hm-m-status" id="mStatus">未连接</span>
+        <span class="hm-m-spacer"></span>
+        <input type="text" id="mHost" value="127.0.0.1:9876" placeholder="host:port">
+        <input type="text" id="mToken" placeholder="token(可选)">
+        <button class="hm-m-btn" id="mConnect">连接</button>
+      </div>
+      <div class="hm-m-body">
+        <div class="hm-m-viewport">
+          <div class="hm-m-canvas-wrap" id="mCanvasWrap">
+            <div class="hm-m-empty" id="mEmpty">连接本地 Blender 后，视口画面将在此实时渲染</div>
+            <img class="hm-m-canvas" id="mCanvas" alt="Blender viewport stream" hidden>
+          </div>
+        </div>
+        <div class="hm-m-side">
+          <h3>场景控制</h3>
+          <div class="hm-m-group">
+            <div class="hm-m-grid2">
+              <button class="hm-m-btn ghost" id="mBtnInfo">场景信息</button>
+              <button class="hm-m-btn ghost" id="mBtnList">对象列表</button>
+            </div>
+            <div class="hm-m-row" style="margin-top:6px">
+              <label>打开</label>
+              <input type="text" id="mFilepath" placeholder="/abs/path/file.blend">
+              <button class="hm-m-btn ghost" id="mBtnOpen">加载</button>
+            </div>
+          </div>
+
+          <h3>对象操作</h3>
+          <div class="hm-m-group">
+            <div class="hm-m-row">
+              <label>对象</label>
+              <select id="mObjSel"></select>
+              <button class="hm-m-btn ghost" id="mBtnDel">删除</button>
+            </div>
+            <div class="hm-m-row">
+              <label>位移X</label><input type="number" id="mTx" value="0" step="0.1">
+              <label style="width:28px">Y</label><input type="number" id="mTy" value="0" step="0.1">
+              <label style="width:28px">Z</label><input type="number" id="mTz" value="0" step="0.1">
+              <button class="hm-m-btn" id="mBtnMove">位移</button>
+            </div>
+            <div class="hm-m-row">
+              <label>颜色</label><input type="color" class="hm-m-color" id="mMatColor" value="#cc3333">
+              <button class="hm-m-btn ghost" id="mBtnMat">上色</button>
+            </div>
+          </div>
+
+          <h3>添加对象</h3>
+          <div class="hm-m-group">
+            <div class="hm-m-row">
+              <label>类型</label>
+              <select id="mAddType">
+                <option value="cube">立方体</option><option value="sphere">球体</option>
+                <option value="cylinder">圆柱</option><option value="plane">平面</option>
+                <option value="torus">圆环</option><option value="monkey">猴头</option>
+                <option value="camera">相机</option><option value="light">灯光</option>
+              </select>
+              <button class="hm-m-btn" id="mBtnAdd">添加</button>
+            </div>
+          </div>
+
+          <h3>视图与流</h3>
+          <div class="hm-m-group">
+            <div class="hm-m-grid2">
+              <button class="hm-m-btn ghost" id="mBtnFrame">抓一帧</button>
+              <button class="hm-m-btn" id="mBtnStream">开启实时流</button>
+              <button class="hm-m-btn ghost" id="mBtnUndo">撤销</button>
+              <button class="hm-m-btn ghost" id="mBtnRedo">重做</button>
+            </div>
+          </div>
+
+          <h3>日志</h3>
+          <div class="hm-m-log" id="mLog"></div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -12031,7 +12151,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'history', 'admin'];
+var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'modeling', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -12055,6 +12175,267 @@ function switchView(view) {
   if (window.HMUI && window.HMUI.onView) window.HMUI.onView(view);
   closeSidebar();
 }
+
+/* ---------------- Blender Web Bridge (3D 建模) ---------------- */
+var BlenderBridge = (function () {
+  var ws = null;
+  var nextId = 1;
+  var pending = new Map();
+  var streaming = false;
+  var bound = false;
+  var viewActive = false;
+  var pingTimer = null;
+
+  function $(id) { return document.getElementById(id); }
+  function logEl() { return $('mLog'); }
+  function statusEl() { return $('mStatus'); }
+  function dotEl() { return $('mDot'); }
+
+  function log(msg, isErr) {
+    var el = logEl();
+    if (!el) return;
+    var d = document.createElement('div');
+    d.textContent = msg;
+    if (isErr) d.className = 'err';
+    el.appendChild(d);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function setStatus(txt, cls) {
+    if (statusEl()) statusEl().textContent = txt;
+    if (dotEl()) dotEl().className = 'hm-m-dot ' + (cls || '');
+  }
+
+  function rpc(method, params) {
+    return new Promise(function (resolve, reject) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        reject(new Error('未连接 Blender 桥接服务'));
+        return;
+      }
+      var id = String(nextId++);
+      pending.set(id, { resolve: resolve, reject: reject });
+      ws.send(JSON.stringify({ v: 1, type: 'request', id: id, method: method, params: params || {} }));
+      setTimeout(function () {
+        if (pending.delete(id)) reject(new Error('请求超时: ' + method));
+      }, 8000);
+    });
+  }
+
+  function connect() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    var hostVal = ($('mHost') || {}).value || '127.0.0.1:9876';
+    var parts = hostVal.split(':');
+    var h = parts[0] || '127.0.0.1';
+    var port = parts[1] || '9876';
+    var token = ($('mToken') || {}).value || '';
+    var url = 'ws://' + h + ':' + port;
+    setStatus('连接中…', 'conn');
+    log('正在连接 ' + url + ' …');
+
+    try {
+      ws = new WebSocket(url);
+    } catch (e) {
+      setStatus('连接失败', 'err');
+      log('WebSocket 创建失败: ' + e.message, true);
+      return;
+    }
+
+    ws.onopen = function () {
+      setStatus('已连接', 'on');
+      log('已连接 ' + url);
+      startPing();
+      var p = Promise.resolve();
+      if (token) {
+        p = p.then(function () { return rpc('auth', { token: token }); })
+          .catch(function (e) { log('鉴权失败: ' + e.message, true); });
+      }
+      p.then(refreshInfo);
+    };
+    ws.onclose = function () {
+      setStatus('已断开', 'err');
+      streaming = false;
+      if ($('mBtnStream')) $('mBtnStream').textContent = '开启实时流';
+      stopPing();
+      log('连接已断开');
+    };
+    ws.onerror = function () {
+      setStatus('连接错误', 'err');
+    };
+    ws.onmessage = function (ev) {
+      var msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.type === 'response' || msg.type === 'error') {
+        var q = pending.get(msg.id);
+        if (!q) return;
+        pending.delete(msg.id);
+        if (msg.type === 'error') q.reject(new Error((msg.error && msg.error.message) || '未知错误'));
+        else q.resolve(msg.result || {});
+      } else if (msg.type === 'event') {
+        handleEvent(msg);
+      }
+    };
+  }
+
+  function disconnect() {
+    streaming = false;
+    stopPing();
+    if (ws) {
+      try { ws.close(); } catch (e) { /* ignore */ }
+      ws = null;
+    }
+  }
+
+  function handleEvent(msg) {
+    if (msg.event === 'viewport.frame' && msg.data && msg.data.data_base64) {
+      var cv = $('mCanvas');
+      var empty = $('mEmpty');
+      if (cv) { cv.src = 'data:image/jpeg;base64,' + msg.data.data_base64; cv.hidden = false; }
+      if (empty) empty.hidden = true;
+    } else if (msg.event === 'log') {
+      log('[Blender] ' + (msg.data && msg.data.message));
+    } else if (msg.event === 'scene.updated') {
+      refreshObjects();
+    } else if (msg.event === 'ready') {
+      log('桥接就绪' + (msg.data && msg.data.blender_version ? ' · Blender ' + msg.data.blender_version : ''));
+    }
+  }
+
+  function startPing() {
+    stopPing();
+    pingTimer = setInterval(function () {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        rpc('ping').catch(function () {});
+      }
+    }, 20000);
+  }
+  function stopPing() {
+    if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+  }
+
+  function refreshInfo() {
+    return rpc('get_info').then(function (info) {
+      var v = info && info.blender && info.blender.version;
+      var cnt = info && info.scene && info.scene.objects_count;
+      log('Blender ' + (v || '?') + ' | 对象 ' + (cnt != null ? cnt : '?'));
+      return refreshObjects();
+    }).catch(function (e) { log('获取信息失败: ' + e.message, true); });
+  }
+
+  function refreshObjects() {
+    return rpc('object.list').then(function (r) {
+      var sel = $('mObjSel');
+      if (!sel) return;
+      sel.innerHTML = '';
+      (r.objects || []).forEach(function (o) {
+        var opt = document.createElement('option');
+        opt.value = o.name;
+        opt.textContent = o.name + ' (' + o.type + ')';
+        sel.appendChild(opt);
+      });
+    }).catch(function (e) { log('对象列表失败: ' + e.message, true); });
+  }
+
+  function bind() {
+    if (bound) return;
+    bound = true;
+    var btn = $('mConnect');
+    if (btn) btn.onclick = connect;
+
+    var bInfo = $('mBtnInfo');
+    if (bInfo) bInfo.onclick = function () {
+      rpc('scene.info').then(function (i) { log(JSON.stringify(i)); }).catch(function (e) { log(e.message, true); });
+    };
+    var bList = $('mBtnList');
+    if (bList) bList.onclick = refreshObjects;
+    var bOpen = $('mBtnOpen');
+    if (bOpen) bOpen.onclick = function () {
+      var fp = ($('mFilepath') || {}).value;
+      if (!fp) { log('请输入 .blend 文件路径', true); return; }
+      rpc('scene.open', { filepath: fp }).then(function (r) {
+        log('已加载 ' + r.objects + ' 个对象');
+        return refreshObjects();
+      }).catch(function (e) { log(e.message, true); });
+    };
+    var bDel = $('mBtnDel');
+    if (bDel) bDel.onclick = function () {
+      var name = ($('mObjSel') || {}).value;
+      if (!name) return;
+      rpc('object.delete', { name: name }).then(refreshObjects).catch(function (e) { log(e.message, true); });
+    };
+    var bMove = $('mBtnMove');
+    if (bMove) bMove.onclick = function () {
+      var name = ($('mObjSel') || {}).value;
+      if (!name) return;
+      rpc('object.transform', {
+        name: name, relative: true,
+        location: [+$('mTx').value, +$('mTy').value, +$('mTz').value]
+      }).then(function (r) { log('移动 ' + r.name + ' -> ' + JSON.stringify(r.location)); })
+        .catch(function (e) { log(e.message, true); });
+    };
+    var bMat = $('mBtnMat');
+    if (bMat) bMat.onclick = function () {
+      var name = ($('mObjSel') || {}).value;
+      if (!name) return;
+      var hex = $('mMatColor').value;
+      var c = [parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255, 1];
+      rpc('object.material.set', { name: name, color: c }).then(function () { log('已上色 ' + name); })
+        .catch(function (e) { log(e.message, true); });
+    };
+    var bAdd = $('mBtnAdd');
+    if (bAdd) bAdd.onclick = function () {
+      var type = ($('mAddType') || {}).value;
+      rpc('object.add', { type: type, location: [0, 0, 0] }).then(function (r) {
+        log('已添加 ' + r.name);
+        return refreshObjects();
+      }).catch(function (e) { log(e.message, true); });
+    };
+    var bFrame = $('mBtnFrame');
+    if (bFrame) bFrame.onclick = function () {
+      rpc('viewport.frame', { width: 960, height: 540 }).then(function (r) {
+        var cv = $('mCanvas');
+        var empty = $('mEmpty');
+        if (cv) { cv.src = 'data:image/jpeg;base64,' + r.data_base64; cv.hidden = false; }
+        if (empty) empty.hidden = true;
+        log('已抓帧');
+      }).catch(function (e) { log(e.message, true); });
+    };
+    var bStream = $('mBtnStream');
+    if (bStream) bStream.onclick = function () {
+      rpc('viewport.stream', { enabled: !streaming, fps: 15, width: 960, height: 540 }).then(function (r) {
+        streaming = r.streaming;
+        bStream.textContent = streaming ? '关闭实时流' : '开启实时流';
+        log(streaming ? '实时流已开启' : '实时流已关闭');
+      }).catch(function (e) { log(e.message, true); });
+    };
+    var bUndo = $('mBtnUndo');
+    if (bUndo) bUndo.onclick = function () { rpc('undo').catch(function (e) { log(e.message, true); }); };
+    var bRedo = $('mBtnRedo');
+    if (bRedo) bRedo.onclick = function () { rpc('redo').catch(function (e) { log(e.message, true); }); };
+  }
+
+  function enter() {
+    viewActive = true;
+    bind();
+    setStatus('未连接', '');
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      log('准备连接本地 Blender 桥接服务 …');
+      connect();
+    }
+  }
+
+  function leave() {
+    viewActive = false;
+    // 离开建模视图时保持连接（切回时无需重连），但停止实时流以省资源
+    if (streaming) {
+      rpc('viewport.stream', { enabled: false }).catch(function () {});
+      streaming = false;
+      var bs = $('mBtnStream');
+      if (bs) bs.textContent = '开启实时流';
+    }
+  }
+
+  return { enter: enter, leave: leave, connect: connect, disconnect: disconnect };
+})();
 
 function openSidebar() {
   els.sidebar.classList.add('is-open');
@@ -14893,16 +15274,26 @@ window.HMApp = {
     updateCredit();
   }
 
+  var prevView = null;
+
   function onView(view) {
     document.querySelectorAll('[data-rail]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-rail') === view);
     });
     updateRailBadges();
 
+    if (prevView === 'modeling' && view !== 'modeling' && window.BlenderBridge) {
+      try { window.BlenderBridge.leave(); } catch (e) { /* ignore */ }
+    }
+    prevView = view;
+
     if (view === 'canvas') renderCanvas();
     if (view === 'assets') renderAssetPage();
     if (view === 'writing') loadDraft();
     if (view === 'forum') renderForum();
+    if (view === 'modeling' && window.BlenderBridge) {
+      try { window.BlenderBridge.enter(); } catch (e) { /* ignore */ }
+    }
   }
 
   function onRenderWorks() {

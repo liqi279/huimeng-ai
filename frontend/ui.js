@@ -177,16 +177,26 @@
     updateCredit();
   }
 
+  var prevView = null;
+
   function onView(view) {
     document.querySelectorAll('[data-rail]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-rail') === view);
     });
     updateRailBadges();
 
+    if (prevView === 'modeling' && view !== 'modeling' && window.BlenderBridge) {
+      try { window.BlenderBridge.leave(); } catch (e) { /* ignore */ }
+    }
+    prevView = view;
+
     if (view === 'canvas') renderCanvas();
     if (view === 'assets') renderAssetPage();
     if (view === 'writing') loadDraft();
     if (view === 'forum') renderForum();
+    if (view === 'modeling' && window.BlenderBridge) {
+      try { window.BlenderBridge.enter(); } catch (e) { /* ignore */ }
+    }
   }
 
   function onRenderWorks() {
