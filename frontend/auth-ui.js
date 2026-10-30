@@ -155,10 +155,18 @@
     try {
       var data = await api.listWorks();
       if (data && Array.isArray(data.items) && window.HMApp && window.HMApp.state) {
-        var MAX = window.HMApp.state.MAX_WORKS || 200;
-        window.HMApp.state.works = data.items.filter(function (w) { return w && w.url; }).slice(0, MAX);
-        try { localStorage.setItem('anidream.works.v1', JSON.stringify(window.HMApp.state.works)); } catch (e) {}
-        if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+        var A = window.HMApp;
+        /* 合并服务端与本地，绝不用服务端空列表覆盖本地
+           （Render 免费层重启会清空 data/，作品可能只存在本地） */
+        var localWorks = Array.isArray(A.state.works) ? A.state.works : [];
+        A.state.works = (A.mergeWorks
+          ? A.mergeWorks(data.items, localWorks)
+          : data.items.concat(localWorks));
+        /* 从 IndexedDB 补回原图（本地缓存里 url 被清空、blob 标记存在） */
+        if (A.hydrateWorks) { try { await A.hydrateWorks(); } catch (e) {} }
+        /* 走 saveWorks：备份 + 写 IndexedDB + 同步服务端，不直接写 localStorage */
+        if (A.saveWorks) A.saveWorks();
+        if (A.renderWorks) A.renderWorks();
       }
     } catch (e) {}
   }

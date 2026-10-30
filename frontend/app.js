@@ -4313,6 +4313,8 @@ window.HMApp = {
   toast: toast,
   renderWorks: renderWorks,
   saveWorks: saveWorks,
+  mergeWorks: mergeWorks,
+  hydrateWorks: hydrateWorks,
   renderRef: renderRef,
   translatePrompt: translatePrompt,
   syncSettingsUI: syncSettingsUI,
