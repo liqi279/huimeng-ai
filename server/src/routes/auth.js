@@ -3,7 +3,7 @@
 const express = require('express');
 const { wrap, assert } = require('../http');
 const store = require('../store');
-const { authRequired, adminOnly } = require('../auth');
+const { authRequired, adminOnly, tokenOnly } = require('../auth');
 
 const router = express.Router();
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; /* 30 天 */
@@ -32,8 +32,8 @@ router.post('/auth/login', wrap(async (req, res) => {
   res.json({ user, token, expiresAt: Date.now() + TOKEN_TTL_MS });
 }));
 
-/* 当前用户信息 */
-router.get('/auth/me', authRequired, wrap(async (req, res) => {
+/* 当前用户信息：直接用已签名的 token 内容返回，不查库（省一次跨地域往返） */
+router.get('/auth/me', tokenOnly, wrap(async (req, res) => {
   res.json({ user: req.user });
 }));
 

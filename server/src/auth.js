@@ -2,6 +2,37 @@
 
 const store = require('./store');
 
+/* 用户信息内存缓存（60 秒）：登录/刷新等高频请求不再每次都查数据库，
+   跨地域数据库往返通常要数百毫秒到数秒。角色变更最迟 60 秒后生效。 */
+const userCache = new Map();
+const USER_CACHE_TTL = 60000;
+
+function cachedFindUser(id) {
+  const hit = userCache.get(id);
+  if (hit && Date.now() - hit.at < USER_CACHE_TTL) return Promise.resolve(hit.user);
+  return store.findUserById(id).then((user) => {
+    if (user) userCache.set(id, { user, at: Date.now() });
+    else userCache.delete(id);
+    return user;
+  });
+}
+
+/* 仅校验签名并从 token 取用户信息（不查库）：用于 /auth/me 这类只读自身信息的接口 */
+function tokenOnly(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const payload = store.verifyToken(token);
+  if (!payload || !payload.uid) {
+    return res.status(401).json({ error: { message: '未登录或登录已过期' } });
+  }
+  req.user = {
+    id: payload.uid,
+    username: payload.username || ('guest_' + payload.uid.slice(-6)),
+    role: payload.role || 'user',
+  };
+  next();
+}
+
 /* 从请求头 Authorization: Bearer <token> 里解析用户，挂到 req.user */
 function authRequired(req, res, next) {
   const header = req.headers.authorization || '';
@@ -10,7 +41,7 @@ function authRequired(req, res, next) {
   if (!payload || !payload.uid) {
     return res.status(401).json({ error: { message: '未登录或登录已过期' } });
   }
-  store.findUserById(payload.uid).then((user) => {
+  cachedFindUser(payload.uid).then((user) => {
     if (!user) {
       /* ========== Render 免费层重启 → data/users.json 被清空 ==========
          Token 签名仍有效（secret 固定），但 DB 用户记录丢了。
@@ -55,7 +86,7 @@ function authOptional(req, res, next) {
       username: payload.username || ('guest_' + payload.uid.slice(-6)),
       role: payload.role || 'user'
     };
-    store.findUserById(payload.uid).then((user) => {
+    cachedFindUser(payload.uid).then((user) => {
       if (user) {
         req.user = { id: user.id, username: user.username, role: user.role };
       } else if (payload.username) {
@@ -69,4 +100,4 @@ function authOptional(req, res, next) {
   }
 }
 
-module.exports = { authRequired, adminOnly, authOptional };
+module.exports = { authRequired, adminOnly, authOptional, tokenOnly };

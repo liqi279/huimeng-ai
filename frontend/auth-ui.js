@@ -141,7 +141,9 @@
       if (res && res.token) api.setToken(res.token);
       /* 登录成功即证明后端在线（预热前 ping 可能因冷启动超时，把在线标记纠正过来） */
       if (api) api.online = true;
-      var me = await api.me();
+      /* 登录/注册接口已直接返回完整用户信息，不再额外请求 /auth/me，
+         少一个跨地域往返（用户点击到登录框关闭只保留 1 个请求） */
+      var me = (res && res.user) ? { user: res.user } : await api.me();
       window.HMApp = window.HMApp || {};
       window.HMApp.user = me.user;
       try { localStorage.setItem('hm.user', JSON.stringify(me.user)); } catch (e) {}

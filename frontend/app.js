@@ -4362,9 +4362,10 @@ function boot() {
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();
 
-  /* 认证引导（先探测后端，再登录态校验） */
-  api.ping().finally(function () {
-    authBoot();
+  /* 认证引导与后端探测并行：不再等 ping 完成（冷启动时 ping 最长 6 秒），
+     登录框立刻可用；后端探测完成后异步拉取模型目录 */
+  authBoot();
+  api.ping().then(function () {
     loadCatalog();      /* ← 后端在线时拉取完整免费模型目录 */
   });
 

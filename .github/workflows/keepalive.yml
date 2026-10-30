@@ -1,0 +1,15 @@
+name: keepalive
+
+# Render 免费层 15 分钟无请求会休眠，休眠后首次登录要等 20~60 秒唤醒。
+# 每 10 分钟 ping 一次健康检查，让后端保持常醒，登录不再有冷启动延迟。
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health
+        run: curl -fsS --max-time 60 https://huimeng-ai-backend.onrender.com/api/health > /dev/null || true
