@@ -459,8 +459,8 @@
         <button class="hm-m-btn" id="mConnect">连接</button>
       </div>
       <div class="hm-m-tabs" id="mModeTabs">
-        <button class="hm-m-tab is-active" data-mmode="remote">远程操作</button>
-        <button class="hm-m-tab" data-mmode="platform">平台操作</button>
+        <button type="button" class="hm-m-tab is-active" data-mmode="remote" onclick="if(window.BlenderBridge)window.BlenderBridge.setMode('remote')">远程操作</button>
+        <button type="button" class="hm-m-tab" data-mmode="platform" onclick="if(window.BlenderBridge)window.BlenderBridge.setMode('platform')">平台操作</button>
       </div>
       <div class="hm-m-body" id="mRemotePanel">
         <div class="hm-m-viewport">

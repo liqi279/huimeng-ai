@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030195120-290535b";</script>
+<script>window.HM_BUILD = "20261030200840-b0e3c53";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8820,8 +8820,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         <button class="hm-m-btn" id="mConnect">连接</button>
       </div>
       <div class="hm-m-tabs" id="mModeTabs">
-        <button class="hm-m-tab is-active" data-mmode="remote">远程操作</button>
-        <button class="hm-m-tab" data-mmode="platform">平台操作</button>
+        <button type="button" class="hm-m-tab is-active" data-mmode="remote" onclick="if(window.BlenderBridge)window.BlenderBridge.setMode('remote')">远程操作</button>
+        <button type="button" class="hm-m-tab" data-mmode="platform" onclick="if(window.BlenderBridge)window.BlenderBridge.setMode('platform')">平台操作</button>
       </div>
       <div class="hm-m-body" id="mRemotePanel">
         <div class="hm-m-viewport">
@@ -12430,13 +12430,19 @@ var BlenderBridge = (function () {
     });
     var remote = $('mRemotePanel');
     var plat = $('mPlatformPanel');
-    if (remote) remote.hidden = platformMode;
-    if (plat) plat.hidden = !platformMode;
+    if (remote) {
+      if (platformMode) remote.setAttribute('hidden', '');
+      else remote.removeAttribute('hidden');
+    }
+    if (plat) {
+      if (platformMode) plat.removeAttribute('hidden');
+      else plat.setAttribute('hidden', '');
+    }
 
     if (platformMode) {
       startPlatformLoop();
       var stage = $('mPlatformStage');
-      if (stage) stage.focus();
+      if (stage) { try { stage.focus(); } catch (e) {} }
     } else {
       stopPlatformLoop();
     }
@@ -12608,7 +12614,7 @@ var BlenderBridge = (function () {
     }
   }
 
-  return { enter: enter, leave: leave, connect: connect, disconnect: disconnect };
+  return { enter: enter, leave: leave, connect: connect, disconnect: disconnect, setMode: setMode };
 })();
 
 function openSidebar() {

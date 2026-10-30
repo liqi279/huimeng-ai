@@ -2090,13 +2090,19 @@ var BlenderBridge = (function () {
     });
     var remote = $('mRemotePanel');
     var plat = $('mPlatformPanel');
-    if (remote) remote.hidden = platformMode;
-    if (plat) plat.hidden = !platformMode;
+    if (remote) {
+      if (platformMode) remote.setAttribute('hidden', '');
+      else remote.removeAttribute('hidden');
+    }
+    if (plat) {
+      if (platformMode) plat.removeAttribute('hidden');
+      else plat.setAttribute('hidden', '');
+    }
 
     if (platformMode) {
       startPlatformLoop();
       var stage = $('mPlatformStage');
-      if (stage) stage.focus();
+      if (stage) { try { stage.focus(); } catch (e) {} }
     } else {
       stopPlatformLoop();
     }
@@ -2268,7 +2274,7 @@ var BlenderBridge = (function () {
     }
   }
 
-  return { enter: enter, leave: leave, connect: connect, disconnect: disconnect };
+  return { enter: enter, leave: leave, connect: connect, disconnect: disconnect, setMode: setMode };
 })();
 
 function openSidebar() {
