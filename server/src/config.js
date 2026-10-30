@@ -42,6 +42,10 @@ module.exports = {
      所以 secret 不能只存在文件里；优先读环境变量，没有就用内置固定值
      （任何环境下只要不手动改 env，token 永远有效） */
   TOKEN_SECRET: env('TOKEN_SECRET', 'huimeng-ai-v1-permanent-secret-change-me-if-you-want-2026'),
+  /* 外部 PostgreSQL 连接串（Neon / Supabase / Render Postgres 等）。
+     设置后作品/用户/桌面/资产全部存入外部数据库，Render 重启不再丢数据。
+     不设置则回退到本地 JSON 文件（data/ 目录，重启会清空）。 */
+  DATABASE_URL: env('DATABASE_URL', ''),
   DATA_DIR: process.env.DATA_DIR ? path.resolve(env('DATA_DIR', '')) : path.join(serverRoot, 'data'),
   FRONTEND_DIR: process.env.FRONTEND_DIR
     ? path.resolve(env('FRONTEND_DIR', ''))

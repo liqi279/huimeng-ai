@@ -293,35 +293,82 @@ function removeAsset(id) {
   });
 }
 
-module.exports = {
-  dirs,
-  caps: { works: WORK_CAP, assets: ASSET_CAP },
-  ensureDirs,
-  readJson,
-  writeJson,
-  /* 用户系统 */
-  listUsers,
-  findUserByUsername,
-  findUserById,
-  createUser,
-  reviveUser,
-  authenticateUser,
-  updateUserRole,
-  resetUserPassword,
-  deleteUser,
-  signToken,
-  verifyToken,
-  /* 作品 */
-  listWorks,
-  upsertWork,
-  removeWork,
-  clearWorks,
-  /* 桌面 */
-  getDesk,
-  saveDesk,
-  /* 资产 */
-  listAssets,
-  getAsset,
-  addAsset,
-  removeAsset,
-};
+/* =============================================================
+ * 存储层路由：
+ * - 设置了 DATABASE_URL → 使用外部 PostgreSQL（db.js），数据持久化不丢
+ * - 未设置 → 回退到本地 JSON 文件（data/ 目录，Render 重启会清空）
+ * signToken / verifyToken / dirs / ensureDirs 始终在本文件实现。
+ * ============================================================= */
+const USE_DB = !!config.DATABASE_URL;
+
+if (USE_DB) {
+  const db = require('./db');
+  /* 启动时异步建表，不阻塞服务启动 */
+  db.init().catch((e) => console.error('[db] 初始化失败，将回退行为：', e.message));
+
+  module.exports = {
+    dirs,
+    caps: db.caps,
+    ensureDirs,
+    readJson,
+    writeJson,
+    /* 用户系统 */
+    listUsers: db.listUsers,
+    findUserByUsername: db.findUserByUsername,
+    findUserById: db.findUserById,
+    createUser: db.createUser,
+    reviveUser: db.reviveUser,
+    authenticateUser: db.authenticateUser,
+    updateUserRole: db.updateUserRole,
+    resetUserPassword: db.resetUserPassword,
+    deleteUser: db.deleteUser,
+    signToken,
+    verifyToken,
+    /* 作品 */
+    listWorks: db.listWorks,
+    upsertWork: db.upsertWork,
+    removeWork: db.removeWork,
+    clearWorks: db.clearWorks,
+    /* 桌面 */
+    getDesk: db.getDesk,
+    saveDesk: db.saveDesk,
+    /* 资产 */
+    listAssets: db.listAssets,
+    getAsset: db.getAsset,
+    addAsset: db.addAsset,
+    removeAsset: db.removeAsset,
+  };
+} else {
+  module.exports = {
+    dirs,
+    caps: { works: WORK_CAP, assets: ASSET_CAP },
+    ensureDirs,
+    readJson,
+    writeJson,
+    /* 用户系统 */
+    listUsers,
+    findUserByUsername,
+    findUserById,
+    createUser,
+    reviveUser,
+    authenticateUser,
+    updateUserRole,
+    resetUserPassword,
+    deleteUser,
+    signToken,
+    verifyToken,
+    /* 作品 */
+    listWorks,
+    upsertWork,
+    removeWork,
+    clearWorks,
+    /* 桌面 */
+    getDesk,
+    saveDesk,
+    /* 资产 */
+    listAssets,
+    getAsset,
+    addAsset,
+    removeAsset,
+  };
+}

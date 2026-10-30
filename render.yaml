@@ -27,5 +27,12 @@ services:
         value: "gpt-image-2.5-flare"
       - key: BANANA_MODEL
         value: "gemini-3.1-flash-image"
+      # 外部 PostgreSQL 连接串（解决 Render 免费层重启清空 data/ 目录导致数据丢失）
+      # 推荐使用 Neon (https://neon.tech) 免费 PostgreSQL，连接串格式：
+      #   postgresql://user:password@host/dbname?sslmode=require
+      # 设置后用户/作品/桌面/资产全部存入外部数据库，Render 重启不再丢数据；
+      # 不设置则回退到本地 JSON 文件（data/ 目录，免费层重启会清空）。
+      - key: DATABASE_URL
+        value: ""
     healthCheckPath: /api/health
     autoDeploy: true
