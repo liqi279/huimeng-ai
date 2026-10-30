@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030191758-0b93eeb";</script>
+<script>window.HM_BUILD = "20261030195120-290535b";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8804,6 +8804,12 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         .hm-m-log{max-height:110px;overflow:auto;font-size:11px;color:var(--hm-dim,#8b93a1);background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:6px;margin-top:4px;line-height:1.5}
         .hm-m-log div.err{color:#ff7c7c}
         .hm-m-color{width:36px;padding:2px;height:30px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;background:#11151f}
+        .hm-m-tabs{display:flex;gap:8px}
+        .hm-m-tab{font-size:13px;border:1px solid var(--hm-line,#2a3142);border-radius:8px;background:var(--hm-surface,#1b2030);color:var(--hm-dim,#8b93a1);padding:7px 16px;cursor:pointer}
+        .hm-m-tab.is-active{background:var(--hm-accent,#4f8cff);color:#fff;border-color:var(--hm-accent,#4f8cff)}
+        .hm-m-platform{flex:1;min-height:0;display:flex;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;overflow:hidden}
+        .hm-m-platform-stage{flex:1;position:relative;overflow:hidden;background:#0a0d14;cursor:crosshair;display:flex;align-items:center;justify-content:center}
+        .hm-m-platform-img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
       </style>
       <div class="hm-m-bar">
         <span class="hm-m-dot" id="mDot"></span>
@@ -8813,7 +8819,11 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         <input type="text" id="mToken" placeholder="token(可选)">
         <button class="hm-m-btn" id="mConnect">连接</button>
       </div>
-      <div class="hm-m-body">
+      <div class="hm-m-tabs" id="mModeTabs">
+        <button class="hm-m-tab is-active" data-mmode="remote">远程操作</button>
+        <button class="hm-m-tab" data-mmode="platform">平台操作</button>
+      </div>
+      <div class="hm-m-body" id="mRemotePanel">
         <div class="hm-m-viewport">
           <div class="hm-m-canvas-wrap" id="mCanvasWrap">
             <div class="hm-m-empty" id="mEmpty">连接本地 Blender 后，视口画面将在此实时渲染</div>
@@ -8879,6 +8889,12 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 
           <h3>日志</h3>
           <div class="hm-m-log" id="mLog"></div>
+        </div>
+      </div>
+      <div class="hm-m-platform" id="mPlatformPanel" hidden>
+        <div class="hm-m-platform-stage" id="mPlatformStage" tabindex="0">
+          <div class="hm-m-empty" id="mPlatformEmpty">连接本地 Blender 后，完整 Blender 窗口将在此显示，可直接鼠标/键盘操作</div>
+          <img class="hm-m-platform-img" id="mPlatformImg" alt="Blender window" hidden>
         </div>
       </div>
     </div>
@@ -12335,11 +12351,164 @@ var BlenderBridge = (function () {
     }).catch(function (e) { log('对象列表失败: ' + e.message, true); });
   }
 
+  /* ---------------- 平台操作模式 ---------------- */
+  var platformMode = false;
+  var platformTimer = null;
+  var capturing = false;
+  var windowGeo = null;
+  var pressedButtons = {};
+
+  function getScreenInfo() {
+    return rpc('screen.info').then(function (geo) {
+      windowGeo = geo;
+      return geo;
+    }).catch(function () { windowGeo = null; });
+  }
+
+  function captureWindow() {
+    if (capturing) return;
+    capturing = true;
+    rpc('screen.capture', { quality: 80 }).then(function (r) {
+      var img = $('mPlatformImg');
+      var empty = $('mPlatformEmpty');
+      if (img && r && r.data_base64) {
+        img.src = 'data:image/jpeg;base64,' + r.data_base64;
+        img.hidden = false;
+        if (empty) empty.hidden = true;
+      }
+    }).catch(function () {}).then(function () {
+      capturing = false;
+    });
+  }
+
+  function startPlatformLoop() {
+    stopPlatformLoop();
+    getScreenInfo();
+    platformTimer = setInterval(function () {
+      if (ws && ws.readyState === WebSocket.OPEN) captureWindow();
+    }, 120);
+  }
+
+  function stopPlatformLoop() {
+    if (platformTimer) { clearInterval(platformTimer); platformTimer = null; }
+  }
+
+  function mapToWindow(clientX, clientY) {
+    var img = $('mPlatformImg');
+    var stage = $('mPlatformStage');
+    if (!img || !stage || !img.naturalWidth) return null;
+    var rect = stage.getBoundingClientRect();
+    var natW = img.naturalWidth, natH = img.naturalHeight;
+    var scale = Math.min(rect.width / natW, rect.height / natH);
+    var dispW = natW * scale, dispH = natH * scale;
+    var offX = (rect.width - dispW) / 2;
+    var offY = (rect.height - dispH) / 2;
+    var x = (clientX - rect.left - offX) / scale;
+    var y = (clientY - rect.top - offY) / scale;
+    if (x < 0 || y < 0 || x > natW || y > natH) return null;
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+
+  function sendMouse(action, x, y, button, delta) {
+    var params = { action: action };
+    if (x != null) params.x = x;
+    if (y != null) params.y = y;
+    if (button) params.button = button;
+    if (delta != null) params.delta = delta;
+    rpc('input.mouse', params).catch(function () {});
+  }
+
+  function sendKey(vk, action) {
+    rpc('input.key', { vk: vk, action: action || 'press' }).catch(function () {});
+  }
+
+  function setMode(mode) {
+    platformMode = (mode === 'platform');
+    var tabs = document.querySelectorAll('.hm-m-tab');
+    tabs.forEach(function (t) {
+      t.classList.toggle('is-active', t.getAttribute('data-mmode') === mode);
+    });
+    var remote = $('mRemotePanel');
+    var plat = $('mPlatformPanel');
+    if (remote) remote.hidden = platformMode;
+    if (plat) plat.hidden = !platformMode;
+
+    if (platformMode) {
+      startPlatformLoop();
+      var stage = $('mPlatformStage');
+      if (stage) stage.focus();
+    } else {
+      stopPlatformLoop();
+    }
+  }
+
+  function bindPlatformInput() {
+    var stage = $('mPlatformStage');
+    if (!stage || stage.dataset.bound) return;
+    stage.dataset.bound = '1';
+
+    stage.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      stage.focus();
+      var p = mapToWindow(e.clientX, e.clientY);
+      if (!p) return;
+      var btn = e.button === 2 ? 'right' : (e.button === 1 ? 'middle' : 'left');
+      pressedButtons[btn] = true;
+      sendMouse('down', p.x, p.y, btn);
+    });
+    stage.addEventListener('mouseup', function (e) {
+      e.preventDefault();
+      var btn = e.button === 2 ? 'right' : (e.button === 1 ? 'middle' : 'left');
+      if (pressedButtons[btn]) {
+        pressedButtons[btn] = false;
+        sendMouse('up', null, null, btn);
+      }
+    });
+    stage.addEventListener('mousemove', function (e) {
+      var p = mapToWindow(e.clientX, e.clientY);
+      if (!p) return;
+      // 拖拽中持续 move，否则节流 move 以免阻塞
+      var anyDown = Object.keys(pressedButtons).some(function (k) { return pressedButtons[k]; });
+      if (anyDown) {
+        sendMouse('move', p.x, p.y);
+      } else {
+        sendMouse('move', p.x, p.y);
+      }
+    });
+    stage.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var delta = e.deltaY > 0 ? -1 : 1;
+      sendMouse('scroll', null, null, null, delta);
+    }, { passive: false });
+    stage.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    stage.addEventListener('keydown', function (e) {
+      // 阻止浏览器快捷键干扰（F5、Ctrl+W 等仍由浏览器处理，尽量放行 Blender 常用键）
+      var block = true;
+      if (e.ctrlKey && (e.keyCode === 82 || e.keyCode === 87 || e.keyCode === 84)) block = false;
+      if (e.keyCode === 116) block = false; // F5 刷新
+      if (block) e.preventDefault();
+      sendKey(e.keyCode, 'down');
+    });
+    stage.addEventListener('keyup', function (e) {
+      e.preventDefault();
+      sendKey(e.keyCode, 'up');
+    });
+  }
+
   function bind() {
     if (bound) return;
     bound = true;
     var btn = $('mConnect');
     if (btn) btn.onclick = connect;
+
+    // 模式切换：远程操作 / 平台操作
+    document.querySelectorAll('.hm-m-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        setMode(tab.getAttribute('data-mmode'));
+      });
+    });
+    bindPlatformInput();
 
     var bInfo = $('mBtnInfo');
     if (bInfo) bInfo.onclick = function () {
@@ -12417,6 +12586,8 @@ var BlenderBridge = (function () {
     viewActive = true;
     bind();
     setStatus('未连接', '');
+    // 默认回到远程操作模式
+    setMode('remote');
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       log('准备连接本地 Blender 桥接服务 …');
       connect();
@@ -12425,6 +12596,9 @@ var BlenderBridge = (function () {
 
   function leave() {
     viewActive = false;
+    // 停止平台操作截图循环
+    stopPlatformLoop();
+    platformMode = false;
     // 离开建模视图时保持连接（切回时无需重连），但停止实时流以省资源
     if (streaming) {
       rpc('viewport.stream', { enabled: false }).catch(function () {});
