@@ -2119,34 +2119,40 @@ var BlenderBridge = (function () {
     if (!stage || stage.dataset.bound) return;
     stage.dataset.bound = '1';
 
+    var lastMoveTime = 0;
+    var MOVE_THROTTLE_MS = 16; // ~60fps
+
     stage.addEventListener('mousedown', function (e) {
       e.preventDefault();
+      try { stage.setPointerCapture(e.pointerId); } catch (err) {}
       stage.focus();
       var p = mapToWindow(e.clientX, e.clientY);
-      if (!p) return;
+      if (!p) { console.warn('[Bridge] mousedown: mapToWindow null'); return; }
       var btn = e.button === 2 ? 'right' : (e.button === 1 ? 'middle' : 'left');
       pressedButtons[btn] = true;
       sendMouse('down', p.x, p.y, btn);
     });
-    stage.addEventListener('mouseup', function (e) {
-      e.preventDefault();
+
+    function onUp(e) {
       var btn = e.button === 2 ? 'right' : (e.button === 1 ? 'middle' : 'left');
       if (pressedButtons[btn]) {
         pressedButtons[btn] = false;
         sendMouse('up', null, null, btn);
       }
-    });
+    }
+    stage.addEventListener('mouseup', onUp);
+    stage.addEventListener('pointerup', onUp);
+    stage.addEventListener('pointercancel', onUp);
+
     stage.addEventListener('mousemove', function (e) {
+      var now = Date.now();
+      if (now - lastMoveTime < MOVE_THROTTLE_MS) return;
+      lastMoveTime = now;
       var p = mapToWindow(e.clientX, e.clientY);
       if (!p) return;
-      // 拖拽中持续 move，否则节流 move 以免阻塞
-      var anyDown = Object.keys(pressedButtons).some(function (k) { return pressedButtons[k]; });
-      if (anyDown) {
-        sendMouse('move', p.x, p.y);
-      } else {
-        sendMouse('move', p.x, p.y);
-      }
+      sendMouse('move', p.x, p.y);
     });
+
     stage.addEventListener('wheel', function (e) {
       e.preventDefault();
       var delta = e.deltaY > 0 ? -1 : 1;
