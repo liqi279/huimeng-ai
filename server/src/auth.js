@@ -48,16 +48,19 @@ function authOptional(req, res, next) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   const payload = store.verifyToken(token);
   if (payload && payload.uid) {
+    /* 先信任 token payload 设置 req.user（防止 reviveUser 异步未完成时
+       req.user 仍为 undefined，导致作品/桌面存进全局而非用户专属文件） */
+    req.user = {
+      id: payload.uid,
+      username: payload.username || ('guest_' + payload.uid.slice(-6)),
+      role: payload.role || 'user'
+    };
     store.findUserById(payload.uid).then((user) => {
-      if (user) req.user = { id: user.id, username: user.username, role: user.role };
-      else if (payload.username) {
-        /* 自动重建 */
-        store.reviveUser(payload.uid, payload.username, payload.role || 'user')
-          .then((revived) => { req.user = { id: revived.id, username: revived.username, role: revived.role }; })
-          .catch(() => {});
-      } else {
-        /* 旧 token：trust payload */
-        req.user = { id: payload.uid, username: 'guest_' + payload.uid.slice(-6), role: 'user' };
+      if (user) {
+        req.user = { id: user.id, username: user.username, role: user.role };
+      } else if (payload.username) {
+        /* Render 重启清空 users.json → 自动重建用户（不阻塞 next，req.user 已设） */
+        store.reviveUser(payload.uid, payload.username, payload.role || 'user').catch(() => {});
       }
       next();
     }).catch(() => next());
