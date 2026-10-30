@@ -34,6 +34,21 @@
     return base + (path.charAt(0) === '/' ? path : '/' + path);
   }
 
+  /* 提前与后端建立连接，省掉首次请求的 DNS/TLS 握手时间（跨地域约 0.5~1s） */
+  if (origin) {
+    try {
+      var pre = document.createElement('link');
+      pre.rel = 'preconnect';
+      pre.href = origin;
+      pre.crossOrigin = 'anonymous';
+      document.head.appendChild(pre);
+      var dns = document.createElement('link');
+      dns.rel = 'dns-prefetch';
+      dns.href = origin;
+      document.head.appendChild(dns);
+    } catch (e) {}
+  }
+
   function normalizeError(data, status) {
     var message = '';
     var hint = '';
