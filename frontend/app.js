@@ -2274,7 +2274,20 @@ var BlenderBridge = (function () {
     }
   }
 
-  return { enter: enter, leave: leave, connect: connect, disconnect: disconnect, setMode: setMode };
+  // 文档级事件委托：点击 [data-mmode] 标签切换模式（不依赖 bind() 时序，保证始终生效）
+  document.addEventListener('click', function (e) {
+    var tab = e.target.closest('[data-mmode]');
+    if (!tab) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var mode = tab.getAttribute('data-mmode');
+    if (mode === 'remote' || mode === 'platform') setMode(mode);
+  }, true);
+
+  var api = { enter: enter, leave: leave, connect: connect, disconnect: disconnect, setMode: setMode };
+  // 显式挂载到 window，确保内联 onclick 可访问
+  if (typeof window !== 'undefined') window.BlenderBridge = api;
+  return api;
 })();
 
 function openSidebar() {

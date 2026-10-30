@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030202401-6b0b9d3";</script>
+<script>window.HM_BUILD = "20261030203153-26657ee";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -12618,7 +12618,20 @@ var BlenderBridge = (function () {
     }
   }
 
-  return { enter: enter, leave: leave, connect: connect, disconnect: disconnect, setMode: setMode };
+  // 文档级事件委托：点击 [data-mmode] 标签切换模式（不依赖 bind() 时序，保证始终生效）
+  document.addEventListener('click', function (e) {
+    var tab = e.target.closest('[data-mmode]');
+    if (!tab) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var mode = tab.getAttribute('data-mmode');
+    if (mode === 'remote' || mode === 'platform') setMode(mode);
+  }, true);
+
+  var api = { enter: enter, leave: leave, connect: connect, disconnect: disconnect, setMode: setMode };
+  // 显式挂载到 window，确保内联 onclick 可访问
+  if (typeof window !== 'undefined') window.BlenderBridge = api;
+  return api;
 })();
 
 function openSidebar() {
