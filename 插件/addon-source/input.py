@@ -20,33 +20,35 @@ _PLATFORM = platform.system()
 
 
 def _find_blender_hwnd():
-    """在 Windows 上查找 Blender 主窗口句柄（与 viewport.py 保持一致）。"""
+    """在 Windows 上查找 Blender 主窗口句柄（与 viewport.py 保持一致）。
+
+    枚举所有 GHOST_WindowClass 窗口，返回面积最大的可见窗口。
+    """
     try:
         import ctypes
         from ctypes import wintypes
         user32 = ctypes.windll.user32
-        hwnd = user32.FindWindowW("GHOST_WindowClass", None)
-        if hwnd:
-            return hwnd
         EnumWindows = user32.EnumWindows
         EnumWindowsProc = ctypes.WINFUNCTYPE(
             wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-        found = []
+        candidates = []
 
         def _cb(h, _l):
-            if user32.IsWindowVisible(h):
-                length = user32.GetWindowTextLengthW(h)
-                if length > 0:
-                    buf = ctypes.create_unicode_buffer(length + 1)
-                    user32.GetWindowTextW(h, buf, length + 1)
-                    if "blender" in buf.value.lower():
-                        found.append(h)
-                        return False
+            buf = ctypes.create_unicode_buffer(256)
+            user32.GetClassNameW(h, buf, 256)
+            if buf.value == "GHOST_WindowClass" and user32.IsWindowVisible(h):
+                rect = wintypes.RECT()
+                user32.GetWindowRect(h, ctypes.byref(rect))
+                w = rect.right - rect.left
+                hgt = rect.bottom - rect.top
+                if w > 50 and hgt > 50:
+                    candidates.append((w * hgt, h))
             return True
 
         EnumWindows(EnumWindowsProc(_cb), 0)
-        if found:
-            return found[0]
+        if candidates:
+            candidates.sort(key=lambda x: x[0], reverse=True)
+            return candidates[0][1]
     except Exception:
         pass
     return None

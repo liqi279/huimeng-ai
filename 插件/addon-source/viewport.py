@@ -56,37 +56,41 @@ def frame_to_base64(jpeg_bytes):
 
 
 def _find_blender_hwnd():
-    """在 Windows 上查找 Blender 主窗口句柄。"""
+    """在 Windows 上查找 Blender 主窗口句柄。
+
+    枚举所有 GHOST_WindowClass 窗口，返回面积最大的可见窗口
+    （避免 FindWindowW 误取到小弹窗/工具提示）。
+    """
     try:
         import ctypes
         from ctypes import wintypes
         user32 = ctypes.windll.user32
 
-        # Blender 使用 GHOST 窗口类
-        hwnd = user32.FindWindowW("GHOST_WindowClass", None)
-        if hwnd:
-            return hwnd
-
-        # 备用：枚举所有窗口，找含 "Blender" 的可见窗口
         EnumWindows = user32.EnumWindows
         EnumWindowsProc = ctypes.WINFUNCTYPE(
             wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-        found = []
+        candidates = []
 
         def _cb(h, _l):
-            if user32.IsWindowVisible(h):
-                length = user32.GetWindowTextLengthW(h)
-                if length > 0:
-                    buf = ctypes.create_unicode_buffer(length + 1)
-                    user32.GetWindowTextW(h, buf, length + 1)
-                    if "blender" in buf.value.lower():
-                        found.append(h)
-                        return False
+            # 只取 GHOST_WindowClass（Blender 的窗口类）
+            buf = ctypes.create_unicode_buffer(256)
+            user32.GetClassNameW(h, buf, 256)
+            if buf.value == "GHOST_WindowClass" and user32.IsWindowVisible(h):
+                rect = wintypes.RECT()
+                user32.GetWindowRect(h, ctypes.byref(rect))
+                w = rect.right - rect.left
+                hgt = rect.bottom - rect.top
+                if w > 50 and hgt > 50:  # 过滤掉过小的窗口
+                    candidates.append((w * hgt, h, w, hgt))
             return True
 
         EnumWindows(EnumWindowsProc(_cb), 0)
-        if found:
-            return found[0]
+        if candidates:
+            # 按面积排序，取最大的
+            candidates.sort(key=lambda x: x[0], reverse=True)
+            _, hwnd, w, h = candidates[0]
+            print(f"[Bridge] found Blender hwnd={hwnd} {w}x{h} ({len(candidates)} candidates)", flush=True)
+            return hwnd
     except Exception as e:
         print(f"[Bridge] _find_blender_hwnd error: {e}", flush=True)
     return None
@@ -120,8 +124,18 @@ def _capture_via_gdi(hwnd):
         return None, 0, 0
     old = gdi32.SelectObject(mem_dc, bmp)
 
-    # SRCCOPY = 0x00CC0020；抓取含标题栏边框的整个窗口
-    bitblt_ok = gdi32.BitBlt(mem_dc, 0, 0, w, h, hwnd_dc, 0, 0, 0x00CC0020)
+    # 方法 A: PrintWindow（发送 WM_PRINT，即使窗口被遮挡也能抓取内容）
+    # PW_RENDERFULLCONTENT = 0x00000002（Win8.1+，抓取完整内容包括硬件加速）
+    print_ok = False
+    try:
+        print_ok = user32.PrintWindow(hwnd, mem_dc, 0x00000002)
+    except Exception:
+        print_ok = False
+
+    # 方法 B: BitBlt（回退，直接从窗口 DC 拷贝）
+    bitblt_ok = False
+    if not print_ok:
+        bitblt_ok = gdi32.BitBlt(mem_dc, 0, 0, w, h, hwnd_dc, 0, 0, 0x00CC0020)  # SRCCOPY
 
     # 构造 BMP 信息头（在 GetDIBits 之前准备好）
     class BITMAPINFOHEADER(ctypes.Structure):
@@ -142,10 +156,11 @@ def _capture_via_gdi(hwnd):
     bih = BITMAPINFOHEADER()
     bih.biSize = ctypes.sizeof(BITMAPINFOHEADER)
     bih.biWidth = w
-    bih.biHeight = -h  # 顶到底（top-down），避免上下颠倒
+    bih.biHeight = h  # 正值 = bottom-up（标准 BMP，兼容性最好）
     bih.biPlanes = 1
     bih.biBitCount = 32
     bih.biCompression = 0  # BI_RGB
+    bih.biSizeImage = w * h * 4  # 显式设置图像大小
 
     buf_size = w * h * 4
     buf = ctypes.create_string_buffer(buf_size)
@@ -158,8 +173,8 @@ def _capture_via_gdi(hwnd):
     gdi32.DeleteDC(mem_dc)
     user32.ReleaseDC(hwnd, hwnd_dc)
 
-    if not bitblt_ok or lines == 0:
-        print(f"[Bridge] GDI BitBlt/GetDIBits failed: bitblt={bitblt_ok}, lines={lines}", flush=True)
+    if (not print_ok and not bitblt_ok) or lines == 0:
+        print(f"[Bridge] GDI capture failed: print={print_ok}, bitblt={bitblt_ok}, lines={lines}", flush=True)
         return None, 0, 0
 
     # BMP 文件头
