@@ -4036,38 +4036,51 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   height: 18px;
 }
 
-/* ========== chip 重写：图标 + @图N ========== */
-/* chip 宽度必须等于自身文字宽度，光标才不会错位 */
+/* ========== chip：必须让文档流宽度 == @N 文字宽度，才能让光标对上 ==========
+   关键设计：chip-label 是文档流主体（inline-block），宽度 = @N 文字宽度，
+   和 textarea 里的 @1/@2/@3 等宽。缩略图 chip-thumb 用 position:absolute
+   溢出到左侧，不占文档流空间 —— 这样 overlay 和 textarea 的文字位置
+   逐像素对齐，光标指哪打哪。这是 Slack/Discord/@mention 的行业标准做法。 */
 .hm-prompt-overlay .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 0 4px 0 2px;
-  margin: 0;
-  border-radius: 4px;
-  background-color: rgba(99, 102, 241, 0.22);
-  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.55);
+  position: relative;      /* 给内部 thumb absolute 定位的 containing block */
+  display: inline-block;   /* 宽度 = 子元素 label 宽度 */
   vertical-align: baseline;
+  padding: 0;
+  margin: 0;
   font-size: inherit;
   font-family: inherit;
   line-height: inherit;
-  height: 1.4em;
+  /* 让 overflow 部分（左侧 thumb）不被裁剪 */
+  overflow: visible;
 }
+/* 视觉背景 + 边框画在 label 上（只覆盖 @N 文字区域，不包括溢出的 thumb） */
+.hm-prompt-overlay .chip .chip-label {
+  display: inline-block;
+  color: #c7d2fe;
+  font-weight: 500;
+  font-size: inherit;       /* 和 textarea 同字号，保证 @N 宽度一致 */
+  white-space: nowrap;
+  padding: 0 3px;
+  border-radius: 3px;
+  background-color: rgba(99, 102, 241, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.55);
+  height: 1.3em;
+  line-height: 1.3em;
+  box-sizing: border-box;
+}
+/* 缩略图：绝对定位到 label 左侧，宽度 1.1em，溢出不占布局空间 */
 .hm-prompt-overlay .chip .chip-thumb {
-  flex: 0 0 auto;
+  position: absolute;
+  left: -1.25em;            /* 放在 label 左边约 0.15em 的位置 */
+  top: 50%;
+  transform: translateY(-50%);
   width: 1.1em;
   height: 1.1em;
   border-radius: 2px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-}
-.hm-prompt-overlay .chip .chip-label {
-  flex: 0 0 auto;
-  color: #c7d2fe;
-  font-weight: 500;
-  font-size: 0.92em;
-  white-space: nowrap;
+  flex: none;               /* 防止 inline-block 布局中被影响 */
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */
@@ -4399,7 +4412,7 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   inset: 0;
   pointer-events: none;
   padding: 2px 40px 18px 14px; /* 和 .hm-prompt padding 对齐 */
-  overflow: hidden;
+  overflow: visible;           /* 让 chip-thumb 溢出左侧不被裁剪 */
   font-size: 12.5px;
   line-height: 1.6;
   color: #dbe7f3;
@@ -4408,11 +4421,13 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   overflow-wrap: break-word;
   font-family: inherit;
 }
-/* chip 层叠顺序：图标(.chip-thumb 子元素)在前，@N(.chip-label 子元素)在后，inline-flex 排列。
-   注意：不要再加重复的 .hm-prompt-overlay .chip 规则！
-   之前有人在这里加了 inline-block + color:transparent 的方案（与 flex 子元素方案冲突），
-   已经删掉。app.js 里 chip 的 HTML 结构是 <span class="chip"><span class="chip-thumb">...
-   </span><span class="chip-label">@N</span></span> —— 必须用 inline-flex 才能让两个子元素并排。 */
+/* ⚠️⚠️⚠️ chip 宽度规则 —— 绝对不能改！⚠️⚠️⚠️
+   chip 在文档流中的宽度必须严格等于它替换的 @N 文字宽度（约 2 个字符）。
+   之前用 inline-flex + thumb 在流里占空间 → chip 比 @N 宽 → overlay 层
+   文字偏移 → textarea 光标和 overlay 文字对不上（用户指哪打哪不了）。
+   现在方案：chip-label 是文档流主体（宽度=@N），chip-thumb position:absolute
+   溢出到左侧，不影响文档流宽度。这是 Slack/Discord/@mention 的行业标准做法。
+   不要把 thumb 改回 flex 子元素，也不要给 chip 加 padding-left / width。 */
 
 .hm-prompt textarea::placeholder {
   color: #5f7288;
@@ -8364,7 +8379,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030042437-a52ff8f";</script>
+<script>window.HM_BUILD = "20261030042942-269245b";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
