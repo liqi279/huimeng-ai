@@ -1143,14 +1143,19 @@
       item.nextLeft = left;
       item.nextTop = top;
     });
-    /* 拖动时让 grid 自动跟随滚动 */
+    /* 拖动时让 grid 自动跟随滚动
+       注意：只能在卡片贴近可见区域边缘时才滚动，否则会出现「点一下上面的图，
+       滚动条却往下跑」的问题。之前用 visibleBottom - CARD_H - 40 做阈值，
+       卡片高度 240px，导致几乎所有卡片的下移拖动都触发向下滚动。
+       现在改为：卡片顶部距可见顶部 < 30px 才上滚，卡片底部距可见底部 < 30px 才下滚。 */
     var grid = byId('resultGrid');
     if (grid && drag.items[0]) {
       var t = drag.items[0].nextTop;
+      var b = t + CARD_H;
       var visibleTop = grid.scrollTop;
       var visibleBottom = visibleTop + grid.clientHeight;
-      if (t < visibleTop + 40) grid.scrollTop = Math.max(0, t - 80);
-      else if (t > visibleBottom - CARD_H - 40) grid.scrollTop = Math.min(grid.scrollHeight, t - grid.clientHeight + CARD_H + 40);
+      if (t < visibleTop + 30) grid.scrollTop = Math.max(0, t - 60);
+      else if (b > visibleBottom - 30) grid.scrollTop = Math.min(grid.scrollHeight, b - grid.clientHeight + 60);
     }
   }
 
