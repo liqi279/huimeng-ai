@@ -3485,11 +3485,25 @@ function bindEvents() {
     if (event.target === els.apiModal) closeApiModal();
   });
 
-  /* 清掉浏览器自动填充/刷新恢复残留在搜索框里的文字（例如登录用户名 admin） */
-  els.modelSearch.value = '';
-  window.addEventListener('pageshow', function () {
-    if (els.modelSearch) els.modelSearch.value = '';
+  /* 清掉浏览器自动填充/刷新恢复残留在搜索框里的文字（例如登录用户名 admin）。
+     浏览器的回填可能发生在初始化之后，因此分多个时机清理；
+     一旦用户自己敲过键盘，就不再清理，避免误删用户输入。 */
+  function clearSearchRestore() {
+    if (!els.modelSearch) return;
+    if (els.modelSearch.dataset.userTyped === '1') return;
+    if (els.modelSearch.value) els.modelSearch.value = '';
+  }
+  clearSearchRestore();
+  window.addEventListener('pageshow', clearSearchRestore);
+  window.addEventListener('load', function () {
+    clearSearchRestore();
+    setTimeout(clearSearchRestore, 300);
+    setTimeout(clearSearchRestore, 1200);
   });
+  els.modelSearch.addEventListener('keydown', function () {
+    els.modelSearch.dataset.userTyped = '1';
+  });
+  els.modelSearch.addEventListener('focus', clearSearchRestore);
 
   /* 搜索框不再自动弹出「风格模型」侧栏：
      点击/输入搜索时保持安静，仅在风格面板已打开时才联动筛选 */
