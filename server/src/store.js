@@ -308,6 +308,8 @@ if (USE_DB) {
 
   module.exports = {
     dirs,
+    storage: 'postgres',
+    storageReady: () => db.isReady(),
     caps: db.caps,
     ensureDirs,
     readJson,
@@ -339,8 +341,15 @@ if (USE_DB) {
     removeAsset: db.removeAsset,
   };
 } else {
+  /* 未配置外部数据库 → 本地 JSON 文件存储。Render 免费层重启会清空磁盘，
+     数据会全部丢失。启动时明确告警，避免问题被静默忽略。 */
+  if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+    console.warn('[storage] 未配置 DATABASE_URL，当前使用本地 JSON 存储，服务器重启将丢失全部数据！请在环境变量中设置 DATABASE_URL。');
+  }
   module.exports = {
     dirs,
+    storage: 'json',
+    storageReady: () => true,
     caps: { works: WORK_CAP, assets: ASSET_CAP },
     ensureDirs,
     readJson,

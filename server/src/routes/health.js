@@ -2,6 +2,7 @@
 
 const express = require('express');
 const config = require('../config');
+const store = require('../store');
 const { PRESETS } = require('./presets');
 
 const router = express.Router();
@@ -13,6 +14,12 @@ router.get('/health', (req, res) => {
     rayinConfigured: Boolean(config.RAYIN_KEY),
     engines: ['flux', 'openai', 'gpt-image', 'banana'],
     modes: ['image', 'video', 'audio'],
+    /* 存储诊断：postgres = 已接外部数据库（重启不丢数据）；
+       json = 本地文件存储（Render 免费层重启会清空）。
+       persistent 为 true 才代表数据真正持久化。 */
+    storage: store.storage,
+    storageReady: store.storageReady(),
+    persistent: store.storage === 'postgres' && store.storageReady(),
   });
 });
 

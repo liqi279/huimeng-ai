@@ -9,12 +9,15 @@
 const { Pool } = require('pg');
 const config = require('./config');
 const crypto = require('crypto');
+const fsp = require('fs').promises;
+const path = require('path');
 
 const WORK_CAP = 200;
 const ASSET_CAP = 200;
 
 let pool = null;
 let initPromise = null;
+let ready = false;
 
 function getPool() {
   if (!pool) {
@@ -65,12 +68,111 @@ async function init() {
         );
       `);
       console.log('[db] PostgreSQL 表结构已就绪');
+      /* 若数据库为空但磁盘上还有旧版 JSON 数据，自动导入一次，
+         避免“从 JSON 切到 PG”时历史数据看起来消失 */
+      await migrateLegacy(client).catch((e) => console.error('[db] 旧数据迁移失败:', e.message));
+      ready = true;
     } finally {
       client.release();
     }
   })();
   return initPromise;
 }
+
+/* 旧版 JSON 存储（data/ 目录）→ PostgreSQL 一次性迁移。
+   仅在 DB 中 users 表为空时执行，避免覆盖已有数据。 */
+async function migrateLegacy(client) {
+  const { rows } = await client.query('SELECT COUNT(*)::int AS c FROM users');
+  if (rows[0] && rows[0].c > 0) return;
+
+  const dataDir = config.DATA_DIR;
+  const usersFile = path.join(dataDir, 'users.json');
+
+  let legacyUsers = null;
+  try {
+    legacyUsers = JSON.parse(await fsp.readFile(usersFile, 'utf8'));
+  } catch (e) { return; }
+  if (!Array.isArray(legacyUsers) || !legacyUsers.length) return;
+
+  let users = 0;
+  let works = 0;
+  let desks = 0;
+  let assets = 0;
+
+  for (const u of legacyUsers) {
+    if (!u || !u.id || !u.username) continue;
+    await client.query(
+      `INSERT INTO users (id, username, salt, hash, role, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING`,
+      [u.id, u.username, u.salt || '', u.hash || '', u.role === 'admin' ? 'admin' : 'user', Number(u.createdAt) || 0]
+    );
+    users++;
+
+    /* 该用户的作品/桌面 */
+    const wf = path.join(dataDir, 'users', String(u.id), 'works.json');
+    const df = path.join(dataDir, 'users', String(u.id), 'desk.json');
+    let wl = [];
+    let desk = null;
+    try { wl = JSON.parse(await fsp.readFile(wf, 'utf8')); } catch (e) {}
+    try { desk = JSON.parse(await fsp.readFile(df, 'utf8')); } catch (e) {}
+    if (Array.isArray(wl)) {
+      for (const w of wl) {
+        if (!w || typeof w.id !== 'string') continue;
+        await client.query(
+          `INSERT INTO works (id, user_id, data, created_at) VALUES ($1,$2,$3,$4)
+           ON CONFLICT (id) DO NOTHING`,
+          [w.id, u.id, w, workTime(w)]
+        );
+        works++;
+      }
+    }
+    if (desk && typeof desk === 'object') {
+      await client.query(
+        `INSERT INTO desk (user_id, data, updated_at) VALUES ($1,$2,$3)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [u.id, desk, Number(desk.updatedAt) || 0]
+      );
+      desks++;
+    }
+  }
+
+  /* 全局作品（未登录时保存的旧数据） */
+  try {
+    const gl = JSON.parse(await fsp.readFile(path.join(dataDir, 'works.json'), 'utf8'));
+    if (Array.isArray(gl)) {
+      for (const w of gl) {
+        if (!w || typeof w.id !== 'string') continue;
+        await client.query(
+          `INSERT INTO works (id, user_id, data, created_at) VALUES ($1,$2,$3,$4)
+           ON CONFLICT (id) DO NOTHING`,
+          [w.id, null, w, workTime(w)]
+        );
+        works++;
+      }
+    }
+  } catch (e) {}
+
+  /* 资产 */
+  try {
+    const al = JSON.parse(await fsp.readFile(path.join(dataDir, 'assets.json'), 'utf8'));
+    if (Array.isArray(al)) {
+      for (const a of al) {
+        if (!a || !a.id) continue;
+        await client.query(
+          `INSERT INTO assets (id, data, created_at) VALUES ($1,$2,$3)
+           ON CONFLICT (id) DO NOTHING`,
+          [a.id, a, Number(a.createdAt) || Date.now()]
+        );
+        assets++;
+      }
+    }
+  } catch (e) {}
+
+  console.log(`[db] 已从本地 JSON 迁移：用户 ${users}、作品 ${works}、桌面 ${desks}、资产 ${assets}`);
+}
+
+/* 是否已完成建表（health 诊断用） */
+function isReady() { return ready; }
 
 /* 统一查询入口：确保建表完成后再执行 */
 async function q(sql, params) {
@@ -295,6 +397,7 @@ function verifyPassword(password, salt, hash) {
 
 module.exports = {
   init,
+  isReady,
   caps: { works: WORK_CAP, assets: ASSET_CAP },
   /* 用户 */
   listUsers,
