@@ -63,40 +63,40 @@ const KEYLESS = [
 const PROVIDERS = [];
 
 /* RayinAI 代理的真实模型列表 — 从用户 key 拉到的可用模型（2026-10-30 实测）
- * 每个 entry 是一个独立生图模型，前端会把它们渲染成各自独立的按钮
- * engine 字段决定走哪条后端生成链路：
- *   banana → chat/completions (RayinAI 只开了 chat/completions，没开 /images/generations)
- *            所有 3 个 Gemini 图像模型都走 banana engine */
+ * 全部走 banana engine / chat/completions（RayinAI 没开 /images/generations）
+ * 按钮名按功能区分：
+ *   Pro 版 → "GPT Pro 图像" （对应 GPT 引擎，最高质量）
+ *   Flash/Lite → "Banana Flash" / "Banana Lite" （对应 Banana 引擎，速度优先） */
 const RAYIN_MODELS = [
+  {
+    id: 'gemini-3-pro-image',
+    engine: 'banana',
+    model: 'gemini-3-pro-image',
+    name: 'GPT Pro 图像',
+    badge: 'RayinAI · Pro',
+    hint: '最高质量 · 精细渲染 · 多图理解',
+    desc: 'RayinAI 代理下最强图像模型，对应 GPT-image 档位，适合精细插画和写实场景。',
+    tags: ['高质量', 'Pro', 'GPT'],
+  },
   {
     id: 'gemini-3.1-flash-image',
     engine: 'banana',
     model: 'gemini-3.1-flash-image',
-    name: 'Gemini 3.1 Flash Image',
+    name: 'Banana Flash 图像',
     badge: 'RayinAI · Flash',
     hint: '速度最快 · 平衡质量',
-    desc: 'Gemini 3.1 Flash 图像版，速度最快的生图模型，平衡质量与速度。',
-    tags: ['快速', '通用', 'RayinAI'],
+    desc: 'Banana 引擎 Flash 图像版，速度最快的生图模型，平衡质量与速度。',
+    tags: ['快速', '通用', 'Banana'],
   },
   {
     id: 'gemini-3.1-flash-lite-image',
     engine: 'banana',
     model: 'gemini-3.1-flash-lite-image',
-    name: 'Gemini 3.1 Flash Lite Image',
+    name: 'Banana Lite 图像',
     badge: 'RayinAI · Lite',
     hint: '最轻量 · 秒级响应',
-    desc: 'Gemini 3.1 Flash Lite 图像版，最轻量的生图模型，秒级响应。',
-    tags: ['极速', 'RayinAI'],
-  },
-  {
-    id: 'gemini-3-pro-image',
-    engine: 'banana',
-    model: 'gemini-3-pro-image',
-    name: 'Gemini 3 Pro Image',
-    badge: 'RayinAI · Pro',
-    hint: '最高质量 · 精细渲染',
-    desc: 'Gemini 3 Pro 图像版，最高质量生图模型，适合精细插画和写实场景。',
-    tags: ['高质量', 'Pro', 'RayinAI'],
+    desc: 'Banana 引擎 Lite 图像版，最轻量的生图模型，秒级响应。',
+    tags: ['极速', 'Banana'],
   },
 ];
 

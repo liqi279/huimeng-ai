@@ -55,9 +55,9 @@ const CATALOG_FALLBACK = {
   providers: [],
   loras: [],
   rayin: [
-    { id: 'gemini-3.1-flash-image', engine: 'banana', model: 'gemini-3.1-flash-image', name: 'Gemini 3.1 Flash Image', badge: 'RayinAI · Flash', hint: '速度最快 · 平衡质量' },
-    { id: 'gemini-3.1-flash-lite-image', engine: 'banana', model: 'gemini-3.1-flash-lite-image', name: 'Gemini 3.1 Flash Lite Image', badge: 'RayinAI · Lite', hint: '最轻量 · 秒级响应' },
-    { id: 'gemini-3-pro-image', engine: 'banana', model: 'gemini-3-pro-image', name: 'Gemini 3 Pro Image', badge: 'RayinAI · Pro', hint: '最高质量 · 精细渲染' },
+    { id: 'gemini-3-pro-image', engine: 'banana', model: 'gemini-3-pro-image', name: 'GPT Pro 图像', badge: 'RayinAI · Pro', hint: '最高质量 · 精细渲染' },
+    { id: 'gemini-3.1-flash-image', engine: 'banana', model: 'gemini-3.1-flash-image', name: 'Banana Flash 图像', badge: 'RayinAI · Flash', hint: '速度最快 · 平衡质量' },
+    { id: 'gemini-3.1-flash-lite-image', engine: 'banana', model: 'gemini-3.1-flash-lite-image', name: 'Banana Lite 图像', badge: 'RayinAI · Lite', hint: '最轻量 · 秒级响应' },
   ]
 };
 
