@@ -1133,8 +1133,10 @@ function syncEngineUI() {
     els.engineNote.textContent = '密钥已配置 · 按量计费，仅保存在本机';
     els.engineNote.classList.remove('is-warn');
   } else {
-    els.engineNote.textContent = '尚未配置 RayinAPI 密钥，点击右上「接入设置」';
-    els.engineNote.classList.add('is-warn');
+    /* 服务端已内置 GPT / Gemini 默认密钥，前端不填也能直接生成；
+       用户可在「接入设置」里填自己的 key 覆盖服务端默认值 */
+    els.engineNote.textContent = '使用服务端默认密钥 · 可在「接入设置」中覆盖';
+    els.engineNote.classList.remove('is-warn');
   }
 
   updateRatioLabel();
@@ -3062,10 +3064,15 @@ async function handleGenerate() {
     return;
   }
 
-  if (state.engine !== 'flux' && !hasRayinKey()) {
-    toast('请先在「接入设置」中填写 RayinAPI 密钥', 'error');
-    openApiModal();
-    return;
+  /* 仅「免费额度平台(openai)」需要用户自备密钥；
+     gpt-image / banana 走服务端内置的 GPT / Gemini 默认密钥，前端不填也能生成 */
+  if (state.engine === 'openai') {
+    const cfg = providerConfig();
+    if (!cfg.key) {
+      toast('请先在「接入设置」中填写该平台的 API Key', 'error');
+      openApiModal();
+      return;
+    }
   }
 
   if (currentRefs().length > 0 && state.engine === 'flux') {
@@ -3188,10 +3195,15 @@ async function retryJob(job) {
     return;
   }
 
-  if (job.engine && job.engine !== 'flux' && !hasRayinKey()) {
-    toast('请先在「接入设置」中填写 RayinAPI 密钥', 'error');
-    openApiModal();
-    return;
+  /* 仅「免费额度平台(openai)」需要用户自备密钥；
+     gpt-image / banana 走服务端内置默认密钥，无需前端配置 */
+  if (job.engine === 'openai') {
+    const cfg = providerConfig();
+    if (!cfg.key) {
+      toast('请先在「接入设置」中填写该平台的 API Key', 'error');
+      openApiModal();
+      return;
+    }
   }
 
   state.generating = true;
@@ -3269,7 +3281,7 @@ function openApiModal() {
   els.apiKeyInput.value = rayinCfg().key || '';
   els.gptModelInput.value = rayinCfg().gptModel || RAYIN_DEFAULT.gptModel;
   els.bananaModelInput.value = rayinCfg().bananaModel || RAYIN_DEFAULT.bananaModel;
-  els.apiHint.textContent = '保存后即可在上方面板下拉切换模型。';
+  els.apiHint.textContent = '密钥可留空（使用服务端默认 GPT / Gemini 密钥），填写则用你自己的 key 覆盖。保存后即可在上方面板下拉切换模型。';
   renderProviderSelect();
   fillProviderFields(state.providerId);
   els.apiModal.classList.add('is-open');
@@ -3282,23 +3294,27 @@ function closeApiModal() {
 }
 
 function saveRayinConfig() {
+  /* 服务端已内置 GPT / Gemini 默认密钥，前端 key 留空即使用服务端默认值；
+     用户也可填自己的 key 覆盖。base / 模型 ID 留空则用内置默认。 */
   const key = els.apiKeyInput.value.trim();
-  if (!key) {
-    toast('请填写 RayinAPI 密钥', 'error');
-    els.apiKeyInput.focus();
-    return;
-  }
+  const base = normalizeBase(els.apiBaseInput.value) || RAYIN_DEFAULT.base;
+  const gptModel = els.gptModelInput.value.trim() || RAYIN_DEFAULT.gptModel;
+  const bananaModel = els.bananaModelInput.value.trim() || RAYIN_DEFAULT.bananaModel;
 
   state.api = {
-    base: normalizeBase(els.apiBaseInput.value),
+    base: base,
     key: key,
-    gptModel: els.gptModelInput.value.trim() || RAYIN_DEFAULT.gptModel,
-    bananaModel: els.bananaModelInput.value.trim() || RAYIN_DEFAULT.bananaModel
+    gptModel: gptModel,
+    bananaModel: bananaModel
   };
   saveJSON(LS_API, state.api);
   syncEngineUI();
   closeApiModal();
-  toast('接入信息已保存，可切换 GPT-image / Nano Banana', 'success');
+  if (key) {
+    toast('接入信息已保存 · 使用自定义密钥', 'success');
+  } else {
+    toast('已保存 · 将使用服务端默认 GPT / Gemini 密钥', 'success');
+  }
 }
 
 async function fetchRayinModels() {
@@ -3480,9 +3496,10 @@ function bindEvents() {
       return;
     }
 
-    if ((value === 'gpt-image' || value === 'banana') && !hasRayinKey()) {
-      toast('该模型需要 RayinAPI 密钥，先完成接入设置', 'info');
-      openApiModal();
+    /* gpt-image / banana 走服务端内置默认密钥，前端不填也能生成；
+       仅免费额度平台(openai)需要用户自备密钥 */
+    if (value === 'gpt-image' || value === 'banana') {
+      toast('已切换到 ' + currentModelLabel() + ' · 使用服务端默认密钥', 'success');
     } else {
       toast('已切换到 ' + currentModelLabel(), 'success');
     }

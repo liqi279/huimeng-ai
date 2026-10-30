@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030172731-321e4df";</script>
+<script>window.HM_BUILD = "20261030174533-f6fe663";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9214,7 +9214,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
       </button>
       <span class="modal-kicker">RAYINAPI</span>
       <h2>接入 GPT-image 与 Gemini Banana</h2>
-      <p class="api-desc">后端已预配置 Gemini Banana（gemini-3.1-flash-image），可直接出图。也可在此覆盖 RayinAI 账号与模型。密钥仅保存在本浏览器。</p>
+      <p class="api-desc">服务端已内置 GPT-image 与 Gemini 默认密钥，开箱即用。API Key 可留空（用服务端默认值），填写则用你自己的 key 覆盖。密钥仅保存在本浏览器。</p>
 
       <div class="api-form">
         <label class="field">
@@ -9222,8 +9222,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
           <input id="apiBaseInput" type="text" placeholder="https://www.rayinai.com/v1" autocomplete="off">
         </label>
         <label class="field">
-          <span>API Key</span>
-          <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off">
+          <span>API Key（可选 · 留空用服务端默认）</span>
+          <input id="apiKeyInput" type="password" placeholder="sk-...（可留空）" autocomplete="off">
         </label>
         <label class="field">
           <span>GPT-image 模型 ID</span>
@@ -11335,8 +11335,10 @@ function syncEngineUI() {
     els.engineNote.textContent = '密钥已配置 · 按量计费，仅保存在本机';
     els.engineNote.classList.remove('is-warn');
   } else {
-    els.engineNote.textContent = '尚未配置 RayinAPI 密钥，点击右上「接入设置」';
-    els.engineNote.classList.add('is-warn');
+    /* 服务端已内置 GPT / Gemini 默认密钥，前端不填也能直接生成；
+       用户可在「接入设置」里填自己的 key 覆盖服务端默认值 */
+    els.engineNote.textContent = '使用服务端默认密钥 · 可在「接入设置」中覆盖';
+    els.engineNote.classList.remove('is-warn');
   }
 
   updateRatioLabel();
@@ -13264,10 +13266,15 @@ async function handleGenerate() {
     return;
   }
 
-  if (state.engine !== 'flux' && !hasRayinKey()) {
-    toast('请先在「接入设置」中填写 RayinAPI 密钥', 'error');
-    openApiModal();
-    return;
+  /* 仅「免费额度平台(openai)」需要用户自备密钥；
+     gpt-image / banana 走服务端内置的 GPT / Gemini 默认密钥，前端不填也能生成 */
+  if (state.engine === 'openai') {
+    const cfg = providerConfig();
+    if (!cfg.key) {
+      toast('请先在「接入设置」中填写该平台的 API Key', 'error');
+      openApiModal();
+      return;
+    }
   }
 
   if (currentRefs().length > 0 && state.engine === 'flux') {
@@ -13390,10 +13397,15 @@ async function retryJob(job) {
     return;
   }
 
-  if (job.engine && job.engine !== 'flux' && !hasRayinKey()) {
-    toast('请先在「接入设置」中填写 RayinAPI 密钥', 'error');
-    openApiModal();
-    return;
+  /* 仅「免费额度平台(openai)」需要用户自备密钥；
+     gpt-image / banana 走服务端内置默认密钥，无需前端配置 */
+  if (job.engine === 'openai') {
+    const cfg = providerConfig();
+    if (!cfg.key) {
+      toast('请先在「接入设置」中填写该平台的 API Key', 'error');
+      openApiModal();
+      return;
+    }
   }
 
   state.generating = true;
@@ -13471,7 +13483,7 @@ function openApiModal() {
   els.apiKeyInput.value = rayinCfg().key || '';
   els.gptModelInput.value = rayinCfg().gptModel || RAYIN_DEFAULT.gptModel;
   els.bananaModelInput.value = rayinCfg().bananaModel || RAYIN_DEFAULT.bananaModel;
-  els.apiHint.textContent = '保存后即可在上方面板下拉切换模型。';
+  els.apiHint.textContent = '密钥可留空（使用服务端默认 GPT / Gemini 密钥），填写则用你自己的 key 覆盖。保存后即可在上方面板下拉切换模型。';
   renderProviderSelect();
   fillProviderFields(state.providerId);
   els.apiModal.classList.add('is-open');
@@ -13484,23 +13496,27 @@ function closeApiModal() {
 }
 
 function saveRayinConfig() {
+  /* 服务端已内置 GPT / Gemini 默认密钥，前端 key 留空即使用服务端默认值；
+     用户也可填自己的 key 覆盖。base / 模型 ID 留空则用内置默认。 */
   const key = els.apiKeyInput.value.trim();
-  if (!key) {
-    toast('请填写 RayinAPI 密钥', 'error');
-    els.apiKeyInput.focus();
-    return;
-  }
+  const base = normalizeBase(els.apiBaseInput.value) || RAYIN_DEFAULT.base;
+  const gptModel = els.gptModelInput.value.trim() || RAYIN_DEFAULT.gptModel;
+  const bananaModel = els.bananaModelInput.value.trim() || RAYIN_DEFAULT.bananaModel;
 
   state.api = {
-    base: normalizeBase(els.apiBaseInput.value),
+    base: base,
     key: key,
-    gptModel: els.gptModelInput.value.trim() || RAYIN_DEFAULT.gptModel,
-    bananaModel: els.bananaModelInput.value.trim() || RAYIN_DEFAULT.bananaModel
+    gptModel: gptModel,
+    bananaModel: bananaModel
   };
   saveJSON(LS_API, state.api);
   syncEngineUI();
   closeApiModal();
-  toast('接入信息已保存，可切换 GPT-image / Nano Banana', 'success');
+  if (key) {
+    toast('接入信息已保存 · 使用自定义密钥', 'success');
+  } else {
+    toast('已保存 · 将使用服务端默认 GPT / Gemini 密钥', 'success');
+  }
 }
 
 async function fetchRayinModels() {
@@ -13682,9 +13698,10 @@ function bindEvents() {
       return;
     }
 
-    if ((value === 'gpt-image' || value === 'banana') && !hasRayinKey()) {
-      toast('该模型需要 RayinAPI 密钥，先完成接入设置', 'info');
-      openApiModal();
+    /* gpt-image / banana 走服务端内置默认密钥，前端不填也能生成；
+       仅免费额度平台(openai)需要用户自备密钥 */
+    if (value === 'gpt-image' || value === 'banana') {
+      toast('已切换到 ' + currentModelLabel() + ' · 使用服务端默认密钥', 'success');
     } else {
       toast('已切换到 ' + currentModelLabel(), 'success');
     }

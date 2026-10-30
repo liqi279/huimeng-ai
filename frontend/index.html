@@ -853,7 +853,7 @@
       </button>
       <span class="modal-kicker">RAYINAPI</span>
       <h2>接入 GPT-image 与 Gemini Banana</h2>
-      <p class="api-desc">后端已预配置 Gemini Banana（gemini-3.1-flash-image），可直接出图。也可在此覆盖 RayinAI 账号与模型。密钥仅保存在本浏览器。</p>
+      <p class="api-desc">服务端已内置 GPT-image 与 Gemini 默认密钥，开箱即用。API Key 可留空（用服务端默认值），填写则用你自己的 key 覆盖。密钥仅保存在本浏览器。</p>
 
       <div class="api-form">
         <label class="field">
@@ -861,8 +861,8 @@
           <input id="apiBaseInput" type="text" placeholder="https://www.rayinai.com/v1" autocomplete="off">
         </label>
         <label class="field">
-          <span>API Key</span>
-          <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off">
+          <span>API Key（可选 · 留空用服务端默认）</span>
+          <input id="apiKeyInput" type="password" placeholder="sk-...（可留空）" autocomplete="off">
         </label>
         <label class="field">
           <span>GPT-image 模型 ID</span>
