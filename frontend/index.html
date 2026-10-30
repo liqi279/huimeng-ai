@@ -551,7 +551,7 @@
                 <span class="hm-menu-label">RayinAPI</span>
                 <div class="hm-chip-grid">
                   <button data-engine="gpt-image">GPT-image</button>
-                  <button data-engine="banana">Nano Banana</button>
+                  <button data-engine="banana">Gemini Banana</button>
                 </div>
                 <span class="hm-menu-label">LoRA 风格</span>
                 <div class="hm-chip-grid" id="loraList"></div>
@@ -682,7 +682,7 @@
         <option value="flux">FLUX.1 · 免费（无需密钥）</option>
         <option value="openai">免费额度平台模型</option>
         <option value="gpt-image">GPT-image · RayinAPI</option>
-        <option value="banana">Nano Banana · RayinAPI</option>
+        <option value="banana">Gemini Banana · RayinAI</option>
       </select>
     </div>
   </div>
@@ -835,8 +835,8 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
       <span class="modal-kicker">RAYINAPI</span>
-      <h2>接入 GPT-image 与 Banana</h2>
-      <p class="api-desc">在 <a href="https://www.rayinai.com/usage" target="_blank" rel="noopener">rayinai.com</a> 控制台创建 API Key 后填入下方，密钥仅保存在本浏览器。</p>
+      <h2>接入 GPT-image 与 Gemini Banana</h2>
+      <p class="api-desc">后端已预配置 Gemini Banana（gemini-3.1-flash-image），可直接出图。也可在此覆盖 RayinAI 账号与模型。密钥仅保存在本浏览器。</p>
 
       <div class="api-form">
         <label class="field">
@@ -849,11 +849,11 @@
         </label>
         <label class="field">
           <span>GPT-image 模型 ID</span>
-          <input id="gptModelInput" type="text" placeholder="gpt-image-2" autocomplete="off">
+          <input id="gptModelInput" type="text" placeholder="gemini-3-pro-image" autocomplete="off">
         </label>
         <label class="field">
-          <span>Nano Banana 模型 ID</span>
-          <input id="bananaModelInput" type="text" placeholder="nano-banana" autocomplete="off">
+          <span>Gemini Banana 模型 ID</span>
+          <input id="bananaModelInput" type="text" placeholder="gemini-3.1-flash-image" autocomplete="off">
         </label>
       </div>
 

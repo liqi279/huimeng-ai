@@ -13,10 +13,16 @@ module.exports = {
   PORT: Number(env('PORT', '8787')),
   HTTPS_PORT: Number(env('HTTPS_PORT', '8443')),
   HTTPS: env('HTTPS', 'auto'), /* 'on' | 'off' | 'auto' */
+  /* RayinAI 代理通用配置（GPT-image / Gemini Banana 共用 base + key） */
   RAYIN_BASE: env('RAYIN_BASE', 'https://www.rayinai.com/v1'),
-  RAYIN_KEY: env('RAYIN_KEY', ''),
-  GPT_MODEL: env('GPT_MODEL', 'gpt-image-2'),
-  BANANA_MODEL: env('BANANA_MODEL', 'nano-banana'),
+  RAYIN_KEY: env('RAYIN_KEY', 'sk-e77e0766df2fe8a27a5eb19b0f4e4c97c604334e1ffeafc72bb55da70f14eb38'),
+  GPT_MODEL: env('GPT_MODEL', 'gemini-3-pro-image'),
+  /* Gemini Banana 专属配置 —— 用户提供的 Gemini 2.0 Flash 代理设置 */
+  GEMINI_BASE_URL: env('GEMINI_BASE_URL', 'https://www.rayinai.com/v1'),
+  GEMINI_API_KEY: env('GEMINI_API_KEY', 'sk-e77e0766df2fe8a27a5eb19b0f4e4c97c604334e1ffeafc72bb55da70f14eb38'),
+  GEMINI_MODEL: env('GEMINI_MODEL', 'gemini-3.1-flash-image'),
+  /* BANANA_MODEL 向后兼容 —— 若 GEMINI_MODEL 设置则优先用它 */
+  BANANA_MODEL: env('GEMINI_MODEL', env('BANANA_MODEL', 'gemini-3.1-flash-image')),
   VIDEO_MODEL: env('VIDEO_MODEL', 'sora-2'),
   AUDIO_MODEL: env('AUDIO_MODEL', 'tts-1'),
   RAYIN_VIDEO_PATH: env('RAYIN_VIDEO_PATH', '/videos/generations'),

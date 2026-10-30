@@ -26,23 +26,21 @@ const ENGINES = [
   }
 ];
 
-/* RayinAPI 接入（GPT-image / Nano Banana）
- * 注意：RayinAPI 只认官方 OpenAI 模型 ID，别写 Rayin 自己的展示别名 */
+/* RayinAPI 接入（GPT-image / Gemini Banana）
+ * 后端默认已配置用户提供的 RayinAI key + gemini-3.1-flash-image，
+ * 前端可在「接入设置」里覆盖 key 和模型 ID */
 const RAYIN_DEFAULT = {
   base: 'https://www.rayinai.com/v1',
   key: '',
-  gptModel: 'gpt-image-2',
-  bananaModel: 'nano-banana'
+  gptModel: 'gemini-3-pro-image',
+  bananaModel: 'gemini-3.1-flash-image'
 };
-
-/* GPT-image 候选模型链（RayinAPI 只认官方 OpenAI ID），第一个不可用自动试下一个 */
-const GPT_IMAGE_FALLBACKS = ['gpt-image-2', 'gpt-image-1'];
 
 const ENGINE_META = {
   flux: { label: 'FLUX.1', pill: 'FLUX.1 · 免费', hint: '免费 · 约 10 秒', meta: 'FLUX.1', free: true },
   openai: { label: '免费模型平台', pill: '免费额度 · 第三方', hint: '免费额度 · 需平台密钥', meta: 'Third-party', free: true },
   'gpt-image': { label: 'GPT-image', pill: 'GPT-image · RayinAPI', hint: 'RayinAPI · 按量计费', meta: 'GPT-image', free: false },
-  banana: { label: 'Nano Banana', pill: 'Nano Banana · RayinAPI', hint: 'RayinAPI · 按量计费', meta: 'Nano Banana', free: false }
+  banana: { label: 'Gemini Banana', pill: 'Gemini Banana · RayinAI', hint: 'RayinAI · Gemini 2.0 多模态生图', meta: 'Gemini Banana', free: false }
 };
 
 /* 免费模型目录（启动时从后端 /catalog 拉取，拉不到就用内置兜底） */

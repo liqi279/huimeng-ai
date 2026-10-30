@@ -313,6 +313,22 @@ function extractChatImage(message) {
   if (!message) return '';
 
   const content = message.content;
+
+  /* 1. content 为 markdown 字符串（Gemini / GPT-4o 返回 ![image](data:image/...base64,...) 格式） */
+  if (typeof content === 'string') {
+    /* ![image](data:image/png;base64,xxxxx) 或 ![image](https://...) */
+    const m = content.match(/!\[.*?\]\((data:image\/[^)]+|https?:\/\/[^)]+)\)/i);
+    if (m) return m[1];
+    /* 纯 URL（一些代理会直接返回 https://... 链接） */
+    const urlOnly = content.match(/(https?:\/\/[^\s)"']+\.(?:png|jpg|jpeg|webp|gif))/i);
+    if (urlOnly) return urlOnly[1];
+    /* data URI 直接出现 */
+    const dataOnly = content.match(/(data:image\/[^;\s]+;base64,[A-Za-z0-9+/=]+)/);
+    if (dataOnly) return dataOnly[1];
+    return '';
+  }
+
+  /* 2. content 为数组（多模态 messages，image_url 格式） */
   if (Array.isArray(content)) {
     for (const part of content) {
       if (!part || typeof part !== 'object') continue;
@@ -323,22 +339,20 @@ function extractChatImage(message) {
         }
       }
       if (typeof part.url === 'string' && part.url) return part.url;
+      /* 也处理数组内某个元素的 text 字段里嵌 markdown */
+      if (typeof part.text === 'string') {
+        const m = part.text.match(/!\[.*?\]\((data:image\/[^)]+|https?:\/\/[^)]+)\)/i);
+        if (m) return m[1];
+      }
     }
   }
 
-  if (typeof content === 'string' && content) {
-    const dataUrl = content.match(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/);
-    if (dataUrl) return dataUrl[0];
-    const httpUrl = content.match(/https?:\/\/[^\s"'<>)\]]+/);
-    if (httpUrl) return httpUrl[0];
+  /* 3. message 其他字段兜底 */
+  if (typeof message.url === 'string' && message.url) return message.url;
+  if (typeof message.image_url === 'string' && message.image_url) return message.image_url;
+  if (message.image_url && typeof message.image_url.url === 'string' && message.image_url.url) {
+    return message.image_url.url;
   }
-
-  if (Array.isArray(message.images) && message.images.length) {
-    const first = message.images[0];
-    if (typeof first === 'string' && first) return first;
-    if (first && typeof first.url === 'string' && first.url) return first.url;
-  }
-
   return '';
 }
 
@@ -361,7 +375,7 @@ async function generateBanana({ base, key, model, prompt, refs }) {
 
   const message = data && data.choices && data.choices[0] ? data.choices[0].message : null;
   const url = extractChatImage(message);
-  if (!url) throw jsonError(502, 'Nano Banana 未返回图片', '请检查模型 ID 与账号权限');
+  if (!url) throw jsonError(502, 'Gemini Banana 未返回图片', '请检查模型 ID 与账号权限');
   return url;
 }
 
