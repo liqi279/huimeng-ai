@@ -362,7 +362,10 @@ function extractChatImage(message) {
   return '';
 }
 
-async function generateBanana({ base, key, model, prompt, refs }) {
+/* Gemini 上游常见「账号额度耗尽」：换一个可用模型重试一次，避免整次生成直接失败 */
+const BANANA_FALLBACK_ORDER = ['gemini-3.1-flash-image', 'gemini-3-pro-image'];
+
+async function requestBanana(base, key, model, prompt, refs) {
   const content = [
     { type: 'text', text: prompt },
     ...refs.map((r) => ({ type: 'image_url', image_url: { url: r.dataUrl } })),
@@ -383,6 +386,26 @@ async function generateBanana({ base, key, model, prompt, refs }) {
   const url = extractChatImage(message);
   if (!url) throw jsonError(502, 'Gemini Banana 未返回图片', '请检查模型 ID 与账号权限');
   return url;
+}
+
+async function generateBanana({ base, key, model, prompt, refs }) {
+  const primary = model || 'gemini-3.1-flash-image';
+  try {
+    return await requestBanana(base, key, primary, prompt, refs);
+  } catch (err) {
+    const msg = String((err && err.message) || '');
+    const unavailable = /exhausted|quota|429|503|额度|已达上限|不可用/i.test(msg);
+    if (!unavailable) throw err;
+    const alt = BANANA_FALLBACK_ORDER.find((m) => m !== primary);
+    if (alt) {
+      try {
+        return await requestBanana(base, key, alt, prompt, refs);
+      } catch (err2) {
+        /* 换模型也失败 → 走下面的统一提示 */
+      }
+    }
+    throw jsonError(502, '该 Gemini 模型上游额度暂满', '请稍后重试，或改用 Gemini 3.1 Flash Image / Gemini 3 Pro Image');
+  }
 }
 
 /* 免费额度平台配置（密钥仅由前端保存在本机，随请求带上） */

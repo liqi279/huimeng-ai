@@ -672,12 +672,34 @@
     return compactSlot(idx, grid);
   }
 
-  function placeCard(el, id, idx, grid) {
+  /* 两张卡片是否像素重叠（用于给新卡片找空位，避免压在别人身上） */
+  function overlapsAny(left, top, occupied) {
+    var w = cardWidth();
+    return occupied.some(function (r) {
+      return left < r.left + w && r.left < left + w &&
+        top < r.top + CARD_H && r.top < top + CARD_H;
+    });
+  }
+
+  /* 从 startIdx 往后找第一个没被占用的网格位（保持生成顺序，不覆盖已有卡片） */
+  function nextFreeSlot(startIdx, grid, occupied) {
+    var idx = startIdx;
+    var guard = 0;
+    while (guard++ < 600) {
+      var slot = compactSlot(idx, grid);
+      if (!overlapsAny(slot.pxLeft, slot.pxTop, occupied)) return slot;
+      idx += 1;
+    }
+    return compactSlot(startIdx, grid);
+  }
+
+  function placeCard(el, id, idx, grid, occupied) {
+    occupied = occupied || [];
     if (!el) return;
     var pos = desk.positions[id] || desk.positions['job:' + id];
-    /* 只在用户明确拖过（_userSet=true）时才用存储坐标，否则一律紧凑网格 */
+    /* 只在用户明确拖过（_userSet=true）时才用存储坐标，否则一律从空位紧凑排 */
     if (!pos || !pos._userSet) {
-      pos = compactSlot(idx, grid);
+      pos = nextFreeSlot(idx, grid, occupied);
     }
     var left, top;
     if (typeof pos.pxTop === 'number') {
@@ -691,7 +713,7 @@
       delete pos.x;
       delete pos.y;
     } else {
-      var slot = compactSlot(idx, grid);
+      var slot = nextFreeSlot(idx, grid, occupied);
       left = slot.pxLeft;
       top = slot.pxTop;
     }
@@ -699,6 +721,7 @@
     el.style.top = top + 'px';
     el.style.zIndex = String(pos.z || idx + 1);
     if (!desk.positions[id]) desk.positions[id] = { pxLeft: left, pxTop: top, z: pos.z || idx + 1 };
+    occupied.push({ left: left, top: top });
   }
 
   function deskCardHtml(work) {
@@ -798,6 +821,7 @@
     });
 
     var idx = 0;
+    var occupied = [];
     works.forEach(function (w) {
       var existing = grid.querySelector('.desk-card[data-work="' + w.id + '"]');
       if (!existing) {
@@ -808,7 +832,7 @@
         grid.appendChild(existing);
       }
       existing.innerHTML = deskCardHtmlInner(w);
-      placeCard(existing, w.id, idx, grid);
+      placeCard(existing, w.id, idx, grid, occupied);
       idx += 1;
     });
 
@@ -831,8 +855,9 @@
       }
       existing.innerHTML = folderCardHtmlInner(f);
       var pos = desk.positions[f.id];
-      if (!pos) {
-        pos = compactSlot(works.length + folders.indexOf(f), grid);
+      if (!pos || !pos.pxLeft) {
+        pos = nextFreeSlot(works.length + folders.indexOf(f), grid, occupied);
+        pos._userSet = false;
         desk.positions[f.id] = pos;
       }
       var left = typeof pos.pxLeft === 'number' ? pos.pxLeft : PAD;
@@ -840,6 +865,7 @@
       existing.style.left = left + 'px';
       existing.style.top = top + 'px';
       existing.style.zIndex = String(pos.z || idx + 1);
+      occupied.push({ left: left, top: top });
     });
 
     /* ---------- 原地处理 loading 卡片：不再 removeChild + appendChild ---------- */
@@ -873,7 +899,7 @@
       if (!existing.parentNode) grid.appendChild(existing);
       var pos = desk.positions['job:' + id];
       if (!pos) {
-        pos = defaultSlot(works.length + i, grid);
+        pos = nextFreeSlot(works.length + folders.length + i, grid, occupied);
         desk.positions['job:' + id] = pos;
       }
       /* px 坐标渲染 */
@@ -903,8 +929,9 @@
         var key = g.clientWidth + 'x' + g.clientHeight;
         if (key === view.sizeKey) return;
         view.sizeKey = key;
+        var occ = [];
         Array.prototype.forEach.call(g.querySelectorAll('.desk-card'), function (el, idx) {
-          if (el.dataset.work) placeCard(el, el.dataset.work, idx, g);
+          if (el.dataset.work) placeCard(el, el.dataset.work, idx, g, occ);
         });
       });
     }
@@ -1803,6 +1830,8 @@
           commitInline(ip.value);
         } else if (event.key === 'Escape') {
           event.preventDefault();
+          /* 只取消行内编辑，不把整个项目面板一起关掉 */
+          event.stopPropagation();
           cancelInline();
         }
       });
@@ -2270,6 +2299,21 @@
       hideContexts();
     });
 
+    /* 鼠标光标所在区域（项目栏 / 桌面），快捷键以此为准 */
+    var lastMouse = { x: 0, y: 0 };
+    document.addEventListener('mousemove', function (ev) {
+      lastMouse.x = ev.clientX;
+      lastMouse.y = ev.clientY;
+    }, true);
+
+    function hoverRegion() {
+      var el = document.elementFromPoint(lastMouse.x, lastMouse.y);
+      if (!el) return '';
+      if (el.closest('#projPanel')) return 'panel';
+      if (el.closest('#resultGrid')) return 'desk';
+      return '';
+    }
+
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
         hideContexts();
@@ -2292,9 +2336,12 @@
           commitInline(curInput ? curInput.value : view.inline.value);
           return;
         }
-        /* 1. 侧栏 projList 有 active/selected folder → 重命名 */
-        var targetFolder = view.activeFolder;
-        if (!targetFolder) {
+        /* 1. 侧栏 projList 有 active/selected folder → 重命名
+           （仅当光标/焦点在项目栏时才回退到 activeFolder，避免在桌面按 F2 改到文件夹） */
+        var inPanelFocus = event.target && event.target.closest && event.target.closest('#projPanel');
+        var panelRegion = hoverRegion() === 'panel' || inPanelFocus;
+        var targetFolder = panelRegion ? view.activeFolder : null;
+        if (panelRegion && !targetFolder) {
           var selKeys = Object.keys(view.selectedFolders);
           if (selKeys.length === 1) targetFolder = selKeys[0];
         }
@@ -2306,6 +2353,12 @@
         }
         /* 2. 桌面上选中了 folder-card（桌面多选 selected 里有 folder id） */
         var keys = selectedIds();
+        /* 没有选中项时，以鼠标光标下的卡片为准 */
+        if (!keys.length) {
+          var hovEl = document.elementFromPoint(lastMouse.x, lastMouse.y);
+          var hovCard = hovEl && hovEl.closest('.folder-card, .desk-card');
+          if (hovCard) keys = [hovCard.dataset.folder || hovCard.dataset.work];
+        }
         var deskFolderIds = keys.filter(function (k) { return desk.folders.some(function (f) { return f.id === k; }); });
         if (deskFolderIds.length === 1) {
           event.preventDefault();
@@ -2333,10 +2386,15 @@
         return;
       }
 
-      /* 只有桌面视图 + 没有在输入框/textarea/select/contenteditable 里，才响应桌面快捷键 */
+      /* 只有桌面视图 + 没有在输入框/textarea/select/contenteditable 里，才响应桌面快捷键
+         注意：以「光标下的元素」为准 —— 光标停在文本框上才让输入框处理，
+         避免项目栏搜索框自动获得焦点后，桌面快捷键全部失灵 */
       var active = document.activeElement;
-      var inInput = active && (active.matches('input, textarea, select, [contenteditable="true"]') || active.tagName === 'TEXTAREA');
-      if (inInput) return;
+      var underEl = typeof document.elementFromPoint === 'function'
+        ? document.elementFromPoint(lastMouse.x, lastMouse.y) : null;
+      if (underEl && underEl.closest && underEl.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (active && active.matches && active.matches('textarea, [contenteditable="true"]')) return;
+      if (active && active.matches && active.matches('input, select') && !active.closest('#projSearch')) return;
       var inModal = active && active.closest('.modal, .hm-ctx');
       if (inModal) return;
       var isDesk = document.body.getAttribute('data-view') === 'create';
@@ -2344,6 +2402,12 @@
 
       if ((event.key === 'Delete' || event.key === 'Backspace') && !event.ctrlKey && !event.metaKey) {
         var keys = selectedIds();
+        /* 没有选中项时，以鼠标光标下的卡片为准 */
+        if (!keys.length) {
+          var hovEl = document.elementFromPoint(lastMouse.x, lastMouse.y);
+          var hovCard = hovEl && hovEl.closest('.folder-card, .desk-card');
+          if (hovCard) keys = [hovCard.dataset.folder || hovCard.dataset.work];
+        }
         if (!keys.length) return;
         var folderIds = keys.filter(function (k) { return desk.folders.some(function (f) { return f.id === k; }); });
         if (folderIds.length) {
@@ -2390,7 +2454,76 @@
       }
     });
 
-    /* 参数弹窗 */
+    /* ===== 区域感知快捷键：以鼠标光标所在区域决定作用对象 =====
+       光标在左侧项目栏 → 作用于文件夹；在桌面 → 作用于作品/文件夹卡片。
+       Delete/Backspace 删除、F2 重命名、Enter 打开文件夹、Ctrl+A 全选。 */
+    document.addEventListener('keydown', function (event) {
+      var key = event.key;
+      var isDelete = key === 'Delete' || key === 'Backspace';
+      var isF2 = key === 'F2';
+      var isEnter = key === 'Enter';
+      var isSelAll = (event.ctrlKey || event.metaKey) && key.toLowerCase() === 'a';
+      if (!isDelete && !isF2 && !isEnter && !isSelAll) return;
+      if (event.altKey) return;
+      if (document.body.getAttribute('data-view') !== 'create') return;
+      /* 以光标下元素为准：光标停在文本框上时不拦截，交给输入框自己处理；
+         面板搜索框自动聚焦不应阻断区域快捷键 */
+      var underEl = typeof document.elementFromPoint === 'function'
+        ? document.elementFromPoint(lastMouse.x, lastMouse.y) : null;
+      if (underEl && underEl.closest && underEl.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (underEl && underEl.closest && underEl.closest('.modal, .hm-ctx')) return;
+      var active = document.activeElement;
+      if (active && active.matches && active.matches('textarea, [contenteditable="true"]')) return;
+      if (active && active.matches && active.matches('input, select') && !active.closest('#projSearch')) return;
+      if (active && active.closest && active.closest('.modal, .hm-ctx')) return;
+      var region = hoverRegion();
+      if (!region && event.target && event.target.closest && event.target.closest('#projPanel')) region = 'panel';
+      /* 只有光标在项目栏时才拦截；桌面/中性区域交给原有逻辑处理 */
+      if (region !== 'panel') return;
+
+      /* 目标文件夹：优先光标下的那一行 → 已选中的 → 当前打开的 */
+      var hoveredRow = underEl && underEl.closest && underEl.closest('#projPanel [data-folder-row]');
+      var hoveredFolderId = hoveredRow ? hoveredRow.dataset.folderRow : null;
+      var folderIds = Object.keys(view.selectedFolders).filter(function (k) { return view.selectedFolders[k]; });
+      if (hoveredFolderId) folderIds = [hoveredFolderId];
+      else if (!folderIds.length && view.activeFolder) folderIds = [view.activeFolder];
+      event.stopPropagation();
+
+      if (isSelAll) {
+        event.preventDefault();
+        view.selectedFolders = {};
+        desk.folders.forEach(function (f) {
+          if ((f.parentId || null) === (view.activeFolder || null)) view.selectedFolders[f.id] = true;
+        });
+        renderPanel();
+        return;
+      }
+      if (isEnter) {
+        if (folderIds.length === 1) {
+          event.preventDefault();
+          view.activeFolder = folderIds[0];
+          view.selectedFolders = {};
+          clearSelection();
+          renderPanel();
+          renderDesktop();
+        }
+        return;
+      }
+      if (isF2) {
+        if (folderIds.length !== 1) return;
+        event.preventDefault();
+        startInlineRename(folderIds[0]);
+        return;
+      }
+      if (isDelete) {
+        if (!folderIds.length) return;
+        event.preventDefault();
+        folderIds.forEach(function (fid) { deleteFolder(fid); });
+        view.selectedFolders = {};
+        renderPanel();
+      }
+    }, true);
+
     var paramModal = byId('paramModal');
     if (paramModal) {
       paramModal.addEventListener('click', function (event) {
@@ -2633,8 +2766,8 @@
         var id = card.dataset.job;
         var job = A.state.jobs.get(id);
         if (!job || !job.startedAt) return;
-        var secs = (Date.now() - job.startedAt) / 1000;
-        timeEl.textContent = secs.toFixed(1) + 's';
+        var ms = Date.now() - job.startedAt;
+        timeEl.textContent = A.formatDuration ? A.formatDuration(ms) : ((ms / 1000).toFixed(1) + 's');
       });
     }, 400);
   }

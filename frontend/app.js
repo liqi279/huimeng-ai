@@ -2515,6 +2515,7 @@ function errorText(err) {
 
 function friendlyError(err) {
   const message = String((err && err.message) || '');
+  if (/exhausted|额度|暂满/i.test(message)) return '该 Gemini 模型上游额度暂满（已尝试备用模型），请稍后重试或换模型';
   if (/429|quota|exceeded|ZeroGPU|limit/i.test(message)) return '免费算力额度暂满，请稍后重试';
   if (/Failed to fetch|NetworkError|network|load failed/i.test(message)) return '免费通道连接失败，请检查网络后重试';
   if (/abort|timeout|超时/i.test(message)) return '生成超时，请重试';
@@ -2527,9 +2528,20 @@ function jobMediaLoading(job) {
   return '<div class="result-media media-loading" style="aspect-ratio:' + job.width + ' / ' + job.height + '">' +
     '<div class="loader-box">' +
       '<span class="loader-ring"></span>' +
-      '<div><strong>正在绘制</strong><span class="load-status" data-status>排队中…</span><span class="load-time" data-time>0.0s</span></div>' +
+      '<div><strong>正在绘制</strong><span class="load-status" data-status>排队中…</span><span class="load-time" data-time>00:00.0</span></div>' +
     '</div>' +
   '</div>';
+}
+
+/* 生成长度格式化：mm:ss.d（超过 1 小时显示 h:mm:ss） */
+function formatDuration(ms) {
+  var total = Math.max(0, Math.floor(ms / 100)) / 10;
+  var h = Math.floor(total / 3600);
+  var m = Math.floor((total % 3600) / 60);
+  var s = (total % 60).toFixed(1);
+  if (s.split('.')[0].length < 2) s = '0' + s;
+  if (h) return h + ':' + (m < 10 ? '0' + m : m) + ':' + s;
+  return (m < 10 ? '0' + m : m) + ':' + s;
 }
 
 function jobInfo(job) {
@@ -2998,7 +3010,7 @@ function startTicker() {
     state.jobs.forEach(function (job) {
       if (job.status !== 'loading') return;
       const el = document.querySelector('[data-job="' + job.id + '"] [data-time]');
-      if (el) el.textContent = ((now - job.startedAt) / 1000).toFixed(1) + 's';
+      if (el) el.textContent = formatDuration(now - job.startedAt);
     });
   }, 200);
 }
@@ -4322,6 +4334,7 @@ window.HMApp = {
   updateJobStatus: updateJobStatus,
   updateAllJobStatus: updateAllJobStatus,
   jobMediaLoading: jobMediaLoading,
+  formatDuration: formatDuration,
   jobInfo: jobInfo,
   createLoadingCard: createLoadingCard,
   markJobDone: markJobDone,
