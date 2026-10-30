@@ -4069,6 +4069,8 @@ async function authBoot() {
     console.log('[authBoot] me() 成功:', me.user.username);
     window.HMApp.user = me.user;
     try { saveJSON('hm.user', me.user); } catch (e) {}
+    /* 换账号/刷新后清掉搜索框残留文字（例如浏览器自动填充的 admin） */
+    if (typeof window.HMResetSearchBox === 'function') { try { window.HMResetSearchBox(); } catch (e) {} }
 
     /* 若 me() 返回的用户与缓存用户不同（换号登录），重新加载该用户的本地作品 */
     var confirmedKey = worksLsKey(me.user.id);

@@ -152,12 +152,12 @@
     return (data && data.text) || '';
   };
 
-  api.listWorks = function () { return request('/works', {}, 15000); };
+  api.listWorks = function () { return request('/works', {}, 20000); };
   api.saveWork = function (work) { return request('/works', { method: 'POST', body: { work: work } }, 15000); };
   api.deleteWork = function (id) { return request('/works/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.clearWorks = function () { return request('/works', { method: 'DELETE' }, 15000); };
 
-  api.getDesk = function () { return request('/desk', {}, 15000); };
+  api.getDesk = function () { return request('/desk', {}, 20000); };
   api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
 
   api.listAssets = function () { return request('/assets', {}, 15000); };
@@ -185,13 +185,18 @@
   api.getToken = authToken;
 
   api.register = function (username, password) {
-    return request('/auth/register', { method: 'POST', body: { username: username, password: password } }, 15000);
+    return request('/auth/register', { method: 'POST', body: { username: username, password: password } }, 60000);
   };
   api.login = function (username, password) {
-    return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 15000);
+    return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 60000);
   };
   api.me = function () {
-    return request('/auth/me', {}, 10000);
+    return request('/auth/me', {}, 30000);
+  };
+  /* 预热后端：Render 免费层休眠后首个请求需 20~60s 唤醒，
+     在打开登录框时先打一枪，用户输入账号密码期间服务器即可醒来 */
+  api.warmup = function () {
+    return request('/health', {}, 60000).catch(function () {});
   };
   api.logout = function () {
     setAuthToken('');

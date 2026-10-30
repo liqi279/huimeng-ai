@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030161621-2a6a361";</script>
+<script>window.HM_BUILD = "20261030162311-9cd7200";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9680,12 +9680,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return (data && data.text) || '';
   };
 
-  api.listWorks = function () { return request('/works', {}, 15000); };
+  api.listWorks = function () { return request('/works', {}, 20000); };
   api.saveWork = function (work) { return request('/works', { method: 'POST', body: { work: work } }, 15000); };
   api.deleteWork = function (id) { return request('/works/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.clearWorks = function () { return request('/works', { method: 'DELETE' }, 15000); };
 
-  api.getDesk = function () { return request('/desk', {}, 15000); };
+  api.getDesk = function () { return request('/desk', {}, 20000); };
   api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
 
   api.listAssets = function () { return request('/assets', {}, 15000); };
@@ -9713,13 +9713,18 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.getToken = authToken;
 
   api.register = function (username, password) {
-    return request('/auth/register', { method: 'POST', body: { username: username, password: password } }, 15000);
+    return request('/auth/register', { method: 'POST', body: { username: username, password: password } }, 60000);
   };
   api.login = function (username, password) {
-    return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 15000);
+    return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 60000);
   };
   api.me = function () {
-    return request('/auth/me', {}, 10000);
+    return request('/auth/me', {}, 30000);
+  };
+  /* 预热后端：Render 免费层休眠后首个请求需 20~60s 唤醒，
+     在打开登录框时先打一枪，用户输入账号密码期间服务器即可醒来 */
+  api.warmup = function () {
+    return request('/health', {}, 60000).catch(function () {});
   };
   api.logout = function () {
     setAuthToken('');
@@ -9804,6 +9809,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     applyMode();
     clearError();
     setTimeout(function () { els.username && els.username.focus(); }, 50);
+    /* Render 免费层休眠后首个请求要 20~60 秒唤醒：
+       打开登录框就先预热，用户输入账号密码的时间足够服务器醒来 */
+    if (api && api.warmup) { try { api.warmup(); } catch (e) {} }
   }
 
   function hideLogin() {
@@ -9848,6 +9856,17 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     els.submitText.hidden = on;
   }
 
+  /* 切换账号时清掉顶栏搜索框里浏览器残留/自动填充的文字（例如 admin），
+     并重新设为只读，避免再次被自动填充 */
+  function resetSearchBox() {
+    var input = document.getElementById('modelSearch');
+    if (!input) return;
+    input.value = '';
+    try { delete input.dataset.userTyped; } catch (e) { input.removeAttribute('data-user-typed'); }
+    input.setAttribute('readonly', '');
+  }
+  window.HMResetSearchBox = resetSearchBox;
+
   /* ---------- 提交 ---------- */
   async function handleSubmit(ev) {
     ev.preventDefault();
@@ -9863,31 +9882,32 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
     setSubmitting(true);
     clearError();
+    /* 超过 3 秒仍未返回，说明后端在冷启动，给出明确提示避免用户以为卡死 */
+    var slowTimer = setTimeout(function () {
+      if (submitting) els.sub.textContent = '正在唤醒服务器（首次约 20~60 秒，请稍候）…';
+    }, 3000);
+
     try {
       var res = mode === 'register'
         ? await api.register(username, password)
         : await api.login(username, password);
       if (res && res.token) api.setToken(res.token);
+      /* 登录成功即证明后端在线（预热前 ping 可能因冷启动超时，把在线标记纠正过来） */
+      if (api) api.online = true;
       var me = await api.me();
       window.HMApp = window.HMApp || {};
       window.HMApp.user = me.user;
       try { localStorage.setItem('hm.user', JSON.stringify(me.user)); } catch (e) {}
 
-      /* 拉取该用户作品并刷新 */
-      await refreshUserWorks();
-
-      /* 加载该用户的桌面布局（从用户专属 key 读取，与上个账号隔离） */
-      if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') {
-        try { window.HMDesk.reloadForUser(); } catch (e) {}
-      } else if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
-        try { window.HMDesk.sync(); } catch (e) {}
-      }
-
+      /* 认证已完成：立即关闭登录框并刷新用户区，
+         作品与桌面放到后台并行加载，不再让用户干等 */
       hideLogin();
       updateUserUI();
+      resetSearchBox();
       if (window.HMApp && window.HMApp.toast) {
         window.HMApp.toast(mode === 'register' ? '注册成功，欢迎加入绘梦' : '登录成功', 'success');
       }
+      loadUserData();
     } catch (err) {
       var msg = (err && err.message) ? err.message : '操作失败，请稍后重试';
       /* 网络错误通常意味着后端未启动或证书未信任 */
@@ -9896,8 +9916,21 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       }
       setError(msg);
     } finally {
+      clearTimeout(slowTimer);
       setSubmitting(false);
+      applyMode();
     }
+  }
+
+  /* 登录后：并行拉取作品与桌面布局（两者互不依赖，省一个往返） */
+  function loadUserData() {
+    var tasks = [refreshUserWorks()];
+    if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') {
+      tasks.push(Promise.resolve().then(function () { window.HMDesk.reloadForUser(); }));
+    } else if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
+      tasks.push(Promise.resolve().then(function () { window.HMDesk.sync(); }));
+    }
+    Promise.all(tasks).catch(function () {});
   }
 
   async function refreshUserWorks() {
@@ -9969,6 +10002,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     window.HMApp.user = null;
     toggleUserMenu(false);
     updateUserUI();
+    resetSearchBox();
     showLogin('login');
   }
 
@@ -14219,6 +14253,8 @@ async function authBoot() {
     console.log('[authBoot] me() 成功:', me.user.username);
     window.HMApp.user = me.user;
     try { saveJSON('hm.user', me.user); } catch (e) {}
+    /* 换账号/刷新后清掉搜索框残留文字（例如浏览器自动填充的 admin） */
+    if (typeof window.HMResetSearchBox === 'function') { try { window.HMResetSearchBox(); } catch (e) {} }
 
     /* 若 me() 返回的用户与缓存用户不同（换号登录），重新加载该用户的本地作品 */
     var confirmedKey = worksLsKey(me.user.id);

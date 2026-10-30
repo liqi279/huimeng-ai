@@ -56,6 +56,9 @@
     applyMode();
     clearError();
     setTimeout(function () { els.username && els.username.focus(); }, 50);
+    /* Render 免费层休眠后首个请求要 20~60 秒唤醒：
+       打开登录框就先预热，用户输入账号密码的时间足够服务器醒来 */
+    if (api && api.warmup) { try { api.warmup(); } catch (e) {} }
   }
 
   function hideLogin() {
@@ -100,6 +103,17 @@
     els.submitText.hidden = on;
   }
 
+  /* 切换账号时清掉顶栏搜索框里浏览器残留/自动填充的文字（例如 admin），
+     并重新设为只读，避免再次被自动填充 */
+  function resetSearchBox() {
+    var input = document.getElementById('modelSearch');
+    if (!input) return;
+    input.value = '';
+    try { delete input.dataset.userTyped; } catch (e) { input.removeAttribute('data-user-typed'); }
+    input.setAttribute('readonly', '');
+  }
+  window.HMResetSearchBox = resetSearchBox;
+
   /* ---------- 提交 ---------- */
   async function handleSubmit(ev) {
     ev.preventDefault();
@@ -115,31 +129,32 @@
 
     setSubmitting(true);
     clearError();
+    /* 超过 3 秒仍未返回，说明后端在冷启动，给出明确提示避免用户以为卡死 */
+    var slowTimer = setTimeout(function () {
+      if (submitting) els.sub.textContent = '正在唤醒服务器（首次约 20~60 秒，请稍候）…';
+    }, 3000);
+
     try {
       var res = mode === 'register'
         ? await api.register(username, password)
         : await api.login(username, password);
       if (res && res.token) api.setToken(res.token);
+      /* 登录成功即证明后端在线（预热前 ping 可能因冷启动超时，把在线标记纠正过来） */
+      if (api) api.online = true;
       var me = await api.me();
       window.HMApp = window.HMApp || {};
       window.HMApp.user = me.user;
       try { localStorage.setItem('hm.user', JSON.stringify(me.user)); } catch (e) {}
 
-      /* 拉取该用户作品并刷新 */
-      await refreshUserWorks();
-
-      /* 加载该用户的桌面布局（从用户专属 key 读取，与上个账号隔离） */
-      if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') {
-        try { window.HMDesk.reloadForUser(); } catch (e) {}
-      } else if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
-        try { window.HMDesk.sync(); } catch (e) {}
-      }
-
+      /* 认证已完成：立即关闭登录框并刷新用户区，
+         作品与桌面放到后台并行加载，不再让用户干等 */
       hideLogin();
       updateUserUI();
+      resetSearchBox();
       if (window.HMApp && window.HMApp.toast) {
         window.HMApp.toast(mode === 'register' ? '注册成功，欢迎加入绘梦' : '登录成功', 'success');
       }
+      loadUserData();
     } catch (err) {
       var msg = (err && err.message) ? err.message : '操作失败，请稍后重试';
       /* 网络错误通常意味着后端未启动或证书未信任 */
@@ -148,8 +163,21 @@
       }
       setError(msg);
     } finally {
+      clearTimeout(slowTimer);
       setSubmitting(false);
+      applyMode();
     }
+  }
+
+  /* 登录后：并行拉取作品与桌面布局（两者互不依赖，省一个往返） */
+  function loadUserData() {
+    var tasks = [refreshUserWorks()];
+    if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') {
+      tasks.push(Promise.resolve().then(function () { window.HMDesk.reloadForUser(); }));
+    } else if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
+      tasks.push(Promise.resolve().then(function () { window.HMDesk.sync(); }));
+    }
+    Promise.all(tasks).catch(function () {});
   }
 
   async function refreshUserWorks() {
@@ -221,6 +249,7 @@
     window.HMApp.user = null;
     toggleUserMenu(false);
     updateUserUI();
+    resetSearchBox();
     showLogin('login');
   }
 
