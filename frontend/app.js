@@ -3503,7 +3503,12 @@ function bindEvents() {
   els.modelSearch.addEventListener('keydown', function () {
     els.modelSearch.dataset.userTyped = '1';
   });
-  els.modelSearch.addEventListener('focus', clearSearchRestore);
+  els.modelSearch.addEventListener('focus', function () {
+    clearSearchRestore();
+    /* 浏览器也可能在获得焦点后才回填，补两次延迟清理 */
+    setTimeout(clearSearchRestore, 60);
+    setTimeout(clearSearchRestore, 300);
+  });
 
   /* 搜索框不再自动弹出「风格模型」侧栏：
      点击/输入搜索时保持安静，仅在风格面板已打开时才联动筛选 */

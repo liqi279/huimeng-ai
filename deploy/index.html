@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030160812-d49df3e";</script>
+<script>window.HM_BUILD = "20261030160833-d56be9d";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -13653,7 +13653,12 @@ function bindEvents() {
   els.modelSearch.addEventListener('keydown', function () {
     els.modelSearch.dataset.userTyped = '1';
   });
-  els.modelSearch.addEventListener('focus', clearSearchRestore);
+  els.modelSearch.addEventListener('focus', function () {
+    clearSearchRestore();
+    /* 浏览器也可能在获得焦点后才回填，补两次延迟清理 */
+    setTimeout(clearSearchRestore, 60);
+    setTimeout(clearSearchRestore, 300);
+  });
 
   /* 搜索框不再自动弹出「风格模型」侧栏：
      点击/输入搜索时保持安静，仅在风格面板已打开时才联动筛选 */
