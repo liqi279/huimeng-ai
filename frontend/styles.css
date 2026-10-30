@@ -3493,6 +3493,7 @@ body.hm-resizing * {
 
 .hm-composer {
   position: relative;
+  z-index: 50; /* 在 dock 层叠上下文中压过 .hm-resizer(z:10)，因为 backdrop-filter 会强制 composer 创建新的层叠上下文 */
   border-radius: 10px;
   border: 1px solid rgba(120, 170, 210, 0.16);
   background: rgba(15, 25, 38, 0.97);
