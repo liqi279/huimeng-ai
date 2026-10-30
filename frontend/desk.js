@@ -1118,11 +1118,16 @@
     /* 不在 pointerdown 里 preventDefault —— 会阻断后续的 click 事件（folder-card 弹窗等） */
   }
 
+  /* 拖动判定阈值：小于该距离的位移视为「点击」，不保存位置、不标记 _userSet。
+     触屏板/鼠标点击时手指的微小抖动很容易超过 4px，导致卡片被误拖并永久偏移，
+     因此把阈值提高到 8px（常规桌面端 5-10px 区间）。 */
+  var DRAG_THRESHOLD = 8;
+
   function onPointerMove(event) {
     if (!drag) return;
     var dx = event.clientX - drag.startX;
     var dy = event.clientY - drag.startY;
-    if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+    if (!drag.moved && Math.abs(dx) + Math.abs(dy) < DRAG_THRESHOLD) return;
     if (!drag.moved) {
       drag.moved = true;
       try { event.preventDefault(); } catch (e) {}
