@@ -8027,7 +8027,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030031147-b459f56";</script>
+<script>window.HM_BUILD = "20261030031832-f0a3da6";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9767,9 +9767,14 @@ const CATALOG_FALLBACK = {
   providers: [],
   loras: [],
   rayin: [
-    { id: 'gemini-3-pro-image', engine: 'banana', model: 'gemini-3-pro-image', name: 'GPT Pro 图像', badge: 'RayinAI · Pro', hint: '最高质量 · 精细渲染' },
-    { id: 'gemini-3.1-flash-image', engine: 'banana', model: 'gemini-3.1-flash-image', name: 'Banana Flash 图像', badge: 'RayinAI · Flash', hint: '速度最快 · 平衡质量' },
-    { id: 'gemini-3.1-flash-lite-image', engine: 'banana', model: 'gemini-3.1-flash-lite-image', name: 'Banana Lite 图像', badge: 'RayinAI · Lite', hint: '最轻量 · 秒级响应' },
+    /* GPT 图像模型（OpenAI key → /images/generations） */
+    { id: 'gpt-image-2', engine: 'gpt-image', model: 'gpt-image-2', name: 'GPT Image 2', badge: 'GPT · 标准', hint: '稳定通用 · OpenAI 原生生图' },
+    { id: 'gpt-image-2.5-flare', engine: 'gpt-image', model: 'gpt-image-2.5-flare', name: 'GPT Image 2.5 Flare', badge: 'GPT · 光影增强', hint: '光影绚丽 · 氛围渲染' },
+    { id: 'gpt-image-2.5-sunburst', engine: 'gpt-image', model: 'gpt-image-2.5-sunburst', name: 'GPT Image 2.5 Sunburst', badge: 'GPT · 细节爆发', hint: '高细节 · 锐度爆发' },
+    /* Gemini 图像模型（Gemini key → /chat/completions） */
+    { id: 'gemini-3-pro-image', engine: 'banana', model: 'gemini-3-pro-image', name: 'Gemini 3 Pro Image', badge: 'Gemini · Pro', hint: '最高质量 · 精细渲染' },
+    { id: 'gemini-3.1-flash-image', engine: 'banana', model: 'gemini-3.1-flash-image', name: 'Gemini 3.1 Flash Image', badge: 'Gemini · Flash', hint: '速度最快 · 平衡质量' },
+    { id: 'gemini-3.1-flash-lite-image', engine: 'banana', model: 'gemini-3.1-flash-lite-image', name: 'Gemini 3.1 Flash Lite Image', badge: 'Gemini · Lite', hint: '最轻量 · 秒级响应' },
   ]
 };
 

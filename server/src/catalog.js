@@ -62,41 +62,85 @@ const KEYLESS = [
 /* PROVIDERS（免费额度平台）— 全部移除：用户明确要纯免密钥通道 */
 const PROVIDERS = [];
 
-/* RayinAI 代理的真实模型列表 — 从用户 key 拉到的可用模型（2026-10-30 实测）
- * 全部走 banana engine / chat/completions（RayinAI 没开 /images/generations）
- * 按钮名按功能区分：
- *   Pro 版 → "GPT Pro 图像" （对应 GPT 引擎，最高质量）
- *   Flash/Lite → "Banana Flash" / "Banana Lite" （对应 Banana 引擎，速度优先） */
+/* RayinAI 代理 —— 两套 key，各 3 个图像模型（2026-10-30 从 API 拉取确认）
+ *
+ * Key 1 (OPENAI_KEY) —— GPT 图像模型，走 engine='gpt-image'
+ *   → /images/generations（不支持 chat/completions）
+ *
+ * Key 2 (GEMINI_KEY) —— Gemini 图像模型，走 engine='banana'
+ *   → /chat/completions（返回 markdown ![image](data:...base64,...)）
+ *
+ * 每个 entry: model 字段是传给 RayinAI 的真实 ID
+ *            engine 字段决定后端走哪条生成链路 */
 const RAYIN_MODELS = [
+  /* ============ GPT 图像模型（Key 1 · OpenAI） ============ */
+  {
+    id: 'gpt-image-2',
+    engine: 'gpt-image',
+    keyGroup: 'openai',
+    model: 'gpt-image-2',
+    name: 'GPT Image 2',
+    badge: 'GPT · 标准',
+    hint: '稳定通用 · OpenAI 原生生图',
+    desc: 'OpenAI 官方 GPT Image 2，稳定可靠，适合通用生图场景。',
+    tags: ['GPT', 'OpenAI', '标准'],
+  },
+  {
+    id: 'gpt-image-2.5-flare',
+    engine: 'gpt-image',
+    keyGroup: 'openai',
+    model: 'gpt-image-2.5-flare',
+    name: 'GPT Image 2.5 Flare',
+    badge: 'GPT · 光影增强',
+    hint: '光影绚丽 · 氛围渲染',
+    desc: 'GPT Image 2.5 Flare 光影增强版，擅长逆光、光效和氛围渲染。',
+    tags: ['GPT', 'Flare', '光影'],
+  },
+  {
+    id: 'gpt-image-2.5-sunburst',
+    engine: 'gpt-image',
+    keyGroup: 'openai',
+    model: 'gpt-image-2.5-sunburst',
+    name: 'GPT Image 2.5 Sunburst',
+    badge: 'GPT · 细节爆发',
+    hint: '高细节 · 锐度爆发',
+    desc: 'GPT Image 2.5 Sunburst 细节增强版，画面锐利、纹理丰富。',
+    tags: ['GPT', 'Sunburst', '细节'],
+  },
+
+  /* ============ Gemini 图像模型（Key 2 · Gemini） ============ */
   {
     id: 'gemini-3-pro-image',
     engine: 'banana',
+    keyGroup: 'gemini',
     model: 'gemini-3-pro-image',
-    name: 'GPT Pro 图像',
-    badge: 'RayinAI · Pro',
+    name: 'Gemini 3 Pro Image',
+    badge: 'Gemini · Pro',
     hint: '最高质量 · 精细渲染 · 多图理解',
-    desc: 'RayinAI 代理下最强图像模型，对应 GPT-image 档位，适合精细插画和写实场景。',
-    tags: ['高质量', 'Pro', 'GPT'],
+    desc: 'Gemini 3 Pro 图像版，最强生图模型，支持多图参考和精细渲染。',
+    tags: ['Gemini', 'Pro', '高质量'],
   },
   {
     id: 'gemini-3.1-flash-image',
     engine: 'banana',
+    keyGroup: 'gemini',
     model: 'gemini-3.1-flash-image',
-    name: 'Banana Flash 图像',
-    badge: 'RayinAI · Flash',
+    name: 'Gemini 3.1 Flash Image',
+    badge: 'Gemini · Flash',
     hint: '速度最快 · 平衡质量',
-    desc: 'Banana 引擎 Flash 图像版，速度最快的生图模型，平衡质量与速度。',
-    tags: ['快速', '通用', 'Banana'],
+    desc: 'Gemini 3.1 Flash 图像版，速度最快，平衡质量与速度。',
+    tags: ['Gemini', 'Flash', '快速'],
   },
   {
     id: 'gemini-3.1-flash-lite-image',
     engine: 'banana',
+    keyGroup: 'gemini',
     model: 'gemini-3.1-flash-lite-image',
-    name: 'Banana Lite 图像',
-    badge: 'RayinAI · Lite',
+    name: 'Gemini 3.1 Flash Lite Image',
+    badge: 'Gemini · Lite',
     hint: '最轻量 · 秒级响应',
-    desc: 'Banana 引擎 Lite 图像版，最轻量的生图模型，秒级响应。',
-    tags: ['极速', 'Banana'],
+    desc: 'Gemini 3.1 Flash Lite 图像版，最轻量，秒级响应。',
+    tags: ['Gemini', 'Lite', '极速'],
   },
 ];
 

@@ -15,20 +15,17 @@ services:
       # Render 自带 HTTPS 终端，关闭自签 HTTPS 服务器，避免绑定 8443 端口失败
       - key: HTTPS
         value: "off"
-      # RayinAI 代理通用配置（GPT-image / Gemini Banana 共用）
-      - key: RAYIN_BASE
-        value: "https://www.rayinai.com/v1"
-      - key: RAYIN_KEY
+      # RayinAI 代理 —— 两套 key 共用同一个 base URL
+      # Key 1: OpenAI 图像模型 → /images/generations
+      - key: OPENAI_KEY
+        value: "sk-9205aabaca73ce33821e254186977ac65181acee9d322042d595c696e6400747"
+      # Key 2: Gemini 图像模型 → /chat/completions
+      - key: GEMINI_KEY
         value: "sk-e77e0766df2fe8a27a5eb19b0f4e4c97c604334e1ffeafc72bb55da70f14eb38"
-      # Gemini Banana 生图模型配置（用户指定）
-      - key: GEMINI_BASE_URL
-        value: "https://www.rayinai.com/v1"
-      - key: GEMINI_API_KEY
-        value: "sk-e77e0766df2fe8a27a5eb19b0f4e4c97c604334e1ffeafc72bb55da70f14eb38"
-      - key: GEMINI_MODEL
-        value: "gemini-3.1-flash-image"
-      # GPT-image 也走 RayinAI + Gemini 模型（用户账号下的可用模型）
+      # 默认模型
       - key: GPT_MODEL
-        value: "gemini-3-pro-image"
+        value: "gpt-image-2.5-flare"
+      - key: BANANA_MODEL
+        value: "gemini-3.1-flash-image"
     healthCheckPath: /api/health
     autoDeploy: true

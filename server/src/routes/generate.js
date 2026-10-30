@@ -99,9 +99,15 @@ function readRefImages(value) {
 
 function resolveRayin(input) {
   const rayin = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+  /* 两套 key 共存：
+   *   openaiKey  → engine=gpt-image → /images/generations
+   *   geminiKey  → engine=banana   → /chat/completions
+   * 前端可传 rayin.key 覆盖（单 key 兼容老版），否则用后端默认 */
+  const userKey = typeof rayin.key === 'string' && rayin.key.trim() ? rayin.key.trim() : '';
   return {
     base: normalizeBase(rayin.base),
-    key: typeof rayin.key === 'string' && rayin.key.trim() ? rayin.key.trim() : config.RAYIN_KEY,
+    openaiKey: userKey || config.OPENAI_KEY,
+    geminiKey: userKey || config.GEMINI_KEY,
     gptModel: typeof rayin.gptModel === 'string' && rayin.gptModel.trim() ? rayin.gptModel.trim() : config.GPT_MODEL,
     bananaModel: typeof rayin.bananaModel === 'string' && rayin.bananaModel.trim()
       ? rayin.bananaModel.trim()
@@ -420,7 +426,8 @@ async function generateImages(body) {
   const model = typeof body.model === 'string' && body.model.trim() ? body.model.trim() : '';
   const provider = engine === 'openai' ? resolveProvider(body.provider, model) : null;
 
-  if (engine === 'gpt-image' || engine === 'banana') requireKey(rayin.key);
+  if (engine === 'gpt-image') requireKey(rayin.openaiKey);
+  if (engine === 'banana') requireKey(rayin.geminiKey);
   if (engine === 'openai') {
     assert(provider.key, 400, '未配置该平台的 API Key', '在「接入设置 · 免费模型平台」中填写密钥');
     assert(provider.model, 400, '未选择模型', '请选择一个模型 ID');
@@ -451,20 +458,20 @@ async function generateImages(body) {
         negative: styled.negative,
       });
     } else if (engine === 'gpt-image') {
-      /* GPT-image /images/generations 不支持多 reference 图，传第一张 */
+      /* GPT-image → /images/generations，不支持多 reference 图 */
       url = await generateGptImage({
         base: rayin.base,
-        key: rayin.key,
+        key: rayin.openaiKey,
         model: model || rayin.gptModel,
         prompt: styled.prompt,
         size,
         ref: refs[0],
       });
     } else {
-      /* Banana chat/completions 支持多图引用 */
+      /* Banana → /chat/completions，支持多图引用 */
       url = await generateBanana({
         base: rayin.base,
-        key: rayin.key,
+        key: rayin.geminiKey,
         model: model || rayin.bananaModel,
         prompt: styled.prompt,
         refs,
