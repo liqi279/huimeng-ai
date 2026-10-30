@@ -774,23 +774,9 @@
     works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
     var folders = activeFolders();
 
-    /* ---------- 退出文件夹：返回按钮 ---------- */
+    /* ---------- 文件夹桌面无需返回按钮：各文件夹桌面独立，通过左侧项目栏切换 ---------- */
     var backHint = byId('deskBackHint');
-    if (view.activeFolder) {
-      if (!backHint) {
-        backHint = document.createElement('button');
-        backHint.id = 'deskBackHint';
-        backHint.className = 'desk-back-hint';
-        backHint.innerHTML = '← 返回桌面';
-        backHint.addEventListener('click', function () {
-          view.activeFolder = null;
-          renderAll();
-        });
-        grid.parentNode.insertBefore(backHint, grid);
-      }
-    } else if (backHint) {
-      if (backHint.parentNode) backHint.parentNode.removeChild(backHint);
-    }
+    if (backHint && backHint.parentNode) backHint.parentNode.removeChild(backHint);
 
     /* ---------- 增量更新 desk-card ---------- */
     var needIds = {};

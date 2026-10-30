@@ -6983,24 +6983,6 @@ body.hm-light .hm-page-empty {
   margin-top: 2px;
 }
 
-/* 退出文件夹的返回按钮 */
-.desk-back-hint {
-  align-self: flex-start;
-  margin: 6px auto 0;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(96, 165, 250, 0.35);
-  background: rgba(30, 64, 120, 0.25);
-  color: #93c5fd;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all .16s ease;
-}
-.desk-back-hint:hover {
-  background: rgba(30, 64, 120, 0.55);
-  color: #dbeafe;
-}
-
 .desk-thumb > .desk-media-inner,
 .hm-history-thumb > .hm-history-media {
   position: absolute;
@@ -8385,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030053704-4c573e6";</script>
+<script>window.HM_BUILD = "20261030054836-876be2b";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -16686,23 +16668,9 @@ window.HMApp = {
     works.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
     var folders = activeFolders();
 
-    /* ---------- 退出文件夹：返回按钮 ---------- */
+    /* ---------- 文件夹桌面无需返回按钮：各文件夹桌面独立，通过左侧项目栏切换 ---------- */
     var backHint = byId('deskBackHint');
-    if (view.activeFolder) {
-      if (!backHint) {
-        backHint = document.createElement('button');
-        backHint.id = 'deskBackHint';
-        backHint.className = 'desk-back-hint';
-        backHint.innerHTML = '← 返回桌面';
-        backHint.addEventListener('click', function () {
-          view.activeFolder = null;
-          renderAll();
-        });
-        grid.parentNode.insertBefore(backHint, grid);
-      }
-    } else if (backHint) {
-      if (backHint.parentNode) backHint.parentNode.removeChild(backHint);
-    }
+    if (backHint && backHint.parentNode) backHint.parentNode.removeChild(backHint);
 
     /* ---------- 增量更新 desk-card ---------- */
     var needIds = {};
