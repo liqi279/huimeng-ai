@@ -1448,8 +1448,6 @@
        引擎、比例、倍数、步数与种子，避免恢复成不存在的模型或错误参数 */
     if (A.reuseJob) {
       A.reuseJob(work);
-      var input = byId('promptInput');
-      if (input && input.dispatchEvent) input.dispatchEvent(new Event('input', { bubbles: true }));
       return;
     }
     var inp = byId('promptInput');

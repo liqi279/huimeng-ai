@@ -3225,6 +3225,11 @@ function reuseJob(job) {
     toast('视频 / 音频暂不支持复用参数', 'info');
     return;
   }
+  /* 先切回图片模式：若当前停在视频/音频模式，底栏与模型列表展示的是媒体模型，
+     恢复后看起来就像“模型选择不正确” */
+  if (window.HMUI && typeof window.HMUI.setMode === 'function' && state.mode !== 'image') {
+    window.HMUI.setMode('image');
+  }
   /* 模型目录可能随版本更新更换 id：先按 id 精确匹配，再按名称回退，
      避免把 state.modelId 设成不存在的值导致生成时落到默认模型 */
   var restoredModel = MODEL_INDEX.find(function (m) { return m.id === job.modelId; });
@@ -3235,9 +3240,12 @@ function reuseJob(job) {
   state.engine = ENGINE_META[job.engine] ? job.engine : 'flux';
   if (job.ratioId && RATIOS.some(function (r) { return r.id === job.ratioId; })) state.ratio = job.ratioId;
   if (job.scaleId && SCALES.some(function (s) { return s.id === job.scaleId; })) state.scale = job.scaleId;
-  if (job.seed) state.seed = job.seed;
+  if (typeof job.seed === 'number' && job.seed > 0) state.seed = job.seed;
   if (typeof job.steps === 'number' && job.steps > 0) state.steps = clamp(job.steps, 4, 12);
   els.promptInput.value = job.prompt || job.enPrompt || '';
+  /* 触发 input 事件：同步到当前标签草稿、字数统计与本地持久化，
+     否则切换标签/刷新后提示词会丢失 */
+  els.promptInput.dispatchEvent(new Event('input', { bubbles: true }));
   updateCharCount();
   syncSettingsUI();
   persistPrefs();
