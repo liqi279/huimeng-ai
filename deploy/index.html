@@ -3724,6 +3724,132 @@ body.hm-resizing * {
   display: block;
 }
 
+/* ========== 参考图大图预览（点击 cell 展开） ========== */
+.hm-ref-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  min-height: 140px;
+  max-height: 260px;
+  background: linear-gradient(135deg, rgba(15, 25, 38, 0.96), rgba(20, 35, 55, 0.96));
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15), 0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: hmRefPreviewIn 0.18s ease both;
+}
+
+@keyframes hmRefPreviewIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.hm-ref-preview img {
+  max-width: 200px;
+  max-height: 220px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.3);
+  display: block;
+}
+
+.hm-ref-preview-idx {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(147, 197, 253, 0.95);
+  color: #0c2d5b;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  user-select: none;
+  pointer-events: none;
+}
+
+.hm-ref-preview-size {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #e5e7eb;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+.hm-ref-preview-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.8);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hm-ref-preview-close:hover {
+  background: rgba(251, 113, 133, 0.9);
+  color: #fff;
+}
+
+.hm-ref-preview-close svg {
+  width: 11px;
+  height: 11px;
+}
+
+.hm-ref-preview-actions {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.hm-ref-preview-actions button {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.hm-ref-preview-insert {
+  background: rgba(56, 189, 248, 0.18);
+  color: #bae6fd;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+}
+
+.hm-ref-preview-insert:hover {
+  background: rgba(56, 189, 248, 0.32);
+  transform: translateY(-1px);
+}
+
+.hm-ref-preview-remove {
+  background: rgba(251, 113, 133, 0.14);
+  color: #fda4af;
+  border: 1px solid rgba(251, 113, 133, 0.4);
+}
+
+.hm-ref-preview-remove:hover {
+  background: rgba(251, 113, 133, 0.3);
+  transform: translateY(-1px);
+}
+
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */
 .hm-prompt-textarea .hm-ref-mention {
   color: #bae6fd;
@@ -8028,7 +8154,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030033012-2339b3f";</script>
+<script>window.HM_BUILD = "20261030033831-277f02f";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8472,6 +8598,19 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
           <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 @1 @2 … 引用</span>
         </div>
         <div class="hm-ref-grid" id="refGrid" hidden></div>
+        <!-- 点击某个 ref-cell 时展开的大图预览 -->
+        <div class="hm-ref-preview" id="refPreview" hidden>
+          <img alt="参考图预览">
+          <span class="hm-ref-preview-idx"></span>
+          <span class="hm-ref-preview-size"></span>
+          <button class="hm-ref-preview-close" type="button" aria-label="关闭预览" title="关闭预览（点击空白处也可）">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="hm-ref-preview-actions">
+            <button type="button" class="hm-ref-preview-insert" title="插入到提示词">插入 @N</button>
+            <button type="button" class="hm-ref-preview-remove" title="删除此参考图">删除</button>
+          </div>
+        </div>
         <span class="hm-ref-state" id="refState">未添加</span>
         <button class="hm-ref-remove" id="refRemove" type="button" aria-label="清空所有参考" title="清空全部参考">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -10766,6 +10905,10 @@ function syncRefNote() {
 
 function renderRef() {
   const list = currentRefs();
+
+  /* 兜底：如果当前展开的索引超出范围（删除导致），自动收起 */
+  if (_refExpandedIdx >= list.length) _refExpandedIdx = -1;
+
   /* 渲染多图网格 */
   if (els.refGrid) {
     els.refGrid.innerHTML = '';
@@ -10791,6 +10934,11 @@ function renderRef() {
         ev.stopPropagation();
         removeRefAt(idx);
       });
+      /* 点击 cell 本身 → 展开大图预览 */
+      cell.addEventListener('click', function (ev) {
+        /* 如果已在预览里点了同一个 cell，就收起 */
+        toggleRefPreview(idx);
+      });
       els.refGrid.appendChild(cell);
     });
 
@@ -10808,7 +10956,21 @@ function renderRef() {
       els.refGrid.appendChild(addCell);
     }
 
-    els.refGrid.hidden = list.length === 0;
+    /* 有预览展开时，网格隐藏 */
+    els.refGrid.hidden = list.length === 0 || _refExpandedIdx >= 0;
+  }
+
+  /* ---- 大图预览面板 ---- */
+  if (els.refPreview) {
+    if (_refExpandedIdx >= 0 && list[_refExpandedIdx]) {
+      var ref = list[_refExpandedIdx];
+      els.refPreview.hidden = false;
+      els.refPreview.querySelector('img').src = ref.dataUrl;
+      els.refPreview.querySelector('.hm-ref-preview-idx').textContent = '@' + (_refExpandedIdx + 1);
+      els.refPreview.querySelector('.hm-ref-preview-size').textContent = ref.width + '×' + ref.height;
+    } else {
+      els.refPreview.hidden = true;
+    }
   }
 
   /* 更新 overlay chip 层（textarea 上显示带图标的 @N 视觉化） */
@@ -10837,6 +10999,24 @@ function renderRef() {
   }
 
   syncRefNote();
+}
+
+/* 参考图大图预览的展开索引（-1 表示收起） */
+var _refExpandedIdx = -1;
+
+function toggleRefPreview(idx) {
+  if (_refExpandedIdx === idx) {
+    _refExpandedIdx = -1;
+  } else {
+    _refExpandedIdx = idx;
+  }
+  renderRef();
+}
+
+function closeRefPreview() {
+  if (_refExpandedIdx < 0) return;
+  _refExpandedIdx = -1;
+  renderRef();
 }
 
 /* ========== @N 富文本 chip overlay ==========
@@ -10947,6 +11127,9 @@ function removeRefAt(idx) {
   arr.splice(idx, 1);
   setCurrentRefs(arr);
   els.refInput.value = '';
+  /* 预览索引纠偏：删除后如果有图的编号前移，同步调整 */
+  if (_refExpandedIdx === idx) _refExpandedIdx = -1;
+  else if (_refExpandedIdx > idx) _refExpandedIdx--;
   renderRef();
   toast('已删除参考图 #' + (idx + 1), 'info');
 }
@@ -10954,6 +11137,7 @@ function removeRefAt(idx) {
 function clearRefImages() {
   setCurrentRefs([]);
   els.refInput.value = '';
+  _refExpandedIdx = -1;
   renderRef();
 }
 
@@ -10966,6 +11150,7 @@ function insertPromptAt(text) {
   ta.value = val.slice(0, start) + text + val.slice(end);
   ta.selectionStart = ta.selectionEnd = start + text.length;
   updateCharCount();
+  schedulePromptOverlay(); /* 程序改值不会触发 input，手动刷新 chip overlay */
   ta.focus();
 }
 
@@ -11068,6 +11253,7 @@ function _commitRefAc(refIdx) {
   var newPos = atIdx + insert.length;
   ta.selectionStart = ta.selectionEnd = newPos;
   updateCharCount();
+  schedulePromptOverlay(); /* 程序改值不会触发 input，手动刷新 chip overlay */
   ta.focus();
 }
 
@@ -12944,9 +13130,19 @@ function bindEvents() {
     }
   });
 
-  els.refInput.addEventListener('change', function (event) {
-    const file = event.target.files && event.target.files[0];
-    pickRefFile(file);
+  els.refInput.addEventListener('change', async function (event) {
+    var files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    var remaining = REF_MAX_COUNT - currentRefs().length;
+    if (remaining <= 0) {
+      toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+      els.refInput.value = '';
+      return;
+    }
+    for (var i = 0; i < Math.min(files.length, remaining); i++) {
+      await pickRefFile(files[i]);
+    }
+    els.refInput.value = ''; /* 重置，让同一个文件可以再次选择 */
   });
 
   els.refRemove.addEventListener('click', function (event) {
@@ -12969,14 +13165,50 @@ function bindEvents() {
     els.refDrop.classList.remove('is-over');
   });
 
-  els.refDrop.addEventListener('drop', function (event) {
+  els.refDrop.addEventListener('drop', async function (event) {
     event.preventDefault();
     event.stopPropagation();
     els.refDrop.classList.remove('is-over');
     /* 支持拖入多张 */
-    const files = Array.from(event.dataTransfer && event.dataTransfer.files || []);
-    files.slice(0, REF_MAX_COUNT - currentRefs().length).forEach(function (f) { pickRefFile(f); });
+    var files = Array.from(event.dataTransfer && event.dataTransfer.files || []);
+    var remaining = REF_MAX_COUNT - currentRefs().length;
+    for (var i = 0; i < Math.min(files.length, remaining); i++) {
+      await pickRefFile(files[i]);
+    }
   });
+
+  /* ---- 预览面板事件（事件委托，面板重绘后不用重新绑定） ---- */
+  if (els.refPreview) {
+    els.refPreview.addEventListener('click', function (ev) {
+      var closeBtn = ev.target.closest('.hm-ref-preview-close');
+      if (closeBtn) {
+        ev.stopPropagation();
+        closeRefPreview();
+        return;
+      }
+      var insertBtn = ev.target.closest('.hm-ref-preview-insert');
+      if (insertBtn) {
+        ev.stopPropagation();
+        if (_refExpandedIdx >= 0) insertPromptAt('@' + (_refExpandedIdx + 1) + ' ');
+        closeRefPreview();
+        return;
+      }
+      var removeBtn = ev.target.closest('.hm-ref-preview-remove');
+      if (removeBtn) {
+        ev.stopPropagation();
+        if (_refExpandedIdx >= 0) removeRefAt(_refExpandedIdx);
+        return; /* removeRefAt 内部会 renderRef 并自动收起 */
+      }
+      /* 点击预览面板空白处 → 收起 */
+      var imgWrap = ev.target.closest('img');
+      var idxTag = ev.target.closest('.hm-ref-preview-idx');
+      var sizeTag = ev.target.closest('.hm-ref-preview-size');
+      var actions = ev.target.closest('.hm-ref-preview-actions');
+      if (!imgWrap && !idxTag && !sizeTag && !actions) {
+        closeRefPreview();
+      }
+    });
+  }
 
   els.inspireBtn.addEventListener('click', function () {
     const current = els.promptInput.value.trim();

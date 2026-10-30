@@ -3716,6 +3716,132 @@ body.hm-resizing * {
   display: block;
 }
 
+/* ========== 参考图大图预览（点击 cell 展开） ========== */
+.hm-ref-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  min-height: 140px;
+  max-height: 260px;
+  background: linear-gradient(135deg, rgba(15, 25, 38, 0.96), rgba(20, 35, 55, 0.96));
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15), 0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: hmRefPreviewIn 0.18s ease both;
+}
+
+@keyframes hmRefPreviewIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.hm-ref-preview img {
+  max-width: 200px;
+  max-height: 220px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.3);
+  display: block;
+}
+
+.hm-ref-preview-idx {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(147, 197, 253, 0.95);
+  color: #0c2d5b;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  user-select: none;
+  pointer-events: none;
+}
+
+.hm-ref-preview-size {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #e5e7eb;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+.hm-ref-preview-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.8);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hm-ref-preview-close:hover {
+  background: rgba(251, 113, 133, 0.9);
+  color: #fff;
+}
+
+.hm-ref-preview-close svg {
+  width: 11px;
+  height: 11px;
+}
+
+.hm-ref-preview-actions {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.hm-ref-preview-actions button {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.hm-ref-preview-insert {
+  background: rgba(56, 189, 248, 0.18);
+  color: #bae6fd;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+}
+
+.hm-ref-preview-insert:hover {
+  background: rgba(56, 189, 248, 0.32);
+  transform: translateY(-1px);
+}
+
+.hm-ref-preview-remove {
+  background: rgba(251, 113, 133, 0.14);
+  color: #fda4af;
+  border: 1px solid rgba(251, 113, 133, 0.4);
+}
+
+.hm-ref-preview-remove:hover {
+  background: rgba(251, 113, 133, 0.3);
+  transform: translateY(-1px);
+}
+
 /* ref-idx 点击时的视觉反馈（@N 被高亮） */
 .hm-prompt-textarea .hm-ref-mention {
   color: #bae6fd;

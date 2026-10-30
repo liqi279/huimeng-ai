@@ -450,6 +450,19 @@
           <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 @1 @2 … 引用</span>
         </div>
         <div class="hm-ref-grid" id="refGrid" hidden></div>
+        <!-- 点击某个 ref-cell 时展开的大图预览 -->
+        <div class="hm-ref-preview" id="refPreview" hidden>
+          <img alt="参考图预览">
+          <span class="hm-ref-preview-idx"></span>
+          <span class="hm-ref-preview-size"></span>
+          <button class="hm-ref-preview-close" type="button" aria-label="关闭预览" title="关闭预览（点击空白处也可）">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="hm-ref-preview-actions">
+            <button type="button" class="hm-ref-preview-insert" title="插入到提示词">插入 @N</button>
+            <button type="button" class="hm-ref-preview-remove" title="删除此参考图">删除</button>
+          </div>
+        </div>
         <span class="hm-ref-state" id="refState">未添加</span>
         <button class="hm-ref-remove" id="refRemove" type="button" aria-label="清空所有参考" title="清空全部参考">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>

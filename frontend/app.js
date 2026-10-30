@@ -1053,6 +1053,10 @@ function syncRefNote() {
 
 function renderRef() {
   const list = currentRefs();
+
+  /* 兜底：如果当前展开的索引超出范围（删除导致），自动收起 */
+  if (_refExpandedIdx >= list.length) _refExpandedIdx = -1;
+
   /* 渲染多图网格 */
   if (els.refGrid) {
     els.refGrid.innerHTML = '';
@@ -1078,6 +1082,11 @@ function renderRef() {
         ev.stopPropagation();
         removeRefAt(idx);
       });
+      /* 点击 cell 本身 → 展开大图预览 */
+      cell.addEventListener('click', function (ev) {
+        /* 如果已在预览里点了同一个 cell，就收起 */
+        toggleRefPreview(idx);
+      });
       els.refGrid.appendChild(cell);
     });
 
@@ -1095,7 +1104,21 @@ function renderRef() {
       els.refGrid.appendChild(addCell);
     }
 
-    els.refGrid.hidden = list.length === 0;
+    /* 有预览展开时，网格隐藏 */
+    els.refGrid.hidden = list.length === 0 || _refExpandedIdx >= 0;
+  }
+
+  /* ---- 大图预览面板 ---- */
+  if (els.refPreview) {
+    if (_refExpandedIdx >= 0 && list[_refExpandedIdx]) {
+      var ref = list[_refExpandedIdx];
+      els.refPreview.hidden = false;
+      els.refPreview.querySelector('img').src = ref.dataUrl;
+      els.refPreview.querySelector('.hm-ref-preview-idx').textContent = '@' + (_refExpandedIdx + 1);
+      els.refPreview.querySelector('.hm-ref-preview-size').textContent = ref.width + '×' + ref.height;
+    } else {
+      els.refPreview.hidden = true;
+    }
   }
 
   /* 更新 overlay chip 层（textarea 上显示带图标的 @N 视觉化） */
@@ -1124,6 +1147,24 @@ function renderRef() {
   }
 
   syncRefNote();
+}
+
+/* 参考图大图预览的展开索引（-1 表示收起） */
+var _refExpandedIdx = -1;
+
+function toggleRefPreview(idx) {
+  if (_refExpandedIdx === idx) {
+    _refExpandedIdx = -1;
+  } else {
+    _refExpandedIdx = idx;
+  }
+  renderRef();
+}
+
+function closeRefPreview() {
+  if (_refExpandedIdx < 0) return;
+  _refExpandedIdx = -1;
+  renderRef();
 }
 
 /* ========== @N 富文本 chip overlay ==========
@@ -1234,6 +1275,9 @@ function removeRefAt(idx) {
   arr.splice(idx, 1);
   setCurrentRefs(arr);
   els.refInput.value = '';
+  /* 预览索引纠偏：删除后如果有图的编号前移，同步调整 */
+  if (_refExpandedIdx === idx) _refExpandedIdx = -1;
+  else if (_refExpandedIdx > idx) _refExpandedIdx--;
   renderRef();
   toast('已删除参考图 #' + (idx + 1), 'info');
 }
@@ -1241,6 +1285,7 @@ function removeRefAt(idx) {
 function clearRefImages() {
   setCurrentRefs([]);
   els.refInput.value = '';
+  _refExpandedIdx = -1;
   renderRef();
 }
 
@@ -1253,6 +1298,7 @@ function insertPromptAt(text) {
   ta.value = val.slice(0, start) + text + val.slice(end);
   ta.selectionStart = ta.selectionEnd = start + text.length;
   updateCharCount();
+  schedulePromptOverlay(); /* 程序改值不会触发 input，手动刷新 chip overlay */
   ta.focus();
 }
 
@@ -1355,6 +1401,7 @@ function _commitRefAc(refIdx) {
   var newPos = atIdx + insert.length;
   ta.selectionStart = ta.selectionEnd = newPos;
   updateCharCount();
+  schedulePromptOverlay(); /* 程序改值不会触发 input，手动刷新 chip overlay */
   ta.focus();
 }
 
@@ -3231,9 +3278,19 @@ function bindEvents() {
     }
   });
 
-  els.refInput.addEventListener('change', function (event) {
-    const file = event.target.files && event.target.files[0];
-    pickRefFile(file);
+  els.refInput.addEventListener('change', async function (event) {
+    var files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    var remaining = REF_MAX_COUNT - currentRefs().length;
+    if (remaining <= 0) {
+      toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+      els.refInput.value = '';
+      return;
+    }
+    for (var i = 0; i < Math.min(files.length, remaining); i++) {
+      await pickRefFile(files[i]);
+    }
+    els.refInput.value = ''; /* 重置，让同一个文件可以再次选择 */
   });
 
   els.refRemove.addEventListener('click', function (event) {
@@ -3256,14 +3313,50 @@ function bindEvents() {
     els.refDrop.classList.remove('is-over');
   });
 
-  els.refDrop.addEventListener('drop', function (event) {
+  els.refDrop.addEventListener('drop', async function (event) {
     event.preventDefault();
     event.stopPropagation();
     els.refDrop.classList.remove('is-over');
     /* 支持拖入多张 */
-    const files = Array.from(event.dataTransfer && event.dataTransfer.files || []);
-    files.slice(0, REF_MAX_COUNT - currentRefs().length).forEach(function (f) { pickRefFile(f); });
+    var files = Array.from(event.dataTransfer && event.dataTransfer.files || []);
+    var remaining = REF_MAX_COUNT - currentRefs().length;
+    for (var i = 0; i < Math.min(files.length, remaining); i++) {
+      await pickRefFile(files[i]);
+    }
   });
+
+  /* ---- 预览面板事件（事件委托，面板重绘后不用重新绑定） ---- */
+  if (els.refPreview) {
+    els.refPreview.addEventListener('click', function (ev) {
+      var closeBtn = ev.target.closest('.hm-ref-preview-close');
+      if (closeBtn) {
+        ev.stopPropagation();
+        closeRefPreview();
+        return;
+      }
+      var insertBtn = ev.target.closest('.hm-ref-preview-insert');
+      if (insertBtn) {
+        ev.stopPropagation();
+        if (_refExpandedIdx >= 0) insertPromptAt('@' + (_refExpandedIdx + 1) + ' ');
+        closeRefPreview();
+        return;
+      }
+      var removeBtn = ev.target.closest('.hm-ref-preview-remove');
+      if (removeBtn) {
+        ev.stopPropagation();
+        if (_refExpandedIdx >= 0) removeRefAt(_refExpandedIdx);
+        return; /* removeRefAt 内部会 renderRef 并自动收起 */
+      }
+      /* 点击预览面板空白处 → 收起 */
+      var imgWrap = ev.target.closest('img');
+      var idxTag = ev.target.closest('.hm-ref-preview-idx');
+      var sizeTag = ev.target.closest('.hm-ref-preview-size');
+      var actions = ev.target.closest('.hm-ref-preview-actions');
+      if (!imgWrap && !idxTag && !sizeTag && !actions) {
+        closeRefPreview();
+      }
+    });
+  }
 
   els.inspireBtn.addEventListener('click', function () {
     const current = els.promptInput.value.trim();
