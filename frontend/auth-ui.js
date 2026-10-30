@@ -418,12 +418,14 @@
       if (!row) return;
       handleAdminAction(row.dataset.uid, btn.dataset.acmd);
     });
-
-    /* 暴露到全局，供 app.js 的 authBoot 调用 */
-    window.showLogin = showLogin;
-    window.hideLogin = hideLogin;
-    window.updateUserUI = updateUserUI;
   }
+
+  /* 立即暴露到全局：app.js 的 boot() 在 DOMContentLoaded 之前同步执行，
+     若等到 bind() 里才暴露，authBoot 调用 updateUserUI/hideLogin 会抛
+     ReferenceError 中断整个引导流程，导致右上角账号信息永远不显示 */
+  window.showLogin = showLogin;
+  window.hideLogin = hideLogin;
+  window.updateUserUI = updateUserUI;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bind);
