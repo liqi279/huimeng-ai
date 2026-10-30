@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030154444-f610ded";</script>
+<script>window.HM_BUILD = "20261030155202-099e544";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -13635,11 +13635,12 @@ function bindEvents() {
     if (event.target === els.apiModal) closeApiModal();
   });
 
-  els.modelSearch.addEventListener('focus', openSidebar);
-
+  /* 搜索框不再自动弹出「风格模型」侧栏：
+     点击/输入搜索时保持安静，仅在风格面板已打开时才联动筛选 */
   els.modelSearch.addEventListener('input', function (event) {
-    openSidebar();
-    renderModels(event.target.value);
+    if (els.sidebar && els.sidebar.classList.contains('is-open')) {
+      renderModels(event.target.value);
+    }
   });
 
   els.modelGroups.addEventListener('click', function (event) {

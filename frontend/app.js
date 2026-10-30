@@ -3485,11 +3485,12 @@ function bindEvents() {
     if (event.target === els.apiModal) closeApiModal();
   });
 
-  els.modelSearch.addEventListener('focus', openSidebar);
-
+  /* 搜索框不再自动弹出「风格模型」侧栏：
+     点击/输入搜索时保持安静，仅在风格面板已打开时才联动筛选 */
   els.modelSearch.addEventListener('input', function (event) {
-    openSidebar();
-    renderModels(event.target.value);
+    if (els.sidebar && els.sidebar.classList.contains('is-open')) {
+      renderModels(event.target.value);
+    }
   });
 
   els.modelGroups.addEventListener('click', function (event) {
