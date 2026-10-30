@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030054836-876be2b";</script>
+<script>window.HM_BUILD = "20261030064214-a0b65f3";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9440,6 +9440,50 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== 注意：以下两个组件放在 body 直接子元素，不能放 composer 内 =====
+       因为 .hm-composer 有 backdrop-filter，会强制成为 containing block，
+       导致 position:fixed 元素降级为相对于 composer 定位而非视口。
+       另外必须放在所有 <script> 之前，否则 app.js 的 bindEls() 取到 null（预览/浮层失效）。 -->
+
+  <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
+  <div class="hm-ref-hover" id="refHover" hidden>
+    <img alt="预览">
+    <div class="hm-ref-hover-actions">
+      <button type="button" class="hm-ref-hover-view" title="全屏查看">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        查看
+      </button>
+      <button type="button" class="hm-ref-hover-at" title="@主体">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        @主体
+      </button>
+    </div>
+  </div>
+
+  <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
+  <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
+    <button class="hm-ref-fs-close" type="button" id="refFsClose" aria-label="关闭全屏" title="关闭">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <div class="hm-ref-fs-idx" id="refFsIdx"></div>
+    <img class="hm-ref-fs-img" id="refFsImg" alt="全屏预览">
+    <!-- 底部控制条：🔍- ⟳ 🔍+ ⬇ -->
+    <div class="hm-ref-fs-controls">
+      <button type="button" class="hm-ref-fs-btn" id="refFsZoomOut" title="缩小">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsReset" title="重置">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsZoomIn" title="放大">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsDownload" title="下载">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
   </div>
 
@@ -10530,6 +10574,7 @@ function setCurrentRefs(arr) {
   _acKey = ''; /* 参考图变了，补全列表与 chip 缓存失效 */
   _chipCacheKey = '';
   schedulePromptOverlay();
+  if (typeof scheduleComposerSave === 'function') scheduleComposerSave(); /* 参考图随桌面持久化 */
 }
 function currentTabRefWeight() {
   ensureTabSlots();
@@ -10540,6 +10585,86 @@ function setCurrentTabRefWeight(v) {
   state.tabRefWeights[state.activePrompt] = v;
   state.refWeight = v; /* 兼容旧字段 */
 }
+
+/* ========== 每个桌面（文件夹）独立的提示词与参考图，且跨刷新保留 ========== */
+const LS_COMPOSER = 'anidream.composer.v1';
+var _composerKey = '__space';       /* 当前已载入的桌面 key：'__space' = 个人空间 */
+var _composerSaveTimer = 0;
+
+function composerKeyOf(folderId) { return folderId ? String(folderId) : '__space'; }
+
+function readComposerStore() {
+  var store = loadJSON(LS_COMPOSER, {});
+  return store && typeof store === 'object' && !Array.isArray(store) ? store : {};
+}
+
+function composerSnapshot() {
+  if (els.promptInput) state.prompts[state.activePrompt] = els.promptInput.value || '';
+  return {
+    prompts: state.prompts.slice(),
+    refs: state.tabRefs.map(function (arr) { return (arr || []).slice(); }),
+    weights: state.tabRefWeights.slice(),
+    active: state.activePrompt
+  };
+}
+
+function saveComposer() {
+  var store = readComposerStore();
+  var snap = composerSnapshot();
+  store[_composerKey] = snap;
+  if (saveJSON(LS_COMPOSER, store)) return;
+  /* 配额不足：退化成只存缩略图，保证提示词与缩略预览不丢 */
+  store[_composerKey] = {
+    prompts: snap.prompts,
+    refs: snap.refs.map(function (arr) {
+      return (arr || []).map(function (r) { return { thumb: r.thumb || r.dataUrl, name: r.name, width: r.width, height: r.height, weight: r.weight }; });
+    }),
+    weights: snap.weights,
+    active: snap.active
+  };
+  saveJSON(LS_COMPOSER, store);
+}
+
+function scheduleComposerSave() {
+  if (_composerSaveTimer) clearTimeout(_composerSaveTimer);
+  _composerSaveTimer = setTimeout(function () { _composerSaveTimer = 0; saveComposer(); }, 350);
+}
+
+function applyComposer(data) {
+  var prompts = (data && Array.isArray(data.prompts) && data.prompts.length) ? data.prompts.slice() : ['', ''];
+  var refs = (data && Array.isArray(data.refs)) ? data.refs.slice() : [];
+  var weights = (data && Array.isArray(data.weights)) ? data.weights.slice() : [];
+  while (refs.length < prompts.length) refs.push([]);
+  while (weights.length < prompts.length) weights.push(70);
+  state.prompts = prompts;
+  state.tabPrompts = prompts;
+  state.tabRefs = refs;
+  state.tabRefWeights = weights;
+  state.activePrompt = Math.min(Math.max(Number(data && data.active) || 0, 0), prompts.length - 1);
+  state.refImages = (refs[0] || []).slice();
+  if (els.promptInput) els.promptInput.value = prompts[state.activePrompt] || '';
+  renderPromptTabs();
+  renderRef();
+  applyRefWeightUI(currentTabRefWeight());
+  updateCharCount();
+}
+
+/* desk.js 在每次切换桌面时调用：先把旧桌面的内容存下来，再载入新桌面的 */
+function switchComposerFolder(folderId) {
+  var next = composerKeyOf(folderId);
+  if (next === _composerKey) return;
+  if (_composerSaveTimer) { clearTimeout(_composerSaveTimer); _composerSaveTimer = 0; }
+  saveComposer();
+  _composerKey = next;
+  if (!els.promptInput) return; /* app 还没完成 bindEls，等 boot 时统一恢复 */
+  applyComposer(readComposerStore()[next] || null);
+}
+
+window.HMComposer = {
+  onFolderChange: switchComposerFolder,
+  save: saveComposer,
+  currentKey: function () { return _composerKey; }
+};
 
 /* ---------------- DOM ---------------- */
 const els = {};
@@ -10827,6 +10952,7 @@ function switchPromptTab(index) {
   renderRef(); /* ← 切换 tab 时切换独立的 ref 网格 */
   applyRefWeightUI(currentTabRefWeight()); /* ← 同步 ref 强度 slider */
   updateCharCount();
+  scheduleComposerSave();
 }
 
 /* 新增 tab 时也要同步 refs 插槽 */
@@ -10843,6 +10969,7 @@ function addPromptTab() {
   renderRef();
   applyRefWeightUI(currentTabRefWeight());
   updateCharCount();
+  scheduleComposerSave();
   els.promptInput.focus();
 }
 
@@ -13445,7 +13572,10 @@ function bindEvents() {
     if (modelItem) selectModel(modelItem.dataset.model);
   });
 
-  els.promptInput.addEventListener('input', updateCharCount);
+  els.promptInput.addEventListener('input', function () {
+    updateCharCount();
+    scheduleComposerSave(); /* 提示词按桌面持久化 */
+  });
 
   /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 === */
   if (els.refEmpty) {
@@ -14227,6 +14357,12 @@ function boot() {
   bindPromptOverlayEvents(); /* ← overlay chip 视觉化 */
   renderRef();          /* ← 每个 tab 独立的 refs 渲染 */
   renderCatalogMenus(); /* ← 免费模型 / LoRA 风格列表（先用内置兜底） */
+
+  /* 恢复当前桌面（个人空间或上次停留的文件夹）上次的提示词与参考图；随刷新保留 */
+  var bootFolder = window.HMDesk && window.HMDesk.getActiveFolder ? window.HMDesk.getActiveFolder() : null;
+  _composerKey = composerKeyOf(bootFolder);
+  applyComposer(readComposerStore()[_composerKey] || null);
+  window.addEventListener('beforeunload', function () { saveComposer(); });
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();
 
@@ -15990,6 +16126,9 @@ window.HMApp = {
     desk.assigns = stored.assigns && typeof stored.assigns === 'object' ? stored.assigns : {};
     desk.names = stored.names && typeof stored.names === 'object' ? stored.names : {};
     desk.updatedAt = Number(stored.updatedAt) || 0;
+    /* 恢复上次停留的桌面（每个文件夹桌面独立，刷新后回到同一个桌面） */
+    view.activeFolder = stored.activeFolder && desk.folders.some(function (f) { return f.id === stored.activeFolder; })
+      ? stored.activeFolder : null;
   }
 
   var persistTimer = null;
@@ -16000,6 +16139,7 @@ window.HMApp = {
       positions: desk.positions,
       assigns: desk.assigns,
       names: desk.names,
+      activeFolder: view.activeFolder || null,
       updatedAt: desk.updatedAt
     };
   }
@@ -16654,6 +16794,11 @@ window.HMApp = {
       return;
     }
     deskDirty = false;
+    /* 切换桌面 → 提示词与参考图跟随切换（每个桌面独立、跨刷新保留） */
+    if (window.HMComposer && window.HMComposer.onFolderChange) {
+      window.HMComposer.onFolderChange(view.activeFolder);
+    }
+    persistSoon(); /* 记住当前停在哪个桌面 */
     if (!grid.classList.contains('is-board')) grid.classList.add('is-board');
     setDockVar();
 
@@ -18534,7 +18679,8 @@ window.HMApp = {
     openHistory: openHistory,
     openParam: openParam,
     deleteWork: deleteWork,
-    sync: syncServer
+    sync: syncServer,
+    getActiveFolder: function () { return view.activeFolder; }
   };
 
   init();
@@ -19070,47 +19216,5 @@ window.HMApp = {
 
 </script>
 
-  <!-- ===== 注意：以下两个组件放在 body 直接子元素，不能放 composer 内 =====
-       因为 .hm-composer 有 backdrop-filter，会强制成为 containing block，
-       导致 position:fixed 元素降级为相对于 composer 定位而非视口。 -->
-
-  <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
-  <div class="hm-ref-hover" id="refHover" hidden>
-    <img alt="预览">
-    <div class="hm-ref-hover-actions">
-      <button type="button" class="hm-ref-hover-view" title="全屏查看">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        查看
-      </button>
-      <button type="button" class="hm-ref-hover-at" title="@主体">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-        @主体
-      </button>
-    </div>
-  </div>
-
-  <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
-  <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
-    <button class="hm-ref-fs-close" type="button" id="refFsClose" aria-label="关闭全屏" title="关闭">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-    </button>
-    <div class="hm-ref-fs-idx" id="refFsIdx"></div>
-    <img class="hm-ref-fs-img" id="refFsImg" alt="全屏预览">
-    <!-- 底部控制条：🔍- ⟳ 🔍+ ⬇ -->
-    <div class="hm-ref-fs-controls">
-      <button type="button" class="hm-ref-fs-btn" id="refFsZoomOut" title="缩小">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </button>
-      <button type="button" class="hm-ref-fs-btn" id="refFsReset" title="重置">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <button type="button" class="hm-ref-fs-btn" id="refFsZoomIn" title="放大">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </button>
-      <button type="button" class="hm-ref-fs-btn" id="refFsDownload" title="下载">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-    </div>
-  </div>
 </body>
 </html>

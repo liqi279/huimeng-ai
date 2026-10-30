@@ -1082,18 +1082,10 @@
     </div>
   </div>
 
-  <script src="jszip.min.js"></script>
-  <script src="chart.umd.min.js"></script>
-  <script src="api.js"></script>
-  <script src="auth-ui.js"></script>
-  <script src="app.js"></script>
-  <script src="ui.js"></script>
-  <script src="desk.js"></script>
-  <script src="admin.js"></script>
-
   <!-- ===== 注意：以下两个组件放在 body 直接子元素，不能放 composer 内 =====
        因为 .hm-composer 有 backdrop-filter，会强制成为 containing block，
-       导致 position:fixed 元素降级为相对于 composer 定位而非视口。 -->
+       导致 position:fixed 元素降级为相对于 composer 定位而非视口。
+       另外必须放在所有 <script> 之前，否则 app.js 的 bindEls() 取到 null（预览/浮层失效）。 -->
 
   <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
   <div class="hm-ref-hover" id="refHover" hidden>
@@ -1126,12 +1118,22 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <button type="button" class="hm-ref-fs-btn" id="refFsZoomIn" title="放大">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
       <button type="button" class="hm-ref-fs-btn" id="refFsDownload" title="下载">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
   </div>
+
+  <script src="jszip.min.js"></script>
+  <script src="chart.umd.min.js"></script>
+  <script src="api.js"></script>
+  <script src="auth-ui.js"></script>
+  <script src="app.js"></script>
+  <script src="ui.js"></script>
+  <script src="desk.js"></script>
+  <script src="admin.js"></script>
+
 </body>
 </html>

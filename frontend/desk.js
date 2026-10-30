@@ -96,6 +96,9 @@
     desk.assigns = stored.assigns && typeof stored.assigns === 'object' ? stored.assigns : {};
     desk.names = stored.names && typeof stored.names === 'object' ? stored.names : {};
     desk.updatedAt = Number(stored.updatedAt) || 0;
+    /* 恢复上次停留的桌面（每个文件夹桌面独立，刷新后回到同一个桌面） */
+    view.activeFolder = stored.activeFolder && desk.folders.some(function (f) { return f.id === stored.activeFolder; })
+      ? stored.activeFolder : null;
   }
 
   var persistTimer = null;
@@ -106,6 +109,7 @@
       positions: desk.positions,
       assigns: desk.assigns,
       names: desk.names,
+      activeFolder: view.activeFolder || null,
       updatedAt: desk.updatedAt
     };
   }
@@ -760,6 +764,11 @@
       return;
     }
     deskDirty = false;
+    /* 切换桌面 → 提示词与参考图跟随切换（每个桌面独立、跨刷新保留） */
+    if (window.HMComposer && window.HMComposer.onFolderChange) {
+      window.HMComposer.onFolderChange(view.activeFolder);
+    }
+    persistSoon(); /* 记住当前停在哪个桌面 */
     if (!grid.classList.contains('is-board')) grid.classList.add('is-board');
     setDockVar();
 
@@ -2640,7 +2649,8 @@
     openHistory: openHistory,
     openParam: openParam,
     deleteWork: deleteWork,
-    sync: syncServer
+    sync: syncServer,
+    getActiveFolder: function () { return view.activeFolder; }
   };
 
   init();

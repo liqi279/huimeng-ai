@@ -454,6 +454,7 @@ function setCurrentRefs(arr) {
   _acKey = ''; /* 参考图变了，补全列表与 chip 缓存失效 */
   _chipCacheKey = '';
   schedulePromptOverlay();
+  if (typeof scheduleComposerSave === 'function') scheduleComposerSave(); /* 参考图随桌面持久化 */
 }
 function currentTabRefWeight() {
   ensureTabSlots();
@@ -464,6 +465,86 @@ function setCurrentTabRefWeight(v) {
   state.tabRefWeights[state.activePrompt] = v;
   state.refWeight = v; /* 兼容旧字段 */
 }
+
+/* ========== 每个桌面（文件夹）独立的提示词与参考图，且跨刷新保留 ========== */
+const LS_COMPOSER = 'anidream.composer.v1';
+var _composerKey = '__space';       /* 当前已载入的桌面 key：'__space' = 个人空间 */
+var _composerSaveTimer = 0;
+
+function composerKeyOf(folderId) { return folderId ? String(folderId) : '__space'; }
+
+function readComposerStore() {
+  var store = loadJSON(LS_COMPOSER, {});
+  return store && typeof store === 'object' && !Array.isArray(store) ? store : {};
+}
+
+function composerSnapshot() {
+  if (els.promptInput) state.prompts[state.activePrompt] = els.promptInput.value || '';
+  return {
+    prompts: state.prompts.slice(),
+    refs: state.tabRefs.map(function (arr) { return (arr || []).slice(); }),
+    weights: state.tabRefWeights.slice(),
+    active: state.activePrompt
+  };
+}
+
+function saveComposer() {
+  var store = readComposerStore();
+  var snap = composerSnapshot();
+  store[_composerKey] = snap;
+  if (saveJSON(LS_COMPOSER, store)) return;
+  /* 配额不足：退化成只存缩略图，保证提示词与缩略预览不丢 */
+  store[_composerKey] = {
+    prompts: snap.prompts,
+    refs: snap.refs.map(function (arr) {
+      return (arr || []).map(function (r) { return { thumb: r.thumb || r.dataUrl, name: r.name, width: r.width, height: r.height, weight: r.weight }; });
+    }),
+    weights: snap.weights,
+    active: snap.active
+  };
+  saveJSON(LS_COMPOSER, store);
+}
+
+function scheduleComposerSave() {
+  if (_composerSaveTimer) clearTimeout(_composerSaveTimer);
+  _composerSaveTimer = setTimeout(function () { _composerSaveTimer = 0; saveComposer(); }, 350);
+}
+
+function applyComposer(data) {
+  var prompts = (data && Array.isArray(data.prompts) && data.prompts.length) ? data.prompts.slice() : ['', ''];
+  var refs = (data && Array.isArray(data.refs)) ? data.refs.slice() : [];
+  var weights = (data && Array.isArray(data.weights)) ? data.weights.slice() : [];
+  while (refs.length < prompts.length) refs.push([]);
+  while (weights.length < prompts.length) weights.push(70);
+  state.prompts = prompts;
+  state.tabPrompts = prompts;
+  state.tabRefs = refs;
+  state.tabRefWeights = weights;
+  state.activePrompt = Math.min(Math.max(Number(data && data.active) || 0, 0), prompts.length - 1);
+  state.refImages = (refs[0] || []).slice();
+  if (els.promptInput) els.promptInput.value = prompts[state.activePrompt] || '';
+  renderPromptTabs();
+  renderRef();
+  applyRefWeightUI(currentTabRefWeight());
+  updateCharCount();
+}
+
+/* desk.js 在每次切换桌面时调用：先把旧桌面的内容存下来，再载入新桌面的 */
+function switchComposerFolder(folderId) {
+  var next = composerKeyOf(folderId);
+  if (next === _composerKey) return;
+  if (_composerSaveTimer) { clearTimeout(_composerSaveTimer); _composerSaveTimer = 0; }
+  saveComposer();
+  _composerKey = next;
+  if (!els.promptInput) return; /* app 还没完成 bindEls，等 boot 时统一恢复 */
+  applyComposer(readComposerStore()[next] || null);
+}
+
+window.HMComposer = {
+  onFolderChange: switchComposerFolder,
+  save: saveComposer,
+  currentKey: function () { return _composerKey; }
+};
 
 /* ---------------- DOM ---------------- */
 const els = {};
@@ -751,6 +832,7 @@ function switchPromptTab(index) {
   renderRef(); /* ← 切换 tab 时切换独立的 ref 网格 */
   applyRefWeightUI(currentTabRefWeight()); /* ← 同步 ref 强度 slider */
   updateCharCount();
+  scheduleComposerSave();
 }
 
 /* 新增 tab 时也要同步 refs 插槽 */
@@ -767,6 +849,7 @@ function addPromptTab() {
   renderRef();
   applyRefWeightUI(currentTabRefWeight());
   updateCharCount();
+  scheduleComposerSave();
   els.promptInput.focus();
 }
 
@@ -3369,7 +3452,10 @@ function bindEvents() {
     if (modelItem) selectModel(modelItem.dataset.model);
   });
 
-  els.promptInput.addEventListener('input', updateCharCount);
+  els.promptInput.addEventListener('input', function () {
+    updateCharCount();
+    scheduleComposerSave(); /* 提示词按桌面持久化 */
+  });
 
   /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 === */
   if (els.refEmpty) {
@@ -4151,6 +4237,12 @@ function boot() {
   bindPromptOverlayEvents(); /* ← overlay chip 视觉化 */
   renderRef();          /* ← 每个 tab 独立的 refs 渲染 */
   renderCatalogMenus(); /* ← 免费模型 / LoRA 风格列表（先用内置兜底） */
+
+  /* 恢复当前桌面（个人空间或上次停留的文件夹）上次的提示词与参考图；随刷新保留 */
+  var bootFolder = window.HMDesk && window.HMDesk.getActiveFolder ? window.HMDesk.getActiveFolder() : null;
+  _composerKey = composerKeyOf(bootFolder);
+  applyComposer(readComposerStore()[_composerKey] || null);
+  window.addEventListener('beforeunload', function () { saveComposer(); });
 
   if (window.HMUI && window.HMUI.init) window.HMUI.init();
 
