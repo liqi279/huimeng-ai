@@ -70,6 +70,7 @@ class BridgeServer:
     def start(self):
         if self.started:
             return True
+        print(f"[bridge] start() called on {self.host}:{self.port}", flush=True)
         self._stop_event.clear()
         self._thread = threading.Thread(
             target=self._run_loop, name="blender-bridge-ws", daemon=True)
@@ -99,20 +100,22 @@ class BridgeServer:
         return len(self._clients)
 
     def _run_loop(self):
+        print("[bridge] server thread starting...", flush=True)
         self._loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self._loop)
         self._loop.run_until_complete(self._serve())
         self._loop.close()
+        print("[bridge] server thread exited", flush=True)
 
     async def _serve(self):
         try:
             self._server = await asyncio.start_server(
                 self._handle_client, self.host, self.port, reuse_address=True)
         except OSError as exc:
-            print(f"[bridge] listen failed on {self.host}:{self.port}: {exc}")
+            print(f"[bridge] listen failed on {self.host}:{self.port}: {exc}", flush=True)
             self._server = None
             return
-        print(f"[bridge] WebSocket server listening on ws://{self.host}:{self.port}")
+        print(f"[bridge] WebSocket server listening on ws://{self.host}:{self.port}", flush=True)
         # 同时消费发送队列
         asyncio.ensure_future(self._outbound_worker())
         try:
@@ -163,14 +166,14 @@ class BridgeServer:
         except (ConnectionError, asyncio.IncompleteReadError):
             pass
         except Exception as exc:
-            print(f"[bridge] client {conn_key} error: {exc}")
+            print(f"[bridge] client {conn_key} error: {exc}", flush=True)
         finally:
             self._clients.pop(conn_key, None)
             try:
                 writer.close()
             except Exception:
                 pass
-            print(f"[bridge] client {conn_key} disconnected")
+            print(f"[bridge] client {conn_key} disconnected", flush=True)
 
     async def _ws_handshake(self, reader, writer):
         lines = []

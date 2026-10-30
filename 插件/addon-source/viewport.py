@@ -88,7 +88,7 @@ def _find_blender_hwnd():
         if found:
             return found[0]
     except Exception as e:
-        print(f"[Bridge] _find_blender_hwnd error: {e}")
+        print(f"[Bridge] _find_blender_hwnd error: {e}", flush=True)
     return None
 
 
@@ -159,7 +159,7 @@ def _capture_via_gdi(hwnd):
     user32.ReleaseDC(hwnd, hwnd_dc)
 
     if not bitblt_ok or lines == 0:
-        print(f"[Bridge] GDI BitBlt/GetDIBits failed: bitblt={bitblt_ok}, lines={lines}")
+        print(f"[Bridge] GDI BitBlt/GetDIBits failed: bitblt={bitblt_ok}, lines={lines}", flush=True)
         return None, 0, 0
 
     # BMP 文件头
@@ -216,20 +216,20 @@ def capture_window(quality=80):
                                     if os.path.exists(jpg_path) and os.path.getsize(jpg_path) > 0:
                                         saved = True
                                 except Exception as e:
-                                    print(f"[Bridge] img.save() failed: {e}")
+                                    print(f"[Bridge] img.save() failed: {e}", flush=True)
                                 if not saved:
                                     try:
                                         img.save_render(jpg_path, scene=scene)
                                     except Exception as e:
-                                        print(f"[Bridge] save_render() failed: {e}")
+                                        print(f"[Bridge] save_render() failed: {e}", flush=True)
                                 if os.path.exists(jpg_path) and os.path.getsize(jpg_path) > 0:
                                     with open(jpg_path, "rb") as f:
                                         data = f.read()
-                                    print(f"[Bridge] GDI capture OK (jpeg): {w}x{h}, {len(data)} bytes")
+                                    print(f"[Bridge] GDI capture OK (jpeg): {w}x{h}, {len(data)} bytes", flush=True)
                                     return data, int(w), int(h), "jpeg"
                                 else:
                                     # JPEG 转存失败，直接发 BMP
-                                    print(f"[Bridge] GDI jpeg convert failed, send BMP directly: {w}x{h}, {len(bmp_data)} bytes")
+                                    print(f"[Bridge] GDI jpeg convert failed, send BMP directly: {w}x{h}, {len(bmp_data)} bytes", flush=True)
                                     return bmp_data, int(w), int(h), "bmp"
                             finally:
                                 try:
@@ -247,7 +247,7 @@ def capture_window(quality=80):
                         except OSError:
                             pass
         except Exception as e:
-            print(f"[Bridge] GDI capture failed: {e}")
+            print(f"[Bridge] GDI capture failed: {e}", flush=True)
 
     # ---- 方法 2: bpy.ops.screen.screenshot ----
     try:
@@ -272,10 +272,10 @@ def capture_window(quality=80):
                     bpy.ops.screen.screenshot('EXEC_DEFAULT', filepath=tmp, full=full_val)
                 if os.path.exists(tmp) and os.path.getsize(tmp) > 0:
                     ok = True
-                    print(f"[Bridge] screenshot full={full_val} OK: {os.path.getsize(tmp)} bytes")
+                    print(f"[Bridge] screenshot full={full_val} OK: {os.path.getsize(tmp)} bytes", flush=True)
                     break
             except Exception as e:
-                print(f"[Bridge] screenshot full={full_val} failed: {e}")
+                print(f"[Bridge] screenshot full={full_val} failed: {e}", flush=True)
 
         if ok:
             with open(tmp, "rb") as f:
@@ -291,18 +291,18 @@ def capture_window(quality=80):
         except OSError:
             pass
     except Exception as e:
-        print(f"[Bridge] screenshot method error: {e}")
+        print(f"[Bridge] screenshot method error: {e}", flush=True)
     finally:
         scene.render.image_settings.file_format = prev_fmt
         scene.render.image_settings.quality = prev_qual
 
     # ---- 方法 3: 降级到视口渲染 ----
-    print("[Bridge] window capture failed, fallback to viewport")
+    print("[Bridge] window capture failed, fallback to viewport", flush=True)
     try:
         data, w, h = capture_frame(quality=int(quality))
         return data, int(w), int(h), "jpeg"
     except Exception as e:
-        print(f"[Bridge] viewport fallback also failed: {e}")
+        print(f"[Bridge] viewport fallback also failed: {e}", flush=True)
         raise
     finally:
         scene.render.image_settings.file_format = prev_fmt

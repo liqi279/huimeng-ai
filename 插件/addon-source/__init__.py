@@ -23,7 +23,7 @@ from bpy.props import BoolProperty, IntProperty, StringProperty
 bl_info = {
     "name": "Doubao Web Bridge",
     "author": "Doubao Work",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (3, 6, 0),
     "location": "3D View > Sidebar > Doubao Bridge",
     "description": "把本地 Blender 渲染到自研网页平台并可可视化操作（WebSocket + 视口画面流）",
@@ -62,7 +62,9 @@ def _settings():
 
 
 def _start_server():
+    print("[bridge] _start_server() called", flush=True)
     if _state["server"] and _state["server"].is_running():
+        print("[bridge] server already running", flush=True)
         return True
     from .bridge_server import BridgeServer
     from . import commands
@@ -71,9 +73,11 @@ def _start_server():
         token=_settings().token or None,
         request_handler=commands.handle_request)
     ok = s.start()
+    print(f"[bridge] server.start() returned {ok}", flush=True)
     _state["server"] = s
     if ok and _state["timer_handle"] is None:
         _state["timer_handle"] = bpy.app.timers.register(_poll, first_interval=0.1)
+        print("[bridge] timer registered", flush=True)
     return ok
 
 
@@ -92,6 +96,9 @@ def _stop_server():
 
 def _poll():
     """主线程轮询：执行命令 + 推送视口帧。返回下次调度间隔或 None(停止)。"""
+    if not _state.get("_poll_logged"):
+        print("[bridge] _poll() timer ticking", flush=True)
+        _state["_poll_logged"] = True
     server = _state["server"]
     if not server or not server.is_running():
         _state["streaming"] = False
@@ -203,9 +210,11 @@ classes = (BridgeSettings, BRIDGE_OT_start, BRIDGE_OT_stop, BRIDGE_PT_panel)
 
 
 def register():
+    print("[bridge] addon register() called", flush=True)
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.bridge_settings = bpy.props.PointerProperty(type=BridgeSettings)
+    print("[bridge] addon registered OK", flush=True)
 
 
 def unregister():
