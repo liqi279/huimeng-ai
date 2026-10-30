@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261030204253-8785986";</script>
+<script>window.HM_BUILD = "20261030205741-d5afca5";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -12376,7 +12376,9 @@ var BlenderBridge = (function () {
       var img = $('mPlatformImg');
       var empty = $('mPlatformEmpty');
       if (img && r && r.data_base64) {
-        img.src = 'data:image/jpeg;base64,' + r.data_base64;
+        var fmt = (r.format || 'jpeg').toLowerCase();
+        var mime = fmt === 'bmp' ? 'image/bmp' : 'image/jpeg';
+        img.src = 'data:' + mime + ';base64,' + r.data_base64;
         if (img.hidden) img.hidden = false;
         if (empty && !empty.hidden) empty.hidden = true;
       } else {

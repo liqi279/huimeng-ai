@@ -252,8 +252,8 @@ def _cmd_screen_info(params):
 def _cmd_screen_capture(params):
     from . import viewport
     quality = int(params.get("quality", 80))
-    data, w, h = viewport.capture_window(quality)
-    return {"width": w, "height": h, "format": "jpeg",
+    data, w, h, fmt = viewport.capture_window(quality)
+    return {"width": w, "height": h, "format": fmt,
             "data_base64": viewport.frame_to_base64(data)}
 
 

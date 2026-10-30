@@ -2032,7 +2032,9 @@ var BlenderBridge = (function () {
       var img = $('mPlatformImg');
       var empty = $('mPlatformEmpty');
       if (img && r && r.data_base64) {
-        img.src = 'data:image/jpeg;base64,' + r.data_base64;
+        var fmt = (r.format || 'jpeg').toLowerCase();
+        var mime = fmt === 'bmp' ? 'image/bmp' : 'image/jpeg';
+        img.src = 'data:' + mime + ';base64,' + r.data_base64;
         if (img.hidden) img.hidden = false;
         if (empty && !empty.hidden) empty.hidden = true;
       } else {
