@@ -4069,6 +4069,9 @@ async function authBoot() {
     console.log('[authBoot] me() 成功:', me.user.username);
     window.HMApp.user = me.user;
     try { saveJSON('hm.user', me.user); } catch (e) {}
+    /* 先用 token 里的用户信息立刻渲染右上角账号，
+       不必等后面的作品/桌面加载完成（网络慢时会有几秒空白） */
+    updateUserUI();
     /* 换账号/刷新后清掉搜索框残留文字（例如浏览器自动填充的 admin） */
     if (typeof window.HMResetSearchBox === 'function') { try { window.HMResetSearchBox(); } catch (e) {} }
 
@@ -4147,6 +4150,9 @@ async function authBoot() {
     /* 如果之前没缓存（极少情况），确保显示登录态的桌面 */
     if (!window.HMApp || !window.HMApp.user) {
       hideLogin();
+    } else {
+      /* 有缓存用户：哪怕后端暂时连不上，也先把账号信息显示出来 */
+      updateUserUI();
     }
 
     setTimeout(function () { toast('暂时无法连接后端，正在自动重试…', 'warn'); }, 500);

@@ -215,6 +215,9 @@
 
   /* ---------- 用户头像 UI ---------- */
   function updateUserUI() {
+    /* app.js 的 authBoot 可能在 DOMContentLoaded 之前就调入本函数，
+       此时元素尚未缓存，先补一次缓存，避免账号信息一直空白 */
+    if (!els.userWrap) cache();
     if (!els.userWrap) return;
     var user = (window.HMApp && window.HMApp.user) || null;
     if (!user) {
