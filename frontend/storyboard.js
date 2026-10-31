@@ -20,6 +20,8 @@ window.HMStoryboard = (function () {
   var pressDrag = null;          // 指针拖拽状态（替代不稳定的原生 HTML5 拖拽）
   var suppressClick = false;     // 拖拽结束后抑制紧随其后的 click
   var DRAG_THRESHOLD = 6;        // 超过该位移才视为拖拽
+  var ctxMenu = null;            // 卡片右键菜单
+  var ctxTargetId = null;        // 右键菜单当前作用的镜头
   var el = {};
   var playState = { raf: null, playing: false, index: 0, duration: 1000, elapsed: 0, lastTick: 0 };
 
@@ -130,6 +132,7 @@ window.HMStoryboard = (function () {
 
     bindTop();
     bindBoard();
+    bindContextMenu();
     bindInspector();
     bindPlay();
   }
@@ -419,6 +422,68 @@ window.HMStoryboard = (function () {
   function onCardPointerCancel() {
     pressDrag = null;
     endPressDrag();
+  }
+
+  /* ---------------- 卡片右键菜单 ---------------- */
+  function bindContextMenu() {
+    el.board.addEventListener('contextmenu', function (e) {
+      var card = e.target.closest('.hm-sb-card');
+      if (!card || !card.dataset.id) return;
+      e.preventDefault();
+      selectedId = card.dataset.id;
+      el.board.querySelectorAll('.hm-sb-card.is-sel').forEach(function (n) { n.classList.remove('is-sel'); });
+      card.classList.add('is-sel');
+      syncInspector();
+      showCtxMenu(card.dataset.id, e.clientX, e.clientY);
+    });
+    el.board.addEventListener('scroll', hideCtxMenu);
+    document.addEventListener('pointerdown', function (e) {
+      if (ctxMenu && !ctxMenu.hidden && !ctxMenu.contains(e.target)) hideCtxMenu();
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') hideCtxMenu();
+    });
+    window.addEventListener('resize', hideCtxMenu);
+  }
+
+  function ensureCtxMenu() {
+    if (ctxMenu) return ctxMenu;
+    ctxMenu = document.createElement('div');
+    ctxMenu.className = 'hm-sb-ctx';
+    ctxMenu.hidden = true;
+    ctxMenu.innerHTML =
+      '<button type="button" data-ctx="dup">复制镜头</button>' +
+      '<button type="button" data-ctx="del" class="danger">删除镜头</button>';
+    document.body.appendChild(ctxMenu);
+    ctxMenu.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-ctx]');
+      if (!btn) return;
+      var act = btn.getAttribute('data-ctx');
+      var id = ctxTargetId;
+      hideCtxMenu();
+      if (!id) return;
+      if (act === 'dup') duplicatePanel(id);
+      else if (act === 'del') deletePanel(id);
+    });
+    return ctxMenu;
+  }
+
+  function showCtxMenu(id, x, y) {
+    ensureCtxMenu();
+    ctxTargetId = id;
+    ctxMenu.hidden = false;
+    ctxMenu.style.left = x + 'px';
+    ctxMenu.style.top = y + 'px';
+    var r = ctxMenu.getBoundingClientRect();
+    var maxLeft = window.innerWidth - r.width - 8;
+    var maxTop = window.innerHeight - r.height - 8;
+    ctxMenu.style.left = Math.max(8, Math.min(x, maxLeft)) + 'px';
+    ctxMenu.style.top = Math.max(8, Math.min(y, maxTop)) + 'px';
+  }
+
+  function hideCtxMenu() {
+    if (ctxMenu) ctxMenu.hidden = true;
+    ctxTargetId = null;
   }
 
   function dropPanel(id, target) {
