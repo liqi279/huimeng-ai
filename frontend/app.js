@@ -4986,6 +4986,8 @@ window.HMDirector = (function () {
   var rafId = null;
   var lastTs = 0;
   var holdTimer = null;       // 按住前后帧的连续步进定时器
+  var selectedClipId = null;  // 当前选中的片段ID（用于预览区缩放/移动）
+  var selHandle = null;       // 当前拖动的缩放手柄 'tl'|'tr'|'bl'|'br'|'move'|null
 
   function $(id) { return document.getElementById(id); }
 
@@ -5025,13 +5027,14 @@ window.HMDirector = (function () {
     el.addTrackBtn.addEventListener('click', addTrack);
     el.exportBtn.addEventListener('click', exportComposite);
     el.playBtn.addEventListener('click', togglePlay);
-    el.fpsSel.addEventListener('change', function () { fps = parseInt(el.fpsSel.value, 10); });
+    el.fpsSel.addEventListener('change', function () { fps = parseInt(el.fpsSel.value, 10); el.durTime.textContent = formatTime(totalDuration); canvasDirty = true; });
 
     // 按住前后帧连续步进
     bindHoldButton(el.prevFrame, -1);
     bindHoldButton(el.nextFrame, 1);
 
     bindFilmstripDrag();
+    bindCanvasInteraction();
     document.addEventListener('keydown', onKeyDown);
 
     startRenderLoop();
@@ -5084,7 +5087,8 @@ window.HMDirector = (function () {
         id: 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
         url: url, name: f.name, type: type,
         start: 0, duration: type === 'image' ? IMG_DEFAULT_DUR : 0,
-        trackStart: 0, trackId: null, mediaEl: null
+        trackStart: 0, trackId: null, mediaEl: null,
+        scale: 1, offsetX: 0, offsetY: 0
       };
       if (type === 'video') {
         var probe = document.createElement('video');
@@ -5186,6 +5190,7 @@ window.HMDirector = (function () {
         c.style.width = Math.max(clip.duration * PX_PER_SEC, 24) + 'px';
         c.style.background = (clip.type === 'image' ? '#2a3142' : track.color) + 'dd';
         c.dataset.clipId = clip.id;
+        if (clip.id === selectedClipId) c.style.outline = '2px solid #ff5c7a';
         c.innerHTML = '<div class="hm-dir-clip-name">' + (clip.type === 'image' ? '🖼 ' : '🎬 ') + clip.name + '</div>'
           + '<div class="hm-dir-clip-handle-l" data-resize="l"></div>'
           + '<div class="hm-dir-clip-handle-r" data-resize="r"></div>';
@@ -5219,22 +5224,43 @@ window.HMDirector = (function () {
 
   /* ---------- 片段拖拽 ---------- */
   function bindClipDrag(cEl, clip) {
-    var startX, origTrackStart, origWidth, origStart, origDur, mode;
+    var startX, startY, origTrackStart, origWidth, origStart, origDur, mode;
     cEl.addEventListener('mousedown', function (e) {
       var resize = e.target.getAttribute('data-resize');
       mode = resize || 'move';
       startX = e.clientX;
+      startY = e.clientY;
       origTrackStart = clip.trackStart;
       origWidth = clip.duration * PX_PER_SEC;
       origStart = clip.start;
       origDur = clip.duration;
+      // 选中该片段
+      selectClip(clip.id);
       e.preventDefault(); e.stopPropagation();
 
       function onMove(ev) {
         var dx = ev.clientX - startX;
+        var dy = ev.clientY - startY;
         if (mode === 'move') {
+          // 水平：调整时间位置
           clip.trackStart = Math.max(0, origTrackStart + dx / PX_PER_SEC);
           cEl.style.left = (clip.trackStart * PX_PER_SEC) + 'px';
+          // 垂直：拖动到其他轨道
+          var trackRows = el.trackList.querySelectorAll('.hm-dir-track');
+          for (var i = 0; i < trackRows.length; i++) {
+            var r = trackRows[i].getBoundingClientRect();
+            if (ev.clientY >= r.top && ev.clientY <= r.bottom) {
+              if (tracks[i] && clip.trackId !== tracks[i].id) {
+                var origTrack = tracks.find(function (t) { return t.id === clip.trackId; });
+                if (origTrack) origTrack.clips = origTrack.clips.filter(function (c) { return c.id !== clip.id; });
+                tracks[i].clips.push(clip);
+                clip.trackId = tracks[i].id;
+                var newLane = trackRows[i].querySelector('.hm-dir-track-lane');
+                if (newLane) newLane.appendChild(cEl);
+              }
+              break;
+            }
+          }
         } else if (mode === 'r') {
           var newW = Math.max(24, origWidth + dx);
           clip.duration = Math.max(0.1, newW / PX_PER_SEC);
@@ -5269,20 +5295,42 @@ window.HMDirector = (function () {
     });
   }
 
+  /* 选中片段（用于预览区缩放/移动） */
+  function selectClip(clipId) {
+    selectedClipId = clipId;
+    canvasDirty = true;
+    // 更新轨道高亮
+    var nodes = el.trackList.querySelectorAll('.hm-dir-clip');
+    nodes.forEach(function (n) {
+      if (n.dataset.clipId === clipId) n.style.outline = '2px solid #ff5c7a';
+      else n.style.outline = '';
+    });
+  }
+
+  function getSelectedClip() {
+    if (!selectedClipId) return null;
+    for (var i = 0; i < tracks.length; i++) {
+      for (var j = 0; j < tracks[i].clips.length; j++) {
+        if (tracks[i].clips[j].id === selectedClipId) return tracks[i].clips[j];
+      }
+    }
+    return null;
+  }
+
   /* ---------- 合成：按层级找当前时间的片段（底层→顶层） ---------- */
   function findClipsAt(time) {
-    // tracks[0] 是列表最上层 → 最上层图层；绘制时从后往前（先画底层）
+    // 轨道列表中越靠上的行（index 越小）图层越靠上；绘制时先画底层(index大)后画顶层(index小)
     var result = [];
     for (var i = 0; i < tracks.length; i++) {
       for (var j = 0; j < tracks[i].clips.length; j++) {
         var c = tracks[i].clips[j];
-        if (time >= c.trackStart && time < c.trackStart + c.duration) {
+        if (time >= c.trackStart - 0.001 && time <= c.trackStart + c.duration + 0.001) {
           result.push({ clip: c, track: tracks[i], index: i });
         }
       }
     }
-    // 按轨道 index 升序 = 从底到顶（index 大的在上层，后画）
-    result.sort(function (a, b) { return a.index - b.index; });
+    // index 降序 = 从底到顶（index 大的先画在底层，index 小的后画在上层）
+    result.sort(function (a, b) { return b.index - a.index; });
     return result;
   }
 
@@ -5359,12 +5407,21 @@ window.HMDirector = (function () {
     var w = canvas.width, h = canvas.height;
     if (w < 2 || h < 2) return; // 画布未就绪
     var clips = findClipsAt(currentTime);
+    // 只有当所有轨道都没有任何片段时才显示空状态，避免拖动到片段边界时闪烁
+    var hasAnyClip = tracks.some(function (t) { return t.clips.length > 0; });
     if (clips.length === 0) {
-      if (!el.empty.hidden) return; // 已显示空状态，不重复清屏
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, w, h);
-      el.empty.hidden = false;
-      lastDrawnTime = currentTime;
+      if (!hasAnyClip) {
+        if (!el.empty.hidden) return;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, w, h);
+        el.empty.hidden = false;
+        lastDrawnTime = currentTime;
+        return;
+      }
+      // 当前时间无片段但工程中有片段：保留上一帧，不切换空状态
+      if (canvasDirty || Math.abs(currentTime - lastDrawnTime) >= 0.001) {
+        // 仅更新播放头等，不重绘画布
+      }
       return;
     }
     // 时间未变且无需重绘，跳过以避免闪烁
@@ -5378,27 +5435,61 @@ window.HMDirector = (function () {
     el.empty.hidden = true;
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, w, h);
+    var selRect = null;
     for (var i = 0; i < clips.length; i++) {
       drawClip(clips[i].clip, w, h);
+      if (clips[i].clip.id === selectedClipId) {
+        selRect = getClipDrawRect(clips[i].clip, w, h);
+      }
+    }
+    // 绘制选中片段的缩放框与手柄
+    if (selRect) {
+      ctx.save();
+      ctx.strokeStyle = '#ff5c7a';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(selRect.x, selRect.y, selRect.w, selRect.h);
+      ctx.setLineDash([]);
+      var hs = 10;
+      ctx.fillStyle = '#ff5c7a';
+      var corners = [
+        [selRect.x, selRect.y], [selRect.x + selRect.w, selRect.y],
+        [selRect.x, selRect.y + selRect.h], [selRect.x + selRect.w, selRect.y + selRect.h]
+      ];
+      corners.forEach(function (p) {
+        ctx.fillRect(p[0] - hs / 2, p[1] - hs / 2, hs, hs);
+      });
+      ctx.restore();
     }
     lastDrawnTime = currentTime;
     canvasDirty = false;
   }
 
-  function drawClip(clip, cw, ch) {
+  /* 计算片段在画布上的绘制矩形（含 scale/offset 变换） */
+  function getClipDrawRect(clip, cw, ch) {
+    var iw, ih;
     if (clip.type === 'image') {
-      var img = clip.mediaEl;
-      if (img && img.complete && img.naturalWidth) {
-        drawCover(img, 0, 0, cw, ch);
-      }
+      if (!clip.mediaEl || !clip.mediaEl.complete || !clip.mediaEl.naturalWidth) return null;
+      iw = clip.mediaEl.naturalWidth; ih = clip.mediaEl.naturalHeight;
     } else {
-      var v = clip.mediaEl;
-      if (v && v.readyState >= 2) {
-        try {
-          drawContain(v, 0, 0, cw, ch);
-        } catch (e) { /* 跨域等 */ }
-      }
+      if (!clip.mediaEl || clip.mediaEl.readyState < 2) return null;
+      iw = clip.mediaEl.videoWidth; ih = clip.mediaEl.videoHeight;
     }
+    if (!iw || !ih) return null;
+    // 图片默认 cover 填满，视频默认 contain 留黑边
+    var baseScale = clip.type === 'image' ? Math.max(cw / iw, ch / ih) : Math.min(cw / iw, ch / ih);
+    var tw = iw * baseScale, th = ih * baseScale;
+    var s = clip.scale || 1;
+    tw *= s; th *= s;
+    var tx = (cw - tw) / 2 + (clip.offsetX || 0);
+    var ty = (ch - th) / 2 + (clip.offsetY || 0);
+    return { x: tx, y: ty, w: tw, h: th };
+  }
+
+  function drawClip(clip, cw, ch) {
+    var rect = getClipDrawRect(clip, cw, ch);
+    if (!rect) return;
+    try { ctx.drawImage(clip.mediaEl, rect.x, rect.y, rect.w, rect.h); } catch (e) { /* 跨域等 */ }
   }
 
   /* object-fit: cover 式绘制（裁剪填满） */
@@ -5518,6 +5609,72 @@ window.HMDirector = (function () {
     el.filmstrip.addEventListener('touchend', function () { dragging = false; });
   }
 
+  /* 预览区画布交互：选中片段后可拖动角点缩放、拖动中心移动 */
+  function bindCanvasInteraction() {
+    var startX, startY, origScale, origOffX, origOffY;
+    function canvasPos(e) {
+      var rect = canvas.getBoundingClientRect();
+      var cx = (e.clientX - rect.left) * (canvas.width / rect.width);
+      var cy = (e.clientY - rect.top) * (canvas.height / rect.height);
+      return { x: cx, y: cy };
+    }
+    function hitHandle(rect, p) {
+      var hs = 12;
+      var corners = {
+        tl: [rect.x, rect.y], tr: [rect.x + rect.w, rect.y],
+        bl: [rect.x, rect.y + rect.h], br: [rect.x + rect.w, rect.y + rect.h]
+      };
+      for (var k in corners) {
+        var c = corners[k];
+        if (Math.abs(p.x - c[0]) <= hs && Math.abs(p.y - c[1]) <= hs) return k;
+      }
+      if (p.x >= rect.x && p.x <= rect.x + rect.w && p.y >= rect.y && p.y <= rect.y + rect.h) return 'move';
+      return null;
+    }
+    canvas.addEventListener('mousedown', function (e) {
+      var clip = getSelectedClip();
+      if (!clip) return;
+      var rect = getClipDrawRect(clip, canvas.width, canvas.height);
+      if (!rect) return;
+      var p = canvasPos(e);
+      var hit = hitHandle(rect, p);
+      if (!hit) return;
+      selHandle = hit;
+      startX = e.clientX; startY = e.clientY;
+      origScale = clip.scale || 1;
+      origOffX = clip.offsetX || 0;
+      origOffY = clip.offsetY || 0;
+      e.preventDefault();
+      function onMove(ev) {
+        var dx = ev.clientX - startX, dy = ev.clientY - startY;
+        if (selHandle === 'move') {
+          clip.offsetX = origOffX + dx * (canvas.width / canvas.getBoundingClientRect().width);
+          clip.offsetY = origOffY + dy * (canvas.height / canvas.getBoundingClientRect().height);
+        } else {
+          // 角点缩放：以中心为基准，按距离变化比例缩放
+          var cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2;
+          var origDist = Math.hypot((rect.x + rect.w / 2) - (selHandle === 'tl' || selHandle === 'bl' ? rect.x : rect.x + rect.w),
+                                    (selHandle === 'tl' || selHandle === 'tr' ? rect.y : rect.y + rect.h) - cy);
+          var newRect = { x: rect.x + (selHandle === 'tl' || selHandle === 'bl' ? dx : 0),
+                          y: rect.y + (selHandle === 'tl' || selHandle === 'tr' ? dy : 0),
+                          w: rect.w + (selHandle === 'tl' || selHandle === 'bl' ? -dx : dx),
+                          h: rect.h + (selHandle === 'tl' || selHandle === 'tr' ? -dy : dy) };
+          var newDist = Math.hypot(newRect.w / 2, newRect.h / 2);
+          var ratio = newDist / (Math.hypot(rect.w / 2, rect.h / 2) || 1);
+          clip.scale = Math.max(0.1, origScale * ratio);
+        }
+        canvasDirty = true;
+      }
+      function onUp() {
+        selHandle = null;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  }
+
   function renderFilmstrip() {
     if (generatingStrip) return;
     var w = el.stripCanvas.clientWidth, h = el.stripCanvas.clientHeight;
@@ -5589,8 +5746,10 @@ window.HMDirector = (function () {
   /* ---------- 工具 ---------- */
   function formatTime(sec) {
     sec = Math.max(0, sec);
-    var m = Math.floor(sec / 60), s = Math.floor(sec % 60), cs = Math.floor((sec % 1) * 100);
-    return pad(m) + ':' + pad(s) + '.' + pad(cs);
+    var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    var fr = Math.floor((sec - Math.floor(sec)) * fps);
+    if (fr >= fps) fr = fps - 1;
+    return pad(m) + ':' + pad(s) + ':' + pad(fr);
   }
   function formatTimeShort(sec) {
     sec = Math.max(0, sec);
