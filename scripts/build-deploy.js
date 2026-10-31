@@ -69,7 +69,7 @@ if (!html.includes(styleAdminTag.slice(0, 40))) {
   throw new Error('未找到 styles-admin.css 的 link 标签');
 }
 
-const scripts = ['jszip.min.js', 'chart.umd.min.js', 'api.js', 'auth-ui.js', 'app.js', 'ui.js', 'desk.js', 'admin.js'];
+const scripts = ['jszip.min.js', 'chart.umd.min.js', 'api.js', 'auth-ui.js', 'app.js', 'storyboard.js', 'ui.js', 'desk.js', 'admin.js'];
 for (const file of scripts) {
   const re = new RegExp('<script[^>]*src=["\']' + file.replace(/\./g, '\\.') + '["\'][^>]*></script>', 'i');
   if (!re.test(html)) throw new Error('未找到脚本标签：' + file);

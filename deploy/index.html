@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261031105837-cf302b3";</script>
+<script>window.HM_BUILD = "20261031112952-3b444b6";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -8407,6 +8407,10 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
       <button class="hm-rail-item" data-rail="director" title="导演台（视频剪辑与多轨道合成）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9l5 3-5 3V9Z" fill="currentColor" opacity=".8"/><path d="M3 9h2M3 15h2M19 9h2M19 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/></svg>
         <span>导演台</span>
+      </button>
+      <button class="hm-rail-item" data-rail="storyboard" title="故事版（分镜创作）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
+        <span>故事版</span>
       </button>
     </div>
 
@@ -9041,6 +9045,145 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
         </div>
         <div class="hm-dir-track-ruler" id="dirTrackRuler"></div>
         <div class="hm-dir-track-list" id="dirTrackList"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== 故事版（分镜创作） ===================== -->
+  <main class="hm-page hm-sb-page" id="view-storyboard" hidden>
+    <style>
+      .hm-sb-page{display:flex;flex-direction:column;height:calc(100vh - 60px);min-height:0;background:var(--hm-bg,#0f1320);padding:14px 16px;gap:12px}
+      .hm-sb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;flex-wrap:wrap}
+      .hm-sb-title{display:flex;align-items:center;gap:10px;min-width:0}
+      .hm-sb-logo{font-size:18px;color:#52c41a}
+      .hm-sb-title h2{font-size:18px;color:var(--hm-text,#e6e9ef);margin:0;white-space:nowrap}
+      .hm-sb-name{background:transparent;border:1px solid transparent;border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:14px;font-weight:600;padding:4px 8px;min-width:120px;max-width:240px}
+      .hm-sb-name:hover{border-color:var(--hm-line,#2a3142)}
+      .hm-sb-name:focus{outline:none;border-color:var(--hm-accent,#4f8cff);background:#11151f}
+      .hm-sb-sub{font-size:12px;color:var(--hm-dim,#8b93a1);white-space:nowrap}
+      .hm-sb-tools{display:flex;gap:8px;flex-wrap:wrap}
+      .hm-sb-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;background:var(--hm-accent,#4f8cff);color:#fff;white-space:nowrap}
+      .hm-sb-btn:hover{filter:brightness(1.08)}
+      .hm-sb-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef)}
+      .hm-sb-btn.ghost:hover{background:#242a3a}
+      .hm-sb-body{flex:1;min-height:0;display:flex;gap:12px}
+      .hm-sb-board{flex:1;min-width:0;overflow:auto;padding:2px 6px 24px 2px}
+      .hm-sb-scene{margin-bottom:22px}
+      .hm-sb-scene-head{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--hm-surface2,#15192a);border:1px solid var(--hm-line,#2a3142);border-radius:10px;margin-bottom:10px;position:sticky;top:0;z-index:3;flex-wrap:wrap}
+      .hm-sb-scene-no{width:22px;height:22px;flex:none;border-radius:50%;background:var(--hm-accent,#4f8cff);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+      .hm-sb-scene-title{background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:13px;font-weight:600;padding:5px 8px;width:150px}
+      .hm-sb-scene-title:focus{outline:none;border-color:var(--hm-accent,#4f8cff)}
+      .hm-sb-scene-desc{flex:1;min-width:120px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--hm-dim,#8b93a1);font-size:12px;padding:5px 8px}
+      .hm-sb-scene-desc:focus{outline:none;border-color:var(--hm-accent,#4f8cff);background:#11151f;color:var(--hm-text,#e6e9ef)}
+      .hm-sb-scene-count{font-size:11px;color:var(--hm-dim,#8b93a1);font-family:monospace;white-space:nowrap}
+      .hm-sb-mini{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:5px 8px;background:transparent;color:var(--hm-dim,#8b93a1);cursor:pointer;white-space:nowrap}
+      .hm-sb-mini:hover{color:var(--hm-text,#e6e9ef);border-color:#3d465c}
+      .hm-sb-mini.danger:hover{color:#ff5c7a;border-color:#ff5c7a}
+      .hm-sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+      .hm-sb-card{background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s}
+      .hm-sb-card:hover{border-color:#3d465c}
+      .hm-sb-card.is-sel{border-color:#ff5c7a;box-shadow:0 0 0 1px #ff5c7a inset}
+      .hm-sb-card.dragging{opacity:.4}
+      .hm-sb-card.drop-target{border-color:var(--hm-accent,#4f8cff);box-shadow:0 0 0 1px var(--hm-accent,#4f8cff) inset}
+      .hm-sb-thumb{position:relative;aspect-ratio:16/9;background:#0a0d14;overflow:hidden}
+      .hm-sb-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+      .hm-sb-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#4a5568;font-size:11px}
+      .hm-sb-ph svg{width:26px;height:26px;opacity:.5}
+      .hm-sb-idx{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.66);color:#fff;font-size:11px;font-weight:600;padding:2px 6px;border-radius:5px;font-family:monospace}
+      .hm-sb-card-body{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+      .hm-sb-card-title{font-size:12px;color:var(--hm-text,#e6e9ef);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hm-sb-card-tags{display:flex;gap:5px;flex-wrap:wrap}
+      .hm-sb-tag{font-size:10px;color:var(--hm-dim,#8b93a1);background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:4px;padding:1px 5px;font-family:monospace}
+      .hm-sb-addcard{display:flex;align-items:center;justify-content:center;min-height:150px;border:1px dashed #38405a;border-radius:10px;color:#6b7689;font-size:12px;cursor:pointer;background:transparent;transition:border-color .15s,color .15s}
+      .hm-sb-addcard:hover{border-color:var(--hm-accent,#4f8cff);color:var(--hm-accent,#4f8cff)}
+      .hm-sb-addcard.drop-target{border-color:var(--hm-accent,#4f8cff);color:var(--hm-accent,#4f8cff)}
+      .hm-sb-inspector{width:300px;flex:none;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;display:flex;flex-direction:column;min-height:0}
+      .hm-sb-insp-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--hm-line,#2a3142);font-size:13px;color:var(--hm-text,#e6e9ef);flex:none}
+      .hm-sb-insp-head b{font-weight:600}
+      .hm-sb-insp-index{font-family:monospace;font-size:12px;color:#ff5c7a}
+      .hm-sb-insp-empty{margin:auto;padding:24px;text-align:center;font-size:12px;color:var(--hm-dim,#8b93a1);line-height:1.7}
+      .hm-sb-insp-body{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+      .hm-sb-field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-sb-field select,.hm-sb-field input,.hm-sb-field textarea{background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:12px;padding:6px 8px;font-family:inherit;resize:vertical;width:100%;box-sizing:border-box}
+      .hm-sb-field select:focus,.hm-sb-field input:focus,.hm-sb-field textarea:focus{outline:none;border-color:var(--hm-accent,#4f8cff)}
+      .hm-sb-field textarea{min-height:58px}
+      .hm-sb-insp-thumb{aspect-ratio:16/9;background:#0a0d14;border:1px solid var(--hm-line,#2a3142);border-radius:8px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+      .hm-sb-insp-thumb img{width:100%;height:100%;object-fit:cover}
+      .hm-sb-thumb-actions{display:flex;gap:8px}
+      .hm-sb-thumb-actions>.hm-sb-mini{flex:1;text-align:center}
+      .hm-sb-insp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;border-top:1px solid var(--hm-line,#2a3142);flex:none}
+      .hm-sb-insp-actions .hm-sb-mini{text-align:center}
+      .hm-sb-play{position:fixed;inset:0;z-index:130;background:rgba(4,6,12,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px}
+      .hm-sb-play-stage{flex:1;width:100%;display:flex;align-items:center;justify-content:center;min-height:0}
+      .hm-sb-play-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 10px 44px rgba(0,0,0,.6)}
+      .hm-sb-play-ph{width:min(70vw,880px);aspect-ratio:16/9;background:#0a0d14;border:1px solid #2a3142;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#5a6579;font-size:14px}
+      .hm-sb-play-cap{max-width:min(82vw,880px);text-align:center;color:#c8d0e0;font-size:14px;min-height:20px}
+      .hm-sb-play-bar{width:min(82vw,880px);display:flex;align-items:center;gap:12px;color:#8b93a1;font-size:12px;font-family:monospace}
+      .hm-sb-prog{flex:1;height:4px;background:#222a3a;border-radius:2px;overflow:hidden}
+      .hm-sb-prog i{display:block;height:100%;width:0;background:#ff5c7a}
+      @media (max-width:900px){.hm-sb-body{flex-direction:column}.hm-sb-inspector{width:auto;max-height:44%}}
+    </style>
+    <div class="hm-sb-top">
+      <div class="hm-sb-title">
+        <span class="hm-sb-logo">▤</span>
+        <h2>故事版</h2>
+        <input id="sbProjectName" class="hm-sb-name" value="未命名分镜" maxlength="40" title="项目名称">
+        <span class="hm-sb-sub" id="sbMeta">0 个场次 · 0 个镜头</span>
+      </div>
+      <div class="hm-sb-tools">
+        <button class="hm-sb-btn ghost" id="sbAddSceneBtn">+ 添加场次</button>
+        <button class="hm-sb-btn ghost" id="sbImportBtn">导入 JSON</button>
+        <input type="file" id="sbImportInput" accept="application/json,.json" hidden>
+        <button class="hm-sb-btn ghost" id="sbExportBtn">导出 JSON</button>
+        <button class="hm-sb-btn ghost" id="sbPrintBtn">打印 / PDF</button>
+        <button class="hm-sb-btn" id="sbPlayBtn">▶ 播放预览</button>
+      </div>
+    </div>
+
+    <div class="hm-sb-body">
+      <div class="hm-sb-board" id="sbBoard"></div>
+      <aside class="hm-sb-inspector" id="sbInspector">
+        <div class="hm-sb-insp-head">
+          <b>镜头详情</b>
+          <span class="hm-sb-insp-index" id="sbInspIndex"></span>
+        </div>
+        <div class="hm-sb-insp-empty" id="sbInspEmpty">点击左侧镜头卡片<br>即可编辑景别、运镜、时长与描述</div>
+        <div class="hm-sb-insp-body" id="sbInspBody" hidden>
+          <div class="hm-sb-field">画面预览</div>
+          <div class="hm-sb-insp-thumb" id="sbInspThumb" title="点击上传 / 替换画面"></div>
+          <div class="hm-sb-thumb-actions">
+            <button class="hm-sb-mini" id="sbInspUpload">上传画面</button>
+            <button class="hm-sb-mini danger" id="sbInspClearImg">清除画面</button>
+          </div>
+          <label class="hm-sb-field">所属场次<select id="sbInspScene"></select></label>
+          <label class="hm-sb-field">景别<select id="sbInspShot"></select></label>
+          <label class="hm-sb-field">运镜<select id="sbInspMove"></select></label>
+          <label class="hm-sb-field">视角<select id="sbInspAngle"></select></label>
+          <label class="hm-sb-field">时长（秒）<input type="number" id="sbInspDur" min="0.5" step="0.5"></label>
+          <label class="hm-sb-field">画面描述<textarea id="sbInspDesc" placeholder="这一镜头发生了什么"></textarea></label>
+          <label class="hm-sb-field">对白 / 音效<textarea id="sbInspDialogue" placeholder="对白、旁白或音效"></textarea></label>
+          <label class="hm-sb-field">备注<textarea id="sbInspNotes" placeholder="拍摄要点、参考、情绪"></textarea></label>
+        </div>
+        <div class="hm-sb-insp-actions">
+          <button class="hm-sb-mini" id="sbInspPrev">↑ 上一镜头</button>
+          <button class="hm-sb-mini" id="sbInspNext">↓ 下一镜头</button>
+          <button class="hm-sb-mini" id="sbInspDup">复制镜头</button>
+          <button class="hm-sb-mini danger" id="sbInspDel">删除镜头</button>
+        </div>
+      </aside>
+    </div>
+
+    <input type="file" id="sbImageInput" accept="image/*" hidden>
+
+    <!-- 动态预览（Animatic） -->
+    <div class="hm-sb-play" id="sbPlayOverlay" hidden>
+      <div class="hm-sb-play-stage" id="sbPlayStage"></div>
+      <div class="hm-sb-play-cap" id="sbPlayCap"></div>
+      <div class="hm-sb-play-bar">
+        <span id="sbPlayIndex">1/1</span>
+        <div class="hm-sb-prog"><i id="sbPlayProg"></i></div>
+        <button class="hm-sb-mini" id="sbPlayToggle">暂停</button>
+        <button class="hm-sb-mini" id="sbPlayClose">关闭</button>
       </div>
     </div>
   </main>
@@ -12312,7 +12455,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'modeling', 'director', 'history', 'admin'];
+var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'assets', 'writing', 'forum', 'modeling', 'director', 'storyboard', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -16276,6 +16419,704 @@ window.HMDirector = (function () {
 
 </script>
   <script>
+/* ============================================================
+ * 故事版 HMStoryboard（分镜创作）
+ * - 场次分组 + 镜头卡片网格（参考 Boords / StudioBinder 布局）
+ * - 镜头属性：景别 / 运镜 / 视角 / 时长 / 画面描述 / 对白 / 备注
+ * - 拖拽排序、跨场次移动、复制 / 删除镜头
+ * - 本地上传画面（自动压缩）、动态预览 Animatic、导入导出 JSON、打印 / PDF
+ * ============================================================ */
+window.HMStoryboard = (function () {
+  var SHOT_SIZES = ['大远景', '远景', '全景', '中景', '中近景', '近景', '特写', '大特写'];
+  var MOVES = ['固定', '推', '拉', '摇', '移', '跟', '升降', '环绕', '手持'];
+  var ANGLES = ['平视', '俯视', '仰视', '过肩', '主观'];
+  var LS_PREFIX = 'anidream.storyboard.v1';
+
+  var project = null;
+  var selectedId = null;
+  var imageTargetId = null;
+  var inited = false;
+  var loadedKey = '';
+  var saveTimer = null;
+  var dragId = null;
+  var el = {};
+  var playState = { raf: null, playing: false, index: 0, duration: 1000, elapsed: 0, lastTick: 0 };
+
+  function uid() { return 'sb' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function $(id) { return document.getElementById(id); }
+  function toast(msg, type) { if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function frameIcon() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M7 5v14M17 5v14" stroke="currentColor" stroke-width="1" opacity=".5"/></svg>';
+  }
+
+  /* ---------------- 数据 ---------------- */
+  function makePanel(sceneId) {
+    return {
+      id: uid(), sceneId: sceneId, image: '',
+      shot: '中景', move: '固定', angle: '平视',
+      duration: 3, desc: '', dialogue: '', notes: ''
+    };
+  }
+  function defaultProject() {
+    var s = { id: uid(), title: '场景 1', desc: '' };
+    return { name: '未命名分镜', scenes: [s], panels: [makePanel(s.id)] };
+  }
+  function normalize(p) {
+    if (!p || typeof p !== 'object') return defaultProject();
+    var scenes = Array.isArray(p.scenes) ? p.scenes.filter(function (s) { return s && s.id; }) : [];
+    if (!scenes.length) scenes = [{ id: uid(), title: '场景 1', desc: '' }];
+    var valid = {};
+    scenes.forEach(function (s) { valid[s.id] = true; if (!s.title) s.title = '未命名场次'; s.desc = s.desc || ''; });
+    var panels = Array.isArray(p.panels) ? p.panels.filter(function (x) { return x && x.id; }) : [];
+    panels.forEach(function (x) {
+      if (!valid[x.sceneId]) x.sceneId = scenes[0].id;
+      x.image = x.image || '';
+      x.shot = x.shot || '中景';
+      x.move = x.move || '固定';
+      x.angle = x.angle || '平视';
+      x.duration = Number(x.duration) > 0 ? Number(x.duration) : 3;
+      x.desc = x.desc || '';
+      x.dialogue = x.dialogue || '';
+      x.notes = x.notes || '';
+    });
+    return { name: p.name || '未命名分镜', scenes: scenes, panels: panels };
+  }
+
+  function lsKey() {
+    var u = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+    return u ? (LS_PREFIX + '.' + u) : LS_PREFIX;
+  }
+  function loadProject() {
+    try {
+      var raw = localStorage.getItem(lsKey());
+      if (raw) return normalize(JSON.parse(raw));
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+  function saveNow() {
+    try { localStorage.setItem(lsKey(), JSON.stringify(project)); }
+    catch (e) { toast('保存失败：本地存储空间不足（画面图片过多）', 'error'); }
+  }
+  function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 400); }
+
+  function findScene(id) {
+    for (var i = 0; i < project.scenes.length; i++) if (project.scenes[i].id === id) return project.scenes[i];
+    return null;
+  }
+  function findPanel(id) {
+    for (var i = 0; i < project.panels.length; i++) if (project.panels[i].id === id) return project.panels[i];
+    return null;
+  }
+  function panelsOf(sceneId) { return project.panels.filter(function (p) { return p.sceneId === sceneId; }); }
+  function globalIndex(p) { return project.panels.indexOf(p); }
+
+  /* ---------------- 初始化 ---------------- */
+  function init() {
+    if (inited) return;
+    inited = true;
+    el.board = $('sbBoard');
+    el.meta = $('sbMeta');
+    el.nameInput = $('sbProjectName');
+    el.inspEmpty = $('sbInspEmpty');
+    el.inspBody = $('sbInspBody');
+    el.inspIndex = $('sbInspIndex');
+    el.inspThumb = $('sbInspThumb');
+    el.inspScene = $('sbInspScene');
+    el.inspShot = $('sbInspShot');
+    el.inspMove = $('sbInspMove');
+    el.inspAngle = $('sbInspAngle');
+    el.inspDur = $('sbInspDur');
+    el.inspDesc = $('sbInspDesc');
+    el.inspDialogue = $('sbInspDialogue');
+    el.inspNotes = $('sbInspNotes');
+    el.imageInput = $('sbImageInput');
+    el.importInput = $('sbImportInput');
+    el.playOverlay = $('sbPlayOverlay');
+    el.playStage = $('sbPlayStage');
+    el.playCap = $('sbPlayCap');
+    el.playIndex = $('sbPlayIndex');
+    el.playProg = $('sbPlayProg');
+    el.playToggle = $('sbPlayToggle');
+
+    fillSelect(el.inspShot, SHOT_SIZES);
+    fillSelect(el.inspMove, MOVES);
+    fillSelect(el.inspAngle, ANGLES);
+
+    bindTop();
+    bindBoard();
+    bindInspector();
+    bindPlay();
+  }
+
+  function fillSelect(sel, list) {
+    if (!sel) return;
+    sel.innerHTML = '';
+    list.forEach(function (v) {
+      var o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+  }
+
+  function bindTop() {
+    el.nameInput.addEventListener('input', function () {
+      project.name = el.nameInput.value.trim() || '未命名分镜';
+      scheduleSave();
+    });
+    $('sbAddSceneBtn').addEventListener('click', addScene);
+    $('sbExportBtn').addEventListener('click', exportJSON);
+    $('sbPrintBtn').addEventListener('click', printBoard);
+    $('sbPlayBtn').addEventListener('click', startPlay);
+    $('sbImportBtn').addEventListener('click', function () { el.importInput.click(); });
+    el.importInput.addEventListener('change', importJSON);
+    el.imageInput.addEventListener('change', onImagePicked);
+  }
+
+  /* ---------------- 渲染 ---------------- */
+  function renderBoard() {
+    if (!el.board) return;
+    var b = el.board;
+    b.innerHTML = '';
+    project.scenes.forEach(function (scene, si) {
+      var sec = document.createElement('section');
+      sec.className = 'hm-sb-scene';
+      sec.dataset.scene = scene.id;
+
+      var head = document.createElement('div');
+      head.className = 'hm-sb-scene-head';
+      head.dataset.dropScene = scene.id;
+      head.innerHTML =
+        '<span class="hm-sb-scene-no">' + (si + 1) + '</span>' +
+        '<input class="hm-sb-scene-title" value="' + esc(scene.title) + '" maxlength="40" title="场次名称">' +
+        '<input class="hm-sb-scene-desc" value="' + esc(scene.desc) + '" maxlength="120" placeholder="场次说明（地点 / 时间 / 氛围）">' +
+        '<span class="hm-sb-scene-count">' + panelsOf(scene.id).length + ' 镜头</span>' +
+        '<button class="hm-sb-mini" data-addshot="' + scene.id + '">+ 镜头</button>' +
+        '<button class="hm-sb-mini danger" data-delscene="' + scene.id + '">删除场次</button>';
+      sec.appendChild(head);
+
+      var grid = document.createElement('div');
+      grid.className = 'hm-sb-grid';
+      grid.dataset.dropScene = scene.id;
+      panelsOf(scene.id).forEach(function (p) {
+        grid.appendChild(buildCard(p));
+      });
+      var add = document.createElement('div');
+      add.className = 'hm-sb-addcard';
+      add.dataset.addshot = scene.id;
+      add.dataset.dropScene = scene.id;
+      add.innerHTML = '<span>＋ 添加镜头</span>';
+      grid.appendChild(add);
+      sec.appendChild(grid);
+      b.appendChild(sec);
+    });
+    updateMeta();
+    syncInspector();
+  }
+
+  function buildCard(p) {
+    var card = document.createElement('div');
+    card.className = 'hm-sb-card' + (p.id === selectedId ? ' is-sel' : '');
+    card.dataset.id = p.id;
+    card.draggable = true;
+    var thumb = p.image
+      ? '<img src="' + p.image + '" alt="">'
+      : '<div class="hm-sb-ph">' + frameIcon() + '<span>未上传画面</span></div>';
+    card.innerHTML =
+      '<div class="hm-sb-thumb">' + thumb + '<span class="hm-sb-idx">#' + (globalIndex(p) + 1) + '</span></div>' +
+      '<div class="hm-sb-card-body">' +
+        '<div class="hm-sb-card-title">' + esc(p.desc || '未命名镜头') + '</div>' +
+        '<div class="hm-sb-card-tags">' +
+          '<span class="hm-sb-tag">' + esc(p.shot) + '</span>' +
+          '<span class="hm-sb-tag">' + esc(p.move) + '</span>' +
+          (p.angle !== '平视' ? '<span class="hm-sb-tag">' + esc(p.angle) + '</span>' : '') +
+          '<span class="hm-sb-tag">' + p.duration.toFixed(1) + 's</span>' +
+        '</div>' +
+      '</div>';
+    return card;
+  }
+
+  function updateMeta() {
+    var total = project.panels.reduce(function (a, p) { return a + (Number(p.duration) || 0); }, 0);
+    el.meta.textContent = project.scenes.length + ' 个场次 · ' + project.panels.length + ' 个镜头 · 总时长 ' + total.toFixed(1) + 's';
+  }
+
+  function updateCardInPlace(p) {
+    var card = el.board.querySelector('.hm-sb-card[data-id="' + p.id + '"]');
+    if (!card) return;
+    card.replaceWith(buildCard(p));
+  }
+
+  /* ---------------- 场次与镜头操作 ---------------- */
+  function addScene() {
+    var s = { id: uid(), title: '场景 ' + (project.scenes.length + 1), desc: '' };
+    project.scenes.push(s);
+    var p = makePanel(s.id);
+    project.panels.push(p);
+    selectedId = p.id;
+    saveNow();
+    renderBoard();
+  }
+
+  function deleteScene(id) {
+    if (project.scenes.length <= 1) { toast('至少保留一个场次', 'info'); return; }
+    var sc = findScene(id);
+    if (!sc) return;
+    if (!window.confirm('删除「' + sc.title + '」及其下所有镜头？')) return;
+    project.scenes = project.scenes.filter(function (s) { return s.id !== id; });
+    project.panels = project.panels.filter(function (p) { return p.sceneId !== id; });
+    if (selectedId && !findPanel(selectedId)) selectedId = null;
+    saveNow();
+    renderBoard();
+  }
+
+  function addShot(sceneId) {
+    if (!findScene(sceneId)) return;
+    var p = makePanel(sceneId);
+    var last = -1;
+    for (var i = 0; i < project.panels.length; i++) if (project.panels[i].sceneId === sceneId) last = i;
+    project.panels.splice(last + 1, 0, p);
+    selectedId = p.id;
+    saveNow();
+    renderBoard();
+  }
+
+  function deletePanel(id) {
+    var p = findPanel(id);
+    if (!p) return;
+    if (!window.confirm('删除该镜头？')) return;
+    var i = project.panels.indexOf(p);
+    project.panels.splice(i, 1);
+    var next = project.panels[Math.min(i, project.panels.length - 1)];
+    selectedId = next ? next.id : null;
+    saveNow();
+    renderBoard();
+  }
+
+  function duplicatePanel(id) {
+    var p = findPanel(id);
+    if (!p) return;
+    var copy = JSON.parse(JSON.stringify(p));
+    copy.id = uid();
+    project.panels.splice(project.panels.indexOf(p) + 1, 0, copy);
+    selectedId = copy.id;
+    saveNow();
+    renderBoard();
+  }
+
+  function navPanel(delta) {
+    var p = findPanel(selectedId);
+    if (!p) return;
+    var i = project.panels.indexOf(p) + delta;
+    if (i < 0 || i >= project.panels.length) return;
+    selectedId = project.panels[i].id;
+    renderBoard();
+  }
+
+  /* ---------------- 拖拽排序（支持跨场次） ---------------- */
+  function clearDropMarks() {
+    el.board.querySelectorAll('.drop-target').forEach(function (n) { n.classList.remove('drop-target'); });
+  }
+
+  function bindBoard() {
+    el.board.addEventListener('click', function (e) {
+      var add = e.target.closest('[data-addshot]');
+      if (add) { addShot(add.getAttribute('data-addshot')); return; }
+      var del = e.target.closest('[data-delscene]');
+      if (del) { deleteScene(del.getAttribute('data-delscene')); return; }
+      var card = e.target.closest('.hm-sb-card');
+      if (card) { selectedId = card.dataset.id; renderBoard(); }
+    });
+
+    el.board.addEventListener('input', function (e) {
+      var t = e.target;
+      var sec = t.closest('.hm-sb-scene');
+      if (!sec) return;
+      var sc = findScene(sec.dataset.scene);
+      if (!sc) return;
+      if (t.classList.contains('hm-sb-scene-title')) { sc.title = t.value; scheduleSave(); }
+      else if (t.classList.contains('hm-sb-scene-desc')) { sc.desc = t.value; scheduleSave(); }
+    });
+
+    el.board.addEventListener('dragstart', function (e) {
+      var card = e.target.closest('.hm-sb-card');
+      if (!card) return;
+      dragId = card.dataset.id;
+      card.classList.add('dragging');
+      try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId); } catch (err) { /* ignore */ }
+    });
+    el.board.addEventListener('dragend', function (e) {
+      var card = e.target.closest('.hm-sb-card');
+      if (card) card.classList.remove('dragging');
+      clearDropMarks();
+    });
+    el.board.addEventListener('dragover', function (e) {
+      if (!dragId) return;
+      var t = e.target.closest('.hm-sb-card, .hm-sb-addcard, .hm-sb-scene-head, .hm-sb-grid');
+      if (!t) return;
+      e.preventDefault();
+      clearDropMarks();
+      t.classList.add('drop-target');
+    });
+    el.board.addEventListener('drop', function (e) {
+      if (!dragId) return;
+      var t = e.target.closest('.hm-sb-card, .hm-sb-addcard, .hm-sb-scene-head, .hm-sb-grid');
+      if (!t) return;
+      e.preventDefault();
+      dropPanel(t);
+      clearDropMarks();
+    });
+  }
+
+  function dropPanel(target) {
+    var id = dragId;
+    dragId = null;
+    var p = findPanel(id);
+    if (!p) return;
+    if (target.classList.contains('hm-sb-card')) {
+      var tp = findPanel(target.dataset.id);
+      if (!tp || tp.id === p.id) return;
+      moveBefore(p, tp);
+    } else {
+      var sceneId = target.dataset.dropScene;
+      if (!sceneId) {
+        var sec = target.closest('[data-drop-scene]');
+        sceneId = sec ? sec.dataset.dropScene : '';
+      }
+      if (!sceneId || !findScene(sceneId)) return;
+      moveToEnd(p, sceneId);
+    }
+    saveNow();
+    renderBoard();
+  }
+
+  function moveBefore(p, beforePanel) {
+    var from = project.panels.indexOf(p);
+    if (from >= 0) project.panels.splice(from, 1);
+    p.sceneId = beforePanel.sceneId;
+    var to = project.panels.indexOf(beforePanel);
+    if (to < 0) project.panels.push(p); else project.panels.splice(to, 0, p);
+  }
+
+  function moveToEnd(p, sceneId) {
+    var from = project.panels.indexOf(p);
+    if (from >= 0) project.panels.splice(from, 1);
+    p.sceneId = sceneId;
+    var last = -1;
+    for (var i = 0; i < project.panels.length; i++) if (project.panels[i].sceneId === sceneId) last = i;
+    project.panels.splice(last + 1, 0, p);
+  }
+
+  /* ---------------- 检查器 ---------------- */
+  function syncInspector() {
+    var p = findPanel(selectedId);
+    el.inspEmpty.hidden = !!p;
+    el.inspBody.hidden = !p;
+    if (!p) { el.inspIndex.textContent = ''; return; }
+    el.inspIndex.textContent = '#' + (globalIndex(p) + 1);
+
+    el.inspThumb.innerHTML = p.image
+      ? '<img src="' + p.image + '" alt="">'
+      : '<div class="hm-sb-ph">' + frameIcon() + '<span>点击上传画面</span></div>';
+
+    el.inspScene.innerHTML = '';
+    project.scenes.forEach(function (s, i) {
+      var o = document.createElement('option');
+      o.value = s.id; o.textContent = '场次 ' + (i + 1) + '：' + s.title;
+      if (s.id === p.sceneId) o.selected = true;
+      el.inspScene.appendChild(o);
+    });
+
+    el.inspShot.value = p.shot;
+    el.inspMove.value = p.move;
+    el.inspAngle.value = p.angle;
+    el.inspDur.value = p.duration;
+    el.inspDesc.value = p.desc;
+    el.inspDialogue.value = p.dialogue;
+    el.inspNotes.value = p.notes;
+  }
+
+  function setField(field, value) {
+    var p = findPanel(selectedId);
+    if (!p) return;
+    p[field] = value;
+    updateCardInPlace(p);
+    updateMeta();
+    scheduleSave();
+  }
+
+  function bindInspector() {
+    $('sbInspUpload').addEventListener('click', function () { pickImage(selectedId); });
+    el.inspThumb.addEventListener('click', function () { pickImage(selectedId); });
+    $('sbInspClearImg').addEventListener('click', function () {
+      var p = findPanel(selectedId);
+      if (!p) return;
+      p.image = '';
+      saveNow();
+      renderBoard();
+    });
+
+    el.inspScene.addEventListener('change', function () {
+      var p = findPanel(selectedId);
+      if (!p) return;
+      var sid = el.inspScene.value;
+      if (sid && p.sceneId !== sid && findScene(sid)) {
+        p.sceneId = sid;
+        saveNow();
+        renderBoard();
+      }
+    });
+
+    el.inspShot.addEventListener('change', function () { setField('shot', el.inspShot.value); });
+    el.inspMove.addEventListener('change', function () { setField('move', el.inspMove.value); });
+    el.inspAngle.addEventListener('change', function () { setField('angle', el.inspAngle.value); });
+    el.inspDur.addEventListener('input', function () {
+      var v = parseFloat(el.inspDur.value);
+      if (!isFinite(v) || v <= 0) return;
+      setField('duration', v);
+    });
+    el.inspDesc.addEventListener('input', function () { setField('desc', el.inspDesc.value); });
+    el.inspDialogue.addEventListener('input', function () { setField('dialogue', el.inspDialogue.value); });
+    el.inspNotes.addEventListener('input', function () { setField('notes', el.inspNotes.value); });
+
+    $('sbInspPrev').addEventListener('click', function () { navPanel(-1); });
+    $('sbInspNext').addEventListener('click', function () { navPanel(1); });
+    $('sbInspDup').addEventListener('click', function () { duplicatePanel(selectedId); });
+    $('sbInspDel').addEventListener('click', function () { deletePanel(selectedId); });
+  }
+
+  /* ---------------- 画面图片 ---------------- */
+  function pickImage(id) {
+    if (!id) { toast('请先选择一个镜头', 'info'); return; }
+    imageTargetId = id;
+    el.imageInput.value = '';
+    el.imageInput.click();
+  }
+
+  function onImagePicked() {
+    var f = el.imageInput.files && el.imageInput.files[0];
+    if (!f || !imageTargetId) return;
+    compressImage(f, function (dataUrl) {
+      var p = findPanel(imageTargetId);
+      if (p) {
+        p.image = dataUrl;
+        saveNow();
+        renderBoard();
+      }
+      el.imageInput.value = '';
+    });
+  }
+
+  function compressImage(file, cb) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var max = 720;
+          var sc = Math.min(1, max / Math.max(img.width, img.height));
+          var w = Math.round(img.width * sc), h = Math.round(img.height * sc);
+          var c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          cb(c.toDataURL('image/jpeg', 0.82));
+        } catch (e) { cb(reader.result); }
+      };
+      img.onerror = function () { cb(reader.result); };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ---------------- 导入 / 导出 / 打印 ---------------- */
+  function exportJSON() {
+    var blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (project.name || 'storyboard') + '.storyboard.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    toast('已导出分镜 JSON', 'success');
+  }
+
+  function importJSON() {
+    var f = el.importInput.files && el.importInput.files[0];
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        project = normalize(data);
+        selectedId = project.panels[0] ? project.panels[0].id : null;
+        el.nameInput.value = project.name;
+        saveNow();
+        renderBoard();
+        toast('已导入故事版', 'success');
+      } catch (e) {
+        toast('导入失败：文件不是有效的分镜 JSON', 'error');
+      }
+    };
+    reader.readAsText(f);
+    el.importInput.value = '';
+  }
+
+  function printBoard() {
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(project.name) + ' · 故事版</title>' +
+      '<style>' +
+      'body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#111;margin:24px;background:#fff}' +
+      'h1{font-size:22px;margin:0 0 4px}.meta{color:#666;font-size:12px;margin-bottom:20px}' +
+      'h2{font-size:15px;margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid #111}' +
+      'h2 small{font-weight:400;color:#666;font-size:12px;margin-left:8px}' +
+      '.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}' +
+      '.cell{border:1px solid #ddd;border-radius:8px;overflow:hidden;page-break-inside:avoid}' +
+      '.thumb{aspect-ratio:16/9;background:#f2f2f2;display:flex;align-items:center;justify-content:center}' +
+      '.thumb img{width:100%;height:100%;object-fit:cover;display:block}' +
+      '.noph{color:#aaa;font-size:12px}.bar{display:flex;gap:8px;align-items:center;padding:6px 8px;font-size:11px;border-bottom:1px solid #eee;background:#fafafa}' +
+      '.no{font-weight:700}.tag{background:#eee;border-radius:4px;padding:1px 5px}' +
+      '.desc{padding:8px;font-size:12px;line-height:1.5;margin:0}.dia{padding:0 8px 6px;font-size:12px;color:#1a4b8c;margin:0}' +
+      '.note{padding:0 8px 8px;font-size:11px;color:#777;margin:0}' +
+      '@media print{body{margin:12mm}}' +
+      '</style></head><body>';
+    html += '<h1>' + esc(project.name) + '</h1>';
+    var total = project.panels.reduce(function (a, p) { return a + (Number(p.duration) || 0); }, 0);
+    html += '<div class="meta">' + project.scenes.length + ' 个场次 · ' + project.panels.length + ' 个镜头 · 总时长 ' + total.toFixed(1) + 's</div>';
+    project.scenes.forEach(function (s, si) {
+      var ps = panelsOf(s.id);
+      html += '<h2>场次 ' + (si + 1) + '：' + esc(s.title) + (s.desc ? '<small>' + esc(s.desc) + '</small>' : '') + '</h2>';
+      html += '<div class="grid">';
+      ps.forEach(function (p) {
+        html += '<div class="cell">' +
+          '<div class="thumb">' + (p.image ? '<img src="' + p.image + '">' : '<span class="noph">未上传画面</span>') + '</div>' +
+          '<div class="bar"><span class="no">#' + (globalIndex(p) + 1) + '</span>' +
+            '<span class="tag">' + esc(p.shot) + '</span>' +
+            '<span class="tag">' + esc(p.move) + '</span>' +
+            '<span class="tag">' + esc(p.angle) + '</span>' +
+            '<span class="tag">' + p.duration.toFixed(1) + 's</span></div>' +
+          '<p class="desc">' + esc(p.desc || '（无描述）') + '</p>' +
+          (p.dialogue ? '<p class="dia">♪ ' + esc(p.dialogue) + '</p>' : '') +
+          (p.notes ? '<p class="note">备注：' + esc(p.notes) + '</p>' : '') +
+          '</div>';
+      });
+      html += '</div>';
+    });
+    html += '</body></html>';
+
+    var w = window.open('', '_blank');
+    if (!w) { toast('请允许弹出窗口后再打印', 'error'); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    setTimeout(function () { try { w.focus(); w.print(); } catch (e) { /* ignore */ } }, 400);
+  }
+
+  /* ---------------- 动态预览（Animatic） ---------------- */
+  function bindPlay() {
+    $('sbPlayClose').addEventListener('click', stopPlay);
+    el.playToggle.addEventListener('click', togglePlay);
+    document.addEventListener('keydown', function (e) {
+      if (el.playOverlay.hidden) return;
+      if (e.key === 'Escape') { e.preventDefault(); stopPlay(); }
+      else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+    });
+  }
+
+  function startPlay() {
+    if (!project.panels.length) { toast('还没有镜头，先添加镜头', 'info'); return; }
+    playState.index = 0;
+    playState.playing = true;
+    el.playOverlay.hidden = false;
+    showPlayFrame();
+  }
+
+  function showPlayFrame() {
+    var p = project.panels[playState.index];
+    if (!p) { stopPlay(); return; }
+    el.playIndex.textContent = (playState.index + 1) + '/' + project.panels.length;
+    el.playStage.innerHTML = p.image
+      ? '<img src="' + p.image + '" alt="">'
+      : '<div class="hm-sb-play-ph">镜头 ' + (playState.index + 1) + ' · 未上传画面</div>';
+    var cap = [p.shot, p.move, (p.angle !== '平视' ? p.angle : ''), p.desc || ('镜头 ' + (playState.index + 1))];
+    el.playCap.textContent = cap.filter(function (x) { return x; }).join(' · ');
+    el.playToggle.textContent = playState.playing ? '暂停' : '播放';
+    restartTimer(Number(p.duration) || 3);
+  }
+
+  function restartTimer(seconds) {
+    cancelAnimationFrame(playState.raf);
+    playState.raf = null;
+    playState.duration = Math.max(300, seconds * 1000);
+    playState.elapsed = 0;
+    playState.lastTick = 0;
+    el.playProg.style.width = '0%';
+    if (playState.playing) playState.raf = requestAnimationFrame(tickPlay);
+  }
+
+  function tickPlay(now) {
+    if (!playState.playing) return;
+    if (!playState.lastTick) playState.lastTick = now;
+    var dt = now - playState.lastTick;
+    playState.lastTick = now;
+    playState.elapsed += dt;
+    var pct = Math.min(1, playState.elapsed / playState.duration);
+    el.playProg.style.width = (pct * 100) + '%';
+    if (pct >= 1) {
+      playState.index++;
+      if (playState.index >= project.panels.length) { stopPlay(); return; }
+      showPlayFrame();
+      return;
+    }
+    playState.raf = requestAnimationFrame(tickPlay);
+  }
+
+  function togglePlay() {
+    if (el.playOverlay.hidden) return;
+    if (playState.playing) {
+      playState.playing = false;
+      cancelAnimationFrame(playState.raf);
+      playState.raf = null;
+      el.playToggle.textContent = '播放';
+    } else {
+      playState.playing = true;
+      playState.lastTick = 0;
+      el.playToggle.textContent = '暂停';
+      playState.raf = requestAnimationFrame(tickPlay);
+    }
+  }
+
+  function stopPlay() {
+    playState.playing = false;
+    if (playState.raf) cancelAnimationFrame(playState.raf);
+    playState.raf = null;
+    if (el.playOverlay) el.playOverlay.hidden = true;
+  }
+
+  /* ---------------- 对外接口 ---------------- */
+  function enter() {
+    init();
+    var key = lsKey();
+    if (!project || loadedKey !== key) {
+      var saved = loadProject();
+      project = saved || project || defaultProject();
+      loadedKey = key;
+      selectedId = selectedId && findPanel(selectedId) ? selectedId : (project.panels[0] ? project.panels[0].id : null);
+    }
+    el.nameInput.value = project.name;
+    renderBoard();
+  }
+
+  function pause() { stopPlay(); }
+
+  return { init: init, enter: enter, pause: pause };
+})();
+
+</script>
+  <script>
 'use strict';
 
 /* =============================================================
@@ -16469,6 +17310,9 @@ window.HMDirector = (function () {
     if (prevView === 'director' && view !== 'director' && window.HMDirector) {
       try { window.HMDirector.pause(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'storyboard' && view !== 'storyboard' && window.HMStoryboard) {
+      try { window.HMStoryboard.pause(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas') renderCanvas();
@@ -16480,6 +17324,9 @@ window.HMDirector = (function () {
     }
     if (view === 'director' && window.HMDirector) {
       try { window.HMDirector.onEnter(); } catch (e) { console.error('[Director] onEnter failed', e); }
+    }
+    if (view === 'storyboard' && window.HMStoryboard) {
+      try { window.HMStoryboard.enter(); } catch (e) { console.error('[Storyboard] enter failed', e); }
     }
   }
 

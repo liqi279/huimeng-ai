@@ -191,6 +191,9 @@
     if (prevView === 'director' && view !== 'director' && window.HMDirector) {
       try { window.HMDirector.pause(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'storyboard' && view !== 'storyboard' && window.HMStoryboard) {
+      try { window.HMStoryboard.pause(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas') renderCanvas();
@@ -202,6 +205,9 @@
     }
     if (view === 'director' && window.HMDirector) {
       try { window.HMDirector.onEnter(); } catch (e) { console.error('[Director] onEnter failed', e); }
+    }
+    if (view === 'storyboard' && window.HMStoryboard) {
+      try { window.HMStoryboard.enter(); } catch (e) { console.error('[Storyboard] enter failed', e); }
     }
   }
 

@@ -47,6 +47,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9l5 3-5 3V9Z" fill="currentColor" opacity=".8"/><path d="M3 9h2M3 15h2M19 9h2M19 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/></svg>
         <span>导演台</span>
       </button>
+      <button class="hm-rail-item" data-rail="storyboard" title="故事版（分镜创作）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
+        <span>故事版</span>
+      </button>
     </div>
 
     <div class="hm-rail-bottom">
@@ -680,6 +684,145 @@
         </div>
         <div class="hm-dir-track-ruler" id="dirTrackRuler"></div>
         <div class="hm-dir-track-list" id="dirTrackList"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== 故事版（分镜创作） ===================== -->
+  <main class="hm-page hm-sb-page" id="view-storyboard" hidden>
+    <style>
+      .hm-sb-page{display:flex;flex-direction:column;height:calc(100vh - 60px);min-height:0;background:var(--hm-bg,#0f1320);padding:14px 16px;gap:12px}
+      .hm-sb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;flex-wrap:wrap}
+      .hm-sb-title{display:flex;align-items:center;gap:10px;min-width:0}
+      .hm-sb-logo{font-size:18px;color:#52c41a}
+      .hm-sb-title h2{font-size:18px;color:var(--hm-text,#e6e9ef);margin:0;white-space:nowrap}
+      .hm-sb-name{background:transparent;border:1px solid transparent;border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:14px;font-weight:600;padding:4px 8px;min-width:120px;max-width:240px}
+      .hm-sb-name:hover{border-color:var(--hm-line,#2a3142)}
+      .hm-sb-name:focus{outline:none;border-color:var(--hm-accent,#4f8cff);background:#11151f}
+      .hm-sb-sub{font-size:12px;color:var(--hm-dim,#8b93a1);white-space:nowrap}
+      .hm-sb-tools{display:flex;gap:8px;flex-wrap:wrap}
+      .hm-sb-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;background:var(--hm-accent,#4f8cff);color:#fff;white-space:nowrap}
+      .hm-sb-btn:hover{filter:brightness(1.08)}
+      .hm-sb-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef)}
+      .hm-sb-btn.ghost:hover{background:#242a3a}
+      .hm-sb-body{flex:1;min-height:0;display:flex;gap:12px}
+      .hm-sb-board{flex:1;min-width:0;overflow:auto;padding:2px 6px 24px 2px}
+      .hm-sb-scene{margin-bottom:22px}
+      .hm-sb-scene-head{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--hm-surface2,#15192a);border:1px solid var(--hm-line,#2a3142);border-radius:10px;margin-bottom:10px;position:sticky;top:0;z-index:3;flex-wrap:wrap}
+      .hm-sb-scene-no{width:22px;height:22px;flex:none;border-radius:50%;background:var(--hm-accent,#4f8cff);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+      .hm-sb-scene-title{background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:13px;font-weight:600;padding:5px 8px;width:150px}
+      .hm-sb-scene-title:focus{outline:none;border-color:var(--hm-accent,#4f8cff)}
+      .hm-sb-scene-desc{flex:1;min-width:120px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--hm-dim,#8b93a1);font-size:12px;padding:5px 8px}
+      .hm-sb-scene-desc:focus{outline:none;border-color:var(--hm-accent,#4f8cff);background:#11151f;color:var(--hm-text,#e6e9ef)}
+      .hm-sb-scene-count{font-size:11px;color:var(--hm-dim,#8b93a1);font-family:monospace;white-space:nowrap}
+      .hm-sb-mini{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:5px 8px;background:transparent;color:var(--hm-dim,#8b93a1);cursor:pointer;white-space:nowrap}
+      .hm-sb-mini:hover{color:var(--hm-text,#e6e9ef);border-color:#3d465c}
+      .hm-sb-mini.danger:hover{color:#ff5c7a;border-color:#ff5c7a}
+      .hm-sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+      .hm-sb-card{background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s}
+      .hm-sb-card:hover{border-color:#3d465c}
+      .hm-sb-card.is-sel{border-color:#ff5c7a;box-shadow:0 0 0 1px #ff5c7a inset}
+      .hm-sb-card.dragging{opacity:.4}
+      .hm-sb-card.drop-target{border-color:var(--hm-accent,#4f8cff);box-shadow:0 0 0 1px var(--hm-accent,#4f8cff) inset}
+      .hm-sb-thumb{position:relative;aspect-ratio:16/9;background:#0a0d14;overflow:hidden}
+      .hm-sb-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+      .hm-sb-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#4a5568;font-size:11px}
+      .hm-sb-ph svg{width:26px;height:26px;opacity:.5}
+      .hm-sb-idx{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.66);color:#fff;font-size:11px;font-weight:600;padding:2px 6px;border-radius:5px;font-family:monospace}
+      .hm-sb-card-body{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+      .hm-sb-card-title{font-size:12px;color:var(--hm-text,#e6e9ef);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hm-sb-card-tags{display:flex;gap:5px;flex-wrap:wrap}
+      .hm-sb-tag{font-size:10px;color:var(--hm-dim,#8b93a1);background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:4px;padding:1px 5px;font-family:monospace}
+      .hm-sb-addcard{display:flex;align-items:center;justify-content:center;min-height:150px;border:1px dashed #38405a;border-radius:10px;color:#6b7689;font-size:12px;cursor:pointer;background:transparent;transition:border-color .15s,color .15s}
+      .hm-sb-addcard:hover{border-color:var(--hm-accent,#4f8cff);color:var(--hm-accent,#4f8cff)}
+      .hm-sb-addcard.drop-target{border-color:var(--hm-accent,#4f8cff);color:var(--hm-accent,#4f8cff)}
+      .hm-sb-inspector{width:300px;flex:none;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;display:flex;flex-direction:column;min-height:0}
+      .hm-sb-insp-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--hm-line,#2a3142);font-size:13px;color:var(--hm-text,#e6e9ef);flex:none}
+      .hm-sb-insp-head b{font-weight:600}
+      .hm-sb-insp-index{font-family:monospace;font-size:12px;color:#ff5c7a}
+      .hm-sb-insp-empty{margin:auto;padding:24px;text-align:center;font-size:12px;color:var(--hm-dim,#8b93a1);line-height:1.7}
+      .hm-sb-insp-body{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+      .hm-sb-field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-sb-field select,.hm-sb-field input,.hm-sb-field textarea{background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:12px;padding:6px 8px;font-family:inherit;resize:vertical;width:100%;box-sizing:border-box}
+      .hm-sb-field select:focus,.hm-sb-field input:focus,.hm-sb-field textarea:focus{outline:none;border-color:var(--hm-accent,#4f8cff)}
+      .hm-sb-field textarea{min-height:58px}
+      .hm-sb-insp-thumb{aspect-ratio:16/9;background:#0a0d14;border:1px solid var(--hm-line,#2a3142);border-radius:8px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+      .hm-sb-insp-thumb img{width:100%;height:100%;object-fit:cover}
+      .hm-sb-thumb-actions{display:flex;gap:8px}
+      .hm-sb-thumb-actions>.hm-sb-mini{flex:1;text-align:center}
+      .hm-sb-insp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;border-top:1px solid var(--hm-line,#2a3142);flex:none}
+      .hm-sb-insp-actions .hm-sb-mini{text-align:center}
+      .hm-sb-play{position:fixed;inset:0;z-index:130;background:rgba(4,6,12,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px}
+      .hm-sb-play-stage{flex:1;width:100%;display:flex;align-items:center;justify-content:center;min-height:0}
+      .hm-sb-play-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 10px 44px rgba(0,0,0,.6)}
+      .hm-sb-play-ph{width:min(70vw,880px);aspect-ratio:16/9;background:#0a0d14;border:1px solid #2a3142;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#5a6579;font-size:14px}
+      .hm-sb-play-cap{max-width:min(82vw,880px);text-align:center;color:#c8d0e0;font-size:14px;min-height:20px}
+      .hm-sb-play-bar{width:min(82vw,880px);display:flex;align-items:center;gap:12px;color:#8b93a1;font-size:12px;font-family:monospace}
+      .hm-sb-prog{flex:1;height:4px;background:#222a3a;border-radius:2px;overflow:hidden}
+      .hm-sb-prog i{display:block;height:100%;width:0;background:#ff5c7a}
+      @media (max-width:900px){.hm-sb-body{flex-direction:column}.hm-sb-inspector{width:auto;max-height:44%}}
+    </style>
+    <div class="hm-sb-top">
+      <div class="hm-sb-title">
+        <span class="hm-sb-logo">▤</span>
+        <h2>故事版</h2>
+        <input id="sbProjectName" class="hm-sb-name" value="未命名分镜" maxlength="40" title="项目名称">
+        <span class="hm-sb-sub" id="sbMeta">0 个场次 · 0 个镜头</span>
+      </div>
+      <div class="hm-sb-tools">
+        <button class="hm-sb-btn ghost" id="sbAddSceneBtn">+ 添加场次</button>
+        <button class="hm-sb-btn ghost" id="sbImportBtn">导入 JSON</button>
+        <input type="file" id="sbImportInput" accept="application/json,.json" hidden>
+        <button class="hm-sb-btn ghost" id="sbExportBtn">导出 JSON</button>
+        <button class="hm-sb-btn ghost" id="sbPrintBtn">打印 / PDF</button>
+        <button class="hm-sb-btn" id="sbPlayBtn">▶ 播放预览</button>
+      </div>
+    </div>
+
+    <div class="hm-sb-body">
+      <div class="hm-sb-board" id="sbBoard"></div>
+      <aside class="hm-sb-inspector" id="sbInspector">
+        <div class="hm-sb-insp-head">
+          <b>镜头详情</b>
+          <span class="hm-sb-insp-index" id="sbInspIndex"></span>
+        </div>
+        <div class="hm-sb-insp-empty" id="sbInspEmpty">点击左侧镜头卡片<br>即可编辑景别、运镜、时长与描述</div>
+        <div class="hm-sb-insp-body" id="sbInspBody" hidden>
+          <div class="hm-sb-field">画面预览</div>
+          <div class="hm-sb-insp-thumb" id="sbInspThumb" title="点击上传 / 替换画面"></div>
+          <div class="hm-sb-thumb-actions">
+            <button class="hm-sb-mini" id="sbInspUpload">上传画面</button>
+            <button class="hm-sb-mini danger" id="sbInspClearImg">清除画面</button>
+          </div>
+          <label class="hm-sb-field">所属场次<select id="sbInspScene"></select></label>
+          <label class="hm-sb-field">景别<select id="sbInspShot"></select></label>
+          <label class="hm-sb-field">运镜<select id="sbInspMove"></select></label>
+          <label class="hm-sb-field">视角<select id="sbInspAngle"></select></label>
+          <label class="hm-sb-field">时长（秒）<input type="number" id="sbInspDur" min="0.5" step="0.5"></label>
+          <label class="hm-sb-field">画面描述<textarea id="sbInspDesc" placeholder="这一镜头发生了什么"></textarea></label>
+          <label class="hm-sb-field">对白 / 音效<textarea id="sbInspDialogue" placeholder="对白、旁白或音效"></textarea></label>
+          <label class="hm-sb-field">备注<textarea id="sbInspNotes" placeholder="拍摄要点、参考、情绪"></textarea></label>
+        </div>
+        <div class="hm-sb-insp-actions">
+          <button class="hm-sb-mini" id="sbInspPrev">↑ 上一镜头</button>
+          <button class="hm-sb-mini" id="sbInspNext">↓ 下一镜头</button>
+          <button class="hm-sb-mini" id="sbInspDup">复制镜头</button>
+          <button class="hm-sb-mini danger" id="sbInspDel">删除镜头</button>
+        </div>
+      </aside>
+    </div>
+
+    <input type="file" id="sbImageInput" accept="image/*" hidden>
+
+    <!-- 动态预览（Animatic） -->
+    <div class="hm-sb-play" id="sbPlayOverlay" hidden>
+      <div class="hm-sb-play-stage" id="sbPlayStage"></div>
+      <div class="hm-sb-play-cap" id="sbPlayCap"></div>
+      <div class="hm-sb-play-bar">
+        <span id="sbPlayIndex">1/1</span>
+        <div class="hm-sb-prog"><i id="sbPlayProg"></i></div>
+        <button class="hm-sb-mini" id="sbPlayToggle">暂停</button>
+        <button class="hm-sb-mini" id="sbPlayClose">关闭</button>
       </div>
     </div>
   </main>
@@ -1408,6 +1551,7 @@
   <script src="api.js"></script>
   <script src="auth-ui.js"></script>
   <script src="app.js"></script>
+  <script src="storyboard.js"></script>
   <script src="ui.js"></script>
   <script src="desk.js"></script>
   <script src="admin.js"></script>
