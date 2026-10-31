@@ -17,7 +17,9 @@ window.HMStoryboard = (function () {
   var inited = false;
   var loadedKey = '';
   var saveTimer = null;
-  var dragId = null;
+  var pressDrag = null;          // 指针拖拽状态（替代不稳定的原生 HTML5 拖拽）
+  var suppressClick = false;     // 拖拽结束后抑制紧随其后的 click
+  var DRAG_THRESHOLD = 6;        // 超过该位移才视为拖拽
   var el = {};
   var playState = { raf: null, playing: false, index: 0, duration: 1000, elapsed: 0, lastTick: 0 };
 
@@ -201,7 +203,6 @@ window.HMStoryboard = (function () {
     var card = document.createElement('div');
     card.className = 'hm-sb-card' + (p.id === selectedId ? ' is-sel' : '');
     card.dataset.id = p.id;
-    card.draggable = true;
     var thumb = p.image
       ? '<img src="' + p.image + '" alt="">'
       : '<div class="hm-sb-ph">' + frameIcon() + '<span>未上传画面</span></div>';
@@ -303,6 +304,7 @@ window.HMStoryboard = (function () {
 
   function bindBoard() {
     el.board.addEventListener('click', function (e) {
+      if (suppressClick) { suppressClick = false; return; }
       var add = e.target.closest('[data-addshot]');
       if (add) { addShot(add.getAttribute('data-addshot')); return; }
       var del = e.target.closest('[data-delscene]');
@@ -321,39 +323,105 @@ window.HMStoryboard = (function () {
       else if (t.classList.contains('hm-sb-scene-desc')) { sc.desc = t.value; scheduleSave(); }
     });
 
-    el.board.addEventListener('dragstart', function (e) {
-      var card = e.target.closest('.hm-sb-card');
-      if (!card) return;
-      dragId = card.dataset.id;
-      card.classList.add('dragging');
-      try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId); } catch (err) { /* ignore */ }
-    });
-    el.board.addEventListener('dragend', function (e) {
-      var card = e.target.closest('.hm-sb-card');
-      if (card) card.classList.remove('dragging');
-      clearDropMarks();
-    });
-    el.board.addEventListener('dragover', function (e) {
-      if (!dragId) return;
-      var t = e.target.closest('.hm-sb-card, .hm-sb-addcard, .hm-sb-scene-head, .hm-sb-grid');
-      if (!t) return;
-      e.preventDefault();
-      clearDropMarks();
-      t.classList.add('drop-target');
-    });
-    el.board.addEventListener('drop', function (e) {
-      if (!dragId) return;
-      var t = e.target.closest('.hm-sb-card, .hm-sb-addcard, .hm-sb-scene-head, .hm-sb-grid');
-      if (!t) return;
-      e.preventDefault();
-      dropPanel(t);
-      clearDropMarks();
-    });
+    /* 指针拖拽排序：不依赖原生 HTML5 拖拽（拖拽图片/全局事件易导致失效），鼠标与触屏均可稳定工作 */
+    el.board.addEventListener('pointerdown', onCardPointerDown);
   }
 
-  function dropPanel(target) {
-    var id = dragId;
-    dragId = null;
+  function onCardPointerDown(e) {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (e.target.closest('button, input, select, textarea')) return;
+    var card = e.target.closest('.hm-sb-card');
+    if (!card || !card.dataset.id) return;
+    pressDrag = {
+      id: card.dataset.id,
+      card: card,
+      startX: e.clientX,
+      startY: e.clientY,
+      active: false,
+      ghost: null,
+      offsetX: 0,
+      offsetY: 0,
+      target: null,
+      pointerId: e.pointerId
+    };
+    window.addEventListener('pointermove', onCardPointerMove, { passive: false });
+    window.addEventListener('pointerup', onCardPointerUp);
+    window.addEventListener('pointercancel', onCardPointerCancel);
+  }
+
+  function onCardPointerMove(e) {
+    if (!pressDrag) return;
+    var dx = e.clientX - pressDrag.startX;
+    var dy = e.clientY - pressDrag.startY;
+    if (!pressDrag.active) {
+      if (dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD) return;
+      startGhost(e);
+    }
+    if (e.cancelable) e.preventDefault();
+    var r = pressDrag.card.getBoundingClientRect();
+    pressDrag.ghost.style.left = (e.clientX - pressDrag.offsetX) + 'px';
+    pressDrag.ghost.style.top = (e.clientY - pressDrag.offsetY) + 'px';
+    pressDrag.ghost.style.width = r.width + 'px';
+
+    var under = document.elementFromPoint(e.clientX, e.clientY);
+    var t = under ? under.closest('.hm-sb-card, .hm-sb-addcard, .hm-sb-scene-head, .hm-sb-grid') : null;
+    clearDropMarks();
+    if (t && !(t.classList.contains('hm-sb-card') && t.dataset.id === pressDrag.id)) {
+      t.classList.add('drop-target');
+      pressDrag.target = t;
+    } else {
+      pressDrag.target = null;
+    }
+  }
+
+  function startGhost(e) {
+    pressDrag.active = true;
+    var card = pressDrag.card;
+    var r = card.getBoundingClientRect();
+    pressDrag.offsetX = e.clientX - r.left;
+    pressDrag.offsetY = e.clientY - r.top;
+    var g = card.cloneNode(true);
+    g.className = 'hm-sb-card hm-sb-ghost';
+    g.style.position = 'fixed';
+    g.style.left = r.left + 'px';
+    g.style.top = r.top + 'px';
+    g.style.width = r.width + 'px';
+    g.style.height = r.height + 'px';
+    document.body.appendChild(g);
+    pressDrag.ghost = g;
+    card.classList.add('is-press-drag');
+    document.body.classList.add('hm-sb-dragging');
+  }
+
+  function endPressDrag() {
+    window.removeEventListener('pointermove', onCardPointerMove);
+    window.removeEventListener('pointerup', onCardPointerUp);
+    window.removeEventListener('pointercancel', onCardPointerCancel);
+    if (pressDrag) {
+      if (pressDrag.ghost) pressDrag.ghost.remove();
+      if (pressDrag.card) pressDrag.card.classList.remove('is-press-drag');
+      document.body.classList.remove('hm-sb-dragging');
+    }
+    clearDropMarks();
+  }
+
+  function onCardPointerUp() {
+    var pd = pressDrag;
+    pressDrag = null;
+    endPressDrag();
+    if (!pd || !pd.active) return;         // 未超过阈值：交给 click 正常选中
+    suppressClick = true;
+    setTimeout(function () { suppressClick = false; }, 0);
+    if (pd.target) dropPanel(pd.id, pd.target);
+    else renderBoard();
+  }
+
+  function onCardPointerCancel() {
+    pressDrag = null;
+    endPressDrag();
+  }
+
+  function dropPanel(id, target) {
     var p = findPanel(id);
     if (!p) return;
     if (target.classList.contains('hm-sb-card')) {
@@ -369,6 +437,7 @@ window.HMStoryboard = (function () {
       if (!sceneId || !findScene(sceneId)) return;
       moveToEnd(p, sceneId);
     }
+    selectedId = p.id;
     saveNow();
     renderBoard();
   }
