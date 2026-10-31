@@ -4959,35 +4959,36 @@ window.HMApp = {
 };
 
 /* ============================================================
- * 导演台 HMDirector
- * 多轨道视频剪辑：播放控制、逐帧、时间轴缩略条、可拖拽播放头、
- * 轨道片段拖拽、按层级合成显示
+ * 导演台 HMDirector（Canvas 合成版）
+ * - Canvas 实时合成预览（支持视频/图片、多轨道层级）
+ * - 逐帧步进、按住前后按钮连续播放
+ * - 轨道时间轴、胶片条缩略图、可拖拽播放头
  * ============================================================ */
 window.HMDirector = (function () {
   var TRACK_COLORS = ['#4f8cff', '#52c41a', '#faad14', '#ff5c7a', '#722ed1', '#13c2c2', '#fa541c', '#2f54eb'];
-  var PX_PER_SEC = 60;        // 时间轴上每秒对应像素
-  var THUMB_INTERVAL = 0.5;   // 缩略帧间隔（秒）
+  var PX_PER_SEC = 60;
+  var IMG_DEFAULT_DUR = 5;   // 图片默认时长（秒）
 
-  var tracks = [];            // [{id,name,color,clips:[{id,url,name,start,duration,trackStart,videoEl}]}]
+  var tracks = [];           // [{id,name,color,clips:[{id,url,name,type,start,duration,trackStart,mediaEl}]}]
   var currentTime = 0;
   var fps = 30;
   var isPlaying = false;
   var totalDuration = 0;
   var activeClip = null;
-  var stripThumbs = [];       // [{time,dataUrl}]
   var generatingStrip = false;
 
-  // DOM refs
   var el = {};
+  var canvas = null, ctx = null;
   var stripCtx = null;
-  var overlayCtx = null;
-  var draggingClip = null;
-  var resizingClip = null;
+  var rafId = null;
+  var lastTs = 0;
+  var holdTimer = null;       // 按住前后帧的连续步进定时器
 
   function $(id) { return document.getElementById(id); }
 
   function init() {
-    el.video = $('dirVideo');
+    canvas = $('dirCanvas');
+    ctx = canvas.getContext('2d');
     el.stage = $('dirStage');
     el.empty = $('dirEmpty');
     el.playBtn = $('dirPlayBtn');
@@ -5002,37 +5003,44 @@ window.HMDirector = (function () {
     el.playhead = $('dirPlayhead');
     el.filmstrip = $('dirFilmstrip');
     el.trackList = $('dirTrackList');
+    el.trackRuler = $('dirTrackRuler');
     el.trackTimeLabel = $('dirTrackTimeLabel');
     el.importBtn = $('dirImportBtn');
     el.fileInput = $('dirFileInput');
     el.addTrackBtn = $('dirAddTrackBtn');
     el.exportBtn = $('dirExportBtn');
-
     stripCtx = el.stripCanvas.getContext('2d');
 
-    // 默认 3 条轨道
+    // 自适应 canvas 尺寸
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
     addTrack(); addTrack(); addTrack();
 
-    // 事件绑定
     el.importBtn.addEventListener('click', function () { el.fileInput.click(); });
     el.fileInput.addEventListener('change', onFileImport);
     el.addTrackBtn.addEventListener('click', addTrack);
     el.exportBtn.addEventListener('click', exportComposite);
     el.playBtn.addEventListener('click', togglePlay);
-    el.prevFrame.addEventListener('click', prevFrame);
-    el.nextFrame.addEventListener('click', nextFrame);
     el.fpsSel.addEventListener('change', function () { fps = parseInt(el.fpsSel.value, 10); });
 
-    // 视频事件
-    el.video.addEventListener('timeupdate', onVideoTimeUpdate);
-    el.video.addEventListener('ended', function () { pause(); });
-    el.video.addEventListener('loadedmetadata', function () { updateDuration(); });
+    // 按住前后帧连续步进
+    bindHoldButton(el.prevFrame, -1);
+    bindHoldButton(el.nextFrame, 1);
 
-    // 播放头拖拽（胶片条）
     bindFilmstripDrag();
-
-    // 键盘
     document.addEventListener('keydown', onKeyDown);
+
+    startRenderLoop();
+  }
+
+  function resizeCanvas() {
+    var rect = el.stage.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
   }
 
   /* ---------- 轨道 / 片段 ---------- */
@@ -5047,57 +5055,85 @@ window.HMDirector = (function () {
     renderTracks();
   }
 
+  function isImageFile(f) { return /^image\//.test(f.type); }
+  function isVideoFile(f) { return /^video\//.test(f.type); }
+
   function onFileImport(e) {
     var files = Array.from(e.target.files || []);
     if (!files.length) return;
     files.forEach(function (f) {
+      if (!isImageFile(f) && !isVideoFile(f)) return;
       var url = URL.createObjectURL(f);
-      // 创建一个离屏 video 探测时长
-      var probe = document.createElement('video');
-      probe.preload = 'metadata';
-      probe.src = url;
-      probe.addEventListener('loadedmetadata', function () {
-        var dur = probe.duration || 5;
-        // 加到第一条没有满的轨道，或新建
-        var track = tracks.find(function (t) { return t.clips.length === 0; }) || tracks[0];
-        if (!track) { addTrack(); track = tracks[tracks.length - 1]; }
-        var trackStart = track.clips.reduce(function (m, c) {
-          return Math.max(m, c.trackStart + c.duration);
-        }, 0);
-        track.clips.push({
-          id: 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-          url: url,
-          name: f.name,
-          start: 0,
-          duration: dur,
-          trackStart: trackStart,
-          trackId: track.id
+      var type = isImageFile(f) ? 'image' : 'video';
+      var clip = {
+        id: 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        url: url, name: f.name, type: type,
+        start: 0, duration: type === 'image' ? IMG_DEFAULT_DUR : 0,
+        trackStart: 0, trackId: null, mediaEl: null
+      };
+      if (type === 'video') {
+        var probe = document.createElement('video');
+        probe.preload = 'metadata'; probe.src = url;
+        probe.addEventListener('loadedmetadata', function () {
+          clip.duration = probe.duration || 5;
+          probe = null;
+          placeClip(clip);
         });
-        probe = null;
-        recomputeTotalDuration();
-        renderTracks();
-        // 默认选中刚加入的片段
-        if (!activeClip) updateComposite();
-      });
+      } else {
+        var img = new Image();
+        img.onload = function () { placeClip(clip); };
+        img.src = url;
+      }
     });
     e.target.value = '';
   }
 
-  function removeClip(clipId) {
-    tracks.forEach(function (t) {
-      t.clips = t.clips.filter(function (c) { return c.id !== clipId; });
-    });
+  function placeClip(clip) {
+    // 放到第一条空轨道，否则放轨道0末尾
+    var track = tracks.find(function (t) { return t.clips.length === 0; }) || tracks[0];
+    if (!track) { addTrack(); track = tracks[tracks.length - 1]; }
+    clip.trackStart = track.clips.reduce(function (m, c) {
+      return Math.max(m, c.trackStart + c.duration);
+    }, 0);
+    clip.trackId = track.id;
+    clip.mediaEl = createClipMedia(clip);
+    track.clips.push(clip);
     recomputeTotalDuration();
     renderTracks();
+    renderTrackRuler();
+    if (!activeClip) updateComposite();
+    renderFilmstrip();
+  }
+
+  function createClipMedia(clip) {
+    if (clip.type === 'image') {
+      var img = new Image();
+      img.src = clip.url;
+      return img;
+    }
+    var v = document.createElement('video');
+    v.preload = 'auto'; v.muted = true; v.playsInline = true;
+    v.src = clip.url;
+    v.crossOrigin = 'anonymous';
+    return v;
+  }
+
+  function removeClip(clipId) {
+    tracks.forEach(function (t) {
+      t.clips = t.clips.filter(function (c) {
+        if (c.id === clipId) { try { URL.revokeObjectURL(c.url); } catch (e) {} return false; }
+        return true;
+      });
+    });
+    recomputeTotalDuration();
+    renderTracks(); renderTrackRuler();
     updateComposite();
   }
 
   function recomputeTotalDuration() {
     var max = 0;
     tracks.forEach(function (t) {
-      t.clips.forEach(function (c) {
-        max = Math.max(max, c.trackStart + c.duration);
-      });
+      t.clips.forEach(function (c) { max = Math.max(max, c.trackStart + c.duration); });
     });
     totalDuration = max;
     el.durTime.textContent = formatTime(totalDuration);
@@ -5106,10 +5142,10 @@ window.HMDirector = (function () {
   /* ---------- 渲染轨道 ---------- */
   function renderTracks() {
     el.trackList.innerHTML = '';
-    tracks.forEach(function (track, ti) {
+    var laneW = Math.max(totalDuration * PX_PER_SEC, 600);
+    tracks.forEach(function (track) {
       var row = document.createElement('div');
       row.className = 'hm-dir-track';
-
       var label = document.createElement('div');
       label.className = 'hm-dir-track-label';
       label.innerHTML = '<b style="color:' + track.color + '">' + track.name + '</b>'
@@ -5118,54 +5154,58 @@ window.HMDirector = (function () {
 
       var lane = document.createElement('div');
       lane.className = 'hm-dir-track-lane';
-      lane.style.minWidth = Math.max(totalDuration * PX_PER_SEC, 600) + 'px';
+      lane.style.minWidth = laneW + 'px';
 
       track.clips.forEach(function (clip) {
         var c = document.createElement('div');
         c.className = 'hm-dir-clip';
         c.style.left = (clip.trackStart * PX_PER_SEC) + 'px';
         c.style.width = Math.max(clip.duration * PX_PER_SEC, 24) + 'px';
-        c.style.background = track.color + 'cc';
+        c.style.background = (clip.type === 'image' ? '#2a3142' : track.color) + 'dd';
         c.dataset.clipId = clip.id;
-        c.dataset.trackId = track.id;
-        c.innerHTML = '<div class="hm-dir-clip-name">' + clip.name + '</div>'
+        c.innerHTML = '<div class="hm-dir-clip-name">' + (clip.type === 'image' ? '🖼 ' : '🎬 ') + clip.name + '</div>'
           + '<div class="hm-dir-clip-handle-l" data-resize="l"></div>'
           + '<div class="hm-dir-clip-handle-r" data-resize="r"></div>';
-        bindClipDrag(c, clip, track);
+        bindClipDrag(c, clip);
         lane.appendChild(c);
       });
-
       row.appendChild(lane);
       el.trackList.appendChild(row);
     });
-    renderTrackRuler();
   }
 
   function renderTrackRuler() {
-    // 播放头在轨道区域的竖线
-    var existing = el.trackList.querySelector('.hm-dir-track-ruler');
-    if (existing) existing.remove();
-    var ruler = document.createElement('div');
-    ruler.className = 'hm-dir-track-ruler';
-    var line = document.createElement('div');
-    line.className = 'hm-dir-track-ruler-line';
-    line.style.left = (currentTime * PX_PER_SEC) + 'px';
-    ruler.appendChild(line);
-    el.trackList.appendChild(ruler);
+    el.trackRuler.innerHTML = '';
+    el.trackRuler.style.width = Math.max(totalDuration * PX_PER_SEC, 600) + 'px';
+    var step = 1;
+    if (totalDuration > 60) step = 5;
+    if (totalDuration > 300) step = 30;
+    for (var t = 0; t <= totalDuration + 0.001; t += step) {
+      var x = t * PX_PER_SEC;
+      var line = document.createElement('i');
+      line.style.left = x + 'px';
+      el.trackRuler.appendChild(line);
+      if (t < totalDuration) {
+        var sp = document.createElement('span');
+        sp.textContent = formatTimeShort(t);
+        sp.style.left = x + 'px';
+        el.trackRuler.appendChild(sp);
+      }
+    }
   }
 
   /* ---------- 片段拖拽 ---------- */
-  function bindClipDrag(cEl, clip, track) {
-    var startX, origTrackStart, origWidth, mode;
-
+  function bindClipDrag(cEl, clip) {
+    var startX, origTrackStart, origWidth, origStart, origDur, mode;
     cEl.addEventListener('mousedown', function (e) {
       var resize = e.target.getAttribute('data-resize');
       mode = resize || 'move';
       startX = e.clientX;
       origTrackStart = clip.trackStart;
       origWidth = clip.duration * PX_PER_SEC;
-      e.preventDefault();
-      e.stopPropagation();
+      origStart = clip.start;
+      origDur = clip.duration;
+      e.preventDefault(); e.stopPropagation();
 
       function onMove(ev) {
         var dx = ev.clientX - startX;
@@ -5179,7 +5219,7 @@ window.HMDirector = (function () {
         } else if (mode === 'l') {
           var delta = dx / PX_PER_SEC;
           var newStart = Math.max(0, origTrackStart + delta);
-          var newDur = (origTrackStart + clip.duration) - newStart;
+          var newDur = (origTrackStart + origDur) - newStart;
           if (newDur > 0.1) {
             clip.trackStart = newStart;
             clip.duration = newDur;
@@ -5188,6 +5228,7 @@ window.HMDirector = (function () {
           }
         }
         recomputeTotalDuration();
+        renderTrackRuler();
         updateComposite();
       }
       function onUp() {
@@ -5199,137 +5240,208 @@ window.HMDirector = (function () {
       document.addEventListener('mouseup', onUp);
     });
 
-    // 双击删除
     cEl.addEventListener('dblclick', function (e) {
       if (e.target.getAttribute('data-resize')) return;
       if (confirm('删除片段 "' + clip.name + '" ?')) removeClip(clip.id);
     });
   }
 
-  /* ---------- 合成：找到当前时间最上层可见片段 ---------- */
-  function findActiveClip(time) {
-    for (var i = tracks.length - 1; i >= 0; i--) {
-      var t = tracks[i];
-      for (var j = 0; j < t.clips.length; j++) {
-        var c = t.clips[j];
+  /* ---------- 合成：按层级找当前时间的片段（底层→顶层） ---------- */
+  function findClipsAt(time) {
+    // tracks[0] 是列表最上层 → 最上层图层；绘制时从后往前（先画底层）
+    var result = [];
+    for (var i = 0; i < tracks.length; i++) {
+      for (var j = 0; j < tracks[i].clips.length; j++) {
+        var c = tracks[i].clips[j];
         if (time >= c.trackStart && time < c.trackStart + c.duration) {
-          return { clip: c, track: t };
+          result.push({ clip: c, track: tracks[i], index: i });
         }
       }
     }
-    return null;
+    // 按轨道 index 升序 = 从底到顶（index 大的在上层，后画）
+    result.sort(function (a, b) { return a.index - b.index; });
+    return result;
   }
 
-  function updateComposite() {
-    var found = findActiveClip(currentTime);
-    if (found) {
-      var c = found.clip;
-      if (activeClip !== c) {
-        activeClip = c;
-        el.video.src = c.url;
-        el.video.load();
+  function findTopClipAt(time) {
+    var list = findClipsAt(time);
+    return list.length ? list[list.length - 1] : null;
+  }
+
+  /* ---------- 实时渲染循环 ---------- */
+  function startRenderLoop() {
+    function loop(ts) {
+      rafId = requestAnimationFrame(loop);
+      var dt = lastTs ? (ts - lastTs) / 1000 : 0;
+      lastTs = ts;
+
+      if (isPlaying) {
+        var top = findTopClipAt(currentTime);
+        if (top) {
+          var c = top.clip;
+          if (c !== activeClip) {
+            if (activeClip && activeClip.type === 'video' && activeClip.mediaEl) activeClip.mediaEl.pause();
+            activeClip = c;
+            if (c.type === 'video' && c.mediaEl) {
+              c.mediaEl.currentTime = (currentTime - c.trackStart) + c.start;
+              c.mediaEl.play().catch(function () {});
+            }
+          }
+          if (c.type === 'video' && c.mediaEl) {
+            // 用视频实际播放时间同步 currentTime
+            var t = c.trackStart + (c.mediaEl.currentTime - c.start);
+            if (t >= c.trackStart + c.duration - 0.02) {
+              // 片段结束，跳到下一帧找新片段
+              currentTime = c.trackStart + c.duration;
+              activeClip = null;
+            } else {
+              currentTime = t;
+            }
+          } else {
+            currentTime += dt;
+            if (currentTime >= c.trackStart + c.duration) {
+              currentTime = c.trackStart + c.duration;
+              activeClip = null;
+            }
+          }
+        } else {
+          // 当前时间无片段，尝试往后找
+          var next = findNextClipStart(currentTime);
+          if (next != null) currentTime = next;
+          else { pause(); }
+        }
+        if (currentTime > totalDuration) { currentTime = totalDuration; pause(); }
       }
-      var localTime = (currentTime - c.trackStart) + c.start;
-      if (Math.abs(el.video.currentTime - localTime) > 0.05) {
-        el.video.currentTime = Math.min(localTime, c.duration - 0.01);
-      }
-      el.empty.hidden = true;
-      el.video.classList.add('is-on');
-    } else {
-      activeClip = null;
-      el.video.pause();
-      el.video.removeAttribute('src');
-      el.video.classList.remove('is-on');
-      el.empty.hidden = false;
+
+      drawCompositedFrame();
+      updatePlayhead();
+      el.curTime.textContent = formatTime(currentTime);
+      el.trackTimeLabel.textContent = formatTime(currentTime);
     }
-    updatePlayhead();
-    el.curTime.textContent = formatTime(currentTime);
-    el.trackTimeLabel.textContent = formatTime(currentTime);
-    renderTrackRuler();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function findNextClipStart(from) {
+    var best = Infinity;
+    tracks.forEach(function (t) {
+      t.clips.forEach(function (c) {
+        if (c.trackStart >= from - 0.001 && c.trackStart < best) best = c.trackStart;
+      });
+    });
+    return best === Infinity ? null : best;
+  }
+
+  /* 把所有覆盖 currentTime 的片段从底到顶画到 canvas */
+  function drawCompositedFrame() {
+    var w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    var clips = findClipsAt(currentTime);
+    if (clips.length === 0) {
+      el.empty.hidden = false;
+      return;
+    }
+    el.empty.hidden = true;
+    for (var i = 0; i < clips.length; i++) {
+      drawClip(clips[i].clip, w, h);
+    }
+  }
+
+  function drawClip(clip, cw, ch) {
+    var localTime = (currentTime - clip.trackStart) + clip.start;
+    if (clip.type === 'image') {
+      var img = clip.mediaEl;
+      if (img && img.complete && img.naturalWidth) {
+        drawCover(img, 0, 0, cw, ch);
+      }
+    } else {
+      var v = clip.mediaEl;
+      if (v && v.readyState >= 2) {
+        try {
+          ctx.drawImage(v, 0, 0, cw, ch);
+        } catch (e) { /* 跨域等 */ }
+      }
+    }
+  }
+
+  /* object-fit: cover 式绘制 */
+  function drawCover(img, dx, dy, dw, dh) {
+    var iw = img.naturalWidth || img.videoWidth;
+    var ih = img.naturalHeight || img.videoHeight;
+    if (!iw || !ih) return;
+    var scale = Math.max(dw / iw, dh / ih);
+    var sw = dw / scale, sh = dh / scale;
+    var sx = (iw - sw) / 2, sy = (ih - sh) / 2;
+    ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 
   /* ---------- 播放控制 ---------- */
-  function togglePlay() {
-    if (isPlaying) pause(); else play();
-  }
+  function togglePlay() { if (isPlaying) pause(); else play(); }
 
   function play() {
-    var found = findActiveClip(currentTime);
-    if (!found) {
-      // 从头找第一个有片段的时间点
-      var first = Infinity;
-      tracks.forEach(function (t) {
-        t.clips.forEach(function (c) { first = Math.min(first, c.trackStart); });
-      });
-      if (first === Infinity) return;
+    if (totalDuration <= 0) return;
+    // 若当前无片段，跳到第一个
+    if (!findTopClipAt(currentTime)) {
+      var first = findNextClipStart(0);
+      if (first == null) return;
       currentTime = first;
-      updateComposite();
     }
     isPlaying = true;
+    activeClip = null; // 强制重新选择片段并播放
     el.playIcon.innerHTML = '<path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/>';
-    el.video.play().catch(function () { /* ignore */ });
-    startPlayLoop();
   }
 
   function pause() {
     isPlaying = false;
     el.playIcon.innerHTML = '<path d="M8 5v14l11-7L8 5Z" fill="currentColor"/>';
-    el.video.pause();
-  }
-
-  var playTimer = null;
-  function startPlayLoop() {
-    if (playTimer) cancelAnimationFrame(playTimer);
-    function tick() {
-      if (!isPlaying) return;
-      currentTime += 1 / fps;
-      if (currentTime > totalDuration) {
-        currentTime = totalDuration;
-        pause();
-      }
-      updateComposite();
-      playTimer = requestAnimationFrame(tick);
+    if (activeClip && activeClip.type === 'video' && activeClip.mediaEl) {
+      activeClip.mediaEl.pause();
     }
-    playTimer = requestAnimationFrame(tick);
+    activeClip = null;
   }
 
-  function prevFrame() {
+  function stepFrame(dir) {
     pause();
-    currentTime = Math.max(0, currentTime - 1 / fps);
-    updateComposite();
+    currentTime = Math.max(0, Math.min(totalDuration, currentTime + dir * (1 / fps)));
+    seekActiveMedia();
   }
 
-  function nextFrame() {
-    pause();
-    currentTime = Math.min(totalDuration, currentTime + 1 / fps);
-    updateComposite();
+  /* 让当前顶层视频片段的 mediaEl 定位到 currentTime */
+  function seekActiveMedia() {
+    var top = findTopClipAt(currentTime);
+    if (top && top.clip.type === 'video' && top.clip.mediaEl) {
+      var local = (currentTime - top.clip.trackStart) + top.clip.start;
+      try { top.clip.mediaEl.currentTime = Math.min(local, top.clip.duration - 0.01); } catch (e) {}
+    }
   }
 
   function seek(time) {
+    pause();
     currentTime = Math.max(0, Math.min(totalDuration, time));
-    updateComposite();
+    seekActiveMedia();
   }
 
-  /* ---------- 视频 timeupdate 同步 ---------- */
-  function onVideoTimeUpdate() {
-    if (!activeClip) return;
-    // 视频实际播放时间 -> 换算到时间轴时间
-    var local = el.video.currentTime;
-    var t = activeClip.trackStart + (local - activeClip.start);
-    if (Math.abs(t - currentTime) > 0.1) {
-      currentTime = t;
-      updatePlayhead();
-      el.curTime.textContent = formatTime(currentTime);
-      el.trackTimeLabel.textContent = formatTime(currentTime);
-      renderTrackRuler();
+  /* 按住按钮连续步进 */
+  function bindHoldButton(btn, dir) {
+    var intervalId = null;
+    function start() {
+      stepFrame(dir);
+      // 300ms 后开始连续步进
+      intervalId = setInterval(function () { stepFrame(dir); }, 1000 / fps);
     }
+    function stop() {
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+    }
+    btn.addEventListener('mousedown', function (e) { e.preventDefault(); start(); });
+    btn.addEventListener('mouseup', stop);
+    btn.addEventListener('mouseleave', stop);
+    btn.addEventListener('touchstart', function (e) { e.preventDefault(); start(); }, { passive: false });
+    btn.addEventListener('touchend', stop);
   }
 
-  function updateDuration() {
-    if (activeClip) {
-      // 用片段自身时长
-    }
-    el.durTime.textContent = formatTime(totalDuration);
+  /* ---------- updateComposite（保留供外部调用） ---------- */
+  function updateComposite() {
+    seekActiveMedia();
+    drawCompositedFrame();
   }
 
   /* ---------- 胶片条与播放头 ---------- */
@@ -5346,96 +5458,57 @@ window.HMDirector = (function () {
       var pct = Math.max(0, Math.min(1, x / rect.width));
       seek(pct * totalDuration);
     }
-    el.filmstrip.addEventListener('mousedown', function (e) {
-      dragging = true;
-      pause();
-      seekFromEvent(e);
-    });
-    document.addEventListener('mousemove', function (e) {
-      if (dragging) seekFromEvent(e);
-    });
+    el.filmstrip.addEventListener('mousedown', function (e) { dragging = true; seekFromEvent(e); });
+    document.addEventListener('mousemove', function (e) { if (dragging) seekFromEvent(e); });
     document.addEventListener('mouseup', function () { dragging = false; });
-    el.filmstrip.addEventListener('touchstart', function (e) {
-      dragging = true; pause(); seekFromEvent(e);
-    }, { passive: true });
-    el.filmstrip.addEventListener('touchmove', function (e) {
-      if (dragging) seekFromEvent(e);
-    }, { passive: true });
+    el.filmstrip.addEventListener('touchstart', function (e) { dragging = true; seekFromEvent(e); }, { passive: true });
+    el.filmstrip.addEventListener('touchmove', function (e) { if (dragging) seekFromEvent(e); }, { passive: true });
     el.filmstrip.addEventListener('touchend', function () { dragging = false; });
   }
 
-  /* 生成胶片缩略图 */
   function renderFilmstrip() {
     if (generatingStrip) return;
-    var w = el.stripCanvas.clientWidth;
-    var h = el.stripCanvas.clientHeight;
-    if (w === 0 || h === 0) {
-      requestAnimationFrame(renderFilmstrip);
-      return;
-    }
-    el.stripCanvas.width = w * (window.devicePixelRatio || 1);
-    el.stripCanvas.height = h * (window.devicePixelRatio || 1);
-    stripCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+    var w = el.stripCanvas.clientWidth, h = el.stripCanvas.clientHeight;
+    if (w === 0 || h === 0) { requestAnimationFrame(renderFilmstrip); return; }
+    var dpr = window.devicePixelRatio || 1;
+    el.stripCanvas.width = w * dpr;
+    el.stripCanvas.height = h * dpr;
+    stripCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     stripCtx.fillStyle = '#0a0d14';
     stripCtx.fillRect(0, 0, w, h);
 
-    // 用当前活跃片段生成缩略图
-    var srcClip = activeClip || findAnyClip();
-    if (!srcClip) {
-      drawRuler(w, h);
-      return;
+    var srcClip = null;
+    for (var i = 0; i < tracks.length; i++) {
+      if (tracks[i].clips.length) { srcClip = tracks[i].clips[0]; break; }
     }
+    if (!srcClip || srcClip.type !== 'video') { drawStripRuler(w, h); return; }
     generatingStrip = true;
     generateStripThumbs(srcClip, w, h);
-  }
-
-  function findAnyClip() {
-    for (var i = tracks.length - 1; i >= 0; i--) {
-      if (tracks[i].clips.length) return tracks[i].clips[0];
-    }
-    return null;
   }
 
   function generateStripThumbs(clip, w, h) {
     var thumbW = Math.floor(h * (16 / 9));
     var count = Math.max(1, Math.floor(w / thumbW));
     var v = document.createElement('video');
-    v.preload = 'auto';
-    v.muted = true;
-    v.src = clip.url;
+    v.preload = 'auto'; v.muted = true; v.src = clip.url;
     var idx = 0;
-
-    v.addEventListener('loadedmetadata', function () {
-      nextThumb();
-    });
-
-    function nextThumb() {
-      if (idx >= count) {
-        drawRuler(w, h);
-        generatingStrip = false;
-        try { URL.revokeObjectURL(v.src); } catch (e) {}
-        return;
-      }
+    v.addEventListener('loadedmetadata', function () { next(); });
+    function next() {
+      if (idx >= count) { drawStripRuler(w, h); generatingStrip = false; return; }
       var t = (idx / count) * clip.duration;
       v.currentTime = Math.min(t, clip.duration - 0.05);
     }
     v.addEventListener('seeked', function () {
-      var thumbW = Math.floor(h * (16 / 9));
-      try {
-        stripCtx.drawImage(v, idx * thumbW, 0, thumbW, h);
-      } catch (e) { /* ignore */ }
+      try { stripCtx.drawImage(v, idx * thumbW, 0, thumbW, h); } catch (e) {}
       idx++;
-      setTimeout(nextThumb, 30);
+      setTimeout(next, 30);
     });
   }
 
-  function drawRuler(w, h) {
-    // 时间刻度
+  function drawStripRuler(w, h) {
     el.stripRuler.innerHTML = '';
-    var step = 1; // 每秒一个刻度
-    if (totalDuration > 60) step = 5;
-    if (totalDuration > 300) step = 30;
-    for (var t = 0; t <= totalDuration; t += step) {
+    var step = totalDuration > 300 ? 30 : (totalDuration > 60 ? 5 : 1);
+    for (var t = 0; t <= totalDuration + 0.001; t += step) {
       var x = (t / totalDuration) * w;
       if (x > w) break;
       var sp = document.createElement('span');
@@ -5450,51 +5523,44 @@ window.HMDirector = (function () {
     if (document.body.dataset.view !== 'director') return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-    else if (e.code === 'ArrowLeft') { e.preventDefault(); prevFrame(); }
-    else if (e.code === 'ArrowRight') { e.preventDefault(); nextFrame(); }
+    else if (e.code === 'ArrowLeft') { e.preventDefault(); stepFrame(-1); }
+    else if (e.code === 'ArrowRight') { e.preventDefault(); stepFrame(1); }
   }
 
   /* ---------- 工具 ---------- */
   function formatTime(sec) {
     sec = Math.max(0, sec);
-    var m = Math.floor(sec / 60);
-    var s = Math.floor(sec % 60);
-    var cs = Math.floor((sec % 1) * 100);
+    var m = Math.floor(sec / 60), s = Math.floor(sec % 60), cs = Math.floor((sec % 1) * 100);
     return pad(m) + ':' + pad(s) + '.' + pad(cs);
   }
   function formatTimeShort(sec) {
     sec = Math.max(0, sec);
-    var m = Math.floor(sec / 60);
-    var s = Math.floor(sec % 60);
-    return pad(m) + ':' + pad(s);
+    return pad(Math.floor(sec / 60)) + ':' + pad(Math.floor(sec % 60));
   }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
   function exportComposite() {
     if (tracks.every(function (t) { return t.clips.length === 0; })) {
-      alert('请先导入视频片段');
-      return;
+      alert('请先导入视频或图片片段'); return;
     }
-    alert('导出功能：将按轨道层级顺序拼接所有片段（开发中）。\n当前可通过播放预览合成效果。');
+    alert('导出功能开发中。当前可在预览区查看多轨道合成效果。');
   }
 
   /* ---------- 对外 ---------- */
   function onEnter() {
-    // 进入导演台时刷新
+    resizeCanvas();
     renderTracks();
+    renderTrackRuler();
     updateComposite();
     renderFilmstrip();
   }
 
   return {
-    init: init,
-    onEnter: onEnter,
-    play: play,
-    pause: pause,
-    prevFrame: prevFrame,
-    nextFrame: nextFrame,
-    seek: seek,
-    addTrack: addTrack,
+    init: init, onEnter: onEnter,
+    play: play, pause: pause,
+    prevFrame: function () { stepFrame(-1); },
+    nextFrame: function () { stepFrame(1); },
+    seek: seek, addTrack: addTrack,
     renderFilmstrip: renderFilmstrip
   };
 })();

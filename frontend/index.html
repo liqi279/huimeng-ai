@@ -570,6 +570,7 @@
       .hm-dir-empty>span{font-size:12px}
       .hm-dir-video{max-width:100%;max-height:100%;object-fit:contain;display:none}
       .hm-dir-video.is-on{display:block}
+      .hm-dir-canvas{max-width:100%;max-height:100%;object-fit:contain;display:block;background:#000}
       .hm-dir-overlay{position:absolute;top:0;left:0;pointer-events:none}
       .hm-dir-controls{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--hm-surface2,#15192a);border-top:1px solid var(--hm-line,#2a3142)}
       .hm-dir-ctrl{width:36px;height:36px;border:none;border-radius:50%;background:#2a3142;color:var(--hm-text,#e6e9ef);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
@@ -590,6 +591,9 @@
       .hm-dir-playhead::before{content:"";position:absolute;top:-2px;left:-5px;width:12px;height:8px;background:#ff5c7a;clip-path:polygon(50% 100%,0 0,100% 0)}
       .hm-dir-tracks{flex:none;max-height:38%;min-height:160px;display:flex;flex-direction:column;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;overflow:hidden}
       .hm-dir-track-head{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:12px;color:var(--hm-dim,#8b93a1);border-bottom:1px solid var(--hm-line,#2a3142);flex:none}
+      .hm-dir-track-ruler{height:22px;flex:none;position:relative;border-bottom:1px solid var(--hm-line,#2a3142);background:var(--hm-surface2,#15192a);margin-left:90px;overflow:hidden}
+      .hm-dir-track-ruler span{position:absolute;top:4px;font-size:9px;color:var(--hm-dim,#8b93a1);font-family:monospace;transform:translateX(-50%);pointer-events:none}
+      .hm-dir-track-ruler i{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08);pointer-events:none}
       .hm-dir-track-list{flex:1;overflow:auto;position:relative}
       .hm-dir-track{display:flex;align-items:stretch;border-bottom:1px solid var(--hm-line,#2a3142);min-height:52px;position:relative}
       .hm-dir-track-label{width:90px;flex:none;padding:6px 10px;font-size:11px;color:var(--hm-dim,#8b93a1);display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--hm-line,#2a3142);background:var(--hm-surface2,#15192a)}
@@ -615,7 +619,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 21h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           导入视频
         </button>
-        <input type="file" id="dirFileInput" accept="video/*" multiple hidden>
+        <input type="file" id="dirFileInput" accept="video/*,image/*" multiple hidden>
         <button class="hm-dir-btn ghost" id="dirAddTrackBtn">+ 添加轨道</button>
         <button class="hm-dir-btn ghost" id="dirExportBtn">导出合成</button>
       </div>
@@ -627,11 +631,10 @@
         <div class="hm-dir-stage" id="dirStage">
           <div class="hm-dir-empty" id="dirEmpty">
             <div class="hm-dir-empty-icon">🎬</div>
-            <div>导入视频到下方轨道开始剪辑</div>
-            <span>支持多轨道图层合成 · 逐帧精修</span>
+            <div>导入视频或图片到下方轨道开始剪辑</div>
+            <span>支持多轨道图层合成 · 逐帧精修 · 图片/视频混合</span>
           </div>
-          <video class="hm-dir-video" id="dirVideo" playsinline></video>
-          <canvas class="hm-dir-overlay" id="dirOverlay" hidden></canvas>
+          <canvas class="hm-dir-canvas" id="dirCanvas"></canvas>
         </div>
 
         <!-- 标号3,4,5: 播放控制 -->
@@ -677,6 +680,7 @@
           <span>轨道</span>
           <span class="hm-dir-track-time" id="dirTrackTimeLabel">00:00.00</span>
         </div>
+        <div class="hm-dir-track-ruler" id="dirTrackRuler"></div>
         <div class="hm-dir-track-list" id="dirTrackList"></div>
       </div>
     </div>
