@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261031093710-6d15320";</script>
+<script>window.HM_BUILD = "20261031095429-56c83b9";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -15463,6 +15463,9 @@ window.HMDirector = (function () {
   var totalDuration = 0;
   var activeClip = null;
   var generatingStrip = false;
+  var canvasDirty = true;     // 画布是否需要重绘
+  var lastDrawnTime = -1;     // 上次绘制的时间戳，避免重复绘制同一帧
+  var stripClipId = null;     // 已生成胶片缩略图的片段ID，避免重复生成
 
   var el = {};
   var canvas = null, ctx = null;
@@ -15523,14 +15526,23 @@ window.HMDirector = (function () {
 
   function resizeCanvas() {
     var rect = el.stage.getBoundingClientRect();
+    if (rect.width < 10 || rect.height < 10) {
+      // 舞台尚未布局完成，下一帧重试
+      requestAnimationFrame(resizeCanvas);
+      return;
+    }
     var dpr = window.devicePixelRatio || 1;
-    // 画布填满舞台，视频用 drawContain 保持原始比例
-    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-    canvas.style.left = '0px';
-    canvas.style.top = '0px';
+    var newW = Math.max(1, Math.floor(rect.width * dpr));
+    var newH = Math.max(1, Math.floor(rect.height * dpr));
+    if (canvas.width !== newW || canvas.height !== newH) {
+      canvas.width = newW;
+      canvas.height = newH;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      canvas.style.left = '0px';
+      canvas.style.top = '0px';
+      canvasDirty = true;
+    }
   }
 
   /* ---------- 轨道 / 片段 ---------- */
@@ -15591,8 +15603,10 @@ window.HMDirector = (function () {
     recomputeTotalDuration();
     renderTracks();
     renderTrackRuler();
+    stripClipId = null; // 新片段加入，需重新生成胶片
     if (!activeClip) updateComposite();
     renderFilmstrip();
+    canvasDirty = true;
   }
 
   function createClipMedia(clip) {
@@ -15617,7 +15631,10 @@ window.HMDirector = (function () {
     });
     recomputeTotalDuration();
     renderTracks(); renderTrackRuler();
+    stripClipId = null;
+    canvasDirty = true;
     updateComposite();
+    renderFilmstrip();
   }
 
   function recomputeTotalDuration() {
@@ -15824,28 +15841,32 @@ window.HMDirector = (function () {
   /* 把所有覆盖 currentTime 的片段从底到顶画到 canvas */
   function drawCompositedFrame() {
     var w = canvas.width, h = canvas.height;
+    if (w < 2 || h < 2) return; // 画布未就绪
     var clips = findClipsAt(currentTime);
     if (clips.length === 0) {
-      // 无片段：只在首次或切换时清屏，避免每帧重绘闪烁
-      if (!el.empty.hidden) return;
+      if (!el.empty.hidden) return; // 已显示空状态，不重复清屏
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, w, h);
       el.empty.hidden = false;
+      lastDrawnTime = currentTime;
       return;
     }
-    // 检查是否至少有一个片段可绘制，否则保留上一帧避免黑屏闪烁
+    // 时间未变且无需重绘，跳过以避免闪烁
+    if (!canvasDirty && Math.abs(currentTime - lastDrawnTime) < 0.001) return;
+    // 检查是否至少有一个片段可绘制，否则保留上一帧
     var canDraw = clips.some(function (c) {
       if (c.clip.type === 'image') return c.clip.mediaEl && c.clip.mediaEl.complete && c.clip.mediaEl.naturalWidth;
       return c.clip.mediaEl && c.clip.mediaEl.readyState >= 2;
     });
-    if (!canDraw) return; // 保留上一帧，不清空
+    if (!canDraw) return;
     el.empty.hidden = true;
-    // 用黑色填充而非 clearRect，避免透明闪烁
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, w, h);
     for (var i = 0; i < clips.length; i++) {
       drawClip(clips[i].clip, w, h);
     }
+    lastDrawnTime = currentTime;
+    canvasDirty = false;
   }
 
   function drawClip(clip, cw, ch) {
@@ -15899,6 +15920,7 @@ window.HMDirector = (function () {
     }
     isPlaying = true;
     activeClip = null; // 强制重新选择片段并播放
+    canvasDirty = true;
     el.playIcon.innerHTML = '<path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/>';
   }
 
@@ -15915,6 +15937,7 @@ window.HMDirector = (function () {
     pause();
     currentTime = Math.max(0, Math.min(totalDuration, currentTime + dir * (1 / fps)));
     seekActiveMedia();
+    canvasDirty = true;
   }
 
   /* 让当前顶层视频片段的 mediaEl 定位到 currentTime */
@@ -15930,6 +15953,7 @@ window.HMDirector = (function () {
     pause();
     currentTime = Math.max(0, Math.min(totalDuration, time));
     seekActiveMedia();
+    canvasDirty = true;
   }
 
   /* 按住按钮连续步进 */
@@ -15983,18 +16007,25 @@ window.HMDirector = (function () {
     var w = el.stripCanvas.clientWidth, h = el.stripCanvas.clientHeight;
     if (w === 0 || h === 0) { requestAnimationFrame(renderFilmstrip); return; }
     var dpr = window.devicePixelRatio || 1;
-    el.stripCanvas.width = w * dpr;
-    el.stripCanvas.height = h * dpr;
-    stripCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    stripCtx.fillStyle = '#0a0d14';
-    stripCtx.fillRect(0, 0, w, h);
+    var newW = w * dpr, newH = h * dpr;
+    // 尺寸未变则不重置画布，避免闪烁
+    if (el.stripCanvas.width !== newW || el.stripCanvas.height !== newH) {
+      el.stripCanvas.width = newW;
+      el.stripCanvas.height = newH;
+      stripCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
 
     var srcClip = null;
     for (var i = 0; i < tracks.length; i++) {
       if (tracks[i].clips.length) { srcClip = tracks[i].clips[0]; break; }
     }
     if (!srcClip || srcClip.type !== 'video') { drawStripRuler(w, h); return; }
+    // 同一片段已生成过缩略图则跳过，避免重复生成导致闪烁
+    if (stripClipId === srcClip.id) { drawStripRuler(w, h); return; }
+    stripClipId = srcClip.id;
     generatingStrip = true;
+    stripCtx.fillStyle = '#0a0d14';
+    stripCtx.fillRect(0, 0, w, h);
     generateStripThumbs(srcClip, w, h);
   }
 
@@ -16060,11 +16091,15 @@ window.HMDirector = (function () {
 
   /* ---------- 对外 ---------- */
   function onEnter() {
-    resizeCanvas();
-    renderTracks();
-    renderTrackRuler();
-    updateComposite();
-    renderFilmstrip();
+    // 等待页面过渡动画完成后再测量尺寸，避免获取到 0 尺寸
+    requestAnimationFrame(function () {
+      resizeCanvas();
+      renderTracks();
+      renderTrackRuler();
+      canvasDirty = true;
+      updateComposite();
+      renderFilmstrip();
+    });
   }
 
   return {
