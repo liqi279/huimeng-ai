@@ -5037,19 +5037,13 @@ window.HMDirector = (function () {
   function resizeCanvas() {
     var rect = el.stage.getBoundingClientRect();
     var dpr = window.devicePixelRatio || 1;
-    // 预览区保持 16:9，居中显示，避免过宽拉伸
-    var targetRatio = 16 / 9;
-    var w = rect.width, h = rect.height;
-    if (w / h > targetRatio) { w = h * targetRatio; }
-    else { h = w / targetRatio; }
-    w = Math.max(1, Math.floor(w));
-    h = Math.max(1, Math.floor(h));
-    canvas.width = Math.floor(w * dpr);
-    canvas.height = Math.floor(h * dpr);
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-    canvas.style.left = Math.floor((rect.width - w) / 2) + 'px';
-    canvas.style.top = Math.floor((rect.height - h) / 2) + 'px';
+    // 画布填满舞台，视频用 drawContain 保持原始比例
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    canvas.style.left = '0px';
+    canvas.style.top = '0px';
   }
 
   /* ---------- 轨道 / 片段 ---------- */
@@ -5345,18 +5339,23 @@ window.HMDirector = (function () {
     var w = canvas.width, h = canvas.height;
     var clips = findClipsAt(currentTime);
     if (clips.length === 0) {
-      ctx.clearRect(0, 0, w, h);
+      // 无片段：只在首次或切换时清屏，避免每帧重绘闪烁
+      if (!el.empty.hidden) return;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, w, h);
       el.empty.hidden = false;
       return;
     }
-    el.empty.hidden = true;
     // 检查是否至少有一个片段可绘制，否则保留上一帧避免黑屏闪烁
     var canDraw = clips.some(function (c) {
       if (c.clip.type === 'image') return c.clip.mediaEl && c.clip.mediaEl.complete && c.clip.mediaEl.naturalWidth;
       return c.clip.mediaEl && c.clip.mediaEl.readyState >= 2;
     });
     if (!canDraw) return; // 保留上一帧，不清空
-    ctx.clearRect(0, 0, w, h);
+    el.empty.hidden = true;
+    // 用黑色填充而非 clearRect，避免透明闪烁
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
     for (var i = 0; i < clips.length; i++) {
       drawClip(clips[i].clip, w, h);
     }
