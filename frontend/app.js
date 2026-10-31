@@ -5132,6 +5132,9 @@ window.HMDirector = (function () {
     v.preload = 'auto'; v.muted = true; v.playsInline = true;
     v.src = clip.url;
     v.crossOrigin = 'anonymous';
+    // seek/数据加载完成后标记画布脏，确保拖动预览时帧能实时刷新
+    v.addEventListener('seeked', function () { canvasDirty = true; });
+    v.addEventListener('loadeddata', function () { canvasDirty = true; });
     return v;
   }
 
