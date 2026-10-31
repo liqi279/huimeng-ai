@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261031103407-89d3fd1";</script>
+<script>window.HM_BUILD = "20261031103918-2655178";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -15903,29 +15903,29 @@ window.HMDirector = (function () {
         lastDrawnTime = currentTime;
         return;
       }
-      // 当前时间无片段但工程中有片段：保留上一帧，不切换空状态
-      if (canvasDirty || Math.abs(currentTime - lastDrawnTime) >= 0.001) {
-        // 仅更新播放头等，不重绘画布
-      }
+      // 当前时间无片段但工程中有片段：保留上一帧
       return;
     }
     // 时间未变且无需重绘，跳过以避免闪烁
     if (!canvasDirty && Math.abs(currentTime - lastDrawnTime) < 0.001) return;
-    // 检查是否至少有一个片段可绘制，否则保留上一帧
-    var canDraw = clips.some(function (c) {
-      if (c.clip.type === 'image') return c.clip.mediaEl && c.clip.mediaEl.complete && c.clip.mediaEl.naturalWidth;
-      return c.clip.mediaEl && c.clip.mediaEl.readyState >= 2;
-    });
-    if (!canDraw) return;
+    // 关键：先用 getClipDrawRect 真实探测每个片段能否画出，收集可绘制项
+    // （不能只看 readyState，因为 seek 时状态可能在检查与绘制之间变化）
+    var drawList = [];
+    var selRect = null;
+    for (var i = 0; i < clips.length; i++) {
+      var r = getClipDrawRect(clips[i].clip, w, h);
+      if (r) {
+        drawList.push({ clip: clips[i].clip, rect: r });
+        if (clips[i].clip.id === selectedClipId) selRect = r;
+      }
+    }
+    // 没有任何片段能画出来 → 保留上一帧，绝不清屏（否则会出现黑屏）
+    if (drawList.length === 0) return;
     el.empty.hidden = true;
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, w, h);
-    var selRect = null;
-    for (var i = 0; i < clips.length; i++) {
-      drawClip(clips[i].clip, w, h);
-      if (clips[i].clip.id === selectedClipId) {
-        selRect = getClipDrawRect(clips[i].clip, w, h);
-      }
+    for (var k = 0; k < drawList.length; k++) {
+      try { ctx.drawImage(drawList[k].clip.mediaEl, drawList[k].rect.x, drawList[k].rect.y, drawList[k].rect.w, drawList[k].rect.h); } catch (e) { /* 跨域等 */ }
     }
     // 绘制选中片段的缩放框与手柄
     if (selRect) {
