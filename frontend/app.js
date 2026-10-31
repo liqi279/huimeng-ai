@@ -5407,8 +5407,9 @@ window.HMDirector = (function () {
     var w = canvas.width, h = canvas.height;
     if (w < 2 || h < 2) return; // 画布未就绪
     var clips = findClipsAt(currentTime);
-    // 只有当所有轨道都没有任何片段时才显示空状态，避免拖动到片段边界时闪烁
+    // 工程中有片段就立刻隐藏空状态层，避免它覆盖画布造成"帧消失"
     var hasAnyClip = tracks.some(function (t) { return t.clips.length > 0; });
+    if (hasAnyClip) el.empty.hidden = true;
     if (clips.length === 0) {
       if (!hasAnyClip) {
         if (!el.empty.hidden) return;
@@ -5436,7 +5437,6 @@ window.HMDirector = (function () {
     }
     // 没有任何片段能画出来 → 保留上一帧，绝不清屏（否则会出现黑屏）
     if (drawList.length === 0) return;
-    el.empty.hidden = true;
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, w, h);
     for (var k = 0; k < drawList.length; k++) {
