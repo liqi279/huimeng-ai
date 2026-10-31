@@ -8367,7 +8367,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261031124834-277cc56";</script>
+<script>window.HM_BUILD = "20261031134229-ba29d0f";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -17994,10 +17994,13 @@ window.HMPaint = (function () {
       return false;
     }
     var d = pdata.data;
-    var blocked = new Uint8Array(w * h);
+    // lineMask：真实线稿像素（alpha>24），用于区分"线稿"与"扩张间隙"
+    var lineMask = new Uint8Array(w * h);
     for (var i = 0; i < w * h; i++) {
-      if (ldata[i * 4 + 3] > 24) blocked[i] = 1;
+      if (ldata[i * 4 + 3] > 24) lineMask[i] = 1;
     }
+    // blocked：用于洪水填充扩散控制的阻挡掩码（开启闭合缝隙时向外扩张 1px，防止漏色）
+    var blocked = new Uint8Array(lineMask);
     if (blockByLine && gapClose) dilate(blocked, w, h, 1);
     var start = sy * w + sx;
     if (blockByLine && blocked[start]) {
@@ -18016,10 +18019,19 @@ window.HMPaint = (function () {
     var changed = false;
     while (stack.length) {
       var idx = stack.pop();
-      if (visited[idx] || blocked[idx]) continue;
+      if (visited[idx]) continue;
       visited[idx] = 1;
       var o = idx * 4;
-      if (ta === d[o + 3] && Math.abs(d[o] - tr) <= tolerance && Math.abs(d[o + 1] - tg) <= tolerance && Math.abs(d[o + 2] - tb) <= tolerance) {
+      var match = (ta === d[o + 3] && Math.abs(d[o] - tr) <= tolerance && Math.abs(d[o + 1] - tg) <= tolerance && Math.abs(d[o + 2] - tb) <= tolerance);
+      if (blocked[idx]) {
+        // 扩张间隙像素：与填充区4邻接的间隙直接填充以消除黑边，但不扩散（防止沿线稿环漏色）
+        if (match && !lineMask[idx]) {
+          d[o] = fill.r; d[o + 1] = fill.g; d[o + 2] = fill.b; d[o + 3] = 255;
+          changed = true;
+        }
+        continue;
+      }
+      if (match) {
         d[o] = fill.r; d[o + 1] = fill.g; d[o + 2] = fill.b; d[o + 3] = 255;
         changed = true;
         var x = idx % w;
@@ -18027,6 +18039,26 @@ window.HMPaint = (function () {
         if (x < w - 1) stack.push(idx + 1);
         if (idx >= w) stack.push(idx - w);
         if (idx + w < w * h) stack.push(idx + w);
+      }
+    }
+    // 第二遍：填充与已填充区域8邻接的间隙像素（覆盖角落），不传播
+    for (var y = 1; y < h - 1; y++) {
+      for (var x = 1; x < w - 1; x++) {
+        var ci = y * w + x;
+        if (!blocked[ci] || lineMask[ci]) continue;
+        var co = ci * 4;
+        if (d[co + 3] !== 0) continue;
+        var adj = false;
+        for (var dy = -1; dy <= 1 && !adj; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            if (d[( (y + dy) * w + (x + dx)) * 4 + 3] === 255) { adj = true; break; }
+          }
+        }
+        if (adj && ta === d[co + 3] && Math.abs(d[co] - tr) <= tolerance && Math.abs(d[co + 1] - tg) <= tolerance && Math.abs(d[co + 2] - tb) <= tolerance) {
+          d[co] = fill.r; d[co + 1] = fill.g; d[co + 2] = fill.b; d[co + 3] = 255;
+          changed = true;
+        }
       }
     }
     if (!changed) return false;
