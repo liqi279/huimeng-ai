@@ -194,6 +194,9 @@
     if (prevView === 'storyboard' && view !== 'storyboard' && window.HMStoryboard) {
       try { window.HMStoryboard.pause(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'paint' && view !== 'paint' && window.HMPaint) {
+      try { window.HMPaint.leave(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas') renderCanvas();
@@ -208,6 +211,9 @@
     }
     if (view === 'storyboard' && window.HMStoryboard) {
       try { window.HMStoryboard.enter(); } catch (e) { console.error('[Storyboard] enter failed', e); }
+    }
+    if (view === 'paint' && window.HMPaint) {
+      try { window.HMPaint.enter(); } catch (e) { console.error('[Paint] enter failed', e); }
     }
   }
 

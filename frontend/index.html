@@ -51,6 +51,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
         <span>故事版</span>
       </button>
+      <button class="hm-rail-item" data-rail="paint" title="着色（PaintMan 上色）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l7-7 5 5-7 7H5v-5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6l3-3 6 6-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="17" r="1.4" fill="currentColor" opacity=".8"/></svg>
+        <span>着色</span>
+      </button>
     </div>
 
     <div class="hm-rail-bottom">
@@ -837,6 +841,153 @@
     </div>
   </main>
 
+  <!-- ===================== 着色（参考 RETAS PaintMan） ===================== -->
+  <main class="hm-page hm-pt-page" id="view-paint" hidden>
+    <style>
+      .hm-pt-page{display:flex;flex-direction:column;height:calc(100vh - 60px);min-height:0;background:var(--hm-bg,#0f1320);padding:14px 16px;gap:12px}
+      .hm-pt-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;flex-wrap:wrap}
+      .hm-pt-title{display:flex;align-items:center;gap:10px;min-width:0}
+      .hm-pt-logo{font-size:18px;color:#52c41a}
+      .hm-pt-title h2{font-size:18px;color:var(--hm-text,#e6e9ef);margin:0;white-space:nowrap}
+      .hm-pt-name{background:transparent;border:1px solid transparent;border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:14px;font-weight:600;padding:4px 8px;min-width:120px;max-width:240px}
+      .hm-pt-name:hover{border-color:var(--hm-line,#2a3142)}
+      .hm-pt-name:focus{outline:none;border-color:#52c41a;background:#11151f}
+      .hm-pt-sub{font-size:12px;color:var(--hm-dim,#8b93a1);white-space:nowrap;font-family:monospace}
+      .hm-pt-actions{display:flex;gap:8px;flex-wrap:wrap}
+      .hm-pt-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;background:#52c41a;color:#0b1206;font-weight:600;white-space:nowrap}
+      .hm-pt-btn:hover{filter:brightness(1.08)}
+      .hm-pt-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef);font-weight:400}
+      .hm-pt-btn.ghost:hover{background:#242a3a}
+      .hm-pt-body{flex:1;min-height:0;display:flex;gap:12px}
+      .hm-pt-tools{width:214px;flex:none;overflow:auto;background:var(--hm-surface2,#15192a);border:1px solid var(--hm-line,#2a3142);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+      .hm-pt-sec{font-size:12px;color:var(--hm-dim,#8b93a1);font-weight:600;letter-spacing:.04em}
+      .hm-pt-toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      .hm-pt-tool{display:flex;flex-direction:column;align-items:center;gap:3px;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:8px;color:var(--hm-text,#e6e9ef);font-size:18px;padding:9px 4px;cursor:pointer;line-height:1}
+      .hm-pt-tool span{font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-pt-tool.is-active{border-color:#52c41a;color:#52c41a;box-shadow:0 0 0 1px #52c41a inset}
+      .hm-pt-tool.is-active span{color:#52c41a}
+      .hm-pt-field{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--hm-dim,#8b93a1)}
+      .hm-pt-field b{color:var(--hm-text,#e6e9ef);float:right;font-family:monospace}
+      .hm-pt-field input[type=range]{width:100%;accent-color:#52c41a}
+      .hm-pt-check{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--hm-text,#e6e9ef);cursor:pointer}
+      .hm-pt-check input{accent-color:#52c41a}
+      .hm-pt-zoom{display:flex;align-items:center;gap:6px}
+      .hm-pt-zoom span{margin-left:auto;font-size:11px;color:var(--hm-dim,#8b93a1);font-family:monospace}
+      .hm-pt-mini{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:5px 9px;background:transparent;color:var(--hm-dim,#8b93a1);cursor:pointer;white-space:nowrap}
+      .hm-pt-mini:hover{color:var(--hm-text,#e6e9ef);border-color:#3d465c}
+      .hm-pt-layers{display:flex;flex-direction:column;gap:6px}
+      .hm-pt-layer{display:flex;align-items:center;gap:8px;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:8px;padding:7px 9px;font-size:12px;color:var(--hm-text,#e6e9ef)}
+      .hm-pt-eye{width:22px;height:22px;flex:none;border-radius:50%;border:1px solid #3a4256;background:#1b2030;color:#52c41a;cursor:pointer;line-height:1;font-size:11px}
+      .hm-pt-eye.is-off{color:#4a5265}
+      .hm-pt-layer input[type=range]{flex:1;min-width:40px;accent-color:#52c41a}
+      .hm-pt-layernote{font-size:10px;color:var(--hm-dim,#8b93a1)}
+      .hm-pt-hint{font-size:11px;color:#5a6579;line-height:1.6;margin-top:auto;padding-top:8px;border-top:1px dashed var(--hm-line,#2a3142)}
+      .hm-pt-stage{flex:1;min-width:0;position:relative;overflow:auto;background:#0b0e16;border:1px solid var(--hm-line,#2a3142);border-radius:10px;display:flex;padding:18px}
+      .hm-pt-canvaswrap{position:relative;margin:auto;flex:none;background:#fff;box-shadow:0 10px 34px rgba(0,0,0,.55);width:640px;height:360px}
+      .hm-pt-canvaswrap canvas{position:absolute;inset:0;width:100%;height:100%}
+      .hm-pt-hit{touch-action:none;cursor:crosshair}
+      .hm-pt-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5a6579;font-size:14px;pointer-events:none;background:#0b0e16;border-radius:10px}
+      .hm-pt-empty[hidden]{display:none}
+      .hm-pt-chart{width:248px;flex:none;display:flex;flex-direction:column;background:var(--hm-surface2,#15192a);border:1px solid var(--hm-line,#2a3142);border-radius:10px;min-height:0}
+      .hm-pt-chart-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--hm-line,#2a3142);font-size:13px;font-weight:600;color:var(--hm-text,#e6e9ef)}
+      .hm-pt-chart-head em{font-style:normal;font-size:11px;color:var(--hm-dim,#8b93a1);font-family:monospace}
+      .hm-pt-colors{flex:1;overflow:auto;padding:6px}
+      .hm-pt-color{display:flex;align-items:center;gap:8px;padding:6px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+      .hm-pt-color:hover{background:#1b2030}
+      .hm-pt-color.is-active{border-color:#52c41a;background:rgba(82,196,26,.08)}
+      .hm-pt-color i{width:18px;height:18px;border-radius:4px;border:1px solid #3a4256;flex:none}
+      .hm-pt-color b{font-size:11px;font-family:monospace;color:var(--hm-dim,#8b93a1);width:32px;flex:none}
+      .hm-pt-color span{flex:1;font-size:12px;color:var(--hm-text,#e6e9ef);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hm-pt-color em{font-size:10px;color:#5a6579;font-style:normal;font-family:monospace}
+      .hm-pt-color-del{width:16px;height:16px;line-height:14px;text-align:center;border-radius:50%;color:#ff5c7a;font-style:normal;border:1px solid transparent;cursor:pointer}
+      .hm-pt-color-del:hover{background:rgba(255,92,122,.16);border-color:#ff5c7a}
+      .hm-pt-addrow{display:flex;gap:6px;padding:8px;border-top:1px solid var(--hm-line,#2a3142)}
+      .hm-pt-addrow input[type=color]{width:30px;height:28px;border:none;background:transparent;cursor:pointer;padding:0}
+      .hm-pt-addrow input[type=text]{flex:1;min-width:0;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:12px;padding:5px 7px}
+      .hm-pt-addrow input[type=text]:focus{outline:none;border-color:#52c41a}
+      .hm-pt-cur{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--hm-line,#2a3142);font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-pt-cur i{width:20px;height:20px;border-radius:4px;border:1px solid #3a4256}
+      .hm-pt-cur b{color:#52c41a;font-family:monospace}
+      .hm-pt-cur span#ptCurName{color:var(--hm-text,#e6e9ef)}
+      @media (max-width:1100px){.hm-pt-body{flex-direction:column}.hm-pt-tools{width:auto;flex-direction:row;flex-wrap:wrap;align-items:center}.hm-pt-chart{width:auto;max-height:40%}.hm-pt-hint{display:none}}
+    </style>
+    <div class="hm-pt-top">
+      <div class="hm-pt-title">
+        <span class="hm-pt-logo">◐</span>
+        <h2>着色</h2>
+        <input id="ptName" class="hm-pt-name" value="未命名着色" maxlength="40" title="项目名称">
+        <span class="hm-pt-sub" id="ptMeta">1280×720 · 14 色</span>
+      </div>
+      <div class="hm-pt-actions">
+        <button class="hm-pt-btn ghost" id="ptImportBtn">导入线稿</button>
+        <input type="file" id="ptImportInput" accept="image/*" hidden>
+        <button class="hm-pt-btn ghost" id="ptUndoBtn">撤销</button>
+        <button class="hm-pt-btn ghost" id="ptRedoBtn">重做</button>
+        <button class="hm-pt-btn ghost" id="ptClearBtn">清空上色</button>
+        <button class="hm-pt-btn" id="ptExportBtn">导出 PNG</button>
+      </div>
+    </div>
+    <div class="hm-pt-body">
+      <aside class="hm-pt-tools">
+        <div class="hm-pt-sec">工具</div>
+        <div class="hm-pt-toolgrid" id="ptTools">
+          <button class="hm-pt-tool is-active" data-tool="bucket">▨<span>油漆桶</span></button>
+          <button class="hm-pt-tool" data-tool="brush">✎<span>画笔</span></button>
+          <button class="hm-pt-tool" data-tool="eraser">⌫<span>橡皮</span></button>
+          <button class="hm-pt-tool" data-tool="picker">◉<span>吸管</span></button>
+        </div>
+        <label class="hm-pt-field">笔刷大小 <b id="ptSizeVal">12</b>
+          <input type="range" id="ptSize" min="1" max="80" value="12">
+        </label>
+        <label class="hm-pt-field">填充容差 <b id="ptTolVal">24</b>
+          <input type="range" id="ptTol" min="0" max="100" value="24">
+        </label>
+        <label class="hm-pt-check"><input type="checkbox" id="ptBlockLine" checked> 线稿遮挡填充</label>
+        <label class="hm-pt-check"><input type="checkbox" id="ptGapClose" checked> 闭合线条缝隙</label>
+        <div class="hm-pt-sec">缩放</div>
+        <div class="hm-pt-zoom">
+          <button class="hm-pt-mini" id="ptZoomOut">−</button>
+          <button class="hm-pt-mini" id="ptZoomFit">适配</button>
+          <button class="hm-pt-mini" id="ptZoomIn">+</button>
+          <span id="ptZoomVal">100%</span>
+        </div>
+        <div class="hm-pt-sec">图层</div>
+        <div class="hm-pt-layers">
+          <div class="hm-pt-layer">
+            <button class="hm-pt-eye" id="ptLineEye" title="显示 / 隐藏线稿">◉</button>
+            <span>线稿层</span>
+            <input type="range" id="ptLineAlpha" min="20" max="100" value="100" title="线稿浓度">
+          </div>
+          <div class="hm-pt-layer">
+            <button class="hm-pt-eye" id="ptPaintEye" title="显示 / 隐藏上色">◉</button>
+            <span>上色层</span>
+            <span class="hm-pt-layernote">色指定</span>
+          </div>
+        </div>
+        <div class="hm-pt-hint">参考 RETAS PaintMan 上色流程：先导入线稿，再按色指定表逐块填充，最后导出 PNG。</div>
+      </aside>
+      <section class="hm-pt-stage" id="ptStage">
+        <div class="hm-pt-canvaswrap" id="ptCanvasWrap">
+          <canvas id="ptPaintCanvas" width="1280" height="720"></canvas>
+          <canvas id="ptLineCanvas" class="hm-pt-hit" width="1280" height="720"></canvas>
+        </div>
+        <div class="hm-pt-empty" id="ptEmpty">导入线稿后即可开始上色</div>
+      </section>
+      <aside class="hm-pt-chart">
+        <div class="hm-pt-chart-head"><span>色指定表</span><em id="ptMeta2">-</em></div>
+        <div class="hm-pt-colors" id="ptColors"></div>
+        <div class="hm-pt-addrow">
+          <input type="color" id="ptNewColor" value="#ffcfae" title="选择颜色">
+          <input type="text" id="ptNewName" placeholder="颜色名称" maxlength="12">
+          <button class="hm-pt-mini" id="ptAddColor">添加</button>
+        </div>
+        <div class="hm-pt-cur">
+          <span>当前色</span><i id="ptCurSwatch"></i><b id="ptCurCode">102</b><span id="ptCurName">肌肤</span>
+        </div>
+      </aside>
+    </div>
+  </main>
+
   <main class="hm-page hm-admin-page" id="view-admin" hidden>
     <div class="hm-admin-topbar-wrap">
       <div class="hm-admin-brand">
@@ -1562,6 +1713,7 @@
   <script src="auth-ui.js"></script>
   <script src="app.js"></script>
   <script src="storyboard.js"></script>
+  <script src="paint.js"></script>
   <script src="ui.js"></script>
   <script src="desk.js"></script>
   <script src="admin.js"></script>
