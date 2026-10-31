@@ -328,6 +328,12 @@ window.HMStoryboard = (function () {
 
     /* 指针拖拽排序：不依赖原生 HTML5 拖拽（拖拽图片/全局事件易导致失效），鼠标与触屏均可稳定工作 */
     el.board.addEventListener('pointerdown', onCardPointerDown);
+
+    /* 失焦 / 页面隐藏时兜底清理拖拽态，避免拖拽副本残留把界面卡住 */
+    window.addEventListener('blur', resetDragState);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) resetDragState();
+    });
   }
 
   function onCardPointerDown(e) {
@@ -335,6 +341,8 @@ window.HMStoryboard = (function () {
     if (e.target.closest('button, input, select, textarea')) return;
     var card = e.target.closest('.hm-sb-card');
     if (!card || !card.dataset.id) return;
+    // 上一次拖拽若未正常结束（如在窗口外松开），先彻底清理，避免副本叠加
+    if (pressDrag) { var stale = pressDrag; pressDrag = null; endPressDrag(stale); }
     pressDrag = {
       id: card.dataset.id,
       card: card,
@@ -347,6 +355,8 @@ window.HMStoryboard = (function () {
       target: null,
       pointerId: e.pointerId
     };
+    // 指针捕获：即使指针移出窗口 / 画板，pointerup 仍能送达，避免拖拽卡死
+    try { card.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     window.addEventListener('pointermove', onCardPointerMove, { passive: false });
     window.addEventListener('pointerup', onCardPointerUp);
     window.addEventListener('pointercancel', onCardPointerCancel);
@@ -396,22 +406,25 @@ window.HMStoryboard = (function () {
     document.body.classList.add('hm-sb-dragging');
   }
 
-  function endPressDrag() {
+  function endPressDrag(pd) {
+    var d = pd || pressDrag;
     window.removeEventListener('pointermove', onCardPointerMove);
     window.removeEventListener('pointerup', onCardPointerUp);
     window.removeEventListener('pointercancel', onCardPointerCancel);
-    if (pressDrag) {
-      if (pressDrag.ghost) pressDrag.ghost.remove();
-      if (pressDrag.card) pressDrag.card.classList.remove('is-press-drag');
-      document.body.classList.remove('hm-sb-dragging');
+    if (d) {
+      if (d.ghost) d.ghost.remove();
+      if (d.card) d.card.classList.remove('is-press-drag');
     }
+    // 兜底：清掉任何残留的拖拽副本，防止多次拖拽后叠加卡死
+    document.querySelectorAll('.hm-sb-ghost').forEach(function (n) { n.remove(); });
+    document.body.classList.remove('hm-sb-dragging');
     clearDropMarks();
   }
 
   function onCardPointerUp() {
     var pd = pressDrag;
     pressDrag = null;
-    endPressDrag();
+    endPressDrag(pd);
     if (!pd || !pd.active) return;         // 未超过阈值：交给 click 正常选中
     suppressClick = true;
     setTimeout(function () { suppressClick = false; }, 0);
@@ -420,8 +433,16 @@ window.HMStoryboard = (function () {
   }
 
   function onCardPointerCancel() {
+    var pd = pressDrag;
     pressDrag = null;
-    endPressDrag();
+    endPressDrag(pd);
+  }
+
+  function resetDragState() {
+    if (pressDrag) { var pd = pressDrag; pressDrag = null; endPressDrag(pd); }
+    document.querySelectorAll('.hm-sb-ghost').forEach(function (n) { n.remove(); });
+    document.body.classList.remove('hm-sb-dragging');
+    clearDropMarks();
   }
 
   /* ---------------- 卡片右键菜单 ---------------- */
@@ -812,6 +833,7 @@ window.HMStoryboard = (function () {
   /* ---------------- 对外接口 ---------------- */
   function enter() {
     init();
+    resetDragState();
     var key = lsKey();
     if (!project || loadedKey !== key) {
       var saved = loadProject();
