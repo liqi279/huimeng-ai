@@ -564,13 +564,13 @@
       .hm-dir-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
       .hm-dir-preview{display:flex;flex-direction:column;flex:1;min-height:0;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;overflow:hidden}
       .hm-dir-stage{flex:1;min-height:0;position:relative;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
-      .hm-dir-empty{text-align:center;color:var(--hm-dim,#8b93a1)}
+      .hm-dir-empty{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--hm-dim,#8b93a1);padding:0 24px;pointer-events:none}
       .hm-dir-empty-icon{font-size:48px;margin-bottom:12px}
       .hm-dir-empty>div{font-size:15px;color:#c8d0e0}
       .hm-dir-empty>span{font-size:12px}
       .hm-dir-video{max-width:100%;max-height:100%;object-fit:contain;display:none}
       .hm-dir-video.is-on{display:block}
-      .hm-dir-canvas{max-width:100%;max-height:100%;object-fit:contain;display:block;background:#000}
+      .hm-dir-canvas{position:absolute;top:0;left:0;z-index:1;max-width:100%;max-height:100%;object-fit:contain;display:block;background:#000}
       .hm-dir-overlay{position:absolute;top:0;left:0;pointer-events:none}
       .hm-dir-controls{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--hm-surface2,#15192a);border-top:1px solid var(--hm-line,#2a3142)}
       .hm-dir-ctrl{width:36px;height:36px;border:none;border-radius:50%;background:#2a3142;color:var(--hm-text,#e6e9ef);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
