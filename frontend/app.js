@@ -5472,7 +5472,9 @@ window.HMDirector = (function () {
       if (!clip.mediaEl || !clip.mediaEl.complete || !clip.mediaEl.naturalWidth) return null;
       iw = clip.mediaEl.naturalWidth; ih = clip.mediaEl.naturalHeight;
     } else {
-      if (!clip.mediaEl || clip.mediaEl.readyState < 2) return null;
+      // 要求 readyState >= 3 (HAVE_FUTURE_DATA)：确保当前帧已完整解码
+      // readyState=2 (HAVE_CURRENT_DATA) 在快速 seek 时可能只有部分数据，drawImage 会画出黑色
+      if (!clip.mediaEl || clip.mediaEl.readyState < 3) return null;
       iw = clip.mediaEl.videoWidth; ih = clip.mediaEl.videoHeight;
     }
     if (!iw || !ih) return null;
