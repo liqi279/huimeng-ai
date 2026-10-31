@@ -875,11 +875,19 @@
       .hm-pt-zoom span{margin-left:auto;font-size:11px;color:var(--hm-dim,#8b93a1);font-family:monospace}
       .hm-pt-mini{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:5px 9px;background:transparent;color:var(--hm-dim,#8b93a1);cursor:pointer;white-space:nowrap}
       .hm-pt-mini:hover{color:var(--hm-text,#e6e9ef);border-color:#3d465c}
-      .hm-pt-layers{display:flex;flex-direction:column;gap:6px}
-      .hm-pt-layer{display:flex;align-items:center;gap:8px;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:8px;padding:7px 9px;font-size:12px;color:var(--hm-text,#e6e9ef)}
-      .hm-pt-eye{width:22px;height:22px;flex:none;border-radius:50%;border:1px solid #3a4256;background:#1b2030;color:#52c41a;cursor:pointer;line-height:1;font-size:11px}
+      .hm-pt-layerbar{display:flex;gap:6px;flex-wrap:wrap}
+      .hm-pt-layerbar .hm-pt-mini{flex:1;min-width:0;padding:5px 4px;font-size:11px}
+      .hm-pt-layerlist{display:flex;flex-direction:column;gap:6px;max-height:38vh;overflow:auto}
+      .hm-pt-layer{display:flex;align-items:center;gap:6px;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:8px;padding:6px 8px;font-size:12px;color:var(--hm-text,#e6e9ef);cursor:pointer}
+      .hm-pt-layer.is-active{border-color:#52c41a;box-shadow:0 0 0 1px #52c41a inset}
+      .hm-pt-layer.is-locked{opacity:.7}
+      .hm-pt-eye{width:20px;height:20px;flex:none;border-radius:50%;border:1px solid #3a4256;background:#1b2030;color:#52c41a;cursor:pointer;line-height:1;font-size:11px;padding:0}
       .hm-pt-eye.is-off{color:#4a5265}
-      .hm-pt-layer input[type=range]{flex:1;min-width:40px;accent-color:#52c41a}
+      .hm-pt-lock{width:20px;height:20px;flex:none;border-radius:50%;border:1px solid #3a4256;background:#1b2030;color:#ffce5c;cursor:pointer;line-height:1;font-size:10px;padding:0}
+      .hm-pt-lock.is-unlocked{color:#5a6579}
+      .hm-pt-layername{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+      .hm-pt-layerop{width:56px;flex:none;accent-color:#52c41a}
+      .hm-pt-layerval{font-size:10px;color:var(--hm-dim,#8b93a1);font-family:monospace;width:26px;text-align:right;flex:none}
       .hm-pt-layernote{font-size:10px;color:var(--hm-dim,#8b93a1)}
       .hm-pt-hint{font-size:11px;color:#5a6579;line-height:1.6;margin-top:auto;padding-top:8px;border-top:1px dashed var(--hm-line,#2a3142)}
       .hm-pt-stage{flex:1;min-width:0;min-height:240px;position:relative;overflow:auto;background:#0b0e16;border:1px solid var(--hm-line,#2a3142);border-radius:10px;display:flex;padding:18px}
@@ -952,18 +960,14 @@
           <span id="ptZoomVal">100%</span>
         </div>
         <div class="hm-pt-sec">图层</div>
-        <div class="hm-pt-layers">
-          <div class="hm-pt-layer">
-            <button class="hm-pt-eye" id="ptLineEye" title="显示 / 隐藏线稿">◉</button>
-            <span>线稿层</span>
-            <input type="range" id="ptLineAlpha" min="20" max="100" value="100" title="线稿浓度">
-          </div>
-          <div class="hm-pt-layer">
-            <button class="hm-pt-eye" id="ptPaintEye" title="显示 / 隐藏上色">◉</button>
-            <span>上色层</span>
-            <span class="hm-pt-layernote">色指定</span>
-          </div>
+        <div class="hm-pt-layerbar">
+          <button class="hm-pt-mini" id="ptAddLayer" title="新建图层">+ 新建</button>
+          <button class="hm-pt-mini" id="ptDupLayer" title="复制图层">复制</button>
+          <button class="hm-pt-mini" id="ptUpLayer" title="上移">↑</button>
+          <button class="hm-pt-mini" id="ptDownLayer" title="下移">↓</button>
+          <button class="hm-pt-mini" id="ptDelLayer" title="删除图层">删除</button>
         </div>
+        <div class="hm-pt-layerlist" id="ptLayerList"></div>
         <div class="hm-pt-hint">参考 RETAS PaintMan 上色流程：先导入线稿，再按色指定表逐块填充，最后导出 PNG。</div>
       </aside>
       <section class="hm-pt-stage" id="ptStage">

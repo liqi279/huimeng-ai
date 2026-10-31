@@ -1,7 +1,7 @@
 /* ============================================================
  * 着色 HMPaint（参考 RETAS PaintMan 的上色工作流）
  * - 布局：左侧工具栏 / 中部画布 / 右侧色指定表（色号 + 色块 + 使用次数）
- * - 图层：线稿层（可调浓度、可隐藏）+ 上色层
+ * - 图层：线稿层（可调浓度、可隐藏）+ 多个上色图层（增删/复制/排序/锁定/不透明度）
  * - 工具：油漆桶（受线稿遮挡、可闭合缝隙）、画笔、橡皮、吸管
  * - 撤销 / 重做、缩放适配、导入线稿、导出 PNG、本地自动保存
  * ============================================================ */
@@ -9,6 +9,7 @@ window.HMPaint = (function () {
   var LS_PREFIX = 'anidream.paint.v1';
   var MAX_W = 1600;
   var MAX_H = 1000;
+  var LINE_LAYER_ID = 'lyr_line';
 
   var PRESETS = [
     { code: '001', name: '线稿', color: '#1a1a1a' },
@@ -47,33 +48,93 @@ window.HMPaint = (function () {
   var drawing = false;
   var lastPt = null;
 
+  // el.paintLayers: [{ layer, canvas, ctx }]  与 state.layers 中的上色层一一对应
+  // el.line / el.lineCtx: 线稿层画布（始终在最上层，接收指针事件）
+
   function uid(p) { return (p || 'c') + Math.random().toString(36).slice(2, 7); }
   function $(id) { return document.getElementById(id); }
   function toast(msg, type) { if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type); }
 
   /* ---------------- 数据 ---------------- */
+  function makeLayer(type, name, opts) {
+    opts = opts || {};
+    return {
+      id: type === 'line' ? LINE_LAYER_ID : uid('lyr_'),
+      name: name,
+      type: type,                          // 'line' | 'paint'
+      visible: opts.visible !== false,
+      locked: type === 'line' ? true : (opts.locked || false),
+      opacity: typeof opts.opacity === 'number' ? opts.opacity : 1,
+      data: opts.data || ''
+    };
+  }
+
   function defaults() {
     return {
       name: '未命名着色',
       w: 1280, h: 720,
-      line: '',
-      paint: '',
+      layers: [
+        makeLayer('line', '线稿', { opacity: 1 }),
+        makeLayer('paint', '上色 1', { opacity: 1 })
+      ],
+      activeLayerId: '',
       palette: PRESETS.map(function (p) { return { code: p.code, name: p.name, color: p.color, count: 0, custom: false }; }),
-      current: '#ffcfae',
-      showLine: true,
-      showPaint: true,
-      lineAlpha: 1
+      current: '#ffcfae'
     };
+  }
+
+  function ensureActive(s) {
+    if (!s || !Array.isArray(s.layers)) return;
+    var paint = s.layers.filter(function (l) { return l.type === 'paint'; });
+    if (!paint.length) {
+      var nl = makeLayer('paint', '上色 1');
+      s.layers.push(nl);
+      paint = [nl];
+    }
+    var exists = paint.some(function (l) { return l.id === s.activeLayerId; });
+    if (!exists) s.activeLayerId = paint[0].id;
   }
 
   function normalize(s) {
     var d = defaults();
-    if (!s || typeof s !== 'object') return d;
+    if (!s || typeof s !== 'object') { ensureActive(d); return d; }
     d.name = s.name || d.name;
     d.w = Number(s.w) > 0 ? Math.min(MAX_W, Number(s.w)) : 1280;
     d.h = Number(s.h) > 0 ? Math.min(MAX_H, Number(s.h)) : 720;
-    d.line = typeof s.line === 'string' ? s.line : '';
-    d.paint = typeof s.paint === 'string' ? s.paint : '';
+
+    var layers;
+    if (Array.isArray(s.layers) && s.layers.length) {
+      layers = s.layers.map(function (l, i) {
+        if (!l || typeof l !== 'object') return makeLayer('paint', '图层 ' + (i + 1));
+        var type = l.type === 'line' ? 'line' : 'paint';
+        return makeLayer(type, String(l.name || (type === 'line' ? '线稿' : '图层 ' + (i + 1))), {
+          visible: l.visible !== false,
+          locked: type === 'line' ? true : !!l.locked,
+          opacity: (Number(l.opacity) >= 0 && Number(l.opacity) <= 1) ? Number(l.opacity) : 1,
+          data: typeof l.data === 'string' ? l.data : ''
+        });
+      });
+    } else {
+      // 兼容旧数据：state.line / state.paint / showLine / showPaint / lineAlpha
+      layers = [
+        makeLayer('line', '线稿', {
+          visible: s.showLine !== false,
+          opacity: (Number(s.lineAlpha) >= 0.2 && Number(s.lineAlpha) <= 1) ? Number(s.lineAlpha) : 1,
+          data: typeof s.line === 'string' ? s.line : ''
+        }),
+        makeLayer('paint', '上色 1', {
+          visible: s.showPaint !== false,
+          opacity: 1,
+          data: typeof s.paint === 'string' ? s.paint : ''
+        })
+      ];
+    }
+    // 保证线稿层存在且放在数组首位
+    var line = layers.filter(function (l) { return l.type === 'line'; })[0];
+    var paints = layers.filter(function (l) { return l.type === 'paint'; });
+    if (!line) line = makeLayer('line', '线稿');
+    d.layers = [line].concat(paints);
+
     if (Array.isArray(s.palette) && s.palette.length) {
       d.palette = s.palette.filter(function (p) { return p && p.color; }).map(function (p) {
         return {
@@ -87,9 +148,8 @@ window.HMPaint = (function () {
       if (!d.palette.length) d.palette = defaults().palette;
     }
     d.current = s.current || d.current;
-    d.showLine = s.showLine !== false;
-    d.showPaint = s.showPaint !== false;
-    d.lineAlpha = Number(s.lineAlpha) >= 0.2 ? Number(s.lineAlpha) : 1;
+    d.activeLayerId = typeof s.activeLayerId === 'string' ? s.activeLayerId : '';
+    ensureActive(d);
     return d;
   }
 
@@ -108,7 +168,10 @@ window.HMPaint = (function () {
     if (!state) return;
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
     try {
-      state.paint = el.paint ? el.paint.toDataURL('image/png') : state.paint;
+      state.layers.forEach(function (l) {
+        var ref = layerRef(l.id);
+        if (ref && ref.canvas) l.data = ref.canvas.toDataURL('image/png');
+      });
       localStorage.setItem(lsKey(), JSON.stringify(state));
     } catch (e) {
       toast('本地存储空间不足，本次上色未能保存', 'error');
@@ -119,11 +182,24 @@ window.HMPaint = (function () {
     saveTimer = setTimeout(saveNow, 800);
   }
 
+  function lineLayer() { return state ? state.layers.find(function (l) { return l.type === 'line'; }) : null; }
+  function paintLayers() { return state ? state.layers.filter(function (l) { return l.type === 'paint'; }) : []; }
+  function activeLayer() {
+    if (!state) return null;
+    return state.layers.find(function (l) { return l.id === state.activeLayerId; }) || null;
+  }
+  function layerRef(id) {
+    if (id === LINE_LAYER_ID) return { layer: lineLayer(), canvas: el.line, ctx: el.lineCtx };
+    for (var i = 0; i < el.paintLayers.length; i++) {
+      if (el.paintLayers[i].layer.id === id) return el.paintLayers[i];
+    }
+    return null;
+  }
+
   /* ---------------- 初始化 ---------------- */
   function init() {
     if (inited) return;
     inited = true;
-    // 便于阅读，显式别名
     el.name = $('ptName');
     el.meta = $('ptMeta');
     el.importBtn = $('ptImportBtn');
@@ -143,9 +219,6 @@ window.HMPaint = (function () {
     el.zoomFit = $('ptZoomFit');
     el.zoomIn = $('ptZoomIn');
     el.zoomVal = $('ptZoomVal');
-    el.lineEye = $('ptLineEye');
-    el.paintEye = $('ptPaintEye');
-    el.lineAlpha = $('ptLineAlpha');
     el.stage = $('ptStage');
     el.wrap = $('ptCanvasWrap');
     el.paint = $('ptPaintCanvas');
@@ -159,6 +232,13 @@ window.HMPaint = (function () {
     el.curCode = $('ptCurCode');
     el.curName = $('ptCurName');
 
+    el.layerList = $('ptLayerList');
+    el.addLayerBtn = $('ptAddLayer');
+    el.dupLayerBtn = $('ptDupLayer');
+    el.upLayerBtn = $('ptUpLayer');
+    el.downLayerBtn = $('ptDownLayer');
+    el.delLayerBtn = $('ptDelLayer');
+
     el.paintCtx = el.paint.getContext('2d');
     el.lineCtx = el.line.getContext('2d');
 
@@ -166,6 +246,7 @@ window.HMPaint = (function () {
     bindTools();
     bindPaint();
     bindChart();
+    bindLayers();
     bindKeys();
     window.addEventListener('resize', function () {
       if (fitMode) fitCanvas();
@@ -214,24 +295,6 @@ window.HMPaint = (function () {
     el.zoomOut.addEventListener('click', function () { setZoom(zoom * 0.8); });
     el.zoomIn.addEventListener('click', function () { setZoom(zoom * 1.25); });
     el.zoomFit.addEventListener('click', function () { fitCanvas(); });
-    el.lineEye.addEventListener('click', function () {
-      if (!state) return;
-      state.showLine = !state.showLine;
-      applyLayerVisibility();
-      scheduleSave();
-    });
-    el.paintEye.addEventListener('click', function () {
-      if (!state) return;
-      state.showPaint = !state.showPaint;
-      applyLayerVisibility();
-      scheduleSave();
-    });
-    el.lineAlpha.addEventListener('input', function () {
-      if (!state) return;
-      state.lineAlpha = Math.max(0.2, Number(el.lineAlpha.value) / 100);
-      applyLayerVisibility();
-      scheduleSave();
-    });
   }
 
   function bindChart() {
@@ -282,7 +345,7 @@ window.HMPaint = (function () {
         return;
       }
       if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); redo(); return; }
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if ((e.ctrlKey || e.metaKey) || e.altKey) return;
       var map = { b: 'brush', e: 'eraser', g: 'bucket', i: 'picker' };
       if (map[k]) {
         tool = map[k];
@@ -294,16 +357,68 @@ window.HMPaint = (function () {
     });
   }
 
-  /* ---------------- 画布 ---------------- */
+  /* ---------------- 画布 / 图层 DOM ---------------- */
+  // 构建 state.layers 对应的 canvas 引用；复用已有 canvas（按 data-layer-id 匹配），保留内容
+  function buildLayerCanvases() {
+    var paints = paintLayers();
+    var existing = {};
+    el.wrap.querySelectorAll('canvas').forEach(function (c) {
+      if (c === el.paint || c === el.line) return;
+      var id = c.getAttribute('data-layer-id');
+      if (id) existing[id] = c;
+    });
+    el.paintLayers = [];
+    if (paints[0]) {
+      el.paint.setAttribute('data-layer-id', paints[0].id);
+      el.paintLayers.push({ layer: paints[0], canvas: el.paint, ctx: el.paintCtx });
+    }
+    for (var i = 1; i < paints.length; i++) {
+      var l = paints[i];
+      var c = existing[l.id];
+      if (!c) {
+        c = document.createElement('canvas');
+        c.width = state.w;
+        c.height = state.h;
+        el.wrap.appendChild(c);
+      }
+      c.setAttribute('data-layer-id', l.id);
+      el.paintLayers.push({ layer: l, canvas: c, ctx: c.getContext('2d') });
+    }
+    var validIds = paints.map(function (p) { return p.id; });
+    el.wrap.querySelectorAll('canvas').forEach(function (c) {
+      if (c === el.paint || c === el.line) return;
+      var id = c.getAttribute('data-layer-id');
+      if (validIds.indexOf(id) === -1) c.remove();
+    });
+    reorderLayerDom();
+  }
+
+  // 按 state.layers 顺序重排 DOM：上色层从下到上，线稿层在最上
+  function reorderLayerDom() {
+    var paints = paintLayers();
+    paints.forEach(function (l) {
+      var ref = layerRef(l.id);
+      if (ref && ref.canvas && ref.canvas.parentNode === el.wrap) {
+        el.wrap.appendChild(ref.canvas);
+      }
+    });
+    if (el.line.parentNode === el.wrap) el.wrap.appendChild(el.line);
+  }
+
   function sizeCanvases() {
     el.paint.width = state.w;
     el.paint.height = state.h;
     el.line.width = state.w;
     el.line.height = state.h;
-    el.wrap.style.width = Math.round(state.w * zoom) + 'px';
-    el.wrap.style.height = Math.round(state.h * zoom) + 'px';
+    el.paintLayers.forEach(function (r) {
+      r.canvas.width = state.w;
+      r.canvas.height = state.h;
+      r.ctx = r.canvas.getContext('2d');
+    });
     el.paintCtx = el.paint.getContext('2d');
     el.lineCtx = el.line.getContext('2d');
+    el.wrap.style.width = Math.round(state.w * zoom) + 'px';
+    el.wrap.style.height = Math.round(state.h * zoom) + 'px';
   }
 
   function setZoom(z) {
@@ -327,56 +442,56 @@ window.HMPaint = (function () {
     el.zoomVal.textContent = Math.round(zoom * 100) + '%';
   }
 
+  // 统一应用图层可见性与不透明度（单一渲染入口，避免状态污染）
   function applyLayerVisibility() {
     if (!state) return;
-    el.line.style.opacity = state.showLine ? String(state.lineAlpha) : '0';
-    el.paint.style.opacity = state.showPaint ? '1' : '0';
-    el.lineEye.classList.toggle('is-off', !state.showLine);
-    el.paintEye.classList.toggle('is-off', !state.showPaint);
-    el.lineAlpha.value = String(Math.round(state.lineAlpha * 100));
+    state.layers.forEach(function (l) {
+      var ref = layerRef(l.id);
+      if (!ref || !ref.canvas) return;
+      var o = l.visible ? l.opacity : 0;
+      ref.canvas.style.opacity = String(o);
+      ref.canvas.style.pointerEvents = (l.type === 'line') ? 'auto' : 'none';
+    });
+    renderLayers();
   }
 
   function updateCursor() {
     if (!el.line) return;
     var c = 'crosshair';
-    if (tool === 'brush' || tool === 'eraser') c = 'crosshair';
     if (tool === 'picker') c = 'copy';
-    el.line.style.cursor = c + '';
+    el.line.style.cursor = c;
   }
 
   function restore() {
+    buildLayerCanvases();
     sizeCanvases();
-    el.paintCtx.clearRect(0, 0, state.w, state.h);
+    el.paintLayers.forEach(function (r) { r.ctx.clearRect(0, 0, state.w, state.h); });
     el.lineCtx.clearRect(0, 0, state.w, state.h);
     lineReady = false;
-    el.empty.hidden = !!state.line;
+    var line = lineLayer();
+    el.empty.hidden = !!(line && line.data);
     var pending = 0;
     function done() {
       pending--;
       if (pending <= 0) {
-        lineReady = !!state.line;
+        lineReady = !!(line && line.data);
         el.empty.hidden = lineReady;
         applyLayerVisibility();
         requestAnimationFrame(fitCanvas);
         updateMeta();
       }
     }
-    if (state.line) {
+    state.layers.forEach(function (l) {
+      if (!l.data) return;
+      var ref = layerRef(l.id);
+      if (!ref) return;
       pending++;
-      loadImage(state.line, function (img) {
-        el.lineCtx.clearRect(0, 0, state.w, state.h);
-        el.lineCtx.drawImage(img, 0, 0, state.w, state.h);
+      loadImage(l.data, function (img) {
+        ref.ctx.clearRect(0, 0, state.w, state.h);
+        ref.ctx.drawImage(img, 0, 0, state.w, state.h);
         done();
       }, done);
-    }
-    if (state.paint) {
-      pending++;
-      loadImage(state.paint, function (img) {
-        el.paintCtx.clearRect(0, 0, state.w, state.h);
-        el.paintCtx.drawImage(img, 0, 0, state.w, state.h);
-        done();
-      }, done);
-    }
+    });
     if (pending === 0) done();
   }
 
@@ -389,7 +504,7 @@ window.HMPaint = (function () {
 
   function importLine(file) {
     if (!file || !/^image\//.test(file.type)) { toast('请选择图片文件', 'error'); return; }
-    if (state.line && !drawingEmpty()) {
+    if (lineReady && !drawingEmpty()) {
       if (!window.confirm('导入新线稿会清空当前上色，是否继续？')) return;
     }
     var reader = new FileReader();
@@ -401,13 +516,15 @@ window.HMPaint = (function () {
         var ratio = Math.min(1, MAX_W / w, MAX_H / h);
         state.w = Math.max(2, Math.round(w * ratio));
         state.h = Math.max(2, Math.round(h * ratio));
+        buildLayerCanvases();
         sizeCanvases();
-        el.paintCtx.clearRect(0, 0, state.w, state.h);
+        el.paintLayers.forEach(function (r) { r.ctx.clearRect(0, 0, state.w, state.h); });
         el.lineCtx.clearRect(0, 0, state.w, state.h);
         el.lineCtx.drawImage(img, 0, 0, state.w, state.h);
         removePaperWhite(state.w, state.h);
-        state.line = el.line.toDataURL('image/png');
-        state.paint = '';
+        var line = lineLayer();
+        if (line) line.data = el.line.toDataURL('image/png');
+        paintLayers().forEach(function (l) { l.data = ''; });
         lineReady = true;
         el.empty.hidden = true;
         undoStack = [];
@@ -425,7 +542,6 @@ window.HMPaint = (function () {
     reader.readAsDataURL(file);
   }
 
-  /* 把线稿中的纸张白底转为透明，避免白底遮挡油漆桶填充 */
   function removePaperWhite(w, h) {
     try {
       var img = el.lineCtx.getImageData(0, 0, w, h);
@@ -443,8 +559,10 @@ window.HMPaint = (function () {
 
   function drawingEmpty() {
     try {
-      var d = el.paintCtx.getImageData(0, 0, state.w, state.h).data;
-      for (var i = 3; i < d.length; i += 4) { if (d[i] !== 0) return false; }
+      for (var i = 0; i < el.paintLayers.length; i++) {
+        var d = el.paintLayers[i].ctx.getImageData(0, 0, state.w, state.h).data;
+        for (var j = 3; j < d.length; j += 4) { if (d[j] !== 0) return false; }
+      }
     } catch (e) { return false; }
     return true;
   }
@@ -459,6 +577,14 @@ window.HMPaint = (function () {
     return { x: x, y: y };
   }
 
+  function activeCtx() {
+    var al = activeLayer();
+    if (!al || al.type !== 'paint') return null;
+    if (al.locked) return null;
+    var ref = layerRef(al.id);
+    return ref ? ref.ctx : null;
+  }
+
   function bindPaint() {
     el.line.addEventListener('pointerdown', function (e) {
       if (!state || !lineReady) { toast('请先导入线稿', 'info'); return; }
@@ -467,6 +593,9 @@ window.HMPaint = (function () {
       if (!p) return;
       e.preventDefault();
       if (tool === 'picker') { pickColor(p); return; }
+      var al = activeLayer();
+      if (!al || al.type !== 'paint') { toast('请先选择一个上色图层', 'info'); return; }
+      if (al.locked) { toast('当前图层已锁定', 'info'); return; }
       if (tool === 'bucket') {
         pushUndo();
         var filled = floodFill(p.x, p.y);
@@ -503,7 +632,8 @@ window.HMPaint = (function () {
   function paintColor() { return state ? state.current : '#000'; }
 
   function paintDot(p) {
-    var ctx = el.paintCtx;
+    var ctx = activeCtx();
+    if (!ctx) return;
     ctx.save();
     ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
     ctx.fillStyle = paintColor();
@@ -514,7 +644,8 @@ window.HMPaint = (function () {
   }
 
   function paintSegment(a, b) {
-    var ctx = el.paintCtx;
+    var ctx = activeCtx();
+    if (!ctx) return;
     ctx.save();
     ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
     ctx.strokeStyle = paintColor();
@@ -528,16 +659,26 @@ window.HMPaint = (function () {
     ctx.restore();
   }
 
+  // 吸管：从最上层可见图层取色（上色层自顶向下，最后取线稿）
   function pickColor(p) {
-    var hit = null;
-    try { hit = el.lineCtx.getImageData(p.x, p.y, 1, 1).data; } catch (e) { hit = null; }
-    if (hit && hit[3] > 24) {
-      setCurrent(rgbToHex(hit[0], hit[1], hit[2]));
-      return;
+    var paints = paintLayers().slice().reverse();
+    for (var i = 0; i < paints.length; i++) {
+      var l = paints[i];
+      if (!l.visible) continue;
+      var ref = layerRef(l.id);
+      if (!ref) continue;
+      var hit = null;
+      try { hit = ref.ctx.getImageData(p.x, p.y, 1, 1).data; } catch (e) { hit = null; }
+      if (hit && hit[3] > 24) { setCurrent(rgbToHex(hit[0], hit[1], hit[2])); return; }
     }
-    try { hit = el.paintCtx.getImageData(p.x, p.y, 1, 1).data; } catch (e2) { hit = null; }
-    if (hit && hit[3] > 24) setCurrent(rgbToHex(hit[0], hit[1], hit[2]));
-    else setCurrent('#ffffff');
+    var line = lineLayer();
+    if (line && line.visible) {
+      try {
+        var lh = el.lineCtx.getImageData(p.x, p.y, 1, 1).data;
+        if (lh && lh[3] > 24) { setCurrent(rgbToHex(lh[0], lh[1], lh[2])); return; }
+      } catch (e) { /* ignore */ }
+    }
+    setCurrent('#ffffff');
   }
 
   function setCurrent(hex) {
@@ -548,22 +689,22 @@ window.HMPaint = (function () {
 
   /* ---------------- 油漆桶 ---------------- */
   function floodFill(sx, sy) {
+    var ctx = activeCtx();
+    if (!ctx) return false;
     var w = state.w, h = state.h;
     var pdata, ldata;
     try {
-      pdata = el.paintCtx.getImageData(0, 0, w, h);
+      pdata = ctx.getImageData(0, 0, w, h);
       ldata = el.lineCtx.getImageData(0, 0, w, h).data;
     } catch (e) {
       toast('画布读取失败，请重新导入线稿', 'error');
       return false;
     }
     var d = pdata.data;
-    // lineMask：真实线稿像素（alpha>24），用于区分"线稿"与"扩张间隙"
     var lineMask = new Uint8Array(w * h);
     for (var i = 0; i < w * h; i++) {
       if (ldata[i * 4 + 3] > 24) lineMask[i] = 1;
     }
-    // blocked：用于洪水填充扩散控制的阻挡掩码（开启闭合缝隙时向外扩张 1px，防止漏色）
     var blocked = new Uint8Array(lineMask);
     if (blockByLine && gapClose) dilate(blocked, w, h, 1);
     var start = sy * w + sx;
@@ -588,7 +729,6 @@ window.HMPaint = (function () {
       var o = idx * 4;
       var match = (ta === d[o + 3] && Math.abs(d[o] - tr) <= tolerance && Math.abs(d[o + 1] - tg) <= tolerance && Math.abs(d[o + 2] - tb) <= tolerance);
       if (blocked[idx]) {
-        // 扩张间隙像素：与填充区4邻接的间隙直接填充以消除黑边，但不扩散（防止沿线稿环漏色）
         if (match && !lineMask[idx]) {
           d[o] = fill.r; d[o + 1] = fill.g; d[o + 2] = fill.b; d[o + 3] = 255;
           changed = true;
@@ -605,7 +745,6 @@ window.HMPaint = (function () {
         if (idx + w < w * h) stack.push(idx + w);
       }
     }
-    // 第二遍：填充与已填充区域8邻接的间隙像素（覆盖角落），不传播
     for (var y = 1; y < h - 1; y++) {
       for (var x = 1; x < w - 1; x++) {
         var ci = y * w + x;
@@ -626,7 +765,7 @@ window.HMPaint = (function () {
       }
     }
     if (!changed) return false;
-    el.paintCtx.putImageData(pdata, 0, 0);
+    ctx.putImageData(pdata, 0, 0);
     bumpColor(state.current);
     return true;
   }
@@ -667,8 +806,12 @@ window.HMPaint = (function () {
   /* ---------------- 撤销 / 重做 ---------------- */
   function pushUndo() {
     if (!state) return;
+    var al = activeLayer();
+    if (!al || al.type !== 'paint') return;
+    var ref = layerRef(al.id);
+    if (!ref) return;
     try {
-      undoStack.push(el.paint.toDataURL('image/png'));
+      undoStack.push({ id: al.id, data: ref.canvas.toDataURL('image/png') });
       if (undoStack.length > 20) undoStack.shift();
       redoStack = [];
     } catch (e) { /* ignore */ }
@@ -676,35 +819,225 @@ window.HMPaint = (function () {
   function undo() {
     if (!state) return;
     if (!undoStack.length) { toast('没有可撤销的操作', 'info'); return; }
-    try { redoStack.push(el.paint.toDataURL('image/png')); } catch (e) { /* ignore */ }
-    var src = undoStack.pop();
-    loadImage(src, function (img) {
-      el.paintCtx.clearRect(0, 0, state.w, state.h);
-      el.paintCtx.drawImage(img, 0, 0, state.w, state.h);
-      scheduleSave();
-      renderPalette();
-    });
+    var snap = undoStack.pop();
+    var ref = layerRef(snap.id);
+    if (ref) {
+      try { redoStack.push({ id: snap.id, data: ref.canvas.toDataURL('image/png') }); } catch (e) { /* ignore */ }
+      loadImage(snap.data, function (img) {
+        ref.ctx.clearRect(0, 0, state.w, state.h);
+        ref.ctx.drawImage(img, 0, 0, state.w, state.h);
+        scheduleSave();
+        renderPalette();
+      });
+    }
   }
   function redo() {
     if (!state) return;
     if (!redoStack.length) { toast('没有可重做的操作', 'info'); return; }
-    try { undoStack.push(el.paint.toDataURL('image/png')); } catch (e) { /* ignore */ }
-    var src = redoStack.pop();
-    loadImage(src, function (img) {
-      el.paintCtx.clearRect(0, 0, state.w, state.h);
-      el.paintCtx.drawImage(img, 0, 0, state.w, state.h);
-      scheduleSave();
-      renderPalette();
-    });
+    var snap = redoStack.pop();
+    var ref = layerRef(snap.id);
+    if (ref) {
+      try { undoStack.push({ id: snap.id, data: ref.canvas.toDataURL('image/png') }); } catch (e) { /* ignore */ }
+      loadImage(snap.data, function (img) {
+        ref.ctx.clearRect(0, 0, state.w, state.h);
+        ref.ctx.drawImage(img, 0, 0, state.w, state.h);
+        scheduleSave();
+        renderPalette();
+      });
+    }
   }
 
   function clearPaint() {
     if (!state) return;
-    if (!window.confirm('确定清空当前所有上色吗？')) return;
+    var al = activeLayer();
+    if (!al || al.type !== 'paint') { toast('请先选择一个上色图层', 'info'); return; }
+    if (al.locked) { toast('当前图层已锁定', 'info'); return; }
+    if (!window.confirm('确定清空当前图层的上色吗？')) return;
     pushUndo();
-    el.paintCtx.clearRect(0, 0, state.w, state.h);
+    var ref = layerRef(al.id);
+    if (ref) ref.ctx.clearRect(0, 0, state.w, state.h);
     saveNow();
-    toast('已清空上色', 'success');
+    toast('已清空当前图层', 'success');
+  }
+
+  /* ---------------- 图层面板 ---------------- */
+  function bindLayers() {
+    el.addLayerBtn.addEventListener('click', addLayer);
+    el.dupLayerBtn.addEventListener('click', duplicateLayer);
+    el.upLayerBtn.addEventListener('click', function () { moveLayer(1); });
+    el.downLayerBtn.addEventListener('click', function () { moveLayer(-1); });
+    el.delLayerBtn.addEventListener('click', removeLayer);
+
+    el.layerList.addEventListener('click', function (e) {
+      var eye = e.target.closest('[data-eye]');
+      var lock = e.target.closest('[data-lock]');
+      var row = e.target.closest('[data-layer]');
+      if (!row) return;
+      var id = row.getAttribute('data-layer');
+      if (eye) { toggleVisible(id); return; }
+      if (lock) { toggleLock(id); return; }
+      setActiveLayer(id);
+    });
+    el.layerList.addEventListener('dblclick', function (e) {
+      var name = e.target.closest('[data-layername]');
+      if (!name) return;
+      var id = name.getAttribute('data-layername');
+      renameLayer(id);
+    });
+    el.layerList.addEventListener('input', function (e) {
+      var op = e.target.closest('[data-layerop]');
+      if (!op) return;
+      var id = op.getAttribute('data-layerop');
+      setLayerOpacity(id, Number(op.value) / 100);
+    });
+  }
+
+  function paintLayerIndex(id) {
+    return state.layers.findIndex(function (l) { return l.id === id && l.type === 'paint'; });
+  }
+
+  function addLayer() {
+    if (!state) return;
+    var n = paintLayers().length + 1;
+    var nl = makeLayer('paint', '上色 ' + n);
+    state.layers.push(nl);
+    state.activeLayerId = nl.id;
+    buildLayerCanvases();
+    sizeCanvases();
+    applyLayerVisibility();
+    scheduleSave();
+    toast('已新建图层：' + nl.name, 'success');
+  }
+
+  function duplicateLayer() {
+    if (!state) return;
+    var al = activeLayer();
+    if (!al || al.type !== 'paint') { toast('请先选择一个上色图层', 'info'); return; }
+    var ref = layerRef(al.id);
+    var nl = makeLayer('paint', al.name + ' 副本', { visible: al.visible, opacity: al.opacity });
+    var idx = paintLayerIndex(al.id);
+    state.layers.splice(idx + 1, 0, nl);
+    state.activeLayerId = nl.id;
+    buildLayerCanvases();
+    sizeCanvases();
+    if (ref) {
+      var nref = layerRef(nl.id);
+      if (nref) nref.ctx.drawImage(ref.canvas, 0, 0);
+    }
+    applyLayerVisibility();
+    scheduleSave();
+    toast('已复制图层：' + nl.name, 'success');
+  }
+
+  function removeLayer() {
+    if (!state) return;
+    var paints = paintLayers();
+    if (paints.length <= 1) { toast('至少需要保留一个上色图层', 'info'); return; }
+    var al = activeLayer();
+    if (!al || al.type !== 'paint') return;
+    if (!window.confirm('确定删除图层「' + al.name + '」吗？')) return;
+    state.layers = state.layers.filter(function (l) { return l.id !== al.id; });
+    ensureActive(state);
+    buildLayerCanvases();
+    sizeCanvases();
+    applyLayerVisibility();
+    scheduleSave();
+    toast('已删除图层', 'success');
+  }
+
+  // dir: +1 上移（更靠前），-1 下移（更靠后）
+  function moveLayer(dir) {
+    if (!state) return;
+    var al = activeLayer();
+    if (!al || al.type !== 'paint') return;
+    var idx = state.layers.findIndex(function (l) { return l.id === al.id; });
+    var paints = paintLayers();
+    var pidx = paints.findIndex(function (l) { return l.id === al.id; });
+    var targetPidx = pidx + dir;
+    if (targetPidx < 0 || targetPidx >= paints.length) return;
+    var target = paints[targetPidx];
+    var tidx = state.layers.findIndex(function (l) { return l.id === target.id; });
+    state.layers[idx] = target;
+    state.layers[tidx] = al;
+    reorderLayerDom();
+    applyLayerVisibility();
+    scheduleSave();
+  }
+
+  function setActiveLayer(id) {
+    if (!state) return;
+    var l = state.layers.find(function (x) { return x.id === id; });
+    if (!l || l.type !== 'paint') return;
+    state.activeLayerId = id;
+    renderLayers();
+    scheduleSave();
+  }
+
+  function toggleVisible(id) {
+    if (!state) return;
+    var l = state.layers.find(function (x) { return x.id === id; });
+    if (!l) return;
+    l.visible = !l.visible;
+    applyLayerVisibility();
+    scheduleSave();
+  }
+
+  function toggleLock(id) {
+    if (!state) return;
+    var l = state.layers.find(function (x) { return x.id === id; });
+    if (!l || l.type !== 'paint') return;
+    l.locked = !l.locked;
+    renderLayers();
+    scheduleSave();
+  }
+
+  function setLayerOpacity(id, op) {
+    if (!state) return;
+    var l = state.layers.find(function (x) { return x.id === id; });
+    if (!l) return;
+    l.opacity = Math.max(0, Math.min(1, op));
+    applyLayerVisibility();
+    scheduleSave();
+  }
+
+  function renameLayer(id) {
+    if (!state) return;
+    var l = state.layers.find(function (x) { return x.id === id; });
+    if (!l) return;
+    var name = window.prompt('图层名称', l.name);
+    if (name === null) return;
+    name = name.trim().slice(0, 16) || l.name;
+    l.name = name;
+    renderLayers();
+    scheduleSave();
+  }
+
+  // 面板顺序：线稿在最上，上色层按"前→后"显示（即数组中靠后的在上）
+  function renderLayers() {
+    if (!state || !el.layerList) return;
+    var html = '';
+    var line = lineLayer();
+    if (line) html += renderLayerRow(line);
+    var paints = paintLayers().slice().reverse();
+    paints.forEach(function (l) { html += renderLayerRow(l); });
+    el.layerList.innerHTML = html;
+  }
+
+  function renderLayerRow(l) {
+    var isLine = l.type === 'line';
+    var active = !isLine && l.id === state.activeLayerId;
+    var eye = l.visible ? '◉' : '○';
+    var lockIcon = isLine ? '🔒' : (l.locked ? '🔒' : '🔓');
+    var op = Math.round(l.opacity * 100);
+    return '<div class="hm-pt-layer' + (active ? ' is-active' : '') +
+      (l.locked && !isLine ? ' is-locked' : '') +
+      '" data-layer="' + l.id + '">' +
+      '<button class="hm-pt-eye' + (l.visible ? '' : ' is-off') + '" data-eye="' + l.id + '" title="显示 / 隐藏">' + eye + '</button>' +
+      '<button class="hm-pt-lock' + (l.locked || isLine ? '' : ' is-unlocked') + '" data-lock="' + l.id + '" title="锁定 / 解锁">' + lockIcon + '</button>' +
+      '<span class="hm-pt-layername" data-layername="' + l.id + '" title="双击重命名">' + l.name + '</span>' +
+      '<input type="range" class="hm-pt-layerop" data-layerop="' + l.id + '" min="0" max="100" value="' + op + '" title="不透明度">' +
+      '<em class="hm-pt-layerval">' + op + '</em>' +
+      '</div>';
   }
 
   /* ---------------- 色指定表 ---------------- */
@@ -740,7 +1073,7 @@ window.HMPaint = (function () {
 
   function updateMeta() {
     if (!state || !el.meta) return;
-    el.meta.textContent = state.w + '×' + state.h + ' · ' + state.palette.length + ' 色';
+    el.meta.textContent = state.w + '×' + state.h + ' · ' + state.palette.length + ' 色 · ' + paintLayers().length + ' 层';
   }
 
   /* ---------------- 导出 ---------------- */
@@ -753,11 +1086,24 @@ window.HMPaint = (function () {
     var ctx = out.getContext('2d');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, state.w, state.h);
-    ctx.globalAlpha = state.showPaint ? 1 : 0;
-    ctx.drawImage(el.paint, 0, 0);
-    ctx.globalAlpha = state.showLine ? state.lineAlpha : 0;
-    ctx.drawImage(el.line, 0, 0);
-    ctx.globalAlpha = 1;
+    // 合成：按 z 序自下而上绘制所有可见上色层，再绘线稿层
+    state.layers.forEach(function (l) {
+      if (l.type !== 'paint') return;
+      if (!l.visible) return;
+      var ref = layerRef(l.id);
+      if (!ref) return;
+      ctx.save();
+      ctx.globalAlpha = l.opacity;
+      ctx.drawImage(ref.canvas, 0, 0);
+      ctx.restore();
+    });
+    var line = lineLayer();
+    if (line && line.visible) {
+      ctx.save();
+      ctx.globalAlpha = line.opacity;
+      ctx.drawImage(el.line, 0, 0);
+      ctx.restore();
+    }
     try {
       var url = out.toDataURL('image/png');
       var a = document.createElement('a');
@@ -790,6 +1136,7 @@ window.HMPaint = (function () {
     el.gapClose.checked = gapClose;
     el.newColor.value = state.current;
     renderPalette();
+    renderLayers();
     restore();
   }
 
