@@ -3825,7 +3825,7 @@ async function fetchRayinModels() {
 }
 
 /* ---------------- 事件绑定 ---------------- */
-var DISABLED_VIEWS = { canvas: true, works: true, tools: true, assets: true, writing: true, forum: true };
+var DISABLED_VIEWS = { canvas: true, works: true, assets: true, writing: true, forum: true };
 
 function bindEvents() {
   document.addEventListener('click', function (event) {
