@@ -9,6 +9,7 @@ window.HMToolReference = (function () {
   'use strict';
 
   var LS_KEY = 'anidream.pixabay.key';
+  var DEFAULT_KEY = '58353329-F7CBBE7615A3BBFD57B1BBF44';
 
   var CATEGORIES = [
     { id: 'character', label: '人物', tags: ['portrait', 'people'] },
@@ -45,7 +46,7 @@ window.HMToolReference = (function () {
   function toast(msg, type) { if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type); }
 
   function loadKey() {
-    try { return localStorage.getItem(LS_KEY) || ''; } catch (e) { return ''; }
+    try { return localStorage.getItem(LS_KEY) || DEFAULT_KEY; } catch (e) { return DEFAULT_KEY; }
   }
   function saveKey(k) {
     try { localStorage.setItem(LS_KEY, k || ''); } catch (e) {}
