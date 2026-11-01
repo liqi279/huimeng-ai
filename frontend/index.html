@@ -305,6 +305,11 @@
       </div>
     </div>
     <div class="hm-tool-grid">
+      <button class="hm-tool-card" data-tool="toolvideo">
+        <span class="hm-tool-icon">影</span>
+        <strong>免费生视频</strong>
+        <p>提示词 → HTML 代码 → PNG 帧序列 → GIF / MP4，全程本地生成，不消耗积分</p>
+      </button>
       <button class="hm-tool-card" data-tool="translate">
         <span class="hm-tool-icon">译</span>
         <strong>智能翻译</strong>
@@ -345,6 +350,114 @@
         <strong>使用指南</strong>
         <p>三步上手，查看提示词与参考图技巧</p>
       </button>
+    </div>
+  </main>
+
+  <main class="hm-page hm-gv-page" id="view-toolvideo" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>免费生视频</h2>
+        <p>提示词 → HTML 代码 → PNG 连续帧 → GIF / MP4 · 全程本地渲染，不调用付费接口</p>
+      </div>
+      <div class="hm-page-actions">
+        <button class="hm-pill" id="gvBack">返回工具</button>
+      </div>
+    </div>
+
+    <div class="hm-gv-body">
+      <section class="hm-gv-panel hm-gv-left">
+        <div class="hm-gv-sec">① 描述画面</div>
+        <textarea id="gvPrompt" class="hm-gv-prompt" rows="3" placeholder="例如：深蓝夜空里，星光粒子缓缓汇聚成一颗发光的星球"></textarea>
+        <div class="hm-gv-row">
+          <label class="hm-gv-field">风格
+            <select id="gvTheme">
+              <option value="auto">自动识别</option>
+              <option value="particles">星光粒子</option>
+              <option value="rain">星际雨</option>
+              <option value="city">霓虹城市</option>
+              <option value="blocks">像素方块</option>
+              <option value="wave">波浪</option>
+              <option value="ripple">涟漪光环</option>
+              <option value="orbit">星球轨道</option>
+              <option value="fireworks">烟花</option>
+            </select>
+          </label>
+          <label class="hm-gv-field">分辨率
+            <select id="gvRes">
+              <option value="640x360">640×360</option>
+              <option value="960x540" selected>960×540</option>
+              <option value="1280x720">1280×720</option>
+            </select>
+          </label>
+        </div>
+        <div class="hm-gv-row">
+          <label class="hm-gv-field">帧率
+            <select id="gvFps">
+              <option value="12">12 fps</option>
+              <option value="18" selected>18 fps</option>
+              <option value="24">24 fps</option>
+              <option value="30">30 fps</option>
+            </select>
+          </label>
+          <label class="hm-gv-field">随机种子
+            <input id="gvSeed" type="number" min="1" max="99999" placeholder="留空自动">
+          </label>
+          <label class="hm-gv-field hm-gv-field-color">主色
+            <input id="gvAccent" type="color" value="#8ab4ff">
+          </label>
+        </div>
+        <label class="hm-gv-field hm-gv-field-range">总帧数 <b id="gvFramesVal">36</b>
+          <input id="gvFrames" type="range" min="8" max="96" step="4" value="36">
+        </label>
+        <div class="hm-gv-row hm-gv-row-btn">
+          <button class="hm-pill hm-pill-primary" id="gvGen">生成 HTML 代码</button>
+          <button class="hm-pill" id="gvIdea">换一个灵感</button>
+        </div>
+
+        <div class="hm-gv-sec">② HTML 代码（可编辑）</div>
+        <textarea id="gvCode" class="hm-gv-code" spellcheck="false" placeholder="点击「生成 HTML 代码」后在这里查看与修改场景代码"></textarea>
+        <button class="hm-pill hm-gv-apply" id="gvApply">应用代码并重新渲染</button>
+      </section>
+
+      <section class="hm-gv-panel hm-gv-center">
+        <div class="hm-gv-stage">
+          <canvas id="gvPreview" width="960" height="540"></canvas>
+          <div class="hm-gv-empty" id="gvStageEmpty">生成后将在这里预览连续帧动画</div>
+        </div>
+        <div class="hm-gv-controls">
+          <button class="hm-pill hm-gv-play" id="gvPlay">▶ 播放</button>
+          <input type="range" id="gvScrub" min="0" max="0" value="0">
+          <span id="gvFrameInfo">0 / 0</span>
+        </div>
+        <div class="hm-gv-thumbs" id="gvThumbs"></div>
+      </section>
+
+      <section class="hm-gv-panel hm-gv-right">
+        <div class="hm-gv-sec">③ 生成流水线</div>
+        <div class="hm-gv-step" id="gvStep1"><i>1</i><span>生成 HTML 代码</span><em>待执行</em></div>
+        <div class="hm-gv-step" id="gvStep2"><i>2</i><span>HTML → PNG 帧序列</span><em>待执行</em></div>
+        <div class="hm-gv-step" id="gvStep3"><i>3</i><span>合成 GIF / MP4</span><em>待导出</em></div>
+        <div class="hm-gv-progress"><span id="gvProgress"></span></div>
+        <div class="hm-gv-status" id="gvStatus">等待生成</div>
+        <div class="hm-gv-hint" id="gvStatusHint"></div>
+
+        <div class="hm-gv-sec">导出</div>
+        <div class="hm-gv-export">
+          <button class="hm-pill hm-pill-primary" id="gvGif">导出 GIF</button>
+          <button class="hm-pill" id="gvVideo">导出 WebM</button>
+          <button class="hm-pill" id="gvZip">PNG 帧序列 ZIP</button>
+          <button class="hm-pill" id="gvPng">当前帧 PNG</button>
+          <button class="hm-pill" id="gvHtml">HTML 代码</button>
+        </div>
+        <label class="hm-gv-field">GIF 宽度
+          <select id="gvGifSize">
+            <option value="320">320 px（体积小）</option>
+            <option value="480" selected>480 px</option>
+            <option value="640">640 px（清晰）</option>
+          </select>
+        </label>
+        <div class="hm-gv-tip">思路：先用提示词生成可执行的 HTML 场景代码，再把同一份代码逐帧渲染成 PNG，最后按帧序列合成 GIF 或视频。全部在浏览器本地完成，免费且可离线。</div>
+      </section>
     </div>
   </main>
 
@@ -1718,6 +1831,7 @@
   <script src="app.js"></script>
   <script src="storyboard.js"></script>
   <script src="paint.js"></script>
+  <script src="toolvideo.js"></script>
   <script src="ui.js"></script>
   <script src="desk.js"></script>
   <script src="admin.js"></script>
