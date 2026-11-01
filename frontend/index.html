@@ -320,6 +320,11 @@
         <strong>素材参考</strong>
         <p>Pixabay 免费图库：搜索人物 / 姿势 / 服装 / 场景等参考图，一键存入资产库</p>
       </button>
+      <button class="hm-tool-card" data-tool="tooltraining">
+        <span class="hm-tool-icon">训</span>
+        <strong>模型训练</strong>
+        <p>Checkpoint / LoRA 训练配置：参数对齐 web-ui 规范，导出 JSON 与命令行</p>
+      </button>
       <button class="hm-tool-card" data-tool="translate">
         <span class="hm-tool-icon">译</span>
         <strong>智能翻译</strong>
@@ -665,6 +670,49 @@
           </div>
         </div>
       </div>
+    </div>
+  </main>
+
+  <main class="hm-page hm-tr-page" id="view-tooltraining" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>模型训练</h2>
+        <p>Checkpoint / LoRA 训练配置 · 参数对齐 AUTOMATIC1111 web-ui 与 sd-scripts 规范</p>
+      </div>
+      <div class="hm-page-actions">
+        <button class="hm-pill" id="trBack">返回工具</button>
+      </div>
+    </div>
+
+    <div class="hm-tr-tabs" id="trTabs"></div>
+
+    <div class="hm-tr-body">
+      <section class="hm-tr-panel hm-tr-left">
+        <div class="hm-tr-form" id="trForm"></div>
+        <div class="hm-tr-actions">
+          <button class="hm-pill" id="trBtnReset">恢复默认</button>
+          <button class="hm-pill" id="trBtnJSON">生成 JSON 配置</button>
+          <button class="hm-pill" id="trBtnCmd">生成命令行</button>
+        </div>
+      </section>
+
+      <section class="hm-tr-panel hm-tr-right">
+        <div class="hm-tr-sec-title">配置预览</div>
+        <div class="hm-tr-preview-head">
+          <button class="hm-pill" id="trBtnCopy">复制</button>
+          <button class="hm-pill" id="trBtnDownload">下载 JSON</button>
+        </div>
+        <pre class="hm-tr-preview" id="trPreview">点击左侧「生成 JSON 配置」或「生成命令行」查看结果…</pre>
+
+        <div class="hm-tr-sec-title" style="margin-top:18px;">训练演示</div>
+        <div class="hm-tr-progress">
+          <div class="hm-tr-progress-bar"><div class="hm-tr-progress-fill" id="trProgressBar"></div></div>
+          <span class="hm-tr-progress-text" id="trProgressText">就绪</span>
+        </div>
+        <button class="hm-pill hm-pill-primary hm-tr-train-btn" id="trTrainBtn">开始训练</button>
+        <div class="hm-tr-log" id="trLog"></div>
+        <div class="hm-tr-tip">⚠️ 本平台为纯前端，此处训练为演示进度。导出的 JSON / 命令行可直接用于本地 AUTOMATIC1111 web-ui 或 sd-scripts 进行真实训练。</div>
+      </section>
     </div>
   </main>
 
@@ -2040,6 +2088,7 @@
   <script src="paint.js"></script>
   <script src="toolimage.js"></script>
   <script src="toolreference.js"></script>
+  <script src="tooltraining.js"></script>
   <script src="toolvideo.js"></script>
   <script src="ui.js"></script>
   <script src="desk.js"></script>
