@@ -9286,3 +9286,129 @@ body.hm-chat-open .hm-dock {
   body.hm-chat-open .hm-page,
   body.hm-chat-open .hm-canvas { right: 0; }
 }
+
+/* ---------- 图片修复 ---------- */
+.hm-rs-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 18px;
+  align-items: start;
+}
+.hm-rs-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+}
+.hm-rs-left { display: flex; flex-direction: column; gap: 12px; }
+.hm-rs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hm-rs-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.hm-rs-tab {
+  padding: 7px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.hm-rs-tab:hover { border-color: rgba(139, 92, 246, 0.4); }
+.hm-rs-tab.is-active {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border-color: transparent;
+  color: #fff;
+}
+.hm-rs-brush-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.hm-rs-brush-ctrl input[type="range"] { flex: 1; accent-color: #8b5cf6; }
+.hm-rs-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.hm-rs-canvas-wrap {
+  background:
+    linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.03) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.03) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+.hm-rs-canvas {
+  max-width: 100%;
+  max-height: 70vh;
+  display: block;
+  cursor: crosshair;
+  border-radius: 4px;
+}
+.hm-rs-tip {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+.hm-rs-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hm-rs-layer {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--surface-2);
+}
+.hm-rs-layer-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.hm-rs-layer img {
+  width: 100%;
+  border-radius: 6px;
+  display: block;
+  background:
+    linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,0.05) 25%, transparent 25%);
+  background-size: 12px 12px;
+}
+.hm-rs-layer .hm-pill {
+  width: 100%;
+  margin-top: 8px;
+  text-align: center;
+}
+
+@media (max-width: 1180px) {
+  .hm-rs-body { grid-template-columns: minmax(0, 1fr); }
+}
