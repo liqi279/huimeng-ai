@@ -1634,6 +1634,11 @@
     if (window.HMDirector) {
       try { window.HMDirector.init(); } catch (e) { console.error('[Director] init failed', e); }
     }
+
+    /* 右侧 AI 聊天面板初始化 */
+    if (window.HMChat) {
+      try { window.HMChat.init(); } catch (e) { console.error('[Chat] init failed', e); }
+    }
   }
 
   window.HMUI = {
