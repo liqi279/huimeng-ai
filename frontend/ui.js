@@ -203,6 +203,12 @@
     if (view === 'toolvideo' && window.HMToolVideo) {
       try { window.HMToolVideo.enter(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'toolimage' && view !== 'toolimage' && window.HMToolImage) {
+      try { window.HMToolImage.leave(); } catch (e) { /* ignore */ }
+    }
+    if (view === 'toolimage' && window.HMToolImage) {
+      try { window.HMToolImage.enter(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas') renderCanvas();
@@ -1467,6 +1473,7 @@
 
   function runTool(tool) {
     if (tool === 'toolvideo') { A.switchView('toolvideo'); return; }
+    if (tool === 'toolimage') { A.switchView('toolimage'); return; }
     if (tool === 'translate') return translateTool();
     if (tool === 'inspire') { A.els.inspireBtn.click(); return; }
     if (tool === 'presets') { openPresetModal(); return; }

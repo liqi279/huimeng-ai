@@ -310,6 +310,11 @@
         <strong>免费生视频</strong>
         <p>提示词 → Python 代码 → 二维赛璐璐平涂 PNG 帧 → GIF / MP4，全程本地生成，不消耗积分</p>
       </button>
+      <button class="hm-tool-card" data-tool="toolimage">
+        <span class="hm-tool-icon">绘</span>
+        <strong>动漫生图工坊</strong>
+        <p>WebUI 式桌面：Checkpoint × LoRA × 赛璐璐平涂 / 半厚涂 / 厚涂，只生成动漫图片</p>
+      </button>
       <button class="hm-tool-card" data-tool="translate">
         <span class="hm-tool-icon">译</span>
         <strong>智能翻译</strong>
@@ -506,6 +511,93 @@
           </select>
         </label>
         <div class="hm-gv-tip">思路：先用提示词生成可运行的 Python（Pillow）场景脚本，画面为传统二维赛璐璐平涂（平涂底色 + 硬边阴影 + 一层高光，无渐变）；同一套参数在浏览器本地逐帧渲染成 PNG，再合成 GIF 或视频，导出的 .py 也能离线跑出同样的帧序列。</div>
+      </section>
+    </div>
+  </main>
+
+  <main class="hm-page hm-iw-page" id="view-toolimage" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>动漫生图工坊</h2>
+        <p>WebUI 式桌面工作台 · Checkpoint × LoRA × 三种日式画风 · 只生成图片，全程本地渲染</p>
+      </div>
+      <div class="hm-page-actions">
+        <button class="hm-pill" id="iwBack">返回工具</button>
+      </div>
+    </div>
+
+    <div class="hm-iw-body">
+      <section class="hm-iw-panel hm-iw-left">
+        <div class="hm-iw-sec">提示词</div>
+        <textarea id="iwPrompt" class="hm-gv-prompt" rows="3" placeholder="例如：白毛萝莉，猫耳，水手服，樱花缓缓飘落"></textarea>
+        <label class="hm-gv-field hm-gv-field-grow">反向提示词
+          <input id="iwNeg" type="text" placeholder="lowres, bad anatomy, extra fingers, watermark">
+        </label>
+
+        <div class="hm-iw-sec">画风 <span class="hm-iw-sub" id="iwStyleTag">日式赛璐璐二维平涂</span></div>
+        <div class="hm-iw-styles" id="iwStyles">
+          <button class="is-active" data-style="cel"><b>赛璐璐平涂</b><i>硬边阴影 · 单层高光</i></button>
+          <button data-style="semi"><b>半厚涂</b><i>柔和过渡 · 体积感</i></button>
+          <button data-style="impasto"><b>厚涂</b><i>堆叠笔触 · 油画质感</i></button>
+        </div>
+
+        <div class="hm-iw-sec">Checkpoint</div>
+        <select id="iwCkpt" class="hm-iw-select"></select>
+        <div class="hm-iw-modelmeta" id="iwCkptMeta"></div>
+
+        <div class="hm-iw-sec">LoRA <span class="hm-iw-sub" id="iwLoraCount">0</span></div>
+        <div class="hm-iw-loras" id="iwLoraList"></div>
+        <button class="hm-pill hm-iw-loraadd" id="iwLoraAdd">＋ 从模型站添加 LoRA</button>
+        <div class="hm-iw-loralib" id="iwLoraLib" hidden></div>
+
+        <div class="hm-iw-sec">生成参数</div>
+        <div class="hm-gv-row">
+          <label class="hm-gv-field">采样器
+            <select id="iwSampler"></select>
+          </label>
+          <label class="hm-gv-field">尺寸
+            <select id="iwSize">
+              <option value="768x1024" selected>768×1024 竖图</option>
+              <option value="832x1216">832×1216 大竖图</option>
+              <option value="1024x1024">1024×1024 方图</option>
+              <option value="1216x832">1216×832 横图</option>
+            </select>
+          </label>
+        </div>
+        <label class="hm-gv-field hm-gv-field-range">迭代步数 <b id="iwStepsVal">28</b>
+          <input id="iwSteps" type="range" min="10" max="50" step="1" value="28">
+        </label>
+        <label class="hm-gv-field hm-gv-field-range">CFG <b id="iwCfgVal">7</b>
+          <input id="iwCfg" type="range" min="1" max="15" step="0.5" value="7">
+        </label>
+        <label class="hm-gv-field">随机种子
+          <input id="iwSeed" type="number" min="1" max="999999" placeholder="留空随机">
+        </label>
+
+        <button class="hm-pill hm-pill-primary hm-iw-gen" id="iwGen">生成图片</button>
+      </section>
+
+      <section class="hm-iw-panel hm-iw-center">
+        <div class="hm-iw-stage">
+          <canvas id="iwPreview" width="768" height="1024"></canvas>
+          <div class="hm-gv-empty" id="iwEmpty">设置提示词与模型后点击「生成图片」</div>
+          <span class="hm-iw-badge" id="iwBadge">赛璐璐平涂 · Anything V5</span>
+        </div>
+        <div class="hm-iw-toolbar">
+          <button class="hm-pill" id="iwSave">保存 PNG</button>
+          <button class="hm-pill" id="iwParams">复制参数</button>
+          <button class="hm-pill" id="iwDice">随机种子</button>
+          <span id="iwStatus">就绪</span>
+        </div>
+        <div class="hm-iw-hint">切换画风 / Checkpoint / LoRA 会立即重绘；复制出的参数与 WebUI 一致。</div>
+      </section>
+
+      <section class="hm-iw-panel hm-iw-right">
+        <div class="hm-iw-sec">生成记录</div>
+        <div class="hm-iw-history" id="iwHistory"></div>
+        <div class="hm-iw-sec">模型来源</div>
+        <div class="hm-iw-sources" id="iwSources"></div>
+        <div class="hm-gv-tip">离线说明：所有 Checkpoint / LoRA 以真实模型站的条目为索引，画面由本地确定性渲染器逐笔绘制，不下载权重、不联网推理、不消耗积分。</div>
       </section>
     </div>
   </main>
@@ -1880,6 +1972,7 @@
   <script src="app.js"></script>
   <script src="storyboard.js"></script>
   <script src="paint.js"></script>
+  <script src="toolimage.js"></script>
   <script src="toolvideo.js"></script>
   <script src="ui.js"></script>
   <script src="desk.js"></script>
