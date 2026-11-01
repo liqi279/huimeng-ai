@@ -162,6 +162,18 @@
     return request('/generate', { method: 'POST', body: payload }, timeoutMs || 180000);
   };
 
+  /* 工作流 TTS：声音设计（Edge-TTS 免费） */
+  api.ttsDesign = function (payload, timeoutMs) {
+    return request('/tts/design', { method: 'POST', body: payload }, timeoutMs || 60000);
+  };
+  /* 工作流 TTS：语音克隆（Fish Audio，需 API Key） */
+  api.ttsClone = function (payload, timeoutMs) {
+    return request('/tts/clone', { method: 'POST', body: payload }, timeoutMs || 120000);
+  };
+  api.ttsVoices = function () {
+    return request('/tts/voices', {}, 15000);
+  };
+
   api.translate = async function (text) {
     var data = await request('/translate', { method: 'POST', body: { text: text } }, 30000);
     return (data && data.text) || '';

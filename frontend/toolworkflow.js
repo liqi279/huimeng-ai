@@ -378,16 +378,23 @@ window.HMToolWorkflow = (function () {
 
   var QWEN3_FIELDS = [
     {
-      sec: '语音克隆 · 输入文本',
+      sec: '语音克隆 · API 配置',
       items: [
-        { key: 'clone_text', label: '合成文本（CR Text → 语音克隆节点）', type: 'textarea', default: '你们的陛下，肯定也会喜欢', node: 11, widget: 'text', idx: 0, hint: '要克隆音色并合成为该文本的语音' },
-        { key: 'clone_reftext', label: '参考文本（可选）', type: 'textarea', default: '', node: 1, widget: '参考文本', idx: 1, hint: '留空则由 Whisper 自动识别参考音频的文本' }
+        { key: 'fish_key', label: 'Fish Audio API Key（语音克隆用，声音设计无需）', type: 'apikey', default: '', noNode: true, hint: '在 https://fish.audio 控制台获取；不填则语音克隆不可用，声音设计仍可免费生成' },
+        { key: 'clone_refaudio_file', label: '参考音频样本（3~10 秒干净人声）', type: 'file', default: '', noNode: true, stateKey: 'cloneRefName', stateKeyData: 'cloneRefAudio', hint: '用于克隆音色；声音设计无需上传' }
       ]
     },
     {
-      sec: '语音克隆 · 参考音频',
+      sec: '语音克隆 · 输入文本',
       items: [
-        { key: 'clone_refaudio', label: '参考音频文件名', type: 'text', default: 'reference.wav', node: 4, widget: 'audio', idx: 0, hint: '需先放入 ComfyUI 的 input 目录' },
+        { key: 'clone_text', label: '合成文本（CR Text → 语音克隆节点）', type: 'textarea', default: '你们的陛下，肯定也会喜欢', node: 11, widget: 'text', idx: 0, hint: '要克隆音色并合成为该文本的语音' },
+        { key: 'clone_reftext', label: '参考文本（可选，填写可提升克隆准确度）', type: 'textarea', default: '', node: 1, widget: '参考文本', idx: 1, hint: '留空则由 Whisper 自动识别参考音频的文本' }
+      ]
+    },
+    {
+      sec: '语音克隆 · 参考音频（ComfyUI 参数）',
+      items: [
+        { key: 'clone_refaudio', label: '参考音频文件名', type: 'text', default: 'reference.wav', node: 4, widget: 'audio', idx: 0, hint: '导出 ComfyUI JSON 时使用；在线生成请用上方上传' },
         { key: 'clone_crop_start', label: '裁剪开始时间', type: 'text', default: '0:00', node: 6, widget: 'start_time', idx: 0 },
         { key: 'clone_crop_end', label: '裁剪结束时间', type: 'text', default: '0:4', node: 6, widget: 'end_time', idx: 1, hint: '格式 m:ss，建议截取 3~10 秒干净人声' }
       ]
@@ -473,13 +480,25 @@ window.HMToolWorkflow = (function () {
 
   var state = {
     selected: null,
-    values: {}
+    values: {},
+    fishKey: '',
+    cloneRefAudio: '',
+    cloneRefName: '',
+    outputs: { clone: null, design: null }
   };
   var el = {};
   var inited = false;
 
   function $(id) { return document.getElementById(id); }
   function toast(msg, type) { if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type); }
+
+  /* Fish Audio API Key 持久化（全局，不随工作流重置） */
+  function loadFishKey() {
+    try { return localStorage.getItem(LS_PREFIX + 'fishKey') || ''; } catch (e) { return ''; }
+  }
+  function saveFishKey(v) {
+    try { localStorage.setItem(LS_PREFIX + 'fishKey', v || ''); } catch (e) {}
+  }
 
   /* ---------- 默认值 / 持久化 ---------- */
   function defaults(wf) {
@@ -492,9 +511,15 @@ window.HMToolWorkflow = (function () {
   function loadState(wf) {
     try {
       var raw = localStorage.getItem(LS_PREFIX + wf.id);
-      if (raw) return Object.assign(defaults(wf), JSON.parse(raw));
+      if (raw) {
+        var d = Object.assign(defaults(wf), JSON.parse(raw));
+        d.fish_key = state.fishKey;
+        return d;
+      }
     } catch (e) {}
-    return defaults(wf);
+    var d = defaults(wf);
+    d.fish_key = state.fishKey;
+    return d;
   }
   function saveState(wf) {
     try { localStorage.setItem(LS_PREFIX + wf.id, JSON.stringify(state.values[wf.id])); } catch (e) {}
@@ -518,6 +543,18 @@ window.HMToolWorkflow = (function () {
 
   /* ---------- 表单渲染 ---------- */
   function fieldInput(f, val) {
+    if (f.type === 'apikey') {
+      return '<input type="password" data-key="' + f.key + '" value="' + (val == null ? '' : String(val).replace(/"/g, '&quot;')) + '" placeholder="在 fish.audio 控制台获取">';
+    }
+    if (f.type === 'file') {
+      var name = state[f.stateKey] || '';
+      var has = !!state[f.stateKey + 'Data'];
+      return '<div class="hm-wf-file">' +
+        '<input type="file" data-key="' + f.key + '" accept="audio/*" hidden>' +
+        '<button type="button" class="hm-pill" data-role="pick">' + (has ? '重新选择' : '上传参考音频') + '</button>' +
+        '<span class="hm-wf-file-name">' + (name || '未选择文件（建议 3~10 秒干净人声）') + '</span>' +
+        '</div>';
+    }
     if (f.type === 'checkbox') {
       return '<label class="hm-tr-check"><input type="checkbox" data-key="' + f.key + '"' + (val ? ' checked' : '') + '><span>' + (val ? '开启' : '关闭') + '</span></label>';
     }
@@ -574,6 +611,9 @@ window.HMToolWorkflow = (function () {
         if (span) span.textContent = n.checked ? '开启' : '关闭';
       } else if (n.type === 'number') {
         vals[k] = n.value === '' ? 0 : parseFloat(n.value);
+      } else if (n.type === 'password') {
+        vals[k] = n.value;
+        if (k === 'fish_key') { state.fishKey = n.value; saveFishKey(n.value); }
       } else {
         vals[k] = n.value;
       }
@@ -674,6 +714,11 @@ window.HMToolWorkflow = (function () {
       '</div>' +
       '<div class="hm-wf-diagram" id="wfDiagram"></div>' +
       '<div class="hm-tr-form" id="wfForm"></div>' +
+      '<div class="hm-wf-gen-row">' +
+        '<button class="hm-pill hm-pill-primary" id="wfGenClone">🎙 生成语音克隆</button>' +
+        '<button class="hm-pill hm-pill-primary" id="wfGenDesign">✨ 生成声音设计</button>' +
+      '</div>' +
+      '<div class="hm-wf-output" id="wfOutput"></div>' +
       '<div class="hm-wf-preview-wrap" id="wfPreviewWrap" hidden>' +
         '<div class="hm-tr-sec-title">JSON 预览</div>' +
         '<div class="hm-tr-preview-head"><button class="hm-pill" id="wfCopy">复制</button><button class="hm-pill" id="wfDownload">下载 JSON</button></div>' +
@@ -683,16 +728,20 @@ window.HMToolWorkflow = (function () {
     // 重新绑定内部元素
     el.diagram = $('wfDiagram');
     el.form = $('wfForm');
+    el.output = $('wfOutput');
     el.previewWrap = $('wfPreviewWrap');
     el.previewOut = $('wfPreviewOut');
     el.btnReset = $('wfReset');
     el.btnPreview = $('wfPreview');
     el.btnExport = $('wfExport');
+    el.btnGenClone = $('wfGenClone');
+    el.btnGenDesign = $('wfGenDesign');
     el.btnCopy = $('wfCopy');
     el.btnDownload = $('wfDownload');
 
     renderForm();
     renderDiagram();
+    renderOutput();
     bindDetail();
   }
 
@@ -701,9 +750,36 @@ window.HMToolWorkflow = (function () {
     el.form.addEventListener('input', function (e) {
       if (e.target.matches('input[type="number"]')) collectForm();
     });
+    /* 文件上传处理 */
+    el.form.addEventListener('click', function (e) {
+      var pick = e.target.closest('[data-role="pick"]');
+      if (!pick) return;
+      var wrap = pick.closest('.hm-wf-file');
+      if (!wrap) return;
+      var input = wrap.querySelector('input[type="file"]');
+      if (input) input.click();
+    });
+    el.form.addEventListener('change', function (e) {
+      if (e.target.type !== 'file') return;
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        state.cloneRefAudio = String(reader.result);
+        state.cloneRefName = file.name;
+        var nameEl = e.target.parentElement.querySelector('.hm-wf-file-name');
+        if (nameEl) nameEl.textContent = file.name;
+        var btn = e.target.parentElement.querySelector('[data-role="pick"]');
+        if (btn) btn.textContent = '重新选择';
+        toast('参考音频已载入：' + file.name, 'success');
+      };
+      reader.readAsDataURL(file);
+    });
     el.btnReset.addEventListener('click', resetDefaults);
     el.btnPreview.addEventListener('click', previewJSON);
     el.btnExport.addEventListener('click', exportJSON);
+    el.btnGenClone.addEventListener('click', generateClone);
+    el.btnGenDesign.addEventListener('click', generateDesign);
     el.btnCopy.addEventListener('click', copyPreview);
     el.btnDownload.addEventListener('click', downloadJSON);
   }
@@ -722,6 +798,7 @@ window.HMToolWorkflow = (function () {
 
     wf.sections.forEach(function (sec) {
       sec.items.forEach(function (f) {
+        if (f.noNode) return; /* API Key / 文件上传等不写入工作流 JSON */
         var node = nodeMap[f.node];
         if (!node) return;
         var val = vals[f.key];
@@ -792,9 +869,142 @@ window.HMToolWorkflow = (function () {
     if (!wf) return;
     if (!confirm('确定恢复该工作流的全部默认参数？')) return;
     state.values[wf.id] = defaults(wf);
+    state.values[wf.id].fish_key = state.fishKey;
     saveState(wf);
     renderForm();
     toast('已恢复默认参数', 'info');
+  }
+
+  /* ---------- 生成音频 ---------- */
+  function api() { return (window.HM && window.HM.api) || null; }
+
+  function renderOutput() {
+    if (!el.output) return;
+    var out = state.outputs;
+    var html = '';
+    if (out.clone) {
+      html += renderOutputCard('语音克隆结果', out.clone);
+    }
+    if (out.design) {
+      html += renderOutputCard('声音设计结果', out.design);
+    }
+    el.output.innerHTML = html;
+  }
+
+  function renderOutputCard(title, item) {
+    if (item.loading) {
+      return '<div class="hm-wf-out-card"><div class="hm-wf-out-title">' + title + '</div>' +
+        '<div class="hm-wf-out-loading">' + item.status || '生成中…' + '</div></div>';
+    }
+    if (item.error) {
+      return '<div class="hm-wf-out-card is-error"><div class="hm-wf-out-title">' + title + '</div>' +
+        '<div class="hm-wf-out-err">' + item.error + '</div></div>';
+    }
+    var url = item.url || '';
+    var full = (api() && api().mediaUrl) ? api().mediaUrl(url) : url;
+    return '<div class="hm-wf-out-card">' +
+      '<div class="hm-wf-out-title">' + title +
+        '<a class="hm-wf-out-download" href="' + full + '" download="' + (item.name || 'audio.mp3') + '">下载</a>' +
+      '</div>' +
+      '<audio class="hm-wf-out-player" controls src="' + full + '"></audio>' +
+      (item.duration ? '<div class="hm-wf-out-meta">时长约 ' + item.duration + ' 秒 · 引擎：' + (item.engine || '') + '</div>' : '') +
+    '</div>';
+  }
+
+  function generateClone() {
+    collectForm();
+    var wf = state.selected;
+    if (!wf) return;
+    var v = state.values[wf.id];
+
+    if (!state.fishKey) {
+      toast('请先填写 Fish Audio API Key', 'error');
+      return;
+    }
+    if (!state.cloneRefAudio) {
+      toast('请上传参考音频样本', 'error');
+      return;
+    }
+    var text = String(v.clone_text || '').trim();
+    if (!text) { toast('请填写合成文本', 'error'); return; }
+
+    state.outputs.clone = { loading: true, status: '语音克隆生成中…' };
+    el.btnGenClone.disabled = true;
+    el.btnGenClone.textContent = '生成中…';
+    renderOutput();
+
+    var payload = {
+      text: text,
+      apiKey: state.fishKey,
+      referenceAudio: state.cloneRefAudio,
+      referenceText: String(v.clone_reftext || '').trim(),
+      speed: v.clone_speed
+    };
+
+    (api() ? api().ttsClone(payload, 120000) : Promise.reject(new Error('API 未就绪')))
+      .then(function (data) {
+        state.outputs.clone = {
+          url: data.url,
+          duration: data.duration,
+          engine: data.engine || 'fish-audio',
+          name: 'voice-clone-' + Date.now() + '.mp3'
+        };
+        toast('语音克隆生成成功', 'success');
+      })
+      .catch(function (err) {
+        var msg = (err && err.message) ? err.message : String(err);
+        state.outputs.clone = { error: msg };
+        toast('语音克隆失败：' + msg, 'error');
+      })
+      .finally(function () {
+        el.btnGenClone.disabled = false;
+        el.btnGenClone.textContent = '🎙 生成语音克隆';
+        renderOutput();
+      });
+  }
+
+  function generateDesign() {
+    collectForm();
+    var wf = state.selected;
+    if (!wf) return;
+    var v = state.values[wf.id];
+
+    var text = String(v.design_text || '').trim();
+    if (!text) { toast('请填写合成文本', 'error'); return; }
+    var prompt = String(v.design_prompt || '').trim();
+
+    state.outputs.design = { loading: true, status: '声音设计生成中（Edge-TTS 免费）…' };
+    el.btnGenDesign.disabled = true;
+    el.btnGenDesign.textContent = '生成中…';
+    renderOutput();
+
+    var payload = {
+      text: text,
+      prompt: prompt,
+      speed: v.design_speed
+    };
+
+    (api() ? api().ttsDesign(payload, 60000) : Promise.reject(new Error('API 未就绪')))
+      .then(function (data) {
+        state.outputs.design = {
+          url: data.url,
+          duration: data.duration,
+          engine: data.engine || 'edgetts',
+          voice: data.voice,
+          name: 'voice-design-' + Date.now() + '.mp3'
+        };
+        toast('声音设计生成成功（免费）', 'success');
+      })
+      .catch(function (err) {
+        var msg = (err && err.message) ? err.message : String(err);
+        state.outputs.design = { error: msg };
+        toast('声音设计失败：' + msg, 'error');
+      })
+      .finally(function () {
+        el.btnGenDesign.disabled = false;
+        el.btnGenDesign.textContent = '✨ 生成声音设计';
+        renderOutput();
+      });
   }
 
   /* ---------- 选择工作流 ---------- */
@@ -826,6 +1036,7 @@ window.HMToolWorkflow = (function () {
     el.back = $('wfBack');
     el.list = $('wfList');
     el.detail = $('wfDetail');
+    state.fishKey = loadFishKey();
     renderList();
     bind();
     // 默认选中第一个

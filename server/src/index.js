@@ -18,6 +18,7 @@ const catalogRoutes = require('./routes/catalog');
 const rayinRoutes = require('./routes/rayin');
 const generateRoutes = require('./routes/generate');
 const chatRoutes = require('./routes/chat');
+const ttsRoutes = require('./routes/tts');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 
@@ -42,6 +43,7 @@ app.use('/api', catalogRoutes);
 app.use('/api', rayinRoutes);
 app.use('/api', generateRoutes);
 app.use('/api', chatRoutes);
+app.use('/api/tts', ttsRoutes);
 
 app.use('/api', (req, res) => {
   res.status(404).json({
