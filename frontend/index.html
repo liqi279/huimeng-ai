@@ -369,6 +369,52 @@
         <div class="hm-gv-sec">① 描述画面</div>
         <textarea id="gvPrompt" class="hm-gv-prompt" rows="3" placeholder="例如：白毛萝莉，红色蝴蝶结，樱花缓缓飘落；或：深蓝夜空里，星光粒子汇聚成一颗发光的星球"></textarea>
         <div class="hm-gv-row">
+          <label class="hm-gv-field">模型
+            <select id="gvModel">
+              <option value="seedance" selected>Seedance 1.0</option>
+              <option value="vidu">Vidu 2</option>
+              <option value="minimax-h3">MiniMax H3</option>
+              <option value="sora2">Sora 2</option>
+              <option value="wan">Wan 2.1</option>
+            </select>
+          </label>
+          <label class="hm-gv-field">运镜
+            <select id="gvCamera">
+              <option value="auto" selected>自动识别</option>
+              <option value="dolly">推镜</option>
+              <option value="pull">拉镜</option>
+              <option value="pan">摇镜</option>
+              <option value="orbit">环绕</option>
+              <option value="follow">跟拍</option>
+              <option value="static">固定</option>
+            </select>
+          </label>
+        </div>
+        <div class="hm-gv-row">
+          <label class="hm-gv-field">时长
+            <select id="gvDuration">
+              <option value="3" selected>3 秒</option>
+              <option value="5">5 秒</option>
+              <option value="8">8 秒</option>
+              <option value="10">10 秒</option>
+            </select>
+          </label>
+          <label class="hm-gv-field">画幅
+            <select id="gvAspect">
+              <option value="16:9" selected>16:9 横屏</option>
+              <option value="9:16">9:16 竖屏</option>
+              <option value="1:1">1:1 方形</option>
+              <option value="4:3">4:3 经典</option>
+            </select>
+          </label>
+        </div>
+        <label class="hm-gv-field hm-gv-field-grow">反向提示词
+          <input id="gvNeg" type="text" placeholder="模糊、变形、多余肢体、闪烁…">
+        </label>
+        <label class="hm-gv-field hm-gv-field-range">运动强度 <b id="gvMotionVal">80</b>
+          <input id="gvMotion" type="range" min="0" max="100" step="5" value="80">
+        </label>
+        <div class="hm-gv-row">
           <label class="hm-gv-field">风格
             <select id="gvTheme">
               <option value="auto">自动识别</option>
@@ -395,9 +441,11 @@
           <label class="hm-gv-field">帧率
             <select id="gvFps">
               <option value="12">12 fps</option>
-              <option value="18" selected>18 fps</option>
-              <option value="24">24 fps</option>
+              <option value="16">16 fps</option>
+              <option value="18">18 fps</option>
+              <option value="24" selected>24 fps</option>
               <option value="30">30 fps</option>
+              <option value="48">48 fps</option>
             </select>
           </label>
           <label class="hm-gv-field">随机种子

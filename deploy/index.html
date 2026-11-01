@@ -8101,7 +8101,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 .hm-gv-field select,
-.hm-gv-field input[type="number"] {
+.hm-gv-field input[type="number"],
+.hm-gv-field input[type="text"] {
   height: 30px;
   border-radius: 7px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -8111,6 +8112,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   padding: 0 8px;
   font-family: inherit;
 }
+
+.hm-gv-field-grow { flex: 1 0 100%; }
 
 .hm-gv-field select:focus,
 .hm-gv-field input:focus { outline: none; border-color: rgba(96, 165, 250, 0.6); }
@@ -8304,7 +8307,8 @@ body.hm-light .hm-gv-sec { color: #64748b; }
 body.hm-light .hm-gv-prompt,
 body.hm-light .hm-gv-code,
 body.hm-light .hm-gv-field select,
-body.hm-light .hm-gv-field input[type="number"] {
+body.hm-light .hm-gv-field input[type="number"],
+body.hm-light .hm-gv-field input[type="text"] {
   background: #f8fafc;
   color: #1e293b;
   border-color: rgba(15, 23, 42, 0.12);
@@ -8666,7 +8670,7 @@ body.hm-light .hm-gv-empty { color: #94a3b8; }
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261101151255-f2b6b81";</script>
+<script>window.HM_BUILD = "20261101152711-4b911b0";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9029,6 +9033,52 @@ body.hm-light .hm-gv-empty { color: #94a3b8; }
         <div class="hm-gv-sec">① 描述画面</div>
         <textarea id="gvPrompt" class="hm-gv-prompt" rows="3" placeholder="例如：白毛萝莉，红色蝴蝶结，樱花缓缓飘落；或：深蓝夜空里，星光粒子汇聚成一颗发光的星球"></textarea>
         <div class="hm-gv-row">
+          <label class="hm-gv-field">模型
+            <select id="gvModel">
+              <option value="seedance" selected>Seedance 1.0</option>
+              <option value="vidu">Vidu 2</option>
+              <option value="minimax-h3">MiniMax H3</option>
+              <option value="sora2">Sora 2</option>
+              <option value="wan">Wan 2.1</option>
+            </select>
+          </label>
+          <label class="hm-gv-field">运镜
+            <select id="gvCamera">
+              <option value="auto" selected>自动识别</option>
+              <option value="dolly">推镜</option>
+              <option value="pull">拉镜</option>
+              <option value="pan">摇镜</option>
+              <option value="orbit">环绕</option>
+              <option value="follow">跟拍</option>
+              <option value="static">固定</option>
+            </select>
+          </label>
+        </div>
+        <div class="hm-gv-row">
+          <label class="hm-gv-field">时长
+            <select id="gvDuration">
+              <option value="3" selected>3 秒</option>
+              <option value="5">5 秒</option>
+              <option value="8">8 秒</option>
+              <option value="10">10 秒</option>
+            </select>
+          </label>
+          <label class="hm-gv-field">画幅
+            <select id="gvAspect">
+              <option value="16:9" selected>16:9 横屏</option>
+              <option value="9:16">9:16 竖屏</option>
+              <option value="1:1">1:1 方形</option>
+              <option value="4:3">4:3 经典</option>
+            </select>
+          </label>
+        </div>
+        <label class="hm-gv-field hm-gv-field-grow">反向提示词
+          <input id="gvNeg" type="text" placeholder="模糊、变形、多余肢体、闪烁…">
+        </label>
+        <label class="hm-gv-field hm-gv-field-range">运动强度 <b id="gvMotionVal">80</b>
+          <input id="gvMotion" type="range" min="0" max="100" step="5" value="80">
+        </label>
+        <div class="hm-gv-row">
           <label class="hm-gv-field">风格
             <select id="gvTheme">
               <option value="auto">自动识别</option>
@@ -9055,9 +9105,11 @@ body.hm-light .hm-gv-empty { color: #94a3b8; }
           <label class="hm-gv-field">帧率
             <select id="gvFps">
               <option value="12">12 fps</option>
-              <option value="18" selected>18 fps</option>
-              <option value="24">24 fps</option>
+              <option value="16">16 fps</option>
+              <option value="18">18 fps</option>
+              <option value="24" selected>24 fps</option>
               <option value="30">30 fps</option>
+              <option value="48">48 fps</option>
             </select>
           </label>
           <label class="hm-gv-field">随机种子
@@ -19015,6 +19067,10 @@ window.HMToolVideo = (function () {
   var DEFAULT_PROMPT = '深蓝夜空里，星光粒子缓缓汇聚成一颗发光的星球';
   var MAX_FRAMES = 96;
 
+  var SHOT_LABELS = { close: '特写', medium: '近景', full: '全景', wide: '远景' };
+  var CAM_LABELS = { auto: '自动运镜', dolly: '推镜', pull: '拉镜', pan: '摇镜', orbit: '环绕', follow: '跟拍', static: '固定' };
+  var GRADE_LABELS = { cinema: '电影宽银幕', filmic: '胶片动漫', neon: '霓虹', soft: '柔光', clean: '通透' };
+
   var el = {};
   var inited = false;
 
@@ -19151,6 +19207,57 @@ window.HMToolVideo = (function () {
     };
   }
 
+  /* 主流视频模型风格预设：对齐其运动幅度/运镜习惯/色彩与颗粒特征 */
+  var MODEL_PROFILES = [
+    { id: 'seedance', name: 'Seedance 1.0', fps: 24, motion: 0.90, camera: 'dolly', grade: 'filmic', grain: 0.035 },
+    { id: 'vidu', name: 'Vidu 2', fps: 24, motion: 0.70, camera: 'static', grade: 'clean', grain: 0 },
+    { id: 'minimax-h3', name: 'MiniMax H3', fps: 30, motion: 1.00, camera: 'orbit', grade: 'neon', grain: 0.02 },
+    { id: 'sora2', name: 'Sora 2', fps: 30, motion: 0.80, camera: 'pan', grade: 'cinema', grain: 0.05 },
+    { id: 'wan', name: 'Wan 2.1', fps: 16, motion: 0.60, camera: 'dolly', grade: 'soft', grain: 0.01 }
+  ];
+
+  function modelProfile(id) {
+    for (var i = 0; i < MODEL_PROFILES.length; i++) if (MODEL_PROFILES[i].id === id) return MODEL_PROFILES[i];
+    return MODEL_PROFILES[0];
+  }
+
+  /* 文本语义解析：景别 / 运镜 / 动作 / 影调 */
+  function detectShot(text) {
+    if (hasAny(text, ['特写', '脸部', 'close-up', 'closeup'])) return 'close';
+    if (hasAny(text, ['近景', '半身', 'medium shot'])) return 'medium';
+    if (hasAny(text, ['远景', '大景', 'wide shot', 'long shot'])) return 'wide';
+    if (hasAny(text, ['全景', '全身', 'full body'])) return 'full';
+    return 'medium';
+  }
+
+  function detectCamera(text) {
+    if (hasAny(text, ['推镜', '推进', '推近', 'zoom in', 'dolly in'])) return 'dolly';
+    if (hasAny(text, ['拉镜', '拉远', 'zoom out', 'dolly out'])) return 'pull';
+    if (hasAny(text, ['摇镜', '横移', '平移', ' pan', 'pan '])) return 'pan';
+    if (hasAny(text, ['环绕', '旋转镜头', 'orbit'])) return 'orbit';
+    if (hasAny(text, ['跟拍', '跟随', 'follow'])) return 'follow';
+    if (hasAny(text, ['固定', '静止镜头', 'static'])) return 'static';
+    return '';
+  }
+
+  function detectAction(text) {
+    if (hasAny(text, ['挥手', '招手', 'wave'])) return 'wave';
+    if (hasAny(text, ['奔跑', '冲刺', ' run', 'run '])) return 'run';
+    if (hasAny(text, ['转身', '回头', 'turn'])) return 'turn';
+    if (hasAny(text, ['漂浮', '悬浮', '飘浮', 'float'])) return 'float';
+    if (hasAny(text, ['微笑', '笑容', 'smile'])) return 'smile';
+    return 'idle';
+  }
+
+  function detectGrade(text, profile) {
+    if (hasAny(text, ['电影感', '宽银幕', 'cinematic'])) return 'cinema';
+    if (hasAny(text, ['赛璐璐', '动漫', '二次元', 'anime'])) return 'filmic';
+    if (hasAny(text, ['霓虹', '赛博', 'neon', 'cyber'])) return 'neon';
+    if (hasAny(text, ['柔和', '水彩', '柔光', 'soft'])) return 'soft';
+    if (hasAny(text, ['通透', '写实', 'clean'])) return 'clean';
+    return profile.grade;
+  }
+
   function compilePrompt(prompt, opts) {
     var text = String(prompt || '').toLowerCase();
     var chosen = null;
@@ -19163,10 +19270,22 @@ window.HMToolVideo = (function () {
     if (!chosen) chosen = THEMES[0];
     var style = opts && opts.style && opts.style !== 'auto' ? opts.style : chosen.style;
     var theme = themeForStyle(style);
+    var profile = modelProfile(opts && opts.model);
     var seed = opts && opts.seed ? Number(opts.seed) : (hashStr(prompt) % 99991);
     var hash = hashStr(prompt + '#' + seed);
     var w = Number(opts && opts.w) || 960;
     var h = Number(opts && opts.h) || 540;
+    var fps = Number(opts && opts.fps) || profile.fps;
+    var frames = Math.min(MAX_FRAMES, Math.max(8, Number(opts && opts.frames) || 36));
+    var motion = opts && opts.motion != null ? Number(opts.motion) : profile.motion;
+    motion = Math.max(0, Math.min(1, motion));
+
+    var camType = opts && opts.camera && opts.camera !== 'auto' ? opts.camera : (detectCamera(text) || profile.camera);
+    var shot = detectShot(text);
+    var action = detectAction(text);
+    var grade = detectGrade(text, profile);
+    var negative = String((opts && opts.negative) || '');
+
     var palette = theme.palette.slice();
     if (opts && opts.accent) palette[0] = opts.accent;
     var charSpec = null;
@@ -19176,10 +19295,20 @@ window.HMToolVideo = (function () {
     }
     return {
       w: w, h: h,
-      fps: Number(opts && opts.fps) || 18,
-      frames: Math.min(MAX_FRAMES, Math.max(8, Number(opts && opts.frames) || 36)),
+      fps: fps,
+      frames: frames,
+      duration: Math.round(frames / fps * 10) / 10,
       seed: seed,
       style: style,
+      model: profile.id,
+      modelLabel: profile.name,
+      motion: motion,
+      camera: { type: camType, strength: motion },
+      shot: shot,
+      action: action,
+      grade: grade,
+      grain: profile.grain,
+      negative: negative,
       bg1: charSpec ? charSpec.bg1 : theme.bg1,
       bg2: charSpec ? charSpec.bg2 : theme.bg2,
       palette: palette,
@@ -19222,13 +19351,32 @@ window.HMToolVideo = (function () {
     var style = spec.style || 'particles';
     var i, x, y;
 
+    // 摄像机：景别基准缩放 + 运镜（推/拉/摇/环绕/跟拍）
+    var cam = spec.camera || { type: 'static', strength: 0.6 };
+    var prog = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    var cst = Math.max(0, Math.min(1, cam.strength == null ? 0.6 : cam.strength));
+    var baseZ = spec.shot === 'close' ? 1.42 : spec.shot === 'wide' ? 0.86 : 1;
+    var zoom = baseZ, offX = 0, offY = 0, rotC = 0;
+    if (cam.type === 'dolly') { zoom = baseZ * (1 + 0.16 * cst * prog); }
+    else if (cam.type === 'pull') { zoom = baseZ * (1 + 0.16 * cst * (1 - prog)); }
+    else if (cam.type === 'pan') { offX = -w * 0.085 * cst * (prog - 0.5); zoom = baseZ * 1.05; }
+    else if (cam.type === 'orbit') { rotC = (prog - 0.5) * 0.10 * cst; offX = w * 0.02 * cst * Math.sin(prog * 6.2832); }
+    else if (cam.type === 'follow') { offY = -h * 0.05 * cst * prog; zoom = baseZ * 1.03; }
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(rotC);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-w / 2 + offX, -h / 2 + offY);
+
     if (style === 'character') {
       var ch = spec.char || {};
       var cs = Math.min(w, h);
       var chibi = !!ch.chibi;
       var headR = cs * (chibi ? 0.188 : 0.162);
       var mx = w * 0.5;
-      var bob = Math.sin(t * 6.2832) * cs * 0.008;
+      var act = spec.action || 'idle';
+      var bobAmp = cs * (act === 'run' ? 0.022 : act === 'float' ? 0.016 : 0.008);
+      var bob = Math.sin(t * (act === 'run' ? 12.566 : 6.2832)) * bobAmp;
       var cy = h * (chibi ? 0.425 : 0.405) + bob;
       var hairC = ch.hair || '#f2f4ff';
       var hairS = ch.shade || '#c6cff0';
@@ -19404,7 +19552,9 @@ window.HMToolVideo = (function () {
       for (var sd2 = -1; sd2 <= 1; sd2 += 2) {
         ctx.save();
         ctx.translate(mx + sd2 * headR * 0.62, shoulderY + headR * 0.22);
-        ctx.rotate(sd2 * 0.20);
+        var armRot = sd2 * 0.20;
+        if (act === 'wave' && sd2 === 1) armRot = -0.95 + Math.sin(t * 12.566) * 0.32;
+        ctx.rotate(armRot);
         ctx.fillStyle = dressC;
         ctx.beginPath(); ctx.ellipse(0, headR * 0.26, headR * 0.125, headR * 0.30, 0, 0, 6.2832); ctx.fill();
         ctx.fillStyle = '#ffe3d5';
@@ -19731,6 +19881,55 @@ window.HMToolVideo = (function () {
       ctx.globalAlpha = 1;
     }
 
+    ctx.restore();
+
+    // 影调分级：对齐各模型的色彩特征（电影宽银幕 / 霓虹 / 胶片 / 柔和 / 通透）
+    var grade = spec.grade || 'clean';
+    if (grade === 'cinema') {
+      var bar = Math.round(h * 0.052);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, w, bar);
+      ctx.fillRect(0, h - bar, w, bar);
+      var g1 = ctx.createLinearGradient(0, 0, 0, h);
+      g1.addColorStop(0, 'rgba(255,176,110,0.10)');
+      g1.addColorStop(0.55, 'rgba(0,0,0,0)');
+      g1.addColorStop(1, 'rgba(0,86,132,0.14)');
+      ctx.fillStyle = g1;
+      ctx.fillRect(0, bar, w, h - bar * 2);
+    } else if (grade === 'filmic') {
+      var g2 = ctx.createLinearGradient(0, 0, 0, h);
+      g2.addColorStop(0, 'rgba(255,210,150,0.08)');
+      g2.addColorStop(0.5, 'rgba(120,80,200,0.05)');
+      g2.addColorStop(1, 'rgba(20,10,40,0.12)');
+      ctx.fillStyle = g2;
+      ctx.fillRect(0, 0, w, h);
+    } else if (grade === 'neon') {
+      var g3 = ctx.createLinearGradient(0, 0, w, h);
+      g3.addColorStop(0, 'rgba(244,114,182,0.10)');
+      g3.addColorStop(0.5, 'rgba(0,0,0,0)');
+      g3.addColorStop(1, 'rgba(34,211,238,0.12)');
+      ctx.fillStyle = g3;
+      ctx.fillRect(0, 0, w, h);
+    } else if (grade === 'soft') {
+      ctx.fillStyle = 'rgba(255,228,240,0.055)';
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // 胶片颗粒（逐帧变化，模拟模型输出的质感）
+    var grain = Number(spec.grain) || 0;
+    if (grain > 0) {
+      var gn = Math.round(w * h * grain / 70);
+      var fseed = Math.floor(t * 997);
+      for (i = 0; i < gn; i++) {
+        x = rnd(i + fseed * 31) * w;
+        y = rnd(i + fseed * 31 + 7) * h;
+        ctx.globalAlpha = 0.05 + rnd(i + 5) * 0.10;
+        ctx.fillStyle = i % 2 ? '#ffffff' : '#000000';
+        ctx.fillRect(x, y, 1.2, 1.2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
     // 暗角（人物画面减轻，避免压暗肤色与白毛）
     var vigA = style === 'character' ? 0.28 : 0.55;
     var vg = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.25, w * 0.5, h * 0.5, Math.max(w, h) * 0.75);
@@ -19866,7 +20065,8 @@ window.HMToolVideo = (function () {
     frameImgs = await loadImages(urls);
     setStep(2, 'done', urls.length + ' 帧');
     setStep(3, 'run', '可合成');
-    status('帧序列就绪：' + spec.w + '×' + spec.h + ' · ' + urls.length + ' 帧 · ' + spec.fps + ' fps');
+    status('帧序列就绪：' + (spec.modelLabel || '') + ' · ' + spec.w + '×' + spec.h + ' · ' + urls.length +
+      ' 帧 · ' + spec.fps + ' fps · ' + (Math.round(urls.length / spec.fps * 10) / 10) + ' 秒');
     setExportsEnabled(true);
     renderThumbs();
     el.scrub.max = String(Math.max(0, urls.length - 1));
@@ -19946,23 +20146,42 @@ window.HMToolVideo = (function () {
   /* ---------------- 生成流程 ---------------- */
   function generateCode(opts) {
     var prompt = el.prompt.value.trim() || DEFAULT_PROMPT;
-    var res = el.res.value.split('x');
     var themeSel = el.theme ? el.theme.value : 'auto';
+    var dim = frameSize();
     spec = compilePrompt(prompt, {
-      w: Number(res[0]) || 960,
-      h: Number(res[1]) || 540,
-      fps: Number(el.fps.value) || 18,
+      w: dim.w,
+      h: dim.h,
+      fps: Number(el.fps.value) || 24,
       frames: Number(el.frames.value) || 36,
       seed: Number(el.seed.value) || 0,
       style: themeSel,
-      accent: el.accent ? el.accent.value : ''
+      accent: el.accent ? el.accent.value : '',
+      model: el.model ? el.model.value : 'seedance',
+      camera: el.camera ? el.camera.value : 'auto',
+      motion: el.motion ? Number(el.motion.value) / 100 : 0.8,
+      negative: el.neg ? el.neg.value : ''
     });
     code = buildHtml(spec);
     el.code.value = code;
     setStep(1, 'done', 'HTML 已生成');
-    status('已生成 HTML 代码（' + spec.w + '×' + spec.h + '，' + spec.frames + ' 帧 @ ' + spec.fps + 'fps）');
+    status('已生成 HTML 代码（' + spec.modelLabel + ' · ' + spec.w + '×' + spec.h + ' · ' + spec.duration + ' 秒 @ ' + spec.fps + 'fps）');
+    setStatusHint('语义解析：' + SHOT_LABELS[spec.shot] + ' · ' + CAM_LABELS[spec.camera.type] +
+      ' · ' + (GRADE_LABELS[spec.grade] || spec.grade) +
+      (spec.negative ? ' · 已应用反向提示词' : ''));
     ensureIframe(code);
     renderFramesAsync();
+  }
+
+  /* 画幅换算：分辨率下拉给短边，画幅决定宽高比 */
+  function frameSize() {
+    var shortSide = Number(String(el.res.value || '960x540').split('x')[1]) || 540;
+    var aspect = el.aspect ? el.aspect.value : '16:9';
+    var w, h;
+    if (aspect === '9:16') { w = shortSide; h = Math.round(shortSide * 16 / 9); }
+    else if (aspect === '1:1') { w = shortSide; h = shortSide; }
+    else if (aspect === '4:3') { w = Math.round(shortSide * 4 / 3); h = shortSide; }
+    else { w = Math.round(shortSide * 16 / 9); h = shortSide; }
+    return { w: w - (w % 2), h: h - (h % 2) };
   }
 
   function applyCode() {
@@ -20269,6 +20488,25 @@ window.HMToolVideo = (function () {
     el.exportHtml = $('gvHtml');
     el.gifSize = $('gvGifSize');
     el.back = $('gvBack');
+    el.model = $('gvModel');
+    el.camera = $('gvCamera');
+    el.duration = $('gvDuration');
+    el.aspect = $('gvAspect');
+    el.neg = $('gvNeg');
+    el.motion = $('gvMotion');
+    el.motionVal = $('gvMotionVal');
+
+    function syncFramesFromDuration() {
+      var fps = Number(el.fps.value) || 24;
+      var dur = Number(el.duration.value) || 3;
+      var f = Math.min(MAX_FRAMES, Math.max(8, Math.round(fps * dur)));
+      el.frames.value = String(f);
+      el.framesVal.textContent = String(f);
+    }
+    function safeRegen() {
+      if (busy) { setStatusHint('渲染中，完成后再点「生成 HTML 代码」应用新设置'); return; }
+      generateCode();
+    }
 
     el.genBtn.addEventListener('click', function () { if (!busy) generateCode(); });
     el.ideaBtn.addEventListener('click', randomIdea);
@@ -20276,6 +20514,17 @@ window.HMToolVideo = (function () {
     el.frames.addEventListener('input', function () {
       el.framesVal.textContent = el.frames.value;
     });
+    el.model.addEventListener('change', function () {
+      el.fps.value = String(modelProfile(el.model.value).fps);
+      syncFramesFromDuration();
+      safeRegen();
+    });
+    el.camera.addEventListener('change', safeRegen);
+    el.aspect.addEventListener('change', safeRegen);
+    el.duration.addEventListener('change', function () { syncFramesFromDuration(); safeRegen(); });
+    el.fps.addEventListener('change', function () { syncFramesFromDuration(); safeRegen(); });
+    el.motion.addEventListener('input', function () { el.motionVal.textContent = el.motion.value; });
+    el.motion.addEventListener('change', safeRegen);
     el.playBtn.addEventListener('click', function () { if (playing) stopPlay(); else startPlay(); });
     el.scrub.addEventListener('input', function () { stopPlay(); showFrame(Number(el.scrub.value) || 0); });
     el.thumbs.addEventListener('click', function (e) {
@@ -20293,6 +20542,7 @@ window.HMToolVideo = (function () {
       if (window.HMApp && window.HMApp.switchView) window.HMApp.switchView('tools');
     });
 
+    syncFramesFromDuration();
     var mime = pickVideoMime();
     el.exportVideo.textContent = /mp4/.test(mime) ? '导出 MP4' : '导出 WebM';
     el.exportVideo.title = /mp4/.test(mime)

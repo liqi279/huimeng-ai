@@ -8093,7 +8093,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 }
 
 .hm-gv-field select,
-.hm-gv-field input[type="number"] {
+.hm-gv-field input[type="number"],
+.hm-gv-field input[type="text"] {
   height: 30px;
   border-radius: 7px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -8103,6 +8104,8 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   padding: 0 8px;
   font-family: inherit;
 }
+
+.hm-gv-field-grow { flex: 1 0 100%; }
 
 .hm-gv-field select:focus,
 .hm-gv-field input:focus { outline: none; border-color: rgba(96, 165, 250, 0.6); }
@@ -8296,7 +8299,8 @@ body.hm-light .hm-gv-sec { color: #64748b; }
 body.hm-light .hm-gv-prompt,
 body.hm-light .hm-gv-code,
 body.hm-light .hm-gv-field select,
-body.hm-light .hm-gv-field input[type="number"] {
+body.hm-light .hm-gv-field input[type="number"],
+body.hm-light .hm-gv-field input[type="text"] {
   background: #f8fafc;
   color: #1e293b;
   border-color: rgba(15, 23, 42, 0.12);
