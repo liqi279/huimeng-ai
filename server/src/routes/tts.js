@@ -99,7 +99,8 @@ router.post('/design', wrap(async (req, res) => {
       timeout: 45000,
     });
   } catch (err) {
-    throw jsonError(502, 'Edge-TTS 合成失败', err.message ? String(err.message).slice(0, 160) : '微软端点繁忙，请稍后重试');
+    const detail = [err.message, err.code].filter(Boolean).join(' ').slice(0, 160);
+    throw jsonError(502, 'Edge-TTS 合成失败', detail || '微软端点繁忙，请稍后重试');
   }
 
   const fileName = `${Date.now()}-${randomToken()}.mp3`;
