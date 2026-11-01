@@ -373,6 +373,11 @@
         <strong>图片修复</strong>
         <p>自动分层 / 画笔分层 / 智能填充缺失像素 / 线稿提取，纯前端 Canvas 处理</p>
       </button>
+      <button class="hm-tool-card" data-tool="toolworkflow">
+        <span class="hm-tool-icon">流</span>
+        <strong>工作流</strong>
+        <p>内置 ComfyUI 工作流（千问3 TTS 语音克隆等），可视化编辑参数并导出 JSON</p>
+      </button>
       <button class="hm-tool-card" data-tool="translate">
         <span class="hm-tool-icon">译</span>
         <strong>智能翻译</strong>
@@ -811,6 +816,25 @@
       <section class="hm-rs-panel hm-rs-right">
         <div class="hm-tr-sec-title">分层结果</div>
         <div class="hm-rs-layers" id="rsLayers"></div>
+      </section>
+    </div>
+  </main>
+
+  <main class="hm-page hm-wf-page" id="view-toolworkflow" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>工作流</h2>
+        <p>内置 ComfyUI 工作流 · 可视化编辑参数 · 一键导出 JSON 导入 ComfyUI</p>
+      </div>
+      <div class="hm-page-actions">
+        <button class="hm-pill" id="wfBack">返回工具</button>
+      </div>
+    </div>
+
+    <div class="hm-wf-body">
+      <aside class="hm-wf-list" id="wfList"></aside>
+      <section class="hm-wf-detail" id="wfDetail">
+        <div class="hm-wf-empty">← 从左侧选择一个工作流</div>
       </section>
     </div>
   </main>
@@ -2189,6 +2213,7 @@
   <script src="toolreference.js"></script>
   <script src="tooltraining.js"></script>
   <script src="toolrestore.js"></script>
+  <script src="toolworkflow.js"></script>
   <script src="toolvideo.js"></script>
   <script src="chat.js"></script>
   <script src="ui.js"></script>

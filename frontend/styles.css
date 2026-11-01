@@ -8932,7 +8932,8 @@ body.hm-light .hm-rf-detail-inner { background: #fff; }
 }
 .hm-tr-field input[type="text"],
 .hm-tr-field input[type="number"],
-.hm-tr-field select {
+.hm-tr-field select,
+.hm-tr-field textarea {
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--line-strong);
@@ -8942,9 +8943,12 @@ body.hm-light .hm-rf-detail-inner { background: #fff; }
   font-size: 13px;
   outline: none;
   box-sizing: border-box;
+  font-family: inherit;
+  resize: vertical;
 }
 .hm-tr-field input:focus,
-.hm-tr-field select:focus { border-color: rgba(139, 92, 246, 0.6); }
+.hm-tr-field select:focus,
+.hm-tr-field textarea:focus { border-color: rgba(139, 92, 246, 0.6); }
 .hm-tr-check {
   display: flex;
   align-items: center;
@@ -9412,3 +9416,97 @@ body.hm-chat-open .hm-dock {
 @media (max-width: 1180px) {
   .hm-rs-body { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ================= 工作流 Workflow ================= */
+.hm-wf-page { padding-bottom: 40px; }
+.hm-wf-body {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+}
+.hm-wf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: start;
+  position: sticky;
+  top: 14px;
+}
+.hm-wf-card {
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+.hm-wf-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--wf-accent, linear-gradient(135deg, #8b5cf6, #ec4899));
+}
+.hm-wf-card:hover { border-color: rgba(139, 92, 246, 0.5); transform: translateY(-1px); }
+.hm-wf-card.is-active {
+  border-color: rgba(139, 92, 246, 0.7);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.4), 0 8px 24px rgba(139, 92, 246, 0.12);
+}
+.hm-wf-card-name { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.hm-wf-card-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+.hm-wf-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.hm-wf-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+.hm-wf-detail {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.hm-wf-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  color: var(--muted);
+  font-size: 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+.hm-wf-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hm-wf-detail-name { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+.hm-wf-detail-desc { font-size: 12.5px; color: var(--muted); margin: 0; line-height: 1.5; max-width: 620px; }
+.hm-wf-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.hm-wf-diagram {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0d1017;
+  padding: 12px;
+  overflow: auto;
+}
+.hm-wf-svg { display: block; width: 100%; height: auto; min-height: 300px; }
+.hm-wf-preview-wrap { display: flex; flex-direction: column; gap: 8px; }
+
+@media (max-width: 900px) {
+  .hm-wf-body { grid-template-columns: 1fr; }
+  .hm-wf-list { position: static; }
+}
+
