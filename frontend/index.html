@@ -318,7 +318,7 @@
       <button class="hm-tool-card" data-tool="toolreference">
         <span class="hm-tool-icon">参</span>
         <strong>素材参考</strong>
-        <p>按关键词搜索人物 / 姿势 / 服装 / 场景等参考图，多图源切换，一键存入资产库</p>
+        <p>Pixabay 免费图库：搜索人物 / 姿势 / 服装 / 场景等参考图，一键存入资产库</p>
       </button>
       <button class="hm-tool-card" data-tool="translate">
         <span class="hm-tool-icon">译</span>
@@ -611,7 +611,7 @@
     <div class="hm-page-head">
       <div>
         <h2>素材参考</h2>
-        <p>按关键词搜索不同素材参考 · 多图源切换 · 一键存入资产库</p>
+        <p>按关键词搜索不同素材参考 · Pixabay 免费图库 · 一键存入资产库</p>
       </div>
       <div class="hm-page-actions">
         <button class="hm-pill" id="rfBack">返回工具</button>
@@ -623,18 +623,27 @@
         <div class="hm-rf-sec">搜索</div>
         <div class="hm-rf-search">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-          <input id="rfSearch" type="search" placeholder="输入关键词，如 1girl silver hair、樱花、教室…" autocomplete="off">
+          <input id="rfSearch" type="search" placeholder="输入关键词，如 樱花、教室、portrait…" autocomplete="off">
           <button id="rfBtn" class="hm-pill hm-pill-primary">搜索</button>
         </div>
-        <button class="hm-pill hm-rf-opensrc" id="rfOpenSrc">在图源直接打开 ↗</button>
+        <button class="hm-pill hm-rf-opensrc" id="rfOpenSrc">在 Pixabay 直接打开 ↗</button>
 
-        <div class="hm-rf-sec">图源</div>
+        <div class="hm-rf-sec">Pixabay API Key</div>
+        <div class="hm-rf-key">
+          <input id="rfKey" type="text" placeholder="填入免费 API Key" autocomplete="off">
+          <button class="hm-pill" id="rfKeySave">保存</button>
+        </div>
+        <div class="hm-rf-keytip">
+          免费申请：<a href="https://pixabay.com/api/docs/" target="_blank" rel="noopener">pixabay.com/api/docs ↗</a>（注册后在文档页复制 Key，仅存在本机）
+        </div>
+
+        <div class="hm-rf-sec">素材类型</div>
         <div class="hm-rf-sources" id="rfSources"></div>
 
         <div class="hm-rf-sec">分类快选</div>
         <div class="hm-rf-cats" id="rfCats"></div>
 
-        <div class="hm-gv-tip">图源说明：Yande.re / Danbooru / Konachan 为动漫插画图站（建议用英文标签），Openverse 为通用素材库。若搜索失败可点击「在图源直接打开」在新标签页查看。</div>
+        <div class="hm-gv-tip">图源说明：所有素材来自 Pixabay 免费图库（CC0 协议，可商用）。不填 Key 也可点击「在 Pixabay 打开」直接在官网搜索。</div>
       </section>
 
       <section class="hm-rf-panel hm-rf-right">

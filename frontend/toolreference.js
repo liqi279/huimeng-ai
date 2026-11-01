@@ -1,36 +1,40 @@
 /* ============================================================
  * 素材参考 HMTOOLREFERENCE
  * 在【工具】模块下提供「参考」卡片：按关键词搜索不同素材参考
- * 图源：Yandere / Danbooru / Konachan（动漫插画）+ Openverse（通用素材）
+ * 图源：Pixabay（免费图库：照片 / 插画 / 矢量）
  * 支持：分类快选、缩略图网格、大图查看、复制链接、保存到资产库
+ * 需要用户填入 Pixabay API Key（免费，pixabay.com/api/docs）
  * ============================================================ */
 window.HMToolReference = (function () {
   'use strict';
 
+  var LS_KEY = 'anidream.pixabay.key';
+
   var CATEGORIES = [
-    { id: 'character', label: '人物', tags: ['1girl', 'solo'] },
-    { id: 'pose', label: '姿势', tags: ['standing', 'looking_at_viewer'] },
-    { id: 'costume', label: '服装', tags: ['school_uniform', 'sailor_dress'] },
-    { id: 'scene', label: '场景', tags: ['scenery', 'sky'] },
-    { id: 'prop', label: '道具', tags: ['flower', 'holding'] },
-    { id: 'light', label: '光影', tags: ['backlighting', 'sunlight'] },
+    { id: 'character', label: '人物', tags: ['portrait', 'people'] },
+    { id: 'pose', label: '姿势', tags: ['pose'] },
+    { id: 'costume', label: '服装', tags: ['fashion', 'clothing'] },
+    { id: 'scene', label: '场景', tags: ['landscape', 'scenery'] },
+    { id: 'prop', label: '道具', tags: ['object', 'still-life'] },
+    { id: 'light', label: '光影', tags: ['lighting', 'backlight'] },
     { id: 'color', label: '色彩', tags: ['colorful', 'gradient'] }
   ];
 
   var SOURCES = [
-    { id: 'yandere', label: 'Yande.re', desc: '动漫插画 · 无密钥', type: 'yandere' },
-    { id: 'danbooru', label: 'Danbooru', desc: '动漫插画 · 标签最全', type: 'danbooru' },
-    { id: 'konachan', label: 'Konachan', desc: '动漫壁纸 · 高清', type: 'konachan' },
-    { id: 'openverse', label: 'Openverse', desc: '通用素材 · 摄影/插画', type: 'openverse' }
+    { id: 'all', label: '全部素材', desc: '照片 + 插画 + 矢量', type: 'all' },
+    { id: 'photo', label: '照片', desc: '摄影实景', type: 'photo' },
+    { id: 'illustration', label: '插画', desc: '数字 / 手绘插画', type: 'illustration' },
+    { id: 'vector', label: '矢量', desc: 'SVG 矢量图', type: 'vector' }
   ];
 
   var state = {
     query: '',
-    source: 'danbooru',
+    source: 'all',
     category: '',
     page: 1,
     results: [],
-    loading: false
+    loading: false,
+    apiKey: ''
   };
 
   var el = {};
@@ -40,8 +44,15 @@ window.HMToolReference = (function () {
   function $(id) { return document.getElementById(id); }
   function toast(msg, type) { if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type); }
 
+  function loadKey() {
+    try { return localStorage.getItem(LS_KEY) || ''; } catch (e) { return ''; }
+  }
+  function saveKey(k) {
+    try { localStorage.setItem(LS_KEY, k || ''); } catch (e) {}
+  }
+
   /* ---------------- 图源请求 ---------------- */
-  function buildTags() {
+  function buildQuery() {
     var tags = [];
     if (state.query) tags.push(state.query.trim());
     if (state.category) {
@@ -52,74 +63,34 @@ window.HMToolReference = (function () {
         }
       }
     }
-    return tags;
+    return tags.join(' ');
   }
 
-  function apiUrl(type, tags, page) {
-    var q = tags.join(' ');
-    if (type === 'yandere') {
-      return 'https://yande.re/post.json?tags=' + encodeURIComponent(q) + '&limit=40&page=' + page;
-    }
-    if (type === 'konachan') {
-      return 'https://konachan.com/post.json?tags=' + encodeURIComponent(q) + '&limit=40&page=' + page;
-    }
-    if (type === 'danbooru') {
-      return 'https://danbooru.donmai.us/posts.json?tags=' + encodeURIComponent(q) + '&limit=40&page=' + page;
-    }
-    if (type === 'openverse') {
-      return 'https://api.openverse.org/v1/images/?q=' + encodeURIComponent(q) + '&page_size=40&page=' + page;
-    }
-    return '';
+  function apiUrl(type, q, page) {
+    return 'https://pixabay.com/api/?' +
+      'key=' + encodeURIComponent(state.apiKey) +
+      '&q=' + encodeURIComponent(q) +
+      '&image_type=' + type +
+      '&per_page=40&page=' + page +
+      '&safesearch=true&lang=zh';
   }
 
-  function normalize(raw, type) {
+  function normalize(raw) {
     var out = [];
-    if (type === 'openverse') {
-      var arr = raw && raw.results ? raw.results : [];
-      for (var i = 0; i < arr.length; i++) {
-        var it = arr[i];
-        out.push({
-          thumb: it.thumbnail,
-          full: it.url,
-          source: it.foreign_landing_url || it.url,
-          title: it.title || '',
-          tags: (it.tags || []).map(function (t) { return t.name || t; }).join(' '),
-          width: it.width, height: it.height, license: it.license
-        });
-      }
-    } else {
-      for (var j = 0; j < raw.length; j++) {
-        var p = raw[j];
-        if (!p) continue;
-        out.push({
-          thumb: p.preview_file_url || p.preview_url || p.sample_url || p.file_url,
-          full: p.large_file_url || p.file_url || p.sample_url,
-          source: p.source || '',
-          title: '',
-          tags: p.tag_string || p.tags || '',
-          width: p.image_width || p.width, height: p.image_height || p.height, score: p.score
-        });
-      }
+    var hits = (raw && raw.hits) || [];
+    for (var i = 0; i < hits.length; i++) {
+      var p = hits[i];
+      out.push({
+        thumb: p.previewURL,
+        full: p.largeImageURL || p.webformatURL,
+        source: p.pageURL || '',
+        title: p.tags || '',
+        tags: p.tags || '',
+        width: p.imageWidth, height: p.imageHeight,
+        score: p.likes, views: p.views
+      });
     }
     return out;
-  }
-
-  /* Moebooru 系（Yande.re / Konachan）不发 CORS 头，用 JSONP 绕过 */
-  function jsonp(url) {
-    return new Promise(function (resolve, reject) {
-      var cb = '__rfcb_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      var timer = setTimeout(function () { cleanup(); reject(new Error('请求超时')); }, 15000);
-      var script = document.createElement('script');
-      function cleanup() {
-        clearTimeout(timer);
-        try { delete window[cb]; } catch (e) { window[cb] = null; }
-        if (script.parentNode) script.parentNode.removeChild(script);
-      }
-      window[cb] = function (d) { cleanup(); resolve(d); };
-      script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + cb;
-      script.onerror = function () { cleanup(); reject(new Error('网络错误')); };
-      document.head.appendChild(script);
-    });
   }
 
   /* 直连优先，失败时走公共 CORS 代理兜底 */
@@ -137,11 +108,21 @@ window.HMToolReference = (function () {
     }
   }
 
+  function openOnSource() {
+    var q = buildQuery();
+    var url = 'https://pixabay.com/images/search/' + encodeURIComponent(q) + '/';
+    window.open(url, '_blank', 'noopener');
+  }
+
   async function search() {
     if (state.loading) return;
-    var tags = buildTags();
-    if (!tags.length) {
+    var q = buildQuery();
+    if (!q) {
       toast('请输入关键词或选择分类', 'error');
+      return;
+    }
+    if (!state.apiKey) {
+      toast('请先填入 Pixabay API Key（免费申请），或点击「在 Pixabay 打开」', 'error');
       return;
     }
     state.loading = true;
@@ -152,24 +133,19 @@ window.HMToolReference = (function () {
     abortCtrl = new AbortController();
 
     var src = getSource();
-    var url = apiUrl(src.type, tags, state.page);
+    var url = apiUrl(src.type, q, state.page);
     try {
-      var data;
-      if (src.type === 'yandere' || src.type === 'konachan') {
-        data = await jsonp(url);
-      } else {
-        data = await fetchJson(url);
-      }
-      state.results = normalize(data, src.type);
+      var data = await fetchJson(url);
+      state.results = normalize(data);
       if (!state.results.length) {
-        renderStatus('未找到结果，试试其他关键词或图源');
+        renderStatus('未找到结果，试试其他关键词');
       } else {
-        renderStatus('共 ' + state.results.length + ' 条结果 · ' + src.label);
+        renderStatus('共 ' + (data && data.totalHits || state.results.length) + ' 条结果 · Pixabay ' + src.label);
       }
     } catch (err) {
       if (err.name === 'AbortError') return;
       state.results = [];
-      renderStatus('搜索失败（' + (err.message || '网络错误') + '），可点击「在图源打开」直接访问');
+      renderStatus('搜索失败（' + (err.message || '网络错误') + '），可点击「在 Pixabay 打开」直接访问');
     } finally {
       state.loading = false;
       renderGrid();
@@ -179,17 +155,6 @@ window.HMToolReference = (function () {
   function getSource() {
     for (var i = 0; i < SOURCES.length; i++) if (SOURCES[i].id === state.source) return SOURCES[i];
     return SOURCES[0];
-  }
-
-  function openOnSource() {
-    var src = getSource();
-    var tags = buildTags().join(' ');
-    var url = '';
-    if (src.type === 'yandere') url = 'https://yande.re/post?tags=' + encodeURIComponent(tags);
-    else if (src.type === 'konachan') url = 'https://konachan.com/post?tags=' + encodeURIComponent(tags);
-    else if (src.type === 'danbooru') url = 'https://danbooru.donmai.us/posts?tags=' + encodeURIComponent(tags);
-    else url = 'https://openverse.org/search/?q=' + encodeURIComponent(tags) + '&type=image';
-    window.open(url, '_blank', 'noopener');
   }
 
   /* ---------------- 渲染 ---------------- */
@@ -218,17 +183,17 @@ window.HMToolReference = (function () {
     if (!el.grid) return;
     if (!state.results.length) {
       el.grid.innerHTML = state.loading
-        ? '<div class="hm-rf-loading"><div class="hm-rf-spinner"></div><p>正在从 ' + getSource().label + ' 拉取素材…</p></div>'
-        : '<div class="hm-rf-empty"><div class="hm-rf-empty-icon">参</div><h3>输入关键词或选择分类开始搜索</h3><p>支持多个图源切换，点击大图可保存到资产库</p></div>';
+        ? '<div class="hm-rf-loading"><div class="hm-rf-spinner"></div><p>正在从 Pixabay 拉取素材…</p></div>'
+        : '<div class="hm-rf-empty"><div class="hm-rf-empty-icon">参</div><h3>输入关键词或选择分类开始搜索</h3><p>图源 Pixabay 免费图库，点击大图可保存到资产库</p></div>';
       return;
     }
     var html = '';
     for (var i = 0; i < state.results.length; i++) {
       var r = state.results[i];
       if (!r.thumb) continue;
-      html += '<button class="hm-rf-item" data-idx="' + i + '" title="' + (r.tags || r.title || '参考图') + '">' +
+      html += '<button class="hm-rf-item" data-idx="' + i + '" title="' + (r.tags || '参考图') + '">' +
         '<img src="' + r.thumb + '" alt="" loading="lazy" referrerpolicy="no-referrer">' +
-        (r.score != null ? '<span class="hm-rf-score">' + r.score + '</span>' : '') +
+        (r.score != null ? '<span class="hm-rf-score">♥ ' + r.score + '</span>' : '') +
         '</button>';
     }
     el.grid.innerHTML = html;
@@ -244,7 +209,8 @@ window.HMToolReference = (function () {
     el.detailImg.src = r.full || r.thumb;
     el.detailImg.alt = r.tags || r.title || '';
     el.detailMeta.innerHTML =
-      '<p><b>图源：</b>' + getSource().label + (r.score != null ? ' · 评分 ' + r.score : '') + '</p>' +
+      '<p><b>图源：</b>Pixabay' + (r.score != null ? ' · 点赞 ' + r.score : '') +
+      (r.views != null ? ' · 浏览 ' + r.views : '') + '</p>' +
       '<p class="hm-rf-tags">' + (r.tags || r.title || '—') + '</p>';
     el.detail.dataset.idx = idx;
     el.detail.hidden = false;
@@ -313,6 +279,11 @@ window.HMToolReference = (function () {
     el.detailOpen = $('rfDetailOpen');
     el.detailSave = $('rfDetailSave');
     el.back = $('rfBack');
+    el.keyInput = $('rfKey');
+    el.keySave = $('rfKeySave');
+
+    state.apiKey = loadKey();
+    if (el.keyInput) el.keyInput.value = state.apiKey;
 
     renderSources();
     renderCategories();
@@ -332,6 +303,12 @@ window.HMToolReference = (function () {
       state.query = el.search.value; state.page = 1; search();
     });
     if (el.openSrc) el.openSrc.addEventListener('click', openOnSource);
+
+    if (el.keySave) el.keySave.addEventListener('click', function () {
+      state.apiKey = el.keyInput ? el.keyInput.value.trim() : '';
+      saveKey(state.apiKey);
+      toast(state.apiKey ? 'Pixabay Key 已保存' : '已清空 Pixabay Key');
+    });
 
     if (el.sources) el.sources.addEventListener('click', function (e) {
       var b = e.target.closest('[data-src]');

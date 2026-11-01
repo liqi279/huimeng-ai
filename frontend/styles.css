@@ -8656,6 +8656,29 @@ body.hm-light .hm-iw-badge { background: rgba(255, 255, 255, 0.8); color: #47556
   margin-top: 10px;
   width: 100%;
 }
+.hm-rf-key {
+  display: flex;
+  gap: 8px;
+}
+.hm-rf-key input {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.hm-rf-key input:focus { border-color: rgba(139, 92, 246, 0.6); }
+.hm-rf-keytip {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.hm-rf-keytip a { color: #a78bfa; }
 .hm-rf-sources {
   display: grid;
   grid-template-columns: 1fr 1fr;
