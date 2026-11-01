@@ -308,7 +308,7 @@
       <button class="hm-tool-card" data-tool="toolvideo">
         <span class="hm-tool-icon">影</span>
         <strong>免费生视频</strong>
-        <p>提示词 → HTML 代码 → PNG 帧序列 → GIF / MP4，全程本地生成，不消耗积分</p>
+        <p>提示词 → Python 代码 → 二维赛璐璐平涂 PNG 帧 → GIF / MP4，全程本地生成，不消耗积分</p>
       </button>
       <button class="hm-tool-card" data-tool="translate">
         <span class="hm-tool-icon">译</span>
@@ -357,7 +357,7 @@
     <div class="hm-page-head">
       <div>
         <h2>免费生视频</h2>
-        <p>提示词 → HTML 代码 → PNG 连续帧 → GIF / MP4 · 全程本地渲染，不调用付费接口</p>
+        <p>提示词 → Python 代码（Pillow）→ 二维赛璐璐平涂 PNG 连续帧 → GIF / MP4 · 全程本地渲染，不调用付费接口</p>
       </div>
       <div class="hm-page-actions">
         <button class="hm-pill" id="gvBack">返回工具</button>
@@ -418,7 +418,7 @@
           <label class="hm-gv-field">风格
             <select id="gvTheme">
               <option value="auto">自动识别</option>
-              <option value="character">角色人物</option>
+              <option value="character">赛璐璐角色</option>
               <option value="particles">星光粒子</option>
               <option value="rain">星际雨</option>
               <option value="city">霓虹城市</option>
@@ -459,13 +459,13 @@
           <input id="gvFrames" type="range" min="8" max="96" step="4" value="36">
         </label>
         <div class="hm-gv-row hm-gv-row-btn">
-          <button class="hm-pill hm-pill-primary" id="gvGen">生成 HTML 代码</button>
+          <button class="hm-pill hm-pill-primary" id="gvGen">生成 Python 代码</button>
           <button class="hm-pill" id="gvIdea">换一个灵感</button>
         </div>
 
-        <div class="hm-gv-sec">② HTML 代码（可编辑）</div>
-        <textarea id="gvCode" class="hm-gv-code" spellcheck="false" placeholder="点击「生成 HTML 代码」后在这里查看与修改场景代码"></textarea>
-        <button class="hm-pill hm-gv-apply" id="gvApply">应用代码并重新渲染</button>
+        <div class="hm-gv-sec">② Python 代码（Pillow · 可编辑）</div>
+        <textarea id="gvCode" class="hm-gv-code" spellcheck="false" placeholder="点击「生成 Python 代码」后在这里查看、修改并导出可运行的 scene_cel.py"></textarea>
+        <button class="hm-pill hm-gv-apply" id="gvApply">应用 SPEC 并重新渲染</button>
       </section>
 
       <section class="hm-gv-panel hm-gv-center">
@@ -483,8 +483,8 @@
 
       <section class="hm-gv-panel hm-gv-right">
         <div class="hm-gv-sec">③ 生成流水线</div>
-        <div class="hm-gv-step" id="gvStep1"><i>1</i><span>生成 HTML 代码</span><em>待执行</em></div>
-        <div class="hm-gv-step" id="gvStep2"><i>2</i><span>HTML → PNG 帧序列</span><em>待执行</em></div>
+        <div class="hm-gv-step" id="gvStep1"><i>1</i><span>生成 Python 代码</span><em>待执行</em></div>
+        <div class="hm-gv-step" id="gvStep2"><i>2</i><span>Python 场景 → PNG 帧序列</span><em>待执行</em></div>
         <div class="hm-gv-step" id="gvStep3"><i>3</i><span>合成 GIF / MP4</span><em>待导出</em></div>
         <div class="hm-gv-progress"><span id="gvProgress"></span></div>
         <div class="hm-gv-status" id="gvStatus">等待生成</div>
@@ -496,7 +496,7 @@
           <button class="hm-pill" id="gvVideo">导出 WebM</button>
           <button class="hm-pill" id="gvZip">PNG 帧序列 ZIP</button>
           <button class="hm-pill" id="gvPng">当前帧 PNG</button>
-          <button class="hm-pill" id="gvHtml">HTML 代码</button>
+          <button class="hm-pill" id="gvPy">Python 脚本</button>
         </div>
         <label class="hm-gv-field">GIF 宽度
           <select id="gvGifSize">
@@ -505,7 +505,7 @@
             <option value="640">640 px（清晰）</option>
           </select>
         </label>
-        <div class="hm-gv-tip">思路：先用提示词生成可执行的 HTML 场景代码，再把同一份代码逐帧渲染成 PNG，最后按帧序列合成 GIF 或视频。全部在浏览器本地完成，免费且可离线。</div>
+        <div class="hm-gv-tip">思路：先用提示词生成可运行的 Python（Pillow）场景脚本，画面为传统二维赛璐璐平涂（平涂底色 + 硬边阴影 + 一层高光，无渐变）；同一套参数在浏览器本地逐帧渲染成 PNG，再合成 GIF 或视频，导出的 .py 也能离线跑出同样的帧序列。</div>
       </section>
     </div>
   </main>
