@@ -315,6 +315,11 @@
         <strong>动漫生图工坊</strong>
         <p>WebUI 式桌面：Checkpoint × LoRA × 赛璐璐平涂 / 半厚涂 / 厚涂，只生成动漫图片</p>
       </button>
+      <button class="hm-tool-card" data-tool="toolreference">
+        <span class="hm-tool-icon">参</span>
+        <strong>素材参考</strong>
+        <p>按关键词搜索人物 / 姿势 / 服装 / 场景等参考图，多图源切换，一键存入资产库</p>
+      </button>
       <button class="hm-tool-card" data-tool="translate">
         <span class="hm-tool-icon">译</span>
         <strong>智能翻译</strong>
@@ -599,6 +604,58 @@
         <div class="hm-iw-sources" id="iwSources"></div>
         <div class="hm-gv-tip">离线说明：所有 Checkpoint / LoRA 以真实模型站的条目为索引，画面由本地确定性渲染器逐笔绘制，不下载权重、不联网推理、不消耗积分。</div>
       </section>
+    </div>
+  </main>
+
+  <main class="hm-page hm-rf-page" id="view-toolreference" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>素材参考</h2>
+        <p>按关键词搜索不同素材参考 · 多图源切换 · 一键存入资产库</p>
+      </div>
+      <div class="hm-page-actions">
+        <button class="hm-pill" id="rfBack">返回工具</button>
+      </div>
+    </div>
+
+    <div class="hm-rf-body">
+      <section class="hm-rf-panel hm-rf-left">
+        <div class="hm-rf-sec">搜索</div>
+        <div class="hm-rf-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="rfSearch" type="search" placeholder="输入关键词，如 1girl silver hair、樱花、教室…" autocomplete="off">
+          <button id="rfBtn" class="hm-pill hm-pill-primary">搜索</button>
+        </div>
+        <button class="hm-pill hm-rf-opensrc" id="rfOpenSrc">在图源直接打开 ↗</button>
+
+        <div class="hm-rf-sec">图源</div>
+        <div class="hm-rf-sources" id="rfSources"></div>
+
+        <div class="hm-rf-sec">分类快选</div>
+        <div class="hm-rf-cats" id="rfCats"></div>
+
+        <div class="hm-gv-tip">图源说明：Yande.re / Danbooru / Konachan 为动漫插画图站（建议用英文标签），Openverse 为通用素材库。若搜索失败可点击「在图源直接打开」在新标签页查看。</div>
+      </section>
+
+      <section class="hm-rf-panel hm-rf-right">
+        <div class="hm-rf-status" id="rfStatus">输入关键词或选择分类开始搜索</div>
+        <div class="hm-rf-grid" id="rfGrid"></div>
+      </section>
+    </div>
+
+    <div class="hm-rf-detail" id="rfDetail" hidden>
+      <div class="hm-rf-detail-inner">
+        <button class="hm-rf-detail-close" id="rfDetailClose" aria-label="关闭">×</button>
+        <div class="hm-rf-detail-img"><img id="rfDetailImg" alt="" referrerpolicy="no-referrer"></div>
+        <div class="hm-rf-detail-info">
+          <div id="rfDetailMeta"></div>
+          <div class="hm-rf-detail-actions">
+            <button class="hm-pill" id="rfDetailCopy">复制链接</button>
+            <button class="hm-pill" id="rfDetailOpen">查看原图</button>
+            <button class="hm-pill hm-pill-primary" id="rfDetailSave">存入资产库</button>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -1973,6 +2030,7 @@
   <script src="storyboard.js"></script>
   <script src="paint.js"></script>
   <script src="toolimage.js"></script>
+  <script src="toolreference.js"></script>
   <script src="toolvideo.js"></script>
   <script src="ui.js"></script>
   <script src="desk.js"></script>
