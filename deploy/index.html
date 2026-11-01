@@ -9085,6 +9085,38 @@ body.hm-chat-open .hm-chat-panel { transform: translateX(0); }
 .hm-chat-drag:hover,
 .hm-chat-drag:active { background: rgba(139, 92, 246, 0.25); }
 
+/* 面板左边缘开关按钮（点击显示/隐藏） */
+.hm-chat-edge-toggle {
+  position: absolute;
+  left: -34px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  background: #0d1624;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  color: #8fa3b8;
+  cursor: pointer;
+  z-index: 3;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.hm-chat-edge-toggle:hover {
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.18);
+}
+.hm-chat-edge-toggle svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s ease;
+}
+body.hm-chat-open .hm-chat-edge-toggle svg {
+  transform: rotate(180deg);
+}
+
 /* 左侧内容区为聊天面板让位 */
 body.hm-chat-open .hm-top,
 body.hm-chat-open .hm-page,
@@ -9614,7 +9646,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261101190506-d3044b7";</script>
+<script>window.HM_BUILD = "20261101191146-4a4e5dc";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -9778,6 +9810,9 @@ body.hm-chat-open .hm-dock {
 
   <!-- 右侧 AI 聊天面板 -->
   <aside class="hm-chat-panel" id="chatPanel" aria-label="AI 助手">
+    <button class="hm-chat-edge-toggle" id="chatEdgeToggle" title="显示/隐藏 AI 助手">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/></svg>
+    </button>
     <div class="hm-chat-drag" id="chatDrag" title="拖拽改变宽度"></div>
     <div class="hm-chat-head">
       <strong>AI 助手</strong>
@@ -25491,6 +25526,7 @@ window.HMChat = (function () {
   /* ---------- 绑定 ---------- */
   function bind() {
     el.toggle.addEventListener('click', toggle);
+    el.edgeToggle.addEventListener('click', toggle);
     el.closeBtn.addEventListener('click', closePanel);
     el.dragHandle.addEventListener('mousedown', startDrag);
 
@@ -25543,6 +25579,7 @@ window.HMChat = (function () {
     if (inited) return;
     inited = true;
     el.toggle = $('chatToggle');
+    el.edgeToggle = $('chatEdgeToggle');
     el.panel = $('chatPanel');
     el.closeBtn = $('chatClose');
     el.dragHandle = $('chatDrag');

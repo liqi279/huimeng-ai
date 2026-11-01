@@ -284,6 +284,7 @@ window.HMChat = (function () {
   /* ---------- 绑定 ---------- */
   function bind() {
     el.toggle.addEventListener('click', toggle);
+    el.edgeToggle.addEventListener('click', toggle);
     el.closeBtn.addEventListener('click', closePanel);
     el.dragHandle.addEventListener('mousedown', startDrag);
 
@@ -336,6 +337,7 @@ window.HMChat = (function () {
     if (inited) return;
     inited = true;
     el.toggle = $('chatToggle');
+    el.edgeToggle = $('chatEdgeToggle');
     el.panel = $('chatPanel');
     el.closeBtn = $('chatClose');
     el.dragHandle = $('chatDrag');
