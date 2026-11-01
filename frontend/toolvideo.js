@@ -32,6 +32,11 @@ window.HMToolVideo = (function () {
 
   /* ---------------- 提示词编译（本地确定性，零成本） ---------------- */
   var THEMES = [
+    { style: 'character', bg1: '#1b1730', bg2: '#07050f', palette: ['#8ab4ff', '#f2f4ff', '#9d7bf7', '#ffffff'],
+      keys: ['萝莉', '白毛', '白发', '黑发', '金发', '粉发', '蓝发', '银发', '紫发', '红发', '棕发', '茶发',
+        '双马尾', '猫耳', '猫娘', '呆毛', '校服', '水手服', '女仆', '和服', '汉服', '婚纱',
+        '少女', '女孩', '女生', '男孩', '少年', '人物', '角色', '立绘', '头像', '二次元',
+        'loli', 'girl', 'anime', 'character', 'waifu', 'neko'] },
     { style: 'particles', bg1: '#0b1330', bg2: '#02040c', palette: ['#8ab4ff', '#c7d2fe', '#67e8f9', '#ffffff'],
       keys: ['星', '夜空', '银河', '宇宙', '太空', 'star', 'space', 'galaxy'] },
     { style: 'rain', bg1: '#071320', bg2: '#01060b', palette: ['#7dd3fc', '#38bdf8', '#bae6fd'],
@@ -61,7 +66,85 @@ window.HMToolVideo = (function () {
 
   function themeForStyle(style) {
     for (var i = 0; i < THEMES.length; i++) if (THEMES[i].style === style) return THEMES[i];
-    return THEMES[0];
+    return THEMES[1];
+  }
+
+  /* 角色外观解析：把「白毛萝莉」「银发双马尾猫耳少女」等描述翻成可绘制的参数 */
+  var HAIR_COLORS = [
+    { c: '#f6f8ff', s: '#c7d1f0', k: ['白毛', '白发', '银发', '银毛', '白金发', '雪白', 'white hair', 'silver hair'] },
+    { c: '#2f2a42', s: '#171326', k: ['黑毛', '黑发', '黑长直', 'black hair'] },
+    { c: '#ffd66b', s: '#dca42c', k: ['金毛', '金发', '黄发', 'blonde', 'gold hair'] },
+    { c: '#ff9fd0', s: '#e06aa8', k: ['粉毛', '粉发', '粉色头发', 'pink hair'] },
+    { c: '#79c6ff', s: '#3f8ede', k: ['蓝毛', '蓝发', '水色发', 'blue hair'] },
+    { c: '#c4a6ff', s: '#8f68e6', k: ['紫毛', '紫发', 'purple hair', 'violet hair'] },
+    { c: '#ff8f8f', s: '#d65a5a', k: ['红毛', '红发', 'red hair'] },
+    { c: '#c28d5f', s: '#8d5b31', k: ['棕发', '茶发', '褐发', 'brown hair'] },
+    { c: '#9fe8b0', s: '#5dbd7a', k: ['绿毛', '绿发', 'green hair'] },
+    { c: '#cdd4e4', s: '#98a2ba', k: ['灰毛', '灰发', '银灰', 'grey hair', 'gray hair'] }
+  ];
+
+  var EYE_COLORS = [
+    { c: '#ff5e6c', k: ['红瞳', '红眼', '血瞳', 'red eye', 'red eyes'] },
+    { c: '#ffc24a', k: ['金瞳', '黄瞳', '琥珀瞳', 'gold eye', 'gold eyes'] },
+    { c: '#b48bff', k: ['紫瞳', '紫眼', 'violet eye'] },
+    { c: '#4fd88a', k: ['绿瞳', '绿眼', 'green eye'] },
+    { c: '#5aa9ff', k: ['蓝瞳', '蓝眼', 'blue eye'] }
+  ];
+
+  var DRESS_COLORS = [
+    { c: '#2b3f6e', s: '#1b2a4d', k: ['校服', '水手服', '制服', 'jk', 'school uniform'] },
+    { c: '#3a3550', s: '#232034', k: ['女仆', 'maid'] },
+    { c: '#e2607a', s: '#a83a55', k: ['和服', '浴衣', '汉服', 'kimono'] },
+    { c: '#f2f4ff', s: '#c9d3f2', k: ['婚纱', '白裙', 'wedding'] },
+    { c: '#3d4a63', s: '#232b3d', k: ['机甲', '战斗服', '战衣', 'armor'] },
+    { c: '#a78bfa', s: '#7c5ce0', k: ['连衣裙', '裙子', '裙', 'dress'] }
+  ];
+
+  function matchColor(list, text) {
+    for (var i = 0; i < list.length; i++) {
+      for (var j = 0; j < list[i].k.length; j++) {
+        if (text.indexOf(list[i].k[j]) >= 0) return list[i];
+      }
+    }
+    return null;
+  }
+
+  function hasAny(text, keys) {
+    for (var i = 0; i < keys.length; i++) if (text.indexOf(keys[i]) >= 0) return true;
+    return false;
+  }
+
+  var BACKDROPS = [
+    { id: 'sakura', bg1: '#2a1626', bg2: '#0d0613', k: ['樱花', '花瓣', 'sakura'] },
+    { id: 'night', bg1: '#0b1330', bg2: '#02040c', k: ['星空', '夜空', '星', '夜', 'night', 'star'] },
+    { id: 'city', bg1: '#160b2a', bg2: '#05010f', k: ['城市', '霓虹', '赛博', '街', 'city', 'neon', 'cyber'] },
+    { id: 'room', bg1: '#2a1d18', bg2: '#0f0806', k: ['教室', '房间', '室内', '窗边', '窗', 'room', 'classroom'] },
+    { id: 'sea', bg1: '#0a2233', bg2: '#020a12', k: ['海', '沙滩', '海边', 'sea', 'beach'] },
+    { id: 'forest', bg1: '#0d2418', bg2: '#04100a', k: ['森林', '树下', '草地', '自然', 'forest'] }
+  ];
+
+  function compileCharacter(text, accent) {
+    var hair = matchColor(HAIR_COLORS, text) || { c: '#f2f4ff', s: '#c6cff0' };
+    var eye = matchColor(EYE_COLORS, text);
+    var dress = matchColor(DRESS_COLORS, text) || { c: '#9d7bf7', s: '#7048d8' };
+    var back = null;
+    for (var i = 0; i < BACKDROPS.length && !back; i++) {
+      if (hasAny(text, BACKDROPS[i].k)) back = BACKDROPS[i];
+    }
+    if (!back) back = { id: 'studio', bg1: '#1b1730', bg2: '#07050f' };
+    return {
+      hair: hair.c, shade: hair.s,
+      eye: eye ? eye.c : (accent || '#8ab4ff'),
+      dress: dress.c, dressShade: dress.s,
+      twin: hasAny(text, ['双马尾', '双尾', '双辫', 'twintail', 'twin tail', 'pigtail']),
+      catEars: hasAny(text, ['猫耳', '猫娘', 'neko', 'catgirl']),
+      ahoge: hasAny(text, ['呆毛', 'ahoge', '翘毛']),
+      chibi: hasAny(text, ['萝莉', 'loli', '幼女', '小女孩', 'q版', 'chibi', '矮']),
+      bow: hasAny(text, ['蝴蝶结', '发带', '发饰', '头饰', 'ribbon', 'bow']) || hasAny(text, ['萝莉', 'loli', '少女', 'girl']),
+      shortHair: hasAny(text, ['短发', '短毛', 'short hair']),
+      backdrop: back.id,
+      bg1: back.bg1, bg2: back.bg2
+    };
   }
 
   function compilePrompt(prompt, opts) {
@@ -82,15 +165,21 @@ window.HMToolVideo = (function () {
     var h = Number(opts && opts.h) || 540;
     var palette = theme.palette.slice();
     if (opts && opts.accent) palette[0] = opts.accent;
+    var charSpec = null;
+    if (style === 'character') {
+      charSpec = compileCharacter(text, opts && opts.accent);
+      palette = [charSpec.eye, charSpec.hair, charSpec.dress, '#ffffff'];
+    }
     return {
       w: w, h: h,
       fps: Number(opts && opts.fps) || 18,
       frames: Math.min(MAX_FRAMES, Math.max(8, Number(opts && opts.frames) || 36)),
       seed: seed,
       style: style,
-      bg1: theme.bg1,
-      bg2: theme.bg2,
+      bg1: charSpec ? charSpec.bg1 : theme.bg1,
+      bg2: charSpec ? charSpec.bg2 : theme.bg2,
       palette: palette,
+      char: charSpec,
       count: 70 + (hash % 130),
       speed: 0.55 + (hash % 60) / 100,
       cols: 12 + (hash % 7),
@@ -129,7 +218,353 @@ window.HMToolVideo = (function () {
     var style = spec.style || 'particles';
     var i, x, y;
 
-    if (style === 'particles') {
+    if (style === 'character') {
+      var ch = spec.char || {};
+      var cs = Math.min(w, h);
+      var chibi = !!ch.chibi;
+      var headR = cs * (chibi ? 0.188 : 0.162);
+      var mx = w * 0.5;
+      var bob = Math.sin(t * 6.2832) * cs * 0.008;
+      var cy = h * (chibi ? 0.425 : 0.405) + bob;
+      var hairC = ch.hair || '#f2f4ff';
+      var hairS = ch.shade || '#c6cff0';
+      var eyeC = ch.eye || col(0);
+      var dressC = ch.dress || '#9d7bf7';
+      var dressS = ch.dressShade || '#7048d8';
+      var kind = ch.backdrop || 'studio';
+
+      // 人物身后光晕，让角色从背景里分离出来
+      var chg = ctx.createRadialGradient(mx, cy + headR * 0.4, 0, mx, cy + headR * 0.4, cs * 0.95);
+      chg.addColorStop(0, rgba(hairC, 0.22));
+      chg.addColorStop(0.42, rgba(eyeC, 0.10));
+      chg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = chg;
+      ctx.fillRect(0, 0, w, h);
+
+      // 背景氛围
+      if (kind === 'sakura') {
+        ctx.fillStyle = 'rgba(255,170,205,0.10)';
+        ctx.fillRect(0, 0, w, h);
+        for (i = 0; i < 18; i++) {
+          var psp = 0.25 + rnd(i + 300) * 0.9;
+          var ppx = rnd(i + 310) * w + Math.sin(t * 6.2832 + i) * cs * 0.03;
+          var ppy = ((rnd(i + 320) + t * psp) % 1.05) * (h + 80) - 40;
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = i % 3 ? '#ffb7d5' : '#ffd9e8';
+          ctx.beginPath();
+          ctx.ellipse(ppx, ppy, 4.5 + rnd(i) * 3, 3 + rnd(i + 5) * 2, i * 0.7 + t * 3, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      } else if (kind === 'night') {
+        for (i = 0; i < 90; i++) {
+          x = rnd(i + 400) * w;
+          y = rnd(i + 410) * h * 0.8;
+          ctx.globalAlpha = 0.25 + 0.65 * Math.abs(Math.sin(t * 6.2832 + i * 0.6));
+          ctx.fillStyle = i % 4 ? '#dbeafe' : '#fef3c7';
+          ctx.beginPath(); ctx.arc(x, y, 1 + rnd(i + 420) * 2, 0, 6.2832); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      } else if (kind === 'city') {
+        var skyY = h * 0.74;
+        for (i = 0; i < 12; i++) {
+          var blw = w / 11 * (0.6 + rnd(i + 500) * 0.7);
+          var blx = i * w / 11;
+          var blh = h * (0.10 + rnd(i + 510) * 0.22);
+          ctx.fillStyle = 'rgba(12,16,34,0.9)';
+          ctx.fillRect(blx, skyY - blh, blw, blh);
+          for (var wi = 0; wi < 3; wi++) {
+            ctx.globalAlpha = 0.3 + 0.5 * Math.abs(Math.sin(t * 6.2832 + (i + wi) * 0.9));
+            ctx.fillStyle = wi % 2 ? '#f472b6' : '#22d3ee';
+            ctx.fillRect(blx + 4 + wi * 10, skyY - blh + 8 + (i % 3) * 14, 4, 6);
+          }
+          ctx.globalAlpha = 1;
+        }
+      } else if (kind === 'room') {
+        var roomG = ctx.createLinearGradient(0, 0, 0, h);
+        roomG.addColorStop(0, 'rgba(255,214,160,0.18)');
+        roomG.addColorStop(1, 'rgba(255,180,120,0)');
+        ctx.fillStyle = roomG;
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(180,220,255,0.13)';
+        ctx.fillRect(w * 0.62, h * 0.15, w * 0.28, h * 0.34);
+        ctx.strokeStyle = 'rgba(255,226,180,0.4)';
+        ctx.lineWidth = Math.max(4, cs * 0.014);
+        ctx.strokeRect(w * 0.62, h * 0.15, w * 0.28, h * 0.34);
+        ctx.beginPath();
+        ctx.moveTo(w * 0.76, h * 0.15); ctx.lineTo(w * 0.76, h * 0.49);
+        ctx.moveTo(w * 0.62, h * 0.32); ctx.lineTo(w * 0.90, h * 0.32);
+        ctx.stroke();
+      } else if (kind === 'sea') {
+        ctx.fillStyle = 'rgba(56,189,248,0.16)';
+        ctx.fillRect(0, h * 0.66, w, h * 0.34);
+        for (i = 0; i < 5; i++) {
+          ctx.strokeStyle = 'rgba(165,243,252,0.28)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          for (x = 0; x <= w; x += 10) {
+            var wy2 = h * (0.70 + i * 0.055) + Math.sin(x / w * 12.566 + t * 6.2832 + i * 0.8) * h * 0.012;
+            if (x === 0) ctx.moveTo(x, wy2); else ctx.lineTo(x, wy2);
+          }
+          ctx.stroke();
+        }
+      } else if (kind === 'forest') {
+        for (i = 0; i < 9; i++) {
+          x = i * w / 8 + rnd(i + 700) * 24 - 12;
+          y = h * (0.42 + rnd(i + 710) * 0.16);
+          ctx.globalAlpha = 0.30;
+          ctx.fillStyle = '#0f3b25';
+          ctx.beginPath(); ctx.ellipse(x, y, w * 0.09, h * 0.20, 0, 0, 6.2832); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        ctx.fillStyle = 'rgba(120,255,190,0.06)';
+        ctx.fillRect(0, h * 0.72, w, h * 0.28);
+      } else {
+        for (i = 0; i < 22; i++) {
+          x = rnd(i + 800) * w;
+          y = rnd(i + 810) * h;
+          var brad = 12 + rnd(i + 820) * 46;
+          ctx.globalAlpha = 0.05 + rnd(i + 830) * 0.10;
+          ctx.fillStyle = i % 2 ? hairC : eyeC;
+          ctx.beginPath();
+          ctx.arc(x, y + Math.sin(t * 6.2832 + i) * 8, brad, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // 后发
+      ctx.fillStyle = hairS;
+      ctx.beginPath();
+      ctx.ellipse(mx, cy + headR * 0.34, headR * 1.24, headR * 1.45, 0, 0, 6.2832);
+      ctx.fill();
+
+      // 双马尾
+      var sway = Math.sin(t * 6.2832) * 0.12;
+      if (ch.twin) {
+        for (var sd = -1; sd <= 1; sd += 2) {
+          ctx.save();
+          ctx.translate(mx + sd * headR * 1.24, cy + headR * 0.26);
+          ctx.rotate(sd * sway);
+          ctx.fillStyle = hairS;
+          ctx.beginPath(); ctx.ellipse(0, headR * 0.95, headR * 0.30, headR * 1.40, 0, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = hairC;
+          ctx.beginPath(); ctx.ellipse(0, headR * 0.84, headR * 0.21, headR * 1.24, 0, 0, 6.2832); ctx.fill();
+          // 发圈
+          ctx.fillStyle = eyeC;
+          ctx.beginPath(); ctx.ellipse(0, headR * 0.02, headR * 0.17, headR * 0.10, 0, 0, 6.2832); ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // 腿与鞋
+      var hemY = cy + headR * 1.05 + cs * 0.25;
+      var legH = cs * 0.070, legW = headR * 0.15;
+      ctx.fillStyle = '#f2c3b2';
+      ctx.beginPath(); ctx.ellipse(mx - headR * 0.30, hemY + legH * 0.5, legW, legH * 0.62, 0, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(mx + headR * 0.30, hemY + legH * 0.5, legW, legH * 0.62, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = '#2c2438';
+      ctx.beginPath(); ctx.ellipse(mx - headR * 0.30, hemY + legH * 0.92, legW * 1.05, legH * 0.28, 0, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(mx + headR * 0.30, hemY + legH * 0.92, legW * 1.05, legH * 0.28, 0, 0, 6.2832); ctx.fill();
+
+      // 脖子
+      ctx.fillStyle = '#f2c3b2';
+      ctx.fillRect(mx - headR * 0.15, cy + headR * 0.86, headR * 0.30, headR * 0.40);
+
+      // 裙子
+      var shoulderY = cy + headR * 1.16;
+      var halfTop = headR * 0.46;
+      var halfHem = headR * 0.98;
+      var dg = ctx.createLinearGradient(0, shoulderY, 0, hemY);
+      dg.addColorStop(0, dressC);
+      dg.addColorStop(1, dressS);
+      ctx.fillStyle = dg;
+      ctx.beginPath();
+      ctx.moveTo(mx - halfTop, shoulderY);
+      ctx.quadraticCurveTo(mx - halfHem * 0.70, shoulderY + (hemY - shoulderY) * 0.55, mx - halfHem, hemY);
+      ctx.quadraticCurveTo(mx, hemY + cs * 0.014, mx + halfHem, hemY);
+      ctx.quadraticCurveTo(mx + halfHem * 0.70, shoulderY + (hemY - shoulderY) * 0.55, mx + halfTop, shoulderY);
+      ctx.closePath();
+      ctx.fill();
+      // 裙摆高光
+      ctx.globalAlpha = 0.35;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(1.5, cs * 0.004);
+      ctx.beginPath();
+      ctx.moveTo(mx - halfHem * 0.96, hemY - cs * 0.004);
+      ctx.quadraticCurveTo(mx, hemY + cs * 0.010, mx + halfHem * 0.96, hemY - cs * 0.004);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // 手臂与手
+      for (var sd2 = -1; sd2 <= 1; sd2 += 2) {
+        ctx.save();
+        ctx.translate(mx + sd2 * headR * 0.62, shoulderY + headR * 0.22);
+        ctx.rotate(sd2 * 0.20);
+        ctx.fillStyle = dressC;
+        ctx.beginPath(); ctx.ellipse(0, headR * 0.26, headR * 0.125, headR * 0.30, 0, 0, 6.2832); ctx.fill();
+        ctx.fillStyle = '#ffe3d5';
+        ctx.beginPath(); ctx.arc(0, headR * 0.60, headR * 0.115, 0, 6.2832); ctx.fill();
+        ctx.restore();
+      }
+
+      // 头部肤色
+      ctx.fillStyle = '#ffe3d5';
+      ctx.beginPath(); ctx.ellipse(mx, cy, headR, headR * 0.99, 0, 0, 6.2832); ctx.fill();
+
+      // 眼睛
+      var blink = (t + ((spec.seed || 1) % 53) / 53) % 1;
+      var closed = blink < 0.05 || blink > 0.93;
+      var eo = headR * 0.40, eY = cy + headR * 0.20;
+      var eW = headR * 0.255, eH = headR * 0.305;
+      for (var sd3 = -1; sd3 <= 1; sd3 += 2) {
+        var ex = mx + sd3 * eo;
+        if (closed) {
+          ctx.strokeStyle = '#4a3a52';
+          ctx.lineWidth = Math.max(2, headR * 0.042);
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(ex - eW * 0.85, eY);
+          ctx.quadraticCurveTo(ex, eY + eH * 0.42, ex + eW * 0.85, eY);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.ellipse(ex, eY, eW, eH, 0, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = eyeC;
+          ctx.beginPath(); ctx.ellipse(ex, eY + eH * 0.06, eW * 0.80, eH * 0.82, 0, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = 'rgba(22,14,34,0.9)';
+          ctx.beginPath(); ctx.ellipse(ex, eY + eH * 0.10, eW * 0.40, eH * 0.46, 0, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.92)';
+          ctx.beginPath(); ctx.arc(ex - eW * 0.28, eY - eH * 0.26, eW * 0.24, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.beginPath(); ctx.arc(ex + eW * 0.20, eY + eH * 0.30, eW * 0.13, 0, 6.2832); ctx.fill();
+          ctx.strokeStyle = '#3a2b45';
+          ctx.lineWidth = Math.max(1.5, headR * 0.034);
+          ctx.beginPath();
+          ctx.moveTo(ex - eW * 0.92, eY - eH * 0.55);
+          ctx.quadraticCurveTo(ex, eY - eH * 1.05, ex + eW * 0.92, eY - eH * 0.55);
+          ctx.stroke();
+        }
+      }
+      // 腮红
+      ctx.fillStyle = 'rgba(255,138,166,0.30)';
+      ctx.beginPath(); ctx.ellipse(mx - headR * 0.72, cy + headR * 0.50, headR * 0.15, headR * 0.08, 0, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(mx + headR * 0.72, cy + headR * 0.50, headR * 0.15, headR * 0.08, 0, 0, 6.2832); ctx.fill();
+      // 嘴
+      ctx.strokeStyle = '#b05a68';
+      ctx.lineWidth = Math.max(1.6, headR * 0.032);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(mx - headR * 0.08, cy + headR * 0.72);
+      ctx.quadraticCurveTo(mx, cy + headR * 0.78, mx + headR * 0.08, cy + headR * 0.72);
+      ctx.stroke();
+
+      // 刘海（锯齿状发梢覆盖额头）
+      ctx.fillStyle = hairC;
+      ctx.beginPath();
+      ctx.moveTo(mx - headR * 1.03, cy + headR * 0.06);
+      ctx.quadraticCurveTo(mx - headR * 1.16, cy - headR * 0.98, mx, cy - headR * 1.10);
+      ctx.quadraticCurveTo(mx + headR * 1.16, cy - headR * 0.98, mx + headR * 1.03, cy + headR * 0.06);
+      ctx.quadraticCurveTo(mx + headR * 0.86, cy - headR * 0.06, mx + headR * 0.66, cy - headR * 0.30);
+      ctx.quadraticCurveTo(mx + headR * 0.52, cy - headR * 0.05, mx + headR * 0.34, cy - headR * 0.26);
+      ctx.quadraticCurveTo(mx + headR * 0.16, cy - headR * 0.02, mx - headR * 0.02, cy - headR * 0.24);
+      ctx.quadraticCurveTo(mx - headR * 0.20, cy - headR * 0.02, mx - headR * 0.40, cy - headR * 0.22);
+      ctx.quadraticCurveTo(mx - headR * 0.60, cy - headR * 0.02, mx - headR * 0.74, cy - headR * 0.24);
+      ctx.quadraticCurveTo(mx - headR * 0.88, cy - headR * 0.06, mx - headR * 1.03, cy + headR * 0.06);
+      ctx.closePath();
+      ctx.fill();
+
+      // 两侧发绺
+      if (!ch.shortHair) {
+        for (var sd4 = -1; sd4 <= 1; sd4 += 2) {
+          ctx.fillStyle = hairC;
+          ctx.beginPath();
+          ctx.moveTo(mx + sd4 * headR * 0.94, cy - headR * 0.42);
+          ctx.quadraticCurveTo(mx + sd4 * headR * 1.18, cy + headR * 0.30, mx + sd4 * headR * 0.90, cy + headR * 0.92);
+          ctx.quadraticCurveTo(mx + sd4 * headR * 0.76, cy + headR * 0.24, mx + sd4 * headR * 0.74, cy - headR * 0.30);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // 高光
+      ctx.globalAlpha = 0.42;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(2, headR * 0.055);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(mx, cy, headR * 0.86, Math.PI * 1.18, Math.PI * 1.52);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // 猫耳
+      if (ch.catEars) {
+        for (var sd5 = -1; sd5 <= 1; sd5 += 2) {
+          ctx.fillStyle = hairC;
+          ctx.beginPath();
+          ctx.moveTo(mx + sd5 * headR * 0.18, cy - headR * 0.96);
+          ctx.quadraticCurveTo(mx + sd5 * headR * 0.92, cy - headR * 1.58, mx + sd5 * headR * 0.92, cy - headR * 0.72);
+          ctx.quadraticCurveTo(mx + sd5 * headR * 0.58, cy - headR * 0.86, mx + sd5 * headR * 0.18, cy - headR * 0.96);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,163,190,0.72)';
+          ctx.beginPath();
+          ctx.moveTo(mx + sd5 * headR * 0.34, cy - headR * 0.94);
+          ctx.quadraticCurveTo(mx + sd5 * headR * 0.66, cy - headR * 1.34, mx + sd5 * headR * 0.76, cy - headR * 0.86);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // 呆毛
+      if (ch.ahoge) {
+        ctx.strokeStyle = hairC;
+        ctx.lineWidth = Math.max(2, headR * 0.085);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(mx + headR * 0.02, cy - headR * 1.02);
+        ctx.quadraticCurveTo(mx + headR * 0.22, cy - headR * 1.62, mx + headR * 0.62, cy - headR * 1.30);
+        ctx.stroke();
+      }
+
+      // 发饰蝴蝶结
+      if (ch.bow) {
+        var bowX = mx - headR * 0.80, bowY = cy - headR * 0.62;
+        ctx.fillStyle = eyeC;
+        ctx.beginPath();
+        ctx.moveTo(bowX, bowY);
+        ctx.lineTo(bowX - headR * 0.24, bowY - headR * 0.16);
+        ctx.lineTo(bowX - headR * 0.24, bowY + headR * 0.16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(bowX, bowY);
+        ctx.lineTo(bowX + headR * 0.24, bowY - headR * 0.16);
+        ctx.lineTo(bowX + headR * 0.24, bowY + headR * 0.16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath(); ctx.arc(bowX, bowY, headR * 0.09, 0, 6.2832); ctx.fill();
+      }
+
+      // 环绕闪光
+      for (i = 0; i < 14; i++) {
+        var spx = mx + (rnd(i + 600) - 0.5) * cs * 1.5;
+        var spy = cy + (rnd(i + 610) - 0.55) * cs * 1.3 + Math.sin(t * 6.2832 + i) * cs * 0.02;
+        var sa = 0.22 + 0.62 * Math.abs(Math.sin(t * 6.2832 + i * 0.9));
+        var sr = 1.5 + rnd(i + 620) * 3;
+        ctx.globalAlpha = sa;
+        ctx.fillStyle = i % 3 ? '#ffffff' : col(i);
+        ctx.beginPath(); ctx.arc(spx, spy, sr, 0, 6.2832); ctx.fill();
+        ctx.strokeStyle = i % 3 ? '#ffffff' : col(i);
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(spx - sr * 2.6, spy); ctx.lineTo(spx + sr * 2.6, spy);
+        ctx.moveTo(spx, spy - sr * 2.6); ctx.lineTo(spx, spy + sr * 2.6);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+    } else if (style === 'particles') {
       var n = spec.count || 120;
       var cx = w * 0.5, cy = h * 0.52, maxR = Math.min(w, h) * 0.46;
       var cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.6);
@@ -292,10 +727,11 @@ window.HMToolVideo = (function () {
       ctx.globalAlpha = 1;
     }
 
-    // 暗角
+    // 暗角（人物画面减轻，避免压暗肤色与白毛）
+    var vigA = style === 'character' ? 0.28 : 0.55;
     var vg = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.25, w * 0.5, h * 0.5, Math.max(w, h) * 0.75);
     vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+    vg.addColorStop(1, 'rgba(0,0,0,' + vigA + ')');
     ctx.globalAlpha = 1;
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, w, h);
@@ -862,6 +1298,10 @@ window.HMToolVideo = (function () {
   }
 
   var IDEAS = [
+    '白毛萝莉，红色蝴蝶结，樱花缓缓飘落',
+    '银发双马尾少女，猫耳，霓虹灯下微笑',
+    '金发少女穿水手服，教室窗边回眸',
+    '黑长直女孩，红瞳，星空背景',
     '深蓝夜空里，星光粒子缓缓汇聚成一颗发光的星球',
     '霓虹城市雨夜，粉蓝色灯带在楼群间流动',
     '像素方块随节拍跳动，呈现几何节奏动画',
