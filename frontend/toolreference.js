@@ -9,7 +9,7 @@ window.HMToolReference = (function () {
   'use strict';
 
   var LS_KEY = 'anidream.pixabay.key';
-  var DEFAULT_KEY = '58353329-F7CBBE7615A3BBFD57B1BBF44';
+  var DEFAULT_KEY = '58353329-302680e8dd74294ccb123c7e';
 
   var CATEGORIES = [
     { id: 'character', label: '人物', tags: ['portrait', 'people'] },
