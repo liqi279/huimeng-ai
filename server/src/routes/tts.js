@@ -19,23 +19,17 @@ const {
   fetchWithTimeout,
   apiErrorText,
   dataUrlToBuffer,
+  extFromMime,
   randomToken,
 } = require('../http');
 
 const router = express.Router();
 
-const FISH_BASE = 'https://api.fish.audio/v1';
+const FISH_BASE = 'https://fishaudio.org/api/open/v1';
 const MAX_TEXT = 2000;
 const MAX_REF_BYTES = 10 * 1024 * 1024;
 
 /* ---------- 工具 ---------- */
-
-/* 从 data URL 提取 base64（去掉 data:audio/xxx;base64, 前缀） */
-function dataUrlToBase64(dataUrl) {
-  const comma = String(dataUrl).indexOf(',');
-  if (comma < 0) throw jsonError(400, '参考音频格式不正确', '需为 data URL');
-  return String(dataUrl).slice(comma + 1);
-}
 
 /* Edge-TTS 语速：前端传 0.5~2，转成 edge-tts 的 rate 字符串（-50% ~ +100%） */
 function speedToRate(speed) {
@@ -110,7 +104,39 @@ router.post('/design', wrap(async (req, res) => {
   res.json({ url: `/uploads/media/${fileName}`, duration, voice, engine: 'edgetts' });
 }));
 
-/* ---------- 语音克隆：Fish Audio ---------- */
+/* ---------- 语音克隆：Fish Audio v1 voice-clone-tts ---------- */
+
+/* 推导后端公网地址（用于把参考音频 URL 交给 Fish Audio 下载） */
+function publicOrigin(req) {
+  const proto = req.protocol || (req.get('x-forwarded-proto') || 'http').split(',')[0].trim();
+  const host = req.get('x-forwarded-host') || req.get('host');
+  return `${proto}://${host}`;
+}
+
+/* 轮询 Fish Audio 异步任务直到终态 */
+async function pollFishJob(apiKey, jobId, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  const statusUrl = `${FISH_BASE}/speech/voice-clone-tts/jobs/${encodeURIComponent(jobId)}`;
+  while (Date.now() < deadline) {
+    const r = await fetchWithTimeout(statusUrl, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    }, 30000);
+    if (!r.ok) {
+      const raw = await r.text();
+      throw jsonError(r.status, 'Fish Audio 查询任务失败', apiErrorText(r.status, raw));
+    }
+    const data = await r.json();
+    const task = data.task || data;
+    const status = String(task.status || '').toLowerCase();
+    if (status === 'success') return task;
+    if (status === 'fail' || status === 'partial_fail' || status === 'failed') {
+      throw jsonError(502, 'Fish Audio 克隆失败', String(task.error || task.message || '任务失败').slice(0, 160));
+    }
+    /* pending / processing — 等待 */
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw jsonError(504, 'Fish Audio 克隆超时', '任务未在规定时间内完成，请稍后重试');
+}
 
 router.post('/clone', wrap(async (req, res) => {
   const body = req.body || {};
@@ -127,35 +153,39 @@ router.post('/clone', wrap(async (req, res) => {
   const decoded = dataUrlToBuffer(refAudio);
   assert(decoded.buffer.length <= MAX_REF_BYTES, 413, '参考音频过大', '单音频不能超过 10MB');
 
-  const refText = String(body.referenceText || '').trim();
-  /* Fish Audio zero-shot 克隆需要参考音频的对应文本；留空时用一个占位（效果会下降） */
-  const refTranscript = refText || '这是一段参考音频。';
+  /* 1. 把参考音频写到 media 目录，拿到公网 URL（Fish Audio 需要下载它） */
+  const refExt = extFromMime(decoded.mime) || 'mp3';
+  const refName = `ref-${Date.now()}-${randomToken()}.${refExt}`;
+  await fsp.writeFile(path.join(store.dirs.media, refName), decoded.buffer);
+  const refUrl = `${publicOrigin(req)}/uploads/media/${refName}`;
 
-  const audioBase64 = dataUrlToBase64(refAudio);
   const speed = Number(body.speed);
   const rate = Number.isFinite(speed) ? Math.max(0.5, Math.min(2, speed)) : 1;
 
   const payload = {
+    source_audio_url: refUrl,
     text,
-    references: [{ audio: audioBase64, text: refTranscript }],
     format: 'mp3',
-    latency: 'normal',
+    model_id: 'fishaudio-s21pro-flash',
   };
   if (rate !== 1) payload.speed = rate;
 
+  /* 2. 创建 voice-clone 异步任务 */
+  const idemKey = `clone-${Date.now()}-${randomToken()}`;
   let upstream;
   try {
     upstream = await fetchWithTimeout(
-      `${FISH_BASE}/tts`,
+      `${FISH_BASE}/speech/voice-clone-tts/jobs`,
       {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
+          'Idempotency-Key': idemKey,
         },
         body: JSON.stringify(payload),
       },
-      120000,
+      60000,
     );
   } catch (err) {
     throw jsonError(502, 'Fish Audio 请求失败', err.message ? String(err.message).slice(0, 160) : '网络异常，请稍后重试');
@@ -166,21 +196,28 @@ router.post('/clone', wrap(async (req, res) => {
     throw jsonError(upstream.status, 'Fish Audio 克隆失败', apiErrorText(upstream.status, raw));
   }
 
-  const contentType = String(upstream.headers.get('content-type') || '').toLowerCase();
-  let audioBuffer;
-  if (contentType.startsWith('audio/') || contentType.includes('application/octet-stream')) {
-    audioBuffer = Buffer.from(await upstream.arrayBuffer());
-  } else {
-    /* 某些情况下返回 JSON 包含 url */
-    const data = JSON.parse(await upstream.text());
-    const url = (data && data.url) || (data && data.data && data.data.url) || '';
-    if (!url) throw jsonError(502, 'Fish Audio 未返回音频', '请检查 API Key 与参考音频');
-    const media = await fetchWithTimeout(url, {}, 60000);
-    if (!media.ok) throw jsonError(502, '下载音频失败', 'HTTP ' + media.status);
-    audioBuffer = Buffer.from(await media.arrayBuffer());
-  }
+  const createData = await upstream.json();
+  const task = createData.task || createData.job || createData;
+  const jobId = task.taskId || task.jobId || task.id;
+  assert(jobId, 502, 'Fish Audio 未返回任务 ID', '请检查 API Key 额度');
 
-  assert(audioBuffer && audioBuffer.length > 0, 502, 'Fish Audio 返回空音频', '请检查 API Key 额度或参考音频质量');
+  /* 3. 轮询任务直到完成 */
+  const done = await pollFishJob(apiKey, jobId, 180000);
+
+  /* 4. 下载生成的音频 */
+  const audioUrl = done.audioUrl || done.audio_url || done.url || (done.result && done.result.url) || '';
+  assert(audioUrl, 502, 'Fish Audio 未返回音频地址', '任务完成但无输出');
+
+  const media = await fetchWithTimeout(audioUrl, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  }, 60000);
+  if (!media.ok) throw jsonError(502, '下载克隆音频失败', 'HTTP ' + media.status);
+
+  const audioBuffer = Buffer.from(await media.arrayBuffer());
+  assert(audioBuffer.length > 0, 502, 'Fish Audio 返回空音频', '请检查 API Key 额度或参考音频质量');
+
+  /* 清理参考音频（可选，保留也无妨） */
+  fsp.unlink(path.join(store.dirs.media, refName)).catch(() => {});
 
   const fileName = `${Date.now()}-${randomToken()}.mp3`;
   await fsp.writeFile(path.join(store.dirs.media, fileName), audioBuffer);
