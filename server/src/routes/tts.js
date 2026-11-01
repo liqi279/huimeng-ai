@@ -108,7 +108,8 @@ router.post('/design', wrap(async (req, res) => {
 
 /* 推导后端公网地址（用于把参考音频 URL 交给 Fish Audio 下载） */
 function publicOrigin(req) {
-  const proto = req.protocol || (req.get('x-forwarded-proto') || 'http').split(',')[0].trim();
+  const fwdProto = (req.get('x-forwarded-proto') || '').split(',')[0].trim();
+  const proto = fwdProto || req.protocol || 'https';
   const host = req.get('x-forwarded-host') || req.get('host');
   return `${proto}://${host}`;
 }
