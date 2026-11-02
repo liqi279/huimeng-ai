@@ -544,11 +544,74 @@ function extractVideoTaskId(payload) {
   return '';
 }
 
-/* 视频模型定义：每个模型有独立的 duration 范围（秒） */
+/* 视频模型定义：每个模型有独立的 duration 范围、分辨率、fps、计费类型、积分、参考提示 */
 const VIDEO_MODELS = [
-  { id: 'sora-2',      name: 'Sora 2',       minDuration: 5, maxDuration: 15, resolutions: ['720p', '1080p', '2k'], free: false },
-  { id: 'sora-2-pro',  name: 'Sora 2 Pro',   minDuration: 5, maxDuration: 15, resolutions: ['720p', '1080p', '2k'], free: false },
-  { id: 'veo-3',       name: 'Veo 3',        minDuration: 5, maxDuration: 30, resolutions: ['720p', '1080p'],       free: false },
+  {
+    id: 'sora-2',
+    name: 'Sora 2',
+    minDuration: 5, maxDuration: 15,
+    resolutions: ['720p', '1080p', '2k'],
+    fps: 24,
+    billingType: 'perTask', credits: 1920,
+    refHint: '支持图片/视频/音频作为参考主体；单参考图建议清晰主体居中',
+    desc: '文本生成视频 · 单次任务 1920 积分',
+    free: false,
+  },
+  {
+    id: 'sora-2-pro',
+    name: 'Sora 2 Pro',
+    minDuration: 5, maxDuration: 15,
+    resolutions: ['720p', '1080p', '2k'],
+    fps: 24,
+    billingType: 'perTask', credits: 3200,
+    refHint: '支持图片/视频/音频参考；Pro 模型对多主体一致性更强，建议上传 1~3 张关键帧',
+    desc: '专业增强版 · 单次任务 3200 积分',
+    free: false,
+  },
+  {
+    id: 'veo-3',
+    name: 'Veo 3',
+    minDuration: 5, maxDuration: 30,
+    resolutions: ['720p', '1080p'],
+    fps: 24,
+    billingType: 'perSecond', creditsPerSec: 10,
+    refHint: '支持图片参考；适合长镜头叙事，时长上限 30s',
+    desc: 'Google Veo 3 · 按秒计费 10 积分/秒',
+    free: false,
+  },
+  {
+    id: 'seedance-1',
+    name: 'Seedance 1.0',
+    minDuration: 5, maxDuration: 15,
+    resolutions: ['720p', '1080p'],
+    fps: 24,
+    billingType: 'perTask', credits: 1280,
+    refHint: '支持首帧参考图；视频风格迁移推荐',
+    desc: '字节跳动 Seedance · 单次任务 1280 积分',
+    free: false,
+  },
+  {
+    id: 'wan-2',
+    name: 'Wan 2.1',
+    minDuration: 5, maxDuration: 30,
+    resolutions: ['720p', '1080p'],
+    fps: 24,
+    billingType: 'perSecond', creditsPerSec: 8,
+    refHint: '支持图片参考 + 长时长；人物动作一致性较好',
+    desc: '阿里通义 Wan 2.1 · 按秒计费 8 积分/秒',
+    free: false,
+  },
+  {
+    id: 'kling-1.6',
+    name: 'Kling 1.6',
+    minDuration: 5, maxDuration: 10,
+    resolutions: ['720p', '1080p'],
+    fps: 25,
+    billingType: 'perTask', credits: 960,
+    refHint: '支持首尾帧图片参考；镜头运动控制精准',
+    desc: '快手可灵 1.6 · 单次任务 960 积分',
+    free: false,
+  },
 ];
 
 /* 音频模型定义：区分免费（Edge-TTS）和付费（RayinAPI） */
@@ -833,8 +896,14 @@ router.get('/media-models', wrap(async (req, res) => {
       minDuration: m.minDuration,
       maxDuration: m.maxDuration,
       resolutions: m.resolutions,
+      fps: m.fps || 24,
+      billingType: m.billingType || 'perTask',
+      credits: m.credits,
+      creditsPerSec: m.creditsPerSec,
+      desc: m.desc || '',
+      refHint: m.refHint || '',
       free: m.free,
-      /* 参考主体限制（视频场景可上传图片 / 视频 / 音频作为参考） */
+      /* 参考主体限制 */
       refLimits: {
         images: { count: 10, maxBytes: 10 * 1024 * 1024, mime: ['image/jpeg', 'image/png', 'image/webp'] },
         videos: { count: 3, maxBytes: 50 * 1024 * 1024, mime: ['video/mp4', 'video/webm', 'video/quicktime'] },

@@ -6035,6 +6035,50 @@ body[data-mode="audio"] .hm-chip-mode .hm-mode-ico[data-ico="audio"] {
   background: #64748b;
 }
 
+.hm-chip-grid button .hm-pay-badge.hm-pay-persec {
+  background: #f59e0b;
+  color: #1e293b;
+}
+
+/* 模型按钮：悬停显示积分提示（白字浮层） */
+.hm-chip-grid button {
+  position: relative;
+}
+
+.hm-chip-grid button .hm-credits-hover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 650;
+  color: #ffffff;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 50;
+}
+
+.hm-chip-grid button .hm-credits-hover::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.hm-chip-grid button:hover .hm-credits-hover {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* 免费模型 / LoRA 列表由脚本动态渲染 */
 #freeModelList:empty,
 #loraList:empty {

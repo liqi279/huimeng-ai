@@ -395,7 +395,7 @@
     }
   }
 
-  /* 参考主体上传区：按模式动态更新提示文案、accept 格式、限制说明 */
+  /* 参考主体上传区：按模式 + 模型 动态更新提示文案 */
   function updateRefDropForMode(mode) {
     var emptyText = document.getElementById('refEmptyText');
     var hintText = document.getElementById('refHintText');
@@ -404,12 +404,14 @@
     var limitsText = document.getElementById('refLimitsText');
 
     if (mode === 'video') {
+      var videoMeta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+      var refHint = videoMeta && videoMeta.refHint ? videoMeta.refHint : '支持图片/视频/音频参考';
       if (emptyText) emptyText.textContent = '拖入或上传参考主体（图片/视频/音频）';
-      if (hintText) hintText.textContent = '图片 ≤10MB·最多10张 · 视频 ≤50MB·最多3个 · 音频 ≤10MB·最多3个';
+      if (hintText) hintText.textContent = refHint;
       if (input) input.setAttribute('accept', 'image/*,video/*,audio/*');
       if (limits && limitsText) {
         limits.hidden = false;
-        limitsText.textContent = '视频参考主体：图片 ≤10MB 最多10张 · 视频 ≤50MB 最多3个 · 音频 ≤10MB 最多3个';
+        limitsText.textContent = '视频参考主体 · 图片 ≤10MB 最多10张 · 视频 ≤50MB 最多3个 · 音频 ≤10MB 最多3个';
       }
     } else if (mode === 'audio') {
       if (emptyText) emptyText.textContent = '拖入或上传参考音频（可选）';
@@ -440,9 +442,12 @@
   /* ---------------- 免费模型目录（视频 / 音频） ---------------- */
   var mediaCatalog = {
     video: [
-      { id: 'sora-2', name: 'Sora 2', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p', '2k'] },
-      { id: 'sora-2-pro', name: 'Sora 2 Pro', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p', '2k'] },
-      { id: 'veo-3', name: 'Veo 3', minDuration: 5, maxDuration: 30, free: false, resolutions: ['720p', '1080p'] },
+      { id: 'sora-2', name: 'Sora 2', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p', '2k'], fps: 24, billingType: 'perTask', credits: 1920, creditsPerSec: 0, desc: '单次任务 1920 积分', refHint: '支持图片/视频/音频参考' },
+      { id: 'sora-2-pro', name: 'Sora 2 Pro', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p', '2k'], fps: 24, billingType: 'perTask', credits: 3200, creditsPerSec: 0, desc: '单次任务 3200 积分', refHint: 'Pro 版 · 建议 1~3 张关键帧参考' },
+      { id: 'veo-3', name: 'Veo 3', minDuration: 5, maxDuration: 30, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSec: 10, desc: '按秒计费 10 积分/秒', refHint: '支持图片参考 · 长镜头叙事' },
+      { id: 'seedance-1', name: 'Seedance 1.0', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 1280, creditsPerSec: 0, desc: '单次任务 1280 积分', refHint: '支持首帧参考 · 风格迁移推荐' },
+      { id: 'wan-2', name: 'Wan 2.1', minDuration: 5, maxDuration: 30, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSec: 8, desc: '按秒计费 8 积分/秒', refHint: '图片参考 + 长时长 · 动作一致性好' },
+      { id: 'kling-1.6', name: 'Kling 1.6', minDuration: 5, maxDuration: 10, free: false, resolutions: ['720p', '1080p'], fps: 25, billingType: 'perTask', credits: 960, creditsPerSec: 0, desc: '单次任务 960 积分', refHint: '首尾帧参考 · 镜头运动精准' },
     ],
     audio: {
       models: [
@@ -478,11 +483,20 @@
     menu.innerHTML = '<span class="hm-menu-label">视频模型</span>' +
       '<div class="hm-chip-grid">' +
       mediaCatalog.video.map(function (m) {
-        var badge = m.free ? '<small class="hm-free-badge">免费</small>' : '<small class="hm-pay-badge">RayinAPI</small>';
-        return '<button data-vmodel="' + m.id + '">' + m.name + badge + '</button>';
+        var creditsText = m.billingType === 'perSecond'
+          ? (m.creditsPerSec || 0) + ' 积分 / 秒'
+          : (m.credits || 0) + ' 积分 / 次';
+        var badge = m.billingType === 'perSecond'
+          ? '<small class="hm-pay-badge hm-pay-persec">按秒</small>'
+          : '<small class="hm-pay-badge">按次</small>';
+        var tip = m.refHint ? ' ' + m.refHint : '';
+        return '<button data-vmodel="' + m.id + '" title="' + creditsText + tip + '">' +
+          m.name + badge +
+          '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + '</span>' +
+        '</button>';
       }).join('') +
       '</div>' +
-      '<p class="hm-menu-note">视频为异步任务 · 由 Node 后端代理生成</p>';
+      '<p class="hm-menu-note">视频为异步任务 · 由 Node 后端代理生成 · 鼠标悬停查看积分</p>';
 
     menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -490,6 +504,8 @@
         A.persistPrefs();
         A.syncEngineUI();
         renderDurationControls();
+        syncScaleLabels();
+        updateRefDropForMode(state.mode);
         renderVideoModels();
       });
     });
@@ -540,7 +556,7 @@
     });
   }
 
-  /* duration 控件：按当前模型动态范围渲染 slider */
+  /* duration 控件：按当前模型动态范围渲染 slider + 同步分辨率可选 */
   function renderDurationControls() {
     var modelId = state.videoModel;
     var meta = mediaCatalog.video.find(function (m) { return m.id === modelId; }) || mediaCatalog.video[0];
@@ -551,7 +567,6 @@
     var menu = document.getElementById('durationMenu');
     if (menu) {
       menu.innerHTML = '';
-      /* 生成 5 秒间隔的选项 */
       for (var d = min; d <= max; d += 5) {
         var btn = document.createElement('button');
         btn.setAttribute('data-duration', d);
@@ -565,7 +580,7 @@
         menu.appendChild(btn);
       }
     }
-    /* 同时更新 slider（如果存在） */
+    /* 同时更新 slider */
     var slider = document.getElementById('durationSlider');
     if (slider) {
       slider.min = min;
@@ -574,6 +589,27 @@
       slider.step = 5;
       var label = document.getElementById('durationSliderLabel');
       if (label) label.textContent = slider.value + ' 秒';
+    }
+
+    /* 模型支持的分辨率：动态启用/禁用 scale 按钮 */
+    var scalePicker = A.els.scalePicker;
+    if (scalePicker && state.mode === 'video') {
+      var supported = meta.resolutions || ['720p', '1080p'];
+      scalePicker.querySelectorAll('button').forEach(function (el) {
+        var value = el.getAttribute('data-scale');
+        /* 1k→720p, 2k→1080p, 4k→2k */
+        var res = value === '1k' ? '720p' : value === '2k' ? '1080p' : '2k';
+        var ok = supported.indexOf(res) >= 0;
+        el.disabled = !ok;
+        el.style.opacity = ok ? '' : '0.35';
+        el.style.pointerEvents = ok ? '' : 'none';
+        if (!ok && state.scale === value) {
+          /* 当前选中的分辨率不被支持，自动降级 */
+          var fallback = supported.indexOf('1080p') >= 0 ? '2k' : '1k';
+          state.scale = fallback;
+        }
+      });
+      syncScaleLabels();
     }
 
     syncChoiceLabels();
