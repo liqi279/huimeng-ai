@@ -544,73 +544,122 @@ function extractVideoTaskId(payload) {
   return '';
 }
 
-/* 视频模型定义：每个模型有独立的 duration 范围、分辨率、fps、计费类型、积分、参考提示 */
+/* 视频模型定义 — 全部走则灵（RayinAPI）平台。
+ * 每个模型有独立的 API Key（zk-前缀），generateVideo 按模型取 key。
+ * modelId 即 RayinAPI 真实模型名（payload 里的 model 字段）。
+ */
 const VIDEO_MODELS = [
+  /* ========== 账号一 3045324659@qq.com — 按次生成 ========== */
   {
-    id: 'sora-2',
-    name: 'Sora 2',
+    id: 'vidu-q4',
+    name: 'Vidu Q4',
+    minDuration: 5, maxDuration: 31,
+    resolutions: ['720p', '1080p'],
+    fps: 24,
+    billingType: 'perTask', credits: 31, creditsMin: 5,
+    refHint: '支持图片/视频/音频多参考（9图3音3视），动作/风格迁移能力强',
+    desc: '按次生成 · 5-31 积分/次',
+    free: false, apiKey: 'zk-83e955434c5079dfc4f6f054d472f5b0',
+  },
+  {
+    id: 'minimax_h3-768p',
+    name: 'MiniMax H3 768p',
     minDuration: 5, maxDuration: 15,
-    resolutions: ['720p', '1080p', '2k'],
+    resolutions: ['720p'],
     fps: 24,
-    billingType: 'perTask', credits: 1920,
-    refHint: '支持图片/视频/音频作为参考主体；单参考图建议清晰主体居中',
-    desc: '文本生成视频 · 单次任务 1920 积分',
-    free: false,
+    billingType: 'perTask', credits: 15, creditsMin: 13,
+    refHint: '全参模式，支持 prompt / seed / 多参考',
+    desc: '按次生成 · 13-15 积分/次',
+    free: false, apiKey: 'zk-276f49cf4a4f2543790da21098cec361',
   },
   {
-    id: 'sora-2-pro',
-    name: 'Sora 2 Pro',
+    id: 'sd-2-720p',
+    name: 'Seedance 2 · 9图3音3视',
     minDuration: 5, maxDuration: 15,
-    resolutions: ['720p', '1080p', '2k'],
+    resolutions: ['720p'],
     fps: 24,
-    billingType: 'perTask', credits: 3200,
-    refHint: '支持图片/视频/音频参考；Pro 模型对多主体一致性更强，建议上传 1~3 张关键帧',
-    desc: '专业增强版 · 单次任务 3200 积分',
-    free: false,
+    billingType: 'perTask', credits: 35,
+    refHint: '9图+3音+3视多模态参考，动作/风格/角色一致性强',
+    desc: '按次生成 · 35 积分/次',
+    free: false, apiKey: 'zk-a779d45bbdfd5a363064e305a8f9c2be',
   },
   {
-    id: 'veo-3',
-    name: 'Veo 3',
-    minDuration: 5, maxDuration: 30,
-    resolutions: ['720p', '1080p'],
-    fps: 24,
-    billingType: 'perSecond', creditsPerSec: 10,
-    refHint: '支持图片参考；适合长镜头叙事，时长上限 30s',
-    desc: 'Google Veo 3 · 按秒计费 10 积分/秒',
-    free: false,
-  },
-  {
-    id: 'seedance-1',
-    name: 'Seedance 1.0',
+    id: 'wan3.0-vedio-deal',
+    name: 'Wan 3.0 Video Deal',
     minDuration: 5, maxDuration: 15,
     resolutions: ['720p', '1080p'],
     fps: 24,
-    billingType: 'perTask', credits: 1280,
-    refHint: '支持首帧参考图；视频风格迁移推荐',
-    desc: '字节跳动 Seedance · 单次任务 1280 积分',
-    free: false,
+    billingType: 'perTask', credits: 37,
+    refHint: '阿里 Wan 3.0，端到端视频处理',
+    desc: '按次生成 · 37 积分/次',
+    free: false, apiKey: 'zk-43011772c75f119ce11462463954bed8',
   },
   {
-    id: 'wan-2',
-    name: 'Wan 2.1',
-    minDuration: 5, maxDuration: 30,
+    id: 'seedance-2.0',
+    name: 'Seedance 2.0 满血',
+    minDuration: 5, maxDuration: 15,
     resolutions: ['720p', '1080p'],
     fps: 24,
-    billingType: 'perSecond', creditsPerSec: 8,
-    refHint: '支持图片参考 + 长时长；人物动作一致性较好',
-    desc: '阿里通义 Wan 2.1 · 按秒计费 8 积分/秒',
-    free: false,
+    billingType: 'perTask', credits: 34,
+    refHint: '字节 Seedance 2.0 满血版，支持图生视频 / 视频生视频',
+    desc: '按次生成 · 34 积分/次',
+    free: false, apiKey: 'zk-ad8b695045b525614d7735185255600d',
+  },
+  /* ========== 账号二 18005676519@qq.com — 按秒生成 ========== */
+  {
+    id: 'sd2.5-sss',
+    name: 'Seedance 2.5 SSS',
+    minDuration: 5, maxDuration: 15,
+    resolutions: ['720p', '1080p'],
+    fps: 24,
+    billingType: 'perTask', credits: 70,
+    refHint: 'Seedance 2.5 SSS 多参考模式，按次 70 积分',
+    desc: '按次生成 · 70 积分/次',
+    free: false, apiKey: 'zk-adda48ef81efe9b95571906b17dad841',
   },
   {
-    id: 'kling-1.6',
-    name: 'Kling 1.6',
-    minDuration: 5, maxDuration: 10,
+    id: 'Seedance-2.0-Fast',
+    name: 'Seedance 2.0 Fast',
+    minDuration: 5, maxDuration: 15,
     resolutions: ['720p', '1080p'],
-    fps: 25,
-    billingType: 'perTask', credits: 960,
-    refHint: '支持首尾帧图片参考；镜头运动控制精准',
-    desc: '快手可灵 1.6 · 单次任务 960 积分',
-    free: false,
+    fps: 24,
+    billingType: 'perSecond', creditsPerSecMin: 0.2, creditsPerSec: 1.7,
+    refHint: 'Seedance 2.0 极速模式，按秒计费 0.2-1.7 积分/秒',
+    desc: '按秒生成 · 0.2-1.7 积分/秒',
+    free: false, apiKey: 'zk-3d913a045126ce30c227e0880fd63b7b',
+  },
+  {
+    id: 'Seedance-2.0-Mini',
+    name: 'Seedance 2.0 Mini',
+    minDuration: 5, maxDuration: 15,
+    resolutions: ['720p'],
+    fps: 24,
+    billingType: 'perSecond', creditsPerSecMin: 1.3, creditsPerSec: 1.5,
+    refHint: 'Seedance 2.0 迷你版，便宜稳定',
+    desc: '按秒生成 · 1.3-1.5 积分/秒',
+    free: false, apiKey: 'zk-9adc715b6f837dc22a8f8be3e0253015',
+  },
+  {
+    id: 'sd-2.5',
+    name: 'Seedance 2.5 满血',
+    minDuration: 5, maxDuration: 15,
+    resolutions: ['720p', '1080p'],
+    fps: 24,
+    billingType: 'perSecond', creditsPerSecMin: 2.4, creditsPerSec: 9.9,
+    refHint: 'Seedance 2.5 满血，按秒计费 2.4-9.9 积分/秒',
+    desc: '按秒生成 · 2.4-9.9 积分/秒',
+    free: false, apiKey: 'zk-8d476499ad7be96d23a74b13bd616e83',
+  },
+  {
+    id: 'seedance-2.0-full',
+    name: 'Seedance 2.0 满血 (按秒)',
+    minDuration: 5, maxDuration: 15,
+    resolutions: ['720p', '1080p'],
+    fps: 24,
+    billingType: 'perSecond', creditsPerSecMin: 0.3, creditsPerSec: 2.2,
+    refHint: 'Seedance 2.0 满血版按秒通道',
+    desc: '按秒生成 · 0.3-2.2 积分/秒',
+    free: false, apiKey: 'zk-4017faa24d51ffd3f9a51dbbe3201ce5',
   },
 ];
 
@@ -704,8 +753,11 @@ async function generateVideo(body) {
     assert(decoded.buffer.length <= REF_AUDIO_MAX_BYTES, 413, `参考音频 ${i + 1} 过大`, `单音频不能超过 ${Math.round(REF_AUDIO_MAX_BYTES / 1024 / 1024)}MB`);
   }
 
+  /* 按模型取 API Key —— 每个视频模型独立 key（zk-前缀），fallback 到 body.rayin.key / RAYIN_KEY */
+  const modelKey = modelMeta.apiKey;
   const rayin = resolveRayin(body.rayin);
-  requireKey(rayin.key);
+  const finalKey = modelKey || rayin.key;
+  requireKey(finalKey);
 
   const { width, height } = videoSize(ratio, resolution);
   const size = `${width}x${height}`;
@@ -714,7 +766,7 @@ async function generateVideo(body) {
   const statusPath = config.RAYIN_VIDEO_STATUS_PATH.startsWith('/')
     ? config.RAYIN_VIDEO_STATUS_PATH
     : `/${config.RAYIN_VIDEO_STATUS_PATH}`;
-  const authHeaders = { Authorization: `Bearer ${rayin.key}`, 'Content-Type': 'application/json' };
+  const authHeaders = { Authorization: `Bearer ${finalKey}`, 'Content-Type': 'application/json' };
 
   let initial;
   try {

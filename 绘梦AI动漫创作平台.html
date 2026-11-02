@@ -9987,7 +9987,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261102031429-5158b60";</script>
+<script>window.HM_BUILD = "20261102032712-eec2ad0";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -28018,12 +28018,18 @@ window.HMChat = (function () {
   /* ---------------- 免费模型目录（视频 / 音频） ---------------- */
   var mediaCatalog = {
     video: [
-      { id: 'sora-2', name: 'Sora 2', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p', '2k'], fps: 24, billingType: 'perTask', credits: 1920, creditsPerSec: 0, desc: '单次任务 1920 积分', refHint: '支持图片/视频/音频参考' },
-      { id: 'sora-2-pro', name: 'Sora 2 Pro', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p', '2k'], fps: 24, billingType: 'perTask', credits: 3200, creditsPerSec: 0, desc: '单次任务 3200 积分', refHint: 'Pro 版 · 建议 1~3 张关键帧参考' },
-      { id: 'veo-3', name: 'Veo 3', minDuration: 5, maxDuration: 30, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSec: 10, desc: '按秒计费 10 积分/秒', refHint: '支持图片参考 · 长镜头叙事' },
-      { id: 'seedance-1', name: 'Seedance 1.0', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 1280, creditsPerSec: 0, desc: '单次任务 1280 积分', refHint: '支持首帧参考 · 风格迁移推荐' },
-      { id: 'wan-2', name: 'Wan 2.1', minDuration: 5, maxDuration: 30, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSec: 8, desc: '按秒计费 8 积分/秒', refHint: '图片参考 + 长时长 · 动作一致性好' },
-      { id: 'kling-1.6', name: 'Kling 1.6', minDuration: 5, maxDuration: 10, free: false, resolutions: ['720p', '1080p'], fps: 25, billingType: 'perTask', credits: 960, creditsPerSec: 0, desc: '单次任务 960 积分', refHint: '首尾帧参考 · 镜头运动精准' },
+      /* 账号一 — 按次 */
+      { id: 'vidu-q4', name: 'Vidu Q4', minDuration: 5, maxDuration: 31, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 31, creditsMin: 5, creditsPerSec: 0, desc: '5-31 积分/次', refHint: '多模态参考（9图3音3视）' },
+      { id: 'minimax_h3-768p', name: 'MiniMax H3 768p', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 15, creditsMin: 13, creditsPerSec: 0, desc: '13-15 积分/次', refHint: '全参模式，prompt/seed/多参考' },
+      { id: 'sd-2-720p', name: 'Seedance 2 · 9图3音3视', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 35, creditsPerSec: 0, desc: '35 积分/次', refHint: '9图+3音+3视多模态参考' },
+      { id: 'wan3.0-vedio-deal', name: 'Wan 3.0 Video Deal', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 37, creditsPerSec: 0, desc: '37 积分/次', refHint: '阿里 Wan 3.0 端到端处理' },
+      { id: 'seedance-2.0', name: 'Seedance 2.0 满血', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 34, creditsPerSec: 0, desc: '34 积分/次', refHint: '字节 Seedance 2.0 满血，图生/视频生视频' },
+      /* 账号二 — 按次 + 按秒 */
+      { id: 'sd2.5-sss', name: 'Seedance 2.5 SSS', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 70, creditsPerSec: 0, desc: '70 积分/次', refHint: 'Seedance 2.5 SSS 多参考' },
+      { id: 'Seedance-2.0-Fast', name: 'Seedance 2.0 Fast', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 0.2, creditsPerSec: 1.7, desc: '0.2-1.7 积分/秒', refHint: '极速模式，按秒计费' },
+      { id: 'Seedance-2.0-Mini', name: 'Seedance 2.0 Mini', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 1.3, creditsPerSec: 1.5, desc: '1.3-1.5 积分/秒', refHint: '迷你版，便宜稳定' },
+      { id: 'sd-2.5', name: 'Seedance 2.5 满血', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 2.4, creditsPerSec: 9.9, desc: '2.4-9.9 积分/秒', refHint: 'Seedance 2.5 满血按秒' },
+      { id: 'seedance-2.0-full', name: 'Seedance 2.0 满血 (按秒)', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 0.3, creditsPerSec: 2.2, desc: '0.3-2.2 积分/秒', refHint: 'Seedance 2.0 满血按秒通道' },
     ],
     audio: {
       models: [
@@ -28059,9 +28065,17 @@ window.HMChat = (function () {
     menu.innerHTML = '<span class="hm-menu-label">视频模型</span>' +
       '<div class="hm-chip-grid">' +
       mediaCatalog.video.map(function (m) {
-        var creditsText = m.billingType === 'perSecond'
-          ? (m.creditsPerSec || 0) + ' 积分 / 秒'
-          : (m.credits || 0) + ' 积分 / 次';
+        /* 支持积分范围显示（creditsMin / creditsPerSecMin → 最小-最大） */
+        var creditsText;
+        if (m.billingType === 'perSecond') {
+          var psMin = m.creditsPerSecMin;
+          var psMax = m.creditsPerSec || 0;
+          creditsText = psMin != null ? psMin + '-' + psMax + ' 积分 / 秒' : psMax + ' 积分 / 秒';
+        } else {
+          var cMin = m.creditsMin;
+          var cMax = m.credits || 0;
+          creditsText = cMin != null ? cMin + '-' + cMax + ' 积分 / 次' : cMax + ' 积分 / 次';
+        }
         var badge = m.billingType === 'perSecond'
           ? '<small class="hm-pay-badge hm-pay-persec">按秒</small>'
           : '<small class="hm-pay-badge">按次</small>';
