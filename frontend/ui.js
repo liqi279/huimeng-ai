@@ -154,7 +154,7 @@
   }
 
   /* ---------------- 左侧导航 ---------------- */
-  var DISABLED_RAILS = { canvas: true, works: true, assets: true, writing: true, forum: true };
+  var DISABLED_RAILS = {};
 
   function bindRail() {
     document.addEventListener('click', function (event) {
