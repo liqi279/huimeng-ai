@@ -9987,7 +9987,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261102040305-388a73d";</script>
+<script>window.HM_BUILD = "20261102041209-6b298f3";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -11690,7 +11690,7 @@ body.hm-chat-open .hm-dock {
 
           <!-- 视频时长滑块（轮滑选择） -->
           <div class="hm-duration-slider hm-video-only" hidden>
-            <input type="range" id="durationSlider" min="5" max="15" step="5" value="5" aria-label="视频时长">
+            <input type="range" id="durationSlider" min="1" max="30" step="1" value="5" aria-label="视频时长">
             <span class="hm-duration-label" id="durationSliderLabel">5秒</span>
           </div>
 
@@ -28119,6 +28119,14 @@ window.HMChat = (function () {
     });
   }
 
+  /* 根据当前模型夹紧 duration 到合法范围 */
+  function clampDuration(val) {
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    var min = meta.minDuration || 5;
+    var max = meta.maxDuration || 30;
+    return Math.max(min, Math.min(max, val));
+  }
+
   /* 绑定视频时长滑块的 input/change 事件（只绑一次，避免重复） */
   function bindDurationSlider() {
     var slider = document.getElementById('durationSlider');
@@ -28127,8 +28135,11 @@ window.HMChat = (function () {
 
     var label = document.getElementById('durationSliderLabel');
     var update = function () {
-      var val = Number(slider.value);
+      /* 滑块全局 1-30，但夹紧到当前模型合法范围 */
+      var raw = Number(slider.value);
+      var val = clampDuration(raw);
       state.duration = val;
+      slider.value = val; /* 把滑块位置也拉回合法值 */
       if (label) label.textContent = val + '秒';
       syncChoiceLabels();
     };
@@ -28141,12 +28152,15 @@ window.HMChat = (function () {
     });
   }
 
-  /* duration 控件：按当前模型动态范围渲染 slider + 同步分辨率可选 */
+  /* duration 控件：slider 固定全局 1-30，但值被当前模型夹紧到合法范围 */
   function renderDurationControls() {
     var modelId = state.videoModel;
     var meta = mediaCatalog.video.find(function (m) { return m.id === modelId; }) || mediaCatalog.video[0];
     var min = meta.minDuration || 5;
-    var max = meta.maxDuration || 10;
+    var max = meta.maxDuration || 30;
+
+    /* 同时夹紧 state.duration */
+    state.duration = clampDuration(state.duration);
 
     /* 更新下拉菜单（保留用于兼容） */
     var menu = document.getElementById('durationMenu');
@@ -28165,15 +28179,15 @@ window.HMChat = (function () {
         menu.appendChild(btn);
       }
     }
-    /* 同时更新 slider */
+    /* slider：全局固定范围 1-30 / step=1，当前值夹紧到模型合法范围 */
     var slider = document.getElementById('durationSlider');
     if (slider) {
-      slider.min = min;
-      slider.max = max;
-      slider.value = Math.max(min, Math.min(max, state.duration));
-      slider.step = 5;
+      slider.min = 1;
+      slider.max = 30;
+      slider.step = 1;
+      slider.value = state.duration;
       var label = document.getElementById('durationSliderLabel');
-      if (label) label.textContent = slider.value + ' 秒';
+      if (label) label.textContent = state.duration + '秒 · 模型支持 ' + min + '-' + max + 's';
     }
 
     /* 模型支持的分辨率：动态启用/禁用 scale 按钮 */
