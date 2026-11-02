@@ -8377,6 +8377,339 @@ body.hm-light .hm-gv-step { background: #f8fafc; border-color: rgba(15, 23, 42, 
 body.hm-light .hm-gv-status { color: #64748b; }
 body.hm-light .hm-gv-empty { color: #94a3b8; }
 
+/* ========== 开源生视频（工具模块） ========== */
+.hm-ov-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.hm-ov-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  padding: 32px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.92));
+  position: relative;
+  overflow: hidden;
+}
+.hm-ov-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(400px 200px at 0% 0%, rgba(96, 165, 250, 0.15), transparent 60%),
+              radial-gradient(300px 200px at 100% 100%, rgba(52, 211, 153, 0.1), transparent 60%);
+  pointer-events: none;
+}
+
+.hm-ov-hero-left, .hm-ov-hero-right { position: relative; z-index: 1; }
+
+.hm-ov-hero-left h3 {
+  font-size: 28px;
+  line-height: 1.35;
+  margin: 10px 0 12px;
+  color: #f1f5f9;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.hm-ov-hero-left p {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.75;
+  margin: 0 0 20px;
+}
+
+.hm-ov-cta { display: flex; gap: 10px; }
+.hm-ov-cta .hm-btn { padding: 10px 18px; font-size: 13px; }
+
+.hm-ov-spec {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(8, 15, 28, 0.6);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.hm-ov-spec h4 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+.hm-ov-spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+}
+.hm-ov-spec-row:last-child { border-bottom: none; }
+.hm-ov-spec-row span { color: #94a3b8; }
+.hm-ov-spec-row strong { color: #e2e8f0; font-weight: 500; }
+
+.hm-ov-alert {
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 14px 16px;
+}
+.hm-ov-alert strong {
+  display: block;
+  color: #fbbf24;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.hm-ov-alert p {
+  font-size: 12.5px;
+  color: #fde68a;
+  line-height: 1.65;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.hm-ov-body > section h3 {
+  font-size: 18px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin: 0 0 16px;
+  letter-spacing: 0.01em;
+}
+
+.hm-ov-model-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.hm-ov-model-card {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 18px 20px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.hm-ov-model-card:hover { border-color: rgba(96, 165, 250, 0.35); transform: translateY(-1px); }
+.hm-ov-model-card.is-featured {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: linear-gradient(145deg, rgba(6, 78, 59, 0.25), rgba(15, 23, 42, 0.75));
+}
+.hm-ov-model-head { margin-bottom: 12px; }
+.hm-ov-model-head strong {
+  display: block;
+  font-size: 15px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.hm-ov-model-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.hm-ov-model-card ul li {
+  font-size: 13px;
+  color: #cbd5e1;
+  padding: 4px 0 4px 16px;
+  position: relative;
+  line-height: 1.6;
+}
+.hm-ov-model-card ul li::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  color: #60a5fa;
+}
+
+.hm-ov-work-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.hm-ov-work-card {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 20px;
+}
+.hm-ov-work-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  margin-bottom: 14px;
+}
+.hm-ov-work-card h4 {
+  font-size: 15px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.hm-ov-work-card p {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.7;
+  margin: 0 0 12px;
+}
+.hm-ov-work-card code {
+  display: block;
+  font-size: 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  background: rgba(6, 12, 22, 0.8);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #93c5fd;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.65;
+}
+
+.hm-ov-steps ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  counter-reset: ovstep;
+}
+.hm-ov-steps ol li {
+  position: relative;
+  counter-increment: ovstep;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 14px 16px 14px 50px;
+}
+.hm-ov-steps ol li::before {
+  content: counter(ovstep);
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hm-ov-steps ol li strong {
+  display: block;
+  font-size: 14px;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+.hm-ov-steps ol li p {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.65;
+  margin: 0 0 8px;
+}
+.hm-ov-steps ol li code {
+  display: inline-block;
+  font-size: 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  background: rgba(6, 12, 22, 0.8);
+  border-radius: 6px;
+  padding: 4px 9px;
+  color: #93c5fd;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.55;
+}
+.hm-ov-steps ol li a {
+  font-size: 13px;
+  color: #60a5fa;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(96, 165, 250, 0.4);
+}
+.hm-ov-steps ol li a:hover { color: #93c5fd; }
+
+.hm-ov-tip-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.hm-ov-tip {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 14px 16px;
+}
+.hm-tip-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  margin-bottom: 8px;
+}
+.hm-ov-tip p {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* .hm-tag variants (复用现有) */
+.hm-tag.is-free { background: rgba(52, 211, 153, 0.15); color: #4ade80; border-color: rgba(52, 211, 153, 0.3); }
+.hm-tag.is-new { background: rgba(96, 165, 250, 0.15); color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); }
+
+@media (max-width: 900px) {
+  .hm-ov-hero { grid-template-columns: 1fr; }
+  .hm-ov-model-grid, .hm-ov-work-grid { grid-template-columns: 1fr; }
+  .hm-ov-tip-list { grid-template-columns: 1fr; }
+}
+
+/* 亮色主题 */
+body.hm-light .hm-ov-hero {
+  background: linear-gradient(135deg, #ffffff, #f1f5f9);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.hm-light .hm-ov-hero::before { display: none; }
+body.hm-light .hm-ov-hero-left h3 { color: #1e293b; }
+body.hm-light .hm-ov-hero-left p { color: #64748b; }
+body.hm-light .hm-ov-spec { background: #f8fafc; border-color: rgba(15, 23, 42, 0.08); }
+body.hm-light .hm-ov-spec-row { border-color: rgba(15, 23, 42, 0.07); }
+body.hm-light .hm-ov-spec-row span { color: #64748b; }
+body.hm-light .hm-ov-spec-row strong { color: #1e293b; }
+body.hm-light .hm-ov-model-card,
+body.hm-light .hm-ov-work-card,
+body.hm-light .hm-ov-steps ol li,
+body.hm-light .hm-ov-tip {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.hm-light .hm-ov-model-card.is-featured {
+  background: linear-gradient(145deg, #f0fdf4, #ffffff);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+body.hm-light .hm-ov-model-head strong,
+body.hm-light .hm-ov-work-card h4,
+body.hm-light .hm-ov-steps ol li strong,
+body.hm-light .hm-ov-body > section h3 { color: #1e293b; }
+body.hm-light .hm-ov-model-card ul li,
+body.hm-light .hm-ov-work-card p,
+body.hm-light .hm-ov-steps ol li p,
+body.hm-light .hm-ov-tip p { color: #64748b; }
+
+
 
 /* ========== 动漫生图工坊（工具模块 · WebUI 式桌面） ========== */
 .hm-iw-body {
@@ -10002,7 +10335,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261102053845-ba431cc";</script>
+<script>window.HM_BUILD = "20261102054854-97a2762";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -10373,6 +10706,11 @@ body.hm-chat-open .hm-dock {
         <span class="hm-tool-icon">流</span>
         <strong>工作流</strong>
         <p>内置 ComfyUI 工作流（千问3 TTS 语音克隆等），可视化编辑参数并导出 JSON</p>
+      </button>
+      <button class="hm-tool-card" data-tool="toolopenvideo">
+        <span class="hm-tool-icon">开</span>
+        <strong>开源生视频</strong>
+        <p>ComfyUI + Wan2.1/Wan2.2 / H3 · 本地部署，真正无限免费 · 零消耗积分 · 商用自由</p>
       </button>
       <button class="hm-tool-card" data-tool="translate">
         <span class="hm-tool-icon">译</span>
@@ -10831,6 +11169,153 @@ body.hm-chat-open .hm-dock {
       <aside class="hm-wf-list" id="wfList"></aside>
       <section class="hm-wf-detail" id="wfDetail">
         <div class="hm-wf-empty">← 从左侧选择一个工作流</div>
+      </section>
+    </div>
+  </main>
+
+  <main class="hm-page hm-ov-page" id="view-toolopenvideo" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>开源生视频</h2>
+        <p>ComfyUI + Wan2.1 / Wan2.2 / H3 · 本地部署，真正无限免费 · 零消耗积分 · 商用自由</p>
+      </div>
+      <div class="hm-page-actions">
+        <button class="hm-pill" onclick="A.switchView('tools')">返回工具</button>
+      </div>
+    </div>
+
+    <div class="hm-ov-body">
+      <!-- Hero -->
+      <section class="hm-ov-hero">
+        <div class="hm-ov-hero-left">
+          <span class="hm-tag is-free">完全免费</span>
+          <h3>本地显卡跑，<br>想生成多少生成多少</h3>
+          <p>ComfyUI 节点式编排 + 阿里开源 Wan 视频模型系列，零消耗积分、无限次数、无水印、商用自由。搭好一次，后面漫剧分镜、运镜短片全靠它。</p>
+          <div class="hm-ov-cta">
+            <a class="hm-btn is-primary" href="https://github.com/modelscope/Wan2.2" target="_blank" rel="noopener">Wan2.2 官方仓库</a>
+            <a class="hm-btn" href="https://github.com/comfyanonymous/ComfyUI" target="_blank" rel="noopener">ComfyUI 下载</a>
+          </div>
+        </div>
+        <div class="hm-ov-hero-right">
+          <div class="hm-ov-spec">
+            <h4>硬件要求</h4>
+            <div class="hm-ov-spec-row"><span>显卡</span><strong>N 卡（RTX 系列）</strong></div>
+            <div class="hm-ov-spec-row"><span>显存</span><strong>≥ 8 GB（推荐 12 GB+）</strong></div>
+            <div class="hm-ov-spec-row"><span>磁盘</span><strong>模型文件 10–30 GB</strong></div>
+            <div class="hm-ov-spec-row"><span>系统</span><strong>Windows 10 / WSL2 / Linux</strong></div>
+          </div>
+          <div class="hm-ov-alert">
+            <strong>⚠️ 有门槛</strong>
+            <p>需要搭工作流、装模型，首次上手约 30 分钟。但一次搭好，后续使用成本为零。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 模型对比 -->
+      <section class="hm-ov-models">
+        <h3>三款开源视频模型</h3>
+        <div class="hm-ov-model-grid">
+          <div class="hm-ov-model-card">
+            <div class="hm-ov-model-head">
+              <span class="hm-tag">阿里 · Wan2.1</span>
+              <strong>文生视频 14B</strong>
+            </div>
+            <ul>
+              <li>14B 参数，720p 画质稳</li>
+              <li>5–15 秒，运动自然</li>
+              <li>显存 ≥ 12G（FP16）</li>
+            </ul>
+          </div>
+          <div class="hm-ov-model-card is-featured">
+            <div class="hm-ov-model-head">
+              <span class="hm-tag is-new">阿里 · Wan2.2</span>
+              <strong>图生视频 / 文生视频</strong>
+            </div>
+            <ul>
+              <li>2B / 14B 两档，轻量到全量</li>
+              <li>图生视频：首帧控制运镜风格</li>
+              <li>文生视频：直接 prompt 出片</li>
+              <li>动漫 / 影视 / 写实通吃</li>
+            </ul>
+          </div>
+          <div class="hm-ov-model-card">
+            <div class="hm-ov-model-head">
+              <span class="hm-tag">快手 · H3</span>
+              <strong>视频生成 2.4B</strong>
+            </div>
+            <ul>
+              <li>轻量模型，4GB 显存可跑</li>
+              <li>速度快，适合快速迭代</li>
+              <li>画质略低于 Wan，胜在能跑</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 玩法 -->
+      <section class="hm-ov-works">
+        <h3>三种玩法，刚好适配漫剧分镜</h3>
+        <div class="hm-ov-work-grid">
+          <div class="hm-ov-work-card">
+            <div class="hm-ov-work-icon">文</div>
+            <h4>文生视频</h4>
+            <p>直接写提示词，模型自己出视频。适合快速探索镜头语言、运镜风格。</p>
+            <code>动漫角色站在樱花树下<br>春风拂过裙摆，慢镜头</code>
+          </div>
+          <div class="hm-ov-work-card">
+            <div class="hm-ov-work-icon">图</div>
+            <h4>图生视频</h4>
+            <p>给一张参考图当首帧，模型按你的图生成后续动作。适合把静态分镜图动起来。</p>
+            <code>参考 + prompt → 5–10s 视频<br>保持人物/场景一致性</code>
+          </div>
+          <div class="hm-ov-work-card">
+            <div class="hm-ov-work-icon">控</div>
+            <h4>参考视频控动作</h4>
+            <p>上传一段动作参考（人物走路、舞蹈等），你的角色按这个动作演。分镜连续性靠它。</p>
+            <code>motion video + 角色 LoRA<br>→ 稳定的角色动作片段</code>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 步上手 -->
+      <section class="hm-ov-steps">
+        <h3>5 步上手 ComfyUI + Wan</h3>
+        <ol>
+          <li>
+            <strong>装 ComfyUI</strong>
+            <p>从 GitHub clone，或下载官方包。Windows 用户直接解压双击 run_nvidia_gpu.bat 启动。</p>
+            <code>git clone https://github.com/comfyanonymous/ComfyUI.git</code>
+          </li>
+          <li>
+            <strong>下 Wan 模型</strong>
+            <p>从 ModelScope 或 HuggingFace 下载 Wan2.1 / Wan2.2 权重（.safetensors），放进 ComfyUI/models/diffusion_models/</p>
+            <a href="https://modelscope.cn/models/Wan-AI/Wan2.1-T2V-1.3B" target="_blank">ModelScope 下载页 →</a>
+          </li>
+          <li>
+            <strong>装 ComfyUI Manager</strong>
+            <p>插件管理器，一键装所有自定义节点（ComfyUI-Video-Matters、ComfyUI-VideoHelperSuite）。</p>
+            <code>cd ComfyUI/custom_nodes/<br>git clone https://github.com/ltdrdata/ComfyUI-Manager.git</code>
+          </li>
+          <li>
+            <strong>导入 Wan 工作流</strong>
+            <p>拖入 .json 工作流文件 → ComfyUI 自动识别节点 → 点 Queue Prompt 跑第一张。</p>
+          </li>
+          <li>
+            <strong>生成视频</strong>
+            <p>等待 2–10 分钟（依分辨率/步数/显卡），输出 MP4。搭好后每次生成零成本。</p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- 避坑 -->
+      <section class="hm-ov-tips">
+        <h3>常见坑</h3>
+        <div class="hm-ov-tip-list">
+          <div class="hm-ov-tip"><span class="hm-tip-tag">显存不够</span><p>8G 显存跑 Wan14B 会 OOM，用 Wan2.2-2B 或 H3 轻量模型，或开 VAE 分片（GPU-only）。</p></div>
+          <div class="hm-ov-tip"><span class="hm-tip-tag">WSL2 黑屏</span><p>WSL2 下需要额外配置 CUDA，建议直接 Windows 原生 + PyTorch GPU。</p></div>
+          <div class="hm-ov-tip"><span class="hm-tip-tag">商用授权</span><p>Wan 系列 Apache 2.0 可商用。H3 需看快手授权说明。使用前自行确认。</p></div>
+          <div class="hm-ov-tip"><span class="hm-tip-tag">时间成本</span><p>跑通 Wan2.2 工作流 ≈ 30 分钟。但一劳永逸，之后每个视频零成本。</p></div>
+        </div>
       </section>
     </div>
   </main>
@@ -29177,6 +29662,7 @@ window.HMChat = (function () {
     if (tool === 'tooltraining') { A.switchView('tooltraining'); return; }
     if (tool === 'toolrestore') { A.switchView('toolrestore'); return; }
     if (tool === 'toolworkflow') { A.switchView('toolworkflow'); return; }
+    if (tool === 'toolopenvideo') { A.switchView('toolopenvideo'); return; }
     if (tool === 'translate') return translateTool();
     if (tool === 'inspire') { A.els.inspireBtn.click(); return; }
     if (tool === 'presets') { openPresetModal(); return; }

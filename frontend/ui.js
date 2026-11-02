@@ -1561,6 +1561,7 @@
     if (tool === 'tooltraining') { A.switchView('tooltraining'); return; }
     if (tool === 'toolrestore') { A.switchView('toolrestore'); return; }
     if (tool === 'toolworkflow') { A.switchView('toolworkflow'); return; }
+    if (tool === 'toolopenvideo') { A.switchView('toolopenvideo'); return; }
     if (tool === 'translate') return translateTool();
     if (tool === 'inspire') { A.els.inspireBtn.click(); return; }
     if (tool === 'presets') { openPresetModal(); return; }

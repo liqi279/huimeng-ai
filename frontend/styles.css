@@ -8369,6 +8369,339 @@ body.hm-light .hm-gv-step { background: #f8fafc; border-color: rgba(15, 23, 42, 
 body.hm-light .hm-gv-status { color: #64748b; }
 body.hm-light .hm-gv-empty { color: #94a3b8; }
 
+/* ========== 开源生视频（工具模块） ========== */
+.hm-ov-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.hm-ov-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  padding: 32px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.92));
+  position: relative;
+  overflow: hidden;
+}
+.hm-ov-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(400px 200px at 0% 0%, rgba(96, 165, 250, 0.15), transparent 60%),
+              radial-gradient(300px 200px at 100% 100%, rgba(52, 211, 153, 0.1), transparent 60%);
+  pointer-events: none;
+}
+
+.hm-ov-hero-left, .hm-ov-hero-right { position: relative; z-index: 1; }
+
+.hm-ov-hero-left h3 {
+  font-size: 28px;
+  line-height: 1.35;
+  margin: 10px 0 12px;
+  color: #f1f5f9;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.hm-ov-hero-left p {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.75;
+  margin: 0 0 20px;
+}
+
+.hm-ov-cta { display: flex; gap: 10px; }
+.hm-ov-cta .hm-btn { padding: 10px 18px; font-size: 13px; }
+
+.hm-ov-spec {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(8, 15, 28, 0.6);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.hm-ov-spec h4 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+.hm-ov-spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+}
+.hm-ov-spec-row:last-child { border-bottom: none; }
+.hm-ov-spec-row span { color: #94a3b8; }
+.hm-ov-spec-row strong { color: #e2e8f0; font-weight: 500; }
+
+.hm-ov-alert {
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 14px 16px;
+}
+.hm-ov-alert strong {
+  display: block;
+  color: #fbbf24;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.hm-ov-alert p {
+  font-size: 12.5px;
+  color: #fde68a;
+  line-height: 1.65;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.hm-ov-body > section h3 {
+  font-size: 18px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin: 0 0 16px;
+  letter-spacing: 0.01em;
+}
+
+.hm-ov-model-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.hm-ov-model-card {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 18px 20px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.hm-ov-model-card:hover { border-color: rgba(96, 165, 250, 0.35); transform: translateY(-1px); }
+.hm-ov-model-card.is-featured {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: linear-gradient(145deg, rgba(6, 78, 59, 0.25), rgba(15, 23, 42, 0.75));
+}
+.hm-ov-model-head { margin-bottom: 12px; }
+.hm-ov-model-head strong {
+  display: block;
+  font-size: 15px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.hm-ov-model-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.hm-ov-model-card ul li {
+  font-size: 13px;
+  color: #cbd5e1;
+  padding: 4px 0 4px 16px;
+  position: relative;
+  line-height: 1.6;
+}
+.hm-ov-model-card ul li::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  color: #60a5fa;
+}
+
+.hm-ov-work-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.hm-ov-work-card {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 20px;
+}
+.hm-ov-work-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  margin-bottom: 14px;
+}
+.hm-ov-work-card h4 {
+  font-size: 15px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.hm-ov-work-card p {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.7;
+  margin: 0 0 12px;
+}
+.hm-ov-work-card code {
+  display: block;
+  font-size: 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  background: rgba(6, 12, 22, 0.8);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #93c5fd;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.65;
+}
+
+.hm-ov-steps ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  counter-reset: ovstep;
+}
+.hm-ov-steps ol li {
+  position: relative;
+  counter-increment: ovstep;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 14px 16px 14px 50px;
+}
+.hm-ov-steps ol li::before {
+  content: counter(ovstep);
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hm-ov-steps ol li strong {
+  display: block;
+  font-size: 14px;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+}
+.hm-ov-steps ol li p {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.65;
+  margin: 0 0 8px;
+}
+.hm-ov-steps ol li code {
+  display: inline-block;
+  font-size: 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  background: rgba(6, 12, 22, 0.8);
+  border-radius: 6px;
+  padding: 4px 9px;
+  color: #93c5fd;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  line-height: 1.55;
+}
+.hm-ov-steps ol li a {
+  font-size: 13px;
+  color: #60a5fa;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(96, 165, 250, 0.4);
+}
+.hm-ov-steps ol li a:hover { color: #93c5fd; }
+
+.hm-ov-tip-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.hm-ov-tip {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.65);
+  padding: 14px 16px;
+}
+.hm-tip-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  margin-bottom: 8px;
+}
+.hm-ov-tip p {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* .hm-tag variants (复用现有) */
+.hm-tag.is-free { background: rgba(52, 211, 153, 0.15); color: #4ade80; border-color: rgba(52, 211, 153, 0.3); }
+.hm-tag.is-new { background: rgba(96, 165, 250, 0.15); color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); }
+
+@media (max-width: 900px) {
+  .hm-ov-hero { grid-template-columns: 1fr; }
+  .hm-ov-model-grid, .hm-ov-work-grid { grid-template-columns: 1fr; }
+  .hm-ov-tip-list { grid-template-columns: 1fr; }
+}
+
+/* 亮色主题 */
+body.hm-light .hm-ov-hero {
+  background: linear-gradient(135deg, #ffffff, #f1f5f9);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.hm-light .hm-ov-hero::before { display: none; }
+body.hm-light .hm-ov-hero-left h3 { color: #1e293b; }
+body.hm-light .hm-ov-hero-left p { color: #64748b; }
+body.hm-light .hm-ov-spec { background: #f8fafc; border-color: rgba(15, 23, 42, 0.08); }
+body.hm-light .hm-ov-spec-row { border-color: rgba(15, 23, 42, 0.07); }
+body.hm-light .hm-ov-spec-row span { color: #64748b; }
+body.hm-light .hm-ov-spec-row strong { color: #1e293b; }
+body.hm-light .hm-ov-model-card,
+body.hm-light .hm-ov-work-card,
+body.hm-light .hm-ov-steps ol li,
+body.hm-light .hm-ov-tip {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+body.hm-light .hm-ov-model-card.is-featured {
+  background: linear-gradient(145deg, #f0fdf4, #ffffff);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+body.hm-light .hm-ov-model-head strong,
+body.hm-light .hm-ov-work-card h4,
+body.hm-light .hm-ov-steps ol li strong,
+body.hm-light .hm-ov-body > section h3 { color: #1e293b; }
+body.hm-light .hm-ov-model-card ul li,
+body.hm-light .hm-ov-work-card p,
+body.hm-light .hm-ov-steps ol li p,
+body.hm-light .hm-ov-tip p { color: #64748b; }
+
+
 
 /* ========== 动漫生图工坊（工具模块 · WebUI 式桌面） ========== */
 .hm-iw-body {
