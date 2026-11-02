@@ -10059,3 +10059,116 @@ body.hm-chat-open .hm-dock {
   .hm-wf-list { position: static; }
 }
 
+/* ========= 资产 Tab + 项目栏 ========= */
+.hm-asset-tabs {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.hm-asset-tab {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.hm-asset-tab:hover { color: rgba(255, 255, 255, 0.85); }
+.hm-asset-tab.is-active {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+}
+.hm-asset-project-bar {
+  margin: 12px 0 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hm-asset-project-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hm-asset-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  min-width: 56px;
+  flex-shrink: 0;
+}
+.hm-asset-select {
+  flex: 1;
+  max-width: 320px;
+  padding: 6px 10px;
+  background: rgba(10, 18, 32, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 12.5px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.hm-asset-select:hover { border-color: rgba(255, 255, 255, 0.2); }
+.hm-asset-select:focus { border-color: rgba(124, 58, 237, 0.6); }
+.hm-asset-select option { background: #0f172a; color: #e2e8f0; }
+
+/* 亮色主题兼容 */
+[data-theme="light"] .hm-asset-tabs {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+[data-theme="light"] .hm-asset-tab { color: rgba(15, 23, 42, 0.5); }
+[data-theme="light"] .hm-asset-tab:hover { color: rgba(15, 23, 42, 0.85); }
+[data-theme="light"] .hm-asset-project-bar {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+[data-theme="light"] .hm-asset-select {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+[data-theme="light"] .hm-asset-label { color: rgba(15, 23, 42, 0.5); }
+
+/* 资产卡片徽章 */
+.hm-asset-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 8px 0;
+}
+.hm-asset-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.hm-asset-badge-folder {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.hm-asset-badge-proj {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.hm-asset-badge-ref {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+

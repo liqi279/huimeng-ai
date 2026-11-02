@@ -10067,6 +10067,119 @@ body.hm-chat-open .hm-dock {
   .hm-wf-list { position: static; }
 }
 
+/* ========= 资产 Tab + 项目栏 ========= */
+.hm-asset-tabs {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.hm-asset-tab {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.hm-asset-tab:hover { color: rgba(255, 255, 255, 0.85); }
+.hm-asset-tab.is-active {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+}
+.hm-asset-project-bar {
+  margin: 12px 0 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hm-asset-project-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hm-asset-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  min-width: 56px;
+  flex-shrink: 0;
+}
+.hm-asset-select {
+  flex: 1;
+  max-width: 320px;
+  padding: 6px 10px;
+  background: rgba(10, 18, 32, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 12.5px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.hm-asset-select:hover { border-color: rgba(255, 255, 255, 0.2); }
+.hm-asset-select:focus { border-color: rgba(124, 58, 237, 0.6); }
+.hm-asset-select option { background: #0f172a; color: #e2e8f0; }
+
+/* 亮色主题兼容 */
+[data-theme="light"] .hm-asset-tabs {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+[data-theme="light"] .hm-asset-tab { color: rgba(15, 23, 42, 0.5); }
+[data-theme="light"] .hm-asset-tab:hover { color: rgba(15, 23, 42, 0.85); }
+[data-theme="light"] .hm-asset-project-bar {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+[data-theme="light"] .hm-asset-select {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+[data-theme="light"] .hm-asset-label { color: rgba(15, 23, 42, 0.5); }
+
+/* 资产卡片徽章 */
+.hm-asset-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 8px 0;
+}
+.hm-asset-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.hm-asset-badge-folder {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.hm-asset-badge-proj {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.hm-asset-badge-ref {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
 
 </style>
   <style>
@@ -10419,7 +10532,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261102063039-8c59127";</script>
+<script>window.HM_BUILD = "20261102064150-5035cb5";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -11422,23 +11535,47 @@ body.hm-chat-open .hm-dock {
     <div class="hm-page-head">
       <div>
         <h2>资产</h2>
-        <p>参考图、成片与音频素材统一管理 · 共 <span id="assetsTotal">0</span> 项</p>
+        <p id="assetsSubtitle">参考图、成片与音频素材统一管理 · 共 <span id="assetsTotal">0</span> 项</p>
       </div>
       <div class="hm-page-actions">
+        <!-- Tab 切换 -->
+        <div class="hm-asset-tabs" role="tablist">
+          <button class="hm-asset-tab is-active" data-atab="project" role="tab" aria-selected="true">📁 项目资产</button>
+          <button class="hm-asset-tab" data-atab="reference" role="tab" aria-selected="false">📚 参考资料资产</button>
+        </div>
         <label class="hm-asset-search">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
           <input id="assetsSearch" type="search" placeholder="搜索资产..." autocomplete="off">
         </label>
-        <button class="hm-pill hm-pill-primary" id="assetsImportBtn">导入素材</button>
-        <input type="file" id="assetsImportInput" accept="image/*,video/*,audio/*" hidden>
+        <button class="hm-pill hm-pill-primary" id="assetsImportBtn">📥 导入资产</button>
+        <input type="file" id="assetsImportInput" accept="image/*,video/*,audio/*" hidden multiple>
       </div>
     </div>
+
+    <!-- 项目资产专属栏：项目选择 + 文件夹 -->
+    <div class="hm-asset-project-bar" id="assetProjectBar" hidden>
+      <div class="hm-asset-project-row">
+        <label class="hm-asset-label">当前项目</label>
+        <select id="assetProjectSelect" class="hm-asset-select">
+          <option value="">— 未选择 —</option>
+        </select>
+        <button class="hm-pill" id="assetNewProject">＋ 新建项目</button>
+      </div>
+      <div class="hm-asset-project-row" id="assetFolderRow" hidden>
+        <label class="hm-asset-label">文件夹</label>
+        <select id="assetFolderSelect" class="hm-asset-select">
+          <option value="">全部</option>
+        </select>
+        <button class="hm-pill" id="assetNewFolder">＋ 新建文件夹</button>
+      </div>
+    </div>
+
     <div class="hm-asset-grid" id="assetsGrid"></div>
     <div class="hm-page-empty" id="assetsEmpty">
       <div class="hm-page-empty-icon">资</div>
-      <h3>还没有资产</h3>
-      <p>导入参考图、视频或音频，生成时可直接取用</p>
-      <button class="hm-pill hm-pill-primary" id="assetsEmptyImport">导入素材</button>
+      <h3 id="assetsEmptyTitle">还没有资产</h3>
+      <p id="assetsEmptyHint">导入参考图、视频或音频，生成时可直接取用</p>
+      <button class="hm-pill hm-pill-primary" id="assetsEmptyImport">📥 导入资产</button>
     </div>
   </main>
 
@@ -13009,9 +13146,22 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.getDesk = function () { return request('/desk', {}, 20000); };
   api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
 
-  api.listAssets = function () { return request('/assets', {}, 15000); };
+  api.listAssets = function (filter) {
+    var qs = [];
+    if (filter && filter.type) qs.push('type=' + encodeURIComponent(filter.type));
+    if (filter && filter.projectId) qs.push('projectId=' + encodeURIComponent(filter.projectId));
+    if (filter && filter.folder) qs.push('folder=' + encodeURIComponent(filter.folder));
+    var url = '/assets' + (qs.length ? '?' + qs.join('&') : '');
+    return request(url, {}, 15000);
+  };
   api.addAsset = function (asset) { return request('/assets', { method: 'POST', body: asset }, 60000); };
   api.deleteAsset = function (id) { return request('/assets/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
+  api.listProjects = function () { return request('/projects', {}, 15000); };
+  api.createProject = function (project) { return request('/projects', { method: 'POST', body: project }, 15000); };
+  api.updateProject = function (id, patch) { return request('/projects/' + encodeURIComponent(id), { method: 'PATCH', body: patch }, 15000); };
+  api.deleteProject = function (id) { return request('/projects/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+  api.addProjectFolder = function (id, name) { return request('/projects/' + encodeURIComponent(id) + '/folders', { method: 'POST', body: { name: name } }, 15000); };
 
   api.presets = function () { return request('/presets', {}, 15000); };
   api.catalog = function () { return request('/catalog', {}, 15000); };
@@ -28435,7 +28585,7 @@ window.HMChat = (function () {
     prevView = view;
 
     if (view === 'canvas') renderCanvas();
-    if (view === 'assets') renderAssetPage();
+    if (view === 'assets') { renderAssetPage(); loadProjects(); }
     if (view === 'writing') loadDraft();
     if (view === 'forum') renderForum();
     if (view === 'modeling' && window.BlenderBridge) {
@@ -29209,6 +29359,11 @@ window.HMChat = (function () {
   }
 
   /* ---------------- 资产库 ---------------- */
+  var assetTab = 'project';
+  var currentProjectId = '';
+  var currentFolder = '';
+  var projects = [];
+
   function assetKindLabel(kind) {
     return kind === 'video' ? '视频' : kind === 'audio' ? '音频' : '图片';
   }
@@ -29225,32 +29380,108 @@ window.HMChat = (function () {
   }
 
   function assetCard(asset) {
+    var folderBadge = asset.folder ? '<span class="hm-asset-badge hm-asset-badge-folder">📁 ' + esc(asset.folder) + '</span>' : '';
+    var typeBadge = asset.type === 'reference'
+      ? '<span class="hm-asset-badge hm-asset-badge-ref">参考</span>'
+      : '<span class="hm-asset-badge hm-asset-badge-proj">项目</span>';
     return '<article class="hm-asset-card" data-asset="' + esc(asset.id) + '">' +
       assetThumb(asset) +
       '<div class="hm-asset-meta"><span>' + esc(asset.name || '素材') + '</span><span>' + assetKindLabel(asset.kind) + '</span></div>' +
+      '<div class="hm-asset-badges">' + folderBadge + typeBadge + '</div>' +
       '<div class="hm-asset-actions">' +
-        '<button data-aact="use" title="用作参考图">' + ICON_EYE + '</button>' +
+        '<button data-aact="use" title="用作生成参考">' + ICON_EYE + '</button>' +
         '<button data-aact="delete" title="删除">' + ICON_TRASH + '</button>' +
       '</div>' +
     '</article>';
   }
 
   function filteredAssets(filter) {
-    if (!filter) return assets;
-    return assets.filter(function (asset) {
-      return [asset.name, asset.kind].join(' ').toLowerCase().indexOf(filter) >= 0;
-    });
+    var list = assets;
+    if (assetTab === 'project') {
+      list = list.filter(function (a) { return a.type !== 'reference'; });
+      if (currentProjectId) list = list.filter(function (a) { return a.projectId === currentProjectId; });
+      if (currentFolder) list = list.filter(function (a) { return a.folder === currentFolder; });
+    } else {
+      list = list.filter(function (a) { return a.type === 'reference'; });
+    }
+    if (filter) {
+      list = list.filter(function (asset) {
+        return [asset.name, asset.kind, asset.folder || ''].join(' ').toLowerCase().indexOf(filter) >= 0;
+      });
+    }
+    return list;
+  }
+
+  async function loadProjects() {
+    if (api && api.online) {
+      try {
+        var data = await api.listProjects();
+        projects = (data && data.projects) || [];
+      } catch (err) { projects = []; }
+    } else {
+      projects = [];
+    }
+    renderProjectSelect();
+  }
+
+  function renderProjectSelect() {
+    var sel = document.getElementById('assetProjectSelect');
+    var folderRow = document.getElementById('assetFolderRow');
+    var folderSel = document.getElementById('assetFolderSelect');
+    if (!sel) return;
+
+    // 项目选择
+    var html = '<option value="">— 未选择 —（显示所有无归属项目资产）</option>';
+    for (var i = 0; i < projects.length; i++) {
+      var p = projects[i];
+      html += '<option value="' + esc(p.id) + '"' + (p.id === currentProjectId ? ' selected' : '') + '>' +
+        esc(p.name) + ' (' + (p.assetCount || 0) + ') </option>';
+    }
+    sel.innerHTML = html;
+
+    // 文件夹选择
+    if (folderRow) folderRow.hidden = !currentProjectId;
+    if (folderSel && currentProjectId) {
+      var proj = projects.find(function (p) { return p.id === currentProjectId; });
+      var folders = proj && proj.folders ? proj.folders : [];
+      var fhtml = '<option value="">全部文件夹</option>';
+      for (var j = 0; j < folders.length; j++) {
+        fhtml += '<option value="' + esc(folders[j]) + '"' + (folders[j] === currentFolder ? ' selected' : '') + '>' + esc(folders[j]) + '</option>';
+      }
+      folderSel.innerHTML = fhtml;
+      if (!folders.length) folderSel.innerHTML += '<option value="">（此项目还没有文件夹）</option>';
+    }
   }
 
   function renderAssetPage() {
     var grid = document.getElementById('assetsGrid');
     var empty = document.getElementById('assetsEmpty');
     var total = document.getElementById('assetsTotal');
+    var subtitle = document.getElementById('assetsSubtitle');
+    var emptyTitle = document.getElementById('assetsEmptyTitle');
+    var emptyHint = document.getElementById('assetsEmptyHint');
+    var projectBar = document.getElementById('assetProjectBar');
     if (!grid) return;
 
+    // 项目栏只在 project tab 显示
+    if (projectBar) projectBar.hidden = assetTab !== 'project';
+
     var list = filteredAssets(pageFilter);
-    if (total) total.textContent = String(assets.length);
+    if (total) total.textContent = String(list.length);
+    if (subtitle) {
+      if (assetTab === 'project') {
+        subtitle.textContent = currentProjectId
+          ? '项目资产 · ' + (projects.find(function (p) { return p.id === currentProjectId; }) || {}).name + (currentFolder ? ' · ' + currentFolder : '') + ' · 共 ' + list.length + ' 项'
+          : '项目资产（未选择项目） · 共 ' + list.length + ' 项';
+      } else {
+        subtitle.textContent = '参考资料资产 · 共 ' + list.length + ' 项';
+      }
+    }
     if (empty) empty.hidden = list.length > 0;
+    if (emptyTitle) emptyTitle.textContent = list.length ? '' : (assetTab === 'project' ? '还没有项目资产' : '还没有参考资料');
+    if (emptyHint) emptyHint.textContent = list.length ? '' : (assetTab === 'project'
+      ? '先新建一个项目，然后导入素材归属到它'
+      : '导入通用参考图、参考视频，所有项目都能调用');
     grid.innerHTML = list.map(assetCard).join('');
   }
 
@@ -29261,7 +29492,7 @@ window.HMChat = (function () {
     if (!grid) return;
 
     var list = filteredAssets(modalFilter);
-    if (count) count.textContent = assets.length + ' 项';
+    if (count) count.textContent = list.length + ' 项';
     if (empty) empty.hidden = list.length > 0;
     grid.innerHTML = list.map(assetCard).join('');
   }
@@ -29283,8 +29514,86 @@ window.HMChat = (function () {
     document.body.classList.remove('no-scroll');
   }
 
-  function bindAssetUI() {
+  function promptText(label, def) {
+    var v = window.prompt(label, def || '');
+    return v == null ? '' : String(v).trim();
+  }
+
+  async function bindAssetUI() {
     var importInput = document.getElementById('assetsImportInput');
+
+    // Tab 切换
+    var tabs = document.querySelectorAll('[data-atab]');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.classList.remove('is-active'); t.setAttribute('aria-selected', 'false'); });
+        tab.classList.add('is-active'); tab.setAttribute('aria-selected', 'true');
+        assetTab = tab.getAttribute('data-atab');
+        // 切换 tab 时重置项目/文件夹选择
+        if (assetTab !== 'project') {
+          currentProjectId = ''; currentFolder = '';
+        }
+        renderProjectSelect();
+        renderAssetPage();
+      });
+    });
+
+    // 项目选择
+    var projectSel = document.getElementById('assetProjectSelect');
+    if (projectSel) {
+      projectSel.addEventListener('change', function () {
+        currentProjectId = projectSel.value;
+        currentFolder = '';
+        renderProjectSelect();
+        renderAssetPage();
+      });
+    }
+
+    // 文件夹选择
+    var folderSel = document.getElementById('assetFolderSelect');
+    if (folderSel) {
+      folderSel.addEventListener('change', function () {
+        currentFolder = folderSel.value;
+        renderAssetPage();
+      });
+    }
+
+    // 新建项目
+    var newProjBtn = document.getElementById('assetNewProject');
+    if (newProjBtn) newProjBtn.addEventListener('click', async function () {
+      var name = promptText('项目名称', '未命名项目');
+      if (!name) return;
+      try {
+        var res = await api.createProject({ name: name });
+        if (res && res.project) {
+          projects.unshift(res.project);
+          currentProjectId = res.project.id;
+          currentFolder = '';
+          renderProjectSelect();
+          renderAssetPage();
+          A.toast('项目已创建：' + name, 'success');
+        }
+      } catch (err) { A.toast('项目创建失败：' + (err.message || '未知错误'), 'error'); }
+    });
+
+    // 新建文件夹
+    var newFolderBtn = document.getElementById('assetNewFolder');
+    if (newFolderBtn) newFolderBtn.addEventListener('click', async function () {
+      if (!currentProjectId) { A.toast('请先选择或新建一个项目', 'info'); return; }
+      var proj = projects.find(function (p) { return p.id === currentProjectId; });
+      var name = promptText('文件夹名称', '新文件夹');
+      if (!name) return;
+      try {
+        await api.addProjectFolder(currentProjectId, name);
+        // 更新本地 projects 副本
+        if (proj && !proj.folders.includes(name)) proj.folders.push(name);
+        currentFolder = name;
+        renderProjectSelect();
+        renderAssetPage();
+        A.toast('文件夹已创建：' + name, 'success');
+      } catch (err) { A.toast('文件夹创建失败：' + (err.message || '未知错误'), 'error'); }
+    });
+
     ['assetsImportBtn', 'assetsEmptyImport', 'assetModalImport'].forEach(function (id) {
       var btn = document.getElementById(id);
       if (btn && importInput) btn.addEventListener('click', function () { importInput.click(); });
@@ -29353,7 +29662,10 @@ window.HMChat = (function () {
       url: api && api.mediaUrl ? api.mediaUrl(asset.url) : asset.url,
       size: asset.size || 0,
       createdAt: asset.createdAt || new Date().toISOString(),
-      source: asset.source || 'local'
+      source: asset.source || 'local',
+      type: ['project', 'reference'].includes(asset.type) ? asset.type : 'project',
+      projectId: asset.projectId || null,
+      folder: asset.folder || null,
     };
   }
 
@@ -29399,15 +29711,18 @@ window.HMChat = (function () {
 
     for (var i = 0; i < files.length; i += 1) {
       var file = files[i];
-      if (file.size > 8 * 1024 * 1024) {
-        A.toast('「' + file.name + '」超过 8MB，已跳过', 'error');
+      if (file.size > 50 * 1024 * 1024) {
+        A.toast('「' + file.name + '」超过 50MB，已跳过', 'error');
         continue;
       }
       try {
         var dataUrl = await readFileAsDataUrl(file);
         var kind = kindOfMime(file.type || '');
         if (api && api.online) {
-          var res = await api.addAsset({ dataUrl: dataUrl, name: file.name, kind: kind });
+          var body = { dataUrl: dataUrl, name: file.name, kind: kind, type: assetTab };
+          if (assetTab === 'project' && currentProjectId) body.projectId = currentProjectId;
+          if (assetTab === 'project' && currentFolder) body.folder = currentFolder;
+          var res = await api.addAsset(body);
           var asset = normalizeAsset(res && res.asset);
           asset.source = 'server';
           assets.unshift(asset);
@@ -29419,7 +29734,10 @@ window.HMChat = (function () {
             url: dataUrl,
             size: file.size,
             createdAt: new Date().toISOString(),
-            source: 'local'
+            source: 'local',
+            type: assetTab,
+            projectId: assetTab === 'project' ? currentProjectId : null,
+            folder: assetTab === 'project' ? currentFolder : null,
           });
           assets = assets.slice(0, 24);
           if (!writeJSON(LS.assets, assets)) {
@@ -29436,7 +29754,7 @@ window.HMChat = (function () {
     if (added) {
       renderAssetPage();
       renderAssetModal();
-      A.toast('已导入 ' + added + ' 个素材', 'success');
+      A.toast('已导入 ' + added + ' 个素材到「' + (assetTab === 'project' ? '项目资产' : '参考资料') + '」', 'success');
     }
   }
 

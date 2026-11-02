@@ -187,9 +187,22 @@
   api.getDesk = function () { return request('/desk', {}, 20000); };
   api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
 
-  api.listAssets = function () { return request('/assets', {}, 15000); };
+  api.listAssets = function (filter) {
+    var qs = [];
+    if (filter && filter.type) qs.push('type=' + encodeURIComponent(filter.type));
+    if (filter && filter.projectId) qs.push('projectId=' + encodeURIComponent(filter.projectId));
+    if (filter && filter.folder) qs.push('folder=' + encodeURIComponent(filter.folder));
+    var url = '/assets' + (qs.length ? '?' + qs.join('&') : '');
+    return request(url, {}, 15000);
+  };
   api.addAsset = function (asset) { return request('/assets', { method: 'POST', body: asset }, 60000); };
   api.deleteAsset = function (id) { return request('/assets/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
+  api.listProjects = function () { return request('/projects', {}, 15000); };
+  api.createProject = function (project) { return request('/projects', { method: 'POST', body: project }, 15000); };
+  api.updateProject = function (id, patch) { return request('/projects/' + encodeURIComponent(id), { method: 'PATCH', body: patch }, 15000); };
+  api.deleteProject = function (id) { return request('/projects/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+  api.addProjectFolder = function (id, name) { return request('/projects/' + encodeURIComponent(id) + '/folders', { method: 'POST', body: { name: name } }, 15000); };
 
   api.presets = function () { return request('/presets', {}, 15000); };
   api.catalog = function () { return request('/catalog', {}, 15000); };

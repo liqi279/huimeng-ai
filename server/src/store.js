@@ -69,6 +69,7 @@ const dirs = {
 
 const worksFile = path.join(config.DATA_DIR, 'works.json');
 const assetsFile = path.join(config.DATA_DIR, 'assets.json');
+const projectsFile = path.join(config.DATA_DIR, 'projects.json');
 const deskFile = path.join(config.DATA_DIR, 'desk.json');
 
 async function readJson(file, fallback) {
@@ -293,6 +294,67 @@ function removeAsset(id) {
   });
 }
 
+async function listAssets(filter = {}) {
+  const list = await readList(assetsFile);
+  let filtered = list.filter((item) => item && !item.deletedAt);
+  if (filter.type) filtered = filtered.filter((a) => a.type === filter.type);
+  if (filter.projectId) filtered = filtered.filter((a) => a.projectId === filter.projectId);
+  if (filter.folder) filtered = filtered.filter((a) => a.folder === filter.folder);
+  return filtered;
+}
+
+/* 项目 CRUD */
+async function listProjects() {
+  const list = await readJson(projectsFile, []);
+  return list.filter((p) => p && !p.deletedAt).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+}
+
+async function getProject(id) {
+  const list = await readJson(projectsFile, []);
+  return list.find((p) => p && p.id === id && !p.deletedAt) || null;
+}
+
+async function createProject(project) {
+  return enqueue(async () => {
+    const list = await readJson(projectsFile, []);
+    const now = Date.now();
+    const next = {
+      id: project.id || crypto.randomUUID(),
+      name: (project.name || '未命名项目').trim().slice(0, 80),
+      description: (project.description || '').slice(0, 300),
+      folders: Array.isArray(project.folders) ? project.folders : [],
+      createdAt: new Date(now).toISOString(),
+      updatedAt: new Date(now).toISOString(),
+    };
+    list.unshift(next);
+    await writeJson(projectsFile, list);
+    return next;
+  });
+}
+
+async function updateProject(id, patch) {
+  return enqueue(async () => {
+    const list = await readJson(projectsFile, []);
+    const idx = list.findIndex((p) => p && p.id === id);
+    if (idx < 0) return null;
+    const updated = { ...list[idx], ...patch, id: list[idx].id, updatedAt: new Date().toISOString() };
+    list[idx] = updated;
+    await writeJson(projectsFile, list);
+    return updated;
+  });
+}
+
+async function deleteProject(id) {
+  return enqueue(async () => {
+    const list = await readJson(projectsFile, []);
+    const idx = list.findIndex((p) => p && p.id === id);
+    if (idx < 0) return false;
+    list.splice(idx, 1);
+    await writeJson(projectsFile, list);
+    return true;
+  });
+}
+
 /* =============================================================
  * 存储层路由：
  * - 设置了 DATABASE_URL → 使用外部 PostgreSQL（db.js），数据持久化不丢
@@ -339,6 +401,12 @@ if (USE_DB) {
     getAsset: db.getAsset,
     addAsset: db.addAsset,
     removeAsset: db.removeAsset,
+    /* 项目 */
+    listProjects: db.listProjects || null,
+    getProject: db.getProject || null,
+    createProject: db.createProject || null,
+    updateProject: db.updateProject || null,
+    deleteProject: db.deleteProject || null,
   };
 } else {
   /* 未配置外部数据库 → 本地 JSON 文件存储。Render 免费层重启会清空磁盘，
@@ -379,5 +447,11 @@ if (USE_DB) {
     getAsset,
     addAsset,
     removeAsset,
+    /* 项目 */
+    listProjects,
+    getProject,
+    createProject,
+    updateProject,
+    deleteProject,
   };
 }

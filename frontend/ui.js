@@ -236,7 +236,7 @@
     prevView = view;
 
     if (view === 'canvas') renderCanvas();
-    if (view === 'assets') renderAssetPage();
+    if (view === 'assets') { renderAssetPage(); loadProjects(); }
     if (view === 'writing') loadDraft();
     if (view === 'forum') renderForum();
     if (view === 'modeling' && window.BlenderBridge) {
@@ -1010,6 +1010,11 @@
   }
 
   /* ---------------- 资产库 ---------------- */
+  var assetTab = 'project';
+  var currentProjectId = '';
+  var currentFolder = '';
+  var projects = [];
+
   function assetKindLabel(kind) {
     return kind === 'video' ? '视频' : kind === 'audio' ? '音频' : '图片';
   }
@@ -1026,32 +1031,108 @@
   }
 
   function assetCard(asset) {
+    var folderBadge = asset.folder ? '<span class="hm-asset-badge hm-asset-badge-folder">📁 ' + esc(asset.folder) + '</span>' : '';
+    var typeBadge = asset.type === 'reference'
+      ? '<span class="hm-asset-badge hm-asset-badge-ref">参考</span>'
+      : '<span class="hm-asset-badge hm-asset-badge-proj">项目</span>';
     return '<article class="hm-asset-card" data-asset="' + esc(asset.id) + '">' +
       assetThumb(asset) +
       '<div class="hm-asset-meta"><span>' + esc(asset.name || '素材') + '</span><span>' + assetKindLabel(asset.kind) + '</span></div>' +
+      '<div class="hm-asset-badges">' + folderBadge + typeBadge + '</div>' +
       '<div class="hm-asset-actions">' +
-        '<button data-aact="use" title="用作参考图">' + ICON_EYE + '</button>' +
+        '<button data-aact="use" title="用作生成参考">' + ICON_EYE + '</button>' +
         '<button data-aact="delete" title="删除">' + ICON_TRASH + '</button>' +
       '</div>' +
     '</article>';
   }
 
   function filteredAssets(filter) {
-    if (!filter) return assets;
-    return assets.filter(function (asset) {
-      return [asset.name, asset.kind].join(' ').toLowerCase().indexOf(filter) >= 0;
-    });
+    var list = assets;
+    if (assetTab === 'project') {
+      list = list.filter(function (a) { return a.type !== 'reference'; });
+      if (currentProjectId) list = list.filter(function (a) { return a.projectId === currentProjectId; });
+      if (currentFolder) list = list.filter(function (a) { return a.folder === currentFolder; });
+    } else {
+      list = list.filter(function (a) { return a.type === 'reference'; });
+    }
+    if (filter) {
+      list = list.filter(function (asset) {
+        return [asset.name, asset.kind, asset.folder || ''].join(' ').toLowerCase().indexOf(filter) >= 0;
+      });
+    }
+    return list;
+  }
+
+  async function loadProjects() {
+    if (api && api.online) {
+      try {
+        var data = await api.listProjects();
+        projects = (data && data.projects) || [];
+      } catch (err) { projects = []; }
+    } else {
+      projects = [];
+    }
+    renderProjectSelect();
+  }
+
+  function renderProjectSelect() {
+    var sel = document.getElementById('assetProjectSelect');
+    var folderRow = document.getElementById('assetFolderRow');
+    var folderSel = document.getElementById('assetFolderSelect');
+    if (!sel) return;
+
+    // 项目选择
+    var html = '<option value="">— 未选择 —（显示所有无归属项目资产）</option>';
+    for (var i = 0; i < projects.length; i++) {
+      var p = projects[i];
+      html += '<option value="' + esc(p.id) + '"' + (p.id === currentProjectId ? ' selected' : '') + '>' +
+        esc(p.name) + ' (' + (p.assetCount || 0) + ') </option>';
+    }
+    sel.innerHTML = html;
+
+    // 文件夹选择
+    if (folderRow) folderRow.hidden = !currentProjectId;
+    if (folderSel && currentProjectId) {
+      var proj = projects.find(function (p) { return p.id === currentProjectId; });
+      var folders = proj && proj.folders ? proj.folders : [];
+      var fhtml = '<option value="">全部文件夹</option>';
+      for (var j = 0; j < folders.length; j++) {
+        fhtml += '<option value="' + esc(folders[j]) + '"' + (folders[j] === currentFolder ? ' selected' : '') + '>' + esc(folders[j]) + '</option>';
+      }
+      folderSel.innerHTML = fhtml;
+      if (!folders.length) folderSel.innerHTML += '<option value="">（此项目还没有文件夹）</option>';
+    }
   }
 
   function renderAssetPage() {
     var grid = document.getElementById('assetsGrid');
     var empty = document.getElementById('assetsEmpty');
     var total = document.getElementById('assetsTotal');
+    var subtitle = document.getElementById('assetsSubtitle');
+    var emptyTitle = document.getElementById('assetsEmptyTitle');
+    var emptyHint = document.getElementById('assetsEmptyHint');
+    var projectBar = document.getElementById('assetProjectBar');
     if (!grid) return;
 
+    // 项目栏只在 project tab 显示
+    if (projectBar) projectBar.hidden = assetTab !== 'project';
+
     var list = filteredAssets(pageFilter);
-    if (total) total.textContent = String(assets.length);
+    if (total) total.textContent = String(list.length);
+    if (subtitle) {
+      if (assetTab === 'project') {
+        subtitle.textContent = currentProjectId
+          ? '项目资产 · ' + (projects.find(function (p) { return p.id === currentProjectId; }) || {}).name + (currentFolder ? ' · ' + currentFolder : '') + ' · 共 ' + list.length + ' 项'
+          : '项目资产（未选择项目） · 共 ' + list.length + ' 项';
+      } else {
+        subtitle.textContent = '参考资料资产 · 共 ' + list.length + ' 项';
+      }
+    }
     if (empty) empty.hidden = list.length > 0;
+    if (emptyTitle) emptyTitle.textContent = list.length ? '' : (assetTab === 'project' ? '还没有项目资产' : '还没有参考资料');
+    if (emptyHint) emptyHint.textContent = list.length ? '' : (assetTab === 'project'
+      ? '先新建一个项目，然后导入素材归属到它'
+      : '导入通用参考图、参考视频，所有项目都能调用');
     grid.innerHTML = list.map(assetCard).join('');
   }
 
@@ -1062,7 +1143,7 @@
     if (!grid) return;
 
     var list = filteredAssets(modalFilter);
-    if (count) count.textContent = assets.length + ' 项';
+    if (count) count.textContent = list.length + ' 项';
     if (empty) empty.hidden = list.length > 0;
     grid.innerHTML = list.map(assetCard).join('');
   }
@@ -1084,8 +1165,86 @@
     document.body.classList.remove('no-scroll');
   }
 
-  function bindAssetUI() {
+  function promptText(label, def) {
+    var v = window.prompt(label, def || '');
+    return v == null ? '' : String(v).trim();
+  }
+
+  async function bindAssetUI() {
     var importInput = document.getElementById('assetsImportInput');
+
+    // Tab 切换
+    var tabs = document.querySelectorAll('[data-atab]');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.classList.remove('is-active'); t.setAttribute('aria-selected', 'false'); });
+        tab.classList.add('is-active'); tab.setAttribute('aria-selected', 'true');
+        assetTab = tab.getAttribute('data-atab');
+        // 切换 tab 时重置项目/文件夹选择
+        if (assetTab !== 'project') {
+          currentProjectId = ''; currentFolder = '';
+        }
+        renderProjectSelect();
+        renderAssetPage();
+      });
+    });
+
+    // 项目选择
+    var projectSel = document.getElementById('assetProjectSelect');
+    if (projectSel) {
+      projectSel.addEventListener('change', function () {
+        currentProjectId = projectSel.value;
+        currentFolder = '';
+        renderProjectSelect();
+        renderAssetPage();
+      });
+    }
+
+    // 文件夹选择
+    var folderSel = document.getElementById('assetFolderSelect');
+    if (folderSel) {
+      folderSel.addEventListener('change', function () {
+        currentFolder = folderSel.value;
+        renderAssetPage();
+      });
+    }
+
+    // 新建项目
+    var newProjBtn = document.getElementById('assetNewProject');
+    if (newProjBtn) newProjBtn.addEventListener('click', async function () {
+      var name = promptText('项目名称', '未命名项目');
+      if (!name) return;
+      try {
+        var res = await api.createProject({ name: name });
+        if (res && res.project) {
+          projects.unshift(res.project);
+          currentProjectId = res.project.id;
+          currentFolder = '';
+          renderProjectSelect();
+          renderAssetPage();
+          A.toast('项目已创建：' + name, 'success');
+        }
+      } catch (err) { A.toast('项目创建失败：' + (err.message || '未知错误'), 'error'); }
+    });
+
+    // 新建文件夹
+    var newFolderBtn = document.getElementById('assetNewFolder');
+    if (newFolderBtn) newFolderBtn.addEventListener('click', async function () {
+      if (!currentProjectId) { A.toast('请先选择或新建一个项目', 'info'); return; }
+      var proj = projects.find(function (p) { return p.id === currentProjectId; });
+      var name = promptText('文件夹名称', '新文件夹');
+      if (!name) return;
+      try {
+        await api.addProjectFolder(currentProjectId, name);
+        // 更新本地 projects 副本
+        if (proj && !proj.folders.includes(name)) proj.folders.push(name);
+        currentFolder = name;
+        renderProjectSelect();
+        renderAssetPage();
+        A.toast('文件夹已创建：' + name, 'success');
+      } catch (err) { A.toast('文件夹创建失败：' + (err.message || '未知错误'), 'error'); }
+    });
+
     ['assetsImportBtn', 'assetsEmptyImport', 'assetModalImport'].forEach(function (id) {
       var btn = document.getElementById(id);
       if (btn && importInput) btn.addEventListener('click', function () { importInput.click(); });
@@ -1154,7 +1313,10 @@
       url: api && api.mediaUrl ? api.mediaUrl(asset.url) : asset.url,
       size: asset.size || 0,
       createdAt: asset.createdAt || new Date().toISOString(),
-      source: asset.source || 'local'
+      source: asset.source || 'local',
+      type: ['project', 'reference'].includes(asset.type) ? asset.type : 'project',
+      projectId: asset.projectId || null,
+      folder: asset.folder || null,
     };
   }
 
@@ -1200,15 +1362,18 @@
 
     for (var i = 0; i < files.length; i += 1) {
       var file = files[i];
-      if (file.size > 8 * 1024 * 1024) {
-        A.toast('「' + file.name + '」超过 8MB，已跳过', 'error');
+      if (file.size > 50 * 1024 * 1024) {
+        A.toast('「' + file.name + '」超过 50MB，已跳过', 'error');
         continue;
       }
       try {
         var dataUrl = await readFileAsDataUrl(file);
         var kind = kindOfMime(file.type || '');
         if (api && api.online) {
-          var res = await api.addAsset({ dataUrl: dataUrl, name: file.name, kind: kind });
+          var body = { dataUrl: dataUrl, name: file.name, kind: kind, type: assetTab };
+          if (assetTab === 'project' && currentProjectId) body.projectId = currentProjectId;
+          if (assetTab === 'project' && currentFolder) body.folder = currentFolder;
+          var res = await api.addAsset(body);
           var asset = normalizeAsset(res && res.asset);
           asset.source = 'server';
           assets.unshift(asset);
@@ -1220,7 +1385,10 @@
             url: dataUrl,
             size: file.size,
             createdAt: new Date().toISOString(),
-            source: 'local'
+            source: 'local',
+            type: assetTab,
+            projectId: assetTab === 'project' ? currentProjectId : null,
+            folder: assetTab === 'project' ? currentFolder : null,
           });
           assets = assets.slice(0, 24);
           if (!writeJSON(LS.assets, assets)) {
@@ -1237,7 +1405,7 @@
     if (added) {
       renderAssetPage();
       renderAssetModal();
-      A.toast('已导入 ' + added + ' 个素材', 'success');
+      A.toast('已导入 ' + added + ' 个素材到「' + (assetTab === 'project' ? '项目资产' : '参考资料') + '」', 'success');
     }
   }
 

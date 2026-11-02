@@ -1009,23 +1009,47 @@
     <div class="hm-page-head">
       <div>
         <h2>资产</h2>
-        <p>参考图、成片与音频素材统一管理 · 共 <span id="assetsTotal">0</span> 项</p>
+        <p id="assetsSubtitle">参考图、成片与音频素材统一管理 · 共 <span id="assetsTotal">0</span> 项</p>
       </div>
       <div class="hm-page-actions">
+        <!-- Tab 切换 -->
+        <div class="hm-asset-tabs" role="tablist">
+          <button class="hm-asset-tab is-active" data-atab="project" role="tab" aria-selected="true">📁 项目资产</button>
+          <button class="hm-asset-tab" data-atab="reference" role="tab" aria-selected="false">📚 参考资料资产</button>
+        </div>
         <label class="hm-asset-search">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
           <input id="assetsSearch" type="search" placeholder="搜索资产..." autocomplete="off">
         </label>
-        <button class="hm-pill hm-pill-primary" id="assetsImportBtn">导入素材</button>
-        <input type="file" id="assetsImportInput" accept="image/*,video/*,audio/*" hidden>
+        <button class="hm-pill hm-pill-primary" id="assetsImportBtn">📥 导入资产</button>
+        <input type="file" id="assetsImportInput" accept="image/*,video/*,audio/*" hidden multiple>
       </div>
     </div>
+
+    <!-- 项目资产专属栏：项目选择 + 文件夹 -->
+    <div class="hm-asset-project-bar" id="assetProjectBar" hidden>
+      <div class="hm-asset-project-row">
+        <label class="hm-asset-label">当前项目</label>
+        <select id="assetProjectSelect" class="hm-asset-select">
+          <option value="">— 未选择 —</option>
+        </select>
+        <button class="hm-pill" id="assetNewProject">＋ 新建项目</button>
+      </div>
+      <div class="hm-asset-project-row" id="assetFolderRow" hidden>
+        <label class="hm-asset-label">文件夹</label>
+        <select id="assetFolderSelect" class="hm-asset-select">
+          <option value="">全部</option>
+        </select>
+        <button class="hm-pill" id="assetNewFolder">＋ 新建文件夹</button>
+      </div>
+    </div>
+
     <div class="hm-asset-grid" id="assetsGrid"></div>
     <div class="hm-page-empty" id="assetsEmpty">
       <div class="hm-page-empty-icon">资</div>
-      <h3>还没有资产</h3>
-      <p>导入参考图、视频或音频，生成时可直接取用</p>
-      <button class="hm-pill hm-pill-primary" id="assetsEmptyImport">导入素材</button>
+      <h3 id="assetsEmptyTitle">还没有资产</h3>
+      <p id="assetsEmptyHint">导入参考图、视频或音频，生成时可直接取用</p>
+      <button class="hm-pill hm-pill-primary" id="assetsEmptyImport">📥 导入资产</button>
     </div>
   </main>
 
