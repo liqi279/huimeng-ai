@@ -544,122 +544,147 @@ function extractVideoTaskId(payload) {
   return '';
 }
 
-/* 视频模型定义 — 全部走则灵（RayinAPI）平台。
- * 每个模型有独立的 API Key（zk-前缀），generateVideo 按模型取 key。
- * modelId 即 RayinAPI 真实模型名（payload 里的 model 字段）。
+/* 视频模型定义 — 走则灵（zeling.online）平台 /api/hz/tasks 异步任务接口。
+ * model = 真实模型 ID（提交给 POST /api/hz/tasks 的 model 字段）
+ * apiKey = zk- 前缀独立密钥，按模型指定；未授权模型占位（需找到真实 model ID）
+ * 积分/分辨率/时长从 zeling /api/hz/models 实测结果而来
  */
+const ZELING_BASE = 'https://www.zeling.online/api/hz';
+const ZELING_UPLOAD_BASE = 'https://www.zeling.online';
+
 const VIDEO_MODELS = [
-  /* ========== 账号一 3045324659@qq.com — 按次生成 ========== */
+  /* ==== 账号一 3045324659@qq.com · 按次生成 ==== */
   {
     id: 'vidu-q4',
     name: 'Vidu Q4',
-    minDuration: 5, maxDuration: 31,
+    model: 'vidu-q4',
+    minDuration: 4, maxDuration: 16,
     resolutions: ['720p', '1080p'],
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '21:9'],
     fps: 24,
-    billingType: 'perTask', credits: 31, creditsMin: 5,
-    refHint: '支持图片/视频/音频多参考（9图3音3视），动作/风格迁移能力强',
-    desc: '按次生成 · 5-31 积分/次',
-    free: false, apiKey: 'zk-83e955434c5079dfc4f6f054d472f5b0',
+    billingType: 'perTask', creditsMin: 19, credits: 31,
+    refHint: '图15 / 视0 / 音3 多参考，支持首尾帧；1080p 更贵',
+    desc: '按次生成 · 19-31 积分/次',
+    apiKey: 'zk-83e955434c5079dfc4f6f054d472f5b0',
   },
   {
     id: 'minimax_h3-768p',
-    name: 'MiniMax H3 768p',
+    name: 'MiniMax H3',
+    model: 'minimax_h3-768p',
     minDuration: 5, maxDuration: 15,
     resolutions: ['720p'],
+    aspectRatios: ['16:9', '9:16', '1:1'],
     fps: 24,
-    billingType: 'perTask', credits: 15, creditsMin: 13,
-    refHint: '全参模式，支持 prompt / seed / 多参考',
+    billingType: 'perTask', creditsMin: 13, credits: 15,
+    refHint: '图9 / 视0 / 音3 全参模式',
     desc: '按次生成 · 13-15 积分/次',
-    free: false, apiKey: 'zk-276f49cf4a4f2543790da21098cec361',
+    apiKey: 'zk-276f49cf4a4f2543790da21098cec361',
   },
   {
     id: 'sd-2-720p',
     name: 'Seedance 2 · 9图3音3视',
+    model: 'sd-2-720p',
     minDuration: 5, maxDuration: 15,
     resolutions: ['720p'],
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3'],
     fps: 24,
     billingType: 'perTask', credits: 35,
-    refHint: '9图+3音+3视多模态参考，动作/风格/角色一致性强',
+    refHint: '9图+3音+3视 多模态参考，动作/风格/角色一致性强',
     desc: '按次生成 · 35 积分/次',
-    free: false, apiKey: 'zk-a779d45bbdfd5a363064e305a8f9c2be',
+    apiKey: 'zk-a779d45bbdfd5a363064e305a8f9c2be',
   },
   {
-    id: 'wan3.0-vedio-deal',
-    name: 'Wan 3.0 Video Deal',
-    minDuration: 5, maxDuration: 15,
-    resolutions: ['720p', '1080p'],
-    fps: 24,
-    billingType: 'perTask', credits: 37,
-    refHint: '阿里 Wan 3.0，端到端视频处理',
-    desc: '按次生成 · 37 积分/次',
-    free: false, apiKey: 'zk-43011772c75f119ce11462463954bed8',
-  },
-  {
-    id: 'seedance-2.0',
+    id: 'seedance-2.0-903',
     name: 'Seedance 2.0 满血',
+    model: 'seedance-2.0-903',
     minDuration: 5, maxDuration: 15,
-    resolutions: ['720p', '1080p'],
+    resolutions: ['720p'],
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3'],
     fps: 24,
     billingType: 'perTask', credits: 34,
-    refHint: '字节 Seedance 2.0 满血版，支持图生视频 / 视频生视频',
+    refHint: '9图+0视+3音，风格迁移 / 角色一致性',
     desc: '按次生成 · 34 积分/次',
-    free: false, apiKey: 'zk-ad8b695045b525614d7735185255600d',
+    apiKey: 'zk-ad8b695045b525614d7735185255600d',
   },
-  /* ========== 账号二 18005676519@qq.com — 按秒生成 ========== */
+  /* ==== 账号二 18005676519@qq.com · 混合 ==== */
   {
     id: 'sd2.5-sss',
     name: 'Seedance 2.5 SSS',
-    minDuration: 5, maxDuration: 15,
-    resolutions: ['720p', '1080p'],
+    model: 'sd2.5-sss',
+    minDuration: 5, maxDuration: 30,
+    resolutions: ['720p'],
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '21:9'],
     fps: 24,
     billingType: 'perTask', credits: 70,
-    refHint: 'Seedance 2.5 SSS 多参考模式，按次 70 积分',
+    refHint: '图30 / 视10 / 音10 极多参考，Seedance 2.5 SSS 模式',
     desc: '按次生成 · 70 积分/次',
-    free: false, apiKey: 'zk-adda48ef81efe9b95571906b17dad841',
+    apiKey: 'zk-adda48ef81efe9b95571906b17dad841',
   },
+  /* ==== 以下模型 zk-key 已拿到，但 model ID 待补齐（目前所有已知 ID 都返回 403） ==== */
   {
-    id: 'Seedance-2.0-Fast',
-    name: 'Seedance 2.0 Fast',
+    id: 'wan3.0',
+    name: 'Wan 3.0',
+    model: 'mh-wan-3.0', /* 占位：浏览器对话框显示的 model ID，若仍 403 需登录网页查 */
     minDuration: 5, maxDuration: 15,
     resolutions: ['720p', '1080p'],
+    aspectRatios: ['16:9', '9:16', '1:1'],
+    fps: 24,
+    billingType: 'perTask', credits: 37,
+    refHint: '阿里 Wan 3.0 自动路由',
+    desc: '按次生成 · 37 积分/次',
+    apiKey: 'zk-43011772c75f119ce11462463954bed8',
+  },
+  {
+    id: 'seedance-2.0-fast',
+    name: 'Seedance 2.0 Fast',
+    model: 'mh-seedance-2.0-fast', /* 占位 */
+    minDuration: 5, maxDuration: 15,
+    resolutions: ['720p', '1080p'],
+    aspectRatios: ['16:9', '9:16', '1:1'],
     fps: 24,
     billingType: 'perSecond', creditsPerSecMin: 0.2, creditsPerSec: 1.7,
-    refHint: 'Seedance 2.0 极速模式，按秒计费 0.2-1.7 积分/秒',
+    refHint: '极速通道，按秒计费',
     desc: '按秒生成 · 0.2-1.7 积分/秒',
-    free: false, apiKey: 'zk-3d913a045126ce30c227e0880fd63b7b',
+    apiKey: 'zk-3d913a045126ce30c227e0880fd63b7b',
   },
   {
-    id: 'Seedance-2.0-Mini',
+    id: 'seedance-2.0-mini',
     name: 'Seedance 2.0 Mini',
+    model: 'mh-seedance-2.0-mini', /* 占位 */
     minDuration: 5, maxDuration: 15,
     resolutions: ['720p'],
+    aspectRatios: ['16:9', '9:16', '1:1'],
     fps: 24,
     billingType: 'perSecond', creditsPerSecMin: 1.3, creditsPerSec: 1.5,
-    refHint: 'Seedance 2.0 迷你版，便宜稳定',
+    refHint: '迷你版，便宜稳定',
     desc: '按秒生成 · 1.3-1.5 积分/秒',
-    free: false, apiKey: 'zk-9adc715b6f837dc22a8f8be3e0253015',
+    apiKey: 'zk-9adc715b6f837dc22a8f8be3e0253015',
   },
   {
-    id: 'sd-2.5',
+    id: 'seedance-2.5',
     name: 'Seedance 2.5 满血',
+    model: 'mh-seedance-2.5', /* 占位 */
     minDuration: 5, maxDuration: 15,
     resolutions: ['720p', '1080p'],
+    aspectRatios: ['16:9', '9:16', '1:1'],
     fps: 24,
     billingType: 'perSecond', creditsPerSecMin: 2.4, creditsPerSec: 9.9,
-    refHint: 'Seedance 2.5 满血，按秒计费 2.4-9.9 积分/秒',
+    refHint: 'Seedance 2.5 满血按秒通道',
     desc: '按秒生成 · 2.4-9.9 积分/秒',
-    free: false, apiKey: 'zk-8d476499ad7be96d23a74b13bd616e83',
+    apiKey: 'zk-8d476499ad7be96d23a74b13bd616e83',
   },
   {
     id: 'seedance-2.0-full',
     name: 'Seedance 2.0 满血 (按秒)',
+    model: 'mh-seedance-2.0', /* 占位 */
     minDuration: 5, maxDuration: 15,
     resolutions: ['720p', '1080p'],
+    aspectRatios: ['16:9', '9:16', '1:1'],
     fps: 24,
     billingType: 'perSecond', creditsPerSecMin: 0.3, creditsPerSec: 2.2,
-    refHint: 'Seedance 2.0 满血版按秒通道',
+    refHint: 'Seedance 2.0 满血按秒通道',
     desc: '按秒生成 · 0.3-2.2 积分/秒',
-    free: false, apiKey: 'zk-4017faa24d51ffd3f9a51dbbe3201ce5',
+    apiKey: 'zk-4017faa24d51ffd3f9a51dbbe3201ce5',
   },
 ];
 
@@ -701,127 +726,188 @@ function audioModelMeta(v) {
 }
 
 function videoUnavailable() {
-  return jsonError(
-    502,
-    '视频模型接口不可用',
-    '请检查 RAYIN_VIDEO_PATH / RAYIN_VIDEO_STATUS_PATH / VIDEO_MODEL 环境变量，并确认账号已开通视频模型',
-  );
+  return jsonError(502, '则灵视频接口不可用', '请稍后重试或更换模型');
+}
+
+/** 则灵 /api/hz/uploads：上传参考素材（公开端点，无需鉴权）
+ *  上传后返回 /files/uploads/xxx.ext，需要拼上 ZELING_UPLOAD_BASE 才是完整可下载 URL
+ */
+async function zelingUpload(buf, kind, originalName) {
+  const fname = originalName || `ref-${randomToken(6)}.${kind === 'image' ? 'png' : kind === 'video' ? 'mp4' : 'mp3'}`;
+  const url = `${ZELING_BASE}/uploads?kind=${kind}&name=${encodeURIComponent(fname)}`;
+  const r = await fetchWithTimeout(url, { method: 'POST', body: buf, headers: {} }, 30000);
+  if (!r.ok) {
+    let msg = '';
+    try { msg = (await r.text()).slice(0, 200); } catch {}
+    throw jsonError(r.status === 413 ? 413 : 502, '上传参考素材失败', msg || `HTTP ${r.status}`);
+  }
+  const d = await readJsonResponse(r);
+  /* d.url 形如 "/files/uploads/xxx.png" */
+  return d.url.startsWith('http') ? d.url : ZELING_UPLOAD_BASE + d.url;
+}
+
+/** 解析则灵任务 URL 字段 */
+function zelingMediaUrl(task) {
+  if (!task) return '';
+  return task.mediaUrl || task.media_url || task.videoUrl || task.video_url || task.outputUrl || '';
 }
 
 async function generateVideo(body) {
   const prompt = readPrompt(body.prompt, '提示词');
   const modelId = videoModel(body.model);
   const modelMeta = videoModelMeta(modelId);
-  const ratio = RATIO_SIZE[body.ratio] ? body.ratio : '16:9';
-  const resolution = modelMeta.resolutions.includes(body.resolution) ? body.resolution : '720p';
 
-  /* 时长按模型动态校验 */
+  /* aspect_ratio：zeling 原生字段，值为 "16:9"/"9:16"/"1:1"/"4:3"/"21:9" 等 */
+  const ratio = modelMeta.aspectRatios && modelMeta.aspectRatios.includes(body.ratio)
+    ? body.ratio
+    : (modelMeta.aspectRatios && modelMeta.aspectRatios[0]) || '16:9';
+
+  const resolution = modelMeta.resolutions.includes(body.resolution) ? body.resolution : modelMeta.resolutions[0];
+
+  /* 时长校验（zeling 有固定档位，前端做 5 的倍数已经够了，这里边界检查即可） */
   let duration = body.duration != null && body.duration !== '' ? Number(body.duration) : modelMeta.minDuration;
   if (!Number.isFinite(duration) || duration < modelMeta.minDuration || duration > modelMeta.maxDuration) {
-    throw jsonError(
-      400,
-      `视频时长 ${duration} 秒超出范围`,
-      `模型 ${modelMeta.name} 支持 ${modelMeta.minDuration}-${modelMeta.maxDuration} 秒`,
+    throw jsonError(400, `视频时长 ${duration} 秒超出范围`, `模型 ${modelMeta.name} 支持 ${modelMeta.minDuration}-${modelMeta.maxDuration} 秒`);
+  }
+
+  /* 参考主体校验 + 解析 */
+  const refImages = readRefImages(body.refImages);
+  const refVideos = Array.isArray(body.refVideos) ? body.refVideos : [];
+  const refAudios = Array.isArray(body.refAudios) ? body.refAudios : [];
+  for (let i = 0; i < refVideos.length; i += 1) {
+    assert(typeof refVideos[i] === 'string' && refVideos[i].startsWith('data:'), 400, `参考视频 ${i + 1} 格式不正确`);
+  }
+  for (let i = 0; i < refAudios.length; i += 1) {
+    assert(typeof refAudios[i] === 'string' && refAudios[i].startsWith('data:'), 400, `参考音频 ${i + 1} 格式不正确`);
+  }
+
+  const key = modelMeta.apiKey;
+  requireKey(key);
+
+  /* ==== 第一步：把所有参考素材上传到则灵 ==== */
+  let imageRefUrls = [];
+  let videoRefUrls = [];
+  let audioRefUrls = [];
+
+  if (refImages.length || refVideos.length || refAudios.length) {
+    assert(
+      modelMeta.refHint || true,
+      200,
+      undefined,
+      '⚠️ 该模型参考主体数量见上方「参考提示」，若超过模型上限则灵会返回 400',
     );
   }
-  /* 取整到 5 的倍数，避免 RayinAPI 报错 */
-  duration = Math.round(duration / 5) * 5 || modelMeta.minDuration;
 
-  const seedInput = readSeed(body.seed);
-  const seed = seedInput || randomSeed();
-
-  /* 参考主体校验：图片 + 视频 + 音频 各有独立上限 */
-  readRefImages(body.refImages);
-
-  /* refVideos: data URL 数组，视频不超过 50MB 每个，最多 3 个 */
-  const refVideos = Array.isArray(body.refVideos) ? body.refVideos : [];
-  assert(refVideos.length <= REF_VIDEO_MAX_COUNT, 400, '参考视频过多', `最多 ${REF_VIDEO_MAX_COUNT} 个参考视频`);
-  for (let i = 0; i < refVideos.length; i += 1) {
-    const item = refVideos[i];
-    assert(typeof item === 'string' && item.startsWith('data:'), 400, `参考视频 ${i + 1} 格式不正确`);
-    const decoded = dataUrlToBuffer(item);
-    assert(decoded.buffer.length <= REF_VIDEO_MAX_BYTES, 413, `参考视频 ${i + 1} 过大`, `单视频不能超过 ${Math.round(REF_VIDEO_MAX_BYTES / 1024 / 1024)}MB`);
+  for (const r of refImages) {
+    const url = await zelingUpload(r.buffer, 'image', `ref-${randomToken(4)}.${r.ext}`);
+    imageRefUrls.push(url);
+  }
+  for (const item of refVideos) {
+    const dec = dataUrlToBuffer(item);
+    const url = await zelingUpload(dec.buffer, 'video', `ref-${randomToken(4)}.${extFromMime(dec.mime) || 'mp4'}`);
+    videoRefUrls.push(url);
+  }
+  for (const item of refAudios) {
+    const dec = dataUrlToBuffer(item);
+    const url = await zelingUpload(dec.buffer, 'audio', `ref-${randomToken(4)}.${extFromMime(dec.mime) || 'mp3'}`);
+    audioRefUrls.push(url);
   }
 
-  /* refAudios: data URL 数组 */
-  const refAudios = Array.isArray(body.refAudios) ? body.refAudios : [];
-  assert(refAudios.length <= REF_AUDIO_MAX_COUNT, 400, '参考音频过多', `最多 ${REF_AUDIO_MAX_COUNT} 个参考音频`);
-  for (let i = 0; i < refAudios.length; i += 1) {
-    const item = refAudios[i];
-    assert(typeof item === 'string' && item.startsWith('data:'), 400, `参考音频 ${i + 1} 格式不正确`);
-    const decoded = dataUrlToBuffer(item);
-    assert(decoded.buffer.length <= REF_AUDIO_MAX_BYTES, 413, `参考音频 ${i + 1} 过大`, `单音频不能超过 ${Math.round(REF_AUDIO_MAX_BYTES / 1024 / 1024)}MB`);
-  }
-
-  /* 按模型取 API Key —— 每个视频模型独立 key（zk-前缀），fallback 到 body.rayin.key / RAYIN_KEY */
-  const modelKey = modelMeta.apiKey;
-  const rayin = resolveRayin(body.rayin);
-  const finalKey = modelKey || rayin.key;
-  requireKey(finalKey);
-
-  const { width, height } = videoSize(ratio, resolution);
-  const size = `${width}x${height}`;
-  const base = rayin.base;
-  const videoPath = config.RAYIN_VIDEO_PATH.startsWith('/') ? config.RAYIN_VIDEO_PATH : `/${config.RAYIN_VIDEO_PATH}`;
-  const statusPath = config.RAYIN_VIDEO_STATUS_PATH.startsWith('/')
-    ? config.RAYIN_VIDEO_STATUS_PATH
-    : `/${config.RAYIN_VIDEO_STATUS_PATH}`;
-  const authHeaders = { Authorization: `Bearer ${finalKey}`, 'Content-Type': 'application/json' };
+  /* ==== 第二步：创建异步视频任务 ==== */
+  const payload = {
+    type: 'video',
+    model: modelMeta.model || modelId,
+    prompt,
+    duration,
+    aspect_ratio: ratio,
+    resolution,
+  };
+  if (imageRefUrls.length) payload.image_refs = imageRefUrls;
+  if (videoRefUrls.length) payload.video_refs = videoRefUrls;
+  if (audioRefUrls.length) payload.audio_refs = audioRefUrls;
 
   let initial;
   try {
-    const payload = { model: modelId, prompt, size, seconds: duration, seed };
-    if (refVideos.length) payload.refVideos = refVideos;
-    if (refAudios.length) payload.refAudios = refAudios;
     initial = await fetchJson(
-      `${base}${videoPath}`,
+      `${ZELING_BASE}/tasks`,
       {
         method: 'POST',
-        headers: authHeaders,
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       },
       60000,
       '视频任务创建失败',
     );
   } catch (err) {
+    /* 把常见则灵错误码转成可读提示 */
+    if (err && err.status === 409) throw jsonError(409, '积分余额不足', '请在则灵平台充值后重试');
+    if (err && err.status === 403) throw jsonError(403, '该 API Key 未授权此模型', '可能是 model ID 不对或 Key 权限不够');
+    if (err && err.status === 401) throw jsonError(401, 'API Key 无效', '请检查则灵平台 API Key 是否有效');
+    if (err && err.status === 400) throw err;
     throw videoUnavailable();
   }
 
-  let url = extractVideoUrl(initial);
-  if (!url) {
-    const taskId = extractVideoTaskId(initial);
-    if (!taskId) throw jsonError(502, '视频任务创建失败', '上游未返回任务 ID');
+  const taskId = (initial.task && (initial.task.id || initial.task.taskId)) || initial.id || initial.taskId;
+  if (!taskId) throw jsonError(502, '视频任务创建失败', '上游未返回任务 ID');
 
-    const deadline = Date.now() + 90000;
-    while (Date.now() < deadline) {
-      await sleep(3000);
-      let status;
-      try {
-        status = await fetchJson(
-          `${base}${statusPath}/${encodeURIComponent(taskId)}`,
-          { headers: { Authorization: `Bearer ${rayin.key}`, Accept: 'application/json' } },
-          30000,
-          '视频状态查询失败',
-        );
-      } catch (err) {
-        if (err.status === 401 || err.status === 403) throw err;
-        continue;
-      }
+  /* ==== 第三步：轮询任务状态（每 10 秒一次，最多 10 分钟） ==== */
+  let url = '';
+  const deadline = Date.now() + 10 * 60 * 1000;
+  while (Date.now() < deadline) {
+    await sleep(10000);
+    let statusBody;
+    try {
+      statusBody = await fetchJson(
+        `${ZELING_BASE}/tasks/${encodeURIComponent(taskId)}`,
+        { headers: { Authorization: `Bearer ${key}` } },
+        30000,
+        '视频状态查询失败',
+      );
+    } catch (err) {
+      if (err.status === 401 || err.status === 403) throw err;
+      if (err.status === 404) { /* 任务不存在，等会儿再试 */ continue; }
+      continue;
+    }
 
-      url = extractVideoUrl(status);
-      if (url) break;
+    const task = statusBody.task || statusBody;
+    const state = (task.status || '').toLowerCase();
+    url = zelingMediaUrl(task);
+    if (url) break;
 
-      const state = status && typeof status.status === 'string' ? status.status.toLowerCase() : '';
-      if (status && (status.error || ['failed', 'error', 'cancelled', 'canceled'].includes(state))) {
-        const reason = status.error && (status.error.message || status.error);
-        throw jsonError(502, '视频生成失败', typeof reason === 'string' && reason ? reason : undefined);
-      }
+    if (['failed', 'error', 'cancelled', 'canceled'].includes(state)) {
+      const reason = task.error && (task.error.message || task.error);
+      throw jsonError(502, '视频生成失败', typeof reason === 'string' && reason ? reason : undefined);
     }
   }
 
   if (!url) throw jsonError(502, '视频生成超时', '请稍后重试或更换视频模型');
 
-  return [{ type: 'video', url, width, height, duration, seed }];
+  /* ==== 第四步：把则灵成品下载到本地 uploads ==== */
+  let localUrl;
+  try {
+    const r = await fetchWithTimeout(url, { method: 'GET', headers: {} }, 60000);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const buf = Buffer.from(await r.arrayBuffer());
+    const fname = `${Date.now()}-${randomToken(6)}.mp4`;
+    const dest = path.join(config.DATA_DIR, 'media', fname);
+    await fsp.mkdir(path.dirname(dest), { recursive: true });
+    await fsp.writeFile(dest, buf);
+    localUrl = '/uploads/media/' + fname;
+  } catch (err) {
+    /* 下载失败直接透传则灵直链 — 前端可直接播放（则灵直链约 24h 有效） */
+    localUrl = url;
+  }
+
+  return [{
+    type: 'video',
+    url: localUrl,
+    upstreamUrl: url, /* 保留原始直链供前端 fallback */
+    width: modelMeta.resolutions.includes('1080p') && resolution === '1080p' ? 1920 : 1280,
+    height: modelMeta.resolutions.includes('1080p') && resolution === '1080p' ? 1080 : 720,
+    duration,
+    model: modelId,
+    engine: 'zeling',
+  }];
 }
 
 async function generateAudio(body) {
