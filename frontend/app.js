@@ -1830,7 +1830,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'works', 'canvas', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'writing', 'forum', 'modeling', 'director', 'storyboard', 'paint', 'history', 'admin'];
+var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -3850,7 +3850,7 @@ async function fetchRayinModels() {
 }
 
 /* ---------------- 事件绑定 ---------------- */
-var DISABLED_VIEWS = { canvas: true, works: true, assets: true, writing: true, forum: true };
+var DISABLED_VIEWS = {};
 
 function bindEvents() {
   document.addEventListener('click', function (event) {
