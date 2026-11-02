@@ -36,6 +36,9 @@ const RAYIN_DEFAULT = {
   bananaModel: 'gemini-3.1-flash-image'
 };
 
+/* GPT-image 官方模型 fallback 链：用户选的模型失败时自动尝试下一个 */
+const GPT_IMAGE_FALLBACKS = ['gpt-image-2', 'gpt-image-2.5-flare', 'gpt-image-2.5-sunburst'];
+
 const ENGINE_META = {
   flux: { label: 'FLUX.1', pill: 'FLUX.1 · 免费', hint: '免费 · 约 10 秒', meta: 'FLUX.1', free: true },
   openai: { label: '免费模型平台', pill: '免费额度 · 第三方', hint: '免费额度 · 需平台密钥', meta: 'Third-party', free: true },
