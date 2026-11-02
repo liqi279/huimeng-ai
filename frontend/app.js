@@ -3053,7 +3053,7 @@ function markJobError(job, err) {
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;
 
-  card.classList.remove('is-loading', 'is-desk-job');
+  card.classList.remove('is-loading');
   card.classList.add('is-error');
   const media = card.querySelector('.result-media');
   if (media) {
@@ -3080,7 +3080,7 @@ function markJobDone(job, url, seed, elapsed) {
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;
 
-  card.classList.remove('is-loading', 'is-error', 'is-desk-job');
+  card.classList.remove('is-loading', 'is-error');
   card.classList.add('is-done');
 
   var ratio = job.width + ' / ' + job.height;

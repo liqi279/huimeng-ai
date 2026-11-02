@@ -875,30 +875,33 @@
       occupied.push({ left: left, top: top });
     });
 
-    /* ---------- 原地处理 loading 卡片：不再 removeChild + appendChild ---------- */
-    var loadingJobs = [];
+    /* ---------- 原地处理 active 卡片（loading + error）：不再 removeChild + appendChild ----------
+       loading（生成中）→ 保留，位置/样式由 desk 管理
+       error（失败）→ 也保留，同样被 desk 管理位置/拖拽/框选，用户可删除/重试/整理 */
+    var activeJobs = [];
     if (A && A.state && A.state.jobs) {
       A.state.jobs.forEach(function (j) {
-        if (j.status === 'loading') loadingJobs.push(j);
+        if (j.status === 'loading' || j.status === 'error') activeJobs.push(j);
       });
     }
 
-    /* 清掉 DOM 中已不在 state 的 loading job（不应存在但保险） */
+    /* 清掉 DOM 中已不在 state 的 active job（不应存在但保险）
+       is-done 会被转成 desk-card，is-desk-job 会被 markJobDone 去掉，不会走到这里 */
     Array.prototype.forEach.call(grid.querySelectorAll('.result-card.is-desk-job[data-job]'), function (node) {
-      var still = loadingJobs.some(function (j) { return j.id === node.dataset.job; });
+      var still = activeJobs.some(function (j) { return j.id === node.dataset.job; });
       if (!still && node.parentNode) node.parentNode.removeChild(node);
     });
 
-    loadingJobs.forEach(function (job, i) {
+    activeJobs.forEach(function (job, i) {
       var id = job.id;
-      /* 找 grid 中已存在的 loading 节点（可能是 createLoadingCard 刚 append 的，
-         也可能是上次 renderDesktop 标记过的 is-desk-job） */
+      /* 找 grid 中已存在的节点（可能是 createLoadingCard 刚 append 的，
+         也可能是上次 renderDesktop 标记过的 is-desk-job，或是 markJobError 改成 error 的） */
       var existing = grid.querySelector('.result-card.is-desk-job[data-job="' + id + '"]')
                  || grid.querySelector('.result-card[data-job="' + id + '"]');
       if (!existing) {
         /* 极端兜底 */
         existing = document.createElement('article');
-        existing.className = 'result-card is-loading';
+        existing.className = 'result-card ' + (job.status === 'error' ? 'is-error' : 'is-loading');
         existing.dataset.job = id;
       }
       existing.classList.add('is-desk-job');
@@ -944,7 +947,7 @@
     }
 
     var empty = byId('emptyState');
-    var hasJobs = loadingJobs.length > 0;
+    var hasJobs = activeJobs.length > 0;
     if (empty) empty.style.display = (works.length || hasJobs) ? 'none' : 'flex';
 
     var hint = byId('deskHint');
