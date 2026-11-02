@@ -10172,3 +10172,511 @@ body.hm-chat-open .hm-dock {
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
+/* =============================================================
+ * 企划模块 (view-plan)
+ * ============================================================= */
+.hm-plan-page {
+  overflow-y: auto;
+  padding: 24px 32px 48px;
+}
+.hm-plan-page .hm-page-head {
+  margin-bottom: 20px;
+}
+
+/* 主 Tab */
+.hm-plan-main-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-plan-main-tab {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--hm-text-dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.hm-plan-main-tab:hover {
+  color: var(--hm-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+.hm-plan-main-tab.is-active {
+  color: var(--hm-text);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(59, 130, 246, 0.25));
+  box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.35);
+}
+
+/* section */
+.hm-plan-section {
+  display: none;
+}
+.hm-plan-section.is-active {
+  display: block;
+  animation: hm-plan-fade 0.25s ease;
+}
+@keyframes hm-plan-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* toolbar */
+.hm-plan-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-plan-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hm-plan-toolbar-left h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--hm-text);
+}
+.hm-plan-fresh {
+  font-size: 12px;
+  color: var(--hm-text-dim);
+}
+
+/* platform tabs */
+.hm-plan-platform-tabs,
+.hm-plan-cat-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.hm-plan-plat,
+.hm-plan-cat {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--hm-text-dim);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.hm-plan-plat:hover,
+.hm-plan-cat:hover {
+  color: var(--hm-text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.hm-plan-plat.is-active,
+.hm-plan-cat.is-active {
+  color: var(--hm-text);
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* trending list */
+.hm-plan-list,
+.hm-plan-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hm-plan-trend-row,
+.hm-plan-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.18s;
+}
+.hm-plan-trend-row:hover,
+.hm-plan-rank-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.35);
+  transform: translateX(3px);
+}
+.hm-plan-trend-body,
+.hm-plan-rank-body {
+  flex: 1;
+  min-width: 0;
+}
+.hm-plan-trend-title,
+.hm-plan-rank-title {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--hm-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+.hm-plan-trend-meta,
+.hm-plan-rank-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--hm-text-dim);
+}
+.hm-plan-rank-medal {
+  font-size: 22px;
+  width: 32px;
+  text-align: center;
+}
+.hm-plan-rank-num {
+  font-size: 15px;
+  font-weight: 600;
+  width: 32px;
+  text-align: center;
+  color: var(--hm-text-dim);
+}
+.hm-plan-rank-top {
+  color: #fbbf24;
+  font-weight: 700;
+}
+.hm-plan-trend-img,
+.hm-plan-rank-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.hm-plan-empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--hm-text-dim);
+}
+.hm-plan-heat {
+  font-size: 12px;
+  color: #f87171;
+  font-weight: 500;
+}
+.hm-plan-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+.hm-plan-plat-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+/* search */
+.hm-plan-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 900px;
+}
+.hm-plan-search-bar svg {
+  width: 18px;
+  height: 18px;
+  color: var(--hm-text-dim);
+  flex-shrink: 0;
+}
+.hm-plan-search-bar input {
+  flex: 1;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--hm-text);
+  font-size: 14px;
+  outline: none;
+}
+.hm-plan-search-bar input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+.hm-plan-search-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--hm-text);
+  font-size: 13px;
+  outline: none;
+}
+.hm-plan-search-results {
+  min-height: 200px;
+}
+.hm-plan-search-placeholder,
+.hm-plan-proposal-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--hm-text-dim);
+}
+.hm-plan-search-emoji {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.hm-plan-search-placeholder h3,
+.hm-plan-proposal-empty h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--hm-text);
+}
+.hm-plan-search-placeholder p,
+.hm-plan-proposal-empty p {
+  margin: 0 0 20px;
+  font-size: 13px;
+}
+.hm-plan-search-meta {
+  padding: 12px 4px;
+  font-size: 13px;
+  color: var(--hm-text-dim);
+}
+.hm-plan-search-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hm-plan-search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.15s;
+}
+.hm-plan-search-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+.hm-plan-search-title {
+  flex: 1;
+  font-size: 14px;
+  color: var(--hm-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* proposal list */
+.hm-plan-proposal-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.hm-plan-proposal-card {
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.hm-plan-proposal-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.35);
+  transform: translateY(-2px);
+}
+.hm-plan-proposal-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.hm-plan-proposal-card-head h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--hm-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+.hm-plan-proposal-card > p {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  color: var(--hm-text-dim);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hm-plan-proposal-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  margin-bottom: 12px;
+}
+.hm-plan-proposal-card-actions {
+  display: flex;
+  gap: 6px;
+}
+.hm-plan-proposal-card-actions .hm-pill {
+  padding: 4px 10px;
+  font-size: 12px;
+  flex: 1;
+}
+
+/* proposal editor */
+.hm-plan-proposal-nav {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+  flex-wrap: wrap;
+}
+.hm-plan-proposal-nav a {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 8px;
+  color: var(--hm-text-dim);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -8px;
+}
+.hm-plan-proposal-nav a:hover {
+  color: var(--hm-text);
+}
+.hm-plan-proposal-nav a.is-active {
+  color: var(--hm-text);
+  border-bottom-color: #a78bfa;
+  background: rgba(139, 92, 246, 0.08);
+}
+
+/* pstep */
+.hm-plan-pstep {
+  animation: hm-plan-fade 0.25s ease;
+}
+.hm-plan-pstep h3 {
+  margin: 0 0 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--hm-text);
+}
+
+/* field */
+.hm-plan-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.hm-plan-field > span {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--hm-text-dim);
+}
+.hm-plan-field input,
+.hm-plan-field textarea,
+.hm-plan-field select {
+  padding: 9px 13px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--hm-text);
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.hm-plan-field input:focus,
+.hm-plan-field textarea:focus,
+.hm-plan-field select:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+.hm-plan-field textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+.hm-plan-hint {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  opacity: 0.7;
+  margin-left: 6px;
+}
+
+/* grid layouts */
+.hm-plan-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+}
+.hm-plan-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 14px;
+}
+
+/* character / selling / schedule cards */
+.hm-plan-char-card,
+.hm-plan-sp-card,
+.hm-plan-sched-card {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.hm-plan-char-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.hm-plan-char-head b {
+  font-size: 14px;
+  color: var(--hm-text);
+}
+.hm-pill-mini {
+  padding: 3px 10px !important;
+  font-size: 12px !important;
+}
+
+/* responsive */
+@media (max-width: 720px) {
+  .hm-plan-grid-2,
+  .hm-plan-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .hm-plan-page {
+    padding: 16px;
+  }
+  .hm-plan-main-tabs {
+    flex-wrap: wrap;
+  }
+  .hm-plan-proposal-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+}
+

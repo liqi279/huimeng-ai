@@ -204,6 +204,33 @@
   api.deleteProject = function (id) { return request('/projects/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.addProjectFolder = function (id, name) { return request('/projects/' + encodeURIComponent(id) + '/folders', { method: 'POST', body: { name: name } }, 15000); };
 
+  /* -------------- 企划模块 -------------- */
+  api.planTrending = function (platform) {
+    return request('/plan/trending?platform=' + encodeURIComponent(platform || 'zhihu'), {}, 15000);
+  };
+  api.planTrendingAll = function () {
+    return request('/plan/trending/all', {}, 20000);
+  };
+  api.planRanking = function (category, refresh) {
+    var qs = 'category=' + encodeURIComponent(category || 'anime');
+    if (refresh) qs += '&refresh=1';
+    return request('/plan/ranking?' + qs, {}, 30000);
+  };
+  api.planRankingCategories = function () {
+    return request('/plan/ranking/categories', {}, 10000);
+  };
+  api.planSearch = function (q, category, platform) {
+    var qs = 'q=' + encodeURIComponent(q || '');
+    if (category) qs += '&category=' + encodeURIComponent(category);
+    if (platform) qs += '&platform=' + encodeURIComponent(platform);
+    return request('/plan/search?' + qs, {}, 20000);
+  };
+  api.listProposals = function () { return request('/plan/proposal', {}, 15000); };
+  api.getProposal = function (id) { return request('/plan/proposal/' + encodeURIComponent(id), {}, 15000); };
+  api.createProposal = function (payload) { return request('/plan/proposal', { method: 'POST', body: payload }, 20000); };
+  api.updateProposal = function (id, payload) { return request('/plan/proposal/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteProposal = function (id) { return request('/plan/proposal/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
   api.presets = function () { return request('/presets', {}, 15000); };
   api.catalog = function () { return request('/catalog', {}, 15000); };
   api.mediaModels = function () { return request('/media-models', {}, 15000); };

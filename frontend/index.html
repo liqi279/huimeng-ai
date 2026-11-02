@@ -39,6 +39,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l7-7 5 5-7 7H5v-5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6l3-3 6 6-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="17" r="1.4" fill="currentColor" opacity=".8"/></svg>
         <span>着色</span>
       </button>
+      <button class="hm-rail-item" data-rail="plan" title="企划（热榜、排行榜、日式动漫企划书）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5h10M7 12h7M7 15.5h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 3.5v3M8.5 3.5v3" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
+        <span>企划</span>
+      </button>
     </div>
 
     <div class="hm-rail-bottom">
@@ -1671,6 +1675,280 @@
         </div>
       </aside>
     </div>
+  </main>
+
+  <!-- ======== 企划 模块 ======== -->
+  <main class="hm-page hm-plan-page" id="view-plan" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>企划</h2>
+        <p id="planSubtitle">实时热榜 · 热度排行榜 · 类别搜索 · 日式动漫企划书</p>
+      </div>
+      <div class="hm-page-actions">
+        <!-- 主 Tab：热榜 / 排行榜 / 搜索 / 企划书 -->
+        <div class="hm-plan-main-tabs" role="tablist">
+          <button class="hm-plan-main-tab is-active" data-ptab="trending" role="tab">🔥 热榜</button>
+          <button class="hm-plan-main-tab" data-ptab="ranking" role="tab">🏆 排行榜</button>
+          <button class="hm-plan-main-tab" data-ptab="search" role="tab">🔎 搜索</button>
+          <button class="hm-plan-main-tab" data-ptab="proposal" role="tab">📝 企划书</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== 热榜 ======== -->
+    <section class="hm-plan-section is-active" id="planTrending">
+      <div class="hm-plan-toolbar">
+        <div class="hm-plan-platform-tabs" role="tablist">
+          <button class="hm-plan-plat is-active" data-platform="douyin" role="tab">🎵 抖音</button>
+          <button class="hm-plan-plat" data-platform="weibo" role="tab">🔴 微博</button>
+          <button class="hm-plan-plat" data-platform="zhihu" role="tab">💡 知乎</button>
+          <button class="hm-plan-plat" data-platform="bilibili" role="tab">📺 B站</button>
+          <button class="hm-plan-plat" data-platform="baidu" role="tab">🔍 百度</button>
+          <button class="hm-plan-plat" data-platform="toutiao" role="tab">📰 头条</button>
+          <button class="hm-plan-plat" data-platform="douban" role="tab">📚 豆瓣</button>
+        </div>
+        <div class="hm-plan-toolbar-right">
+          <span class="hm-plan-fresh" id="planTrendingFresh">上次刷新：—</span>
+          <button class="hm-pill hm-pill-primary" id="planTrendingRefresh">🔄 刷新</button>
+          <button class="hm-pill" id="planAutoRefresh">⏸ 自动刷新</button>
+        </div>
+      </div>
+      <div class="hm-plan-list" id="planTrendingList"></div>
+      <div class="hm-page-empty" id="planTrendingEmpty" hidden>
+        <div class="hm-page-empty-icon">🔥</div>
+        <h3>热榜加载中...</h3>
+        <p>首次加载需要几秒，请稍候</p>
+      </div>
+    </section>
+
+    <!-- ======== 排行榜 ======== -->
+    <section class="hm-plan-section" id="planRanking">
+      <div class="hm-plan-toolbar">
+        <div class="hm-plan-cat-tabs" role="tablist">
+          <button class="hm-plan-cat is-active" data-category="anime" role="tab">🎬 动漫</button>
+          <button class="hm-plan-cat" data-category="movie" role="tab">🎥 影视</button>
+          <button class="hm-plan-cat" data-category="game" role="tab">🎮 游戏</button>
+          <button class="hm-plan-cat" data-category="music" role="tab">🎵 音乐</button>
+          <button class="hm-plan-cat" data-category="tech" role="tab">💻 科技</button>
+          <button class="hm-plan-cat" data-category="animeip" role="tab">🌟 动漫IP</button>
+        </div>
+        <div class="hm-plan-toolbar-right">
+          <span class="hm-plan-fresh" id="planRankingFresh">构建时间：—</span>
+          <button class="hm-pill hm-pill-primary" id="planRankingRefresh">♻️ 重新聚合</button>
+        </div>
+      </div>
+      <div class="hm-plan-ranking" id="planRankingList"></div>
+    </section>
+
+    <!-- ======== 搜索 ======== -->
+    <section class="hm-plan-section" id="planSearch">
+      <div class="hm-plan-toolbar">
+        <div class="hm-plan-search-bar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="planSearchInput" type="search" placeholder="输入关键词，搜索所有平台热榜..." autocomplete="off">
+          <select id="planSearchCategory" class="hm-plan-search-select">
+            <option value="">全部类别</option>
+            <option value="anime">🎬 动漫</option>
+            <option value="movie">🎥 影视</option>
+            <option value="game">🎮 游戏</option>
+            <option value="music">🎵 音乐</option>
+            <option value="tech">💻 科技</option>
+            <option value="animeip">🌟 动漫IP</option>
+          </select>
+          <select id="planSearchPlatform" class="hm-plan-search-select">
+            <option value="">全部平台</option>
+            <option value="douyin">🎵 抖音</option>
+            <option value="weibo">🔴 微博</option>
+            <option value="zhihu">💡 知乎</option>
+            <option value="bilibili">📺 B站</option>
+            <option value="baidu">🔍 百度</option>
+            <option value="toutiao">📰 头条</option>
+            <option value="douban">📚 豆瓣</option>
+          </select>
+          <button class="hm-pill hm-pill-primary" id="planSearchBtn">🔎 搜索</button>
+        </div>
+      </div>
+      <div class="hm-plan-search-results" id="planSearchResults">
+        <div class="hm-plan-search-placeholder">
+          <div class="hm-plan-search-emoji">🔎</div>
+          <h3>输入关键词开始搜索</h3>
+          <p>例如：AI 动漫、新海诚、ComfyUI、国创</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== 企划书 ======== -->
+    <section class="hm-plan-section" id="planProposal">
+      <div class="hm-plan-toolbar">
+        <div class="hm-plan-toolbar-left">
+          <h3 id="planProposalTitle">📝 我的企划书</h3>
+        </div>
+        <div class="hm-plan-toolbar-right">
+          <button class="hm-pill hm-pill-primary" id="planNewProposal">＋ 新建企划书</button>
+          <button class="hm-pill" id="planSaveProposal" hidden>💾 保存</button>
+          <button class="hm-pill" id="planProposalBack" hidden>← 返回列表</button>
+        </div>
+      </div>
+
+      <!-- 企划书列表 -->
+      <div class="hm-plan-proposal-list" id="planProposalList">
+        <div class="hm-plan-proposal-empty">
+          <div class="hm-plan-search-emoji">📝</div>
+          <h3>还没有企划书</h3>
+          <p>点击「＋ 新建企划书」开始撰写你的日式动漫企划</p>
+          <button class="hm-pill hm-pill-primary" id="planNewProposalEmpty">＋ 新建企划书</button>
+        </div>
+      </div>
+
+      <!-- 企划书编辑页（日式动漫企划书格式） -->
+      <div class="hm-plan-proposal-editor" id="planProposalEditor" hidden>
+        <div class="hm-plan-proposal-nav">
+          <a data-pstep="concept" class="is-active">① 企划核心</a>
+          <a data-pstep="worldview">② 世界观</a>
+          <a data-pstep="characters">③ 角色设定</a>
+          <a data-pstep="selling">④ 卖点与运营</a>
+          <a data-pstep="schedule">⑤ 排期与预算</a>
+        </div>
+
+        <!-- Step 1: 企划核心 -->
+        <div class="hm-plan-pstep" id="planPstep-concept">
+          <h3>① 企划核心（コンセプト）</h3>
+          <div class="hm-plan-grid-2">
+            <label class="hm-plan-field">
+              <span>日文标题（タイトル）</span>
+              <input type="text" data-prop="concept.titleJp" placeholder="例：君の名は。">
+            </label>
+            <label class="hm-plan-field">
+              <span>英文标题</span>
+              <input type="text" data-prop="concept.titleEn" placeholder="例：Your Name.">
+            </label>
+          </div>
+          <label class="hm-plan-field">
+            <span>一句话梗概（ログライン / Logline）<i class="hm-plan-hint">30秒能讲完的故事核心</i></span>
+            <textarea rows="2" data-prop="concept.logline" placeholder="例：东京的少年和乡下的少女，在梦中交换了身体——但当他们试图见面时，发现一切可能只是一场幻觉。"></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>宣传语（キャッチコピー）</span>
+            <input type="text" data-prop="concept.tagline" placeholder="例：「前前前世，我就已经在寻找你了」">
+          </label>
+          <div class="hm-plan-grid-3">
+            <label class="hm-plan-field">
+              <span>题材（ジャンル）</span>
+              <select data-prop="concept.genre">
+                <option value="奇幻">奇幻</option><option value="恋爱">恋爱</option>
+                <option value="校园">校园</option><option value="科幻">科幻</option>
+                <option value="冒险">冒险</option><option value="治愈">治愈</option>
+                <option value="悬疑">悬疑</option><option value="热血">热血</option>
+                <option value="日常">日常</option><option value="机战">机战</option>
+              </select>
+            </label>
+            <label class="hm-plan-field">
+              <span>目标年龄层</span>
+              <select data-prop="concept.targetAge">
+                <option value="全年龄">全年龄</option>
+                <option value="青少年">青少年（12+）</option>
+                <option value="青年">青年（18+）</option>
+                <option value="儿童">儿童（6+）</option>
+              </select>
+            </label>
+            <label class="hm-plan-field">
+              <span>集数 / 时长</span>
+              <input type="text" data-prop="concept.runtime" placeholder="24分钟/集">
+            </label>
+          </div>
+          <div class="hm-plan-grid-2">
+            <label class="hm-plan-field">
+              <span>播放档期（放送期間）</span>
+              <input type="text" data-prop="concept.broadcastPeriod" placeholder="2026年1月～3月（冬番）">
+            </label>
+            <label class="hm-plan-field">
+              <span>总预算（予算）</span>
+              <input type="text" data-prop="concept.budget" placeholder="2000万日元 / 150万人民币">
+            </label>
+          </div>
+          <label class="hm-plan-field">
+            <span>集数</span>
+            <input type="number" data-prop="concept.episodes" placeholder="12" min="1" max="100">
+          </label>
+        </div>
+
+        <!-- Step 2: 世界观 -->
+        <div class="hm-plan-pstep" id="planPstep-worldview" hidden>
+          <h3>② 世界观（世界観）</h3>
+          <label class="hm-plan-field">
+            <span>故事舞台（舞台）<i class="hm-plan-hint">如：近未来东京 / 虚构大陆アルタイル</i></span>
+            <input type="text" data-prop="worldview.location" placeholder="例：2045 年的新宿">
+          </label>
+          <label class="hm-plan-field">
+            <span>时代背景（時代）</span>
+            <input type="text" data-prop="worldview.era" placeholder="例：近未来 / 中世纪 / 现代">
+          </label>
+          <label class="hm-plan-field">
+            <span>世界观设定（世界観設定）</span>
+            <textarea rows="4" data-prop="worldview.worldview" placeholder="描述这个世界的基本规则、社会结构、特殊存在..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>力量体系（能力・魔法システム）</span>
+            <textarea rows="3" data-prop="worldview.powerSystem" placeholder="这个世界里的特殊能力、战斗系统、魔法体系..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>核心主题（テーマ）<i class="hm-plan-hint">2-3 个关键词</i></span>
+            <input type="text" data-prop="worldview.themes" placeholder="例：身份认同 / 时间流逝 / 羁绊">
+          </label>
+          <label class="hm-plan-field">
+            <span>企划原点（きっかけ / Setting）<i class="hm-plan-hint">为什么要做这部作品？</i></span>
+            <textarea rows="3" data-prop="worldview.setting" placeholder="最初的灵感来源、想表达什么、给谁看..."></textarea>
+          </label>
+        </div>
+
+        <!-- Step 3: 角色设定 -->
+        <div class="hm-plan-pstep" id="planPstep-characters" hidden>
+          <h3>③ 角色设定（キャラクター設定）</h3>
+          <div class="hm-plan-char-list" id="planCharList"></div>
+          <button class="hm-pill hm-pill-primary" id="planCharAdd">＋ 添加角色</button>
+        </div>
+
+        <!-- Step 4: 卖点与运营 -->
+        <div class="hm-plan-pstep" id="planPstep-selling" hidden>
+          <h3>④ 卖点（セールスポイント）</h3>
+          <div class="hm-plan-sp-list" id="planSpList"></div>
+          <button class="hm-pill hm-pill-primary" id="planSpAdd">＋ 添加卖点</button>
+
+          <h3 style="margin-top:28px">运营计划（プロモーション）</h3>
+          <label class="hm-plan-field">
+            <span>先行预告（ティザー）</span>
+            <textarea rows="2" data-prop="promotion.teaser" placeholder="上映前 6 个月发布 15 秒 teaser..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>正式 PV</span>
+            <textarea rows="2" data-prop="promotion.pv" placeholder="..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>社交媒体策略（SNS）</span>
+            <textarea rows="2" data-prop="promotion.socialMedia" placeholder="X / Instagram / B站 / 抖音..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>线下活动（イベント）</span>
+            <textarea rows="2" data-prop="promotion.events" placeholder="东京动画节 / 上海 Anime Expo ..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>联动合作（コラボ）</span>
+            <textarea rows="2" data-prop="promotion.collaborations" placeholder="音乐、品牌、游戏联动..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>周边商品（グッズ）</span>
+            <textarea rows="2" data-prop="promotion.merch" placeholder="手办、原画集、OST、小说..."></textarea>
+          </label>
+        </div>
+
+        <!-- Step 5: 排期 -->
+        <div class="hm-plan-pstep" id="planPstep-schedule" hidden>
+          <h3>⑤ 排期（スケジュール）</h3>
+          <div class="hm-plan-sched-list" id="planSchedList"></div>
+          <button class="hm-pill hm-pill-primary" id="planSchedAdd">＋ 添加阶段</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <main class="hm-page hm-admin-page" id="view-admin" hidden>

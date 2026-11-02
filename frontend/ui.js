@@ -251,6 +251,9 @@
     if (view === 'paint' && window.HMPaint) {
       try { window.HMPaint.enter(); } catch (e) { console.error('[Paint] enter failed', e); }
     }
+    if (view === 'plan' && window.HMPlan) {
+      try { window.HMPlan.enter(); } catch (e) { console.error('[Plan] enter failed', e); }
+    }
   }
 
   function onRenderWorks() {
@@ -1899,4 +1902,723 @@
   };
 
   init();
+})();
+
+/* =============================================================
+ * 企划模块（HMPlan）
+ * 热榜 / 排行榜 / 搜索 / 日式动漫企划书
+ * ============================================================= */
+(function () {
+  'use strict';
+  var api = window.HM && window.HM.api;
+  var A = window.HMApp;
+  if (!api || !A) { console.warn('[HMPlan] 缺少 api 或 A'); return; }
+
+  var state = {
+    currentPlatform: 'douyin',
+    currentCategory: 'anime',
+    currentMainTab: 'trending',
+    autoRefresh: true,
+    autoRefreshTimer: null,
+    trendingCache: {},
+    rankingCache: {},
+    // 企划书状态
+    proposals: [],
+    editingProposal: null,   // { id, ...data }
+    editingStep: 'concept',
+  };
+
+  var PLATFORM_EMOJI = { douyin: '🎵', weibo: '🔴', zhihu: '💡', bilibili: '📺', baidu: '🔍', toutiao: '📰', douban: '📚' };
+  var PLATFORM_NAME = { douyin: '抖音', weibo: '微博', zhihu: '知乎', bilibili: 'B站', baidu: '百度', toutiao: '头条', douban: '豆瓣' };
+  var CAT_EMOJI = { anime: '🎬', movie: '🎥', game: '🎮', music: '🎵', tech: '💻', animeip: '🌟' };
+
+  function $(id) { return document.getElementById(id); }
+
+  function fmtHeat(v) {
+    var n = Number(v) || 0;
+    if (n >= 10000000) return (n / 10000000).toFixed(1) + '千万';
+    if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+    return String(n);
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return '—';
+    try { var d = new Date(iso); } catch (e) { return iso; }
+    var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+
+  function setFresh(label, iso) {
+    var el = $(label);
+    if (el) el.textContent = label === 'planRankingFresh' ? '构建时间：' + fmtTime(iso) : '上次刷新：' + fmtTime(iso);
+  }
+
+  /* ============ 主 Tab 切换 ============ */
+  function bindMainTabs() {
+    document.addEventListener('click', function (e) {
+      var tab = e.target.closest('[data-ptab]');
+      if (!tab) return;
+      var ptab = tab.getAttribute('data-ptab');
+      document.querySelectorAll('.hm-plan-main-tab').forEach(function (t) {
+        t.classList.toggle('is-active', t === tab);
+      });
+      document.querySelectorAll('.hm-plan-section').forEach(function (s) {
+        s.classList.toggle('is-active', s.id === 'plan' + ptab.charAt(0).toUpperCase() + ptab.slice(1));
+      });
+      state.currentMainTab = ptab;
+      // 按需加载
+      if (ptab === 'ranking' && $(state.currentCategory + '_rank') === null) {
+        loadRanking(state.currentCategory);
+      }
+      if (ptab === 'proposal') loadProposalList();
+      if (ptab === 'trending') loadTrending(state.currentPlatform);
+    });
+  }
+
+  /* ============ 平台 Tab ============ */
+  function bindPlatformTabs() {
+    document.addEventListener('click', function (e) {
+      var tab = e.target.closest('[data-platform]');
+      if (!tab || !tab.closest('.hm-plan-platform-tabs')) return;
+      var plat = tab.getAttribute('data-platform');
+      state.currentPlatform = plat;
+      document.querySelectorAll('.hm-plan-platform-tabs .hm-plan-plat').forEach(function (t) {
+        t.classList.toggle('is-active', t === tab);
+      });
+      loadTrending(plat);
+    });
+  }
+
+  /* ============ 类别 Tab ============ */
+  function bindCategoryTabs() {
+    document.addEventListener('click', function (e) {
+      var tab = e.target.closest('[data-category]');
+      if (!tab || !tab.closest('.hm-plan-cat-tabs')) return;
+      var cat = tab.getAttribute('data-category');
+      state.currentCategory = cat;
+      document.querySelectorAll('.hm-plan-cat-tabs .hm-plan-cat').forEach(function (t) {
+        t.classList.toggle('is-active', t === tab);
+      });
+      loadRanking(cat);
+    });
+  }
+
+  /* ============ 热榜 ============ */
+  function renderTrendingList(items, platform) {
+    var list = $('planTrendingList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!items || items.length === 0) {
+      list.innerHTML = '<div class="hm-plan-empty-state">暂无热榜数据</div>';
+      return;
+    }
+    items.forEach(function (it) {
+      var row = document.createElement('a');
+      row.className = 'hm-plan-trend-row';
+      row.href = it.url || '#';
+      row.target = '_blank';
+      row.rel = 'noopener';
+      var rankCls = it.rank <= 3 ? 'hm-plan-rank-top' : 'hm-plan-rank-num';
+      var rankHtml = it.rank <= 3
+        ? '<span class="hm-plan-rank-medal">' + ['🥇', '🥈', '🥉'][it.rank - 1] + '</span>'
+        : '<span class="' + rankCls + '">' + it.rank + '</span>';
+      var catHtml = it.category ? '<span class="hm-plan-tag">' + it.category + '</span>' : '';
+      var heatHtml = it.heat ? '<span class="hm-plan-heat">🔥 ' + fmtHeat(it.heat) + '</span>' : '';
+      row.innerHTML = rankHtml +
+        '<div class="hm-plan-trend-body">' +
+          '<div class="hm-plan-trend-title">' + (it.title || '').replace(/[<>]/g, '') + '</div>' +
+          '<div class="hm-plan-trend-meta">' + catHtml + heatHtml + '</div>' +
+        '</div>' +
+        (it.image ? '<img class="hm-plan-trend-img" src="' + it.image + '" alt="">' : '');
+      list.appendChild(row);
+    });
+  }
+
+  async function loadTrending(platform) {
+    var empty = $('planTrendingEmpty');
+    var list = $('planTrendingList');
+    if (empty) empty.hidden = false;
+    if (list) list.innerHTML = '';
+    try {
+      var data = await api.planTrending(platform);
+      state.trendingCache[platform] = data;
+      renderTrendingList(data.items || [], platform);
+      setFresh('planTrendingFresh', data.fetchedAt);
+      if (data.source === 'fallback') {
+        A.toast && A.toast('⚠️ 当前使用本地备用数据（远端抓取失败）', 'warn');
+      }
+    } catch (err) {
+      if (list) list.innerHTML = '<div class="hm-plan-empty-state">加载失败：' + (err && err.message || err) + '</div>';
+    } finally {
+      if (empty) empty.hidden = true;
+    }
+  }
+
+  function bindTrendingRefresh() {
+    var btn = $('planTrendingRefresh');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      loadTrending(state.currentPlatform);
+    });
+    var autoBtn = $('planAutoRefresh');
+    if (!autoBtn) return;
+    autoBtn.addEventListener('click', function () {
+      state.autoRefresh = !state.autoRefresh;
+      autoBtn.textContent = state.autoRefresh ? '⏸ 自动刷新' : '▶ 自动刷新';
+      if (state.autoRefresh) startAutoRefresh(); else stopAutoRefresh();
+    });
+  }
+
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    state.autoRefreshTimer = setInterval(function () {
+      if (state.currentMainTab === 'trending') {
+        loadTrending(state.currentPlatform);
+      }
+    }, 5 * 60 * 1000); // 5分钟
+  }
+  function stopAutoRefresh() {
+    if (state.autoRefreshTimer) { clearInterval(state.autoRefreshTimer); state.autoRefreshTimer = null; }
+  }
+
+  /* ============ 排行榜 ============ */
+  function renderRankingList(items, cat) {
+    var list = $('planRankingList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!items || items.length === 0) {
+      list.innerHTML = '<div class="hm-plan-empty-state">暂无排行数据</div>';
+      return;
+    }
+    items.forEach(function (it) {
+      var row = document.createElement('a');
+      row.className = 'hm-plan-rank-row';
+      row.href = it.url || '#';
+      row.target = '_blank';
+      row.rel = 'noopener';
+      var rankCls = it.rank <= 3 ? 'hm-plan-rank-top' : 'hm-plan-rank-num';
+      var rankHtml = it.rank <= 3
+        ? '<span class="hm-plan-rank-medal">' + ['🥇', '🥈', '🥉'][it.rank - 1] + '</span>'
+        : '<span class="' + rankCls + '">' + it.rank + '</span>';
+      var platformHtml = it._platformName ? '<span class="hm-plan-plat-badge hm-plan-plat-' + it._platform + '">' + PLATFORM_EMOJI[it._platform] + ' ' + it._platformName + '</span>' : '';
+      var catHtml = it.category ? '<span class="hm-plan-tag">' + it.category + '</span>' : '';
+      var heatHtml = it.heat ? '<span class="hm-plan-heat">🔥 ' + fmtHeat(it.heat) + '</span>' : '';
+      row.innerHTML = rankHtml +
+        '<div class="hm-plan-rank-body">' +
+          '<div class="hm-plan-rank-title">' + (it.title || '').replace(/[<>]/g, '') + '</div>' +
+          '<div class="hm-plan-rank-meta">' + platformHtml + catHtml + heatHtml + '</div>' +
+        '</div>' +
+        (it.image ? '<img class="hm-plan-rank-img" src="' + it.image + '" alt="">' : '');
+      list.appendChild(row);
+    });
+  }
+
+  async function loadRanking(cat, refresh) {
+    var list = $('planRankingList');
+    if (list) list.innerHTML = '<div class="hm-plan-empty-state">⏳ 正在聚合多平台数据...</div>';
+    try {
+      var data = await api.planRanking(cat, refresh);
+      state.rankingCache[cat] = data;
+      renderRankingList(data.items || [], cat);
+      setFresh('planRankingFresh', data.builtAt);
+    } catch (err) {
+      if (list) list.innerHTML = '<div class="hm-plan-empty-state">加载失败：' + (err && err.message || err) + '</div>';
+    }
+  }
+
+  function bindRankingRefresh() {
+    var btn = $('planRankingRefresh');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      loadRanking(state.currentCategory, true);
+    });
+  }
+
+  /* ============ 搜索 ============ */
+  async function doSearch() {
+    var q = $('planSearchInput').value.trim();
+    var category = $('planSearchCategory').value;
+    var platform = $('planSearchPlatform').value;
+    var results = $('planSearchResults');
+    if (!results) return;
+    if (!q) {
+      results.innerHTML = '<div class="hm-plan-search-placeholder"><div class="hm-plan-search-emoji">🔎</div><h3>输入关键词开始搜索</h3><p>例如：AI 动漫、新海诚、ComfyUI、国创</p></div>';
+      return;
+    }
+    results.innerHTML = '<div class="hm-plan-empty-state">⏳ 正在搜索...</div>';
+    try {
+      var data = await api.planSearch(q, category, platform);
+      var items = (data && data.trending) || [];
+      if (items.length === 0) {
+        results.innerHTML = '<div class="hm-plan-empty-state">未找到与「' + q + '」相关的热榜内容</div>';
+        return;
+      }
+      var html = '<div class="hm-plan-search-meta">找到 <b>' + items.length + '</b> 条相关热榜';
+      if (data.category) html += ' · 类别：' + CAT_EMOJI[data.category];
+      if (data.platform) html += ' · 平台：' + PLATFORM_EMOJI[data.platform];
+      html += '</div><div class="hm-plan-search-list">';
+      items.forEach(function (it) {
+        html += '<a class="hm-plan-search-item" href="' + (it.url || '#') + '" target="_blank" rel="noopener">' +
+          '<span class="hm-plan-plat-badge hm-plan-plat-' + it.platform + '">' + PLATFORM_EMOJI[it.platform] + ' ' + it.platformName + '</span>' +
+          '<div class="hm-plan-search-title">' + (it.title || '').replace(/[<>]/g, '') + '</div>' +
+          '<span class="hm-plan-heat">🔥 ' + fmtHeat(it.heat) + '</span>' +
+        '</a>';
+      });
+      html += '</div>';
+      results.innerHTML = html;
+    } catch (err) {
+      results.innerHTML = '<div class="hm-plan-empty-state">搜索失败：' + (err && err.message || err) + '</div>';
+    }
+  }
+
+  function bindSearch() {
+    var btn = $('planSearchBtn');
+    if (btn) btn.addEventListener('click', doSearch);
+    var input = $('planSearchInput');
+    if (input) input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') doSearch();
+    });
+  }
+
+  /* ============ 企划书 CRUD ============ */
+  function emptyProposal() {
+    return {
+      title: '', category: 'anime', tags: [], status: 'draft',
+      concept: {
+        titleJp: '', titleEn: '', logline: '', tagline: '',
+        genre: '奇幻', targetAge: '全年龄',
+        runtime: '24分钟/集', episodes: 12, broadcastPeriod: '', budget: '',
+      },
+      worldview: { setting: '', era: '', location: '', worldview: '', powerSystem: '', themes: '' },
+      characters: [], sellingPoints: [],
+      promotion: { teaser: '', pv: '', socialMedia: '', events: '', collaborations: '', merch: '' },
+      schedule: [],
+    };
+  }
+
+  async function loadProposalList() {
+    var list = $('planProposalList');
+    if (!list) return;
+    try {
+      var data = await api.listProposals();
+      state.proposals = (data && data.items) || [];
+      if (state.proposals.length === 0) {
+        list.innerHTML = '<div class="hm-plan-proposal-empty">' +
+          '<div class="hm-plan-search-emoji">📝</div>' +
+          '<h3>还没有企划书</h3>' +
+          '<p>点击「＋ 新建企划书」开始撰写你的日式动漫企划</p>' +
+          '<button class="hm-pill hm-pill-primary" id="planNewProposalEmpty">＋ 新建企划书</button>' +
+        '</div>';
+        var emptyBtn = $('planNewProposalEmpty');
+        if (emptyBtn) emptyBtn.addEventListener('click', createNewProposal);
+        return;
+      }
+      var html = '';
+      state.proposals.forEach(function (p) {
+        html += '<div class="hm-plan-proposal-card" data-pid="' + p.id + '">' +
+          '<div class="hm-plan-proposal-card-head">' +
+            '<h4>' + (p.title || '未命名').replace(/[<>]/g, '') + '</h4>' +
+            '<span class="hm-plan-plat-badge hm-plan-plat-' + p.category + '">' + (CAT_EMOJI[p.category] || '📝') + '</span>' +
+          '</div>' +
+          '<p>' + ((p.logline || '').replace(/[<>]/g, '') || '—').slice(0, 80) + '</p>' +
+          '<div class="hm-plan-proposal-card-meta">' +
+            '<span>集数: ' + (p.episodes || '—') + '</span>' +
+            '<span>更新: ' + fmtTime(p.updatedAt) + '</span>' +
+          '</div>' +
+          '<div class="hm-plan-proposal-card-actions">' +
+            '<button class="hm-pill" data-act="open">✏️ 编辑</button>' +
+            '<button class="hm-pill" data-act="del">🗑 删除</button>' +
+          '</div>' +
+        '</div>';
+      });
+      list.innerHTML = html;
+      list.querySelectorAll('.hm-plan-proposal-card').forEach(function (card) {
+        var pid = card.getAttribute('data-pid');
+        card.querySelectorAll('[data-act]').forEach(function (btn) {
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var act = btn.getAttribute('data-act');
+            if (act === 'open') openProposal(pid);
+            if (act === 'del') deleteProposal(pid, card);
+          });
+        });
+        card.addEventListener('click', function () { openProposal(pid); });
+      });
+    } catch (err) {
+      list.innerHTML = '<div class="hm-plan-empty-state">加载失败：' + (err && err.message || err) + '</div>';
+    }
+  }
+
+  async function createNewProposal() {
+    var title = window.prompt('企划书标题？', '');
+    if (title === null) return;
+    var prop = emptyProposal();
+    prop.title = title || '未命名企划';
+    try {
+      var data = await api.createProposal(prop);
+      if (data && data.proposal) {
+        state.editingProposal = data.proposal;
+        state.editingStep = 'concept';
+        showProposalEditor();
+      }
+    } catch (err) {
+      A.toast && A.toast('创建失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function openProposal(id) {
+    try {
+      var data = await api.getProposal(id);
+      if (data && data.proposal) {
+        state.editingProposal = data.proposal;
+        state.editingStep = 'concept';
+        showProposalEditor();
+      }
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function deleteProposal(id, cardEl) {
+    if (!window.confirm('确定删除这个企划书？此操作不可恢复。')) return;
+    try {
+      await api.deleteProposal(id);
+      A.toast && A.toast('已删除', 'success');
+      if (cardEl) cardEl.remove();
+      loadProposalList();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  function showProposalEditor() {
+    var list = $('planProposalList');
+    var editor = $('planProposalEditor');
+    var title = $('planProposalTitle');
+    var saveBtn = $('planSaveProposal');
+    var backBtn = $('planProposalBack');
+    var newBtn = $('planNewProposal');
+    if (list) list.hidden = true;
+    if (editor) editor.hidden = false;
+    if (title) title.textContent = '📝 ' + (state.editingProposal.title || '未命名企划');
+    if (saveBtn) saveBtn.hidden = false;
+    if (backBtn) backBtn.hidden = false;
+    if (newBtn) newBtn.hidden = true;
+    renderProposalForm();
+  }
+
+  function showProposalList() {
+    var list = $('planProposalList');
+    var editor = $('planProposalEditor');
+    var title = $('planProposalTitle');
+    var saveBtn = $('planSaveProposal');
+    var backBtn = $('planProposalBack');
+    var newBtn = $('planNewProposal');
+    if (list) list.hidden = false;
+    if (editor) editor.hidden = true;
+    if (title) title.textContent = '📝 我的企划书';
+    if (saveBtn) saveBtn.hidden = true;
+    if (backBtn) backBtn.hidden = true;
+    if (newBtn) newBtn.hidden = false;
+    state.editingProposal = null;
+    loadProposalList();
+  }
+
+  function navStep(step) {
+    state.editingStep = step;
+    document.querySelectorAll('.hm-plan-proposal-nav a').forEach(function (a) {
+      a.classList.toggle('is-active', a.getAttribute('data-pstep') === step);
+    });
+    document.querySelectorAll('.hm-plan-pstep').forEach(function (s) {
+      s.hidden = s.id !== ('planPstep-' + step);
+    });
+    // 首次进入角色/卖点/排期时渲染空列表
+    if (step === 'characters') renderCharList();
+    if (step === 'selling') renderSpList();
+    if (step === 'schedule') renderSchedList();
+  }
+
+  function bindStepNav() {
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('.hm-plan-proposal-nav a');
+      if (!a) return;
+      var step = a.getAttribute('data-pstep');
+      navStep(step);
+    });
+  }
+
+  /* ----- 表单数据绑定 ----- */
+  function getProp(obj, path) {
+    var parts = path.split('.');
+    var cur = obj;
+    for (var i = 0; i < parts.length; i++) {
+      if (cur == null) return undefined;
+      cur = cur[parts[i]];
+    }
+    return cur;
+  }
+  function setProp(obj, path, val) {
+    var parts = path.split('.');
+    var cur = obj;
+    for (var i = 0; i < parts.length - 1; i++) {
+      if (cur[parts[i]] == null) cur[parts[i]] = {};
+      cur = cur[parts[i]];
+    }
+    cur[parts[parts.length - 1]] = val;
+  }
+
+  function renderProposalForm() {
+    var data = state.editingProposal;
+    if (!data) return;
+    // 初始化嵌套对象
+    data.concept = Object.assign({ titleJp: '', titleEn: '', logline: '', tagline: '', genre: '奇幻', targetAge: '全年龄', runtime: '24分钟/集', episodes: 12, broadcastPeriod: '', budget: '' }, data.concept || {});
+    data.worldview = Object.assign({ setting: '', era: '', location: '', worldview: '', powerSystem: '', themes: '' }, data.worldview || {});
+    data.promotion = Object.assign({ teaser: '', pv: '', socialMedia: '', events: '', collaborations: '', merch: '' }, data.promotion || {});
+    // 填充 input/textarea/select
+    var root = $('planProposalEditor');
+    if (!root) return;
+    root.querySelectorAll('[data-prop]').forEach(function (el) {
+      var prop = el.getAttribute('data-prop');
+      var val = getProp(data, prop);
+      if (val === undefined || val === null) val = '';
+      if (el.tagName === 'SELECT') {
+        // 确保选项存在
+        var found = false;
+        for (var i = 0; i < el.options.length; i++) {
+          if (el.options[i].value === String(val)) { found = true; break; }
+        }
+        if (!found && val) {
+          var opt = document.createElement('option');
+          opt.value = String(val); opt.textContent = String(val);
+          el.appendChild(opt);
+        }
+        el.value = String(val);
+      } else if (el.type === 'number') {
+        el.value = val === '' ? '' : Number(val);
+      } else {
+        el.value = val;
+      }
+      // 绑定 input 事件
+      el.oninput = function () {
+        var v = el.type === 'number' ? (el.value === '' ? '' : Number(el.value)) : el.value;
+        setProp(data, prop, v);
+      };
+    });
+    navStep('concept');
+  }
+
+  /* ----- 角色列表 ----- */
+  function renderCharList() {
+    var list = $('planCharList');
+    if (!list) return;
+    var chars = state.editingProposal.characters || [];
+    list.innerHTML = '';
+    if (chars.length === 0) {
+      list.innerHTML = '<div class="hm-plan-empty-state">暂无角色，点击下方按钮添加主角 / 配角</div>';
+      return;
+    }
+    chars.forEach(function (c, idx) {
+      var div = document.createElement('div');
+      div.className = 'hm-plan-char-card';
+      div.innerHTML =
+        '<div class="hm-plan-char-head"><b>角色 #' + (idx + 1) + '</b>' +
+          '<button class="hm-pill hm-pill-mini" data-del="' + idx + '">删除</button>' +
+        '</div>' +
+        '<div class="hm-plan-grid-2">' +
+          '<label class="hm-plan-field"><span>日文名</span><input data-char="' + idx + '" data-cprop="nameJp" value="' + (c.nameJp || '') + '"></label>' +
+          '<label class="hm-plan-field"><span>中文名</span><input data-char="' + idx + '" data-cprop="nameCn" value="' + (c.nameCn || '') + '"></label>' +
+          '<label class="hm-plan-field"><span>年龄</span><input data-char="' + idx + '" data-cprop="age" value="' + (c.age || '') + '"></label>' +
+          '<label class="hm-plan-field"><span>性别</span><select data-char="' + idx + '" data-cprop="gender">' +
+            '<option value="">—</option><option value="男">男</option><option value="女">女</option><option value="其他">其他</option>' +
+          '</select></label>' +
+          '<label class="hm-plan-field"><span>角色定位</span><input data-char="' + idx + '" data-cprop="role" placeholder="主角 / 女主 / 反派 / 老师..." value="' + (c.role || '') + '"></label>' +
+          '<label class="hm-plan-field"><span>声优（CV）</span><input data-char="' + idx + '" data-cprop="seiyuu" value="' + (c.seiyuu || '') + '"></label>' +
+        '</div>' +
+        '<label class="hm-plan-field"><span>性格描述（性格）</span><textarea data-char="' + idx + '" data-cprop="personality" rows="2">' + (c.personality || '') + '</textarea></label>' +
+        '<label class="hm-plan-field"><span>外貌特征（外見）</span><textarea data-char="' + idx + '" data-cprop="appearance" rows="2">' + (c.appearance || '') + '</textarea></label>' +
+        '<label class="hm-plan-field"><span>口头禅（口癖）</span><input data-char="' + idx + '" data-cprop="catchphrase" value="' + (c.catchphrase || '') + '"></label>';
+      list.appendChild(div);
+    });
+    // 绑定事件
+    list.querySelectorAll('[data-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        chars.splice(Number(btn.getAttribute('data-del')), 1);
+        state.editingProposal.characters = chars;
+        renderCharList();
+      });
+    });
+    list.querySelectorAll('[data-char]').forEach(function (el) {
+      var cIdx = Number(el.getAttribute('data-char'));
+      var cProp = el.getAttribute('data-cprop');
+      var c = chars[cIdx];
+      if (el.tagName === 'SELECT') {
+        // ensure option
+        for (var i = 0; i < el.options.length; i++) if (el.options[i].value === String(c[cProp] || '')) el.selectedIndex = i;
+      }
+      el.oninput = function () { c[cProp] = el.value; };
+    });
+  }
+
+  function bindCharAdd() {
+    var btn = $('planCharAdd');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      state.editingProposal.characters = state.editingProposal.characters || [];
+      state.editingProposal.characters.push({ nameJp: '', nameCn: '', age: '', gender: '', role: '', personality: '', appearance: '', seiyuu: '', catchphrase: '' });
+      renderCharList();
+    });
+  }
+
+  /* ----- 卖点列表 ----- */
+  function renderSpList() {
+    var list = $('planSpList');
+    if (!list) return;
+    var items = state.editingProposal.sellingPoints || [];
+    list.innerHTML = '';
+    if (items.length === 0) {
+      list.innerHTML = '<div class="hm-plan-empty-state">暂无卖点，添加 2-5 条核心卖点帮助企划通过</div>';
+      return;
+    }
+    items.forEach(function (sp, idx) {
+      var div = document.createElement('div');
+      div.className = 'hm-plan-sp-card';
+      div.innerHTML =
+        '<div class="hm-plan-char-head"><b>卖点 #' + (idx + 1) + '</b>' +
+          '<button class="hm-pill hm-pill-mini" data-sdel="' + idx + '">删除</button>' +
+        '</div>' +
+        '<label class="hm-plan-field"><span>卖点标题</span><input data-sp="' + idx + '" data-sprop="point" value="' + (sp.point || '') + '" placeholder="例：日本一线声优阵容"></label>' +
+        '<label class="hm-plan-field"><span>详细描述</span><textarea data-sp="' + idx + '" data-sprop="description" rows="2" placeholder="为什么这一点会吸引观众...">' + (sp.description || '') + '</textarea></label>' +
+        '<label class="hm-plan-field"><span>目标受众</span><input data-sp="' + idx + '" data-sprop="targetAudience" value="' + (sp.targetAudience || '') + '" placeholder="例：18-30岁女性 / 机战爱好者"></label>';
+      list.appendChild(div);
+    });
+    list.querySelectorAll('[data-sdel]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        items.splice(Number(btn.getAttribute('data-sdel')), 1);
+        state.editingProposal.sellingPoints = items;
+        renderSpList();
+      });
+    });
+    list.querySelectorAll('[data-sp]').forEach(function (el) {
+      var sIdx = Number(el.getAttribute('data-sp'));
+      var sProp = el.getAttribute('data-sprop');
+      el.oninput = function () { items[sIdx][sProp] = el.value; };
+    });
+  }
+  function bindSpAdd() {
+    var btn = $('planSpAdd');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      state.editingProposal.sellingPoints = state.editingProposal.sellingPoints || [];
+      state.editingProposal.sellingPoints.push({ point: '', description: '', targetAudience: '' });
+      renderSpList();
+    });
+  }
+
+  /* ----- 排期列表 ----- */
+  function renderSchedList() {
+    var list = $('planSchedList');
+    if (!list) return;
+    var items = state.editingProposal.schedule || [];
+    list.innerHTML = '';
+    if (items.length === 0) {
+      list.innerHTML = '<div class="hm-plan-empty-state">暂无排期，添加制作阶段和时间节点</div>';
+      return;
+    }
+    items.forEach(function (s, idx) {
+      var div = document.createElement('div');
+      div.className = 'hm-plan-sched-card';
+      div.innerHTML =
+        '<div class="hm-plan-char-head"><b>阶段 #' + (idx + 1) + '</b>' +
+          '<button class="hm-pill hm-pill-mini" data-schdel="' + idx + '">删除</button>' +
+        '</div>' +
+        '<div class="hm-plan-grid-2">' +
+          '<label class="hm-plan-field"><span>阶段（フェーズ）</span><input data-sch="' + idx + '" data-schprop="phase" value="' + (s.phase || '') + '" placeholder="企画 / 脚本 / 设计 / 演出 / 作画 / 后期..."></label>' +
+          '<label class="hm-plan-field"><span>负责人</span><input data-sch="' + idx + '" data-schprop="owner" value="' + (s.owner || '') + '"></label>' +
+          '<label class="hm-plan-field"><span>开始日期</span><input data-sch="' + idx + '" data-schprop="startDate" value="' + (s.startDate || '') + '" placeholder="2025-04-01"></label>' +
+          '<label class="hm-plan-field"><span>结束日期</span><input data-sch="' + idx + '" data-schprop="endDate" value="' + (s.endDate || '') + '" placeholder="2025-06-30"></label>' +
+        '</div>' +
+        '<label class="hm-plan-field"><span>交付物</span><input data-sch="' + idx + '" data-schprop="deliverable" value="' + (s.deliverable || '') + '" placeholder="剧本初稿 / 角色定稿 / 分镜 / 动画 / 成品"></label>';
+      list.appendChild(div);
+    });
+    list.querySelectorAll('[data-schdel]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        items.splice(Number(btn.getAttribute('data-schdel')), 1);
+        state.editingProposal.schedule = items;
+        renderSchedList();
+      });
+    });
+    list.querySelectorAll('[data-sch]').forEach(function (el) {
+      var schIdx = Number(el.getAttribute('data-sch'));
+      var schProp = el.getAttribute('data-schprop');
+      el.oninput = function () { items[schIdx][schProp] = el.value; };
+    });
+  }
+  function bindSchedAdd() {
+    var btn = $('planSchedAdd');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      state.editingProposal.schedule = state.editingProposal.schedule || [];
+      state.editingProposal.schedule.push({ phase: '', startDate: '', endDate: '', deliverable: '', owner: '' });
+      renderSchedList();
+    });
+  }
+
+  /* ----- 保存 / 新建 / 返回 ----- */
+  function bindProposalActions() {
+    var newBtn = $('planNewProposal');
+    if (newBtn) newBtn.addEventListener('click', createNewProposal);
+    var saveBtn = $('planSaveProposal');
+    if (saveBtn) saveBtn.addEventListener('click', async function () {
+      if (!state.editingProposal) return;
+      try {
+        // 标题从 concept.titleJp 或 titleEn 填充
+        var prop = state.editingProposal;
+        if (!prop.title) prop.title = prop.concept.titleJp || prop.concept.titleEn || '未命名企划';
+        if (prop.id) {
+          await api.updateProposal(prop.id, { proposal: prop, title: prop.title });
+          A.toast && A.toast('✅ 已保存', 'success');
+        } else {
+          var data = await api.createProposal({ proposal: prop, title: prop.title });
+          if (data && data.proposal) {
+            state.editingProposal = data.proposal;
+            prop.id = data.proposal.id;
+          }
+          A.toast && A.toast('✅ 已保存', 'success');
+        }
+      } catch (err) {
+        A.toast && A.toast('保存失败: ' + (err && err.message || err), 'error');
+      }
+    });
+    var backBtn = $('planProposalBack');
+    if (backBtn) backBtn.addEventListener('click', showProposalList);
+  }
+
+  /* ============ 主入口 ============ */
+  function enter() {
+    if (state.currentMainTab === 'trending') {
+      loadTrending(state.currentPlatform);
+    } else if (state.currentMainTab === 'ranking') {
+      loadRanking(state.currentCategory);
+    } else if (state.currentMainTab === 'proposal') {
+      showProposalList();
+    }
+    if (state.autoRefresh) startAutoRefresh();
+  }
+
+  function init() {
+    bindMainTabs();
+    bindPlatformTabs();
+    bindCategoryTabs();
+    bindTrendingRefresh();
+    bindRankingRefresh();
+    bindSearch();
+    bindStepNav();
+    bindProposalActions();
+    bindCharAdd();
+    bindSpAdd();
+    bindSchedAdd();
+  }
+
+  init();
+  window.HMPlan = { enter: enter, state: state };
 })();
