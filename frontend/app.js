@@ -2981,16 +2981,24 @@ async function runRayinBanana(job, prompt) {
 }
 
 function errorText(err) {
-  return (err && err.hint) || friendlyError(err);
+  /* 优先后端透传的中文主错误 err.message，否则再走 friendlyError 规则 */
+  if (err && err.message) return String(err.message);
+  return friendlyError(err);
+}
+
+function errorHint(err) {
+  return (err && err.hint) ? String(err.hint) : '';
 }
 
 function friendlyError(err) {
   const message = String((err && err.message) || '');
-  if (/exhausted|额度|暂满/i.test(message)) return '该 Gemini 模型上游额度暂满（已尝试备用模型），请稍后重试或换模型';
+  if (/exhausted|暂满/i.test(message)) return '该模型上游额度暂满，请稍后重试或换模型';
   if (/429|quota|exceeded|ZeroGPU|limit/i.test(message)) return '免费算力额度暂满，请稍后重试';
   if (/Failed to fetch|NetworkError|network|load failed/i.test(message)) return '免费通道连接失败，请检查网络后重试';
   if (/abort|timeout|超时/i.test(message)) return '生成超时，请重试';
   if (/HTTP 5\d\d/.test(message)) return '免费算力繁忙，请稍后重试';
+  /* 兜底：如果 message 本身有内容（后端中文直传），原样返回 */
+  if (message) return message;
   return '生成失败，请稍后重试';
 }
 
@@ -3039,11 +3047,15 @@ function markJobError(job, err) {
   card.classList.add('is-error');
   const media = card.querySelector('.result-media');
   if (media) {
+    var mainText = esc(errorText(err) || '生成失败');
+    var hintText = errorHint(err);
+    var hintHtml = hintText ? '<div class="error-hint">' + esc(hintText) + '</div>' : '';
     media.classList.add('media-loading');
     media.innerHTML = '<div class="error-box">' +
       ICONS.alert +
       '<strong>生成失败</strong>' +
-      '<span>' + esc(errorText(err)) + '</span>' +
+      '<div class="error-main">' + mainText + '</div>' +
+      hintHtml +
       '<button data-action="retry">重试</button>' +
     '</div>';
   }

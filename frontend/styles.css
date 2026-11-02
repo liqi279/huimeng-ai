@@ -1175,6 +1175,21 @@ img {
   color: #9a8290;
 }
 
+.error-box .error-main {
+  max-width: 240px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #fde68a;
+  font-weight: 500;
+}
+
+.error-box .error-hint {
+  max-width: 240px;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #9a8290;
+}
+
 .error-box button {
   margin-top: 4px;
   height: 30px;
