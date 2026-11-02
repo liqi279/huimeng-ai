@@ -443,16 +443,16 @@
   var mediaCatalog = {
     video: [
       /* 账号一 — 按次 */
-      { id: 'vidu-q4', name: 'Vidu Q4', minDuration: 5, maxDuration: 31, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 31, creditsMin: 5, creditsPerSec: 0, desc: '5-31 积分/次', refHint: '多模态参考（9图3音3视）' },
-      { id: 'minimax_h3-768p', name: 'MiniMax H3 768p', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 15, creditsMin: 13, creditsPerSec: 0, desc: '13-15 积分/次', refHint: '全参模式，prompt/seed/多参考' },
-      { id: 'sd-2-720p', name: 'Seedance 2 · 9图3音3视', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 35, creditsPerSec: 0, desc: '35 积分/次', refHint: '9图+3音+3视多模态参考' },
-      { id: 'wan3.0-vedio-deal', name: 'Wan 3.0 Video Deal', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 37, creditsPerSec: 0, desc: '37 积分/次', refHint: '阿里 Wan 3.0 端到端处理' },
-      { id: 'seedance-2.0', name: 'Seedance 2.0 满血', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 34, creditsPerSec: 0, desc: '34 积分/次', refHint: '字节 Seedance 2.0 满血，图生/视频生视频' },
-      /* 账号二 — 按次 + 按秒 */
-      { id: 'sd2.5-sss', name: 'Seedance 2.5 SSS', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 70, creditsPerSec: 0, desc: '70 积分/次', refHint: 'Seedance 2.5 SSS 多参考' },
-      { id: 'Seedance-2.0-Fast', name: 'Seedance 2.0 Fast', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 0.2, creditsPerSec: 1.7, desc: '0.2-1.7 积分/秒', refHint: '极速模式，按秒计费' },
-      { id: 'Seedance-2.0-Mini', name: 'Seedance 2.0 Mini', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 1.3, creditsPerSec: 1.5, desc: '1.3-1.5 积分/秒', refHint: '迷你版，便宜稳定' },
-      { id: 'sd-2.5', name: 'Seedance 2.5 满血', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 2.4, creditsPerSec: 9.9, desc: '2.4-9.9 积分/秒', refHint: 'Seedance 2.5 满血按秒' },
+      { id: 'vidu-q4', name: 'Vidu Q4', minDuration: 4, maxDuration: 16, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 31, creditsMin: 19, creditsPerSec: 0, desc: '19-31 积分/次', refHint: '图15 / 视0 / 音3 多参考，支持首尾帧' },
+      { id: 'minimax_h3-768p', name: 'MiniMax H3', minDuration: 5, maxDuration: 15, free: false, resolutions: ['768p', '480p'], fps: 24, billingType: 'perTask', credits: 15, creditsMin: 13, creditsPerSec: 0, desc: '13-15 积分/次', refHint: '图9 / 视0 / 音3 全参模式，原生 768p' },
+      { id: 'sd-2-720p', name: 'Seedance 2 · 9图3音3视', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 35, creditsPerSec: 0, desc: '35 积分/次', refHint: '9图+3音+3视 多模态参考' },
+      { id: 'seedance-2.0-903', name: 'Seedance 2.0 满血', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 34, creditsPerSec: 0, desc: '34 积分/次', refHint: 'seedance-2.0-903，9图+0视+3音' },
+      { id: 'wan3.0', name: 'Wan 3.0', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 37, creditsPerSec: 0, desc: '37 积分/次', refHint: '阿里 Wan 3.0 自动路由' },
+      /* 账号二 — 混合 */
+      { id: 'sd2.5-sss', name: 'Seedance 2.5 SSS', minDuration: 5, maxDuration: 30, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 70, creditsPerSec: 0, desc: '70 积分/次', refHint: '图30 / 视10 / 音10 极多参考' },
+      { id: 'seedance-2.0-fast', name: 'Seedance 2.0 Fast', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 0.2, creditsPerSec: 1.7, desc: '0.2-1.7 积分/秒', refHint: '极速通道，按秒计费' },
+      { id: 'seedance-2.0-mini', name: 'Seedance 2.0 Mini', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 1.3, creditsPerSec: 1.5, desc: '1.3-1.5 积分/秒', refHint: '迷你版，便宜稳定' },
+      { id: 'seedance-2.5', name: 'Seedance 2.5 满血', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 2.4, creditsPerSec: 9.9, desc: '2.4-9.9 积分/秒', refHint: 'Seedance 2.5 满血按秒' },
       { id: 'seedance-2.0-full', name: 'Seedance 2.0 满血 (按秒)', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perSecond', credits: 0, creditsPerSecMin: 0.3, creditsPerSec: 2.2, desc: '0.3-2.2 积分/秒', refHint: 'Seedance 2.0 满血按秒通道' },
     ],
     audio: {
