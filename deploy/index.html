@@ -10002,7 +10002,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261102044908-bad34dc";</script>
+<script>window.HM_BUILD = "20261102050444-0b7596b";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -15984,7 +15984,7 @@ function markJobError(job, err) {
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;
 
-  card.classList.remove('is-loading');
+  card.classList.remove('is-loading', 'is-desk-job');
   card.classList.add('is-error');
   const media = card.querySelector('.result-media');
   if (media) {
@@ -16011,7 +16011,7 @@ function markJobDone(job, url, seed, elapsed) {
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;
 
-  card.classList.remove('is-loading', 'is-error');
+  card.classList.remove('is-loading', 'is-error', 'is-desk-job');
   card.classList.add('is-done');
 
   var ratio = job.width + ' / ' + job.height;
