@@ -60,7 +60,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
 
 async function readJsonResponse(res, hint) {
   const text = await res.text();
-  if (!res.ok) throw jsonError(502, apiErrorText(res.status, text), hint);
+  if (!res.ok) throw jsonError(res.status, apiErrorText(res.status, text), hint);
   try {
     return JSON.parse(text);
   } catch (err) {

@@ -800,9 +800,12 @@
     if (!grid.classList.contains('is-board')) grid.classList.add('is-board');
     setDockVar();
 
-    /* ---------- 清理已完成/失败的 job 节点 ---------- */
+    /* ---------- 清理已完成/失败的 job 节点 ----------
+       is-done（成功）→ 会被转成 desk-card 显示在桌面，这里清理掉
+       is-loading（生成中）→ 保留
+       is-error（失败）→ 保留，让用户看到具体报错并点"重试" */
     Array.prototype.forEach.call(grid.querySelectorAll('[data-job]'), function (node) {
-      if (!node.classList.contains('is-loading')) {
+      if (!node.classList.contains('is-loading') && !node.classList.contains('is-error')) {
         if (node.parentNode) node.parentNode.removeChild(node);
       }
     });
