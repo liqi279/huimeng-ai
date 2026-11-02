@@ -2551,7 +2551,7 @@ async function generateOne(job, prompt) {
 
   updateJobStatus(job, '提交任务…');
 
-  // 已连接后端时优先走服务端代理（前后端分离）；FLUX 失败可回退浏览器直连
+  // 已连接后端时优先走服务端代理（前后端分离）
   if (window.HM && window.HM.api && window.HM.api.online) {
     try {
       const remote = await runBackendImage(job, prompt);
@@ -2559,8 +2559,18 @@ async function generateOne(job, prompt) {
       markJobDone(job, remote.url, remote.seed, remoteElapsed);
       return;
     } catch (err) {
-      if (job.engine !== 'flux') {
-        err.hint = err.hint || ('后端生成失败：' + (err.message || '请检查接入设置'));
+      /* 后端已返回明确错误（err.message 非空）→ 直接展示给用户，不 fallback */
+      if (err && err.message) {
+        /* 如果后端没有 hint，补一个通用 fallback hint */
+        if (!err.hint && !err.offline) err.hint = err.hint || '请稍后重试或更换模型/接入设置';
+        markJobError(job, err);
+        throw err;
+      }
+      /* 后端纯网络错误（无 message）→ FLUX 可 fallback 到浏览器直连 */
+      if (job.engine === 'flux' && err.offline) {
+        /* 继续往下走浏览器免费兜底通道 */
+      } else {
+        markJobError(job, err);
         throw err;
       }
     }
