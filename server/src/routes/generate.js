@@ -844,6 +844,9 @@ async function generateVideo(body) {
     if (err && err.status === 403) throw jsonError(403, '该 API Key 未授权此模型', '可能是 model ID 不对或 Key 权限不够');
     if (err && err.status === 401) throw jsonError(401, 'API Key 无效', '请检查则灵平台 API Key 是否有效');
     if (err && err.status === 400) throw err;
+    if (err && err.status === 404) throw jsonError(502, '则灵接口路径错误', '可能需要更新则灵 API 版本');
+    /* 其他错误（网络、超时等）：保留原始提示方便排查 */
+    if (err && err.message) throw jsonError(502, '则灵视频接口请求失败', err.message);
     throw videoUnavailable();
   }
 
