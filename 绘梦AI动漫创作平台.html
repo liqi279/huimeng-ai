@@ -8481,6 +8481,90 @@ body.hm-light .hm-gv-empty { color: #94a3b8; }
   letter-spacing: 0.01em;
 }
 
+.hm-ov-quickstart .hm-ov-quick-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.7;
+  margin: 0 0 14px;
+}
+.hm-ov-quickstart .hm-ov-quick-desc code {
+  background: rgba(6, 12, 22, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #93c5fd;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 12px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.hm-ov-download-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.hm-ov-download-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  background: rgba(30, 64, 175, 0.12);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+}
+.hm-ov-download-card:hover {
+  border-color: rgba(96, 165, 250, 0.6);
+  background: rgba(30, 64, 175, 0.22);
+  transform: translateY(-1px);
+}
+.hm-ov-download-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(52, 211, 153, 0.3));
+}
+.hm-ov-download-info { flex: 1; min-width: 0; }
+.hm-ov-download-info strong {
+  display: block;
+  font-size: 13.5px;
+  color: #f1f5f9;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.hm-ov-download-info span {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+.hm-ov-download-arrow {
+  font-size: 18px;
+  color: #60a5fa;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.hm-ov-download-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #94a3b8;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.hm-ov-download-hint code {
+  background: rgba(6, 12, 22, 0.8);
+  color: #93c5fd;
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 11.5px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
 .hm-ov-model-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -10335,7 +10419,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261102060040-d3f15fc";</script>
+<script>window.HM_BUILD = "20261102060612-12d4995";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -11203,6 +11287,41 @@ body.hm-chat-open .hm-dock {
             <strong>⚠️ 有门槛</strong>
             <p>需要搭工作流、装模型，首次上手约 30 分钟。但一次搭好，后续使用成本为零。</p>
           </div>
+        </div>
+      </section>
+
+      <!-- 一键下载 -->
+      <section class="hm-ov-quickstart">
+        <h3>立即上手：一键脚本 + 工作流</h3>
+        <p class="hm-ov-quick-desc">下载下面这两个文件到 Windows 电脑，把它们放同一目录，双击 <code>setup_comfyui.bat</code>。脚本会自动 clone ComfyUI、装依赖、下 Wan2.1 模型、复制工作流 JSON。完成后打开 ComfyUI 的 Load 菜单就能看到。</p>
+        <div class="hm-ov-download-grid">
+          <a class="hm-ov-download-card" href="https://raw.githubusercontent.com/liqi279/huimeng-ai/main/docs/comfyui/setup_comfyui.bat" download>
+            <div class="hm-ov-download-icon">⚡</div>
+            <div class="hm-ov-download-info">
+              <strong>setup_comfyui.bat</strong>
+              <span>一键安装脚本 · Windows · PowerShell</span>
+            </div>
+            <span class="hm-ov-download-arrow">↓</span>
+          </a>
+          <a class="hm-ov-download-card" href="https://raw.githubusercontent.com/liqi279/huimeng-ai/main/docs/comfyui/wan2.1_t2v_1.3B.json" download>
+            <div class="hm-ov-download-icon">📝</div>
+            <div class="hm-ov-download-info">
+              <strong>Wan2.1 文生视频工作流</strong>
+              <span>1.3B FP16 · 8GB 显存可跑 · 5–15 秒</span>
+            </div>
+            <span class="hm-ov-download-arrow">↓</span>
+          </a>
+          <a class="hm-ov-download-card" href="https://raw.githubusercontent.com/liqi279/huimeng-ai/main/docs/comfyui/wan2.1_i2v_14B_480P.json" download>
+            <div class="hm-ov-download-icon">🎬</div>
+            <div class="hm-ov-download-info">
+              <strong>Wan2.1 图生视频工作流</strong>
+              <span>14B 480P · 12GB 显存 · 首帧控运镜</span>
+            </div>
+            <span class="hm-ov-download-arrow">↓</span>
+          </a>
+        </div>
+        <div class="hm-ov-download-hint">
+          <strong>💡 已有 ComfyUI？</strong> 直接把上面两个 JSON 拖进 ComfyUI 浏览器窗口即可加载，或放进 <code>ComfyUI\user\default\workflows\</code> 目录后在 Load 菜单里选。
         </div>
       </section>
 
