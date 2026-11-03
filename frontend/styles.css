@@ -12575,3 +12575,237 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   .hm-char-colors { grid-template-columns: 1fr; }
   .hm-char-card-row { flex-direction: column; align-items: center; }
 }
+
+/* ============ 批量导入向导 ============ */
+.hm-import-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+.hm-import-modal {
+  width: 100%;
+  max-width: 780px;
+  max-height: 86vh;
+  background: #1a1a2e;
+  border-radius: 14px;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: hm-lightbox-in 0.2s ease;
+}
+.hm-import-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(139, 92, 246, 0.12);
+}
+.hm-import-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--hm-text);
+}
+.hm-import-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: rgba(255, 255, 255, 0.08); color: #fff;
+  cursor: pointer; font-size: 14px;
+  transition: background 0.15s;
+}
+.hm-import-close:hover { background: rgba(255, 255, 255, 0.2); }
+
+.hm-import-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* 步骤指示 */
+.hm-import-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.hm-import-step {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  color: var(--hm-text-dim);
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-import-step.active {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--hm-text);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+.hm-import-step.current {
+  background: rgba(139, 92, 246, 0.28);
+  color: #fff;
+  border-color: var(--hm-accent);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+.hm-import-pane-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-text-dim);
+  margin-bottom: 10px;
+}
+
+/* Tabs */
+.hm-import-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 14px;
+}
+.hm-import-tab {
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--hm-text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+  border-radius: 6px 6px 0 0;
+}
+.hm-import-tab:hover { color: var(--hm-text); }
+.hm-import-tab.active {
+  color: var(--hm-text);
+  border-bottom-color: var(--hm-accent);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+/* JSON textarea */
+.hm-import-ta {
+  width: 100%;
+  height: 260px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+.hm-import-ta:focus { border-color: var(--hm-accent); }
+
+.hm-import-hint {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  margin-top: 8px;
+}
+
+/* Drop zone */
+.hm-import-drop {
+  padding: 40px;
+  border: 2px dashed rgba(139, 92, 246, 0.4);
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.06);
+  text-align: center;
+  color: var(--hm-text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.hm-import-drop:hover, .hm-import-drop.active {
+  border-color: var(--hm-accent);
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--hm-text);
+}
+
+/* Templates */
+.hm-import-templates {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+/* Preview table */
+.hm-import-table {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: auto;
+  max-height: 320px;
+}
+.hm-import-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.hm-import-table th, .hm-import-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.hm-import-table th {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--hm-text-dim);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+.hm-import-table tbody tr:hover {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.hm-import-summary {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #22c55e;
+  font-weight: 500;
+}
+.hm-import-empty {
+  padding: 40px;
+  text-align: center;
+  color: #f59e0b;
+}
+
+/* Confirm box */
+.hm-import-confirm-box {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-import-confirm-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+}
+.hm-import-confirm-row:last-child { border-bottom: none; }
+.hm-import-confirm-row b { color: #a78bfa; }
+.hm-import-confirm-warn {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  font-size: 12px;
+}
+
+/* Footer */
+.hm-import-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+}

@@ -4445,6 +4445,7 @@
     $('artChecklistOverlay').addEventListener('click', function (e) {
       if (e.target === $('artChecklistOverlay')) $('artChecklistOverlay').hidden = true;
     });
+    $('artImportBtn').addEventListener('click', openImportWizard);
 
     // 筛选
     var searchTimer = null;
@@ -4473,6 +4474,309 @@
       var gridId = groupKey === 'palette' ? 'artPaletteGrid' : groupKey === 'shadows' ? 'artShadowGrid' : 'artHighlightGrid';
       renderColorGroup(gridId, g, groupKey);
     });
+  }
+
+  /* ============ 批量导入向导 ============ */
+  function openImportWizard() {
+    var overlay = document.createElement('div');
+    overlay.className = 'hm-import-overlay';
+    overlay.innerHTML =
+      '<div class="hm-import-modal">' +
+        '<div class="hm-import-header">' +
+          '<h3>📥 批量导入美术设定 / 角色</h3>' +
+          '<button class="hm-import-close" title="关闭 (ESC)">✕</button>' +
+        '</div>' +
+        '<div class="hm-import-body">' +
+          '<div class="hm-import-steps">' +
+            '<div class="hm-import-step active" data-step="1">① 准备数据</div>' +
+            '<div class="hm-import-step" data-step="2">② 解析预览</div>' +
+            '<div class="hm-import-step" data-step="3">③ 确认导入</div>' +
+          '</div>' +
+          '<div class="hm-import-pane" data-pane="1">' +
+            '<div class="hm-import-pane-title">输入方式</div>' +
+            '<div class="hm-import-tabs">' +
+              '<button class="hm-import-tab active" data-tab="json">📄 JSON 粘贴</button>' +
+              '<button class="hm-import-tab" data-tab="file">📁 选择文件</button>' +
+              '<button class="hm-import-tab" data-tab="template">📑 下载模板</button>' +
+            '</div>' +
+            '<div class="hm-import-tab-pane" data-tab-pane="json">' +
+              '<textarea class="hm-import-ta" id="importJson" placeholder=\'粘贴 JSON 数组，如: [{"title":"角色A","category":"character",...}]\'></textarea>' +
+              '<div class="hm-import-hint">每行 1 个对象的 JSON 数组格式，最多 500 条</div>' +
+            '</div>' +
+            '<div class="hm-import-tab-pane" data-tab-pane="file" hidden>' +
+              '<div class="hm-import-drop" id="importDrop">📁 点击或拖入 .json 文件</div>' +
+              '<input type="file" id="importFile" accept=".json,.csv" hidden>' +
+            '</div>' +
+            '<div class="hm-import-tab-pane" data-tab-pane="template" hidden>' +
+              '<div class="hm-import-hint">下载 Excel / JSON 模板，按模板填完后上传</div>' +
+              '<div class="hm-import-templates">' +
+                '<button class="hm-pill" id="importTemplateChar">🧑 角色设定模板 (JSON)</button>' +
+                '<button class="hm-pill" id="importTemplateSimple">📋 简易角色清单 (CSV)</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="hm-import-pane" data-pane="2" hidden>' +
+            '<div class="hm-import-pane-title">解析预览</div>' +
+            '<div class="hm-import-preview" id="importPreview"></div>' +
+            '<div class="hm-import-summary" id="importSummary"></div>' +
+          '</div>' +
+          '<div class="hm-import-pane" data-pane="3" hidden>' +
+            '<div class="hm-import-pane-title">确认导入</div>' +
+            '<div class="hm-import-confirm" id="importConfirm"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hm-import-footer">' +
+          '<button class="hm-pill hm-pill-ghost" data-import-prev" hidden>← 上一步</button>' +
+          '<button class="hm-pill" data-import-next>下一步 →</button>' +
+          '<button class="hm-pill hm-pill-primary" data-import-go hidden>🚀 开始导入</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    var state2 = { items: [], mode: 'json', step: 1 };
+    var $ = overlay.querySelector.bind(overlay);
+
+    // 关闭
+    function close() { document.body.removeChild(overlay); }
+    overlay.querySelector('.hm-import-close').onclick = close;
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); } });
+
+    // Tab 切换
+    overlay.querySelectorAll('.hm-import-tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        overlay.querySelectorAll('.hm-import-tab').forEach(function (x) { x.classList.remove('active'); });
+        t.classList.add('active');
+        var tab = t.getAttribute('data-tab');
+        overlay.querySelectorAll('.hm-import-tab-pane').forEach(function (p) { p.hidden = true; });
+        overlay.querySelector('.hm-import-tab-pane[data-tab-pane="' + tab + '"]').hidden = false;
+        state2.mode = tab;
+      });
+    });
+
+    // 文件选择 / 拖放
+    overlay.querySelector('#importDrop').onclick = function () {
+      overlay.querySelector('#importFile').click();
+    };
+    overlay.querySelector('#importFile').onchange = function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (f) readImportFile(f);
+    };
+    var drop = overlay.querySelector('#importDrop');
+    drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('active'); });
+    drop.addEventListener('dragleave', function () { drop.classList.remove('active'); });
+    drop.addEventListener('drop', function (e) {
+      e.preventDefault(); drop.classList.remove('active');
+      var f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) readImportFile(f);
+    });
+
+    function readImportFile(f) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var text = reader.result;
+          var parsed = tryParse(text, f.name);
+          state2.items = parsed.items;
+          goStep(2);
+        } catch (err) {
+          A.toast && A.toast('解析失败: ' + err.message, 'error');
+        }
+      };
+      reader.readAsText(f, 'utf-8');
+    }
+
+    function tryParse(text, name) {
+      text = (text || '').trim();
+      if (text.startsWith('[') || text.startsWith('{')) {
+        var json = JSON.parse(text);
+        if (Array.isArray(json)) return { items: json };
+        if (Array.isArray(json.items)) return { items: json.items };
+        throw new Error('JSON 需为数组或带 items 字段');
+      }
+      // CSV fallback
+      if (name && name.toLowerCase().endsWith('.csv')) {
+        return parseCSV(text);
+      }
+      // 自动判断是否像 CSV
+      if (text.indexOf(',') >= 0 && text.indexOf('\n') >= 0 && !text.startsWith('{')) {
+        return parseCSV(text);
+      }
+      throw new Error('无法识别格式，请用 JSON 或 CSV');
+    }
+
+    function parseCSV(text) {
+      var lines = text.split(/\r?\n/).filter(function (l) { return l.trim(); });
+      if (lines.length === 0) return { items: [] };
+      var headers = splitCSV(lines[0]).map(function (h) { return h.trim(); });
+      var titleIdx = headers.indexOf('title');
+      var items = [];
+      for (var i = 1; i < lines.length; i++) {
+        var row = splitCSV(lines[i]);
+        var obj = { category: 'character', section: '', status: 'draft', version: 'Ver1.0', tags: [], colorSpec: { palette: [], shadows: [], highlights: [] }, characterSpec: { expressions: [], mouthShapes: [], poses: [], variants: [], modelSheet: { front: '', side: '', back: '' } } };
+        var char = obj.characterSpec;
+        for (var j = 0; j < headers.length; j++) {
+          var h = headers[j].trim().toLowerCase();
+          var v = (row[j] || '').trim();
+          if (h === 'title') obj.title = v;
+          else if (h === 'subtitle') obj.subtitle = v;
+          else if (h === 'category') obj.category = v || 'character';
+          else if (h === 'section') obj.section = v;
+          else if (h === 'tags') obj.tags = v ? v.split(/[|,]/).map(function (t) { return t.trim(); }).filter(Boolean) : [];
+          else if (h === 'role') char.role = v;
+          else if (h === 'gender') char.gender = v;
+          else if (h === 'age') char.age = v;
+          else if (h === 'height') char.height = v;
+          else if (h === 'weight') char.weight = v;
+          else if (h === 'voiceactor' || h === 'voice_actor' || h === 'cv') char.voiceActor = v;
+          else if (h === 'signature') char.signature = v;
+          else if (h === 'hair' || h === 'haircolor') char.hairColor = v;
+          else if (h === 'eye' || h === 'eyecolor') char.eyeColor = v;
+          else if (h === 'skin' || h === 'skincolor') char.skinColor = v;
+          else if (h === 'outfit' || h === 'outfitcolor') char.outfitMainColor = v;
+        }
+        if (obj.title) items.push(obj);
+      }
+      return { items: items };
+    }
+
+    function splitCSV(line) {
+      var out = []; var cur = ''; var q = false;
+      for (var i = 0; i < line.length; i++) {
+        var c = line[i];
+        if (c === '"') { q = !q; continue; }
+        if (c === ',' && !q) { out.push(cur); cur = ''; }
+        else cur += c;
+      }
+      out.push(cur);
+      return out;
+    }
+
+    // 模板下载
+    overlay.querySelector('#importTemplateChar').onclick = function () {
+      var tpl = {
+        _comment: '角色设定批量导入模板 (JSON) —— 每个对象会被独立创建，自动生成 id',
+        items: [
+          { title: '角色A', subtitle: '示例', category: 'character', section: 'Model Sheet', status: 'draft', version: 'Ver1.0', tags: ['主角', '男'],
+            characterSpec: { role: '主角', gender: '男', age: '16', height: '172cm', weight: '58kg', voiceActor: '花泽香菜', signature: '命运的齿轮...',
+              hairColor: '#8B5A2B', eyeColor: '#2E3A59', skinColor: '#FFDBAC', outfitMainColor: '#4A5568',
+              modelSheet: { front: '', side: '', back: '' },
+              expressions: [], mouthShapes: [], poses: [], variants: [] } }
+        ]
+      };
+      downloadBlob(JSON.stringify(tpl, null, 2), 'character-template.json', 'application/json');
+    };
+    overlay.querySelector('#importTemplateSimple').onclick = function () {
+      var csv = 'title,role,gender,age,height,voiceactor,signature,haircolor,eyecolor\n';
+      csv += '角色A,主角,男,16,172cm,花泽香菜,命运的齿轮,#8B5A2B,#2E3A59\n';
+      csv += '角色B,女主,女,15,162cm,泽城美雪,樱花纷飞,#E91E63,#4472C4\n';
+      downloadBlob(csv, 'character-simple.csv', 'text/csv;charset=utf-8');
+    };
+    function downloadBlob(text, name, mime) {
+      var blob = new Blob([text], { type: mime });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    // 步骤切换
+    function goStep(step) {
+      state2.step = step;
+      overlay.querySelectorAll('.hm-import-pane').forEach(function (p) { p.hidden = true; });
+      overlay.querySelector('.hm-import-pane[data-pane="' + step + '"]').hidden = false;
+      overlay.querySelectorAll('.hm-import-step').forEach(function (s) {
+        s.classList.toggle('active', Number(s.getAttribute('data-step')) <= step);
+        s.classList.toggle('current', Number(s.getAttribute('data-step')) === step);
+      });
+      // 按钮
+      $('[data-import-prev]').hidden = step <= 1;
+      $('[data-import-next]').hidden = step >= 3;
+      $('[data-import-go]').hidden = step < 3;
+      if (step === 2) renderPreview();
+      if (step === 3) renderConfirm();
+    }
+
+    function renderPreview() {
+      var items = state2.items;
+      var table = overlay.querySelector('#importPreview');
+      var summary = overlay.querySelector('#importSummary');
+      if (!items || items.length === 0) {
+        table.innerHTML = '<div class="hm-import-empty">⚠️ 解析出 0 条数据，请检查输入格式</div>';
+        summary.textContent = '';
+        return;
+      }
+      summary.textContent = '✅ 解析成功：' + items.length + ' 条 · 预计创建 ' + Math.min(items.length, 500) + ' 条';
+      var html = '<div class="hm-import-table"><table><thead><tr><th>#</th><th>标题</th><th>分类</th><th>子节</th><th>角色定位</th><th>状态</th></tr></thead><tbody>';
+      items.slice(0, 50).forEach(function (it, i) {
+        var cat = it.category || 'character';
+        var role = (it.characterSpec && it.characterSpec.role) || '';
+        var title = (it.title || '(无标题)').replace(/[<>]/g, '').slice(0, 30);
+        html += '<tr><td>' + (i + 1) + '</td><td>' + title + '</td><td>' + cat + '</td><td>' + (it.section || '—') + '</td><td>' + role + '</td><td>' + (it.status || 'draft') + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      if (items.length > 50) html += '<div class="hm-import-hint">... 后 ' + (items.length - 50) + ' 条省略</div>';
+      table.innerHTML = html;
+    }
+
+    function renderConfirm() {
+      var box = overlay.querySelector('#importConfirm');
+      var items = state2.items;
+      var charCount = items.filter(function (i) { return (i.category || 'character') === 'character'; }).length;
+      box.innerHTML =
+        '<div class="hm-import-confirm-box">' +
+          '<div class="hm-import-confirm-row"><span>总条目数</span><b>' + items.length + '</b></div>' +
+          '<div class="hm-import-confirm-row"><span>角色设定</span><b>' + charCount + '</b></div>' +
+          '<div class="hm-import-confirm-row"><span>其他分类</span><b>' + (items.length - charCount) + '</b></div>' +
+          '<div class="hm-import-confirm-row hm-import-confirm-warn"><span>⚠️ 注意</span><span>导入后每条自动分配 ID 与 createdAt，不可回滚</span></div>' +
+        '</div>';
+    }
+
+    // 下一步按钮
+    overlay.querySelector('[data-import-next]').onclick = function () {
+      if (state2.step === 1) {
+        // 收集输入
+        if (state2.mode === 'json') {
+          var text = overlay.querySelector('#importJson').value.trim();
+          if (!text) { A.toast && A.toast('请输入或粘贴 JSON 数组', 'error'); return; }
+          try {
+            var json = JSON.parse(text);
+            state2.items = Array.isArray(json) ? json : (Array.isArray(json.items) ? json.items : []);
+          } catch (err) {
+            A.toast && A.toast('JSON 解析失败: ' + err.message, 'error');
+            return;
+          }
+        }
+        if (!state2.items || state2.items.length === 0) {
+          A.toast && A.toast('解析出 0 条数据', 'error');
+          return;
+        }
+        if (state2.items.length > 500) {
+          A.toast && A.toast('单次最多 500 条，已自动截断', 'error');
+          state2.items = state2.items.slice(0, 500);
+        }
+      }
+      goStep(state2.step + 1);
+    };
+    overlay.querySelector('[data-import-prev]').onclick = function () {
+      goStep(state2.step - 1);
+    };
+    overlay.querySelector('[data-import-go]').onclick = async function () {
+      var btn = overlay.querySelector('[data-import-go]');
+      btn.disabled = true;
+      btn.textContent = '⏳ 导入中...';
+      try {
+        var res = await api.bulkImportArts(state2.items);
+        A.toast && A.toast('✅ 导入完成：' + res.inserted + ' 条' + (res.skipped ? '，跳过 ' + res.skipped + ' 条' : ''), 'success');
+        close();
+        loadList();
+      } catch (err) {
+        btn.disabled = false; btn.textContent = '🚀 开始导入';
+        A.toast && A.toast('导入失败: ' + (err.message || err), 'error');
+      }
+    };
   }
 
   window.HMArt = { enter: enter, state: state };

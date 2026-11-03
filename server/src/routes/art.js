@@ -278,6 +278,53 @@ router.post('/art/upload', wrap(async (req, res) => {
   });
 }));
 
+/* ============ 批量导入（JSON 数组） ============ */
+router.post('/art/bulk', wrap(async (req, res) => {
+  const body = req.body || {};
+  assert(Array.isArray(body.items) && body.items.length > 0, 400, 'items 数组为空', '请传入 { items: [...] }');
+  assert(body.items.length <= 500, 400, '单次最多 500 条', '当前: ' + body.items.length);
+
+  const list = await loadArts();
+  const now = new Date().toISOString();
+  const eb = emptyBoard();
+  const results = [];
+  let skipped = 0;
+
+  for (const raw of body.items) {
+    if (!raw || typeof raw !== 'object') { skipped++; continue; }
+    const eb2 = emptyBoard();
+    const entry = Object.assign({}, eb2, raw, {
+      id: uid(),
+      category: raw.category || 'character',
+      section: raw.section || '',
+      status: raw.status || 'draft',
+      version: raw.version || 'Ver1.0',
+      tags: Array.isArray(raw.tags) ? raw.tags : [],
+      spec: Object.assign({}, eb2.spec, raw.spec || {}),
+      media: Object.assign({}, eb2.media, raw.media || {}),
+      colorSpec: Object.assign({}, eb2.colorSpec, raw.colorSpec || {}),
+      characterSpec: deepMergeCharacterSpec(eb2.characterSpec, raw.characterSpec),
+      createdAt: now, updatedAt: now,
+    });
+    list.unshift(entry);
+    results.push({
+      id: entry.id,
+      title: entry.title,
+      category: entry.category,
+      section: entry.section,
+    });
+  }
+
+  // 保持 ARTS_CAP 上限
+  if (list.length > ARTS_CAP) {
+    list.splice(ARTS_CAP);
+    skipped += (list.length - ARTS_CAP);
+  }
+
+  await saveArts(list);
+  res.json({ inserted: results.length, skipped, items: results });
+}));
+
 /* ============ 分类字典 ============ */
 router.get('/art/categories', wrap(async (req, res) => {
   res.json({ categories: CATEGORIES, statusOptions: STATUS_OPTIONS, artTypes: ART_TYPES });
