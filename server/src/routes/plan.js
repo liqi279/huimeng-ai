@@ -406,22 +406,17 @@ const CATEGORIES = {
 };
 
 /** 本地排行榜持久化文件 */
-function rankingFile() {
-  return path.join(store.dirs.root, 'plan-rankings.json');
-}
+const rankingFile = path.join(store.dirs.root, 'plan-rankings.json');
+
+const _w = store.writeJson;
+const _r = store.readJson;
+const _q = store.enqueue;
 
 async function loadRankings() {
-  try {
-    const raw = await fsp.readFile(rankingFile(), 'utf8');
-    return JSON.parse(raw);
-  } catch (e) {
-    return {};
-  }
+  return _r(rankingFile, {});
 }
-
-async function saveRankings(obj) {
-  await fsp.mkdir(path.dirname(rankingFile()), { recursive: true });
-  await fsp.writeFile(rankingFile(), JSON.stringify(obj, null, 2), 'utf8');
+function saveRankings(obj) {
+  return _q(() => _w(rankingFile, obj));
 }
 
 /** 从各平台拉全量热榜，按类别聚合，返回排名（按热度降序） */
@@ -598,21 +593,9 @@ router.get('/plan/search', wrap(async (req, res) => {
  */
 const PROPOSAL_CAP = 200;
 
-function proposalsFile() {
-  return path.join(store.dirs.root, 'plan-proposals.json');
-}
-async function loadProposals() {
-  try {
-    const raw = await fsp.readFile(proposalsFile(), 'utf8');
-    return JSON.parse(raw);
-  } catch (e) {
-    return [];
-  }
-}
-async function saveProposals(list) {
-  await fsp.mkdir(path.dirname(proposalsFile()), { recursive: true });
-  await fsp.writeFile(proposalsFile(), JSON.stringify(list, null, 2), 'utf8');
-}
+const proposalsFile = path.join(store.dirs.root, 'plan-proposals.json');
+async function loadProposals() { return _r(proposalsFile, []); }
+function saveProposals(list) { return _q(() => _w(proposalsFile, list)); }
 
 function emptyProposal() {
   return {

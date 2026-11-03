@@ -65,6 +65,11 @@ const express = require('express');
 const { wrap, assert } = require('../http');
 const store = require('../store');
 
+// 使用 store 的原子写入 + 串行队列，保证并发安全和数据不损坏
+const writeJson = store.writeJson;
+const readJson = store.readJson;
+const enqueue = store.enqueue;
+
 const router = express.Router();
 
 const ARTS_CAP = 1000;
@@ -129,15 +134,27 @@ const ART_TYPES = [
 ];
 
 /* ============ 持久化 ============ */
-function artsFile() { return path.join(store.dirs.root, 'artboards.json'); }
-function checklistFile() { return path.join(store.dirs.root, 'art-checklist.json'); }
+const artsFile = path.join(store.dirs.root, 'artboards.json');
+const checklistFile = path.join(store.dirs.root, 'art-checklist.json');
 
 async function loadArts() {
-  try { return JSON.parse(await fsp.readFile(artsFile(), 'utf8')); } catch (e) { return []; }
+  return readJson(artsFile, []);
 }
-async function saveArts(list) {
-  await fsp.mkdir(path.dirname(artsFile()), { recursive: true });
-  await fsp.writeFile(artsFile(), JSON.stringify(list, null, 2), 'utf8');
+function saveArts(list) {
+  // 使用 store 的原子写入（先写 .tmp 再 rename）+ 串行队列（避免并发覆盖）
+  return enqueue(() => writeJson(artsFile, list));
+}
+async function loadChecklist() {
+  const raw = await readJson(checklistFile, null);
+  if (!raw) return Object.assign({}, DEFAULT_CHECKLIST, { items: {} });
+  // 合并默认字段，防止老数据缺字段
+  return Object.assign({}, DEFAULT_CHECKLIST, raw, {
+    items: raw.items || {},
+  });
+}
+function saveChecklist(data) {
+  data.updatedAt = new Date().toISOString();
+  return enqueue(() => writeJson(checklistFile, data));
 }
 
 function uid() { return crypto.randomUUID(); }
@@ -236,32 +253,8 @@ const DEFAULT_CHECKLIST = {
   ],
 };
 
-async function loadChecklist() {
-  try {
-    const raw = JSON.parse(await fsp.readFile(checklistFile(), 'utf8'));
-    // 合并默认字段（防止老数据缺字段）
-    return Object.assign({}, DEFAULT_CHECKLIST, raw, {
-      sekai_board: DEFAULT_CHECKLIST.sekai_board,
-      bg_board: DEFAULT_CHECKLIST.bg_board,
-      prop_board: DEFAULT_CHECKLIST.prop_board,
-      character_board: DEFAULT_CHECKLIST.character_board,
-      creature_board: DEFAULT_CHECKLIST.creature_board,
-      mecha_board: DEFAULT_CHECKLIST.mecha_board,
-      effect_board: DEFAULT_CHECKLIST.effect_board,
-      visual_board: DEFAULT_CHECKLIST.visual_board,
-      logo_board: DEFAULT_CHECKLIST.logo_board,
-      coordination: DEFAULT_CHECKLIST.coordination,
-      items: raw.items || {}, // 已勾选状态
-    });
-  } catch (e) {
-    return Object.assign({}, DEFAULT_CHECKLIST, { items: {} });
-  }
-}
-async function saveChecklist(data) {
-  await fsp.mkdir(path.dirname(checklistFile()), { recursive: true });
-  data.updatedAt = new Date().toISOString();
-  await fsp.writeFile(checklistFile(), JSON.stringify(data, null, 2), 'utf8');
-}
+/* 注意：loadChecklist / saveChecklist 已移至上方「持久化」模块，
+ * 使用 store.writeJson 原子写入 + enqueue 串行化，保证并发安全 */
 
 router.get('/art/checklist', wrap(async (req, res) => {
   const data = await loadChecklist();

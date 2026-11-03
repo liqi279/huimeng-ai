@@ -62,20 +62,19 @@ const express = require('express');
 const { wrap, assert } = require('../http');
 const store = require('../store');
 
+// 使用 store 的原子写入 + 串行队列
+const _w = store.writeJson;
+const _r = store.readJson;
+const _q = store.enqueue;
+
 const router = express.Router();
 
 const SCRIPTS_CAP = 500;
 
-/* ============ 持久化 ============ */
-function scriptsFile() { return path.join(store.dirs.root, 'scripts.json'); }
-async function loadScripts() {
-  try { return JSON.parse(await fsp.readFile(scriptsFile(), 'utf8')); }
-  catch (e) { return []; }
-}
-async function saveScripts(list) {
-  await fsp.mkdir(path.dirname(scriptsFile()), { recursive: true });
-  await fsp.writeFile(scriptsFile(), JSON.stringify(list, null, 2), 'utf8');
-}
+/* ============ 持久化（原子写入 + 串行队列） ============ */
+const scriptsFile = path.join(store.dirs.root, 'scripts.json');
+async function loadScripts() { return _r(scriptsFile, []); }
+function saveScripts(list) { return _q(() => _w(scriptsFile, list)); }
 function findScript(list, id) {
   return list.find((s) => s.id === id);
 }
