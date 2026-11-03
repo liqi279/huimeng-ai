@@ -754,16 +754,16 @@
   function folderCardHtmlInner(folder) {
     var items = worksUnderFolder(folder.id);
     var subCount = desk.folders.filter(function (f) { return (f.parentId || null) === folder.id; }).length;
-    var thumbs = items.slice(0, 4).map(function (w) { return esc(w.thumb || w.url || ''); });
+    var thumbs = items.slice(0, 4);
     var more = Math.max(0, items.length - 4);
     var gridHtml = '';
     if (thumbs.length === 0) {
       gridHtml = '<div class="folder-grid-empty">📂</div>';
     } else if (thumbs.length === 1) {
-      gridHtml = '<img src="' + thumbs[0] + '" class="folder-t" alt="">';
+      gridHtml = '<img src="' + esc(thumbs[0].thumb || thumbs[0].url || '') + '" data-fp="' + esc(thumbs[0].id) + '" class="folder-t" alt="">';
     } else {
-      gridHtml = thumbs.map(function (t, i) {
-        return '<img src="' + t + '" class="folder-t folder-t-' + i + '" alt="">';
+      gridHtml = thumbs.map(function (w, i) {
+        return '<img src="' + esc(w.thumb || w.url || '') + '" data-fp="' + esc(w.id) + '" class="folder-t folder-t-' + i + '" alt="">';
       }).join('');
     }
     var moreHtml = more > 0 ? '<span class="folder-more">+' + more + '</span>' : '';
@@ -2156,20 +2156,31 @@
       });
       var clickTimer = null;
       grid.addEventListener('click', function (event) {
-        /* 左键 folder-card → 弹窗预览文件夹内容 */
+        /* 1. folder-card 里的叠放小图 (.folder-t img) → 打开 lightbox 预览 */
+        var fp = event.target.closest('.folder-t[data-fp]');
+        if (fp) {
+          var w = findWork(fp.dataset.fp);
+          if (w) A.openLightbox(w);
+          return;
+        }
+        /* 2. folder-card 本体 → 进入该文件夹桌面（不再弹窗预览） */
         var folderCard = event.target.closest('.folder-card[data-folder]');
         if (folderCard) {
           if (event.target.closest('button')) return;
           var folder = desk.folders.find(function (f) { return f.id === folderCard.dataset.folder; });
-          if (folder) openFolderPreview(folder);
+          if (folder) {
+            view.activeFolder = folder.id;
+            renderDesktop();
+            persistSoon();
+          }
           return;
         }
+        /* 3. desk-card 本体 → 延迟 openLightbox */
         var card = event.target.closest('.desk-card[data-work]');
         if (!card) return;
         if (event.target.closest('button, [data-dact]')) return; /* 操作按钮由各自按钮处理 */
         var work = findWork(card.dataset.work);
         if (!work) return;
-        /* 单击 = 打开预览（延迟防双击冲突） */
         clearTimeout(clickTimer);
         clickTimer = setTimeout(function () { A.openLightbox(work); }, 240);
       });
