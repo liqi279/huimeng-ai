@@ -3796,7 +3796,7 @@
     if (!body) return;
 
     var sections = [
-      { key: 'sekai_board', title: '🌍 世界观氛围资料（イメージボード + 世界観美術テキスト）' },
+      { key: 'sekai_board', title: '🌍 世界观氛围资料（氛围概念稿 + 世界观美术规范书）' },
       { key: 'bg_board',    title: '🏞️ 背景设定（平面/立面/透视/场景版本区分）' },
       { key: 'prop_board',  title: '🎒 道具/器物/自然物/材质光照' },
       { key: 'character_board', title: '🧑 角色设定（三视图/表情/口型/色卡）' },
@@ -3805,7 +3805,7 @@
       { key: 'effect_board',   title: '✨ 作画特效设定（角色招式，非环境）' },
       { key: 'visual_board',   title: '🎨 宣传视觉设定' },
       { key: 'logo_board',     title: '🔤 文字标识/纹章/LOGO 设定' },
-      { key: 'coordination',   title: '📎 配套协同资料（色彩设计/原図基準/ロケハン）' },
+      { key: 'coordination',   title: '📎 配套协同资料（色彩设计/原图基准规范/实地采风）' },
     ];
 
     body.innerHTML = sections.map(function (s) {
