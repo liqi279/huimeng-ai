@@ -4812,6 +4812,11 @@
       btn.__bound = true;
       btn.addEventListener('click', createNew);
     }
+    var imp = $('ouaImportBtn');
+    if (imp && !imp.__bound) {
+      imp.__bound = true;
+      imp.addEventListener('click', openImportWizard);
+    }
     var exp = $('ouaExportBtn');
     if (exp && !exp.__bound) {
       exp.__bound = true;
@@ -5263,6 +5268,389 @@
   function exportCsv() {
     var url = api.exportOua(state.team);
     window.open(url, '_blank');
+  }
+
+  /* ============ 批量导入向导 ============ */
+  function openImportWizard() {
+    var overlay = document.createElement('div');
+    overlay.className = 'hm-import-overlay';
+    overlay.id = 'hmOuaImportOverlay';
+    overlay.innerHTML = buildImportMarkup();
+    document.body.appendChild(overlay);
+
+    var step = 1, parsed = null, inputTextarea, inputDrop, inputFile, curTab = 'json';
+
+    // 关闭
+    overlay.querySelector('.hm-import-close').onclick = closeAll;
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeAll(); });
+    function closeAll() { overlay.remove(); }
+
+    // Tab 切换
+    overlay.querySelectorAll('.hm-import-tab').forEach(function (t) {
+      t.addEventListener('click', function () {
+        curTab = t.getAttribute('data-tab');
+        overlay.querySelectorAll('.hm-import-tab').forEach(function (x) { x.classList.remove('active'); });
+        t.classList.add('active');
+        overlay.querySelectorAll('.hm-import-pane').forEach(function (p) { p.hidden = p.id !== 'hmOuaPane-' + curTab; });
+      });
+    });
+
+    // JSON textarea
+    inputTextarea = overlay.querySelector('#hmOuaPane-json .hm-import-ta');
+
+    // 文件 drop zone
+    inputDrop = overlay.querySelector('#hmOuaPane-file .hm-import-drop');
+    inputFile = overlay.querySelector('#hmOuaPane-file input[type=file]');
+    inputDrop.addEventListener('click', function () { inputFile.click(); });
+    inputDrop.addEventListener('dragover', function (e) { e.preventDefault(); inputDrop.classList.add('active'); });
+    inputDrop.addEventListener('dragleave', function () { inputDrop.classList.remove('active'); });
+    inputDrop.addEventListener('drop', function (e) {
+      e.preventDefault(); inputDrop.classList.remove('active');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    inputFile.addEventListener('change', function () {
+      if (inputFile.files && inputFile.files[0]) handleFile(inputFile.files[0]);
+    });
+
+    // 模板下载
+    overlay.querySelector('#hmOuaTemplateJson').onclick = function () {
+      downloadTemplate(getTemplateJson(), 'shot-import-template.json');
+    };
+    overlay.querySelector('#hmOuaTemplateCsv').onclick = function () {
+      downloadTemplate(getTemplateCsv(), 'shot-import-template.csv');
+    };
+
+    function handleFile(f) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var ext = (f.name.split('.').pop() || '').toLowerCase();
+        if (ext === 'csv') {
+          parsed = parseCsvToShots(reader.result);
+        } else {
+          try { parsed = normalizeShots(JSON.parse(reader.result)); }
+          catch (e) { alert('JSON 解析失败: ' + e.message); return; }
+        }
+        step = 2; renderStep();
+      };
+      reader.readAsText(f, 'utf-8');
+    }
+
+    function renderStep() {
+      overlay.querySelectorAll('.hm-import-step').forEach(function (s, i) {
+        s.classList.toggle('current', i + 1 === step);
+        s.classList.toggle('active', i + 1 < step);
+      });
+      var body = overlay.querySelector('.hm-import-body');
+      if (step === 1) { body.innerHTML = getStep1Html(); }
+      else if (step === 2) { body.innerHTML = getStep2Html(); }
+      else { body.innerHTML = getStep3Html(); }
+
+      // rebind
+      overlay.querySelectorAll('.hm-import-tab').forEach(function (t) {
+        t.addEventListener('click', function () {
+          curTab = t.getAttribute('data-tab');
+          overlay.querySelectorAll('.hm-import-tab').forEach(function (x) { x.classList.remove('active'); });
+          t.classList.add('active');
+          overlay.querySelectorAll('.hm-import-pane').forEach(function (p) { p.hidden = p.id !== 'hmOuaPane-' + curTab; });
+        });
+      });
+
+      // 文件 drop zone rebind
+      inputFile = body.querySelector('#hmOuaPane-file input[type=file]');
+      inputDrop = body.querySelector('#hmOuaPane-file .hm-import-drop');
+      if (inputDrop) {
+        inputDrop.addEventListener('click', function () { inputFile.click(); });
+        inputDrop.addEventListener('dragover', function (e) { e.preventDefault(); inputDrop.classList.add('active'); });
+        inputDrop.addEventListener('dragleave', function () { inputDrop.classList.remove('active'); });
+        inputDrop.addEventListener('drop', function (e) {
+          e.preventDefault(); inputDrop.classList.remove('active');
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+        });
+        inputFile.addEventListener('change', function () {
+          if (inputFile.files && inputFile.files[0]) handleFile(inputFile.files[0]);
+        });
+      }
+
+      // Step 2 buttons
+      if (step === 2) {
+        overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = 1; renderStep(); };
+        overlay.querySelector('#hmOuaNextBtn').onclick = function () { step = 3; renderStep(); };
+        renderPreviewTable();
+      }
+      // Step 3 buttons
+      if (step === 3) {
+        overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = 2; renderStep(); };
+        overlay.querySelector('#hmOuaImportBtn').onclick = doImport;
+      }
+    }
+
+    function doImport() {
+      var items = parsed.slice(0, 500);
+      api.bulkOua(items).then(function (res) {
+        A.toast && A.toast('✅ 成功导入 ' + res.inserted + ' 条', 'success');
+        closeAll();
+        loadList();
+      }).catch(function (err) {
+        A.toast && A.toast('导入失败: ' + (err.message || err), 'error');
+      });
+    }
+
+    // 上一步按钮
+    overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = Math.max(1, step - 1); renderStep(); };
+    // 下一步按钮
+    overlay.querySelector('#hmOuaNextBtn').onclick = function () {
+      if (step === 1) {
+        var raw;
+        if (curTab === 'json') {
+          raw = inputTextarea.value.trim();
+          if (!raw) { alert('请输入 JSON'); return; }
+          try { parsed = normalizeShots(JSON.parse(raw)); }
+          catch (e) { alert('JSON 解析失败: ' + e.message); return; }
+        } else {
+          var file = inputFile && inputFile.files && inputFile.files[0];
+          if (!file) { alert('请选择或拖入文件'); return; }
+          return; // file reader 会自动进 step 2
+        }
+        step = 2; renderStep();
+      }
+    };
+
+    renderStep();
+  }
+
+  function buildImportMarkup() {
+    return '<div class="hm-import-modal">' +
+      '<div class="hm-import-header">' +
+        '<h3>🎬 原画批量导入 — 镜头表</h3>' +
+        '<button class="hm-import-close">✕</button>' +
+      '</div>' +
+      '<div class="hm-import-body">' +
+        '<div class="hm-import-steps">' +
+          '<div class="hm-import-step current">① 准备数据</div>' +
+          '<div class="hm-import-step">② 解析预览</div>' +
+          '<div class="hm-import-step">③ 确认导入</div>' +
+        '</div>' +
+        '<div class="hm-import-tabs">' +
+          '<button class="hm-import-tab active" data-tab="json">📄 JSON 粘贴</button>' +
+          '<button class="hm-import-tab" data-tab="file">📁 文件上传</button>' +
+          '<button class="hm-import-tab" data-tab="tpl">📑 下载模板</button>' +
+        '</div>' +
+
+        '<div class="hm-import-pane" id="hmOuaPane-json">' +
+          '<div class="hm-import-pane-title">粘贴 JSON 数组（支持 {items: [...]} 或纯数组）</div>' +
+          '<textarea class="hm-import-ta" placeholder=\'[{"shotNo":"1-01","team":"first","title":"主角奔跑","director":"山田太郎","cameraMove":"前 DOLLY IN","status":"todo"}]\'></textarea>' +
+          '<div class="hm-import-hint">支持字段：shotNo / team(first|second) / title / sceneRef / status / version / director / cameraMove / cameraDuration / timeSheet / actionFlow / animator / totalFrames / feedbackStatus</div>' +
+        '</div>' +
+
+        '<div class="hm-import-pane" id="hmOuaPane-file" hidden>' +
+          '<div class="hm-import-pane-title">选择或拖入 .json / .csv 文件</div>' +
+          '<div class="hm-import-drop">' +
+            '<div style="font-size:40px;margin-bottom:10px">📂</div>' +
+            '<div style="font-size:14px;font-weight:600">点击选择文件</div>' +
+            '<div style="font-size:12px;margin-top:6px">或拖入到此处</div>' +
+            '<input type="file" accept=".json,.csv" style="display:none">' +
+          '</div>' +
+          '<div class="hm-import-hint">CSV 列头：shotNo, team, title, sceneRef, status, director, cameraMove, actionFlow, animator, totalFrames...</div>' +
+        '</div>' +
+
+        '<div class="hm-import-pane" id="hmOuaPane-tpl" hidden>' +
+          '<div class="hm-import-pane-title">下载 Excel 兼容模板，填完后在 📁 文件上传 里导入</div>' +
+          '<div class="hm-import-templates">' +
+            '<button class="hm-pill hm-pill-primary" id="hmOuaTemplateJson">📥 下载 JSON 完整模板</button>' +
+            '<button class="hm-pill" id="hmOuaTemplateCsv">📥 下载 CSV 简易清单</button>' +
+          '</div>' +
+          '<div class="hm-import-hint" style="margin-top:14px">CSV 支持列头：shotNo, team(first/second), title, sceneRef, status(todo/wip/review/final), version, director, cameraMove(固定/PAN→/TILT/DOLLY IN/DOLLY OUT/回転/组合), cameraDuration, timeSheet, actionFlow, animator, totalFrames, feedbackStatus(pending/submitted/reviewing/fixing/approved), layoutRef(逗号分隔), drawingNotes</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="hm-import-footer">' +
+        '<button class="hm-pill hm-pill-ghost" id="hmOuaBackBtn" disabled>← 上一步</button>' +
+        '<button class="hm-pill hm-pill-primary" id="hmOuaNextBtn">下一步 →</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function getStep1Html() { return ''; }
+  function getStep2Html() {
+    var items = parsed.slice(0, 50);
+    var body = '';
+    var totalTeam = { first: 0, second: 0 };
+    parsed.forEach(function (s) { if (s.team === 'second') totalTeam.second++; else totalTeam.first++; });
+    if (!parsed || !parsed.length) {
+      body = '<div class="hm-import-empty">❌ 未解析到任何镜头</div>';
+    } else {
+      var html = '<table><thead><tr><th>镜号</th><th>团队</th><th>标题</th><th>状态</th><th>担当</th><th>运镜/帧数</th></tr></thead><tbody>';
+      items.forEach(function (s) {
+        var dir = (s.first && s.first.director) || (s.second && s.second.animator) || '—';
+        var cam = (s.first && s.first.cameraMove) || ((s.second && s.second.totalFrames) ? (s.second.totalFrames + ' 帧') : '—');
+        var teamLabel = s.team === 'second' ? '第二原画' : '第一原画';
+        html += '<tr><td>' + (s.shotNo || '—') + '</td><td>' + teamLabel + '</td><td>' + (s.title || '') + '</td><td>' + (ST_LABELS[s.status] || s.status || '未开始') + '</td><td>' + dir + '</td><td>' + cam + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      body = html + '<div class="hm-import-summary">共解析到 ' + parsed.length + ' 个镜头 · 第一原画 ' + totalTeam.first + ' · 第二原画 ' + totalTeam.second + (parsed.length > 50 ? '（表格只显示前 50 条）' : '') + '</div>';
+    }
+    return '<div class="hm-import-pane-title">② 预览前 50 条</div>' +
+           '<div class="hm-import-table">' + body + '</div>';
+  }
+  function renderPreviewTable() { /* 已在上一个函数直接生成 */ }
+  function getStep3Html() {
+    var items = parsed.slice(0, 500);
+    var totalTeam = { first: 0, second: 0 };
+    items.forEach(function (s) { if (s.team === 'second') totalTeam.second++; else totalTeam.first++; });
+    return '<div class="hm-import-pane-title">③ 确认导入</div>' +
+           '<div class="hm-import-confirm-box">' +
+             '<div class="hm-import-confirm-row"><span>📋 总条数</span><b>' + items.length + '</b></div>' +
+             '<div class="hm-import-confirm-row"><span>🎨 第一原画</span><b>' + totalTeam.first + ' 镜头</b></div>' +
+             '<div class="hm-import-confirm-row"><span>🎬 第二原画</span><b>' + totalTeam.second + ' 镜头</b></div>' +
+             '<div class="hm-import-confirm-row"><span>🔢 单次上限</span><b>500 条</b></div>' +
+             '<div class="hm-import-confirm-warn">⚠️ 导入后无法撤销。请确认以上数据正确。</div>' +
+           '</div>' +
+           '<button class="hm-pill hm-pill-primary" id="hmOuaImportBtn" style="margin-top:14px;padding:10px 30px">🚀 开始导入</button>';
+  }
+
+  /* CSV 解析 → Shot 数组 */
+  function parseCsvToShots(text) {
+    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim(); });
+    if (!lines.length) return [];
+    var header = splitCsv(lines[0]).map(function (h) { return h.trim().toLowerCase(); });
+    var items = [];
+    for (var i = 1; i < lines.length; i++) {
+      var cells = splitCsv(lines[i]);
+      var row = {};
+      header.forEach(function (h, idx) { row[h] = (cells[idx] || '').trim(); });
+      var shot = buildShotFromRow(row);
+      if (shot.shotNo || shot.title) items.push(shot);
+    }
+    return normalizeShots(items);
+  }
+  function splitCsv(line) {
+    var out = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (inQ) {
+        if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (c === '"') inQ = false;
+        else cur += c;
+      } else {
+        if (c === ',') { out.push(cur); cur = ''; }
+        else if (c === '"') inQ = true;
+        else cur += c;
+      }
+    }
+    out.push(cur); return out;
+  }
+  function buildShotFromRow(r) {
+    var team = (r.team || 'first').toLowerCase();
+    if (team.indexOf('sec') >= 0 || team.indexOf('動画') >= 0 || team === '2') team = 'second';
+    else team = 'first';
+
+    var shot = {
+      shotNo: r.shotno || r.shot_no || '',
+      team: team,
+      title: r.title || '',
+      sceneRef: r.sceneref || r.scene_ref || '',
+      status: r.status || 'todo',
+      version: r.version || 'Ver1.0',
+      first: {
+        director: r.director || '',
+        cameraMove: r.cameramove || r.camera_move || '固定',
+        cameraDuration: r.cameraduration || r.camera_duration || '',
+        timeSheet: r.timesheet || r.time_sheet || '',
+        actionFlow: r.actionflow || r.action_flow || '',
+        dialoguePoint: r.dialoguepoint || r.dialogue_point || '',
+        sfxPoint: r.sfxpoint || r.sfx_point || '',
+        layoutRef: (r.layoutref || r.layout_ref || '').split(/[,|]/).map(function (x) { return x.trim(); }).filter(Boolean),
+        drawingNotes: r.drawingnotes || r.drawing_notes || '',
+        poseKeyframes: [],
+        characterRef: [],
+      },
+      second: {
+        animator: r.animator || r.second_animator || '',
+        totalFrames: Number(r.totalframes || r.total_frames || 0) || 0,
+        feedbackStatus: r.feedbackstatus || r.feedback_status || 'pending',
+        revisionCount: Number(r.revisioncount || r.revision_count || 0) || 0,
+        feedbackNote: r.feedbacknote || r.feedback_note || '',
+        tweens: [],
+      },
+      tags: (r.tags || '').split(/[,|]/).map(function (x) { return x.trim(); }).filter(Boolean),
+    };
+    return shot;
+  }
+
+  function normalizeShots(raw) {
+    var arr = Array.isArray(raw) ? raw : (raw.items || []);
+    return arr.map(function (r) {
+      var team = (r.team || 'first').toLowerCase();
+      if (team.indexOf('sec') >= 0 || team.indexOf('second') >= 0) team = 'second'; else team = 'first';
+      return {
+        shotNo: r.shotNo || r.shotno || '',
+        team: team,
+        title: r.title || '',
+        sceneRef: r.sceneRef || r.sceneref || '',
+        status: r.status || 'todo',
+        version: r.version || 'Ver1.0',
+        first: Object.assign({
+          director: '', cameraMove: '固定', cameraDuration: '', timeSheet: '',
+          actionFlow: '', dialoguePoint: '', sfxPoint: '', layoutRef: [], drawingNotes: '',
+          poseKeyframes: [], characterRef: [],
+        }, r.first || {}),
+        second: Object.assign({
+          animator: '', totalFrames: 0, feedbackStatus: 'pending', revisionCount: 0,
+          feedbackNote: '', tweens: [],
+        }, r.second || {}),
+        tags: r.tags || [],
+      };
+    });
+  }
+
+  function getTemplateJson() {
+    return JSON.stringify({
+      _comment: '原画模块批量导入模板 — Shot 对象数组',
+      items: [
+        {
+          shotNo: '1-01', team: 'first', title: '主角奔跑入场', sceneRef: 'scene_001',
+          status: 'todo', version: 'Ver1.0', tags: ['主角', '奔跑'],
+          first: {
+            director: '山田太郎', cameraMove: '前 DOLLY IN', cameraDuration: '3.0',
+            timeSheet: '0:00 起始Pose → 0:1.2 中间Pose → 0:2.8 结束Pose',
+            actionFlow: '角色从左到右奔跑，途中跃过障碍...',
+            dialoguePoint: '0:03.5', sfxPoint: '0:00.0', layoutRef: [], drawingNotes: '',
+            poseKeyframes: [
+              { frame: 0, second: 0, pose: '起始Pose', keyType: 'key', url: '', note: '' },
+              { frame: 12, second: 0.5, pose: '中间Pose', keyType: 'breakdown', url: '', note: '' },
+              { frame: 24, second: 1.0, pose: '结束Pose', keyType: 'key', url: '', note: '' }
+            ]
+          }
+        },
+        {
+          shotNo: '1-02', team: 'second', title: '第二原画中割', status: 'wip',
+          second: {
+            animator: '佐々木花子', totalFrames: 12, feedbackStatus: 'pending', revisionCount: 0,
+            feedbackNote: '',
+            tweens: [
+              { frameNum: 2, ratio: 0.25, url: '', note: '', issue: '' },
+              { frameNum: 4, ratio: 0.5, url: '', note: '', issue: '' },
+              { frameNum: 6, ratio: 0.75, url: '', note: '', issue: '' }
+            ]
+          }
+        }
+      ]
+    }, null, 2);
+  }
+  function getTemplateCsv() {
+    var header = 'shotNo,team,title,sceneRef,status,version,director,cameraMove,cameraDuration,timeSheet,actionFlow,animator,totalFrames,feedbackStatus';
+    var row1 = '1-01,first,主角奔跑入场,scene_001,todo,Ver1.0,山田太郎,前 DOLLY IN,3.0,"0:00 Pose→0:1.2中间→0:2.8结束","角色从左到右奔跑",,,,';
+    var row2 = '1-02,second,第二原画中割,scene_001,wip,Ver1.0,,,,"主角奔跑-中割",佐々木花子,12,pending';
+    return '\ufeff' + header + '\n' + row1 + '\n' + row2 + '\n';
+  }
+
+  function downloadTemplate(text, filename) {
+    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   window.HMOUA = { enter: enter };
