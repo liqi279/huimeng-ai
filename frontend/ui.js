@@ -257,6 +257,9 @@
     if (view === 'script' && window.HMScript) {
       try { window.HMScript.enter(); } catch (e) { console.error('[Script] enter failed', e); }
     }
+    if (view === 'art' && window.HMArt) {
+      try { window.HMArt.enter(); } catch (e) { console.error('[Art] enter failed', e); }
+    }
   }
 
   function onRenderWorks() {
@@ -3390,4 +3393,496 @@
 
   bind();
   window.HMScript = { enter: enter, state: state };
+})();
+
+/* =============================================================
+ * 美术设定设计模块（HMArt）
+ * 参考日本动画现场标准：6 大分类 + 子节 + 会审检查表
+ * ============================================================= */
+(function () {
+  'use strict';
+  var api = window.HM && window.HM.api;
+  var A = window.HMApp;
+  if (!api || !A) { console.warn('[HMArt] 缺少 api 或 A'); return; }
+
+  var state = {
+    categories: [],        // 从 /art/categories 加载
+    arts: [],              // 列表
+    activeCat: 'sekai',
+    activeSection: null,   // null = 全部子节
+    filterStatus: 'all',
+    filterType: 'all',
+    keyword: '',
+    editing: null,         // 当前编辑条目
+    checklist: null,       // 会审检查表
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  /* ============ 入口 ============ */
+  async function enter() {
+    try {
+      var data = await api.artCategories();
+      state.categories = (data && data.categories) || [];
+    } catch (e) { state.categories = []; }
+    showListView();
+    renderCatTabs();
+    await loadList();
+    bind();
+  }
+
+  function showListView() {
+    $('artListView').hidden = false;
+    $('artEditorView').hidden = true;
+    $('artBackBtn').hidden = true;
+  }
+  function showEditorView() {
+    $('artListView').hidden = true;
+    $('artEditorView').hidden = false;
+    $('artBackBtn').hidden = false;
+  }
+
+  /* ============ 分类 Tab ============ */
+  function renderCatTabs() {
+    var el = $('artCatTabs');
+    if (!el) return;
+    el.innerHTML = '';
+    state.categories.forEach(function (cat) {
+      var btn = document.createElement('button');
+      btn.className = 'hm-art-cat-btn' + (cat.key === state.activeCat ? ' is-active' : '');
+      btn.innerHTML = '<span class="hm-art-cat-icon">' + (cat.icon || '📌') + '</span><span class="hm-art-cat-name">' + cat.name + '</span>';
+      btn.addEventListener('click', function () {
+        state.activeCat = cat.key;
+        state.activeSection = null;
+        renderCatTabs();
+        renderSectionTabs();
+        loadList();
+      });
+      el.appendChild(btn);
+    });
+  }
+
+  function renderSectionTabs() {
+    var el = $('artSectionTabs');
+    if (!el) return;
+    el.innerHTML = '';
+    var cat = state.categories.find(function (c) { return c.key === state.activeCat; });
+    if (!cat || !cat.sections || cat.sections.length === 0) { el.hidden = true; return; }
+    el.hidden = false;
+
+    // 全部
+    var all = document.createElement('button');
+    all.className = 'hm-art-sec-btn' + (state.activeSection === null ? ' is-active' : '');
+    all.textContent = '全部';
+    all.addEventListener('click', function () { state.activeSection = null; renderSectionTabs(); renderGrid(); });
+    el.appendChild(all);
+
+    cat.sections.forEach(function (sec) {
+      var btn = document.createElement('button');
+      btn.className = 'hm-art-sec-btn' + (state.activeSection === sec ? ' is-active' : '');
+      btn.textContent = sec;
+      btn.addEventListener('click', function () { state.activeSection = sec; renderSectionTabs(); renderGrid(); });
+      el.appendChild(btn);
+    });
+  }
+
+  /* ============ 加载列表 ============ */
+  async function loadList() {
+    try {
+      var data = await api.listArts(state.activeCat);
+      state.arts = (data && data.items) || [];
+      renderGrid();
+      renderSectionTabs();
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ============ 卡片网格 ============ */
+  function renderGrid() {
+    var grid = $('artGrid');
+    var empty = $('artEmpty');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    var filtered = state.arts.slice();
+    if (state.activeSection) filtered = filtered.filter(function (a) { return a.section === state.activeSection; });
+    if (state.filterStatus !== 'all') filtered = filtered.filter(function (a) { return a.status === state.filterStatus; });
+    if (state.filterType !== 'all') filtered = filtered.filter(function (a) { return a.spec && a.spec.type === state.filterType; });
+    if (state.keyword) {
+      var kw = state.keyword.toLowerCase();
+      filtered = filtered.filter(function (a) {
+        return (a.title || '').toLowerCase().indexOf(kw) >= 0
+          || (a.subtitle || '').toLowerCase().indexOf(kw) >= 0
+          || (a.section || '').toLowerCase().indexOf(kw) >= 0
+          || (a.tags || []).some(function (t) { return (t || '').toLowerCase().indexOf(kw) >= 0; });
+      });
+    }
+
+    if (filtered.length === 0) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    filtered.forEach(function (a) {
+      var card = document.createElement('div');
+      card.className = 'hm-art-card hm-art-st-' + (a.status || 'draft');
+      card.innerHTML =
+        '<div class="hm-art-card-status"></div>' +
+        '<div class="hm-art-card-thumb">' + (a.media && a.media.thumb ? '' : '🎨') + '</div>' +
+        '<div class="hm-art-card-body">' +
+          '<div class="hm-art-card-title">' + (a.title || '未命名').replace(/[<>]/g, '') + '</div>' +
+          (a.subtitle ? '<div class="hm-art-card-sub">' + a.subtitle.replace(/[<>]/g, '') + '</div>' : '') +
+          '<div class="hm-art-card-section">' + (a.section || '—').replace(/[<>]/g, '') + '</div>' +
+          '<div class="hm-art-card-meta">' +
+            '<span class="hm-art-card-type">' + (artTypeLabel(a.spec && a.spec.type) || '设定') + '</span>' +
+            '<span class="hm-art-card-ver">' + (a.version || 'Ver1.0') + '</span>' +
+          '</div>' +
+          (a.tags && a.tags.length > 0 ?
+            '<div class="hm-art-card-tags">' +
+              a.tags.slice(0, 4).map(function (t) { return '<span>#' + t.replace(/[<>]/g, '') + '</span>'; }).join('') +
+            '</div>' : '') +
+        '</div>' +
+        '<div class="hm-art-card-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-art-open>✏️</button>' +
+          '<button class="hm-pill hm-pill-mini" data-art-dup>📋</button>' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-art-del>🗑</button>' +
+        '</div>';
+      card.querySelector('[data-art-open]').addEventListener('click', function () { openArt(a.id); });
+      card.querySelector('[data-art-dup]').addEventListener('click', function (e) {
+        e.stopPropagation(); duplicateArt(a.id);
+      });
+      card.querySelector('[data-art-del]').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.confirm('删除「' + a.title + '」？')) deleteArt(a.id);
+      });
+      card.addEventListener('click', function () { openArt(a.id); });
+      grid.appendChild(card);
+    });
+  }
+
+  function artTypeLabel(v) {
+    var m = { lineart: '线稿', painting: '彩稿', model: '三视图', color: '色卡', layout: 'Layout', doc: '文档' };
+    return m[v];
+  }
+  function artStatusLabel(v) {
+    var m = { draft: '草稿', wip: '制作中', review: '审图中', final: '定稿' };
+    return m[v] || v;
+  }
+
+  /* ============ CRUD ============ */
+  async function createArt() {
+    var title = window.prompt('设定板标题？', '');
+    if (!title && title !== '') return;
+    try {
+      var payload = {
+        title: title || '未命名设定板',
+        category: state.activeCat,
+        section: state.activeSection || '',
+        tags: [],
+        status: 'draft', version: 'Ver1.0',
+        spec: { type: 'painting', format: 'psd', resolution: '', layers: [] },
+        media: { thumb: '', sources: [] },
+        content: '', notes: '',
+        colorSpec: { palette: [], shadows: [], highlights: [] },
+      };
+      var data = await api.createArt(payload);
+      if (data && data.art) {
+        state.editing = data.art;
+        showEditorView();
+        renderEditor();
+        A.toast && A.toast('✅ 已创建', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('创建失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function openArt(id) {
+    try {
+      var data = await api.getArt(id);
+      if (data && data.art) {
+        state.editing = data.art;
+        showEditorView();
+        renderEditor();
+      }
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function duplicateArt(id) {
+    try {
+      var data = await api.duplicateArt(id);
+      if (data && data.art) {
+        loadList();
+        A.toast && A.toast('✅ 已复制', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('复制失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function deleteArt(id) {
+    try {
+      await api.deleteArt(id);
+      if (state.editing && state.editing.id === id) {
+        state.editing = null;
+        showListView();
+      }
+      loadList();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function saveArt() {
+    if (!state.editing) return;
+    var catKey = $('artCategory').value;
+    var cat = state.categories.find(function (c) { return c.key === catKey; });
+    var section = $('artSection').value;
+    var payload = {
+      title: $('artTitle').value,
+      subtitle: $('artSubtitle').value,
+      category: catKey,
+      section: section,
+      version: $('artVersion').value,
+      status: $('artStatus').value,
+      tags: parseTags($('artTags').value),
+      spec: {
+        type: $('artSpecType').value,
+        format: $('artSpecFormat').value,
+        resolution: $('artSpecRes').value,
+        layers: [],
+      },
+      media: state.editing.media,
+      colorSpec: state.editing.colorSpec,
+      content: $('artContent').value,
+      notes: $('artNotes').value,
+    };
+    try {
+      var data = await api.updateArt(state.editing.id, payload);
+      if (data && data.art) {
+        state.editing = data.art;
+        loadList();
+        A.toast && A.toast('💾 已保存', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('保存失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  function parseTags(str) {
+    return (str || '').split(/[\s,，]+/).map(function (t) { return t.replace(/^#/, '').trim(); }).filter(Boolean);
+  }
+
+  /* ============ 编辑器渲染 ============ */
+  function renderEditor() {
+    if (!state.editing) return;
+    var a = state.editing;
+    $('artEditorTitle').textContent = a.title || '未命名';
+    $('artEditorPath').textContent = buildPath(a);
+    $('artVerTag').textContent = a.version || 'Ver1.0';
+
+    // 分类下拉
+    var catSel = $('artCategory');
+    catSel.innerHTML = state.categories.map(function (c) {
+      return '<option value="' + c.key + '"' + (c.key === a.category ? ' selected' : '') + '>' + c.icon + ' ' + c.name + '</option>';
+    }).join('');
+    catSel.onchange = updateSectionOptions;
+    updateSectionOptions();
+
+    // 填充字段
+    $('artTitle').value = a.title || '';
+    $('artSubtitle').value = a.subtitle || '';
+    $('artSection').value = a.section || '';
+    $('artVersion').value = a.version || 'Ver1.0';
+    $('artStatus').value = a.status || 'draft';
+    $('artSpecType').value = a.spec ? (a.spec.type || 'painting') : 'painting';
+    $('artSpecFormat').value = a.spec ? (a.spec.format || '') : '';
+    $('artSpecRes').value = a.spec ? (a.spec.resolution || '') : '';
+    $('artTags').value = (a.tags || []).join(' ');
+    $('artContent').value = a.content || '';
+    $('artNotes').value = a.notes || '';
+
+    // 色卡
+    renderColorGroup('artPaletteGrid', (a.colorSpec && a.colorSpec.palette) || [], 'palette');
+    renderColorGroup('artShadowGrid', (a.colorSpec && a.colorSpec.shadows) || [], 'shadows');
+    renderColorGroup('artHighlightGrid', (a.colorSpec && a.colorSpec.highlights) || [], 'highlights');
+  }
+
+  function updateSectionOptions() {
+    var cat = state.categories.find(function (c) { return c.key === $('artCategory').value; });
+    var sel = $('artSection');
+    sel.innerHTML = '<option value="">— 未分配 —</option>';
+    if (cat) {
+      cat.sections.forEach(function (s) {
+        sel.innerHTML += '<option value="' + s.replace(/"/g, '&quot;') + '">' + s + '</option>';
+      });
+    }
+    if (state.editing) sel.value = state.editing.section || '';
+  }
+
+  function buildPath(a) {
+    var cat = state.categories.find(function (c) { return c.key === a.category; });
+    var catName = cat ? cat.name : '';
+    return (catName ? catName + ' / ' : '') + (a.section || '—');
+  }
+
+  function renderColorGroup(gridId, list, groupKey) {
+    var grid = $(gridId);
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!list || list.length === 0) {
+      grid.innerHTML = '<div class="hm-art-color-empty">暂无</div>';
+      return;
+    }
+    list.forEach(function (c, i) {
+      var item = document.createElement('div');
+      item.className = 'hm-art-color-item';
+      var hex = c.hex || '#888888';
+      item.innerHTML =
+        '<input type="color" class="hm-art-color-picker" value="' + hex + '" data-color-hex="' + i + '" data-group="' + groupKey + '">' +
+        '<input type="text" class="hm-art-color-hex" value="' + hex + '" data-color-hex2="' + i + '" data-group="' + groupKey + '">' +
+        '<input type="text" class="hm-art-color-name" placeholder="名称" value="' + (c.name || '') + '" data-color-name="' + i + '" data-group="' + groupKey + '">' +
+        '<button class="hm-art-color-del" data-color-del="' + i + '" data-group="' + groupKey + '">✕</button>';
+      grid.appendChild(item);
+    });
+    grid.querySelectorAll('[data-color-hex]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var g = state.editing.colorSpec[el.getAttribute('data-group')];
+        g[Number(el.getAttribute('data-color-hex'))].hex = el.value;
+      });
+    });
+    grid.querySelectorAll('[data-color-hex2]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var g = state.editing.colorSpec[el.getAttribute('data-group')];
+        g[Number(el.getAttribute('data-color-hex2'))].hex = el.value;
+        var picker = grid.querySelector('[data-color-hex="' + el.getAttribute('data-color-hex2') + '"]');
+        if (picker) picker.value = el.value;
+      });
+    });
+    grid.querySelectorAll('[data-color-name]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var g = state.editing.colorSpec[el.getAttribute('data-group')];
+        g[Number(el.getAttribute('data-color-name'))].name = el.value;
+      });
+    });
+    grid.querySelectorAll('[data-color-del]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var g = state.editing.colorSpec[el.getAttribute('data-group')];
+        g.splice(Number(el.getAttribute('data-color-del')), 1);
+        renderColorGroup(gridId, g, el.getAttribute('data-group'));
+      });
+    });
+  }
+
+  /* ============ 会审检查表 ============ */
+  async function openChecklist() {
+    try {
+      var data = await api.getChecklist();
+      state.checklist = (data && data.checklist) || null;
+      renderChecklist();
+      $('artChecklistOverlay').hidden = false;
+    } catch (err) {
+      A.toast && A.toast('加载检查表失败', 'error');
+    }
+  }
+
+  function renderChecklist() {
+    if (!state.checklist) return;
+    var body = $('artChecklistBody');
+    if (!body) return;
+
+    var sections = [
+      { key: 'sekai_board', title: '🌍 世界观氛围资料（イメージボード + 世界観美術テキスト）' },
+      { key: 'bg_board',    title: '🏞️ 背景设定（平面/立面/透视/场景版本区分）' },
+      { key: 'prop_board',  title: '🎒 道具/器物/自然物/材质光照' },
+      { key: 'character_board', title: '🧑 角色设定（三视图/表情/口型/色卡）' },
+      { key: 'creature_board',  title: '🦉 生物/怪物设定（并行独立板块）' },
+      { key: 'mecha_board',     title: '🤖 机甲/可驾驶机械设定' },
+      { key: 'effect_board',   title: '✨ 作画特效设定（角色招式，非环境）' },
+      { key: 'visual_board',   title: '🎨 宣传视觉设定' },
+      { key: 'logo_board',     title: '🔤 文字标识/纹章/LOGO 设定' },
+      { key: 'coordination',   title: '📎 配套协同资料（色彩设计/原図基準/ロケハン）' },
+    ];
+
+    body.innerHTML = sections.map(function (s) {
+      var items = state.checklist[s.key] || [];
+      var done = state.checklist.items || {};
+      return '<div class="hm-art-cl-section">' +
+        '<h4>' + s.title + '</h4>' +
+        '<div class="hm-art-cl-items">' +
+          items.map(function (txt, idx) {
+            var checked = done[s.key + ':' + idx] ? ' checked' : '';
+            return '<label class="hm-art-cl-item"><input type="checkbox" data-cl-key="' + s.key + '" data-cl-idx="' + idx + '"' + checked + '><span>' + txt + '</span></label>';
+          }).join('') +
+        '</div></div>';
+    }).join('');
+
+    // 绑定勾选
+    body.querySelectorAll('[data-cl-key]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var items = state.checklist.items || (state.checklist.items = {});
+        items[cb.getAttribute('data-cl-key') + ':' + cb.getAttribute('data-cl-idx')] = cb.checked;
+        api.saveChecklist({ items: items }).catch(function () {});
+      });
+    });
+  }
+
+  /* ============ 全局绑定 ============ */
+  function bind() {
+    if (bind._done) return;
+    bind._done = true;
+
+    $('artNewBtn').addEventListener('click', createArt);
+    $('artBackBtn').addEventListener('click', function () {
+      state.editing = null;
+      showListView();
+      loadList();
+    });
+    $('artSaveBtn').addEventListener('click', saveArt);
+    $('artDeleteBtn').addEventListener('click', function () {
+      if (!state.editing) return;
+      if (window.confirm('彻底删除「' + state.editing.title + '」？')) deleteArt(state.editing.id);
+    });
+    $('artChecklistBtn').addEventListener('click', openChecklist);
+    $('artChecklistClose').addEventListener('click', function () {
+      $('artChecklistOverlay').hidden = true;
+    });
+    $('artChecklistOverlay').addEventListener('click', function (e) {
+      if (e.target === $('artChecklistOverlay')) $('artChecklistOverlay').hidden = true;
+    });
+
+    // 筛选
+    var searchTimer = null;
+    $('artSearch').addEventListener('input', function () {
+      state.keyword = this.value.trim();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(renderGrid, 200);
+    });
+    $('artStatusFilter').addEventListener('change', function () {
+      state.filterStatus = this.value; renderGrid();
+    });
+    $('artTypeFilter').addEventListener('change', function () {
+      state.filterType = this.value; renderGrid();
+    });
+
+    // 色卡 "添加颜色" 按钮（事件委托）
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-add-color]');
+      if (!btn) return;
+      var groupKey = btn.getAttribute('data-add-color');
+      if (!state.editing) { A.toast && A.toast('请先进入编辑状态', 'error'); return; }
+      var g = state.editing.colorSpec[groupKey];
+      if (!Array.isArray(g)) g = [];
+      g.push({ name: '', hex: '#ffffff' });
+      state.editing.colorSpec[groupKey] = g;
+      var gridId = groupKey === 'palette' ? 'artPaletteGrid' : groupKey === 'shadows' ? 'artShadowGrid' : 'artHighlightGrid';
+      renderColorGroup(gridId, g, groupKey);
+    });
+  }
+
+  window.HMArt = { enter: enter, state: state };
 })();

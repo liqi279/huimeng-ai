@@ -11483,6 +11483,559 @@ body.hm-chat-open .hm-dock {
   }
 }
 
+/* =============================================================
+ * 美术设定设计模块 (view-art)
+ * 参考日本动画现场交付标准
+ * ============================================================= */
+.hm-art-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.hm-art-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.hm-art-top-left h2 { margin: 0; font-size: 17px; font-weight: 600; color: var(--hm-text); }
+.hm-art-top-sub {
+  margin-left: 12px;
+  font-size: 12px;
+  color: var(--hm-text-dim);
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+.hm-art-top-right { display: flex; gap: 8px; }
+
+/* 分类 Tab */
+.hm-art-cat-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 14px 24px 0;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.hm-art-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px 10px 0 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+  color: var(--hm-text-dim);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+.hm-art-cat-btn:hover {
+  color: var(--hm-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+.hm-art-cat-btn.is-active {
+  color: var(--hm-text);
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.35);
+  border-bottom-color: rgba(139, 92, 246, 0.15);
+}
+.hm-art-cat-icon { font-size: 16px; }
+
+/* 子节 Tab */
+.hm-art-section-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+.hm-art-sec-btn {
+  padding: 5px 12px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--hm-text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.hm-art-sec-btn:hover { color: var(--hm-text); border-color: rgba(255, 255, 255, 0.2); }
+.hm-art-sec-btn.is-active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #c4b5fd;
+}
+
+/* 筛选条 */
+.hm-art-filter-bar {
+  display: flex;
+  gap: 10px;
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(0,0,0,0.1);
+}
+.hm-art-search {
+  flex: 1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.25);
+  color: var(--hm-text);
+  font-size: 13px;
+  outline: none;
+}
+.hm-art-search:focus { border-color: rgba(139, 92, 246, 0.4); }
+.hm-art-filter {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.25);
+  color: var(--hm-text);
+  font-size: 12.5px;
+  outline: none;
+}
+
+/* 列表网格 */
+.hm-art-view-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.hm-art-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  padding: 18px 24px;
+  align-content: start;
+}
+
+/* 卡片 */
+.hm-art-card {
+  position: relative;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s;
+  overflow: hidden;
+}
+.hm-art-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-2px);
+}
+.hm-art-card-status {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--hm-accent, #8b5cf6);
+}
+.hm-art-st-draft .hm-art-card-status { background: #9ca3af; }
+.hm-art-st-wip .hm-art-card-status { background: #3b82f6; }
+.hm-art-st-review .hm-art-card-status { background: #f59e0b; }
+.hm-art-st-final .hm-art-card-status { background: #22c55e; }
+
+.hm-art-card-thumb {
+  width: 100%;
+  height: 90px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: var(--hm-text-dim);
+}
+.hm-art-card-body { padding: 0 2px; }
+.hm-art-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hm-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-art-card-sub {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  margin-top: 2px;
+  font-style: italic;
+}
+.hm-art-card-section {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #c4b5fd;
+  padding: 3px 8px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 4px;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-art-card-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--hm-text-dim);
+}
+.hm-art-card-ver {
+  font-family: monospace;
+  color: #fcd34d;
+}
+.hm-art-card-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.hm-art-card-tags span {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  color: var(--hm-text-dim);
+}
+.hm-art-card-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.hm-art-card:hover .hm-art-card-actions { opacity: 1; }
+
+.hm-art-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--hm-text-dim);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.hm-art-empty-emoji { font-size: 56px; margin-bottom: 12px; }
+.hm-art-empty h3 { margin: 0 0 6px; font-size: 18px; color: var(--hm-text); }
+
+/* ============ 编辑器 ============ */
+.hm-art-view-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.hm-art-editor-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 24px;
+  background: rgba(0,0,0,0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.hm-art-editor-top h3 {
+  margin: 0; font-size: 15px; font-weight: 600; color: var(--hm-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;
+}
+.hm-art-editor-meta { display: flex; gap: 8px; align-items: center; font-size: 11px; }
+.hm-art-editor-path {
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+.hm-art-editor-version {
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: rgba(252, 211, 77, 0.15);
+  color: #fcd34d;
+  font-family: monospace;
+}
+
+.hm-art-editor-body {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+.hm-art-editor-left {
+  width: 360px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hm-art-editor-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hm-art-form-row { display: flex; flex-direction: column; gap: 5px; }
+.hm-art-form-row label {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.hm-art-form-row input, .hm-art-form-row select {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.25);
+  color: var(--hm-text);
+  font-size: 13px;
+  outline: none;
+}
+.hm-art-form-row input:focus, .hm-art-form-row select:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+.hm-art-form-2col {
+  flex-direction: row;
+  gap: 10px;
+}
+.hm-art-form-2col > div { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+
+.hm-art-form-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hm-art-form-block > label {
+  font-size: 12px;
+  color: var(--hm-text-dim);
+  font-weight: 500;
+}
+
+/* 媒体占位 */
+.hm-art-media-placeholders {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+}
+.hm-art-media-box {
+  padding: 20px;
+  text-align: center;
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: var(--hm-text-dim);
+  font-size: 12px;
+  background: rgba(0,0,0,0.15);
+}
+.hm-art-media-ph label {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* 色卡 */
+.hm-art-color-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hm-art-color-group {
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-art-color-group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--hm-text);
+  margin-bottom: 8px;
+}
+.hm-art-color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.hm-art-color-empty {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  padding: 4px;
+}
+.hm-art-color-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 4px;
+}
+.hm-art-color-picker { width: 24px; height: 24px; border: none; background: transparent; cursor: pointer; padding: 0; }
+.hm-art-color-hex {
+  width: 78px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: monospace;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.3);
+  color: var(--hm-text);
+  outline: none;
+}
+.hm-art-color-name {
+  width: 80px;
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.3);
+  color: var(--hm-text);
+  outline: none;
+}
+.hm-art-color-del {
+  padding: 2px 4px;
+  background: transparent;
+  border: none;
+  color: var(--hm-text-dim);
+  cursor: pointer;
+  font-size: 12px;
+}
+.hm-art-color-del:hover { color: #fca5a5; }
+
+textarea#artContent, textarea#artNotes {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.25);
+  color: var(--hm-text);
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.6;
+}
+textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92, 246, 0.4); }
+
+.hm-art-editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+/* ============ 会审检查表 ============ */
+.hm-art-checklist-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.hm-art-checklist-panel {
+  width: 100%;
+  max-width: 800px;
+  max-height: 85vh;
+  background: #1a1a24;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.hm-art-checklist-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+.hm-art-checklist-head h3 { margin: 0; font-size: 15px; color: var(--hm-text); }
+.hm-art-checklist-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.hm-art-cl-section {
+  margin-bottom: 22px;
+}
+.hm-art-cl-section h4 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-text);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-art-cl-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hm-art-cl-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: background 0.1s;
+  font-size: 12.5px;
+  color: var(--hm-text-dim);
+  line-height: 1.5;
+}
+.hm-art-cl-item:hover { background: rgba(255, 255, 255, 0.05); color: var(--hm-text); }
+.hm-art-cl-item input {
+  margin-top: 3px;
+  accent-color: #8b5cf6;
+  flex-shrink: 0;
+}
+.hm-art-cl-item input:checked + span {
+  text-decoration: line-through;
+  color: #22c55e;
+}
+
+/* 响应式 */
+@media (max-width: 960px) {
+  .hm-art-editor-body { flex-direction: column; }
+  .hm-art-editor-left { width: 100%; }
+}
+@media (max-width: 640px) {
+  .hm-art-top { flex-direction: column; gap: 10px; padding: 12px 16px; }
+  .hm-art-top-left { flex-wrap: wrap; justify-content: center; }
+  .hm-art-cat-tabs { padding: 12px 16px 0; }
+  .hm-art-section-tabs { padding: 10px 16px; }
+  .hm-art-filter-bar { flex-wrap: wrap; padding: 12px 16px; }
+  .hm-art-grid { padding: 14px 16px; }
+}
+
 
 </style>
   <style>
@@ -11835,7 +12388,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261103021641-5feb935";</script>
+<script>window.HM_BUILD = "20261103023652-0f32c3c";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -11875,6 +12428,10 @@ body.hm-chat-open .hm-dock {
       <button class="hm-rail-item" data-rail="script" title="剧本编纂（场次/镜头/对白/角色）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h12a3 3 0 0 1 3 3v11l-4-2.5-4 2.5-4-2.5-3 2V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 9.5h7M8 12.5h7M8 15.5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         <span>剧本</span>
+      </button>
+      <button class="hm-rail-item" data-rail="art" title="美术设定设计（6 大分类 · 日本动画交付标准）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
+        <span>美术设定</span>
       </button>
     </div>
 
@@ -13924,6 +14481,199 @@ body.hm-chat-open .hm-dock {
     </section>
   </main>
 
+  <main class="hm-page hm-art-page" id="view-art" hidden>
+    <!-- 顶部工具条 -->
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎨 美术设定设计</h2>
+        <span class="hm-art-top-sub">日本动画现场交付标准 · 美術監督 负责</span>
+      </div>
+      <div class="hm-art-top-right">
+        <button class="hm-pill" id="artChecklistBtn">📋 会审检查表</button>
+        <button class="hm-pill hm-pill-primary" id="artNewBtn">＋ 新建条目</button>
+      </div>
+    </div>
+
+    <!-- ============ 列表视图 ============ -->
+    <section class="hm-art-view-list" id="artListView">
+      <!-- 分类大 Tab -->
+      <div class="hm-art-cat-tabs" id="artCatTabs"></div>
+
+      <!-- 当前分类下的子节 Tab -->
+      <div class="hm-art-section-tabs" id="artSectionTabs"></div>
+
+      <!-- 筛选条 -->
+      <div class="hm-art-filter-bar">
+        <input class="hm-art-search" id="artSearch" placeholder="🔍 搜索标题 / 标签 / 内容...">
+        <select id="artStatusFilter" class="hm-art-filter">
+          <option value="all">全部状态</option>
+          <option value="draft">草稿</option>
+          <option value="wip">制作中</option>
+          <option value="review">审图中</option>
+          <option value="final">定稿</option>
+        </select>
+        <select id="artTypeFilter" class="hm-art-filter">
+          <option value="all">全部类型</option>
+          <option value="lineart">线稿</option>
+          <option value="painting">彩稿</option>
+          <option value="model">设定三视图</option>
+          <option value="color">色卡</option>
+          <option value="layout">Layout</option>
+          <option value="doc">文档</option>
+        </select>
+      </div>
+
+      <!-- 卡片网格 -->
+      <div class="hm-art-grid" id="artGrid"></div>
+      <div class="hm-art-empty" id="artEmpty" hidden>
+        <div class="hm-art-empty-emoji">🎨</div>
+        <h3>该分类还没有设定资料</h3>
+        <p>点击「＋ 新建条目」创建第一张设定板</p>
+      </div>
+    </section>
+
+    <!-- ============ 条目编辑器 ============ -->
+    <section class="hm-art-view-editor" id="artEditorView" hidden>
+      <div class="hm-art-editor-top">
+        <button class="hm-pill hm-pill-ghost" id="artBackBtn">← 返回列表</button>
+        <h3 id="artEditorTitle">美术条目</h3>
+        <div class="hm-art-editor-meta">
+          <span id="artEditorPath" class="hm-art-editor-path"></span>
+          <span class="hm-art-editor-version" id="artVerTag">Ver1.0</span>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-body">
+        <!-- 左侧：基本信息 -->
+        <div class="hm-art-editor-left">
+          <div class="hm-art-form-row">
+            <label>主标题</label>
+            <input id="artTitle" placeholder="如: 涩谷十字路口 BG 样板 - 黄昏">
+          </div>
+          <div class="hm-art-form-row">
+            <label>日文原名（可选）</label>
+            <input id="artSubtitle" placeholder="如: 渋谷スクランブル交差点 - 夕方">
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>大分类</label>
+              <select id="artCategory"></select>
+            </div>
+            <div>
+              <label>子节</label>
+              <select id="artSection"></select>
+            </div>
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>条目类型</label>
+              <select id="artSpecType">
+                <option value="lineart">线稿</option><option value="painting">彩稿</option>
+                <option value="model">设定三视图</option><option value="color">色卡</option>
+                <option value="layout">Layout</option><option value="doc">文档</option>
+              </select>
+            </div>
+            <div>
+              <label>交付格式</label>
+              <input id="artSpecFormat" placeholder="psd / ai / png / pdf" value="psd">
+            </div>
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>分辨率</label>
+              <input id="artSpecRes" placeholder="如: 1920x1080 / A3">
+            </div>
+            <div>
+              <label>状态</label>
+              <select id="artStatus">
+                <option value="draft">草稿 Ver0.x</option>
+                <option value="wip">制作中 Ver1.x</option>
+                <option value="review">审图中 Ver1.x</option>
+                <option value="final">定稿 Ver2.0 確定</option>
+              </select>
+            </div>
+          </div>
+          <div class="hm-art-form-row">
+            <label>版本号</label>
+            <input id="artVersion" value="Ver1.0" placeholder="Ver1.0 → Ver1.1 → Ver2.0 確定">
+          </div>
+          <div class="hm-art-form-row">
+            <label>标签（朝/昼/夕/夜/雨/霧/雪... 回车添加）</label>
+            <input id="artTags" placeholder="输入后回车添加，如: 朝 昼 夜 雨">
+          </div>
+        </div>
+
+        <!-- 右侧：媒体 + 色卡 + 内容 -->
+        <div class="hm-art-editor-right">
+          <!-- 媒体占位 -->
+          <div class="hm-art-form-block">
+            <label>🎯 关联媒体（缩略图 / 多版本）</label>
+            <div class="hm-art-media-placeholders">
+              <div class="hm-art-media-ph">
+                <div class="hm-art-media-label">缩略图</div>
+                <div class="hm-art-media-box" id="artMediaThumb">🖼️ 拖入或点击上传</div>
+              </div>
+              <div class="hm-art-media-ph">
+                <div class="hm-art-media-label">多版本源文件</div>
+                <div class="hm-art-media-box" id="artMediaSources">📁 初稿 / 改修 / 定稿 多版本管理</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 色卡 -->
+          <div class="hm-art-form-block">
+            <label>🎨 色卡（Color Spec）</label>
+            <div class="hm-art-color-sections">
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">基础色</div>
+                <div class="hm-art-color-grid" id="artPaletteGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="palette">＋ 添加颜色</button>
+              </div>
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">阴影色</div>
+                <div class="hm-art-color-grid" id="artShadowGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="shadows">＋ 添加阴影</button>
+              </div>
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">高光色</div>
+                <div class="hm-art-color-grid" id="artHighlightGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="highlights">＋ 添加高光</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 技术规格 -->
+          <div class="hm-art-form-block">
+            <label>📝 文字说明 / 规格书</label>
+            <textarea id="artContent" rows="8" placeholder="光照方向 / 阴影软硬 / 空气透视 / 笔触规范 / 物理特例 / 禁忌元素..."></textarea>
+          </div>
+
+          <!-- 审图备注 -->
+          <div class="hm-art-form-block">
+            <label>📒 审图备注 / 变更记录</label>
+            <textarea id="artNotes" rows="4" placeholder="审图日 / 变更内容 / 对接画师..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-footer">
+        <button class="hm-pill" id="artDeleteBtn">🗑 删除</button>
+        <button class="hm-pill hm-pill-primary" id="artSaveBtn">💾 保存条目</button>
+      </div>
+    </section>
+
+    <!-- ============ 会审检查表（抽屉弹层） ============ -->
+    <div class="hm-art-checklist-overlay" id="artChecklistOverlay" hidden>
+      <div class="hm-art-checklist-panel">
+        <div class="hm-art-checklist-head">
+          <h3>📋 设定会审检查表（設定レビューチェックシート）</h3>
+          <button class="hm-pill hm-pill-mini" id="artChecklistClose">✕ 关闭</button>
+        </div>
+        <div class="hm-art-checklist-body" id="artChecklistBody"></div>
+      </div>
+    </div>
+  </main>
+
   <main class="hm-page hm-admin-page" id="view-admin" hidden>
     <div class="hm-admin-topbar-wrap">
       <div class="hm-admin-brand">
@@ -14979,6 +15729,23 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.exportScript = function (scriptId, format) {
     return '/script/' + encodeURIComponent(scriptId) + '/export?format=' + encodeURIComponent(format || 'fountain');
   };
+
+  /* -------------- 美术设定设计 -------------- */
+  api.artCategories = function () { return request('/art/categories', {}, 10000); };
+  api.listArts = function (category) {
+    var q = category && category !== 'all' ? '?category=' + encodeURIComponent(category) : '';
+    return request('/art' + q, {}, 15000);
+  };
+  api.createArt = function (payload) { return request('/art', { method: 'POST', body: payload }, 20000); };
+  api.getArt = function (id) { return request('/art/' + encodeURIComponent(id), {}, 15000); };
+  api.updateArt = function (id, payload) { return request('/art/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteArt = function (id) { return request('/art/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+  api.duplicateArt = function (id) { return request('/art/' + encodeURIComponent(id) + '/duplicate', { method: 'POST' }, 15000); };
+  api.bulkArtStatus = function (ids, status) {
+    return request('/art/bulk-status', { method: 'POST', body: { ids: ids, status: status } }, 20000);
+  };
+  api.getChecklist = function () { return request('/art/checklist', {}, 15000); };
+  api.saveChecklist = function (payload) { return request('/art/checklist', { method: 'POST', body: payload }, 15000); };
 
   api.presets = function () { return request('/presets', {}, 15000); };
   api.catalog = function () { return request('/catalog', {}, 15000); };
@@ -17311,7 +18078,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'plan', 'script', 'history', 'admin'];
+var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'plan', 'script', 'art', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -30423,6 +31190,9 @@ window.HMChat = (function () {
     if (view === 'script' && window.HMScript) {
       try { window.HMScript.enter(); } catch (e) { console.error('[Script] enter failed', e); }
     }
+    if (view === 'art' && window.HMArt) {
+      try { window.HMArt.enter(); } catch (e) { console.error('[Art] enter failed', e); }
+    }
   }
 
   function onRenderWorks() {
@@ -33556,6 +34326,498 @@ window.HMChat = (function () {
 
   bind();
   window.HMScript = { enter: enter, state: state };
+})();
+
+/* =============================================================
+ * 美术设定设计模块（HMArt）
+ * 参考日本动画现场标准：6 大分类 + 子节 + 会审检查表
+ * ============================================================= */
+(function () {
+  'use strict';
+  var api = window.HM && window.HM.api;
+  var A = window.HMApp;
+  if (!api || !A) { console.warn('[HMArt] 缺少 api 或 A'); return; }
+
+  var state = {
+    categories: [],        // 从 /art/categories 加载
+    arts: [],              // 列表
+    activeCat: 'sekai',
+    activeSection: null,   // null = 全部子节
+    filterStatus: 'all',
+    filterType: 'all',
+    keyword: '',
+    editing: null,         // 当前编辑条目
+    checklist: null,       // 会审检查表
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+  /* ============ 入口 ============ */
+  async function enter() {
+    try {
+      var data = await api.artCategories();
+      state.categories = (data && data.categories) || [];
+    } catch (e) { state.categories = []; }
+    showListView();
+    renderCatTabs();
+    await loadList();
+    bind();
+  }
+
+  function showListView() {
+    $('artListView').hidden = false;
+    $('artEditorView').hidden = true;
+    $('artBackBtn').hidden = true;
+  }
+  function showEditorView() {
+    $('artListView').hidden = true;
+    $('artEditorView').hidden = false;
+    $('artBackBtn').hidden = false;
+  }
+
+  /* ============ 分类 Tab ============ */
+  function renderCatTabs() {
+    var el = $('artCatTabs');
+    if (!el) return;
+    el.innerHTML = '';
+    state.categories.forEach(function (cat) {
+      var btn = document.createElement('button');
+      btn.className = 'hm-art-cat-btn' + (cat.key === state.activeCat ? ' is-active' : '');
+      btn.innerHTML = '<span class="hm-art-cat-icon">' + (cat.icon || '📌') + '</span><span class="hm-art-cat-name">' + cat.name + '</span>';
+      btn.addEventListener('click', function () {
+        state.activeCat = cat.key;
+        state.activeSection = null;
+        renderCatTabs();
+        renderSectionTabs();
+        loadList();
+      });
+      el.appendChild(btn);
+    });
+  }
+
+  function renderSectionTabs() {
+    var el = $('artSectionTabs');
+    if (!el) return;
+    el.innerHTML = '';
+    var cat = state.categories.find(function (c) { return c.key === state.activeCat; });
+    if (!cat || !cat.sections || cat.sections.length === 0) { el.hidden = true; return; }
+    el.hidden = false;
+
+    // 全部
+    var all = document.createElement('button');
+    all.className = 'hm-art-sec-btn' + (state.activeSection === null ? ' is-active' : '');
+    all.textContent = '全部';
+    all.addEventListener('click', function () { state.activeSection = null; renderSectionTabs(); renderGrid(); });
+    el.appendChild(all);
+
+    cat.sections.forEach(function (sec) {
+      var btn = document.createElement('button');
+      btn.className = 'hm-art-sec-btn' + (state.activeSection === sec ? ' is-active' : '');
+      btn.textContent = sec;
+      btn.addEventListener('click', function () { state.activeSection = sec; renderSectionTabs(); renderGrid(); });
+      el.appendChild(btn);
+    });
+  }
+
+  /* ============ 加载列表 ============ */
+  async function loadList() {
+    try {
+      var data = await api.listArts(state.activeCat);
+      state.arts = (data && data.items) || [];
+      renderGrid();
+      renderSectionTabs();
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ============ 卡片网格 ============ */
+  function renderGrid() {
+    var grid = $('artGrid');
+    var empty = $('artEmpty');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    var filtered = state.arts.slice();
+    if (state.activeSection) filtered = filtered.filter(function (a) { return a.section === state.activeSection; });
+    if (state.filterStatus !== 'all') filtered = filtered.filter(function (a) { return a.status === state.filterStatus; });
+    if (state.filterType !== 'all') filtered = filtered.filter(function (a) { return a.spec && a.spec.type === state.filterType; });
+    if (state.keyword) {
+      var kw = state.keyword.toLowerCase();
+      filtered = filtered.filter(function (a) {
+        return (a.title || '').toLowerCase().indexOf(kw) >= 0
+          || (a.subtitle || '').toLowerCase().indexOf(kw) >= 0
+          || (a.section || '').toLowerCase().indexOf(kw) >= 0
+          || (a.tags || []).some(function (t) { return (t || '').toLowerCase().indexOf(kw) >= 0; });
+      });
+    }
+
+    if (filtered.length === 0) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    filtered.forEach(function (a) {
+      var card = document.createElement('div');
+      card.className = 'hm-art-card hm-art-st-' + (a.status || 'draft');
+      card.innerHTML =
+        '<div class="hm-art-card-status"></div>' +
+        '<div class="hm-art-card-thumb">' + (a.media && a.media.thumb ? '' : '🎨') + '</div>' +
+        '<div class="hm-art-card-body">' +
+          '<div class="hm-art-card-title">' + (a.title || '未命名').replace(/[<>]/g, '') + '</div>' +
+          (a.subtitle ? '<div class="hm-art-card-sub">' + a.subtitle.replace(/[<>]/g, '') + '</div>' : '') +
+          '<div class="hm-art-card-section">' + (a.section || '—').replace(/[<>]/g, '') + '</div>' +
+          '<div class="hm-art-card-meta">' +
+            '<span class="hm-art-card-type">' + (artTypeLabel(a.spec && a.spec.type) || '设定') + '</span>' +
+            '<span class="hm-art-card-ver">' + (a.version || 'Ver1.0') + '</span>' +
+          '</div>' +
+          (a.tags && a.tags.length > 0 ?
+            '<div class="hm-art-card-tags">' +
+              a.tags.slice(0, 4).map(function (t) { return '<span>#' + t.replace(/[<>]/g, '') + '</span>'; }).join('') +
+            '</div>' : '') +
+        '</div>' +
+        '<div class="hm-art-card-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-art-open>✏️</button>' +
+          '<button class="hm-pill hm-pill-mini" data-art-dup>📋</button>' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-art-del>🗑</button>' +
+        '</div>';
+      card.querySelector('[data-art-open]').addEventListener('click', function () { openArt(a.id); });
+      card.querySelector('[data-art-dup]').addEventListener('click', function (e) {
+        e.stopPropagation(); duplicateArt(a.id);
+      });
+      card.querySelector('[data-art-del]').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.confirm('删除「' + a.title + '」？')) deleteArt(a.id);
+      });
+      card.addEventListener('click', function () { openArt(a.id); });
+      grid.appendChild(card);
+    });
+  }
+
+  function artTypeLabel(v) {
+    var m = { lineart: '线稿', painting: '彩稿', model: '三视图', color: '色卡', layout: 'Layout', doc: '文档' };
+    return m[v];
+  }
+  function artStatusLabel(v) {
+    var m = { draft: '草稿', wip: '制作中', review: '审图中', final: '定稿' };
+    return m[v] || v;
+  }
+
+  /* ============ CRUD ============ */
+  async function createArt() {
+    var title = window.prompt('设定板标题？', '');
+    if (!title && title !== '') return;
+    try {
+      var payload = {
+        title: title || '未命名设定板',
+        category: state.activeCat,
+        section: state.activeSection || '',
+        tags: [],
+        status: 'draft', version: 'Ver1.0',
+        spec: { type: 'painting', format: 'psd', resolution: '', layers: [] },
+        media: { thumb: '', sources: [] },
+        content: '', notes: '',
+        colorSpec: { palette: [], shadows: [], highlights: [] },
+      };
+      var data = await api.createArt(payload);
+      if (data && data.art) {
+        state.editing = data.art;
+        showEditorView();
+        renderEditor();
+        A.toast && A.toast('✅ 已创建', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('创建失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function openArt(id) {
+    try {
+      var data = await api.getArt(id);
+      if (data && data.art) {
+        state.editing = data.art;
+        showEditorView();
+        renderEditor();
+      }
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function duplicateArt(id) {
+    try {
+      var data = await api.duplicateArt(id);
+      if (data && data.art) {
+        loadList();
+        A.toast && A.toast('✅ 已复制', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('复制失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function deleteArt(id) {
+    try {
+      await api.deleteArt(id);
+      if (state.editing && state.editing.id === id) {
+        state.editing = null;
+        showListView();
+      }
+      loadList();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function saveArt() {
+    if (!state.editing) return;
+    var catKey = $('artCategory').value;
+    var cat = state.categories.find(function (c) { return c.key === catKey; });
+    var section = $('artSection').value;
+    var payload = {
+      title: $('artTitle').value,
+      subtitle: $('artSubtitle').value,
+      category: catKey,
+      section: section,
+      version: $('artVersion').value,
+      status: $('artStatus').value,
+      tags: parseTags($('artTags').value),
+      spec: {
+        type: $('artSpecType').value,
+        format: $('artSpecFormat').value,
+        resolution: $('artSpecRes').value,
+        layers: [],
+      },
+      media: state.editing.media,
+      colorSpec: state.editing.colorSpec,
+      content: $('artContent').value,
+      notes: $('artNotes').value,
+    };
+    try {
+      var data = await api.updateArt(state.editing.id, payload);
+      if (data && data.art) {
+        state.editing = data.art;
+        loadList();
+        A.toast && A.toast('💾 已保存', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('保存失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  function parseTags(str) {
+    return (str || '').split(/[\s,，]+/).map(function (t) { return t.replace(/^#/, '').trim(); }).filter(Boolean);
+  }
+
+  /* ============ 编辑器渲染 ============ */
+  function renderEditor() {
+    if (!state.editing) return;
+    var a = state.editing;
+    $('artEditorTitle').textContent = a.title || '未命名';
+    $('artEditorPath').textContent = buildPath(a);
+    $('artVerTag').textContent = a.version || 'Ver1.0';
+
+    // 分类下拉
+    var catSel = $('artCategory');
+    catSel.innerHTML = state.categories.map(function (c) {
+      return '<option value="' + c.key + '"' + (c.key === a.category ? ' selected' : '') + '>' + c.icon + ' ' + c.name + '</option>';
+    }).join('');
+    catSel.onchange = updateSectionOptions;
+    updateSectionOptions();
+
+    // 填充字段
+    $('artTitle').value = a.title || '';
+    $('artSubtitle').value = a.subtitle || '';
+    $('artSection').value = a.section || '';
+    $('artVersion').value = a.version || 'Ver1.0';
+    $('artStatus').value = a.status || 'draft';
+    $('artSpecType').value = a.spec ? (a.spec.type || 'painting') : 'painting';
+    $('artSpecFormat').value = a.spec ? (a.spec.format || '') : '';
+    $('artSpecRes').value = a.spec ? (a.spec.resolution || '') : '';
+    $('artTags').value = (a.tags || []).join(' ');
+    $('artContent').value = a.content || '';
+    $('artNotes').value = a.notes || '';
+
+    // 色卡
+    renderColorGroup('artPaletteGrid', (a.colorSpec && a.colorSpec.palette) || [], 'palette');
+    renderColorGroup('artShadowGrid', (a.colorSpec && a.colorSpec.shadows) || [], 'shadows');
+    renderColorGroup('artHighlightGrid', (a.colorSpec && a.colorSpec.highlights) || [], 'highlights');
+  }
+
+  function updateSectionOptions() {
+    var cat = state.categories.find(function (c) { return c.key === $('artCategory').value; });
+    var sel = $('artSection');
+    sel.innerHTML = '<option value="">— 未分配 —</option>';
+    if (cat) {
+      cat.sections.forEach(function (s) {
+        sel.innerHTML += '<option value="' + s.replace(/"/g, '&quot;') + '">' + s + '</option>';
+      });
+    }
+    if (state.editing) sel.value = state.editing.section || '';
+  }
+
+  function buildPath(a) {
+    var cat = state.categories.find(function (c) { return c.key === a.category; });
+    var catName = cat ? cat.name : '';
+    return (catName ? catName + ' / ' : '') + (a.section || '—');
+  }
+
+  function renderColorGroup(gridId, list, groupKey) {
+    var grid = $(gridId);
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!list || list.length === 0) {
+      grid.innerHTML = '<div class="hm-art-color-empty">暂无</div>';
+      return;
+    }
+    list.forEach(function (c, i) {
+      var item = document.createElement('div');
+      item.className = 'hm-art-color-item';
+      var hex = c.hex || '#888888';
+      item.innerHTML =
+        '<input type="color" class="hm-art-color-picker" value="' + hex + '" data-color-hex="' + i + '" data-group="' + groupKey + '">' +
+        '<input type="text" class="hm-art-color-hex" value="' + hex + '" data-color-hex2="' + i + '" data-group="' + groupKey + '">' +
+        '<input type="text" class="hm-art-color-name" placeholder="名称" value="' + (c.name || '') + '" data-color-name="' + i + '" data-group="' + groupKey + '">' +
+        '<button class="hm-art-color-del" data-color-del="' + i + '" data-group="' + groupKey + '">✕</button>';
+      grid.appendChild(item);
+    });
+    grid.querySelectorAll('[data-color-hex]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var g = state.editing.colorSpec[el.getAttribute('data-group')];
+        g[Number(el.getAttribute('data-color-hex'))].hex = el.value;
+      });
+    });
+    grid.querySelectorAll('[data-color-hex2]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var g = state.editing.colorSpec[el.getAttribute('data-group')];
+        g[Number(el.getAttribute('data-color-hex2'))].hex = el.value;
+        var picker = grid.querySelector('[data-color-hex="' + el.getAttribute('data-color-hex2') + '"]');
+        if (picker) picker.value = el.value;
+      });
+    });
+    grid.querySelectorAll('[data-color-name]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        var g = state.editing.colorSpec[el.getAttribute('data-group')];
+        g[Number(el.getAttribute('data-color-name'))].name = el.value;
+      });
+    });
+    grid.querySelectorAll('[data-color-del]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var g = state.editing.colorSpec[el.getAttribute('data-group')];
+        g.splice(Number(el.getAttribute('data-color-del')), 1);
+        renderColorGroup(gridId, g, el.getAttribute('data-group'));
+      });
+    });
+  }
+
+  /* ============ 会审检查表 ============ */
+  async function openChecklist() {
+    try {
+      var data = await api.getChecklist();
+      state.checklist = (data && data.checklist) || null;
+      renderChecklist();
+      $('artChecklistOverlay').hidden = false;
+    } catch (err) {
+      A.toast && A.toast('加载检查表失败', 'error');
+    }
+  }
+
+  function renderChecklist() {
+    if (!state.checklist) return;
+    var body = $('artChecklistBody');
+    if (!body) return;
+
+    var sections = [
+      { key: 'sekai_board', title: '🌍 世界观氛围资料（イメージボード + 世界観美術テキスト）' },
+      { key: 'bg_board',    title: '🏞️ 背景设定（平面/立面/透视/场景版本区分）' },
+      { key: 'prop_board',  title: '🎒 道具/器物/自然物/材质光照' },
+      { key: 'character_board', title: '🧑 角色设定（三视图/表情/口型/色卡）' },
+      { key: 'creature_board',  title: '🦉 生物/怪物设定（并行独立板块）' },
+      { key: 'mecha_board',     title: '🤖 机甲/可驾驶机械设定' },
+      { key: 'effect_board',   title: '✨ 作画特效设定（角色招式，非环境）' },
+      { key: 'visual_board',   title: '🎨 宣传视觉设定' },
+      { key: 'logo_board',     title: '🔤 文字标识/纹章/LOGO 设定' },
+      { key: 'coordination',   title: '📎 配套协同资料（色彩设计/原図基準/ロケハン）' },
+    ];
+
+    body.innerHTML = sections.map(function (s) {
+      var items = state.checklist[s.key] || [];
+      var done = state.checklist.items || {};
+      return '<div class="hm-art-cl-section">' +
+        '<h4>' + s.title + '</h4>' +
+        '<div class="hm-art-cl-items">' +
+          items.map(function (txt, idx) {
+            var checked = done[s.key + ':' + idx] ? ' checked' : '';
+            return '<label class="hm-art-cl-item"><input type="checkbox" data-cl-key="' + s.key + '" data-cl-idx="' + idx + '"' + checked + '><span>' + txt + '</span></label>';
+          }).join('') +
+        '</div></div>';
+    }).join('');
+
+    // 绑定勾选
+    body.querySelectorAll('[data-cl-key]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var items = state.checklist.items || (state.checklist.items = {});
+        items[cb.getAttribute('data-cl-key') + ':' + cb.getAttribute('data-cl-idx')] = cb.checked;
+        api.saveChecklist({ items: items }).catch(function () {});
+      });
+    });
+  }
+
+  /* ============ 全局绑定 ============ */
+  function bind() {
+    if (bind._done) return;
+    bind._done = true;
+
+    $('artNewBtn').addEventListener('click', createArt);
+    $('artBackBtn').addEventListener('click', function () {
+      state.editing = null;
+      showListView();
+      loadList();
+    });
+    $('artSaveBtn').addEventListener('click', saveArt);
+    $('artDeleteBtn').addEventListener('click', function () {
+      if (!state.editing) return;
+      if (window.confirm('彻底删除「' + state.editing.title + '」？')) deleteArt(state.editing.id);
+    });
+    $('artChecklistBtn').addEventListener('click', openChecklist);
+    $('artChecklistClose').addEventListener('click', function () {
+      $('artChecklistOverlay').hidden = true;
+    });
+    $('artChecklistOverlay').addEventListener('click', function (e) {
+      if (e.target === $('artChecklistOverlay')) $('artChecklistOverlay').hidden = true;
+    });
+
+    // 筛选
+    var searchTimer = null;
+    $('artSearch').addEventListener('input', function () {
+      state.keyword = this.value.trim();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(renderGrid, 200);
+    });
+    $('artStatusFilter').addEventListener('change', function () {
+      state.filterStatus = this.value; renderGrid();
+    });
+    $('artTypeFilter').addEventListener('change', function () {
+      state.filterType = this.value; renderGrid();
+    });
+
+    // 色卡 "添加颜色" 按钮（事件委托）
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-add-color]');
+      if (!btn) return;
+      var groupKey = btn.getAttribute('data-add-color');
+      if (!state.editing) { A.toast && A.toast('请先进入编辑状态', 'error'); return; }
+      var g = state.editing.colorSpec[groupKey];
+      if (!Array.isArray(g)) g = [];
+      g.push({ name: '', hex: '#ffffff' });
+      state.editing.colorSpec[groupKey] = g;
+      var gridId = groupKey === 'palette' ? 'artPaletteGrid' : groupKey === 'shadows' ? 'artShadowGrid' : 'artHighlightGrid';
+      renderColorGroup(gridId, g, groupKey);
+    });
+  }
+
+  window.HMArt = { enter: enter, state: state };
 })();
 
 </script>

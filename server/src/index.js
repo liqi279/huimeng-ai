@@ -24,6 +24,7 @@ const adminRoutes = require('./routes/admin');
 const comfyRoutes = require('./routes/comfy');
 const planRoutes = require('./routes/plan');
 const scriptRoutes = require('./routes/script');
+const artRoutes = require('./routes/art');
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use('/api/tts', ttsRoutes);
 app.use('/api/comfy', comfyRoutes);
 app.use('/api', planRoutes);
 app.use('/api', scriptRoutes);
+app.use('/api', artRoutes);
 
 app.use('/api', (req, res) => {
   res.status(404).json({

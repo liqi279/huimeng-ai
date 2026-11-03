@@ -1830,7 +1830,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'plan', 'script', 'history', 'admin'];
+var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'plan', 'script', 'art', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;

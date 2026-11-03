@@ -47,6 +47,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h12a3 3 0 0 1 3 3v11l-4-2.5-4 2.5-4-2.5-3 2V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 9.5h7M8 12.5h7M8 15.5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         <span>剧本</span>
       </button>
+      <button class="hm-rail-item" data-rail="art" title="美术设定设计（6 大分类 · 日本动画交付标准）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
+        <span>美术设定</span>
+      </button>
     </div>
 
     <div class="hm-rail-bottom">
@@ -2093,6 +2097,199 @@
         </div>
       </div>
     </section>
+  </main>
+
+  <main class="hm-page hm-art-page" id="view-art" hidden>
+    <!-- 顶部工具条 -->
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎨 美术设定设计</h2>
+        <span class="hm-art-top-sub">日本动画现场交付标准 · 美術監督 负责</span>
+      </div>
+      <div class="hm-art-top-right">
+        <button class="hm-pill" id="artChecklistBtn">📋 会审检查表</button>
+        <button class="hm-pill hm-pill-primary" id="artNewBtn">＋ 新建条目</button>
+      </div>
+    </div>
+
+    <!-- ============ 列表视图 ============ -->
+    <section class="hm-art-view-list" id="artListView">
+      <!-- 分类大 Tab -->
+      <div class="hm-art-cat-tabs" id="artCatTabs"></div>
+
+      <!-- 当前分类下的子节 Tab -->
+      <div class="hm-art-section-tabs" id="artSectionTabs"></div>
+
+      <!-- 筛选条 -->
+      <div class="hm-art-filter-bar">
+        <input class="hm-art-search" id="artSearch" placeholder="🔍 搜索标题 / 标签 / 内容...">
+        <select id="artStatusFilter" class="hm-art-filter">
+          <option value="all">全部状态</option>
+          <option value="draft">草稿</option>
+          <option value="wip">制作中</option>
+          <option value="review">审图中</option>
+          <option value="final">定稿</option>
+        </select>
+        <select id="artTypeFilter" class="hm-art-filter">
+          <option value="all">全部类型</option>
+          <option value="lineart">线稿</option>
+          <option value="painting">彩稿</option>
+          <option value="model">设定三视图</option>
+          <option value="color">色卡</option>
+          <option value="layout">Layout</option>
+          <option value="doc">文档</option>
+        </select>
+      </div>
+
+      <!-- 卡片网格 -->
+      <div class="hm-art-grid" id="artGrid"></div>
+      <div class="hm-art-empty" id="artEmpty" hidden>
+        <div class="hm-art-empty-emoji">🎨</div>
+        <h3>该分类还没有设定资料</h3>
+        <p>点击「＋ 新建条目」创建第一张设定板</p>
+      </div>
+    </section>
+
+    <!-- ============ 条目编辑器 ============ -->
+    <section class="hm-art-view-editor" id="artEditorView" hidden>
+      <div class="hm-art-editor-top">
+        <button class="hm-pill hm-pill-ghost" id="artBackBtn">← 返回列表</button>
+        <h3 id="artEditorTitle">美术条目</h3>
+        <div class="hm-art-editor-meta">
+          <span id="artEditorPath" class="hm-art-editor-path"></span>
+          <span class="hm-art-editor-version" id="artVerTag">Ver1.0</span>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-body">
+        <!-- 左侧：基本信息 -->
+        <div class="hm-art-editor-left">
+          <div class="hm-art-form-row">
+            <label>主标题</label>
+            <input id="artTitle" placeholder="如: 涩谷十字路口 BG 样板 - 黄昏">
+          </div>
+          <div class="hm-art-form-row">
+            <label>日文原名（可选）</label>
+            <input id="artSubtitle" placeholder="如: 渋谷スクランブル交差点 - 夕方">
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>大分类</label>
+              <select id="artCategory"></select>
+            </div>
+            <div>
+              <label>子节</label>
+              <select id="artSection"></select>
+            </div>
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>条目类型</label>
+              <select id="artSpecType">
+                <option value="lineart">线稿</option><option value="painting">彩稿</option>
+                <option value="model">设定三视图</option><option value="color">色卡</option>
+                <option value="layout">Layout</option><option value="doc">文档</option>
+              </select>
+            </div>
+            <div>
+              <label>交付格式</label>
+              <input id="artSpecFormat" placeholder="psd / ai / png / pdf" value="psd">
+            </div>
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>分辨率</label>
+              <input id="artSpecRes" placeholder="如: 1920x1080 / A3">
+            </div>
+            <div>
+              <label>状态</label>
+              <select id="artStatus">
+                <option value="draft">草稿 Ver0.x</option>
+                <option value="wip">制作中 Ver1.x</option>
+                <option value="review">审图中 Ver1.x</option>
+                <option value="final">定稿 Ver2.0 確定</option>
+              </select>
+            </div>
+          </div>
+          <div class="hm-art-form-row">
+            <label>版本号</label>
+            <input id="artVersion" value="Ver1.0" placeholder="Ver1.0 → Ver1.1 → Ver2.0 確定">
+          </div>
+          <div class="hm-art-form-row">
+            <label>标签（朝/昼/夕/夜/雨/霧/雪... 回车添加）</label>
+            <input id="artTags" placeholder="输入后回车添加，如: 朝 昼 夜 雨">
+          </div>
+        </div>
+
+        <!-- 右侧：媒体 + 色卡 + 内容 -->
+        <div class="hm-art-editor-right">
+          <!-- 媒体占位 -->
+          <div class="hm-art-form-block">
+            <label>🎯 关联媒体（缩略图 / 多版本）</label>
+            <div class="hm-art-media-placeholders">
+              <div class="hm-art-media-ph">
+                <div class="hm-art-media-label">缩略图</div>
+                <div class="hm-art-media-box" id="artMediaThumb">🖼️ 拖入或点击上传</div>
+              </div>
+              <div class="hm-art-media-ph">
+                <div class="hm-art-media-label">多版本源文件</div>
+                <div class="hm-art-media-box" id="artMediaSources">📁 初稿 / 改修 / 定稿 多版本管理</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 色卡 -->
+          <div class="hm-art-form-block">
+            <label>🎨 色卡（Color Spec）</label>
+            <div class="hm-art-color-sections">
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">基础色</div>
+                <div class="hm-art-color-grid" id="artPaletteGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="palette">＋ 添加颜色</button>
+              </div>
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">阴影色</div>
+                <div class="hm-art-color-grid" id="artShadowGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="shadows">＋ 添加阴影</button>
+              </div>
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">高光色</div>
+                <div class="hm-art-color-grid" id="artHighlightGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="highlights">＋ 添加高光</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 技术规格 -->
+          <div class="hm-art-form-block">
+            <label>📝 文字说明 / 规格书</label>
+            <textarea id="artContent" rows="8" placeholder="光照方向 / 阴影软硬 / 空气透视 / 笔触规范 / 物理特例 / 禁忌元素..."></textarea>
+          </div>
+
+          <!-- 审图备注 -->
+          <div class="hm-art-form-block">
+            <label>📒 审图备注 / 变更记录</label>
+            <textarea id="artNotes" rows="4" placeholder="审图日 / 变更内容 / 对接画师..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-footer">
+        <button class="hm-pill" id="artDeleteBtn">🗑 删除</button>
+        <button class="hm-pill hm-pill-primary" id="artSaveBtn">💾 保存条目</button>
+      </div>
+    </section>
+
+    <!-- ============ 会审检查表（抽屉弹层） ============ -->
+    <div class="hm-art-checklist-overlay" id="artChecklistOverlay" hidden>
+      <div class="hm-art-checklist-panel">
+        <div class="hm-art-checklist-head">
+          <h3>📋 设定会审检查表（設定レビューチェックシート）</h3>
+          <button class="hm-pill hm-pill-mini" id="artChecklistClose">✕ 关闭</button>
+        </div>
+        <div class="hm-art-checklist-body" id="artChecklistBody"></div>
+      </div>
+    </div>
   </main>
 
   <main class="hm-page hm-admin-page" id="view-admin" hidden>

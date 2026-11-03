@@ -296,6 +296,23 @@
     return '/script/' + encodeURIComponent(scriptId) + '/export?format=' + encodeURIComponent(format || 'fountain');
   };
 
+  /* -------------- 美术设定设计 -------------- */
+  api.artCategories = function () { return request('/art/categories', {}, 10000); };
+  api.listArts = function (category) {
+    var q = category && category !== 'all' ? '?category=' + encodeURIComponent(category) : '';
+    return request('/art' + q, {}, 15000);
+  };
+  api.createArt = function (payload) { return request('/art', { method: 'POST', body: payload }, 20000); };
+  api.getArt = function (id) { return request('/art/' + encodeURIComponent(id), {}, 15000); };
+  api.updateArt = function (id, payload) { return request('/art/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteArt = function (id) { return request('/art/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+  api.duplicateArt = function (id) { return request('/art/' + encodeURIComponent(id) + '/duplicate', { method: 'POST' }, 15000); };
+  api.bulkArtStatus = function (ids, status) {
+    return request('/art/bulk-status', { method: 'POST', body: { ids: ids, status: status } }, 20000);
+  };
+  api.getChecklist = function () { return request('/art/checklist', {}, 15000); };
+  api.saveChecklist = function (payload) { return request('/art/checklist', { method: 'POST', body: payload }, 15000); };
+
   api.presets = function () { return request('/presets', {}, 15000); };
   api.catalog = function () { return request('/catalog', {}, 15000); };
   api.mediaModels = function () { return request('/media-models', {}, 15000); };
