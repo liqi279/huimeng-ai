@@ -3437,17 +3437,144 @@ async function downloadImage(url, filename) {
 }
 
 /* ---------------- 大图预览 ---------------- */
+/* ---------- Lightbox 状态 ---------- */
+var lbState = { scale: 1, rotate: 0, tx: 0, ty: 0, dragging: false, startX: 0, startY: 0, startTx: 0, startTy: 0, bound: false, isImage: false };
+
+function lbApply() {
+  var img = els.lbImage;
+  if (!img) return;
+  img.style.transform = 'translate(' + lbState.tx + 'px,' + lbState.ty + 'px) scale(' + lbState.scale + ') rotate(' + lbState.rotate + 'deg)';
+  img.style.transformOrigin = 'center center';
+  var label = document.getElementById('lbZoomLabel');
+  if (label) label.textContent = Math.round(lbState.scale * 100) + '%';
+}
+
+function lbReset() {
+  lbState.scale = 1; lbState.rotate = 0; lbState.tx = 0; lbState.ty = 0;
+  lbApply();
+}
+
+function lbZoom(factor, cx, cy) {
+  var prev = lbState.scale;
+  var next = Math.min(10, Math.max(0.1, prev * factor));
+  // 以 (cx,cy) 为锚点缩放
+  if (cx != null && cy != null && els.lbStage && prev !== next) {
+    var rect = els.lbStage.getBoundingClientRect();
+    var px = cx - rect.left - rect.width / 2;
+    var py = cy - rect.top - rect.height / 2;
+    lbState.tx = px - (px - lbState.tx) * (next / prev);
+    lbState.ty = py - (py - lbState.ty) * (next / prev);
+  }
+  lbState.scale = next;
+  lbApply();
+}
+
+function lbFit() {
+  var img = els.lbImage, stage = els.lbStage;
+  if (!img || !img.naturalWidth || !img.naturalHeight || !stage) return;
+  var rot = lbState.rotate % 180;
+  var w = rot === 0 ? img.naturalWidth : img.naturalHeight;
+  var h = rot === 0 ? img.naturalHeight : img.naturalWidth;
+  var sw = stage.clientWidth - 40;
+  var sh = stage.clientHeight - 40;
+  lbState.scale = Math.min(sw / w, sh / h, 1);
+  lbState.tx = 0; lbState.ty = 0;
+  lbApply();
+}
+
+function lbRotate(delta) {
+  lbState.rotate = ((lbState.rotate + delta) % 360 + 360) % 360;
+  lbApply();
+}
+
+function bindLightboxGestures() {
+  if (lbState.bound) return;
+  lbState.bound = true;
+  var img = els.lbImage, stage = els.lbStage;
+
+  // 滚轮缩放
+  stage.addEventListener('wheel', function (e) {
+    if (!lbState.isImage) return;
+    e.preventDefault();
+    var factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+    lbZoom(factor, e.clientX, e.clientY);
+  }, { passive: false });
+
+  // 拖拽平移
+  img.addEventListener('pointerdown', function (e) {
+    if (!lbState.isImage || lbState.scale <= 1) return;
+    lbState.dragging = true;
+    lbState.startX = e.clientX; lbState.startY = e.clientY;
+    lbState.startTx = lbState.tx; lbState.startTy = lbState.ty;
+    img.setPointerCapture(e.pointerId);
+    img.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  img.addEventListener('pointermove', function (e) {
+    if (!lbState.dragging) return;
+    lbState.tx = lbState.startTx + (e.clientX - lbState.startX);
+    lbState.ty = lbState.startTy + (e.clientY - lbState.startY);
+    lbApply();
+  });
+  img.addEventListener('pointerup', function (e) {
+    lbState.dragging = false; img.style.cursor = lbState.scale > 1 ? 'grab' : '';
+    try { img.releasePointerCapture(e.pointerId); } catch (err) {}
+  });
+
+  // 按钮
+  var bar = document.getElementById('lbZoomBar');
+  var $ = function (id) { return document.getElementById(id); };
+  if ($('lbZoomIn'))  $('lbZoomIn').onclick  = function () { lbZoom(1.2); };
+  if ($('lbZoomOut')) $('lbZoomOut').onclick = function () { lbZoom(1 / 1.2); };
+  if ($('lbFit'))     $('lbFit').onclick     = lbFit;
+  if ($('lbReset'))   $('lbReset').onclick   = lbReset;
+  if ($('lbRotL'))    $('lbRotL').onclick    = function () { lbRotate(-90); };
+  if ($('lbRotR'))    $('lbRotR').onclick    = function () { lbRotate(90); };
+  if ($('lbRot180'))  $('lbRot180').onclick  = function () { lbRotate(180); };
+
+  // 键盘
+  document.addEventListener('keydown', function (e) {
+    if (!els.lightbox || !els.lightbox.classList.contains('is-open')) return;
+    if (!lbState.isImage) return;
+    var k = e.key;
+    if (k === '+' || k === '=') { lbZoom(1.15); e.preventDefault(); }
+    else if (k === '-' || k === '_') { lbZoom(1 / 1.15); e.preventDefault(); }
+    else if (k === '0') { lbFit(); e.preventDefault(); }
+    else if (k.toLowerCase() === 'r') { lbReset(); e.preventDefault(); }
+    else if (k === 'ArrowLeft') { lbRotate(-90); e.preventDefault(); }
+    else if (k === 'ArrowRight') { lbRotate(90); e.preventDefault(); }
+  });
+
+  // 双击切换 1x / fit
+  stage.addEventListener('dblclick', function () {
+    if (!lbState.isImage) return;
+    if (lbState.scale > 1.01) lbFit(); else lbZoom(1);
+  });
+}
+
 function openLightbox(item) {
   state.activeItem = item;
   var type = item.type || 'image';
   var inner = els.lightbox.querySelector('.lb-inner');
   inner.querySelectorAll('.lb-media-el').forEach(function (node) { node.remove(); });
 
+  var bar = document.getElementById('lbZoomBar');
+  lbState.isImage = (type === 'image');
+  if (bar) bar.hidden = !lbState.isImage;
+
+  // 重置变换
+  lbState.scale = 1; lbState.rotate = 0; lbState.tx = 0; lbState.ty = 0;
+  if (els.lbImage) { els.lbImage.style.transform = ''; els.lbImage.style.cursor = ''; }
+
   if (type === 'image') {
     els.lbImage.style.display = '';
     els.lbImage.src = item.url || item.thumb || '';
     els.lbImage.onerror = function () {
       if (item.thumb && els.lbImage.src !== item.thumb) els.lbImage.src = item.thumb;
+    };
+    els.lbImage.onload = function () {
+      lbFit(); // 自动适应窗口
+      lbApply();
     };
   } else {
     els.lbImage.style.display = 'none';
@@ -3474,6 +3601,8 @@ function openLightbox(item) {
   els.lightbox.classList.add('is-open');
   els.lightbox.setAttribute('aria-hidden', 'false');
   document.body.classList.add('no-scroll');
+
+  bindLightboxGestures();
 }
 
 function closeLightbox() {
@@ -3481,6 +3610,9 @@ function closeLightbox() {
   els.lightbox.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('no-scroll');
   state.activeItem = null;
+  // 停止视频/音频
+  var media = els.lightbox.querySelector('.lb-media-el');
+  if (media) try { media.pause(); } catch (err) {}
 }
 
 /* ---------------- 生成流程 ---------------- */

@@ -3114,18 +3114,44 @@
     <button class="lb-close" id="lbClose" aria-label="关闭">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
     </button>
-    <div class="lb-inner">
+    <div class="lb-stage" id="lbStage">
       <img id="lbImage" alt="生成的作品">
-      <div class="lb-bar">
-        <div class="lb-copy">
-          <p id="lbPrompt"></p>
-          <span id="lbMeta"></span>
-        </div>
-        <button class="primary-btn" id="lbDownload">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l4-4m-4 4l-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          下载原图
-        </button>
+    </div>
+    <div class="lb-zoom-bar" id="lbZoomBar" hidden>
+      <button class="lb-zb-btn" id="lbFit" title="适应窗口 (0)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="lb-zb-btn" id="lbZoomOut" title="缩小 (-)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 11h6M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+      <span class="lb-zb-label" id="lbZoomLabel">100%</span>
+      <button class="lb-zb-btn" id="lbZoomIn" title="放大 (+)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 11h6M11 8v6M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+      <span class="lb-zb-sep"></span>
+      <button class="lb-zb-btn" id="lbRotL" title="向左旋转 90° (←)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.34-5.66M4 4v4h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="lb-zb-btn" id="lbRot180" title="旋转 180°">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 1 3 6.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M3 4v5h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="lb-zb-btn" id="lbRotR" title="向右旋转 90° (→)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="lb-zb-sep"></span>
+      <button class="lb-zb-btn" id="lbReset" title="重置 (R)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="lb-bar">
+      <div class="lb-copy">
+        <p id="lbPrompt"></p>
+        <span id="lbMeta"></span>
       </div>
+      <button class="primary-btn" id="lbDownload">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l4-4m-4 4l-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        下载原图
+      </button>
     </div>
   </div>
 
