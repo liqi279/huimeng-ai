@@ -62,8 +62,10 @@ const fsp = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
-const { wrap, assert } = require('../http');
+const { wrap, assert, dataUrlToBuffer, extFromMime, randomToken } = require('../http');
 const store = require('../store');
+
+const MAX_ART_MEDIA_BYTES = 50 * 1024 * 1024; // 50MB
 
 // 使用 store 的原子写入 + 串行队列，保证并发安全和数据不损坏
 const writeJson = store.writeJson;
@@ -171,6 +173,31 @@ function emptyBoard() {
     colorSpec: { palette: [], shadows: [], highlights: [] },
   };
 }
+
+/* ============ 图片上传 ============ */
+router.post('/art/upload', wrap(async (req, res) => {
+  const body = req.body || {};
+  assert(
+    typeof body.dataUrl === 'string' && body.dataUrl.startsWith('data:'),
+    400, '缺少文件数据', 'dataUrl 需为 data:<mime>;base64,... 形式',
+  );
+  const decoded = dataUrlToBuffer(body.dataUrl);
+  assert(decoded.buffer.length > 0, 400, '文件内容为空', '请重新选择文件');
+  assert(decoded.buffer.length <= MAX_ART_MEDIA_BYTES, 413, '文件过大',
+    `单个文件不能超过 ${Math.round(MAX_ART_MEDIA_BYTES / 1024 / 1024)}MB`);
+  const mime = decoded.mime || 'image/png';
+  assert(mime.startsWith('image/'), 400, '仅支持图片', `收到 MIME: ${mime}`);
+  const ext = extFromMime(mime) || 'png';
+  const fileName = `art-${Date.now()}-${randomToken()}.${ext}`;
+  // 存到 assets 目录（已挂载 /uploads/assets 静态代理）
+  await fsp.writeFile(path.join(store.dirs.assets, fileName), decoded.buffer);
+  res.json({
+    url: `/uploads/assets/${fileName}`,
+    mime,
+    size: decoded.buffer.length,
+    ext,
+  });
+}));
 
 /* ============ 分类字典 ============ */
 router.get('/art/categories', wrap(async (req, res) => {

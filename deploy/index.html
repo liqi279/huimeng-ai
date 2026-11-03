@@ -12037,6 +12037,238 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 }
 
 
+/* ============ 美术设定：卡片缩略图真实图片 ============ */
+.hm-art-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+/* ============ 美术设定：媒体上传面板 ============ */
+.hm-art-media-placeholders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.hm-art-media-ph {
+  display: flex;
+  flex-direction: column;
+}
+.hm-art-media-label {
+  font-size: 12px;
+  color: var(--hm-text-dim);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.hm-art-media-box {
+  min-height: 180px;
+  border-radius: 10px;
+  border: 1px dashed rgba(139, 92, 246, 0.4);
+  background: rgba(139, 92, 246, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 10px;
+  overflow: hidden;
+}
+.hm-art-media-box:hover,
+.hm-art-media-box.hm-art-drop-hover {
+  border-color: rgba(139, 92, 246, 0.9);
+  background: rgba(139, 92, 246, 0.12);
+  transform: translateY(-1px);
+}
+
+.hm-art-media-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  width: 100%;
+  padding: 22px 10px;
+  cursor: pointer;
+}
+.hm-art-media-empty-sm {
+  padding: 14px 8px;
+}
+.hm-art-media-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+.hm-art-media-hint {
+  font-size: 13px;
+  color: var(--hm-text);
+  font-weight: 500;
+}
+.hm-art-media-sub {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+}
+
+.hm-art-media-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.hm-art-media-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: zoom-in;
+  transition: transform 0.3s;
+}
+.hm-art-media-preview:hover img {
+  transform: scale(1.02);
+}
+.hm-art-media-preview-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  opacity: 0;
+  transition: opacity 0.2s;
+  justify-content: flex-end;
+}
+.hm-art-media-preview:hover .hm-art-media-preview-actions {
+  opacity: 1;
+}
+
+/* 多版本源文件列表 */
+.hm-art-sources-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px;
+  overflow-y: auto;
+  max-height: 320px;
+  margin-bottom: 6px;
+}
+.hm-art-source-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s;
+}
+.hm-art-source-item:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+.hm-art-source-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+.hm-art-source-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+  display: block;
+}
+.hm-art-source-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.hm-art-source-label {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+  color: var(--hm-text);
+  font-size: 13px;
+  padding: 2px 4px;
+  width: 100%;
+  border-radius: 3px;
+  outline: none;
+}
+.hm-art-source-label:focus {
+  border-bottom-color: var(--hm-accent);
+  background: rgba(139, 92, 246, 0.08);
+}
+.hm-art-source-meta {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+}
+
+/* ============ 图片预览灯箱 ============ */
+.hm-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hm-lightbox-in 0.2s ease;
+}
+@keyframes hm-lightbox-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.hm-lightbox-img {
+  max-width: 92vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.hm-lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.hm-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+.hm-lightbox-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+
+/* ============ 响应式 ============ */
+@media (max-width: 900px) {
+  .hm-art-media-placeholders {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>
   <style>
 /* =============================================================
@@ -12388,7 +12620,7 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261103024304-9b83e5f";</script>
+<script>window.HM_BUILD = "20261103025643-9af89a2";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -15739,6 +15971,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.createArt = function (payload) { return request('/art', { method: 'POST', body: payload }, 20000); };
   api.getArt = function (id) { return request('/art/' + encodeURIComponent(id), {}, 15000); };
   api.updateArt = function (id, payload) { return request('/art/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.uploadArtMedia = function (dataUrl) { return request('/art/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000); };
   api.deleteArt = function (id) { return request('/art/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.duplicateArt = function (id) { return request('/art/' + encodeURIComponent(id) + '/duplicate', { method: 'POST' }, 15000); };
   api.bulkArtStatus = function (ids, status) {
@@ -34461,9 +34694,14 @@ window.HMChat = (function () {
     filtered.forEach(function (a) {
       var card = document.createElement('div');
       card.className = 'hm-art-card hm-art-st-' + (a.status || 'draft');
+      var thumbHtml = '🎨';
+      if (a.media && a.media.thumb) {
+        try { thumbHtml = '<img src="' + (api.mediaUrl(a.media.thumb)).replace(/"/g, '&quot;') + '" alt="" loading="lazy">'; }
+        catch (e) { thumbHtml = '🎨'; }
+      }
       card.innerHTML =
         '<div class="hm-art-card-status"></div>' +
-        '<div class="hm-art-card-thumb">' + (a.media && a.media.thumb ? '' : '🎨') + '</div>' +
+        '<div class="hm-art-card-thumb">' + thumbHtml + '</div>' +
         '<div class="hm-art-card-body">' +
           '<div class="hm-art-card-title">' + (a.title || '未命名').replace(/[<>]/g, '') + '</div>' +
           (a.subtitle ? '<div class="hm-art-card-sub">' + a.subtitle.replace(/[<>]/g, '') + '</div>' : '') +
@@ -34643,6 +34881,9 @@ window.HMChat = (function () {
     renderColorGroup('artPaletteGrid', (a.colorSpec && a.colorSpec.palette) || [], 'palette');
     renderColorGroup('artShadowGrid', (a.colorSpec && a.colorSpec.shadows) || [], 'shadows');
     renderColorGroup('artHighlightGrid', (a.colorSpec && a.colorSpec.highlights) || [], 'highlights');
+
+    // 媒体（缩略图 + 多版本）
+    renderMediaPanel();
   }
 
   function updateSectionOptions() {
@@ -34709,6 +34950,228 @@ window.HMChat = (function () {
         renderColorGroup(gridId, g, el.getAttribute('data-group'));
       });
     });
+  }
+
+  /* ============ 媒体上传 / 预览 ============ */
+  function renderMediaPanel() {
+    var a = state.editing;
+    if (!a) return;
+
+    // 缩略图
+    var thumbBox = $('artMediaThumb');
+    if (thumbBox) {
+      thumbBox.innerHTML = buildThumbMediaHtml(a);
+      wireThumbUpload(thumbBox);
+    }
+
+    // 多版本
+    var srcBox = $('artMediaSources');
+    if (srcBox) {
+      srcBox.innerHTML = buildSourcesMediaHtml(a);
+      wireSourcesUpload(srcBox);
+    }
+  }
+
+  function buildThumbMediaHtml(a) {
+    var url = (a.media && a.media.thumb) ? api.mediaUrl(a.media.thumb) : '';
+    if (url) {
+      return '<div class="hm-art-media-preview">' +
+        '<img src="' + url + '" alt="" data-preview-click>' +
+        '<div class="hm-art-media-preview-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-thumb-upload>🔁 更换</button>' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-thumb-clear>🗑 移除</button>' +
+        '</div>' +
+      '</div>';
+    }
+    return '<div class="hm-art-media-empty" data-thumb-upload>' +
+      '<div class="hm-art-media-emoji">🖼️</div>' +
+      '<div class="hm-art-media-hint">点击或拖入缩略图</div>' +
+      '<div class="hm-art-media-sub">支持 PNG / JPG / WebP，≤50MB</div>' +
+    '</div>';
+  }
+
+  function buildSourcesMediaHtml(a) {
+    var sources = (a.media && a.media.sources) || [];
+    var html = '';
+    if (sources.length > 0) {
+      html += '<div class="hm-art-sources-list">';
+      sources.forEach(function (s, i) {
+        var sUrl = api.mediaUrl(s.url || '');
+        var sLabel = (s.label || '版本 ' + (i + 1)).replace(/[<>]/g, '');
+        html += '<div class="hm-art-source-item">' +
+          '<div class="hm-art-source-thumb"><img src="' + sUrl + '" alt="" data-preview-click></div>' +
+          '<div class="hm-art-source-info">' +
+            '<input class="hm-art-source-label" value="' + sLabel.replace(/"/g, '&quot;') + '" data-source-label="' + i + '">' +
+            '<div class="hm-art-source-meta">' + (s.size ? formatSize(s.size) : '') + '</div>' +
+          '</div>' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-source-del="' + i + '">✕</button>' +
+        '</div>';
+      });
+      html += '</div>';
+    }
+    html += '<div class="hm-art-media-empty hm-art-media-empty-sm" data-source-upload>' +
+      '<div class="hm-art-media-emoji">📁</div>' +
+      '<div class="hm-art-media-hint">＋ 添加多版本源文件</div>' +
+    '</div>';
+    return html;
+  }
+
+  function formatSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function wireThumbUpload(box) {
+    // 清空旧事件（通过重建前移除）
+    box.querySelectorAll('[data-thumb-upload]').forEach(function (el) {
+      el.addEventListener('click', function () { pickAndUploadImage('thumb'); });
+    });
+    box.querySelectorAll('[data-thumb-clear]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!state.editing) return;
+        state.editing.media.thumb = '';
+        saveArt();
+        renderMediaPanel();
+      });
+    });
+    // 预览
+    box.querySelectorAll('[data-preview-click]').forEach(function (el) {
+      el.addEventListener('click', function () { openLightbox(el.src); });
+    });
+    // 拖放
+    bindDrop(box, 'thumb');
+  }
+
+  function wireSourcesUpload(box) {
+    box.querySelectorAll('[data-source-upload]').forEach(function (el) {
+      el.addEventListener('click', function () { pickAndUploadImage('source'); });
+    });
+    box.querySelectorAll('[data-source-del]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!state.editing) return;
+        var idx = Number(el.getAttribute('data-source-del'));
+        state.editing.media.sources.splice(idx, 1);
+        saveArt();
+        renderMediaPanel();
+      });
+    });
+    box.querySelectorAll('[data-source-label]').forEach(function (el) {
+      el.addEventListener('input', function () {
+        if (!state.editing) return;
+        var idx = Number(el.getAttribute('data-source-label'));
+        state.editing.media.sources[idx].label = el.value;
+      });
+      el.addEventListener('change', function () { saveArt(); });
+    });
+    box.querySelectorAll('[data-preview-click]').forEach(function (el) {
+      el.addEventListener('click', function () { openLightbox(el.src); });
+    });
+    bindDrop(box, 'source');
+  }
+
+  function bindDrop(box, mode) {
+    if (box.__dropBound) return;
+    box.__dropBound = true;
+    box.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      box.classList.add('hm-art-drop-hover');
+    });
+    box.addEventListener('dragleave', function () { box.classList.remove('hm-art-drop-hover'); });
+    box.addEventListener('drop', function (e) {
+      e.preventDefault();
+      box.classList.remove('hm-art-drop-hover');
+      var files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        handleFile(files[0], mode);
+      }
+    });
+  }
+
+  function pickAndUploadImage(mode) {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = (mode === 'source');
+    input.onchange = function () {
+      var files = input.files;
+      if (!files || files.length === 0) return;
+      if (mode === 'source') {
+        Array.from(files).forEach(function (f) { handleFile(f, mode); });
+      } else {
+        handleFile(files[0], mode);
+      }
+    };
+    input.click();
+  }
+
+  function handleFile(file, mode) {
+    if (!file || !file.type.startsWith('image/')) {
+      A.toast && A.toast('请选择图片文件', 'error');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      uploadDataUrl(reader.result, mode, file);
+    };
+    reader.onerror = function () {
+      A.toast && A.toast('读取文件失败', 'error');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  var _uploadingMedia = false;
+  function uploadDataUrl(dataUrl, mode, file) {
+    if (_uploadingMedia) return;
+    _uploadingMedia = true;
+    var toastMsg = (mode === 'thumb') ? '正在上传缩略图...' : '正在上传源文件...';
+    A.toast && A.toast(toastMsg);
+    api.uploadArtMedia(dataUrl).then(function (res) {
+      _uploadingMedia = false;
+      if (!state.editing) return;
+      if (mode === 'thumb') {
+        state.editing.media.thumb = res.url;
+      } else {
+        state.editing.media.sources = state.editing.media.sources || [];
+        state.editing.media.sources.push({
+          url: res.url,
+          label: (file && file.name) ? file.name.replace(/\.[^.]+$/, '') : '版本 ' + (state.editing.media.sources.length + 1),
+          size: res.size,
+        });
+      }
+      renderMediaPanel();
+      saveArt();
+      A.toast && A.toast('✅ 上传成功', 'success');
+    }).catch(function (err) {
+      _uploadingMedia = false;
+      A.toast && A.toast('上传失败: ' + (err && err.message || err), 'error');
+    });
+  }
+
+  /* ============ 图片预览灯箱 ============ */
+  function openLightbox(src) {
+    var overlay = document.createElement('div');
+    overlay.className = 'hm-lightbox';
+    overlay.innerHTML =
+      '<button class="hm-lightbox-close" title="关闭 (ESC)">✕</button>' +
+      '<img class="hm-lightbox-img" src="' + src + '" alt="">' +
+      '<div class="hm-lightbox-hint">ESC / 点击空白关闭</div>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay || e.target.classList.contains('hm-lightbox-close')) {
+        document.body.removeChild(overlay);
+      }
+    });
+    var onKey = function (e) {
+      if (e.key === 'Escape') {
+        document.body.removeChild(overlay);
+        document.removeEventListener('keydown', onKey);
+      }
+    };
+    document.addEventListener('keydown', onKey);
   }
 
   /* ============ 会审检查表 ============ */

@@ -305,6 +305,7 @@
   api.createArt = function (payload) { return request('/art', { method: 'POST', body: payload }, 20000); };
   api.getArt = function (id) { return request('/art/' + encodeURIComponent(id), {}, 15000); };
   api.updateArt = function (id, payload) { return request('/art/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.uploadArtMedia = function (dataUrl) { return request('/art/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000); };
   api.deleteArt = function (id) { return request('/art/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.duplicateArt = function (id) { return request('/art/' + encodeURIComponent(id) + '/duplicate', { method: 'POST' }, 15000); };
   api.bulkArtStatus = function (ids, status) {
