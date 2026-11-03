@@ -3665,6 +3665,7 @@
       colorSpec: state.editing.colorSpec,
       content: $('artContent').value,
       notes: $('artNotes').value,
+      characterSpec: state.editing.characterSpec,
     };
     try {
       var data = await api.updateArt(state.editing.id, payload);
@@ -3718,6 +3719,14 @@
 
     // 媒体（缩略图 + 多版本）
     renderMediaPanel();
+
+    // 角色设定专属编辑器
+    if (a.category === 'character') {
+      renderCharacterEditor();
+      $('artCharacterBlock').hidden = false;
+    } else {
+      $('artCharacterBlock').hidden = true;
+    }
   }
 
   function updateSectionOptions() {
@@ -4006,6 +4015,358 @@
       }
     };
     document.addEventListener('keydown', onKey);
+  }
+
+  /* ============ 角色设定专属编辑器 ============ */
+  function renderCharacterEditor() {
+    var a = state.editing;
+    var cs = a.characterSpec = a.characterSpec || {};
+    cs.expressions = cs.expressions || [];
+    cs.mouthShapes = cs.mouthShapes || [];
+    cs.poses = cs.poses || [];
+    cs.variants = cs.variants || [];
+    cs.modelSheet = cs.modelSheet || {};
+
+    // 基础信息填充
+    $('charRole').value = cs.role || '';
+    $('charGender').value = cs.gender || '';
+    $('charAge').value = cs.age || '';
+    $('charHeight').value = cs.height || '';
+    $('charWeight').value = cs.weight || '';
+    $('charVoiceActor').value = cs.voiceActor || '';
+    $('charSignature').value = cs.signature || '';
+
+    // 角色色
+    bindCharColor('hairColor', cs, 'charHairColor', 'charHairHex');
+    bindCharColor('eyeColor', cs, 'charEyeColor', 'charEyeHex');
+    bindCharColor('skinColor', cs, 'charSkinColor', 'charSkinHex');
+    bindCharColor('outfitMainColor', cs, 'charOutfitColor', 'charOutfitHex');
+
+    // 字母头像
+    renderCharAvatar();
+
+    // Model Sheet 三视图
+    renderUploadSlots();
+
+    // 表情集
+    renderCharGrid('charExpressionsGrid', cs.expressions, 'expressions');
+    // 口型集
+    renderCharGrid('charMouthGrid', cs.mouthShapes, 'mouthShapes');
+    // 姿势集
+    renderCharGrid('charPosesGrid', cs.poses, 'poses');
+    // 变体
+    renderVariants();
+
+    // 基础信息输入事件
+    bindCharBasicFields();
+
+    // 添加按钮
+    $('charAddPoseBtn').onclick = function () {
+      cs.poses.push({ key: 'pose_' + Date.now(), label: '新姿势', url: '' });
+      renderCharGrid('charPosesGrid', cs.poses, 'poses');
+    };
+    $('charAddVariantBtn').onclick = function () {
+      cs.variants.push({ label: '新变体', url: '' });
+      renderVariants();
+    };
+  }
+
+  function bindCharColor(csKey, cs, pickerId, hexId) {
+    var picker = $(pickerId);
+    var hex = $(hexId);
+    var v = cs[csKey] || '#888888';
+    picker.value = v;
+    hex.textContent = v;
+    picker.oninput = function () {
+      cs[csKey] = picker.value;
+      hex.textContent = picker.value;
+      saveArt();
+    };
+  }
+
+  function renderCharAvatar() {
+    var a = state.editing;
+    var cs = a.characterSpec;
+    var box = $('charAvatar');
+    var initial = (a.title || '?').trim().charAt(0).toUpperCase() || '?';
+    box.textContent = initial;
+    box.style.background = 'linear-gradient(135deg, ' + pickFromPalette(cs) + ', ' + pickFromPalette(cs, true) + ')';
+  }
+  function pickFromPalette(cs, alt) {
+    var arr = [cs.hairColor, cs.outfitMainColor, '#8B5CF6', '#3B82F6', '#EC4899'];
+    return (alt ? arr[1] : arr[0]) || '#8B5CF6';
+  }
+
+  function bindCharBasicFields() {
+    var a = state.editing;
+    var cs = a.characterSpec;
+    var fields = {
+      charRole: 'role', charGender: 'gender', charAge: 'age',
+      charHeight: 'height', charWeight: 'weight',
+      charVoiceActor: 'voiceActor', charSignature: 'signature',
+    };
+    Object.keys(fields).forEach(function (domId) {
+      var el = $(domId);
+      if (!el) return;
+      var key = fields[domId];
+      el.oninput = function () { cs[key] = el.value; };
+      el.onchange = function () { saveArt(); renderCharAvatar(); };
+    });
+  }
+
+  function renderUploadSlots() {
+    var slots = document.querySelectorAll('[data-upload-slot]');
+    slots.forEach(function (slotEl) {
+      var path = slotEl.getAttribute('data-upload-slot'); // e.g. "modelSheet.front"
+      var box = slotEl.querySelector('.hm-char-ms-box');
+      var currentUrl = getCharPath(path);
+
+      if (currentUrl) {
+        box.innerHTML =
+          '<img src="' + api.mediaUrl(currentUrl) + '" alt="" data-preview-click>' +
+          '<div class="hm-char-ms-actions">' +
+            '<button class="hm-pill hm-pill-mini" data-slot-upload>🔁</button>' +
+            '<button class="hm-pill hm-pill-mini hm-pill-danger" data-slot-clear>🗑</button>' +
+          '</div>';
+      } else {
+        box.innerHTML =
+          '<div class="hm-char-ms-empty" data-slot-upload>' +
+            '<div class="hm-char-ms-emoji">＋</div>' +
+            '<div class="hm-char-ms-hint">点击 / 拖入上传</div>' +
+          '</div>';
+      }
+
+      // 上传
+      slotEl.querySelectorAll('[data-slot-upload]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          pickAndUploadForSlot(path);
+        });
+      });
+      // 清除
+      slotEl.querySelectorAll('[data-slot-clear]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          setCharPath(path, '');
+          saveArt();
+          renderUploadSlots();
+        });
+      });
+      // 预览
+      slotEl.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openLightbox(img.src);
+        });
+      });
+      // 拖放
+      if (!slotEl.__msBound) {
+        slotEl.__msBound = true;
+        slotEl.addEventListener('dragover', function (e) { e.preventDefault(); slotEl.classList.add('hm-art-drop-hover'); });
+        slotEl.addEventListener('dragleave', function () { slotEl.classList.remove('hm-art-drop-hover'); });
+        slotEl.addEventListener('drop', function (e) {
+          e.preventDefault();
+          slotEl.classList.remove('hm-art-drop-hover');
+          var f = e.dataTransfer.files && e.dataTransfer.files[0];
+          if (f) pickAndUploadForSlot(path, f);
+        });
+      }
+    });
+  }
+
+  function getCharPath(path) {
+    // path 如 "modelSheet.front"
+    var parts = path.split('.');
+    var cur = state.editing.characterSpec;
+    for (var i = 0; i < parts.length; i++) {
+      cur = cur && cur[parts[i]];
+    }
+    return cur || '';
+  }
+  function setCharPath(path, val) {
+    var parts = path.split('.');
+    var cur = state.editing.characterSpec;
+    for (var i = 0; i < parts.length - 1; i++) {
+      cur[parts[i]] = cur[parts[i]] || {};
+      cur = cur[parts[i]];
+    }
+    cur[parts[parts.length - 1]] = val;
+  }
+
+  function pickAndUploadForSlot(path, preFile) {
+    if (preFile) {
+      if (!preFile.type.startsWith('image/')) return;
+      var reader = new FileReader();
+      reader.onload = function () { uploadCharSlot(reader.result, path); };
+      reader.readAsDataURL(preFile);
+      return;
+    }
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      var r = new FileReader();
+      r.onload = function () { uploadCharSlot(r.result, path); };
+      r.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  function uploadCharSlot(dataUrl, path) {
+    A.toast && A.toast('上传中...');
+    api.uploadArtMedia(dataUrl).then(function (res) {
+      setCharPath(path, res.url);
+      saveArt();
+      renderUploadSlots();
+      // 刷新对应 grid（如果是列表项）
+      var parts = path.split('.');
+      if (parts[0] === 'expressions') { renderCharGrid('charExpressionsGrid', state.editing.characterSpec.expressions, 'expressions'); }
+      if (parts[0] === 'mouthShapes') { renderCharGrid('charMouthGrid', state.editing.characterSpec.mouthShapes, 'mouthShapes'); }
+      if (parts[0] === 'poses') { renderCharGrid('charPosesGrid', state.editing.characterSpec.poses, 'poses'); }
+      A.toast && A.toast('✅ 已上传', 'success');
+    }).catch(function (err) {
+      A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
+    });
+  }
+
+  function renderCharGrid(gridId, list, arrayKey) {
+    var grid = $(gridId);
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!list || list.length === 0) return;
+    list.forEach(function (item, idx) {
+      var url = item.url ? api.mediaUrl(item.url) : '';
+      var cell = document.createElement('div');
+      cell.className = 'hm-char-cell';
+      cell.innerHTML =
+        '<div class="hm-char-cell-img">' +
+          (url ? '<img src="' + url + '" alt="" data-preview-click>' : '<div class="hm-char-cell-empty">＋</div>') +
+        '</div>' +
+        '<input class="hm-char-cell-label" value="' + (item.label || '').replace(/"/g, '&quot;') + '" data-label="' + idx + '" data-array="' + arrayKey + '">' +
+        '<div class="hm-char-cell-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-cell-upload="' + idx + '" data-array="' + arrayKey + '">📤</button>' +
+          (list.length > 0 ? '<button class="hm-pill hm-pill-mini hm-pill-danger" data-cell-del="' + idx + '" data-array="' + arrayKey + '">✕</button>' : '') +
+        '</div>';
+      // 事件
+      cell.querySelectorAll('[data-cell-upload]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var i = Number(b.getAttribute('data-cell-upload'));
+          uploadArrayItem(arrayKey, i);
+        });
+      });
+      cell.querySelectorAll('[data-cell-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var i = Number(b.getAttribute('data-cell-del'));
+          getCsArray(arrayKey).splice(i, 1);
+          saveArt();
+          renderCharGrid(gridId, getCsArray(arrayKey), arrayKey);
+        });
+      });
+      cell.querySelectorAll('[data-label]').forEach(function (inp) {
+        inp.addEventListener('input', function () {
+          var i = Number(inp.getAttribute('data-label'));
+          getCsArray(arrayKey)[i].label = inp.value;
+        });
+        inp.addEventListener('change', function () { saveArt(); });
+      });
+      cell.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { openLightbox(img.src); });
+      });
+      // 点击图片也能上传（空状态）
+      cell.querySelector('.hm-char-cell-img').addEventListener('click', function (e) {
+        if (e.target.classList.contains('hm-char-cell-empty')) {
+          var i = idx;
+          uploadArrayItem(arrayKey, i);
+        }
+      });
+      grid.appendChild(cell);
+    });
+  }
+
+  function getCsArray(key) {
+    return state.editing.characterSpec[key];
+  }
+
+  function uploadArrayItem(arrayKey, idx) {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      var r = new FileReader();
+      r.onload = function () {
+        A.toast && A.toast('上传中...');
+        api.uploadArtMedia(r.result).then(function (res) {
+          getCsArray(arrayKey)[idx].url = res.url;
+          saveArt();
+          // 重绘
+          var gridIds = { expressions: 'charExpressionsGrid', mouthShapes: 'charMouthGrid', poses: 'charPosesGrid' };
+          if (gridIds[arrayKey]) renderCharGrid(gridIds[arrayKey], getCsArray(arrayKey), arrayKey);
+          A.toast && A.toast('✅ 已上传', 'success');
+        }).catch(function (err) {
+          A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
+        });
+      };
+      r.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  function renderVariants() {
+    var box = $('charVariantsList');
+    if (!box) return;
+    var list = state.editing.characterSpec.variants || [];
+    box.innerHTML = '';
+    list.forEach(function (v, idx) {
+      var url = v.url ? api.mediaUrl(v.url) : '';
+      var row = document.createElement('div');
+      row.className = 'hm-char-variant-row';
+      row.innerHTML =
+        '<div class="hm-char-variant-thumb">' +
+          (url ? '<img src="' + url + '" alt="" data-preview-click>' : '<div class="hm-char-cell-empty">＋</div>') +
+        '</div>' +
+        '<input class="hm-char-variant-label" value="' + (v.label || '').replace(/"/g, '&quot;') + '" data-v-label="' + idx + '">' +
+        '<div class="hm-char-variant-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-v-upload="' + idx + '">📤</button>' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-v-del="' + idx + '">✕</button>' +
+        '</div>';
+      row.querySelectorAll('[data-v-upload]').forEach(function (b) {
+        b.addEventListener('click', function () { uploadVariant(idx); });
+      });
+      row.querySelectorAll('[data-v-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          list.splice(idx, 1); saveArt(); renderVariants();
+        });
+      });
+      row.querySelectorAll('[data-v-label]').forEach(function (inp) {
+        inp.addEventListener('input', function () { list[idx].label = inp.value; });
+        inp.addEventListener('change', function () { saveArt(); });
+      });
+      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { openLightbox(img.src); });
+      });
+      box.appendChild(row);
+    });
+  }
+
+  function uploadVariant(idx) {
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0]; if (!f) return;
+      var r = new FileReader();
+      r.onload = function () {
+        api.uploadArtMedia(r.result).then(function (res) {
+          state.editing.characterSpec.variants[idx].url = res.url;
+          saveArt(); renderVariants();
+        });
+      };
+      r.readAsDataURL(f);
+    };
+    input.click();
   }
 
   /* ============ 会审检查表 ============ */

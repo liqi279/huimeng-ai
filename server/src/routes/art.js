@@ -98,6 +98,16 @@ const CATEGORIES = [
     '材质设定（木材 / 石材 / 金属 / 玻璃 反光规则）',
     '光环境设定（全域光源色温 / 阴影衰减）',
   ]},
+  { key: 'character', name: '角色设定',           icon: '🧑', sections: [
+    'Model Sheet 标准人设表（正 / 侧 / 背 三视图）',
+    '身高对比图（全员）',
+    '表情集（喜 / 怒 / 哀 / 惧 / 吃惊 / 冷漠）',
+    '口型集（A / I / U / E / O 基础口型）',
+    '基础姿势集（站姿 / 行走 / 待机 Pose）',
+    '服装分解图 · 配饰拆分图',
+    '角色色指定（基础色 / 阴影色 / 高光色卡）',
+    '特殊变体（破损服装 / 老化 / Q 版 / 变身前 · 后）',
+  ]},
   { key: 'effect', name: '作画特效设定',       icon: '✨', sections: [
     '特效关键帧序列稿（起形→扩散→消散）',
     '色阶渐变规范',
@@ -171,6 +181,56 @@ function emptyBoard() {
     media: { thumb: '', sources: [] },
     content: '', notes: '',
     colorSpec: { palette: [], shadows: [], highlights: [] },
+    // 角色设定专有（category === 'character' 时使用）
+    characterSpec: {
+      // 基础信息
+      role: '',             // 角色定位
+      gender: '',
+      age: '',
+      height: '',
+      weight: '',
+      voiceActor: '',       // 声优 / 配音
+      signature: '',        // 口头禅
+      // 角色色（头发/瞳孔/皮肤/服装主色）
+      hairColor: '',
+      eyeColor: '',
+      skinColor: '',
+      outfitMainColor: '',
+      // Model Sheet 三视图
+      modelSheet: {
+        front: '',   // 正面
+        side: '',    // 侧面
+        back: '',    // 背面
+      },
+      // 表情集（6+ 标准表情）
+      expressions: [
+        { key: 'happy',   label: '😊 喜',   url: '' },
+        { key: 'angry',   label: '😠 怒',   url: '' },
+        { key: 'sad',     label: '😢 哀',   url: '' },
+        { key: 'fear',    label: '😨 惧',   url: '' },
+        { key: 'surprise',label: '😮 吃惊', url: '' },
+        { key: 'cold',    label: '😐 冷漠', url: '' },
+      ],
+      // 口型集（A/I/U/E/O）
+      mouthShapes: [
+        { key: 'A', label: 'A', url: '' },
+        { key: 'I', label: 'I', url: '' },
+        { key: 'U', label: 'U', url: '' },
+        { key: 'E', label: 'E', url: '' },
+        { key: 'O', label: 'O', url: '' },
+      ],
+      // 基础姿势集
+      poses: [
+        { key: 'stand', label: '站姿', url: '' },
+        { key: 'walk',  label: '行走', url: '' },
+        { key: 'idle',  label: '待机', url: '' },
+      ],
+      // 特殊变体
+      variants: [
+        { label: '变身前', url: '' },
+        { label: '变身后', url: '' },
+      ],
+    },
   };
 }
 

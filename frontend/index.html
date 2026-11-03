@@ -2271,6 +2271,82 @@
             <label>📒 审图备注 / 变更记录</label>
             <textarea id="artNotes" rows="4" placeholder="审图日 / 变更内容 / 对接画师..."></textarea>
           </div>
+
+          <!-- 角色设定专属（category === 'character' 时显示） -->
+          <div id="artCharacterBlock" hidden>
+            <!-- 角色卡：基础信息 -->
+            <div class="hm-art-form-block hm-char-card">
+              <label>🧑‍🎤 角色卡（基础信息）</label>
+              <div class="hm-char-card-row">
+                <div class="hm-char-avatar" id="charAvatar">?</div>
+                <div class="hm-char-fields">
+                  <div class="hm-char-field"><label>角色定位</label><input id="charRole" placeholder="如: 主角 / 反派 / 配角 / 吉祥物"></div>
+                  <div class="hm-char-field"><label>性别</label><select id="charGender"><option value="">—</option><option>男</option><option>女</option><option>其他</option><option>无性</option></select></div>
+                  <div class="hm-char-field"><label>年龄</label><input id="charAge" placeholder="如: 16 / 永恒"></div>
+                  <div class="hm-char-field"><label>身高</label><input id="charHeight" placeholder="如: 172cm"></div>
+                  <div class="hm-char-field"><label>体重</label><input id="charWeight" placeholder="如: 58kg"></div>
+                  <div class="hm-char-field"><label>声优</label><input id="charVoiceActor" placeholder="如: 花泽香菜"></div>
+                  <div class="hm-char-field hm-char-field-full"><label>口头禅 / Signature</label><input id="charSignature" placeholder="如: 「命运的齿轮开始转动了」"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 角色色 -->
+            <div class="hm-art-form-block">
+              <label>🎨 角色色（头发 / 瞳孔 / 皮肤 / 服装）</label>
+              <div class="hm-char-colors">
+                <div class="hm-char-color-item"><label>头发色</label><input type="color" id="charHairColor" value="#8B5A2B"><span class="hm-char-color-hex" id="charHairHex">#8B5A2B</span></div>
+                <div class="hm-char-color-item"><label>瞳孔色</label><input type="color" id="charEyeColor" value="#2E3A59"><span class="hm-char-color-hex" id="charEyeHex">#2E3A59</span></div>
+                <div class="hm-char-color-item"><label>皮肤色</label><input type="color" id="charSkinColor" value="#FFDBAC"><span class="hm-char-color-hex" id="charSkinHex">#FFDBAC</span></div>
+                <div class="hm-char-color-item"><label>服装主色</label><input type="color" id="charOutfitColor" value="#4A5568"><span class="hm-char-color-hex" id="charOutfitHex">#4A5568</span></div>
+              </div>
+            </div>
+
+            <!-- Model Sheet 三视图 -->
+            <div class="hm-art-form-block">
+              <label>📐 Model Sheet 标准人设表（正 / 侧 / 背）</label>
+              <div class="hm-char-modelsheet">
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.front">
+                  <div class="hm-char-ms-label">正面 Front</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.side">
+                  <div class="hm-char-ms-label">侧面 Side</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.back">
+                  <div class="hm-char-ms-label">背面 Back</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 表情集 -->
+            <div class="hm-art-form-block">
+              <label>😊 表情集（喜 / 怒 / 哀 / 惧 / 吃惊 / 冷漠）</label>
+              <div class="hm-char-grid hm-char-grid-6" id="charExpressionsGrid"></div>
+            </div>
+
+            <!-- 口型集 -->
+            <div class="hm-art-form-block">
+              <label>👄 口型集（A / I / U / E / O）</label>
+              <div class="hm-char-grid hm-char-grid-5" id="charMouthGrid"></div>
+            </div>
+
+            <!-- 姿势集 -->
+            <div class="hm-art-form-block">
+              <label>🎬 基础姿势集（站姿 / 行走 / 待机 Pose）</label>
+              <div class="hm-char-grid hm-char-grid-3" id="charPosesGrid"></div>
+              <button class="hm-pill hm-pill-mini hm-pill-ghost" id="charAddPoseBtn">＋ 添加姿势</button>
+            </div>
+
+            <!-- 特殊变体 -->
+            <div class="hm-art-form-block">
+              <label>✨ 特殊变体（变身前 / 后 · 破损 · 老化 · Q 版）</label>
+              <div class="hm-char-variants" id="charVariantsList"></div>
+              <button class="hm-pill hm-pill-mini hm-pill-ghost" id="charAddVariantBtn">＋ 添加变体</button>
+            </div>
+          </div>
         </div>
       </div>
 

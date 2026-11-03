@@ -12269,6 +12269,321 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   }
 }
 
+/* ============ 角色设定专属编辑器 ============ */
+#artCharacterBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+  margin-top: 4px;
+}
+/* 避免 hidden 后仍有空间 */
+#artCharacterBlock[hidden] { display: none; }
+
+/* 角色卡 */
+.hm-char-card-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.hm-char-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  user-select: none;
+}
+.hm-char-fields {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+.hm-char-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.hm-char-field-full { grid-column: 1 / -1; }
+.hm-char-field label {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  font-weight: 500;
+}
+.hm-char-field input, .hm-char-field select {
+  padding: 6px 10px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: var(--hm-text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.hm-char-field input:focus, .hm-char-field select:focus {
+  border-color: var(--hm-accent);
+}
+
+/* 角色色 */
+.hm-char-colors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.hm-char-color-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-char-color-item label {
+  font-size: 12px;
+  color: var(--hm-text-dim);
+  min-width: 52px;
+}
+.hm-char-color-item input[type="color"] {
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+}
+.hm-char-color-hex {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  color: var(--hm-text);
+  min-width: 70px;
+}
+
+/* Model Sheet 三视图 */
+.hm-char-modelsheet {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.hm-char-ms-slot {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.hm-char-ms-slot.hm-art-drop-hover {
+  border-color: var(--hm-accent);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+.hm-char-ms-label {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.25);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.hm-char-ms-box {
+  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+.hm-char-ms-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: rgba(0, 0, 0, 0.3);
+}
+.hm-char-ms-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--hm-text-dim);
+  cursor: pointer;
+}
+.hm-char-ms-emoji {
+  font-size: 28px;
+  font-weight: 300;
+}
+.hm-char-ms-hint {
+  font-size: 11px;
+}
+.hm-char-ms-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+  opacity: 0;
+  transition: opacity 0.2s;
+  justify-content: flex-end;
+}
+.hm-char-ms-box:hover .hm-char-ms-actions {
+  opacity: 1;
+}
+
+/* 表情集 / 口型集 / 姿势集 Grid */
+.hm-char-grid {
+  display: grid;
+  gap: 10px;
+}
+.hm-char-grid-6 { grid-template-columns: repeat(6, 1fr); }
+.hm-char-grid-5 { grid-template-columns: repeat(5, 1fr); }
+.hm-char-grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+.hm-char-cell {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.hm-char-cell:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+.hm-char-cell-img {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+.hm-char-cell-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.hm-char-cell-empty {
+  font-size: 24px;
+  font-weight: 200;
+  color: var(--hm-text-dim);
+}
+.hm-char-cell-label {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+  color: var(--hm-text);
+  font-size: 12px;
+  text-align: center;
+  padding: 2px 0;
+  outline: none;
+}
+.hm-char-cell-label:focus {
+  border-bottom-color: var(--hm-accent);
+}
+.hm-char-cell-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.hm-char-cell:hover .hm-char-cell-actions {
+  opacity: 1;
+}
+
+/* 变体列表 */
+.hm-char-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.hm-char-variant-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-char-variant-thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.hm-char-variant-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hm-char-variant-label {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+  color: var(--hm-text);
+  font-size: 13px;
+  padding: 2px 4px;
+  outline: none;
+}
+.hm-char-variant-label:focus {
+  border-bottom-color: var(--hm-accent);
+}
+.hm-char-variant-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.hm-char-variant-row:hover .hm-char-variant-actions {
+  opacity: 1;
+}
+
+/* 响应式 */
+@media (max-width: 1100px) {
+  .hm-char-grid-6 { grid-template-columns: repeat(4, 1fr); }
+  .hm-char-grid-5 { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 700px) {
+  .hm-char-grid-6, .hm-char-grid-5, .hm-char-grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .hm-char-modelsheet { grid-template-columns: 1fr; }
+  .hm-char-fields { grid-template-columns: 1fr; }
+  .hm-char-colors { grid-template-columns: 1fr; }
+  .hm-char-card-row { flex-direction: column; align-items: center; }
+}
+
 </style>
   <style>
 /* =============================================================
@@ -12620,7 +12935,7 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261103025643-9af89a2";</script>
+<script>window.HM_BUILD = "20261103030513-017b196";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -14884,6 +15199,82 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
           <div class="hm-art-form-block">
             <label>📒 审图备注 / 变更记录</label>
             <textarea id="artNotes" rows="4" placeholder="审图日 / 变更内容 / 对接画师..."></textarea>
+          </div>
+
+          <!-- 角色设定专属（category === 'character' 时显示） -->
+          <div id="artCharacterBlock" hidden>
+            <!-- 角色卡：基础信息 -->
+            <div class="hm-art-form-block hm-char-card">
+              <label>🧑‍🎤 角色卡（基础信息）</label>
+              <div class="hm-char-card-row">
+                <div class="hm-char-avatar" id="charAvatar">?</div>
+                <div class="hm-char-fields">
+                  <div class="hm-char-field"><label>角色定位</label><input id="charRole" placeholder="如: 主角 / 反派 / 配角 / 吉祥物"></div>
+                  <div class="hm-char-field"><label>性别</label><select id="charGender"><option value="">—</option><option>男</option><option>女</option><option>其他</option><option>无性</option></select></div>
+                  <div class="hm-char-field"><label>年龄</label><input id="charAge" placeholder="如: 16 / 永恒"></div>
+                  <div class="hm-char-field"><label>身高</label><input id="charHeight" placeholder="如: 172cm"></div>
+                  <div class="hm-char-field"><label>体重</label><input id="charWeight" placeholder="如: 58kg"></div>
+                  <div class="hm-char-field"><label>声优</label><input id="charVoiceActor" placeholder="如: 花泽香菜"></div>
+                  <div class="hm-char-field hm-char-field-full"><label>口头禅 / Signature</label><input id="charSignature" placeholder="如: 「命运的齿轮开始转动了」"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 角色色 -->
+            <div class="hm-art-form-block">
+              <label>🎨 角色色（头发 / 瞳孔 / 皮肤 / 服装）</label>
+              <div class="hm-char-colors">
+                <div class="hm-char-color-item"><label>头发色</label><input type="color" id="charHairColor" value="#8B5A2B"><span class="hm-char-color-hex" id="charHairHex">#8B5A2B</span></div>
+                <div class="hm-char-color-item"><label>瞳孔色</label><input type="color" id="charEyeColor" value="#2E3A59"><span class="hm-char-color-hex" id="charEyeHex">#2E3A59</span></div>
+                <div class="hm-char-color-item"><label>皮肤色</label><input type="color" id="charSkinColor" value="#FFDBAC"><span class="hm-char-color-hex" id="charSkinHex">#FFDBAC</span></div>
+                <div class="hm-char-color-item"><label>服装主色</label><input type="color" id="charOutfitColor" value="#4A5568"><span class="hm-char-color-hex" id="charOutfitHex">#4A5568</span></div>
+              </div>
+            </div>
+
+            <!-- Model Sheet 三视图 -->
+            <div class="hm-art-form-block">
+              <label>📐 Model Sheet 标准人设表（正 / 侧 / 背）</label>
+              <div class="hm-char-modelsheet">
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.front">
+                  <div class="hm-char-ms-label">正面 Front</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.side">
+                  <div class="hm-char-ms-label">侧面 Side</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.back">
+                  <div class="hm-char-ms-label">背面 Back</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 表情集 -->
+            <div class="hm-art-form-block">
+              <label>😊 表情集（喜 / 怒 / 哀 / 惧 / 吃惊 / 冷漠）</label>
+              <div class="hm-char-grid hm-char-grid-6" id="charExpressionsGrid"></div>
+            </div>
+
+            <!-- 口型集 -->
+            <div class="hm-art-form-block">
+              <label>👄 口型集（A / I / U / E / O）</label>
+              <div class="hm-char-grid hm-char-grid-5" id="charMouthGrid"></div>
+            </div>
+
+            <!-- 姿势集 -->
+            <div class="hm-art-form-block">
+              <label>🎬 基础姿势集（站姿 / 行走 / 待机 Pose）</label>
+              <div class="hm-char-grid hm-char-grid-3" id="charPosesGrid"></div>
+              <button class="hm-pill hm-pill-mini hm-pill-ghost" id="charAddPoseBtn">＋ 添加姿势</button>
+            </div>
+
+            <!-- 特殊变体 -->
+            <div class="hm-art-form-block">
+              <label>✨ 特殊变体（变身前 / 后 · 破损 · 老化 · Q 版）</label>
+              <div class="hm-char-variants" id="charVariantsList"></div>
+              <button class="hm-pill hm-pill-mini hm-pill-ghost" id="charAddVariantBtn">＋ 添加变体</button>
+            </div>
           </div>
         </div>
       </div>
@@ -34831,6 +35222,7 @@ window.HMChat = (function () {
       colorSpec: state.editing.colorSpec,
       content: $('artContent').value,
       notes: $('artNotes').value,
+      characterSpec: state.editing.characterSpec,
     };
     try {
       var data = await api.updateArt(state.editing.id, payload);
@@ -34884,6 +35276,14 @@ window.HMChat = (function () {
 
     // 媒体（缩略图 + 多版本）
     renderMediaPanel();
+
+    // 角色设定专属编辑器
+    if (a.category === 'character') {
+      renderCharacterEditor();
+      $('artCharacterBlock').hidden = false;
+    } else {
+      $('artCharacterBlock').hidden = true;
+    }
   }
 
   function updateSectionOptions() {
@@ -35172,6 +35572,358 @@ window.HMChat = (function () {
       }
     };
     document.addEventListener('keydown', onKey);
+  }
+
+  /* ============ 角色设定专属编辑器 ============ */
+  function renderCharacterEditor() {
+    var a = state.editing;
+    var cs = a.characterSpec = a.characterSpec || {};
+    cs.expressions = cs.expressions || [];
+    cs.mouthShapes = cs.mouthShapes || [];
+    cs.poses = cs.poses || [];
+    cs.variants = cs.variants || [];
+    cs.modelSheet = cs.modelSheet || {};
+
+    // 基础信息填充
+    $('charRole').value = cs.role || '';
+    $('charGender').value = cs.gender || '';
+    $('charAge').value = cs.age || '';
+    $('charHeight').value = cs.height || '';
+    $('charWeight').value = cs.weight || '';
+    $('charVoiceActor').value = cs.voiceActor || '';
+    $('charSignature').value = cs.signature || '';
+
+    // 角色色
+    bindCharColor('hairColor', cs, 'charHairColor', 'charHairHex');
+    bindCharColor('eyeColor', cs, 'charEyeColor', 'charEyeHex');
+    bindCharColor('skinColor', cs, 'charSkinColor', 'charSkinHex');
+    bindCharColor('outfitMainColor', cs, 'charOutfitColor', 'charOutfitHex');
+
+    // 字母头像
+    renderCharAvatar();
+
+    // Model Sheet 三视图
+    renderUploadSlots();
+
+    // 表情集
+    renderCharGrid('charExpressionsGrid', cs.expressions, 'expressions');
+    // 口型集
+    renderCharGrid('charMouthGrid', cs.mouthShapes, 'mouthShapes');
+    // 姿势集
+    renderCharGrid('charPosesGrid', cs.poses, 'poses');
+    // 变体
+    renderVariants();
+
+    // 基础信息输入事件
+    bindCharBasicFields();
+
+    // 添加按钮
+    $('charAddPoseBtn').onclick = function () {
+      cs.poses.push({ key: 'pose_' + Date.now(), label: '新姿势', url: '' });
+      renderCharGrid('charPosesGrid', cs.poses, 'poses');
+    };
+    $('charAddVariantBtn').onclick = function () {
+      cs.variants.push({ label: '新变体', url: '' });
+      renderVariants();
+    };
+  }
+
+  function bindCharColor(csKey, cs, pickerId, hexId) {
+    var picker = $(pickerId);
+    var hex = $(hexId);
+    var v = cs[csKey] || '#888888';
+    picker.value = v;
+    hex.textContent = v;
+    picker.oninput = function () {
+      cs[csKey] = picker.value;
+      hex.textContent = picker.value;
+      saveArt();
+    };
+  }
+
+  function renderCharAvatar() {
+    var a = state.editing;
+    var cs = a.characterSpec;
+    var box = $('charAvatar');
+    var initial = (a.title || '?').trim().charAt(0).toUpperCase() || '?';
+    box.textContent = initial;
+    box.style.background = 'linear-gradient(135deg, ' + pickFromPalette(cs) + ', ' + pickFromPalette(cs, true) + ')';
+  }
+  function pickFromPalette(cs, alt) {
+    var arr = [cs.hairColor, cs.outfitMainColor, '#8B5CF6', '#3B82F6', '#EC4899'];
+    return (alt ? arr[1] : arr[0]) || '#8B5CF6';
+  }
+
+  function bindCharBasicFields() {
+    var a = state.editing;
+    var cs = a.characterSpec;
+    var fields = {
+      charRole: 'role', charGender: 'gender', charAge: 'age',
+      charHeight: 'height', charWeight: 'weight',
+      charVoiceActor: 'voiceActor', charSignature: 'signature',
+    };
+    Object.keys(fields).forEach(function (domId) {
+      var el = $(domId);
+      if (!el) return;
+      var key = fields[domId];
+      el.oninput = function () { cs[key] = el.value; };
+      el.onchange = function () { saveArt(); renderCharAvatar(); };
+    });
+  }
+
+  function renderUploadSlots() {
+    var slots = document.querySelectorAll('[data-upload-slot]');
+    slots.forEach(function (slotEl) {
+      var path = slotEl.getAttribute('data-upload-slot'); // e.g. "modelSheet.front"
+      var box = slotEl.querySelector('.hm-char-ms-box');
+      var currentUrl = getCharPath(path);
+
+      if (currentUrl) {
+        box.innerHTML =
+          '<img src="' + api.mediaUrl(currentUrl) + '" alt="" data-preview-click>' +
+          '<div class="hm-char-ms-actions">' +
+            '<button class="hm-pill hm-pill-mini" data-slot-upload>🔁</button>' +
+            '<button class="hm-pill hm-pill-mini hm-pill-danger" data-slot-clear>🗑</button>' +
+          '</div>';
+      } else {
+        box.innerHTML =
+          '<div class="hm-char-ms-empty" data-slot-upload>' +
+            '<div class="hm-char-ms-emoji">＋</div>' +
+            '<div class="hm-char-ms-hint">点击 / 拖入上传</div>' +
+          '</div>';
+      }
+
+      // 上传
+      slotEl.querySelectorAll('[data-slot-upload]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          pickAndUploadForSlot(path);
+        });
+      });
+      // 清除
+      slotEl.querySelectorAll('[data-slot-clear]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          setCharPath(path, '');
+          saveArt();
+          renderUploadSlots();
+        });
+      });
+      // 预览
+      slotEl.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openLightbox(img.src);
+        });
+      });
+      // 拖放
+      if (!slotEl.__msBound) {
+        slotEl.__msBound = true;
+        slotEl.addEventListener('dragover', function (e) { e.preventDefault(); slotEl.classList.add('hm-art-drop-hover'); });
+        slotEl.addEventListener('dragleave', function () { slotEl.classList.remove('hm-art-drop-hover'); });
+        slotEl.addEventListener('drop', function (e) {
+          e.preventDefault();
+          slotEl.classList.remove('hm-art-drop-hover');
+          var f = e.dataTransfer.files && e.dataTransfer.files[0];
+          if (f) pickAndUploadForSlot(path, f);
+        });
+      }
+    });
+  }
+
+  function getCharPath(path) {
+    // path 如 "modelSheet.front"
+    var parts = path.split('.');
+    var cur = state.editing.characterSpec;
+    for (var i = 0; i < parts.length; i++) {
+      cur = cur && cur[parts[i]];
+    }
+    return cur || '';
+  }
+  function setCharPath(path, val) {
+    var parts = path.split('.');
+    var cur = state.editing.characterSpec;
+    for (var i = 0; i < parts.length - 1; i++) {
+      cur[parts[i]] = cur[parts[i]] || {};
+      cur = cur[parts[i]];
+    }
+    cur[parts[parts.length - 1]] = val;
+  }
+
+  function pickAndUploadForSlot(path, preFile) {
+    if (preFile) {
+      if (!preFile.type.startsWith('image/')) return;
+      var reader = new FileReader();
+      reader.onload = function () { uploadCharSlot(reader.result, path); };
+      reader.readAsDataURL(preFile);
+      return;
+    }
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      var r = new FileReader();
+      r.onload = function () { uploadCharSlot(r.result, path); };
+      r.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  function uploadCharSlot(dataUrl, path) {
+    A.toast && A.toast('上传中...');
+    api.uploadArtMedia(dataUrl).then(function (res) {
+      setCharPath(path, res.url);
+      saveArt();
+      renderUploadSlots();
+      // 刷新对应 grid（如果是列表项）
+      var parts = path.split('.');
+      if (parts[0] === 'expressions') { renderCharGrid('charExpressionsGrid', state.editing.characterSpec.expressions, 'expressions'); }
+      if (parts[0] === 'mouthShapes') { renderCharGrid('charMouthGrid', state.editing.characterSpec.mouthShapes, 'mouthShapes'); }
+      if (parts[0] === 'poses') { renderCharGrid('charPosesGrid', state.editing.characterSpec.poses, 'poses'); }
+      A.toast && A.toast('✅ 已上传', 'success');
+    }).catch(function (err) {
+      A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
+    });
+  }
+
+  function renderCharGrid(gridId, list, arrayKey) {
+    var grid = $(gridId);
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!list || list.length === 0) return;
+    list.forEach(function (item, idx) {
+      var url = item.url ? api.mediaUrl(item.url) : '';
+      var cell = document.createElement('div');
+      cell.className = 'hm-char-cell';
+      cell.innerHTML =
+        '<div class="hm-char-cell-img">' +
+          (url ? '<img src="' + url + '" alt="" data-preview-click>' : '<div class="hm-char-cell-empty">＋</div>') +
+        '</div>' +
+        '<input class="hm-char-cell-label" value="' + (item.label || '').replace(/"/g, '&quot;') + '" data-label="' + idx + '" data-array="' + arrayKey + '">' +
+        '<div class="hm-char-cell-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-cell-upload="' + idx + '" data-array="' + arrayKey + '">📤</button>' +
+          (list.length > 0 ? '<button class="hm-pill hm-pill-mini hm-pill-danger" data-cell-del="' + idx + '" data-array="' + arrayKey + '">✕</button>' : '') +
+        '</div>';
+      // 事件
+      cell.querySelectorAll('[data-cell-upload]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var i = Number(b.getAttribute('data-cell-upload'));
+          uploadArrayItem(arrayKey, i);
+        });
+      });
+      cell.querySelectorAll('[data-cell-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var i = Number(b.getAttribute('data-cell-del'));
+          getCsArray(arrayKey).splice(i, 1);
+          saveArt();
+          renderCharGrid(gridId, getCsArray(arrayKey), arrayKey);
+        });
+      });
+      cell.querySelectorAll('[data-label]').forEach(function (inp) {
+        inp.addEventListener('input', function () {
+          var i = Number(inp.getAttribute('data-label'));
+          getCsArray(arrayKey)[i].label = inp.value;
+        });
+        inp.addEventListener('change', function () { saveArt(); });
+      });
+      cell.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { openLightbox(img.src); });
+      });
+      // 点击图片也能上传（空状态）
+      cell.querySelector('.hm-char-cell-img').addEventListener('click', function (e) {
+        if (e.target.classList.contains('hm-char-cell-empty')) {
+          var i = idx;
+          uploadArrayItem(arrayKey, i);
+        }
+      });
+      grid.appendChild(cell);
+    });
+  }
+
+  function getCsArray(key) {
+    return state.editing.characterSpec[key];
+  }
+
+  function uploadArrayItem(arrayKey, idx) {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      var r = new FileReader();
+      r.onload = function () {
+        A.toast && A.toast('上传中...');
+        api.uploadArtMedia(r.result).then(function (res) {
+          getCsArray(arrayKey)[idx].url = res.url;
+          saveArt();
+          // 重绘
+          var gridIds = { expressions: 'charExpressionsGrid', mouthShapes: 'charMouthGrid', poses: 'charPosesGrid' };
+          if (gridIds[arrayKey]) renderCharGrid(gridIds[arrayKey], getCsArray(arrayKey), arrayKey);
+          A.toast && A.toast('✅ 已上传', 'success');
+        }).catch(function (err) {
+          A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
+        });
+      };
+      r.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  function renderVariants() {
+    var box = $('charVariantsList');
+    if (!box) return;
+    var list = state.editing.characterSpec.variants || [];
+    box.innerHTML = '';
+    list.forEach(function (v, idx) {
+      var url = v.url ? api.mediaUrl(v.url) : '';
+      var row = document.createElement('div');
+      row.className = 'hm-char-variant-row';
+      row.innerHTML =
+        '<div class="hm-char-variant-thumb">' +
+          (url ? '<img src="' + url + '" alt="" data-preview-click>' : '<div class="hm-char-cell-empty">＋</div>') +
+        '</div>' +
+        '<input class="hm-char-variant-label" value="' + (v.label || '').replace(/"/g, '&quot;') + '" data-v-label="' + idx + '">' +
+        '<div class="hm-char-variant-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-v-upload="' + idx + '">📤</button>' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-v-del="' + idx + '">✕</button>' +
+        '</div>';
+      row.querySelectorAll('[data-v-upload]').forEach(function (b) {
+        b.addEventListener('click', function () { uploadVariant(idx); });
+      });
+      row.querySelectorAll('[data-v-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          list.splice(idx, 1); saveArt(); renderVariants();
+        });
+      });
+      row.querySelectorAll('[data-v-label]').forEach(function (inp) {
+        inp.addEventListener('input', function () { list[idx].label = inp.value; });
+        inp.addEventListener('change', function () { saveArt(); });
+      });
+      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { openLightbox(img.src); });
+      });
+      box.appendChild(row);
+    });
+  }
+
+  function uploadVariant(idx) {
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0]; if (!f) return;
+      var r = new FileReader();
+      r.onload = function () {
+        api.uploadArtMedia(r.result).then(function (res) {
+          state.editing.characterSpec.variants[idx].url = res.url;
+          saveArt(); renderVariants();
+        });
+      };
+      r.readAsDataURL(f);
+    };
+    input.click();
   }
 
   /* ============ 会审检查表 ============ */
