@@ -14094,7 +14094,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261103093049-11e185f";</script>
+<script>window.HM_BUILD = "20261103094139-ce910a6";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -19073,7 +19073,9 @@ function bindEls() {
   els.worksEmpty = document.getElementById('worksEmpty');
   els.clearWorks = document.getElementById('clearWorks');
   els.lightbox = document.getElementById('lightbox');
+  els.lbStage = document.getElementById('lbStage');
   els.lbImage = document.getElementById('lbImage');
+  els.lbZoomBar = document.getElementById('lbZoomBar');
   els.lbPrompt = document.getElementById('lbPrompt');
   els.lbMeta = document.getElementById('lbMeta');
   els.lbDownload = document.getElementById('lbDownload');
@@ -21986,10 +21988,9 @@ function bindLightboxGestures() {
 function openLightbox(item) {
   state.activeItem = item;
   var type = item.type || 'image';
-  var inner = els.lightbox.querySelector('.lb-inner');
-  inner.querySelectorAll('.lb-media-el').forEach(function (node) { node.remove(); });
+  els.lbStage.querySelectorAll('.lb-media-el').forEach(function (node) { node.remove(); });
 
-  var bar = document.getElementById('lbZoomBar');
+  var bar = els.lbZoomBar;
   lbState.isImage = (type === 'image');
   if (bar) bar.hidden = !lbState.isImage;
 
@@ -22015,7 +22016,7 @@ function openLightbox(item) {
     media.autoplay = true;
     if (type === 'video') media.setAttribute('playsinline', '');
     media.src = item.url || '';
-    inner.insertBefore(media, inner.querySelector('.lb-bar'));
+    els.lbStage.appendChild(media);
   }
 
   els.lbPrompt.textContent = item.prompt || '';
@@ -22042,7 +22043,7 @@ function closeLightbox() {
   document.body.classList.remove('no-scroll');
   state.activeItem = null;
   // 停止视频/音频
-  var media = els.lightbox.querySelector('.lb-media-el');
+  var media = els.lbStage.querySelector('.lb-media-el');
   if (media) try { media.pause(); } catch (err) {}
 }
 
@@ -41954,6 +41955,7 @@ window.HMChat = (function () {
           if (pasteBtn) pasteBtn.disabled = clipboard.isEmpty();
         }
       });
+      var clickTimer = null;
       grid.addEventListener('click', function (event) {
         /* 左键 folder-card → 弹窗预览文件夹内容 */
         var folderCard = event.target.closest('.folder-card[data-folder]');
@@ -41965,16 +41967,15 @@ window.HMChat = (function () {
         }
         var card = event.target.closest('.desk-card[data-work]');
         if (!card) return;
+        if (event.target.closest('button, [data-dact]')) return; /* 操作按钮由各自按钮处理 */
         var work = findWork(card.dataset.work);
         if (!work) return;
-        var act = event.target.closest('[data-dact]');
-        if (act) {
-          if (act.dataset.dact === 'preview') A.openLightbox(work);
-          else if (act.dataset.dact === 'download') A.downloadImage(work.url, A.fileNameFor(work));
-          else if (act.dataset.dact === 'delete') deleteWork(work);
-        }
+        /* 单击 = 打开预览（延迟防双击冲突） */
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(function () { A.openLightbox(work); }, 240);
       });
       grid.addEventListener('dblclick', function (event) {
+        clearTimeout(clickTimer); /* 防止 double-click 触发两次 open */
         var card = event.target.closest('.desk-card[data-work]');
         if (!card) return;
         var work = findWork(card.dataset.work);

@@ -2154,6 +2154,7 @@
           if (pasteBtn) pasteBtn.disabled = clipboard.isEmpty();
         }
       });
+      var clickTimer = null;
       grid.addEventListener('click', function (event) {
         /* 左键 folder-card → 弹窗预览文件夹内容 */
         var folderCard = event.target.closest('.folder-card[data-folder]');
@@ -2165,16 +2166,15 @@
         }
         var card = event.target.closest('.desk-card[data-work]');
         if (!card) return;
+        if (event.target.closest('button, [data-dact]')) return; /* 操作按钮由各自按钮处理 */
         var work = findWork(card.dataset.work);
         if (!work) return;
-        var act = event.target.closest('[data-dact]');
-        if (act) {
-          if (act.dataset.dact === 'preview') A.openLightbox(work);
-          else if (act.dataset.dact === 'download') A.downloadImage(work.url, A.fileNameFor(work));
-          else if (act.dataset.dact === 'delete') deleteWork(work);
-        }
+        /* 单击 = 打开预览（延迟防双击冲突） */
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(function () { A.openLightbox(work); }, 240);
       });
       grid.addEventListener('dblclick', function (event) {
+        clearTimeout(clickTimer); /* 防止 double-click 触发两次 open */
         var card = event.target.closest('.desk-card[data-work]');
         if (!card) return;
         var work = findWork(card.dataset.work);

@@ -642,7 +642,9 @@ function bindEls() {
   els.worksEmpty = document.getElementById('worksEmpty');
   els.clearWorks = document.getElementById('clearWorks');
   els.lightbox = document.getElementById('lightbox');
+  els.lbStage = document.getElementById('lbStage');
   els.lbImage = document.getElementById('lbImage');
+  els.lbZoomBar = document.getElementById('lbZoomBar');
   els.lbPrompt = document.getElementById('lbPrompt');
   els.lbMeta = document.getElementById('lbMeta');
   els.lbDownload = document.getElementById('lbDownload');
@@ -3555,10 +3557,9 @@ function bindLightboxGestures() {
 function openLightbox(item) {
   state.activeItem = item;
   var type = item.type || 'image';
-  var inner = els.lightbox.querySelector('.lb-inner');
-  inner.querySelectorAll('.lb-media-el').forEach(function (node) { node.remove(); });
+  els.lbStage.querySelectorAll('.lb-media-el').forEach(function (node) { node.remove(); });
 
-  var bar = document.getElementById('lbZoomBar');
+  var bar = els.lbZoomBar;
   lbState.isImage = (type === 'image');
   if (bar) bar.hidden = !lbState.isImage;
 
@@ -3584,7 +3585,7 @@ function openLightbox(item) {
     media.autoplay = true;
     if (type === 'video') media.setAttribute('playsinline', '');
     media.src = item.url || '';
-    inner.insertBefore(media, inner.querySelector('.lb-bar'));
+    els.lbStage.appendChild(media);
   }
 
   els.lbPrompt.textContent = item.prompt || '';
@@ -3611,7 +3612,7 @@ function closeLightbox() {
   document.body.classList.remove('no-scroll');
   state.activeItem = null;
   // 停止视频/音频
-  var media = els.lightbox.querySelector('.lb-media-el');
+  var media = els.lbStage.querySelector('.lb-media-el');
   if (media) try { media.pause(); } catch (err) {}
 }
 
