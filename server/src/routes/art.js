@@ -234,6 +234,25 @@ function emptyBoard() {
   };
 }
 
+/** 深合并 characterSpec —— 防止 PATCH 部分字段更新时数组被整个替换丢 */
+function deepMergeCharacterSpec(base, patch) {
+  base = base || {};
+  patch = patch || {};
+  const merged = Object.assign({}, base, patch);
+  // modelSheet 要保持 3 个槽（front/side/back），至少含默认空值
+  merged.modelSheet = Object.assign({ front: '', side: '', back: '' }, base.modelSheet || {}, patch.modelSheet || {});
+  // 数组：patch 有就用 patch（客户端传全量），没有就保留 base
+  const ARRAY_FIELDS = ['expressions', 'mouthShapes', 'poses', 'variants'];
+  ARRAY_FIELDS.forEach(function (k) {
+    if (patch[k] !== undefined) {
+      merged[k] = Array.isArray(patch[k]) ? patch[k] : [];
+    } else {
+      merged[k] = Array.isArray(base[k]) ? base[k] : [];
+    }
+  });
+  return merged;
+}
+
 /* ============ 图片上传 ============ */
 router.post('/art/upload', wrap(async (req, res) => {
   const body = req.body || {};
@@ -387,12 +406,14 @@ router.post('/art', wrap(async (req, res) => {
   const body = req.body || {};
   const list = await loadArts();
   const now = new Date().toISOString();
-  const item = Object.assign({}, emptyBoard(), body, {
+  const eb = emptyBoard();
+  const item = Object.assign({}, eb, body, {
     id: uid(),
     tags: Array.isArray(body.tags) ? body.tags : [],
-    spec: Object.assign({}, emptyBoard().spec, body.spec || {}),
-    media: Object.assign({}, emptyBoard().media, body.media || {}),
-    colorSpec: Object.assign({}, emptyBoard().colorSpec, body.colorSpec || {}),
+    spec: Object.assign({}, eb.spec, body.spec || {}),
+    media: Object.assign({}, eb.media, body.media || {}),
+    colorSpec: Object.assign({}, eb.colorSpec, body.colorSpec || {}),
+    characterSpec: deepMergeCharacterSpec(eb.characterSpec, body.characterSpec),
     createdAt: now, updatedAt: now,
   });
   list.unshift(item);
@@ -413,13 +434,15 @@ router.patch('/art/:id', wrap(async (req, res) => {
   const idx = list.findIndex((a) => a.id === req.params.id);
   assert(idx >= 0, 404, '美术条目不存在');
   const body = req.body || {};
-  list[idx] = Object.assign({}, list[idx], body, {
-    id: list[idx].id, createdAt: list[idx].createdAt,
+  const prev = list[idx];
+  list[idx] = Object.assign({}, prev, body, {
+    id: prev.id, createdAt: prev.createdAt,
     updatedAt: new Date().toISOString(),
-    tags: Array.isArray(body.tags) ? body.tags : list[idx].tags,
-    spec: body.spec ? Object.assign({}, list[idx].spec, body.spec) : list[idx].spec,
-    media: body.media ? Object.assign({}, list[idx].media, body.media) : list[idx].media,
-    colorSpec: body.colorSpec ? Object.assign({}, list[idx].colorSpec, body.colorSpec) : list[idx].colorSpec,
+    tags: Array.isArray(body.tags) ? body.tags : prev.tags,
+    spec: body.spec ? Object.assign({}, prev.spec, body.spec) : prev.spec,
+    media: body.media ? Object.assign({}, prev.media, body.media) : prev.media,
+    colorSpec: body.colorSpec ? Object.assign({}, prev.colorSpec, body.colorSpec) : prev.colorSpec,
+    characterSpec: deepMergeCharacterSpec(prev.characterSpec, body.characterSpec),
   });
   await saveArts(list);
   res.json({ art: mask(list[idx]) });
