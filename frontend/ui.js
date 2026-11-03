@@ -260,6 +260,9 @@
     if (view === 'art' && window.HMArt) {
       try { window.HMArt.enter(); } catch (e) { console.error('[Art] enter failed', e); }
     }
+    if (view === 'oua' && window.HMOUA) {
+      try { window.HMOUA.enter(); } catch (e) { console.error('[OUA] enter failed', e); }
+    }
   }
 
   function onRenderWorks() {
@@ -4781,3 +4784,487 @@
 
   window.HMArt = { enter: enter, state: state };
 })();
+
+/* ========================================================================
+ * HMOUA — Original Animation 原画（第一原画 / 第二原画 · 中割り）
+ * ======================================================================== */
+(function () {
+  var state = {
+    list: [], team: 'first', sortBy: 'updatedAt',
+    editing: null, draft: null, saveTimer: null,
+  };
+  var ST_LABELS = { todo: '未开始', wip: '进行中', review: '审图中', final: '定稿' };
+  var FB_LABELS = { pending: '待提交', submitted: '已提交', reviewing: '审图中', fixing: '修正中', approved: '已通过' };
+
+  function $(id) { return document.getElementById(id); }
+
+  function enter() {
+    bindTop();
+    bindTeamTabs();
+    bindFilters();
+    loadList();
+  }
+
+  /* ============ 事件绑定 ============ */
+  function bindTop() {
+    var btn = $('ouaNewBtn');
+    if (btn && !btn.__bound) {
+      btn.__bound = true;
+      btn.addEventListener('click', createNew);
+    }
+    var exp = $('ouaExportBtn');
+    if (exp && !exp.__bound) {
+      exp.__bound = true;
+      exp.addEventListener('click', exportCsv);
+    }
+  }
+  function bindTeamTabs() {
+    document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (el) {
+      if (el.__bound) return;
+      el.__bound = true;
+      el.addEventListener('click', function () {
+        document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (x) { x.classList.remove('active'); });
+        el.classList.add('active');
+        state.team = el.getAttribute('data-team');
+        // 如果有正在编辑的镜头，也要把它的 team 同步
+        if (state.editing) { state.editing.team = state.team; }
+        loadList();
+      });
+    });
+  }
+  function bindFilters() {
+    ['ouaSearch', 'ouaStatusFilter', 'ouaShotFilter'].forEach(function (id) {
+      var el = $(id); if (!el || el.__bound) return;
+      el.__bound = true;
+      var deb;
+      el.addEventListener('input', function () {
+        clearTimeout(deb); deb = setTimeout(loadList, 300);
+      });
+      el.addEventListener('change', function () { clearTimeout(deb); loadList(); });
+    });
+    document.querySelectorAll('.hm-oua-list-sort .hm-pill').forEach(function (el) {
+      if (el.__bound) return;
+      el.__bound = true;
+      el.addEventListener('click', function () {
+        state.sortBy = el.getAttribute('data-sort');
+        renderGrid();
+      });
+    });
+  }
+
+  /* ============ 列表 ============ */
+  function loadList() {
+    var qp = new URLSearchParams();
+    qp.set('team', state.team);
+    var kw = $('ouaSearch').value.trim(); if (kw) qp.set('keyword', kw);
+    var sf = $('ouaStatusFilter').value; if (sf !== 'all') qp.set('status', sf);
+    var shot = $('ouaShotFilter').value.trim(); if (shot) qp.set('shotNo', shot);
+    state.list = [];
+    api.listOua('?' + qp.toString()).then(function (res) {
+      state.list = res.items || [];
+      renderGrid();
+    }).catch(function (err) {
+      A.toast && A.toast('加载镜头失败: ' + (err.message || err), 'error');
+    });
+  }
+
+  function renderGrid() {
+    var grid = $('ouaGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    var items = state.list.slice();
+    items.sort(function (a, b) {
+      if (state.sortBy === 'shotNo') return (a.shotNo || '').localeCompare(b.shotNo || '');
+      return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+    });
+    items.forEach(function (s) {
+      var card = document.createElement('div');
+      card.className = 'hm-oua-card hm-oua-st-' + s.status;
+      var first = s.first || {}; var second = s.second || {};
+      var kCount = (first.poseKeyframes || []).length;
+      var tCount = (second.tweens || []).length;
+      var teamLabel = (s.team === 'second') ? '🎬 第二原画' : '🎨 第一原画';
+      card.innerHTML =
+        '<div class="hm-oua-card-head">' +
+          '<span class="hm-oua-shotno">' + (s.shotNo || '—') + '</span>' +
+          '<span class="hm-oua-status">' + ST_LABELS[s.status] + '</span>' +
+        '</div>' +
+        '<div class="hm-oua-card-title">' + (s.title || '(无标题)') + '</div>' +
+        '<div class="hm-oua-card-info">' +
+          '<div>🏷 ' + teamLabel + '</div>' +
+          '<div>👤 ' + (first.director || first.animator || '—') + '</div>' +
+          '<div>🎥 ' + (first.cameraMove || '固定') + '</div>' +
+        '</div>' +
+        '<div class="hm-oua-card-foot">' +
+          '<span>🔢 K帧 ' + kCount + '</span>' +
+          '<span>🎞 中割 ' + tCount + '</span>' +
+        '</div>';
+      card.addEventListener('click', function () { openEditor(s.id); });
+      grid.appendChild(card);
+    });
+    $('ouaListCount').textContent = items.length + ' 镜头 · ' + teamLabelFor(state.team);
+  }
+  function teamLabelFor(t) { return t === 'second' ? '第二原画（動画）' : '第一原画（本番原画）'; }
+
+  /* ============ 新建 ============ */
+  function createNew() {
+    var shotNo = window.prompt('镜号（如: 1-01）', ('1-' + (state.list.filter(function (s) { return s.team === state.team; }).length + 1)));
+    if (shotNo === null) return;
+    var payload = { shotNo: shotNo, team: state.team, status: 'todo', title: '' };
+    api.createOua(payload).then(function (res) {
+      openEditor(res.shot.id);
+    }).catch(function (err) {
+      A.toast && A.toast('新建失败: ' + (err.message || err), 'error');
+    });
+  }
+
+  /* ============ 编辑器 ============ */
+  function openEditor(id) {
+    var listView = $('ouaListView');
+    var editView = $('ouaEditorView');
+    listView.hidden = true; editView.hidden = false;
+    api.getOua(id).then(function (res) {
+      state.editing = res.shot;
+      state.draft = JSON.parse(JSON.stringify(res.shot));
+      populateEditor();
+      A.toast && A.toast('已加载镜号 ' + res.shot.shotNo);
+    }).catch(function (err) {
+      A.toast && A.toast('加载失败: ' + (err.message || err), 'error');
+    });
+  }
+
+  function populateEditor() {
+    var s = state.editing;
+    var f = s.first = s.first || {};
+    var sec = s.second = s.second || {};
+    f.poseKeyframes = f.poseKeyframes || [];
+    sec.tweens = sec.tweens || [];
+    sec.shapeCheck = sec.shapeCheck || [];
+    sec.motionCheck = sec.motionCheck || [];
+
+    $('ouaBackBtn').onclick = function () {
+      editView.hidden = true; listView.hidden = false;
+      loadList(); state.editing = null; state.draft = null;
+    };
+    $('ouaDeleteBtn').onclick = function () {
+      if (!window.confirm('确定删除 ' + s.shotNo + ' ' + (s.title || '') + ' ?')) return;
+      api.deleteOua(s.id).then(function () {
+        editView.hidden = true; listView.hidden = false;
+        loadList(); state.editing = null; state.draft = null;
+        A.toast && A.toast('已删除');
+      });
+    };
+    $('ouaSaveBtn').onclick = function () { saveShot(); };
+
+    // 元信息
+    $('ouaShotNo').value = s.shotNo || '';
+    $('ouaTitle').value = s.title || '';
+    $('ouaSceneRef').value = s.sceneRef || '';
+    $('ouaStatus').value = s.status || 'todo';
+    $('ouaVersion').value = s.version || 'Ver1.0';
+    $('ouaTags').value = (s.tags || []).join(', ');
+    $('ouaEditorTitle').textContent = (s.title || '(无标题)') + ' — ' + (s.shotNo || '—');
+    $('ouaShotTag').textContent = s.shotNo || '—';
+    $('ouaStatusTag').textContent = ST_LABELS[s.status] || '未开始';
+
+    // 团队 block 切换
+    $('ouaFirstBlock').hidden = (s.team === 'second');
+    $('ouaSecondBlock').hidden = (s.team !== 'second');
+    // 同步 team tab
+    document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (x) { x.classList.toggle('active', x.getAttribute('data-team') === s.team); });
+    state.team = s.team;
+
+    // 第一原画字段
+    $('ouaDirector').value = f.director || '';
+    $('ouaCameraMove').value = f.cameraMove || '固定';
+    $('ouaCameraDuration').value = f.cameraDuration || '';
+    $('ouaTimeSheet').value = f.timeSheet || '';
+    $('ouaActionFlow').value = f.actionFlow || '';
+    $('ouaDialoguePoint').value = f.dialoguePoint || '';
+    $('ouaSfxPoint').value = f.sfxPoint || '';
+    $('ouaLayoutRef').value = (f.layoutRef || []).join(', ');
+    $('ouaDrawingNotes').value = f.drawingNotes || '';
+
+    // 第二原画字段
+    $('ouaAnimator').value = sec.animator || '';
+    $('ouaTotalFrames').value = sec.totalFrames || 0;
+    $('ouaFeedbackStatus').value = sec.feedbackStatus || 'pending';
+    $('ouaRevisionCount').value = sec.revisionCount || 0;
+    $('ouaFeedbackNote').value = sec.feedbackNote || '';
+    $('ouaShapeCheck').value = (Array.isArray(sec.shapeCheck) ? sec.shapeCheck.map(function (c) { return (c.frameNum ? '帧' + c.frameNum + ' ' : '') + (c.note || ''); }).join('\n') : (sec.shapeCheckText || ''));
+    $('ouaMotionCheck').value = (Array.isArray(sec.motionCheck) ? sec.motionCheck.map(function (c) { return (c.frameNum ? '帧' + c.frameNum + ' ' : '') + (c.note || ''); }).join('\n') : (sec.motionCheckText || ''));
+
+    // 公用
+    $('ouaCharacterRef').value = (f.characterRef || []).map(function (r) { return r.characterId || r.name || ''; }).filter(Boolean).join(', ');
+
+    // K帧列表 + 下拉
+    renderKeyframesList();
+    renderKeyframeSelects();
+    renderTweensList();
+
+    // 绑定输入 → 自动保存
+    bindAutoSave();
+
+    // 添加按钮
+    $('ouaAddKeyframe').onclick = function () {
+      f.poseKeyframes.push({
+        frame: f.poseKeyframes.length * 4 + 0,
+        second: (f.poseKeyframes.length * 0.4).toFixed(1),
+        pose: 'K 帧 ' + (f.poseKeyframes.length + 1),
+        url: '', note: '', keyType: 'key',
+      });
+      renderKeyframesList(); renderKeyframeSelects(); saveShot();
+    };
+    $('ouaAddTween').onclick = function () {
+      var total = (sec.totalFrames || 0) + sec.tweens.length + 1;
+      sec.tweens.push({
+        frameNum: total,
+        ratio: (sec.tweens.length + 1) / (sec.totalFrames || 12),
+        url: '', note: '', issue: '',
+      });
+      sec.totalFrames = total;
+      renderTweensList(); saveShot();
+    };
+  }
+
+  function renderKeyframesList() {
+    var list = $('ouaKeyframesList');
+    var f = state.editing.first;
+    list.innerHTML = '';
+    (f.poseKeyframes || []).forEach(function (k, idx) {
+      var row = document.createElement('div');
+      row.className = 'hm-oua-kframe-row';
+      var typeOpts = [
+        ['layout', 'Layout'], ['key', 'K帧/本番'], ['breakdown', '分解帧'], ['pose', 'Pose参考']
+      ].map(function (t) { return '<option value="' + t[0] + '"' + (k.keyType === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
+      var imgCell = '';
+      if (k.url) {
+        imgCell = '<div class="hm-oua-kframe-img"><img src="' + api.mediaUrl(k.url) + '" alt="" data-preview-click></div>';
+      } else {
+        imgCell = '<div class="hm-oua-kframe-img hm-oua-kframe-empty" data-kf-upload="' + idx + '">＋</div>';
+      }
+      row.innerHTML =
+        '<div class="hm-oua-kframe-idx">#' + (idx + 1) + '</div>' +
+        imgCell +
+        '<div class="hm-oua-kframe-fields">' +
+          '<input class="hm-oua-kf-f" placeholder="帧" type="number" min="0" value="' + (k.frame || '') + '" data-kf-frame="' + idx + '">' +
+          '<input class="hm-oua-kf-s" placeholder="秒" type="number" min="0" step="0.1" value="' + (k.second || '') + '" data-kf-sec="' + idx + '">' +
+          '<select class="hm-oua-kf-type" data-kf-type="' + idx + '">' + typeOpts + '</select>' +
+          '<input class="hm-oua-kf-pose" placeholder="Pose 名称" value="' + (k.pose || '').replace(/"/g, '&quot;') + '" data-kf-pose="' + idx + '">' +
+          '<input class="hm-oua-kf-note" placeholder="备注" value="' + (k.note || '').replace(/"/g, '&quot;') + '" data-kf-note="' + idx + '">' +
+        '</div>' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-kf-del="' + idx + '">✕</button>';
+      row.querySelectorAll('[data-kf-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          f.poseKeyframes.splice(idx, 1);
+          renderKeyframesList(); renderKeyframeSelects(); saveShot();
+        });
+      });
+      row.querySelectorAll('[data-kf-frame],[data-kf-sec],[data-kf-type],[data-kf-pose],[data-kf-note]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var key = el.getAttribute('data-kf-frame') !== null ? 'frame' :
+                    el.getAttribute('data-kf-sec') !== null ? 'second' :
+                    el.getAttribute('data-kf-type') !== null ? 'keyType' :
+                    el.getAttribute('data-kf-pose') !== null ? 'pose' : 'note';
+          if (key === 'frame') k.frame = Number(el.value) || 0;
+          else if (key === 'second') k.second = Number(el.value) || 0;
+          else k[key] = el.value;
+          scheduleSave();
+        });
+      });
+      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
+      });
+      row.querySelectorAll('[data-kf-upload]').forEach(function (el) {
+        el.addEventListener('click', function () { uploadKeyframe(idx); });
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function renderKeyframeSelects() {
+    var f = state.editing.first;
+    var selA = $('ouaKeyASelect'); var selB = $('ouaKeyBSelect');
+    if (!selA || !selB) return;
+    var opts = '<option value="-1">（未选择）</option>';
+    (f.poseKeyframes || []).forEach(function (k, i) {
+      opts += '<option value="' + i + '">#' + (i + 1) + ' ' + (k.pose || '') + ' @' + (k.second || '0') + 's</option>';
+    });
+    selA.innerHTML = opts; selB.innerHTML = opts;
+    secBind('ouaKeyASelect'); secBind('ouaKeyBSelect');
+  }
+  function secBind(id) {
+    var sel = $(id);
+    if (!sel) return;
+    var sec = state.editing.second;
+    var val = (id === 'ouaKeyASelect') ? (sec.keyA_idx || -1) : (sec.keyB_idx || -1);
+    sel.value = String(val);
+    sel.onchange = function () {
+      var s = state.editing.second;
+      if (id === 'ouaKeyASelect') s.keyA_idx = Number(sel.value) || -1;
+      else s.keyB_idx = Number(sel.value) || -1;
+      saveShot();
+    };
+  }
+
+  function renderTweensList() {
+    var list = $('ouaTweensList');
+    var sec = state.editing.second;
+    list.innerHTML = '';
+    (sec.tweens || []).forEach(function (t, idx) {
+      var row = document.createElement('div');
+      row.className = 'hm-oua-tween-row';
+      var imgCell = '';
+      if (t.url) {
+        imgCell = '<div class="hm-oua-tween-img"><img src="' + api.mediaUrl(t.url) + '" alt="" data-preview-click></div>';
+      } else {
+        imgCell = '<div class="hm-oua-tween-img hm-oua-tween-empty" data-tween-upload="' + idx + '">＋</div>';
+      }
+      row.innerHTML =
+        '<div class="hm-oua-tween-num">' + (idx + 1) + '</div>' +
+        imgCell +
+        '<div class="hm-oua-tween-fields">' +
+          '<input class="hm-oua-tf-f" placeholder="帧" type="number" min="0" value="' + (t.frameNum || '') + '" data-tw-f="' + idx + '">' +
+          '<input class="hm-oua-tf-r" placeholder="比例" type="number" min="0" max="1" step="0.01" value="' + (t.ratio || '') + '" data-tw-r="' + idx + '">' +
+          '<input class="hm-oua-tf-note" placeholder="备注" value="' + (t.note || '').replace(/"/g, '&quot;') + '" data-tw-note="' + idx + '">' +
+          '<input class="hm-oua-tf-issue" placeholder="问题" value="' + (t.issue || '').replace(/"/g, '&quot;') + '" data-tw-issue="' + idx + '">' +
+        '</div>' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-tw-del="' + idx + '">✕</button>';
+      row.querySelectorAll('[data-tw-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          sec.tweens.splice(idx, 1); renderTweensList(); saveShot();
+        });
+      });
+      row.querySelectorAll('[data-tw-f],[data-tw-r],[data-tw-note],[data-tw-issue]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var key = el.getAttribute('data-tw-f') !== null ? 'frameNum' :
+                    el.getAttribute('data-tw-r') !== null ? 'ratio' :
+                    el.getAttribute('data-tw-note') !== null ? 'note' : 'issue';
+          if (key === 'frameNum' || key === 'ratio') t[key] = Number(el.value) || 0;
+          else t[key] = el.value;
+          scheduleSave();
+        });
+      });
+      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
+      });
+      row.querySelectorAll('[data-tween-upload]').forEach(function (el) {
+        el.addEventListener('click', function () { uploadTween(idx); });
+      });
+      list.appendChild(row);
+    });
+  }
+
+  /* ============ 图片上传（K帧 / 中割帧） ============ */
+  function uploadKeyframe(idx) {
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0]; if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        A.toast && A.toast('上传中...');
+        api.uploadArtMedia(reader.result).then(function (res) {
+          state.editing.first.poseKeyframes[idx].url = res.url;
+          renderKeyframesList(); saveShot();
+          A.toast && A.toast('✅ 已上传', 'success');
+        }).catch(function (err) {
+          A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
+        });
+      };
+      reader.readAsDataURL(f);
+    };
+    input.click();
+  }
+  function uploadTween(idx) {
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0]; if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        A.toast && A.toast('上传中...');
+        api.uploadArtMedia(reader.result).then(function (res) {
+          state.editing.second.tweens[idx].url = res.url;
+          renderTweensList(); saveShot();
+          A.toast && A.toast('✅ 已上传', 'success');
+        }).catch(function (err) {
+          A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
+        });
+      };
+      reader.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  /* ============ 自动保存绑定 ============ */
+  function bindAutoSave() {
+    var ids = [
+      'ouaShotNo', 'ouaTitle', 'ouaSceneRef', 'ouaStatus', 'ouaVersion', 'ouaTags',
+      'ouaDirector', 'ouaCameraMove', 'ouaCameraDuration', 'ouaTimeSheet', 'ouaActionFlow',
+      'ouaDialoguePoint', 'ouaSfxPoint', 'ouaLayoutRef', 'ouaDrawingNotes',
+      'ouaAnimator', 'ouaTotalFrames', 'ouaFeedbackStatus', 'ouaRevisionCount',
+      'ouaFeedbackNote', 'ouaShapeCheck', 'ouaMotionCheck', 'ouaCharacterRef',
+    ];
+    ids.forEach(function (id) {
+      var el = $(id); if (!el || el.__as) return;
+      el.__as = true;
+      el.addEventListener('input', scheduleSave);
+      el.addEventListener('change', scheduleSave);
+    });
+  }
+
+  function scheduleSave() {
+    clearTimeout(state.saveTimer);
+    state.saveTimer = setTimeout(saveShot, 1200);
+  }
+
+  function saveShot() {
+    if (!state.editing) return;
+    var s = state.editing;
+    var f = s.first = s.first || {};
+    var sec = s.second = s.second || {};
+    s.shotNo = $('ouaShotNo').value;
+    s.title = $('ouaTitle').value;
+    s.sceneRef = $('ouaSceneRef').value;
+    s.status = $('ouaStatus').value;
+    s.version = $('ouaVersion').value;
+    s.team = state.team;
+    s.tags = ($('ouaTags').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    f.director = $('ouaDirector').value;
+    f.cameraMove = $('ouaCameraMove').value;
+    f.cameraDuration = $('ouaCameraDuration').value;
+    f.timeSheet = $('ouaTimeSheet').value;
+    f.actionFlow = $('ouaActionFlow').value;
+    f.dialoguePoint = $('ouaDialoguePoint').value;
+    f.sfxPoint = $('ouaSfxPoint').value;
+    f.layoutRef = ($('ouaLayoutRef').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    f.drawingNotes = $('ouaDrawingNotes').value;
+    sec.animator = $('ouaAnimator').value;
+    sec.totalFrames = Number($('ouaTotalFrames').value) || 0;
+    sec.feedbackStatus = $('ouaFeedbackStatus').value;
+    sec.revisionCount = Number($('ouaRevisionCount').value) || 0;
+    sec.feedbackNote = $('ouaFeedbackNote').value;
+    sec.shapeCheckText = $('ouaShapeCheck').value;
+    sec.motionCheckText = $('ouaMotionCheck').value;
+    var chars = ($('ouaCharacterRef').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    f.characterRef = chars.map(function (c) { return { characterId: c, expression: '', outfit: '' }; });
+
+    api.updateOua(s.id, s).then(function () {
+      var tag = $('ouaStatusTag');
+      tag.textContent = ST_LABELS[s.status] || '未开始';
+      $('ouaEditorTitle').textContent = (s.title || '(无标题)') + ' — ' + (s.shotNo || '—');
+    }).catch(function (err) {
+      A.toast && A.toast('保存失败: ' + (err.message || err), 'error');
+    });
+  }
+
+  /* ============ 导出 ============ */
+  function exportCsv() {
+    var url = api.exportOua(state.team);
+    window.open(url, '_blank');
+  }
+
+  window.HMOUA = { enter: enter };
+})();
+

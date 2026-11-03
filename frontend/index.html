@@ -51,6 +51,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
         <span>美术设定</span>
       </button>
+      <button class="hm-rail-item" data-rail="oua" title="原画（第一原画 K 帧 · 第二原画中割）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 9h10M7 12h7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="16" r="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M19 18.5L22 21" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>原画</span>
+      </button>
     </div>
 
     <div class="hm-rail-bottom">
@@ -2367,6 +2371,206 @@
         <div class="hm-art-checklist-body" id="artChecklistBody"></div>
       </div>
     </div>
+  </main>
+
+  <!-- ============ 原画（Original Animation） ============ -->
+  <main class="hm-page hm-oua-page" id="view-oua" hidden>
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎬 原画（Original Animation）</h2>
+        <span class="hm-art-top-sub">日式传统二维赛璐璐 · 本番原画 / 動画 / 中割り</span>
+      </div>
+      <div class="hm-art-top-right">
+        <button class="hm-pill" id="ouaExportBtn">📤 导出时间分配表</button>
+        <button class="hm-pill hm-pill-primary" id="ouaNewBtn">＋ 新建镜头</button>
+      </div>
+    </div>
+
+    <!-- 团队大 Tab -->
+    <div class="hm-oua-team-tabs" id="ouaTeamTabs">
+      <button class="hm-oua-team-tab active" data-team="first">🎨 第一原画（本番原画 · ラフ原画）</button>
+      <button class="hm-oua-team-tab" data-team="second">🎬 第二原画（動画 · 中割り）</button>
+    </div>
+
+    <!-- 筛选条 -->
+    <div class="hm-art-filter-bar">
+      <input class="hm-art-search" id="ouaSearch" placeholder="🔍 搜索镜号 / 标题 / 动作描述...">
+      <select id="ouaStatusFilter" class="hm-art-filter">
+        <option value="all">全部状态</option>
+        <option value="todo">未开始</option>
+        <option value="wip">进行中</option>
+        <option value="review">审图中</option>
+        <option value="final">定稿</option>
+      </select>
+      <input class="hm-art-search" id="ouaShotFilter" placeholder="镜号前缀（如 1-）" style="max-width:150px">
+    </div>
+
+    <!-- 列表 -->
+    <section class="hm-art-view-list" id="ouaListView">
+      <div class="hm-oua-list-head">
+        <span id="ouaListCount" class="hm-art-top-sub">0 镜头</span>
+        <div class="hm-oua-list-sort">
+          <button class="hm-pill hm-pill-mini" data-sort="shotNo">按镜号</button>
+          <button class="hm-pill hm-pill-mini" data-sort="updatedAt">按更新时间</button>
+        </div>
+      </div>
+      <div class="hm-oua-grid" id="ouaGrid"></div>
+    </section>
+
+    <!-- 编辑器 -->
+    <section class="hm-art-view-editor" id="ouaEditorView" hidden>
+      <div class="hm-art-editor-top">
+        <button class="hm-pill hm-pill-ghost" id="ouaBackBtn">← 返回列表</button>
+        <h3 id="ouaEditorTitle">镜头</h3>
+        <div class="hm-art-editor-meta">
+          <span id="ouaShotTag" class="hm-art-editor-path">—</span>
+          <span class="hm-art-editor-version" id="ouaStatusTag">未开始</span>
+        </div>
+      </div>
+
+      <div class="hm-oua-editor-body">
+        <!-- 顶部基础信息 -->
+        <div class="hm-oua-top-row">
+          <div class="hm-art-form-row"><label>镜号</label><input id="ouaShotNo" placeholder="如: 1-01, 2-03"></div>
+          <div class="hm-art-form-row"><label>镜头标题</label><input id="ouaTitle" placeholder="如: 主角奔跑入场"></div>
+          <div class="hm-art-form-row"><label>关联场次</label><input id="ouaSceneRef" placeholder="如: scene_abc"></div>
+          <div class="hm-art-form-row"><label>状态</label>
+            <select id="ouaStatus">
+              <option value="todo">未开始</option>
+              <option value="wip">进行中</option>
+              <option value="review">审图中</option>
+              <option value="final">定稿</option>
+            </select>
+          </div>
+          <div class="hm-art-form-row"><label>版本号</label><input id="ouaVersion" value="Ver1.0"></div>
+          <div class="hm-art-form-row"><label>标签</label><input id="ouaTags" placeholder="回车添加"></div>
+        </div>
+
+        <!-- 第一原画区 -->
+        <div id="ouaFirstBlock" class="hm-oua-team-block">
+          <h4 class="hm-oua-block-title">🎨 第一原画（本番原画）— K 帧 · 时间分配 · 运镜</h4>
+          <div class="hm-oua-block-inner">
+            <div class="hm-oua-kframes-col">
+              <div class="hm-art-form-block">
+                <label>👤 原画担当（作画监督）</label>
+                <input id="ouaDirector" placeholder="如: 山田太郎">
+              </div>
+              <div class="hm-art-form-block">
+                <label>🔢 K 帧关键姿势（时间轴）</label>
+                <div class="hm-oua-kframes" id="ouaKeyframesList"></div>
+                <button class="hm-pill hm-pill-mini hm-pill-ghost" id="ouaAddKeyframe">＋ 添加 K 帧</button>
+              </div>
+            </div>
+
+            <div class="hm-oua-info-col">
+              <div class="hm-art-form-row hm-art-form-2col">
+                <div>
+                  <label>🎥 运镜指示</label>
+                  <select id="ouaCameraMove">
+                    <option>固定</option><option>左 PAN→</option><option>右 →PAN</option>
+                    <option>上 ↑TILT</option><option>下 ↓TILT</option>
+                    <option>前 DOLLY IN</option><option>后 DOLLY OUT</option>
+                    <option>回転</option><option>组合</option>
+                  </select>
+                </div>
+                <div><label>运镜时长（秒）</label><input id="ouaCameraDuration" placeholder="如: 3.0"></div>
+              </div>
+              <div class="hm-art-form-block">
+                <label>⏱ 时间分配表（タイムシート）</label>
+                <textarea id="ouaTimeSheet" rows="2" placeholder="如: 0:00 起始 Pose → 0:1.2 中间 → 0:2.8 结束"></textarea>
+              </div>
+              <div class="hm-art-form-block">
+                <label>📝 动作描述</label>
+                <textarea id="ouaActionFlow" rows="3" placeholder="角色从左到右奔跑，途中跃过障碍..."></textarea>
+              </div>
+              <div class="hm-art-form-row hm-art-form-2col">
+                <div><label>💬 对白进入时间</label><input id="ouaDialoguePoint" placeholder="如: 0:03.5"></div>
+                <div><label>🔊 音效进入时间</label><input id="ouaSfxPoint" placeholder="如: 0:00.0"></div>
+              </div>
+              <div class="hm-art-form-block">
+                <label>📐 Layout 对接参考（逗号分隔 URL）</label>
+                <input id="ouaLayoutRef" placeholder="如: /uploads/assets/art-1.png, /uploads/assets/art-2.png">
+              </div>
+              <div class="hm-art-form-block">
+                <label>🖊 原画绘画注意点</label>
+                <textarea id="ouaDrawingNotes" rows="2" placeholder="线条风格 / 变形 / 禁忌 / 透视基准..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第二原画区 -->
+        <div id="ouaSecondBlock" class="hm-oua-team-block" hidden>
+          <h4 class="hm-oua-block-title">🎬 第二原画（動画）— 中割り · 质量检查 · 反馈</h4>
+          <div class="hm-oua-block-inner">
+            <div class="hm-oua-kframes-col">
+              <div class="hm-art-form-block">
+                <label>🧑‍💻 动画师担当</label>
+                <input id="ouaAnimator" placeholder="如: 佐々木花子">
+              </div>
+              <div class="hm-art-form-row hm-art-form-2col">
+                <div>
+                  <label>起始 K 帧 (A)</label>
+                  <select id="ouaKeyASelect"></select>
+                </div>
+                <div>
+                  <label>结束 K 帧 (B)</label>
+                  <select id="ouaKeyBSelect"></select>
+                </div>
+              </div>
+              <div class="hm-art-form-row">
+                <label>总中割帧数</label>
+                <input id="ouaTotalFrames" type="number" min="0" placeholder="如: 12">
+              </div>
+              <div class="hm-art-form-block">
+                <label>🎞 中割补间帧列表</label>
+                <div class="hm-oua-tweens" id="ouaTweensList"></div>
+                <button class="hm-pill hm-pill-mini hm-pill-ghost" id="ouaAddTween">＋ 添加中割帧</button>
+              </div>
+            </div>
+
+            <div class="hm-oua-info-col">
+              <div class="hm-art-form-block">
+                <label>✅ 形状守恒检查（shape check）</label>
+                <textarea id="ouaShapeCheck" rows="2" placeholder="帧3 手臂变形 → 修正"></textarea>
+              </div>
+              <div class="hm-art-form-block">
+                <label>🛤 运动轨迹检查（motion check）</label>
+                <textarea id="ouaMotionCheck" rows="2" placeholder="跳跃抛物线 帧4-6 偏下 → 微调"></textarea>
+              </div>
+              <div class="hm-art-form-row hm-art-form-2col">
+                <div>
+                  <label>📨 反馈状态</label>
+                  <select id="ouaFeedbackStatus">
+                    <option value="pending">待提交</option>
+                    <option value="submitted">已提交</option>
+                    <option value="reviewing">审图中</option>
+                    <option value="fixing">修正中</option>
+                    <option value="approved">已通过</option>
+                  </select>
+                </div>
+                <div><label>🔁 修正次数</label><input id="ouaRevisionCount" type="number" min="0"></div>
+              </div>
+              <div class="hm-art-form-block">
+                <label>📒 审图反馈备注</label>
+                <textarea id="ouaFeedbackNote" rows="4" placeholder="第一原画 / 动画监督的修正意见..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hm-art-form-block">
+          <label>🧑 角色引用（逗号分隔）</label>
+          <input id="ouaCharacterRef" placeholder="如: 角色A, 角色B">
+        </div>
+      </div>
+
+      <div class="hm-art-editor-footer">
+        <button class="hm-pill" id="ouaDeleteBtn">🗑 删除</button>
+        <button class="hm-pill hm-pill-ghost" id="ouaSaveBtn">💾 保存</button>
+        <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
+      </div>
+    </section>
   </main>
 
   <main class="hm-page hm-admin-page" id="view-admin" hidden>

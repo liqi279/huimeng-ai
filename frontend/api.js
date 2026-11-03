@@ -307,6 +307,18 @@
   api.updateArt = function (id, payload) { return request('/art/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
   api.uploadArtMedia = function (dataUrl) { return request('/art/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000); };
   api.bulkImportArts = function (items) { return request('/art/bulk', { method: 'POST', body: { items: items } }, 30000); };
+  api.exportArtBoard = function (id, format) { return request('/art/' + encodeURIComponent(id) + '/export?format=' + encodeURIComponent(format), null, 15000); };
+
+  /* ===== 原画（OUA / Original Animation）===== */
+  api.listOua = function (q) { return request('/oua' + (q || ''), null, 20000); };
+  api.getOua = function (id) { return request('/oua/' + encodeURIComponent(id), null, 20000); };
+  api.createOua = function (payload) { return request('/oua', { method: 'POST', body: payload }, 20000); };
+  api.updateOua = function (id, payload) { return request('/oua/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteOua = function (id) { return request('/oua/' + encodeURIComponent(id), { method: 'DELETE', body: null }, 15000); };
+  api.duplicateOua = function (id) { return request('/oua/' + encodeURIComponent(id) + '/duplicate', { method: 'POST', body: null }, 20000); };
+  api.bulkOua = function (items) { return request('/oua/bulk', { method: 'POST', body: { items: items } }, 30000); };
+  api.exportOua = function (team) { return '/api/oua/export' + (team ? '?team=' + encodeURIComponent(team) : ''); };
+  api.dictOua = function () { return request('/oua/dict', null, 10000); };
   api.deleteArt = function (id) { return request('/art/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.duplicateArt = function (id) { return request('/art/' + encodeURIComponent(id) + '/duplicate', { method: 'POST' }, 15000); };
   api.bulkArtStatus = function (ids, status) {
