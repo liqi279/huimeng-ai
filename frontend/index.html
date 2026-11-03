@@ -55,6 +55,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 9h10M7 12h7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="16" r="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M19 18.5L22 21" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         <span>原画</span>
       </button>
+      <button class="hm-rail-item" data-rail="animation" title="动画（中间帧生成 · 帧序列 · 节奏曲线）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 12h4M16 12h4M12 4v4M12 16v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+        <span>动画</span>
+      </button>
     </div>
 
     <div class="hm-rail-bottom">
@@ -2569,6 +2573,148 @@
       <div class="hm-art-editor-footer">
         <button class="hm-pill" id="ouaDeleteBtn">🗑 删除</button>
         <button class="hm-pill hm-pill-ghost" id="ouaSaveBtn">💾 保存</button>
+        <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ 动画（中间帧处理 · Tweening） ============ -->
+  <main class="hm-page hm-anim-page" id="view-animation" hidden>
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎞️ 动画 · 中间帧处理</h2>
+        <span class="hm-art-top-sub">中割り / Tweening · 帧序列 · 节奏曲线</span>
+      </div>
+      <div class="hm-art-top-right">
+        <button class="hm-pill" id="animExportBtn">📤 导出帧表</button>
+        <button class="hm-pill hm-pill-primary" id="animNewBtn">＋ 新建序列</button>
+      </div>
+    </div>
+
+    <!-- 筛选 -->
+    <div class="hm-art-filter-bar">
+      <input class="hm-art-search" id="animSearch" placeholder="🔍 搜索序列名 / 镜号 / 标签...">
+      <select id="animStatusFilter" class="hm-art-filter">
+        <option value="all">全部状态</option>
+        <option value="todo">未开始</option>
+        <option value="wip">进行中</option>
+        <option value="review">审图中</option>
+        <option value="final">定稿</option>
+      </select>
+    </div>
+
+    <!-- 列表 -->
+    <section class="hm-art-view-list" id="animListView">
+      <div class="hm-anim-list-head">
+        <span id="animListCount" class="hm-art-top-sub">0 序列</span>
+      </div>
+      <div class="hm-anim-grid" id="animGrid"></div>
+    </section>
+
+    <!-- 编辑器 -->
+    <section class="hm-art-view-editor" id="animEditorView" hidden>
+      <div class="hm-art-editor-top">
+        <button class="hm-pill hm-pill-ghost" id="animBackBtn">← 返回列表</button>
+        <h3 id="animEditorTitle">序列</h3>
+        <div class="hm-art-editor-meta">
+          <span id="animShotTag" class="hm-art-editor-path">—</span>
+          <span class="hm-art-editor-version" id="animStatusTag">未开始</span>
+        </div>
+      </div>
+
+      <div class="hm-anim-editor-body">
+        <!-- 元信息 -->
+        <div class="hm-anim-meta-row">
+          <div class="hm-art-form-row"><label>序列名称</label><input id="animName"></div>
+          <div class="hm-art-form-row"><label>关联镜号</label><input id="animShotNo" placeholder="如: 1-01"></div>
+          <div class="hm-art-form-row"><label>关联场次</label><input id="animSceneRef"></div>
+          <div class="hm-art-form-row"><label>状态</label>
+            <select id="animStatus">
+              <option value="todo">未开始</option>
+              <option value="wip">进行中</option>
+              <option value="review">审图中</option>
+              <option value="final">定稿</option>
+            </select>
+          </div>
+          <div class="hm-art-form-row"><label>帧率 (fps)</label>
+            <select id="animFrameRate">
+              <option value="12">12 fps (loose)</option>
+              <option value="15">15 fps</option>
+              <option value="24" selected>24 fps (日本TV)</option>
+              <option value="30">30 fps</option>
+              <option value="60">60 fps</option>
+            </select>
+          </div>
+          <div class="hm-art-form-row"><label>标签</label><input id="animTags" placeholder="逗号分隔"></div>
+        </div>
+
+        <!-- K帧编辑 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">🔢 K 帧（关键帧时间轴）</h4>
+          <div class="hm-anim-kfs" id="animKfList"></div>
+          <button class="hm-pill hm-pill-mini hm-pill-ghost" id="animAddKf">＋ 添加 K 帧</button>
+        </div>
+
+        <!-- 自动生成中割 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">⚡ 自动生成中割帧</h4>
+          <div class="hm-anim-gen-row">
+            <div class="hm-art-form-row">
+              <label>起始 K 帧 (A)</label>
+              <select id="animGenA"></select>
+            </div>
+            <div class="hm-art-form-row">
+              <label>结束 K 帧 (B)</label>
+              <select id="animGenB"></select>
+            </div>
+            <div class="hm-art-form-row">
+              <label>中割数量</label>
+              <input id="animGenCount" type="number" min="1" max="30" value="2">
+            </div>
+            <div class="hm-art-form-row">
+              <label>节奏曲线</label>
+              <select id="animGenTiming">
+                <option value="linear">均匀 linear</option>
+                <option value="ease-in">缓入 ease-in</option>
+                <option value="ease-out">缓出 ease-out</option>
+                <option value="ease-in-out">缓入缓出 ease-in-out</option>
+              </select>
+            </div>
+            <div class="hm-art-form-row hm-anim-gen-btn">
+              <label>&nbsp;</label>
+              <button class="hm-pill hm-pill-primary" id="animGenerateBtn">🚀 生成</button>
+            </div>
+          </div>
+          <div class="hm-anim-gen-hint" id="animGenHint">选择两个 K 帧，设置中割数量和节奏，一键自动生成帧号 / 秒数</div>
+        </div>
+
+        <!-- 中割帧列表 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">🎞 中割帧列表（Tweening）</h4>
+          <div class="hm-anim-tweens" id="animTweenList"></div>
+          <div class="hm-anim-tween-actions">
+            <button class="hm-pill hm-pill-mini hm-pill-ghost" id="animAddTween">＋ 手动添加中割帧</button>
+            <button class="hm-pill hm-pill-mini" id="animTweenMarkWip">全标进行中</button>
+            <button class="hm-pill hm-pill-mini" id="animTweenMarkFinal">全标定稿</button>
+          </div>
+        </div>
+
+        <!-- 全帧时间轴预览 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">📊 全帧时间轴预览（K帧 + 中割）</h4>
+          <div class="hm-anim-timeline" id="animTimeline"></div>
+        </div>
+
+        <!-- 备注 -->
+        <div class="hm-art-form-block">
+          <label>📝 整体备注</label>
+          <textarea id="animNotes" rows="3" placeholder="动作说明 / 节奏注意点 / 原画对接备注..."></textarea>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-footer">
+        <button class="hm-pill" id="animDeleteBtn">🗑 删除</button>
+        <button class="hm-pill hm-pill-ghost" id="animSaveBtn">💾 保存</button>
         <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
       </div>
     </section>

@@ -263,6 +263,9 @@
     if (view === 'oua' && window.HMOUA) {
       try { window.HMOUA.enter(); } catch (e) { console.error('[OUA] enter failed', e); }
     }
+    if (view === 'animation' && window.HMAnimation) {
+      try { window.HMAnimation.enter(); } catch (e) { console.error('[Animation] enter failed', e); }
+    }
   }
 
   function onRenderWorks() {
@@ -5656,3 +5659,374 @@
   window.HMOUA = { enter: enter };
 })();
 
+
+
+/* ========================================================================
+ * HMAnimation —— 动画中间帧处理（Tweening · 帧序列 · 节奏曲线）
+ * ======================================================================== */
+(function () {
+  var state = { list: [], editing: null, saveTimer: null };
+  var ST_LABELS = { todo: '未开始', wip: '进行中', review: '审图中', final: '定稿' };
+  function $(id) { return document.getElementById(id); }
+
+  function enter() { bindTop(); bindFilters(); loadList(); }
+
+  function bindTop() {
+    var btn = $('animNewBtn');
+    if (btn && !btn.__bound) { btn.__bound = true; btn.addEventListener('click', createNew); }
+    var exp = $('animExportBtn');
+    if (exp && !exp.__bound) { exp.__bound = true; exp.addEventListener('click', exportCsv); }
+  }
+  function bindFilters() {
+    ['animSearch', 'animStatusFilter'].forEach(function (id) {
+      var el = $(id); if (!el || el.__bound) return;
+      el.__bound = true;
+      var deb;
+      el.addEventListener('input', function () { clearTimeout(deb); deb = setTimeout(loadList, 300); });
+      el.addEventListener('change', function () { clearTimeout(deb); loadList(); });
+    });
+  }
+
+  function loadList() {
+    var qp = new URLSearchParams();
+    var kw = $('animSearch').value.trim(); if (kw) qp.set('keyword', kw);
+    var sf = $('animStatusFilter').value; if (sf !== 'all') qp.set('status', sf);
+    api.listAnimation('?' + qp.toString()).then(function (res) {
+      state.list = res.items || []; renderGrid();
+    });
+  }
+
+  function renderGrid() {
+    var grid = $('animGrid'); grid.innerHTML = '';
+    state.list.forEach(function (s) {
+      var kCount = (s.kfList || []).length;
+      var tCount = (s.tweens || []).length;
+      var totalFrames = kCount + tCount;
+      var card = document.createElement('div');
+      card.className = 'hm-anim-card hm-anim-st-' + s.status;
+      card.innerHTML =
+        '<div class="hm-anim-card-head">' +
+          '<span class="hm-anim-name">' + (s.name || '未命名') + '</span>' +
+          '<span class="hm-anim-status">' + ST_LABELS[s.status] + '</span>' +
+        '</div>' +
+        '<div class="hm-anim-card-info">' +
+          '<div>🎬 镜号 ' + (s.shotNo || '—') + '</div>' +
+          '<div>🎞 节奏 ' + (s.frameRate || 24) + ' fps</div>' +
+          '<div>🔢 K帧 ' + kCount + ' · 🎞 中割 ' + tCount + '</div>' +
+          '<div>📊 合计 ' + totalFrames + ' 帧</div>' +
+        '</div>';
+      card.addEventListener('click', function () { openEditor(s.id); });
+      grid.appendChild(card);
+    });
+    $('animListCount').textContent = state.list.length + ' 序列';
+  }
+
+  function createNew() {
+    var name = window.prompt('序列名称', '序列 ' + (state.list.length + 1));
+    if (!name) return;
+    api.createAnimation({ name: name }).then(function (res) { openEditor(res.sequence.id); });
+  }
+
+  function openEditor(id) {
+    $('animListView').hidden = true; $('animEditorView').hidden = false;
+    api.getAnimation(id).then(function (res) {
+      state.editing = res.sequence;
+      state.editing.kfList = state.editing.kfList || [];
+      state.editing.tweens = state.editing.tweens || [];
+      populate();
+    });
+  }
+
+  function populate() {
+    var s = state.editing;
+    $('animBackBtn').onclick = function () {
+      $('animEditorView').hidden = true; $('animListView').hidden = false;
+      loadList(); state.editing = null;
+    };
+    $('animDeleteBtn').onclick = function () {
+      if (!window.confirm('确定删除序列 ' + s.name + ' ?')) return;
+      api.deleteAnimation(s.id).then(function () {
+        $('animEditorView').hidden = true; $('animListView').hidden = false;
+        loadList(); state.editing = null; A.toast && A.toast('已删除');
+      });
+    };
+    $('animSaveBtn').onclick = save;
+    $('animName').value = s.name || '';
+    $('animShotNo').value = s.shotNo || '';
+    $('animSceneRef').value = s.sceneRef || '';
+    $('animStatus').value = s.status || 'todo';
+    $('animFrameRate').value = String(s.frameRate || 24);
+    $('animTags').value = (s.tags || []).join(', ');
+    $('animNotes').value = s.notes || '';
+    $('animEditorTitle').textContent = s.name || '(未命名)';
+    $('animShotTag').textContent = s.shotNo || '—';
+    $('animStatusTag').textContent = ST_LABELS[s.status] || '未开始';
+
+    renderKfList(); renderTweenList(); renderTimeline();
+    renderKfSelects();
+    bindAutoSave();
+
+    $('animAddKf').onclick = addKf;
+    $('animAddTween').onclick = addManualTween;
+    $('animGenerateBtn').onclick = autoGenerate;
+    $('animTweenMarkWip').onclick = function () { bulkTweenStatus('wip'); };
+    $('animTweenMarkFinal').onclick = function () { bulkTweenStatus('final'); };
+
+    var kfs = state.editing.kfList || [];
+    if (kfs.length >= 2) { $('animGenA').value = '0'; $('animGenB').value = String(kfs.length - 1); }
+  }
+
+  function bindAutoSave() {
+    ['animName', 'animShotNo', 'animSceneRef', 'animStatus', 'animFrameRate', 'animTags', 'animNotes'].forEach(function (id) {
+      var el = $(id); if (!el || el.__as) return;
+      el.__as = true;
+      el.addEventListener('input', scheduleSave);
+      el.addEventListener('change', scheduleSave);
+    });
+  }
+  function scheduleSave() { clearTimeout(state.saveTimer); state.saveTimer = setTimeout(save, 1200); }
+
+  function save() {
+    if (!state.editing) return;
+    var s = state.editing;
+    s.name = $('animName').value;
+    s.shotNo = $('animShotNo').value;
+    s.sceneRef = $('animSceneRef').value;
+    s.status = $('animStatus').value;
+    s.frameRate = Number($('animFrameRate').value) || 24;
+    s.tags = ($('animTags').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    s.notes = $('animNotes').value;
+    api.updateAnimation(s.id, s).then(function () {
+      $('animStatusTag').textContent = ST_LABELS[s.status] || '未开始';
+      $('animEditorTitle').textContent = s.name || '(未命名)';
+    });
+  }
+
+  /* K帧 */
+  function addKf() {
+    var s = state.editing;
+    var last = s.kfList.length ? s.kfList[s.kfList.length - 1] : null;
+    var kf = {
+      id: 'k_' + Math.random().toString(36).slice(2, 10),
+      frame: last ? (last.frame + 12) : 0,
+      second: last ? Number((Number(last.second) + 0.5).toFixed(2)) : 0,
+      pose: 'K帧 ' + (s.kfList.length + 1), url: '', note: '',
+    };
+    api.animAddKf(s.id, kf).then(function (res) {
+      s.kfList.push(res.kf);
+      s.kfList.sort(function (a, b) { return (a.frame || 0) - (b.frame || 0); });
+      renderKfList(); renderKfSelects(); renderTimeline();
+    });
+  }
+
+  function renderKfList() {
+    var list = $('animKfList'); list.innerHTML = '';
+    state.editing.kfList.forEach(function (k, idx) {
+      var row = document.createElement('div');
+      row.className = 'hm-anim-kf-row';
+      var imgCell = k.url
+        ? '<div class="hm-anim-kf-img"><img src="' + api.mediaUrl(k.url) + '" data-preview-click></div>'
+        : '<div class="hm-anim-kf-img hm-anim-kf-empty" data-kf-upload="' + idx + '">＋</div>';
+      row.innerHTML =
+        '<div class="hm-anim-kf-idx">K' + (idx + 1) + '</div>' +
+        imgCell +
+        '<div class="hm-anim-kf-fields">' +
+          '<input type="number" placeholder="帧" value="' + (k.frame || '') + '" data-kf-frame="' + idx + '" min="0">' +
+          '<input type="number" step="0.1" placeholder="秒" value="' + (k.second || '') + '" data-kf-sec="' + idx + '" min="0">' +
+          '<input placeholder="Pose 名称" value="' + (k.pose || '').replace(/"/g, '&quot;') + '" data-kf-pose="' + idx + '">' +
+          '<input placeholder="备注" value="' + (k.note || '').replace(/"/g, '&quot;') + '" data-kf-note="' + idx + '">' +
+        '</div>' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-kf-del="' + idx + '">✕</button>';
+      row.querySelectorAll('[data-kf-frame],[data-kf-sec],[data-kf-pose],[data-kf-note]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var key = el.getAttribute('data-kf-frame') !== null ? 'frame' :
+                    el.getAttribute('data-kf-sec') !== null ? 'second' :
+                    el.getAttribute('data-kf-pose') !== null ? 'pose' : 'note';
+          k[key] = (key === 'frame' || key === 'second') ? Number(el.value) : el.value;
+          scheduleSave(); renderTimeline();
+        });
+      });
+      row.querySelectorAll('[data-kf-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.editing.kfList.splice(idx, 1); scheduleSave(); renderKfList(); renderKfSelects(); renderTimeline();
+        });
+      });
+      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
+      });
+      row.querySelectorAll('[data-kf-upload]').forEach(function (el) {
+        el.addEventListener('click', function () { uploadKf(idx); });
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function renderKfSelects() {
+    var selA = $('animGenA'); var selB = $('animGenB');
+    var opts = '';
+    state.editing.kfList.forEach(function (k, i) {
+      opts += '<option value="' + i + '">K' + (i + 1) + ' @' + (k.frame || 0) + 'f (' + (k.second || 0) + 's) — ' + (k.pose || '') + '</option>';
+    });
+    selA.innerHTML = opts; selB.innerHTML = opts;
+  }
+
+  function uploadKf(idx) {
+    var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0]; if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        api.uploadAnimMedia(reader.result).then(function (res) {
+          state.editing.kfList[idx].url = res.url; renderKfList(); save();
+        });
+      };
+      reader.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  /* 自动生成中割 */
+  function autoGenerate() {
+    var s = state.editing;
+    if ((s.kfList || []).length < 2) { A.toast && A.toast('至少需要 2 个 K 帧', 'error'); return; }
+    api.animGenerate(s.id, {
+      prevKIdx: Number($('animGenA').value) || 0,
+      nextKIdx: Number($('animGenB').value) || 1,
+      count: Number($('animGenCount').value) || 2,
+      timing: $('animGenTiming').value,
+    }).then(function (res) {
+      s.tweens = res.items.concat(s.tweens || []);
+      renderTweenList(); renderTimeline();
+      A.toast && A.toast('✅ 已生成 ' + res.items.length + ' 个中割帧', 'success');
+    }).catch(function (err) {
+      A.toast && A.toast('生成失败: ' + (err.message || err), 'error');
+    });
+  }
+
+  /* 手动添加 */
+  function addManualTween() {
+    var s = state.editing;
+    var t = {
+      prevKey: '', nextKey: '', tweenIndex: (s.tweens.length + 1), totalBetween: 1,
+      frameNum: 0, second: 0, timing: 'linear',
+      url: '', poseRef: '', drawingRef: '', motionRef: '', note: '', status: 'todo', issue: '',
+    };
+    api.animAddTween(s.id, t).then(function (res) {
+      s.tweens.push(res.items[0]); renderTweenList(); renderTimeline();
+    });
+  }
+
+  function bulkTweenStatus(status) {
+    var ids = state.editing.tweens.map(function (t) { return t.id; });
+    if (!ids.length) return;
+    api.animBulkTweenStatus(state.editing.id, ids, status).then(function () {
+      state.editing.tweens.forEach(function (t) { t.status = status; });
+      renderTweenList();
+    });
+  }
+
+  /* 中割帧列表 */
+  function renderTweenList() {
+    var list = $('animTweenList'); list.innerHTML = '';
+    (state.editing.tweens || []).slice().sort(function (a, b) { return (a.frameNum || 0) - (b.frameNum || 0); }).forEach(function (t, idx) {
+      var row = document.createElement('div');
+      row.className = 'hm-anim-tween-row hm-anim-tw-' + (t.status || 'todo');
+      var imgCell = t.url
+        ? '<div class="hm-anim-tween-img"><img src="' + api.mediaUrl(t.url) + '" data-preview-click></div>'
+        : '<div class="hm-anim-tween-img hm-anim-tween-empty" data-tw-upload="' + idx + '">＋</div>';
+      row.innerHTML =
+        '<div class="hm-anim-tween-num">T' + (idx + 1) + '</div>' +
+        imgCell +
+        '<div class="hm-anim-tween-fields">' +
+          '<input type="number" placeholder="帧号" value="' + (t.frameNum || '') + '" data-tw-frame="' + idx + '" min="0">' +
+          '<input type="number" step="0.01" placeholder="秒" value="' + (t.second || '') + '" data-tw-sec="' + idx + '" min="0">' +
+          '<select data-tw-timing="' + idx + '">' + ['linear', 'ease-in', 'ease-out', 'ease-in-out', 'custom'].map(function (o) { return '<option value="' + o + '"' + (t.timing === o ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select>' +
+          '<select data-tw-status="' + idx + '">' + ['todo', 'wip', 'review', 'final'].map(function (o) { return '<option value="' + o + '"' + (t.status === o ? ' selected' : '') + '>' + ST_LABELS[o] + '</option>'; }).join('') + '</select>' +
+          '<input placeholder="Pose 参考" value="' + (t.poseRef || '').replace(/"/g, '&quot;') + '" data-tw-pose="' + idx + '">' +
+          '<input placeholder="问题" value="' + (t.issue || '').replace(/"/g, '&quot;') + '" data-tw-issue="' + idx + '">' +
+          '<input placeholder="备注" value="' + (t.note || '').replace(/"/g, '&quot;') + '" data-tw-note="' + idx + '">' +
+        '</div>' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-tw-del="' + idx + '">✕</button>';
+      row.querySelectorAll('[data-tw-frame],[data-tw-sec],[data-tw-timing],[data-tw-pose],[data-tw-issue],[data-tw-note]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var key = el.getAttribute('data-tw-frame') !== null ? 'frameNum' :
+                    el.getAttribute('data-tw-sec') !== null ? 'second' :
+                    el.getAttribute('data-tw-timing') !== null ? 'timing' :
+                    el.getAttribute('data-tw-pose') !== null ? 'poseRef' :
+                    el.getAttribute('data-tw-issue') !== null ? 'issue' : 'note';
+          if (key === 'frameNum' || key === 'second') t[key] = Number(el.value) || 0;
+          else t[key] = el.value;
+          scheduleSave(); renderTimeline();
+        });
+      });
+      row.querySelectorAll('[data-tw-status]').forEach(function (el) {
+        el.addEventListener('change', function () { t.status = el.value; scheduleSave(); renderTweenList(); renderTimeline(); });
+      });
+      row.querySelectorAll('[data-tw-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var id = state.editing.tweens[idx].id;
+          api.animDeleteTween(state.editing.id, id).then(function () {
+            state.editing.tweens.splice(idx, 1); renderTweenList(); renderTimeline();
+          });
+        });
+      });
+      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
+      });
+      row.querySelectorAll('[data-tw-upload]').forEach(function (el) {
+        el.addEventListener('click', function () { uploadTween(idx); });
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function uploadTween(idx) {
+    var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0]; if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        api.uploadAnimMedia(reader.result).then(function (res) {
+          state.editing.tweens[idx].url = res.url; renderTweenList(); save();
+        });
+      };
+      reader.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  /* 时间轴预览 */
+  function renderTimeline() {
+    var tl = $('animTimeline');
+    var frames = [];
+    (state.editing.kfList || []).forEach(function (k, i) {
+      frames.push({ kind: 'K', idx: i, frame: k.frame, second: k.second, label: 'K' + (i + 1), pose: k.pose, status: 'final' });
+    });
+    (state.editing.tweens || []).forEach(function (t, i) {
+      frames.push({ kind: 'T', idx: i, frame: t.frameNum, second: t.second, label: 'T' + (i + 1), pose: (t.tweenIndex ? 'Tween-' + t.tweenIndex : ''), status: t.status });
+    });
+    frames.sort(function (a, b) { return (a.frame || 0) - (b.frame || 0); });
+    if (!frames.length) {
+      tl.innerHTML = '<div class="hm-anim-tl-empty">还没有帧 —— 先添加 K 帧，或选两个 K 帧一键生成中割</div>';
+      return;
+    }
+    var html = '<div class="hm-anim-tl-bar"><div class="hm-anim-tl-track">';
+    frames.forEach(function (f) {
+      var cls = 'hm-anim-tl-f hm-anim-tl-' + f.kind + ' hm-anim-st-' + (f.status || 'todo');
+      html += '<div class="' + cls + '" title="#' + f.frame + 'f @' + f.second + 's · ' + f.label + '">' +
+        '<span>' + f.label + '</span><small>' + f.frame + 'f</small></div>';
+    });
+    html += '</div></div>';
+    var fps = state.editing.frameRate || 24;
+    var lastSecond = frames[frames.length - 1].second || 0;
+    html += '<div class="hm-anim-tl-summary">合计 ' + frames.length + ' 帧 · 时长约 ' + lastSecond.toFixed(2) + 's · ' + fps + ' fps · 实际输出 ≈ ' + Math.ceil(lastSecond * fps) + ' 帧</div>';
+    tl.innerHTML = html;
+  }
+
+  function exportCsv() {
+    if (!state.editing) return;
+    window.open(api.exportAnimation(state.editing.id, 'csv'), '_blank');
+  }
+
+  window.HMAnimation = { enter: enter };
+})();

@@ -13101,6 +13101,190 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   }
 }
 
+/* ============ 动画（中间帧 Tweening）模块 ============ */
+.hm-anim-page {
+  display: flex; flex-direction: column;
+  height: 100%; padding: 20px 24px; overflow-y: auto; gap: 14px;
+}
+
+.hm-anim-list-head { display: flex; justify-content: space-between; align-items: center; }
+.hm-anim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.hm-anim-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px; padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer; transition: all 0.18s;
+  position: relative; overflow: hidden;
+}
+.hm-anim-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: #6b7280;
+}
+.hm-anim-card:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4); transform: translateY(-2px);
+}
+.hm-anim-st-todo::before { background: #6b7280; }
+.hm-anim-st-wip::before  { background: #3b82f6; }
+.hm-anim-st-review::before { background: #f59e0b; }
+.hm-anim-st-final::before { background: #22c55e; }
+.hm-anim-card-head {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+}
+.hm-anim-name { font-weight: 700; font-size: 14px; color: var(--hm-text); }
+.hm-anim-status {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08); color: var(--hm-text-dim);
+}
+.hm-anim-card-info {
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: 12px; color: var(--hm-text-dim); margin-bottom: 10px;
+}
+.hm-anim-card-foot {
+  font-size: 11px; color: var(--hm-text-dim);
+  padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+/* 编辑器 */
+.hm-anim-editor-body { display: flex; flex-direction: column; gap: 14px; }
+.hm-anim-meta-row {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
+  padding: 12px; background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-anim-meta-row .hm-art-form-row { display: flex; flex-direction: column; gap: 3px; }
+.hm-anim-meta-row .hm-art-form-row label { font-size: 11px; color: var(--hm-text-dim); }
+.hm-anim-meta-row input, .hm-anim-meta-row select {
+  padding: 6px 10px; background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px;
+  color: var(--hm-text); font-size: 13px; outline: none;
+}
+.hm-anim-meta-row input:focus, .hm-anim-meta-row select:focus { border-color: #3b82f6; }
+
+.hm-anim-block {
+  padding: 14px; background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-anim-block-title {
+  font-size: 14px; font-weight: 600; color: var(--hm-text);
+  margin: 0 0 12px 0; padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* K帧行 */
+.hm-anim-kfs, .hm-anim-tweens { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.hm-anim-kf-row, .hm-anim-tween-row {
+  display: grid; grid-template-columns: 40px 44px 1fr 28px; gap: 8px; align-items: center;
+  padding: 6px 8px; background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.hm-anim-kf-idx, .hm-anim-tween-num {
+  font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  color: #3b82f6; font-size: 12px; text-align: center;
+}
+.hm-anim-kf-img, .hm-anim-tween-img {
+  width: 44px; height: 44px; border-radius: 4px; overflow: hidden;
+  background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.hm-anim-kf-img img, .hm-anim-tween-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hm-anim-kf-empty, .hm-anim-tween-empty { font-size: 20px; color: var(--hm-text-dim); font-weight: 200; }
+
+.hm-anim-kf-fields {
+  display: grid; grid-template-columns: 60px 60px 1fr 1fr; gap: 4px;
+}
+.hm-anim-tween-fields {
+  display: grid; grid-template-columns: 70px 70px 80px 80px 1fr 1fr 1fr; gap: 4px;
+}
+.hm-anim-kf-fields input, .hm-anim-tween-fields input, .hm-anim-tween-fields select {
+  padding: 4px 6px; font-size: 12px;
+  background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px; color: var(--hm-text); outline: none; min-width: 0;
+}
+.hm-anim-kf-fields input:focus, .hm-anim-tween-fields input:focus, .hm-anim-tween-fields select:focus {
+  border-color: #3b82f6;
+}
+
+.hm-anim-tween-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* 状态色 */
+.hm-anim-tw-todo { border-left: 3px solid #6b7280; }
+.hm-anim-tw-wip  { border-left: 3px solid #3b82f6; }
+.hm-anim-tw-review { border-left: 3px solid #f59e0b; }
+.hm-anim-tw-final { border-left: 3px solid #22c55e; }
+
+/* 自动生成 */
+.hm-anim-gen-row {
+  display: grid; grid-template-columns: 1fr 1fr 100px 160px 140px; gap: 10px; align-items: end;
+}
+.hm-anim-gen-row .hm-art-form-row { display: flex; flex-direction: column; gap: 3px; }
+.hm-anim-gen-row label { font-size: 11px; color: var(--hm-text-dim); }
+.hm-anim-gen-row input, .hm-anim-gen-row select {
+  padding: 6px 10px; background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px;
+  color: var(--hm-text); font-size: 13px; outline: none;
+}
+.hm-anim-gen-btn button { width: 100%; }
+.hm-anim-gen-hint {
+  margin-top: 10px; padding: 8px 12px; font-size: 12px;
+  background: rgba(59, 130, 246, 0.1); border: 1px dashed rgba(59, 130, 246, 0.4);
+  border-radius: 6px; color: #93c5fd;
+}
+
+/* 时间轴 */
+.hm-anim-timeline {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.hm-anim-tl-empty {
+  padding: 20px; text-align: center; color: var(--hm-text-dim); font-size: 13px;
+}
+.hm-anim-tl-bar {
+  overflow-x: auto; padding: 8px 0;
+}
+.hm-anim-tl-track {
+  display: flex; align-items: stretch; gap: 3px; min-height: 60px;
+  padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;
+}
+.hm-anim-tl-f {
+  min-width: 42px; flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 6px 4px; border-radius: 5px; cursor: pointer;
+  border: 1px solid; font-size: 11px; font-weight: 600;
+}
+.hm-anim-tl-f span { font-size: 12px; font-weight: 700; }
+.hm-anim-tl-f small { font-size: 10px; color: inherit; opacity: 0.75; }
+.hm-anim-tl-K {
+  background: rgba(59, 130, 246, 0.3); border-color: #3b82f6; color: #dbeafe;
+}
+.hm-anim-tl-T {
+  background: rgba(139, 92, 246, 0.25); border-color: #a78bfa; color: #ddd6fe;
+}
+.hm-anim-st-todo { opacity: 0.7; }
+.hm-anim-st-wip  { opacity: 1; }
+.hm-anim-st-review { border-style: dashed; }
+.hm-anim-tl-summary {
+  font-size: 12px; color: var(--hm-text-dim); padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.2); border-radius: 6px;
+  display: flex; justify-content: space-between;
+}
+
+/* 响应式 */
+@media (max-width: 1100px) {
+  .hm-anim-meta-row { grid-template-columns: repeat(3, 1fr); }
+  .hm-anim-gen-row { grid-template-columns: 1fr 1fr; }
+  .hm-anim-gen-btn { grid-column: 1 / -1; }
+  .hm-anim-tween-fields { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 700px) {
+  .hm-anim-meta-row { grid-template-columns: 1fr; }
+  .hm-anim-kf-fields { grid-template-columns: 60px 60px 1fr; }
+  .hm-anim-tween-fields { grid-template-columns: 1fr; }
+}
+
 </style>
   <style>
 /* =============================================================
@@ -13452,7 +13636,7 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261103033952-b4eeefa";</script>
+<script>window.HM_BUILD = "20261103035856-1d87e0f";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -13500,6 +13684,10 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
       <button class="hm-rail-item" data-rail="oua" title="原画（第一原画 K 帧 · 第二原画中割）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 9h10M7 12h7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="16" r="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M19 18.5L22 21" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         <span>原画</span>
+      </button>
+      <button class="hm-rail-item" data-rail="animation" title="动画（中间帧生成 · 帧序列 · 节奏曲线）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 12h4M16 12h4M12 4v4M12 16v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+        <span>动画</span>
       </button>
     </div>
 
@@ -16020,6 +16208,148 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
     </section>
   </main>
 
+  <!-- ============ 动画（中间帧处理 · Tweening） ============ -->
+  <main class="hm-page hm-anim-page" id="view-animation" hidden>
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎞️ 动画 · 中间帧处理</h2>
+        <span class="hm-art-top-sub">中割り / Tweening · 帧序列 · 节奏曲线</span>
+      </div>
+      <div class="hm-art-top-right">
+        <button class="hm-pill" id="animExportBtn">📤 导出帧表</button>
+        <button class="hm-pill hm-pill-primary" id="animNewBtn">＋ 新建序列</button>
+      </div>
+    </div>
+
+    <!-- 筛选 -->
+    <div class="hm-art-filter-bar">
+      <input class="hm-art-search" id="animSearch" placeholder="🔍 搜索序列名 / 镜号 / 标签...">
+      <select id="animStatusFilter" class="hm-art-filter">
+        <option value="all">全部状态</option>
+        <option value="todo">未开始</option>
+        <option value="wip">进行中</option>
+        <option value="review">审图中</option>
+        <option value="final">定稿</option>
+      </select>
+    </div>
+
+    <!-- 列表 -->
+    <section class="hm-art-view-list" id="animListView">
+      <div class="hm-anim-list-head">
+        <span id="animListCount" class="hm-art-top-sub">0 序列</span>
+      </div>
+      <div class="hm-anim-grid" id="animGrid"></div>
+    </section>
+
+    <!-- 编辑器 -->
+    <section class="hm-art-view-editor" id="animEditorView" hidden>
+      <div class="hm-art-editor-top">
+        <button class="hm-pill hm-pill-ghost" id="animBackBtn">← 返回列表</button>
+        <h3 id="animEditorTitle">序列</h3>
+        <div class="hm-art-editor-meta">
+          <span id="animShotTag" class="hm-art-editor-path">—</span>
+          <span class="hm-art-editor-version" id="animStatusTag">未开始</span>
+        </div>
+      </div>
+
+      <div class="hm-anim-editor-body">
+        <!-- 元信息 -->
+        <div class="hm-anim-meta-row">
+          <div class="hm-art-form-row"><label>序列名称</label><input id="animName"></div>
+          <div class="hm-art-form-row"><label>关联镜号</label><input id="animShotNo" placeholder="如: 1-01"></div>
+          <div class="hm-art-form-row"><label>关联场次</label><input id="animSceneRef"></div>
+          <div class="hm-art-form-row"><label>状态</label>
+            <select id="animStatus">
+              <option value="todo">未开始</option>
+              <option value="wip">进行中</option>
+              <option value="review">审图中</option>
+              <option value="final">定稿</option>
+            </select>
+          </div>
+          <div class="hm-art-form-row"><label>帧率 (fps)</label>
+            <select id="animFrameRate">
+              <option value="12">12 fps (loose)</option>
+              <option value="15">15 fps</option>
+              <option value="24" selected>24 fps (日本TV)</option>
+              <option value="30">30 fps</option>
+              <option value="60">60 fps</option>
+            </select>
+          </div>
+          <div class="hm-art-form-row"><label>标签</label><input id="animTags" placeholder="逗号分隔"></div>
+        </div>
+
+        <!-- K帧编辑 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">🔢 K 帧（关键帧时间轴）</h4>
+          <div class="hm-anim-kfs" id="animKfList"></div>
+          <button class="hm-pill hm-pill-mini hm-pill-ghost" id="animAddKf">＋ 添加 K 帧</button>
+        </div>
+
+        <!-- 自动生成中割 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">⚡ 自动生成中割帧</h4>
+          <div class="hm-anim-gen-row">
+            <div class="hm-art-form-row">
+              <label>起始 K 帧 (A)</label>
+              <select id="animGenA"></select>
+            </div>
+            <div class="hm-art-form-row">
+              <label>结束 K 帧 (B)</label>
+              <select id="animGenB"></select>
+            </div>
+            <div class="hm-art-form-row">
+              <label>中割数量</label>
+              <input id="animGenCount" type="number" min="1" max="30" value="2">
+            </div>
+            <div class="hm-art-form-row">
+              <label>节奏曲线</label>
+              <select id="animGenTiming">
+                <option value="linear">均匀 linear</option>
+                <option value="ease-in">缓入 ease-in</option>
+                <option value="ease-out">缓出 ease-out</option>
+                <option value="ease-in-out">缓入缓出 ease-in-out</option>
+              </select>
+            </div>
+            <div class="hm-art-form-row hm-anim-gen-btn">
+              <label>&nbsp;</label>
+              <button class="hm-pill hm-pill-primary" id="animGenerateBtn">🚀 生成</button>
+            </div>
+          </div>
+          <div class="hm-anim-gen-hint" id="animGenHint">选择两个 K 帧，设置中割数量和节奏，一键自动生成帧号 / 秒数</div>
+        </div>
+
+        <!-- 中割帧列表 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">🎞 中割帧列表（Tweening）</h4>
+          <div class="hm-anim-tweens" id="animTweenList"></div>
+          <div class="hm-anim-tween-actions">
+            <button class="hm-pill hm-pill-mini hm-pill-ghost" id="animAddTween">＋ 手动添加中割帧</button>
+            <button class="hm-pill hm-pill-mini" id="animTweenMarkWip">全标进行中</button>
+            <button class="hm-pill hm-pill-mini" id="animTweenMarkFinal">全标定稿</button>
+          </div>
+        </div>
+
+        <!-- 全帧时间轴预览 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">📊 全帧时间轴预览（K帧 + 中割）</h4>
+          <div class="hm-anim-timeline" id="animTimeline"></div>
+        </div>
+
+        <!-- 备注 -->
+        <div class="hm-art-form-block">
+          <label>📝 整体备注</label>
+          <textarea id="animNotes" rows="3" placeholder="动作说明 / 节奏注意点 / 原画对接备注..."></textarea>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-footer">
+        <button class="hm-pill" id="animDeleteBtn">🗑 删除</button>
+        <button class="hm-pill hm-pill-ghost" id="animSaveBtn">💾 保存</button>
+        <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
+      </div>
+    </section>
+  </main>
+
   <main class="hm-page hm-admin-page" id="view-admin" hidden>
     <div class="hm-admin-topbar-wrap">
       <div class="hm-admin-brand">
@@ -17099,6 +17429,23 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.bulkOua = function (items) { return request('/oua/bulk', { method: 'POST', body: { items: items } }, 30000); };
   api.exportOua = function (team) { return '/api/oua/export' + (team ? '?team=' + encodeURIComponent(team) : ''); };
   api.dictOua = function () { return request('/oua/dict', null, 10000); };
+
+  /* ===== 动画（Animation / Tweening）===== */
+  api.listAnimation = function (q) { return request('/animation' + (q || ''), null, 20000); };
+  api.getAnimation = function (id) { return request('/animation/' + encodeURIComponent(id), null, 20000); };
+  api.createAnimation = function (payload) { return request('/animation', { method: 'POST', body: payload }, 20000); };
+  api.updateAnimation = function (id, payload) { return request('/animation/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteAnimation = function (id) { return request('/animation/' + encodeURIComponent(id), { method: 'DELETE', body: null }, 15000); };
+  api.duplicateAnimation = function (id) { return request('/animation/' + encodeURIComponent(id) + '/duplicate', { method: 'POST', body: null }, 20000); };
+  api.bulkAnimation = function (items) { return request('/animation/bulk', { method: 'POST', body: { items: items } }, 30000); };
+  api.uploadAnimMedia = function (dataUrl) { return request('/animation/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000); };
+  api.animAddKf = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/kf', { method: 'POST', body: payload }, 15000); };
+  api.animAddTween = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/tween', { method: 'POST', body: payload }, 15000); };
+  api.animGenerate = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/generate', { method: 'POST', body: payload }, 15000); };
+  api.animDeleteTween = function (id, tweenId) { return request('/animation/' + encodeURIComponent(id) + '/tween/' + encodeURIComponent(tweenId), { method: 'DELETE', body: null }, 15000); };
+  api.animBulkTweenStatus = function (id, ids, status) { return request('/animation/' + encodeURIComponent(id) + '/tween-bulk-status', { method: 'POST', body: { ids: ids, status: status } }, 15000); };
+  api.exportAnimation = function (id, format) { return '/api/animation/export/' + encodeURIComponent(id) + '?format=' + (format || 'csv'); };
+  api.dictAnimation = function () { return request('/animation/dict', null, 10000); };
   api.deleteArt = function (id) { return request('/art/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.duplicateArt = function (id) { return request('/art/' + encodeURIComponent(id) + '/duplicate', { method: 'POST' }, 15000); };
   api.bulkArtStatus = function (ids, status) {
@@ -19438,7 +19785,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'plan', 'script', 'art', 'oua', 'history', 'admin'];
+var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'plan', 'script', 'art', 'oua', 'animation', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -32556,6 +32903,9 @@ window.HMChat = (function () {
     if (view === 'oua' && window.HMOUA) {
       try { window.HMOUA.enter(); } catch (e) { console.error('[OUA] enter failed', e); }
     }
+    if (view === 'animation' && window.HMAnimation) {
+      try { window.HMAnimation.enter(); } catch (e) { console.error('[Animation] enter failed', e); }
+    }
   }
 
   function onRenderWorks() {
@@ -37949,6 +38299,377 @@ window.HMChat = (function () {
   window.HMOUA = { enter: enter };
 })();
 
+
+
+/* ========================================================================
+ * HMAnimation —— 动画中间帧处理（Tweening · 帧序列 · 节奏曲线）
+ * ======================================================================== */
+(function () {
+  var state = { list: [], editing: null, saveTimer: null };
+  var ST_LABELS = { todo: '未开始', wip: '进行中', review: '审图中', final: '定稿' };
+  function $(id) { return document.getElementById(id); }
+
+  function enter() { bindTop(); bindFilters(); loadList(); }
+
+  function bindTop() {
+    var btn = $('animNewBtn');
+    if (btn && !btn.__bound) { btn.__bound = true; btn.addEventListener('click', createNew); }
+    var exp = $('animExportBtn');
+    if (exp && !exp.__bound) { exp.__bound = true; exp.addEventListener('click', exportCsv); }
+  }
+  function bindFilters() {
+    ['animSearch', 'animStatusFilter'].forEach(function (id) {
+      var el = $(id); if (!el || el.__bound) return;
+      el.__bound = true;
+      var deb;
+      el.addEventListener('input', function () { clearTimeout(deb); deb = setTimeout(loadList, 300); });
+      el.addEventListener('change', function () { clearTimeout(deb); loadList(); });
+    });
+  }
+
+  function loadList() {
+    var qp = new URLSearchParams();
+    var kw = $('animSearch').value.trim(); if (kw) qp.set('keyword', kw);
+    var sf = $('animStatusFilter').value; if (sf !== 'all') qp.set('status', sf);
+    api.listAnimation('?' + qp.toString()).then(function (res) {
+      state.list = res.items || []; renderGrid();
+    });
+  }
+
+  function renderGrid() {
+    var grid = $('animGrid'); grid.innerHTML = '';
+    state.list.forEach(function (s) {
+      var kCount = (s.kfList || []).length;
+      var tCount = (s.tweens || []).length;
+      var totalFrames = kCount + tCount;
+      var card = document.createElement('div');
+      card.className = 'hm-anim-card hm-anim-st-' + s.status;
+      card.innerHTML =
+        '<div class="hm-anim-card-head">' +
+          '<span class="hm-anim-name">' + (s.name || '未命名') + '</span>' +
+          '<span class="hm-anim-status">' + ST_LABELS[s.status] + '</span>' +
+        '</div>' +
+        '<div class="hm-anim-card-info">' +
+          '<div>🎬 镜号 ' + (s.shotNo || '—') + '</div>' +
+          '<div>🎞 节奏 ' + (s.frameRate || 24) + ' fps</div>' +
+          '<div>🔢 K帧 ' + kCount + ' · 🎞 中割 ' + tCount + '</div>' +
+          '<div>📊 合计 ' + totalFrames + ' 帧</div>' +
+        '</div>';
+      card.addEventListener('click', function () { openEditor(s.id); });
+      grid.appendChild(card);
+    });
+    $('animListCount').textContent = state.list.length + ' 序列';
+  }
+
+  function createNew() {
+    var name = window.prompt('序列名称', '序列 ' + (state.list.length + 1));
+    if (!name) return;
+    api.createAnimation({ name: name }).then(function (res) { openEditor(res.sequence.id); });
+  }
+
+  function openEditor(id) {
+    $('animListView').hidden = true; $('animEditorView').hidden = false;
+    api.getAnimation(id).then(function (res) {
+      state.editing = res.sequence;
+      state.editing.kfList = state.editing.kfList || [];
+      state.editing.tweens = state.editing.tweens || [];
+      populate();
+    });
+  }
+
+  function populate() {
+    var s = state.editing;
+    $('animBackBtn').onclick = function () {
+      $('animEditorView').hidden = true; $('animListView').hidden = false;
+      loadList(); state.editing = null;
+    };
+    $('animDeleteBtn').onclick = function () {
+      if (!window.confirm('确定删除序列 ' + s.name + ' ?')) return;
+      api.deleteAnimation(s.id).then(function () {
+        $('animEditorView').hidden = true; $('animListView').hidden = false;
+        loadList(); state.editing = null; A.toast && A.toast('已删除');
+      });
+    };
+    $('animSaveBtn').onclick = save;
+    $('animName').value = s.name || '';
+    $('animShotNo').value = s.shotNo || '';
+    $('animSceneRef').value = s.sceneRef || '';
+    $('animStatus').value = s.status || 'todo';
+    $('animFrameRate').value = String(s.frameRate || 24);
+    $('animTags').value = (s.tags || []).join(', ');
+    $('animNotes').value = s.notes || '';
+    $('animEditorTitle').textContent = s.name || '(未命名)';
+    $('animShotTag').textContent = s.shotNo || '—';
+    $('animStatusTag').textContent = ST_LABELS[s.status] || '未开始';
+
+    renderKfList(); renderTweenList(); renderTimeline();
+    renderKfSelects();
+    bindAutoSave();
+
+    $('animAddKf').onclick = addKf;
+    $('animAddTween').onclick = addManualTween;
+    $('animGenerateBtn').onclick = autoGenerate;
+    $('animTweenMarkWip').onclick = function () { bulkTweenStatus('wip'); };
+    $('animTweenMarkFinal').onclick = function () { bulkTweenStatus('final'); };
+
+    var kfs = state.editing.kfList || [];
+    if (kfs.length >= 2) { $('animGenA').value = '0'; $('animGenB').value = String(kfs.length - 1); }
+  }
+
+  function bindAutoSave() {
+    ['animName', 'animShotNo', 'animSceneRef', 'animStatus', 'animFrameRate', 'animTags', 'animNotes'].forEach(function (id) {
+      var el = $(id); if (!el || el.__as) return;
+      el.__as = true;
+      el.addEventListener('input', scheduleSave);
+      el.addEventListener('change', scheduleSave);
+    });
+  }
+  function scheduleSave() { clearTimeout(state.saveTimer); state.saveTimer = setTimeout(save, 1200); }
+
+  function save() {
+    if (!state.editing) return;
+    var s = state.editing;
+    s.name = $('animName').value;
+    s.shotNo = $('animShotNo').value;
+    s.sceneRef = $('animSceneRef').value;
+    s.status = $('animStatus').value;
+    s.frameRate = Number($('animFrameRate').value) || 24;
+    s.tags = ($('animTags').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    s.notes = $('animNotes').value;
+    api.updateAnimation(s.id, s).then(function () {
+      $('animStatusTag').textContent = ST_LABELS[s.status] || '未开始';
+      $('animEditorTitle').textContent = s.name || '(未命名)';
+    });
+  }
+
+  /* K帧 */
+  function addKf() {
+    var s = state.editing;
+    var last = s.kfList.length ? s.kfList[s.kfList.length - 1] : null;
+    var kf = {
+      id: 'k_' + Math.random().toString(36).slice(2, 10),
+      frame: last ? (last.frame + 12) : 0,
+      second: last ? Number((Number(last.second) + 0.5).toFixed(2)) : 0,
+      pose: 'K帧 ' + (s.kfList.length + 1), url: '', note: '',
+    };
+    api.animAddKf(s.id, kf).then(function (res) {
+      s.kfList.push(res.kf);
+      s.kfList.sort(function (a, b) { return (a.frame || 0) - (b.frame || 0); });
+      renderKfList(); renderKfSelects(); renderTimeline();
+    });
+  }
+
+  function renderKfList() {
+    var list = $('animKfList'); list.innerHTML = '';
+    state.editing.kfList.forEach(function (k, idx) {
+      var row = document.createElement('div');
+      row.className = 'hm-anim-kf-row';
+      var imgCell = k.url
+        ? '<div class="hm-anim-kf-img"><img src="' + api.mediaUrl(k.url) + '" data-preview-click></div>'
+        : '<div class="hm-anim-kf-img hm-anim-kf-empty" data-kf-upload="' + idx + '">＋</div>';
+      row.innerHTML =
+        '<div class="hm-anim-kf-idx">K' + (idx + 1) + '</div>' +
+        imgCell +
+        '<div class="hm-anim-kf-fields">' +
+          '<input type="number" placeholder="帧" value="' + (k.frame || '') + '" data-kf-frame="' + idx + '" min="0">' +
+          '<input type="number" step="0.1" placeholder="秒" value="' + (k.second || '') + '" data-kf-sec="' + idx + '" min="0">' +
+          '<input placeholder="Pose 名称" value="' + (k.pose || '').replace(/"/g, '&quot;') + '" data-kf-pose="' + idx + '">' +
+          '<input placeholder="备注" value="' + (k.note || '').replace(/"/g, '&quot;') + '" data-kf-note="' + idx + '">' +
+        '</div>' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-kf-del="' + idx + '">✕</button>';
+      row.querySelectorAll('[data-kf-frame],[data-kf-sec],[data-kf-pose],[data-kf-note]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var key = el.getAttribute('data-kf-frame') !== null ? 'frame' :
+                    el.getAttribute('data-kf-sec') !== null ? 'second' :
+                    el.getAttribute('data-kf-pose') !== null ? 'pose' : 'note';
+          k[key] = (key === 'frame' || key === 'second') ? Number(el.value) : el.value;
+          scheduleSave(); renderTimeline();
+        });
+      });
+      row.querySelectorAll('[data-kf-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.editing.kfList.splice(idx, 1); scheduleSave(); renderKfList(); renderKfSelects(); renderTimeline();
+        });
+      });
+      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
+      });
+      row.querySelectorAll('[data-kf-upload]').forEach(function (el) {
+        el.addEventListener('click', function () { uploadKf(idx); });
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function renderKfSelects() {
+    var selA = $('animGenA'); var selB = $('animGenB');
+    var opts = '';
+    state.editing.kfList.forEach(function (k, i) {
+      opts += '<option value="' + i + '">K' + (i + 1) + ' @' + (k.frame || 0) + 'f (' + (k.second || 0) + 's) — ' + (k.pose || '') + '</option>';
+    });
+    selA.innerHTML = opts; selB.innerHTML = opts;
+  }
+
+  function uploadKf(idx) {
+    var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0]; if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        api.uploadAnimMedia(reader.result).then(function (res) {
+          state.editing.kfList[idx].url = res.url; renderKfList(); save();
+        });
+      };
+      reader.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  /* 自动生成中割 */
+  function autoGenerate() {
+    var s = state.editing;
+    if ((s.kfList || []).length < 2) { A.toast && A.toast('至少需要 2 个 K 帧', 'error'); return; }
+    api.animGenerate(s.id, {
+      prevKIdx: Number($('animGenA').value) || 0,
+      nextKIdx: Number($('animGenB').value) || 1,
+      count: Number($('animGenCount').value) || 2,
+      timing: $('animGenTiming').value,
+    }).then(function (res) {
+      s.tweens = res.items.concat(s.tweens || []);
+      renderTweenList(); renderTimeline();
+      A.toast && A.toast('✅ 已生成 ' + res.items.length + ' 个中割帧', 'success');
+    }).catch(function (err) {
+      A.toast && A.toast('生成失败: ' + (err.message || err), 'error');
+    });
+  }
+
+  /* 手动添加 */
+  function addManualTween() {
+    var s = state.editing;
+    var t = {
+      prevKey: '', nextKey: '', tweenIndex: (s.tweens.length + 1), totalBetween: 1,
+      frameNum: 0, second: 0, timing: 'linear',
+      url: '', poseRef: '', drawingRef: '', motionRef: '', note: '', status: 'todo', issue: '',
+    };
+    api.animAddTween(s.id, t).then(function (res) {
+      s.tweens.push(res.items[0]); renderTweenList(); renderTimeline();
+    });
+  }
+
+  function bulkTweenStatus(status) {
+    var ids = state.editing.tweens.map(function (t) { return t.id; });
+    if (!ids.length) return;
+    api.animBulkTweenStatus(state.editing.id, ids, status).then(function () {
+      state.editing.tweens.forEach(function (t) { t.status = status; });
+      renderTweenList();
+    });
+  }
+
+  /* 中割帧列表 */
+  function renderTweenList() {
+    var list = $('animTweenList'); list.innerHTML = '';
+    (state.editing.tweens || []).slice().sort(function (a, b) { return (a.frameNum || 0) - (b.frameNum || 0); }).forEach(function (t, idx) {
+      var row = document.createElement('div');
+      row.className = 'hm-anim-tween-row hm-anim-tw-' + (t.status || 'todo');
+      var imgCell = t.url
+        ? '<div class="hm-anim-tween-img"><img src="' + api.mediaUrl(t.url) + '" data-preview-click></div>'
+        : '<div class="hm-anim-tween-img hm-anim-tween-empty" data-tw-upload="' + idx + '">＋</div>';
+      row.innerHTML =
+        '<div class="hm-anim-tween-num">T' + (idx + 1) + '</div>' +
+        imgCell +
+        '<div class="hm-anim-tween-fields">' +
+          '<input type="number" placeholder="帧号" value="' + (t.frameNum || '') + '" data-tw-frame="' + idx + '" min="0">' +
+          '<input type="number" step="0.01" placeholder="秒" value="' + (t.second || '') + '" data-tw-sec="' + idx + '" min="0">' +
+          '<select data-tw-timing="' + idx + '">' + ['linear', 'ease-in', 'ease-out', 'ease-in-out', 'custom'].map(function (o) { return '<option value="' + o + '"' + (t.timing === o ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select>' +
+          '<select data-tw-status="' + idx + '">' + ['todo', 'wip', 'review', 'final'].map(function (o) { return '<option value="' + o + '"' + (t.status === o ? ' selected' : '') + '>' + ST_LABELS[o] + '</option>'; }).join('') + '</select>' +
+          '<input placeholder="Pose 参考" value="' + (t.poseRef || '').replace(/"/g, '&quot;') + '" data-tw-pose="' + idx + '">' +
+          '<input placeholder="问题" value="' + (t.issue || '').replace(/"/g, '&quot;') + '" data-tw-issue="' + idx + '">' +
+          '<input placeholder="备注" value="' + (t.note || '').replace(/"/g, '&quot;') + '" data-tw-note="' + idx + '">' +
+        '</div>' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-tw-del="' + idx + '">✕</button>';
+      row.querySelectorAll('[data-tw-frame],[data-tw-sec],[data-tw-timing],[data-tw-pose],[data-tw-issue],[data-tw-note]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var key = el.getAttribute('data-tw-frame') !== null ? 'frameNum' :
+                    el.getAttribute('data-tw-sec') !== null ? 'second' :
+                    el.getAttribute('data-tw-timing') !== null ? 'timing' :
+                    el.getAttribute('data-tw-pose') !== null ? 'poseRef' :
+                    el.getAttribute('data-tw-issue') !== null ? 'issue' : 'note';
+          if (key === 'frameNum' || key === 'second') t[key] = Number(el.value) || 0;
+          else t[key] = el.value;
+          scheduleSave(); renderTimeline();
+        });
+      });
+      row.querySelectorAll('[data-tw-status]').forEach(function (el) {
+        el.addEventListener('change', function () { t.status = el.value; scheduleSave(); renderTweenList(); renderTimeline(); });
+      });
+      row.querySelectorAll('[data-tw-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var id = state.editing.tweens[idx].id;
+          api.animDeleteTween(state.editing.id, id).then(function () {
+            state.editing.tweens.splice(idx, 1); renderTweenList(); renderTimeline();
+          });
+        });
+      });
+      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
+        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
+      });
+      row.querySelectorAll('[data-tw-upload]').forEach(function (el) {
+        el.addEventListener('click', function () { uploadTween(idx); });
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function uploadTween(idx) {
+    var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0]; if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        api.uploadAnimMedia(reader.result).then(function (res) {
+          state.editing.tweens[idx].url = res.url; renderTweenList(); save();
+        });
+      };
+      reader.readAsDataURL(f);
+    };
+    input.click();
+  }
+
+  /* 时间轴预览 */
+  function renderTimeline() {
+    var tl = $('animTimeline');
+    var frames = [];
+    (state.editing.kfList || []).forEach(function (k, i) {
+      frames.push({ kind: 'K', idx: i, frame: k.frame, second: k.second, label: 'K' + (i + 1), pose: k.pose, status: 'final' });
+    });
+    (state.editing.tweens || []).forEach(function (t, i) {
+      frames.push({ kind: 'T', idx: i, frame: t.frameNum, second: t.second, label: 'T' + (i + 1), pose: (t.tweenIndex ? 'Tween-' + t.tweenIndex : ''), status: t.status });
+    });
+    frames.sort(function (a, b) { return (a.frame || 0) - (b.frame || 0); });
+    if (!frames.length) {
+      tl.innerHTML = '<div class="hm-anim-tl-empty">还没有帧 —— 先添加 K 帧，或选两个 K 帧一键生成中割</div>';
+      return;
+    }
+    var html = '<div class="hm-anim-tl-bar"><div class="hm-anim-tl-track">';
+    frames.forEach(function (f) {
+      var cls = 'hm-anim-tl-f hm-anim-tl-' + f.kind + ' hm-anim-st-' + (f.status || 'todo');
+      html += '<div class="' + cls + '" title="#' + f.frame + 'f @' + f.second + 's · ' + f.label + '">' +
+        '<span>' + f.label + '</span><small>' + f.frame + 'f</small></div>';
+    });
+    html += '</div></div>';
+    var fps = state.editing.frameRate || 24;
+    var lastSecond = frames[frames.length - 1].second || 0;
+    html += '<div class="hm-anim-tl-summary">合计 ' + frames.length + ' 帧 · 时长约 ' + lastSecond.toFixed(2) + 's · ' + fps + ' fps · 实际输出 ≈ ' + Math.ceil(lastSecond * fps) + ' 帧</div>';
+    tl.innerHTML = html;
+  }
+
+  function exportCsv() {
+    if (!state.editing) return;
+    window.open(api.exportAnimation(state.editing.id, 'csv'), '_blank');
+  }
+
+  window.HMAnimation = { enter: enter };
+})();
 
 </script>
   <script>

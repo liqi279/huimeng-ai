@@ -319,6 +319,23 @@
   api.bulkOua = function (items) { return request('/oua/bulk', { method: 'POST', body: { items: items } }, 30000); };
   api.exportOua = function (team) { return '/api/oua/export' + (team ? '?team=' + encodeURIComponent(team) : ''); };
   api.dictOua = function () { return request('/oua/dict', null, 10000); };
+
+  /* ===== 动画（Animation / Tweening）===== */
+  api.listAnimation = function (q) { return request('/animation' + (q || ''), null, 20000); };
+  api.getAnimation = function (id) { return request('/animation/' + encodeURIComponent(id), null, 20000); };
+  api.createAnimation = function (payload) { return request('/animation', { method: 'POST', body: payload }, 20000); };
+  api.updateAnimation = function (id, payload) { return request('/animation/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteAnimation = function (id) { return request('/animation/' + encodeURIComponent(id), { method: 'DELETE', body: null }, 15000); };
+  api.duplicateAnimation = function (id) { return request('/animation/' + encodeURIComponent(id) + '/duplicate', { method: 'POST', body: null }, 20000); };
+  api.bulkAnimation = function (items) { return request('/animation/bulk', { method: 'POST', body: { items: items } }, 30000); };
+  api.uploadAnimMedia = function (dataUrl) { return request('/animation/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000); };
+  api.animAddKf = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/kf', { method: 'POST', body: payload }, 15000); };
+  api.animAddTween = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/tween', { method: 'POST', body: payload }, 15000); };
+  api.animGenerate = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/generate', { method: 'POST', body: payload }, 15000); };
+  api.animDeleteTween = function (id, tweenId) { return request('/animation/' + encodeURIComponent(id) + '/tween/' + encodeURIComponent(tweenId), { method: 'DELETE', body: null }, 15000); };
+  api.animBulkTweenStatus = function (id, ids, status) { return request('/animation/' + encodeURIComponent(id) + '/tween-bulk-status', { method: 'POST', body: { ids: ids, status: status } }, 15000); };
+  api.exportAnimation = function (id, format) { return '/api/animation/export/' + encodeURIComponent(id) + '?format=' + (format || 'csv'); };
+  api.dictAnimation = function () { return request('/animation/dict', null, 10000); };
   api.deleteArt = function (id) { return request('/art/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
   api.duplicateArt = function (id) { return request('/art/' + encodeURIComponent(id) + '/duplicate', { method: 'POST' }, 15000); };
   api.bulkArtStatus = function (ids, status) {
