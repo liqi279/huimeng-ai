@@ -13631,29 +13631,37 @@ body[data-season] { background: var(--bg); }
 body[data-season] .hm-rail { background: var(--bg-soft); border-right-color: var(--line); }
 body[data-season] .hm-top { background: var(--bg-soft); border-bottom-color: var(--line); }
 
-body[data-season="spring"] .hm-page {
-  background:
-    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(255, 158, 205, 0.13), transparent 62%),
-    radial-gradient(ellipse 40% 32% at 88% 96%, rgba(143, 227, 207, 0.07), transparent 65%),
-    var(--bg);
+/* 渐变放在 body::before（z-index 0）— 真正的"背景层"，所有操作主体(30/40/60)在它之上 */
+body[data-season]::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+  width: 100%; height: 100%;
+  transition: opacity 0.5s ease;
 }
-body[data-season="summer"] .hm-page {
+body[data-season="spring"]::before {
   background:
-    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(94, 234, 212, 0.13), transparent 62%),
-    radial-gradient(ellipse 40% 32% at 12% 96%, rgba(34, 211, 238, 0.08), transparent 65%),
-    var(--bg);
+    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(255, 158, 205, 0.18), transparent 62%),
+    radial-gradient(ellipse 40% 32% at 88% 96%, rgba(143, 227, 207, 0.09), transparent 65%),
+    transparent;
 }
-body[data-season="autumn"] .hm-page {
+body[data-season="summer"]::before {
   background:
-    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(245, 158, 107, 0.14), transparent 62%),
-    radial-gradient(ellipse 40% 32% at 88% 96%, rgba(251, 191, 36, 0.07), transparent 65%),
-    var(--bg);
+    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(94, 234, 212, 0.18), transparent 62%),
+    radial-gradient(ellipse 40% 32% at 12% 96%, rgba(34, 211, 238, 0.10), transparent 65%),
+    transparent;
 }
-body[data-season="winter"] .hm-page {
+body[data-season="autumn"]::before {
   background:
-    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(147, 197, 253, 0.14), transparent 62%),
-    radial-gradient(ellipse 40% 32% at 12% 96%, rgba(103, 232, 249, 0.06), transparent 65%),
-    var(--bg);
+    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(245, 158, 107, 0.20), transparent 62%),
+    radial-gradient(ellipse 40% 32% at 88% 96%, rgba(251, 191, 36, 0.09), transparent 65%),
+    transparent;
+}
+body[data-season="winter"]::before {
+  background:
+    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(147, 197, 253, 0.20), transparent 62%),
+    radial-gradient(ellipse 40% 32% at 12% 96%, rgba(103, 232, 249, 0.08), transparent 65%),
+    transparent;
 }
 
 /* 浅色模式下侧栏 / 顶栏跟随季节 */
@@ -13662,5 +13670,5 @@ body.hm-light[data-season="summer"] .hm-rail, body.hm-light[data-season="summer"
 body.hm-light[data-season="autumn"] .hm-rail, body.hm-light[data-season="autumn"] .hm-top { background: #fffaf4; }
 body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"] .hm-top { background: #f8fbfe; }
 
-/* 环境粒子层级：覆盖内容页(40)，低于弹窗(9000) */
-.hm-season-ambient { z-index: 8000; opacity: 0.42; }
+/* 环境粒子层级：仅高于 body 背景(0)，低于所有操作主体(30/40/60) */
+.hm-season-ambient { z-index: 1; opacity: 0.42; }
