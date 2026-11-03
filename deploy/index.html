@@ -5169,12 +5169,25 @@ body:not([data-view="create"]) .hm-canvas {
   background:
     radial-gradient(ellipse 60% 40% at 50% 0%, rgba(38, 86, 128, 0.1), transparent 60%),
     #0a111c;
-  animation: hmPageIn 0.18s ease-out;
 }
 
-@keyframes hmPageIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* view 切换：opacity 交叉淡入淡出，避免 display:none 瞬间漏底闪帧 */
+.hm-page[hidden] {
+  display: block !important;
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
+  z-index: 30;
+}
+.hm-page.is-active {
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear;
+  z-index: 41;
 }
 
 .hm-page-head {
@@ -14032,7 +14045,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261103090920-455a0eb";</script>
+<script>window.HM_BUILD = "20261103092004-fa74683";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
