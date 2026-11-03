@@ -436,7 +436,6 @@
       var idx = SEASON_ORDER.indexOf(cur);
       var next = SEASON_ORDER[(idx + 1) % SEASON_ORDER.length];
       applySeason(next);
-      playSeasonCG(next, 4200);
       restartSeasonAmbient();
     }, 30000);
   }
@@ -502,7 +501,6 @@
           stopSeasonAmbient();
           A.toast && A.toast('已切换为经典夜色主题', 'info');
         } else {
-          playSeasonCG(key);
           restartSeasonAmbient();
           A.toast && A.toast('已切换为「' + SEASONS[key].label + '」主题', 'success');
         }
