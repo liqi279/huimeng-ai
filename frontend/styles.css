@@ -13294,3 +13294,373 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   border-radius: 2px;
   margin: 2px 0;
 }
+
+/* ==================================================================
+ * 四季轮回主题 · 动态 CG
+ * ================================================================== */
+
+/* ---------- 春季 ---------- */
+body[data-season="spring"] {
+  --bg: #100812;
+  --bg-soft: #180d1a;
+  --surface: rgba(38, 20, 36, 0.74);
+  --surface-2: rgba(52, 28, 48, 0.84);
+  --line: rgba(255, 182, 213, 0.10);
+  --line-strong: rgba(255, 182, 213, 0.22);
+  --text: #fdeff5;
+  --text-2: #e8c9d9;
+  --muted: #b993a9;
+  --violet: #ff9ecd;
+  --pink: #ffb7d5;
+  --cyan: #8fe3cf;
+  --green: #9ae6b4;
+  --hm-seal: #ffb7d5;
+}
+body[data-season="spring"] h1,
+body[data-season="spring"] .hm-top-title { text-shadow: 0 0 24px rgba(255, 158, 205, 0.28); }
+
+/* ---------- 夏季 ---------- */
+body[data-season="summer"] {
+  --bg: #03121a;
+  --bg-soft: #04202a;
+  --surface: rgba(10, 40, 46, 0.76);
+  --surface-2: rgba(12, 54, 60, 0.84);
+  --line: rgba(94, 234, 212, 0.10);
+  --line-strong: rgba(94, 234, 212, 0.22);
+  --text: #e8fffb;
+  --text-2: #b8e8e2;
+  --muted: #78a8a5;
+  --violet: #5eead4;
+  --pink: #7dd3fc;
+  --cyan: #22d3ee;
+  --green: #6ee7b7;
+}
+
+/* ---------- 秋季 ---------- */
+body[data-season="autumn"] {
+  --bg: #140b06;
+  --bg-soft: #1e1009;
+  --surface: rgba(44, 22, 12, 0.76);
+  --surface-2: rgba(58, 29, 15, 0.84);
+  --line: rgba(245, 158, 107, 0.10);
+  --line-strong: rgba(245, 158, 107, 0.22);
+  --text: #fff3e8;
+  --text-2: #f0d0b6;
+  --muted: #b8906f;
+  --violet: #f59e6b;
+  --pink: #fbbf24;
+  --cyan: #fcd34d;
+  --green: #a3e635;
+}
+
+/* ---------- 冬季 ---------- */
+body[data-season="winter"] {
+  --bg: #050b14;
+  --bg-soft: #0a1624;
+  --surface: rgba(18, 32, 48, 0.76);
+  --surface-2: rgba(24, 42, 62, 0.84);
+  --line: rgba(147, 197, 253, 0.10);
+  --line-strong: rgba(147, 197, 253, 0.22);
+  --text: #f0f8ff;
+  --text-2: #c3d8ee;
+  --muted: #7f9bb8;
+  --violet: #93c5fd;
+  --pink: #bfdbfe;
+  --cyan: #67e8f9;
+  --green: #a7f3d0;
+}
+
+/* 浅色模式下的四季 */
+body.hm-light[data-season="spring"] { background: #fdf0f6; color: #3b1f30; }
+body.hm-light[data-season="summer"] { background: #effbf8; color: #10322f; }
+body.hm-light[data-season="autumn"] { background: #fdf3ea; color: #3a2114; }
+body.hm-light[data-season="winter"] { background: #f1f7fd; color: #16283d; }
+
+body.hm-light[data-season="spring"] .hm-rail-item.is-active { color: #d1477f; background: rgba(255, 158, 205, 0.18); box-shadow: inset 0 0 0 1px rgba(255, 158, 205, 0.4); }
+body.hm-light[data-season="summer"] .hm-rail-item.is-active { color: #0f766e; background: rgba(94, 234, 212, 0.2); box-shadow: inset 0 0 0 1px rgba(94, 234, 212, 0.45); }
+body.hm-light[data-season="autumn"] .hm-rail-item.is-active { color: #b45309; background: rgba(245, 158, 107, 0.18); box-shadow: inset 0 0 0 1px rgba(245, 158, 107, 0.4); }
+body.hm-light[data-season="winter"] .hm-rail-item.is-active { color: #1d4ed8; background: rgba(147, 197, 253, 0.2); box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.45); }
+
+/* 主题切换过渡 */
+body, .hm-rail, .hm-top, .hm-page, .hm-card, .hm-pill {
+  transition: background-color 0.5s ease, border-color 0.5s ease, color 0.35s ease;
+}
+
+/* ---------- 侧边栏主题按钮高亮 ---------- */
+body[data-season="spring"] .hm-rail-item,
+body[data-season="summer"] .hm-rail-item,
+body[data-season="autumn"] .hm-rail-item,
+body[data-season="winter"] .hm-rail-item { color: var(--text-2); }
+
+/* ==================================================================
+ * 主题面板
+ * ================================================================== */
+.hm-season-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(4, 3, 10, 0.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  animation: hmSeasonFadeIn 0.24s ease both;
+}
+.hm-season-overlay.is-out { animation: hmSeasonFadeOut 0.22s ease both; }
+@keyframes hmSeasonFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hmSeasonFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+.hm-season-modal {
+  width: min(880px, 100%);
+  max-height: 90vh; overflow-y: auto;
+  background: linear-gradient(160deg, rgba(26, 20, 44, 0.96), rgba(12, 9, 22, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  padding: 24px 26px 20px;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: hmSeasonRise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes hmSeasonRise { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
+
+.hm-season-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  margin-bottom: 18px;
+}
+.hm-season-head h3 {
+  margin: 0 0 6px; font-size: 20px; font-weight: 700; letter-spacing: 0.06em;
+  background: linear-gradient(90deg, #ffb7d5, #93c5fd, #5eead4, #f5b16b);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hm-season-head p { margin: 0; font-size: 12.5px; color: var(--muted); }
+.hm-season-close {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05); color: var(--text-2);
+  cursor: pointer; font-size: 14px; transition: all 0.18s;
+}
+.hm-season-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+/* 季节卡片 */
+.hm-season-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+}
+.hm-season-card {
+  position: relative; overflow: hidden;
+  height: 148px; border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: #0d0b16;
+  cursor: pointer; padding: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s, border-color 0.24s;
+  color: #fff;
+}
+.hm-season-card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); }
+.hm-season-card.is-active { border-color: rgba(255, 255, 255, 0.55); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22), 0 14px 34px rgba(0, 0, 0, 0.5); }
+
+/* 卡片背景氛围 */
+.hm-season-art-none   { background: radial-gradient(120% 90% at 70% 18%, #3b2d6b 0%, #17112b 45%, #08060f 100%); }
+.hm-season-art-spring { background: linear-gradient(170deg, #2c1230 0%, #6b2d52 48%, #e8a2bb 100%); }
+.hm-season-art-summer { background: linear-gradient(170deg, #041f2b 0%, #0b4a55 48%, #4fc3b5 100%); }
+.hm-season-art-autumn { background: linear-gradient(170deg, #2a1207 0%, #6d2f10 48%, #e09a55 100%); }
+.hm-season-art-winter { background: linear-gradient(170deg, #071527 0%, #1d3a5c 48%, #9fc9e8 100%); }
+
+/* 卡片内飘落粒子 */
+.hm-season-card-art { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.hm-season-card-art i {
+  position: absolute; top: -14px; width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  animation: hmSeasonFall linear infinite;
+}
+.hm-season-card-art i:nth-child(1) { left: 14%; animation-duration: 4.6s; animation-delay: 0s; }
+.hm-season-card-art i:nth-child(2) { left: 33%; animation-duration: 5.8s; animation-delay: -1.4s; }
+.hm-season-card-art i:nth-child(3) { left: 52%; animation-duration: 4.1s; animation-delay: -2.6s; }
+.hm-season-card-art i:nth-child(4) { left: 71%; animation-duration: 6.2s; animation-delay: -0.9s; }
+.hm-season-card-art i:nth-child(5) { left: 88%; animation-duration: 5.1s; animation-delay: -3.2s; }
+
+.hm-season-art-spring .hm-season-card-art i {
+  background: rgba(255, 205, 228, 0.9); border-radius: 60% 40% 55% 45%; width: 9px; height: 7px;
+  animation-name: hmSeasonFallSpin;
+}
+.hm-season-art-summer .hm-season-card-art i {
+  background: rgba(150, 255, 226, 0.95); width: 5px; height: 5px;
+  box-shadow: 0 0 12px rgba(110, 245, 210, 0.9);
+  animation-name: hmSeasonDrift;
+}
+.hm-season-art-autumn .hm-season-card-art i {
+  background: rgba(245, 150, 80, 0.95); border-radius: 2px; width: 9px; height: 9px;
+  animation-name: hmSeasonFallSpin;
+}
+.hm-season-art-winter .hm-season-card-art i {
+  background: rgba(255, 255, 255, 0.95); width: 6px; height: 6px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  animation-name: hmSeasonFallSlow;
+}
+
+@keyframes hmSeasonFall {
+  0% { transform: translate3d(0, -20px, 0); opacity: 0; }
+  12% { opacity: 0.9; }
+  100% { transform: translate3d(-16px, 170px, 0); opacity: 0; }
+}
+@keyframes hmSeasonFallSpin {
+  0% { transform: translate3d(0, -20px, 0) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate3d(24px, 175px, 0) rotate(420deg); opacity: 0; }
+}
+@keyframes hmSeasonFallSlow {
+  0% { transform: translate3d(0, -20px, 0); opacity: 0; }
+  15% { opacity: 0.95; }
+  100% { transform: translate3d(-10px, 175px, 0); opacity: 0; }
+}
+@keyframes hmSeasonDrift {
+  0% { transform: translate3d(0, 40px, 0); opacity: 0; }
+  20% { opacity: 1; }
+  50% { transform: translate3d(-22px, 70px, 0); }
+  80% { opacity: 1; }
+  100% { transform: translate3d(18px, 60px, 0); opacity: 0; }
+}
+
+.hm-season-card-emoji {
+  font-size: 30px; position: relative; z-index: 2; margin-bottom: 8px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+}
+.hm-season-card-label {
+  position: relative; z-index: 2; font-size: 14px; font-weight: 700; letter-spacing: 0.08em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+.hm-season-card-en {
+  position: relative; z-index: 2; font-size: 9px; letter-spacing: 0.26em;
+  opacity: 0.7; margin-top: 3px; text-transform: uppercase;
+}
+
+/* 选项行 */
+.hm-season-options {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.hm-season-switch {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--text-2); cursor: pointer; user-select: none;
+}
+.hm-season-switch input { accent-color: #a78bfa; width: 15px; height: 15px; cursor: pointer; }
+.hm-season-theme-btn {
+  margin-left: auto;
+  padding: 8px 16px; border-radius: 10px; font-size: 12.5px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06); color: var(--text);
+  transition: all 0.18s;
+}
+.hm-season-theme-btn:hover { background: rgba(255, 255, 255, 0.13); }
+.hm-season-tip {
+  margin-top: 12px; font-size: 11px; color: var(--muted); letter-spacing: 0.04em;
+}
+
+/* ==================================================================
+ * 全屏 CG 播放
+ * ================================================================== */
+.hm-season-cg {
+  position: fixed; inset: 0; z-index: 9500;
+  background: #05040c;
+  overflow: hidden; cursor: pointer;
+  animation: hmSeasonCgIn 0.9s ease both;
+}
+.hm-season-cg.is-out { animation: hmSeasonCgOut 0.76s ease forwards; }
+@keyframes hmSeasonCgIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hmSeasonCgOut { from { opacity: 1; } to { opacity: 0; } }
+
+.hm-season-cg-canvas { display: block; width: 100%; height: 100%; }
+
+.hm-season-cg-caption {
+  position: absolute; left: 7%; bottom: 16%;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+  animation: hmSeasonCaptionIn 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+@keyframes hmSeasonCaptionIn {
+  from { opacity: 0; transform: translateY(26px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+.hm-season-cg-en {
+  font-size: 11px; letter-spacing: 0.5em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+.hm-season-cg-cn {
+  font-size: clamp(38px, 6vw, 82px);
+  font-weight: 800; letter-spacing: 0.1em; line-height: 1.1;
+  color: #fff; text-shadow: 0 12px 44px rgba(0, 0, 0, 0.55);
+  font-family: "Songti SC", "Noto Serif SC", "Source Han Serif SC", serif;
+}
+.hm-season-cg-line {
+  width: 0; height: 2px; margin-top: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.85), transparent);
+  animation: hmSeasonLine 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+}
+@keyframes hmSeasonLine { to { width: 220px; } }
+
+.hm-season-cg-skip {
+  position: absolute; right: 26px; bottom: 22px;
+  font-size: 11.5px; letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.45);
+  animation: hmSeasonSkipPulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hmSeasonSkipPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.85; } }
+
+/* ==================================================================
+ * 环境粒子（常驻）
+ * ================================================================== */
+.hm-season-ambient {
+  position: fixed; inset: 0; z-index: 3;
+  width: 100%; height: 100%;
+  pointer-events: none; opacity: 0.5;
+  mix-blend-mode: screen;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  .hm-season-grid { grid-template-columns: repeat(3, 1fr); }
+  .hm-season-modal { padding: 20px 18px 16px; border-radius: 18px; }
+  .hm-season-card { height: 126px; }
+}
+@media (max-width: 560px) {
+  .hm-season-grid { grid-template-columns: repeat(2, 1fr); }
+  .hm-season-theme-btn { margin-left: 0; width: 100%; }
+  .hm-season-cg-caption { left: 8%; bottom: 22%; }
+}
+
+/* ---- 四季：主容器背景覆写（原为硬编码深色） ---- */
+body[data-season] { background: var(--bg); }
+body[data-season] .hm-rail { background: var(--bg-soft); border-right-color: var(--line); }
+body[data-season] .hm-top { background: var(--bg-soft); border-bottom-color: var(--line); }
+
+body[data-season="spring"] .hm-page {
+  background:
+    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(255, 158, 205, 0.13), transparent 62%),
+    radial-gradient(ellipse 40% 32% at 88% 96%, rgba(143, 227, 207, 0.07), transparent 65%),
+    var(--bg);
+}
+body[data-season="summer"] .hm-page {
+  background:
+    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(94, 234, 212, 0.13), transparent 62%),
+    radial-gradient(ellipse 40% 32% at 12% 96%, rgba(34, 211, 238, 0.08), transparent 65%),
+    var(--bg);
+}
+body[data-season="autumn"] .hm-page {
+  background:
+    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(245, 158, 107, 0.14), transparent 62%),
+    radial-gradient(ellipse 40% 32% at 88% 96%, rgba(251, 191, 36, 0.07), transparent 65%),
+    var(--bg);
+}
+body[data-season="winter"] .hm-page {
+  background:
+    radial-gradient(ellipse 62% 42% at 50% 0%, rgba(147, 197, 253, 0.14), transparent 62%),
+    radial-gradient(ellipse 40% 32% at 12% 96%, rgba(103, 232, 249, 0.06), transparent 65%),
+    var(--bg);
+}
+
+/* 浅色模式下侧栏 / 顶栏跟随季节 */
+body.hm-light[data-season="spring"] .hm-rail, body.hm-light[data-season="spring"] .hm-top { background: #fff8fb; }
+body.hm-light[data-season="summer"] .hm-rail, body.hm-light[data-season="summer"] .hm-top { background: #f7fefb; }
+body.hm-light[data-season="autumn"] .hm-rail, body.hm-light[data-season="autumn"] .hm-top { background: #fffaf4; }
+body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"] .hm-top { background: #f8fbfe; }
+
+/* 环境粒子层级：覆盖内容页(40)，低于弹窗(9000) */
+.hm-season-ambient { z-index: 8000; opacity: 0.42; }

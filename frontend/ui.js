@@ -21,7 +21,9 @@
     mode: 'anidream.mode.v1',
     preset: 'anidream.preset.v1',
     credit: 'anidream.credit.v1',
-    railOrder: 'anidream.railOrder.v1'
+    railOrder: 'anidream.railOrder.v1',
+    season: 'anidream.season.v1',
+    seasonFx: 'anidream.seasonFx.v1'
   };
 
   var ICON_DOWNLOAD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l4-4m-4 4l-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
@@ -85,14 +87,458 @@
     document.body.classList.toggle('hm-light', theme === 'light');
   }
 
+  /* ---------------- 四季主题 · 动态 CG ---------------- */
+  function hexA(hex, a) {
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var n = parseInt(h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  var SEASONS = {
+    spring: {
+      key: 'spring', label: '春 · 樱', en: 'SPRING', emoji: '🌸', type: 'petal',
+      sky: ['#150a1a', '#3a1a3c', '#7b3657', '#d38aa0'],
+      accent: '#ff9ecd', glow: '#ffd9e8',
+      hills: ['rgba(38,20,34,.92)', 'rgba(52,26,44,.92)', 'rgba(66,32,54,.92)'],
+      petalColor: '255,183,213',
+    },
+    summer: {
+      key: 'summer', label: '夏 · 萤', en: 'SUMMER', emoji: '🌿', type: 'firefly',
+      sky: ['#03101a', '#07293a', '#0d4a55', '#2f8f8a'],
+      accent: '#5eead4', glow: '#a7f3e6',
+      hills: ['rgba(6,32,36,.92)', 'rgba(8,46,50,.92)', 'rgba(10,60,62,.92)'],
+      petalColor: '120,255,220',
+    },
+    autumn: {
+      key: 'autumn', label: '秋 · 枫', en: 'AUTUMN', emoji: '🍁', type: 'leaf',
+      sky: ['#160b06', '#3b1a0c', '#7a3412', '#d98342'],
+      accent: '#f59e6b', glow: '#ffd0a1',
+      hills: ['rgba(40,20,10,.92)', 'rgba(56,27,12,.92)', 'rgba(72,34,14,.92)'],
+      petalColor: '232,106,51',
+    },
+    winter: {
+      key: 'winter', label: '冬 · 雪', en: 'WINTER', emoji: '❄️', type: 'snow',
+      sky: ['#060c17', '#122034', '#22405f', '#5d8ab2'],
+      accent: '#93c5fd', glow: '#e0f2ff',
+      hills: ['rgba(16,28,44,.94)', 'rgba(24,40,60,.94)', 'rgba(34,54,78,.94)'],
+      petalColor: '235,247,255',
+    },
+  };
+  var SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
+  var seasonRaf = null, seasonAmbientStop = null, seasonAutoTimer = null;
+
+  function applySeason(key) {
+    if (!key || key === 'none' || !SEASONS[key]) {
+      document.body.removeAttribute('data-season');
+    } else {
+      document.body.setAttribute('data-season', key);
+    }
+    writeJSON(LS.season, key || 'none');
+    document.querySelectorAll('.hm-season-card').forEach(function (c) {
+      c.classList.toggle('is-active', (c.getAttribute('data-season') || 'none') === (key || 'none'));
+    });
+  }
+
+  function currentSeason() {
+    var k = readJSON(LS.season, 'none');
+    return (SEASONS[k] ? k : 'none');
+  }
+
+  /* ===== 粒子 ===== */
+  function spawnSeasonParticle(type, W, H, initial) {
+    var p = {
+      x: Math.random() * W,
+      y: initial ? Math.random() * H : -30,
+      r: 0, vx: 0, vy: 0,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.06,
+      phase: Math.random() * Math.PI * 2,
+      alpha: 0.55 + Math.random() * 0.45,
+    };
+    if (type === 'petal') {
+      p.r = 5 + Math.random() * 7;
+      p.vy = 0.55 + Math.random() * 1.1;
+      p.vx = (Math.random() - 0.5) * 1.1;
+    } else if (type === 'leaf') {
+      p.r = 7 + Math.random() * 9;
+      p.vy = 0.75 + Math.random() * 1.4;
+      p.vx = (Math.random() - 0.5) * 1.3;
+      p.vr = (Math.random() - 0.5) * 0.12;
+    } else if (type === 'snow') {
+      p.r = 1.8 + Math.random() * 4.2;
+      p.vy = 0.35 + Math.random() * 0.9;
+      p.vx = (Math.random() - 0.5) * 0.6;
+      p.vr = 0;
+    } else { /* firefly */
+      p.r = 1.6 + Math.random() * 2.2;
+      p.vx = (Math.random() - 0.5) * 0.5;
+      p.vy = (Math.random() - 0.5) * 0.4;
+      p.vr = 0;
+    }
+    return p;
+  }
+
+  function updateSeasonParticle(p, type, W, H, t) {
+    if (type === 'petal' || type === 'leaf') {
+      p.x += p.vx + Math.sin(t * 1.2 + p.phase) * 1.05;
+      p.y += p.vy;
+      p.rot += p.vr;
+    } else if (type === 'snow') {
+      p.x += p.vx + Math.sin(t * 0.8 + p.phase) * 0.5;
+      p.y += p.vy;
+    } else {
+      p.x += p.vx;
+      p.y += p.vy + Math.sin(t * 1.6 + p.phase) * 0.25;
+      p.alpha = 0.35 + Math.abs(Math.sin(t * 1.9 + p.phase)) * 0.65;
+    }
+    if (p.y > H + 30) { p.y = -30; p.x = Math.random() * W; }
+    if (p.x > W + 40) p.x = -40;
+    if (p.x < -40) p.x = W + 40;
+  }
+
+  function drawSeasonParticle(ctx, p, type) {
+    if (type === 'petal') {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = 'rgba(255,183,213,' + p.alpha + ')';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.r * 0.52, p.r, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,240,248,' + p.alpha * 0.5 + ')';
+      ctx.beginPath();
+      ctx.ellipse(-p.r * 0.16, -p.r * 0.3, p.r * 0.16, p.r * 0.35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else if (type === 'leaf') {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = 'rgba(232,106,51,' + p.alpha + ')';
+      ctx.beginPath();
+      for (var i = 0; i < 10; i++) {
+        var ang = (i / 10) * Math.PI * 2 - Math.PI / 2;
+        var rad = (i % 2 === 0) ? p.r : p.r * 0.42;
+        ctx.lineTo(Math.cos(ang) * rad, Math.sin(ang) * rad);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,190,140,' + p.alpha * 0.6 + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, p.r * 0.75);
+      ctx.stroke();
+      ctx.restore();
+    } else if (type === 'snow') {
+      var g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 2.2);
+      g.addColorStop(0, 'rgba(255,255,255,' + p.alpha + ')');
+      g.addColorStop(0.45, 'rgba(226,242,255,' + p.alpha * 0.7 + ')');
+      g.addColorStop(1, 'rgba(180,214,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      var g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 7);
+      g2.addColorStop(0, 'rgba(190,255,225,' + p.alpha + ')');
+      g2.addColorStop(0.25, 'rgba(110,245,210,' + p.alpha * 0.55 + ')');
+      g2.addColorStop(1, 'rgba(60,200,180,0)');
+      ctx.fillStyle = g2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(240,255,250,' + p.alpha + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /* ===== 场景（天空 / 光晕 / 山峦） ===== */
+  function drawSeasonScene(ctx, W, H, s, t) {
+    var sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, s.sky[0]);
+    sky.addColorStop(0.38, s.sky[1]);
+    sky.addColorStop(0.72, s.sky[2]);
+    sky.addColorStop(1, s.sky[3]);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    /* 光晕 */
+    var cx = W * 0.62, cy = H * 0.34;
+    var rad = Math.max(W, H) * 0.28;
+    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+    g.addColorStop(0, 'rgba(255,255,255,.55)');
+    g.addColorStop(0.12, hexA(s.glow, 0.55));
+    g.addColorStop(0.42, hexA(s.accent, 0.10));
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* 云层 / 光束 */
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    for (var i = 0; i < 5; i++) {
+      var y = H * (0.16 + i * 0.075) + Math.sin(t * 0.35 + i) * 6;
+      var grad = ctx.createLinearGradient(0, y, W, y + 24);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.5, 'rgba(255,255,255,.16)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, y, W, 26);
+    }
+    ctx.restore();
+
+    /* 山峦（三层剪影） */
+    for (var k = 0; k < s.hills.length; k++) {
+      var baseY = H * (0.64 + k * 0.11);
+      var amp = H * (0.045 - k * 0.008);
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (var x = 0; x <= W; x += 6) {
+        var yy = baseY
+          + Math.sin((x / W) * Math.PI * (1.4 + k) + k * 1.15) * amp
+          + Math.sin((x / W) * Math.PI * 4.6 + k * 2) * amp * 0.28;
+        ctx.lineTo(x, yy);
+      }
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      ctx.fillStyle = s.hills[k];
+      ctx.fill();
+    }
+
+    /* 底部渐暗 + 暗角 */
+    var vg = ctx.createLinearGradient(0, H * 0.55, 0, H);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,.55)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, H * 0.55, W, H * 0.45);
+  }
+
+  function runSeasonCanvas(canvas, s, opts) {
+    opts = opts || {};
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return function () {};
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = 0, H = 0;
+
+    function resize() {
+      var r = canvas.getBoundingClientRect();
+      W = Math.max(1, Math.round(r.width));
+      H = Math.max(1, Math.round(r.height));
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+
+    var count = opts.count || Math.min(110, Math.round(W / 12));
+    var ps = [];
+    for (var i = 0; i < count; i++) ps.push(spawnSeasonParticle(s.type, W, H, true));
+
+    var t0 = performance.now();
+    var raf = 0;
+    function frame(now) {
+      var t = (now - t0) / 1000;
+      ctx.clearRect(0, 0, W, H);
+      drawSeasonScene(ctx, W, H, s, t);
+      for (var j = 0; j < ps.length; j++) {
+        updateSeasonParticle(ps[j], s.type, W, H, t);
+        drawSeasonParticle(ctx, ps[j], s.type);
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+
+    function onResize() { resize(); }
+    window.addEventListener('resize', onResize);
+
+    return function stop() {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
+  }
+
+  /* ===== 全屏 CG 播放 ===== */
+  function playSeasonCG(key, duration) {
+    var s = SEASONS[key];
+    if (!s) return;
+    var old = document.getElementById('hmSeasonCG');
+    if (old) old.remove();
+    if (seasonRaf) { seasonRaf(); seasonRaf = null; }
+
+    var wrap = document.createElement('div');
+    wrap.id = 'hmSeasonCG';
+    wrap.className = 'hm-season-cg';
+    wrap.innerHTML =
+      '<canvas class="hm-season-cg-canvas"></canvas>' +
+      '<div class="hm-season-cg-caption">' +
+        '<span class="hm-season-cg-en">' + s.en + '</span>' +
+        '<strong class="hm-season-cg-cn">' + s.label + '</strong>' +
+        '<span class="hm-season-cg-line"></span>' +
+      '</div>' +
+      '<div class="hm-season-cg-skip">点击任意处跳过</div>';
+    document.body.appendChild(wrap);
+
+    var stop = runSeasonCanvas(wrap.querySelector('canvas'), s, { count: 120 });
+    seasonRaf = stop;
+
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      wrap.classList.add('is-out');
+      if (seasonRaf) { seasonRaf(); seasonRaf = null; }
+      setTimeout(function () { wrap.remove(); }, 760);
+    }
+    wrap.addEventListener('click', finish);
+    setTimeout(finish, duration || 5200);
+  }
+
+  /* ===== 环境粒子（可选常驻） ===== */
+  function startSeasonAmbient() {
+    stopSeasonAmbient();
+    var key = currentSeason();
+    if (!SEASONS[key]) return;
+    if (!readJSON(LS.seasonFx, true)) return;
+    var cv = document.getElementById('hmSeasonAmbient');
+    if (!cv) {
+      cv = document.createElement('canvas');
+      cv.id = 'hmSeasonAmbient';
+      cv.className = 'hm-season-ambient';
+      document.body.appendChild(cv);
+    }
+    seasonAmbientStop = runSeasonCanvas(cv, SEASONS[key], { count: 42 });
+  }
+
+  function stopSeasonAmbient() {
+    if (seasonAmbientStop) { seasonAmbientStop(); seasonAmbientStop = null; }
+    var cv = document.getElementById('hmSeasonAmbient');
+    if (cv) cv.remove();
+  }
+
+  function restartSeasonAmbient() {
+    stopSeasonAmbient();
+    startSeasonAmbient();
+  }
+
+  /* ===== 四季自动轮回 ===== */
+  function stopSeasonAuto() {
+    if (seasonAutoTimer) { clearInterval(seasonAutoTimer); seasonAutoTimer = null; }
+  }
+  function startSeasonAuto() {
+    stopSeasonAuto();
+    seasonAutoTimer = setInterval(function () {
+      var cur = currentSeason();
+      var idx = SEASON_ORDER.indexOf(cur);
+      var next = SEASON_ORDER[(idx + 1) % SEASON_ORDER.length];
+      applySeason(next);
+      playSeasonCG(next, 4200);
+      restartSeasonAmbient();
+    }, 30000);
+  }
+
+  /* ===== 主题面板 ===== */
+  var SEASON_CARDS = [
+    { key: 'none', label: '经典 · 夜', en: 'CLASSIC', emoji: '🌙' },
+    { key: 'spring', label: '春 · 樱', en: 'SPRING', emoji: '🌸' },
+    { key: 'summer', label: '夏 · 萤', en: 'SUMMER', emoji: '🌿' },
+    { key: 'autumn', label: '秋 · 枫', en: 'AUTUMN', emoji: '🍁' },
+    { key: 'winter', label: '冬 · 雪', en: 'WINTER', emoji: '❄️' },
+  ];
+
+  function openSeasonPanel() {
+    var old = document.getElementById('hmSeasonPanel');
+    if (old) old.remove();
+
+    var cur = currentSeason();
+    var ambientOn = readJSON(LS.seasonFx, true);
+    var autoOn = !!seasonAutoTimer;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'hmSeasonPanel';
+    overlay.className = 'hm-season-overlay';
+    overlay.innerHTML =
+      '<div class="hm-season-modal" role="dialog" aria-label="主题设置">' +
+        '<div class="hm-season-head">' +
+          '<div><h3>四季轮回 · 主题</h3><p>为创作空间换一季光景，点击卡片播放专属动态 CG</p></div>' +
+          '<button class="hm-season-close" title="关闭">✕</button>' +
+        '</div>' +
+        '<div class="hm-season-grid">' +
+          SEASON_CARDS.map(function (c) {
+            return '<button class="hm-season-card hm-season-art-' + c.key + (c.key === cur ? ' is-active' : '') + '" data-season="' + c.key + '">' +
+              '<span class="hm-season-card-art"><i></i><i></i><i></i><i></i><i></i></span>' +
+              '<span class="hm-season-card-emoji">' + c.emoji + '</span>' +
+              '<span class="hm-season-card-label">' + c.label + '</span>' +
+              '<span class="hm-season-card-en">' + c.en + '</span>' +
+            '</button>';
+          }).join('') +
+        '</div>' +
+        '<div class="hm-season-options">' +
+          '<label class="hm-season-switch"><input type="checkbox" id="hmSeasonAmbient" ' + (ambientOn ? 'checked' : '') + '><span>环境粒子常驻</span></label>' +
+          '<label class="hm-season-switch"><input type="checkbox" id="hmSeasonAuto" ' + (autoOn ? 'checked' : '') + '><span>四季自动轮回（30s）</span></label>' +
+          '<button class="hm-season-theme-btn" id="hmSeasonLight">' + (theme === 'light' ? '☀️ 浅色模式' : '🌙 深色模式') + '</button>' +
+        '</div>' +
+        '<div class="hm-season-tip">动态 CG 由 Canvas 实时绘制 · 不占用额外资源</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    function close() { overlay.classList.add('is-out'); setTimeout(function () { overlay.remove(); }, 240); }
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    overlay.querySelector('.hm-season-close').addEventListener('click', close);
+
+    overlay.querySelectorAll('.hm-season-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        var key = card.getAttribute('data-season');
+        applySeason(key);
+        overlay.querySelectorAll('.hm-season-card').forEach(function (c) {
+          c.classList.toggle('is-active', c === card);
+        });
+        if (key === 'none') {
+          stopSeasonAmbient();
+          A.toast && A.toast('已切换为经典夜色主题', 'info');
+        } else {
+          playSeasonCG(key);
+          restartSeasonAmbient();
+          A.toast && A.toast('已切换为「' + SEASONS[key].label + '」主题', 'success');
+        }
+      });
+    });
+
+    var fx = overlay.querySelector('#hmSeasonAmbient');
+    fx.addEventListener('change', function () {
+      writeJSON(LS.seasonFx, fx.checked);
+      if (fx.checked) restartSeasonAmbient(); else stopSeasonAmbient();
+    });
+
+    var auto = overlay.querySelector('#hmSeasonAuto');
+    auto.addEventListener('change', function () {
+      if (auto.checked) {
+        startSeasonAuto();
+        A.toast && A.toast('已开启四季自动轮回', 'info');
+      } else {
+        stopSeasonAuto();
+        A.toast && A.toast('已关闭四季自动轮回', 'info');
+      }
+    });
+
+    var lightBtn = overlay.querySelector('#hmSeasonLight');
+    lightBtn.addEventListener('click', function () {
+      applyTheme(theme === 'light' ? 'dark' : 'light');
+      writeJSON(LS.theme, theme);
+      lightBtn.textContent = theme === 'light' ? '☀️ 浅色模式' : '🌙 深色模式';
+      A.toast && A.toast(theme === 'light' ? '已切换到浅色模式' : '已切换到深色模式', 'info');
+    });
+  }
+
   function bindTheme() {
     var btn = document.getElementById('themeBtn');
     if (btn) {
-      btn.addEventListener('click', function () {
-        applyTheme(theme === 'light' ? 'dark' : 'light');
-        writeJSON(LS.theme, theme);
-        A.toast(theme === 'light' ? '已切换到浅色主题' : '已切换到深色主题', 'info');
-      });
+      btn.addEventListener('click', function () { openSeasonPanel(); });
     }
     var settings = document.getElementById('settingsBtn');
     if (settings) settings.addEventListener('click', function () { A.openApiModal(); });
@@ -1886,6 +2332,7 @@
   /* ---------------- 初始化 ---------------- */
   function readPrefs() {
     applyTheme(readJSON(LS.theme, 'dark'));
+    applySeason(readJSON(LS.season, 'none'));
     loadCredit();
 
     var saved = readJSON(LS.mode, null);
@@ -1930,6 +2377,7 @@
     bindRail();
     initRailDragSort();
     bindTheme();
+    startSeasonAmbient();
     bindModes();
     bindPresetModal();
     bindAssetUI();
