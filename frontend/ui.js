@@ -254,6 +254,9 @@
     if (view === 'plan' && window.HMPlan) {
       try { window.HMPlan.enter(); } catch (e) { console.error('[Plan] enter failed', e); }
     }
+    if (view === 'script' && window.HMScript) {
+      try { window.HMScript.enter(); } catch (e) { console.error('[Script] enter failed', e); }
+    }
   }
 
   function onRenderWorks() {
@@ -2621,4 +2624,770 @@
 
   init();
   window.HMPlan = { enter: enter, state: state };
+})();
+
+/* =============================================================
+ * 剧本模块（HMScript）
+ * 剧本列表 + 场次/镜头/对白编辑器 + 角色 + 大纲 + 版本快照 + 导出
+ * ============================================================= */
+(function () {
+  'use strict';
+  var api = window.HM && window.HM.api;
+  var A = window.HMApp;
+  if (!api || !A) { console.warn('[HMScript] 缺少 api 或 A'); return; }
+
+  var state = {
+    scripts: [],          // 列表
+    editing: null,        // 当前编辑的完整 script 对象
+    activeSceneId: null,  // 左侧选中的场次
+    editingSideTab: 'scenes',
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function uid() { return 's_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+  /* ========== 入口 ========== */
+  function enter() {
+    showListView();
+    loadList();
+  }
+
+  /* ========== 列表视图 ========== */
+  function showListView() {
+    $('scriptListView').hidden = false;
+    $('scriptEditorView').hidden = true;
+    $('scriptBackBtn').hidden = true;
+    $('scriptSaveBtn').hidden = true;
+    $('scriptSnapshotBtn').hidden = true;
+    $('scriptExportWrap').hidden = true;
+    $('scriptStatusTag').hidden = true;
+    $('scriptNewBtn').hidden = false;
+    $('scriptPageTitle').textContent = '剧本';
+  }
+
+  function showEditorView() {
+    $('scriptListView').hidden = true;
+    $('scriptEditorView').hidden = false;
+    $('scriptBackBtn').hidden = false;
+    $('scriptSaveBtn').hidden = false;
+    $('scriptSnapshotBtn').hidden = false;
+    $('scriptExportWrap').hidden = false;
+    $('scriptNewBtn').hidden = true;
+  }
+
+  function fmtStatus(s) {
+    return { draft: '草稿', writing: '撰写中', done: '已完成' }[s] || s;
+  }
+
+  function renderList() {
+    var grid = $('scriptGrid');
+    var empty = $('scriptEmpty');
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!state.scripts || state.scripts.length === 0) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    state.scripts.forEach(function (s) {
+      var card = document.createElement('div');
+      card.className = 'hm-script-card';
+      card.innerHTML =
+        '<div class="hm-script-card-head">' +
+          '<h4>' + (s.title || '未命名').replace(/[<>]/g, '') + '</h4>' +
+          '<span class="hm-script-card-genre">' + (s.genre || '') + '</span>' +
+        '</div>' +
+        '<p class="hm-script-card-logline">' + ((s.logline || '').replace(/[<>]/g, '') || '（暂无梗概）').slice(0, 120) + '</p>' +
+        '<div class="hm-script-card-meta">' +
+          '<span>🎭 ' + (s.characterCount || 0) + ' 角色</span>' +
+          '<span>🎬 ' + (s.sceneCount || 0) + ' 场次</span>' +
+          '<span class="hm-script-card-status hm-sc-' + (s.status || 'draft') + '">' + fmtStatus(s.status) + '</span>' +
+        '</div>' +
+        '<div class="hm-script-card-actions">' +
+          '<button class="hm-pill hm-pill-primary hm-pill-mini" data-open>✏️ 打开</button>' +
+          '<button class="hm-pill hm-pill-mini" data-dup>📋 复制</button>' +
+          '<button class="hm-pill hm-pill-mini" data-del>🗑 删除</button>' +
+        '</div>';
+      card.querySelector('[data-open]').addEventListener('click', function () { openScript(s.id); });
+      card.querySelector('[data-dup]').addEventListener('click', function () { duplicateScript(s.id); });
+      card.querySelector('[data-del]').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.confirm('确定删除「' + s.title + '」？此操作不可恢复。')) deleteScript(s.id);
+      });
+      card.addEventListener('click', function () { openScript(s.id); });
+      grid.appendChild(card);
+    });
+  }
+
+  async function loadList() {
+    try {
+      var data = await api.listScripts();
+      state.scripts = (data && data.items) || [];
+      renderList();
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function createScript() {
+    var title = window.prompt('剧本标题？', '');
+    if (title === null) return;
+    try {
+      var data = await api.createScript({ title: title || '未命名剧本' });
+      if (data && data.script) {
+        state.editing = data.script;
+        state.activeSceneId = null;
+        showEditorView();
+        bindEditorFromState();
+        renderAll();
+      }
+    } catch (err) {
+      A.toast && A.toast('创建失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function openScript(id) {
+    try {
+      var data = await api.getScript(id);
+      if (data && data.script) {
+        state.editing = data.script;
+        state.activeSceneId = (state.editing.scenes && state.editing.scenes.length > 0)
+          ? state.editing.scenes[0].id : null;
+        showEditorView();
+        bindEditorFromState();
+        renderAll();
+      }
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function duplicateScript(id) {
+    try {
+      var data = await api.getScript(id);
+      if (!data || !data.script) return;
+      var s = data.script;
+      var copy = {
+        title: (s.title || '') + ' (副本)',
+        genre: s.genre, logline: s.logline, outline: s.outline,
+        status: 'draft',
+        characters: s.characters || [],
+        scenes: s.scenes || [],
+      };
+      var nc = await api.createScript({ script: copy });
+      if (nc && nc.script) {
+        state.editing = nc.script;
+        showEditorView();
+        bindEditorFromState();
+        renderAll();
+        A.toast && A.toast('✅ 已创建副本', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('复制失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function deleteScript(id) {
+    try {
+      await api.deleteScript(id);
+      state.editing = null;
+      showListView();
+      loadList();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 编辑器视图 ========== */
+
+  function currentScene() {
+    if (!state.editing || !state.editing.scenes) return null;
+    return state.editing.scenes.find(function (sc) { return sc.id === state.activeSceneId; });
+  }
+
+  function bindEditorFromState() {
+    if (!state.editing) return;
+    $('scriptTitleInput').value = state.editing.title || '';
+    $('scriptGenreSelect').value = state.editing.genre || '剧情';
+    $('scriptStatusSelect').value = state.editing.status || 'draft';
+    $('scriptLoglineInput').value = state.editing.logline || '';
+    $('scriptOutlineText').value = state.editing.outline || '';
+    // 状态标签
+    var tag = $('scriptStatusTag');
+    tag.hidden = false;
+    tag.textContent = fmtStatus(state.editing.status);
+    tag.className = 'hm-script-status hm-sc-' + state.editing.status;
+    $('scriptPageTitle').textContent = state.editing.title || '剧本';
+
+    bindSceneEditor();
+  }
+
+  function bindSceneEditor() {
+    var sc = currentScene();
+    var empty = $('scriptSceneEmpty');
+    var edit = $('scriptSceneEdit');
+    if (!sc) {
+      empty.hidden = false;
+      edit.hidden = true;
+      return;
+    }
+    empty.hidden = true;
+    edit.hidden = false;
+    $('scNumber').value = sc.number || 1;
+    $('scTitle').value = sc.title || '';
+    $('scLocation').value = sc.location || '';
+    $('scTime').value = sc.timeOfDay || '';
+    $('scDesc').value = sc.description || '';
+    renderShots();
+  }
+
+  function renderAll() {
+    renderSceneList();
+    renderCharList();
+    renderVersionList();
+    bindEditorFromState();
+  }
+
+  /* ========== 场次列表（左侧） ========== */
+  function renderSceneList() {
+    var list = $('scriptSceneList');
+    if (!list) return;
+    list.innerHTML = '';
+    var scenes = (state.editing && state.editing.scenes) || [];
+    if (scenes.length === 0) {
+      list.innerHTML = '<div class="hm-script-side-empty">点击 ＋ 创建第一场</div>';
+      return;
+    }
+    scenes.forEach(function (sc) {
+      var item = document.createElement('div');
+      item.className = 'hm-script-scene-item' + (sc.id === state.activeSceneId ? ' is-active' : '');
+      item.innerHTML =
+        '<div class="hm-script-scene-item-num">#' + (sc.number || 0) + '</div>' +
+        '<div class="hm-script-scene-item-body">' +
+          '<div class="hm-script-scene-item-title">' + (sc.title || '未命名场次').replace(/[<>]/g, '') + '</div>' +
+          '<div class="hm-script-scene-item-meta">' +
+            '<span>' + (sc.location || '—') + '</span>' +
+            '<span class="hm-script-scene-item-shots">🎥 ' + (sc.shots ? sc.shots.length : 0) + '</span>' +
+          '</div>' +
+        '</div>';
+      item.addEventListener('click', function () {
+        state.activeSceneId = sc.id;
+        renderSceneList();
+        bindEditorFromState();
+      });
+      list.appendChild(item);
+    });
+  }
+
+  async function addScene() {
+    if (!state.editing) return;
+    try {
+      var data = await api.addScene(state.editing.id, { title: '新场次', location: '', timeOfDay: '', description: '', shots: [] });
+      if (data && data.scene) {
+        // 同步前端 state
+        state.editing.scenes = state.editing.scenes || [];
+        state.editing.scenes.push(data.scene);
+        state.activeSceneId = data.scene.id;
+        renderSceneList();
+        bindEditorFromState();
+        A.toast && A.toast('✅ 场次已添加', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('添加失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function deleteCurrentScene() {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    if (!window.confirm('确定删除场次 #' + sc.number + '「' + sc.title + '」？')) return;
+    try {
+      await api.deleteScene(state.editing.id, sc.id);
+      state.editing.scenes = state.editing.scenes.filter(function (x) { return x.id !== sc.id; });
+      state.editing.scenes.forEach(function (s, i) { s.number = i + 1; });
+      state.activeSceneId = state.editing.scenes.length > 0 ? state.editing.scenes[0].id : null;
+      renderSceneList();
+      bindEditorFromState();
+      A.toast && A.toast('已删除', 'success');
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 镜头列表（右侧） ========== */
+  var SHOT_TYPES = [
+    { v: 'extreme-close-up', l: '极端特写' },
+    { v: 'close-up', l: '特写' },
+    { v: 'medium-close-up', l: '中近景' },
+    { v: 'medium', l: '中景' },
+    { v: 'medium-wide', l: '中远景' },
+    { v: 'wide', l: '全景' },
+    { v: 'extreme-wide', l: '大全景' },
+    { v: 'aerial', l: '航拍' },
+    { v: 'over-shoulder', l: '过肩' },
+    { v: 'two-shot', l: '双人镜头' },
+    { v: 'insert', l: '插入' },
+    { v: 'tracking', l: '跟拍' },
+  ];
+  function shotTypeLabel(v) {
+    var m = SHOT_TYPES.find(function (t) { return t.v === v; });
+    return m ? m.l : v;
+  }
+
+  function renderShots() {
+    var list = $('scriptShots');
+    var sc = currentScene();
+    if (!list || !sc) return;
+    list.innerHTML = '';
+    var shots = sc.shots || [];
+    if (shots.length === 0) {
+      list.innerHTML = '<div class="hm-script-empty-state">点击「＋ 添加镜头」开始构建镜头序列</div>';
+      return;
+    }
+    shots.forEach(function (sh) {
+      var card = document.createElement('div');
+      card.className = 'hm-script-shot-card';
+      card.innerHTML =
+        '<div class="hm-script-shot-head">' +
+          '<div class="hm-script-shot-num">🎥 #' + (sh.number || 0) + '</div>' +
+          '<select class="hm-script-shot-type" data-shot-type="' + sh.id + '">' +
+            SHOT_TYPES.map(function (t) { return '<option value="' + t.v + '"' + (t.v === sh.type ? ' selected' : '') + '>' + t.l + '</option>'; }).join('') +
+          '</select>' +
+          '<input type="number" class="hm-script-shot-duration" min="0" value="' + (sh.duration || 0) + '" data-shot-dur="' + sh.id + '" placeholder="秒">' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-shot-del="' + sh.id + '">🗑</button>' +
+        '</div>' +
+        '<textarea class="hm-script-shot-desc" rows="2" data-shot-desc="' + sh.id + '" placeholder="镜头描述 / 构图 / 运动...">' + (sh.description || '').replace(/[<>]/g, '') + '</textarea>' +
+        '<div class="hm-script-dialogues" id="dlgs_' + sh.id + '"></div>' +
+        '<div class="hm-script-dlg-actions"><button class="hm-pill hm-pill-mini" data-dlg-add="' + sh.id + '">💬 添加对白</button></div>' +
+        '<textarea class="hm-script-shot-notes" rows="1" data-shot-notes="' + sh.id + '" placeholder="备注 / 音效 / 转场...">' + (sh.notes || '').replace(/[<>]/g, '') + '</textarea>';
+      list.appendChild(card);
+    });
+    // 渲染对白
+    shots.forEach(function (sh) { renderDialogues(sh); });
+    // 绑定事件
+    list.querySelectorAll('[data-shot-type]').forEach(function (el) {
+      el.addEventListener('change', function () { patchShot(sh.id, { type: el.value }); });
+    });
+    list.querySelectorAll('[data-shot-dur]').forEach(function (el) {
+      el.addEventListener('input', function () { patchShot(sh.id, { duration: Number(el.value) }); });
+    });
+    list.querySelectorAll('[data-shot-desc]').forEach(function (el) {
+      el.addEventListener('input', function () { patchShot(sh.id, { description: el.value }); });
+    });
+    list.querySelectorAll('[data-shot-notes]').forEach(function (el) {
+      el.addEventListener('input', function () { patchShot(sh.id, { notes: el.value }); });
+    });
+    list.querySelectorAll('[data-shot-del]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!window.confirm('删除镜头 #' + sh.number + '？')) return;
+        deleteShot(sh.id);
+      });
+    });
+    list.querySelectorAll('[data-dlg-add]').forEach(function (el) {
+      el.addEventListener('click', function () { addDialogue(sh.id); });
+    });
+  }
+
+  function renderDialogues(shot) {
+    var container = $('dlgs_' + shot.id);
+    if (!container) return;
+    container.innerHTML = '';
+    var characters = (state.editing && state.editing.characters) || [];
+    var dlgs = shot.dialogue || [];
+    dlgs.forEach(function (d) {
+      var div = document.createElement('div');
+      div.className = 'hm-script-dialogue';
+      var charOptions = '<option value="">— 选择角色 —</option>' + characters.map(function (c) {
+        return '<option value="' + c.id + '"' + (c.id === d.characterId ? ' selected' : '') + '>' + (c.name || '') + '</option>';
+      }).join('');
+      div.innerHTML =
+        '<select class="hm-script-dlg-char" data-dlg-char="' + shot.id + ':' + d.id + '">' + charOptions + '</select>' +
+        '<input class="hm-script-dlg-mood" placeholder="语气" value="' + (d.mood || '').replace(/[<>]/g, '') + '" data-dlg-mood="' + shot.id + ':' + d.id + '">' +
+        '<textarea class="hm-script-dlg-text" rows="2" placeholder="对白...">' + (d.text || '').replace(/[<>]/g, '') + '</textarea>' +
+        '<input class="hm-script-dlg-action" placeholder="动作 / 表情（括号内）" value="' + (d.action || '').replace(/[<>]/g, '') + '" data-dlg-action="' + shot.id + ':' + d.id + '">' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-dlg-del="' + shot.id + ':' + d.id + '">✕</button>';
+      container.appendChild(div);
+    });
+    // 绑定
+    container.querySelectorAll('.hm-script-dialogue').forEach(function (dlgEl, i) {
+      var d = dlgs[i];
+      var shotId = shot.id;
+      dlgEl.querySelector('[data-dlg-char]').addEventListener('change', function (e) {
+        var char = characters.find(function (c) { return c.id === e.target.value; });
+        patchDialogue(shotId, d.id, { characterId: e.target.value, characterName: char ? char.name : '' });
+      });
+      dlgEl.querySelector('.hm-script-dlg-text').addEventListener('input', function (e) {
+        patchDialogue(shotId, d.id, { text: e.target.value });
+      });
+      dlgEl.querySelector('[data-dlg-mood]').addEventListener('input', function (e) {
+        patchDialogue(shotId, d.id, { mood: e.target.value });
+      });
+      dlgEl.querySelector('[data-dlg-action]').addEventListener('input', function (e) {
+        patchDialogue(shotId, d.id, { action: e.target.value });
+      });
+      dlgEl.querySelector('[data-dlg-del]').addEventListener('click', function () {
+        deleteDialogue(shotId, d.id);
+      });
+    });
+  }
+
+  async function addShot() {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    try {
+      var data = await api.addShot(state.editing.id, sc.id, { type: 'medium', duration: 3, description: '', notes: '', dialogue: [] });
+      if (data && data.shot) {
+        sc.shots = sc.shots || [];
+        sc.shots.push(data.shot);
+        renderShots();
+      }
+    } catch (err) {
+      A.toast && A.toast('添加镜头失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function patchShot(shotId, patch) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    var sh = (sc.shots || []).find(function (x) { return x.id === shotId; });
+    if (!sh) return;
+    Object.assign(sh, patch);
+    try { await api.updateShot(state.editing.id, sc.id, shotId, patch); } catch (e) {}
+  }
+  async function deleteShot(shotId) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    try {
+      await api.deleteShot(state.editing.id, sc.id, shotId);
+      sc.shots = (sc.shots || []).filter(function (x) { return x.id !== shotId; });
+      sc.shots.forEach(function (s, i) { s.number = i + 1; });
+      renderShots();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function addDialogue(shotId) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    var sh = (sc.shots || []).find(function (x) { return x.id === shotId; });
+    if (!sh) return;
+    try {
+      var data = await api.addDialogue(state.editing.id, sc.id, shotId, { text: '', action: '', mood: '' });
+      if (data && data.dialogue) {
+        sh.dialogue = sh.dialogue || [];
+        sh.dialogue.push(data.dialogue);
+        renderShots(); // 重绘（简单处理）
+      }
+    } catch (err) {
+      A.toast && A.toast('添加对白失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function patchDialogue(shotId, did, patch) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    var sh = (sc.shots || []).find(function (x) { return x.id === shotId; });
+    if (!sh) return;
+    var d = (sh.dialogue || []).find(function (x) { return x.id === did; });
+    if (!d) return;
+    Object.assign(d, patch);
+    try { await api.updateDialogue(state.editing.id, sc.id, shotId, did, patch); } catch (e) {}
+  }
+  async function deleteDialogue(shotId, did) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    var sh = (sc.shots || []).find(function (x) { return x.id === shotId; });
+    try {
+      await api.deleteDialogue(state.editing.id, sc.id, shotId, did);
+      if (sh) sh.dialogue = (sh.dialogue || []).filter(function (x) { return x.id !== did; });
+      renderShots();
+    } catch (err) {
+      A.toast && A.toast('删除对白失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 角色侧栏 ========== */
+  function renderCharList() {
+    var list = $('scriptCharList');
+    if (!list) return;
+    list.innerHTML = '';
+    var chars = (state.editing && state.editing.characters) || [];
+    if (chars.length === 0) {
+      list.innerHTML = '<div class="hm-script-side-empty">点击 ＋ 添加角色</div>';
+      return;
+    }
+    chars.forEach(function (c, i) {
+      var item = document.createElement('div');
+      item.className = 'hm-script-char-item';
+      item.innerHTML =
+        '<div class="hm-script-char-avatar">' + ((c.name || '?')[0] || '?') + '</div>' +
+        '<div class="hm-script-char-body">' +
+          '<input class="hm-script-char-name" value="' + (c.name || '') + '" placeholder="角色名" data-cname="' + c.id + '">' +
+          '<div class="hm-script-char-sub">' +
+            '<input class="hm-script-char-role" value="' + (c.role || '') + '" placeholder="定位（主角/女主/反派...）" data-crole="' + c.id + '">' +
+            '<span class="hm-script-char-gender">' + (c.gender || '') + '</span>' +
+          '</div>' +
+          '<textarea class="hm-script-char-desc" rows="2" placeholder="性格 / 外貌 / 背景...">' + (c.description || '').replace(/[<>]/g, '') + '</textarea>' +
+        '</div>' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger hm-script-char-del" data-cdel="' + c.id + '">🗑</button>';
+      list.appendChild(item);
+    });
+    list.querySelectorAll('[data-cname]').forEach(function (el) {
+      el.addEventListener('input', function () { patchChar(el.getAttribute('data-cname'), { name: el.value }); });
+    });
+    list.querySelectorAll('[data-crole]').forEach(function (el) {
+      el.addEventListener('input', function () { patchChar(el.getAttribute('data-crole'), { role: el.value }); });
+    });
+    list.querySelectorAll('.hm-script-char-desc').forEach(function (el, i) {
+      var c = chars[i];
+      el.addEventListener('input', function () { patchChar(c.id, { description: el.value }); });
+    });
+    list.querySelectorAll('[data-cdel]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!window.confirm('删除角色？')) return;
+        deleteChar(el.getAttribute('data-cdel'));
+      });
+    });
+  }
+
+  async function addChar() {
+    if (!state.editing) return;
+    var name = window.prompt('角色名？', '');
+    if (!name) return;
+    try {
+      var data = await api.addCharacter(state.editing.id, { name: name, role: '', gender: '—', age: '', description: '' });
+      if (data && data.character) {
+        state.editing.characters = state.editing.characters || [];
+        state.editing.characters.push(data.character);
+        renderCharList();
+        renderShots(); // 更新对白里的角色下拉
+      }
+    } catch (err) {
+      A.toast && A.toast('添加失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function patchChar(cid, patch) {
+    if (!state.editing) return;
+    var c = (state.editing.characters || []).find(function (x) { return x.id === cid; });
+    if (!c) return;
+    Object.assign(c, patch);
+    try { await api.updateCharacter(state.editing.id, cid, patch); } catch (e) {}
+  }
+  async function deleteChar(cid) {
+    if (!state.editing) return;
+    try {
+      await api.deleteCharacter(state.editing.id, cid);
+      state.editing.characters = (state.editing.characters || []).filter(function (x) { return x.id !== cid; });
+      renderCharList();
+      renderShots();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 版本侧栏 ========== */
+  function renderVersionList() {
+    var list = $('scriptVerList');
+    if (!list) return;
+    list.innerHTML = '';
+    var versions = (state.editing && state.editing.versions) || [];
+    if (versions.length === 0) {
+      list.innerHTML = '<div class="hm-script-side-empty">点击 📸 创建版本快照<br>最多保存 20 个</div>';
+      return;
+    }
+    versions.forEach(function (v) {
+      var t = new Date(v.createdAt);
+      var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+      var tstr = pad(t.getMonth() + 1) + '/' + pad(t.getDate()) + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
+      var item = document.createElement('div');
+      item.className = 'hm-script-ver-item';
+      item.innerHTML =
+        '<div class="hm-script-ver-label">' + (v.label || '快照').replace(/[<>]/g, '') + '</div>' +
+        '<div class="hm-script-ver-meta">' + tstr + ' · 🎭' + (v.characterCount || 0) + ' 🎬' + (v.sceneCount || 0) + '</div>' +
+        '<div class="hm-script-ver-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-restore="' + v.id + '">↺ 恢复</button>' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-vdel="' + v.id + '">🗑</button>' +
+        '</div>';
+      list.appendChild(item);
+    });
+    list.querySelectorAll('[data-restore]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!window.confirm('恢复到此版本？当前状态会先自动保存为一个快照')) return;
+        restoreVersion(el.getAttribute('data-restore'));
+      });
+    });
+    list.querySelectorAll('[data-vdel]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!window.confirm('删除这个版本？')) return;
+        deleteVersion(el.getAttribute('data-vdel'));
+      });
+    });
+  }
+
+  async function snapshotCurrent() {
+    if (!state.editing) return;
+    var label = window.prompt('版本备注（可选）', '');
+    try {
+      // 先保存当前
+      await saveCurrent();
+      var data = await api.snapshotScript(state.editing.id, label || '');
+      if (data && data.version) {
+        state.editing.versions = state.editing.versions || [];
+        state.editing.versions.unshift(data.version);
+        renderVersionList();
+        A.toast && A.toast('📸 快照已保存', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('快照失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function restoreVersion(vid) {
+    if (!state.editing) return;
+    try {
+      var data = await api.restoreVersion(state.editing.id, vid);
+      if (data && data.script) {
+        state.editing = data.script;
+        state.activeSceneId = (state.editing.scenes && state.editing.scenes.length > 0)
+          ? state.editing.scenes[0].id : null;
+        renderAll();
+        A.toast && A.toast('✅ 已恢复到选定版本', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('恢复失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function deleteVersion(vid) {
+    if (!state.editing) return;
+    try {
+      await api.deleteVersion(state.editing.id, vid);
+      state.editing.versions = (state.editing.versions || []).filter(function (v) { return v.id !== vid; });
+      renderVersionList();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 保存 ========== */
+  async function saveCurrent() {
+    if (!state.editing) return;
+    // 收集元信息
+    var patch = {
+      title: $('scriptTitleInput').value,
+      genre: $('scriptGenreSelect').value,
+      status: $('scriptStatusSelect').value,
+      logline: $('scriptLoglineInput').value,
+      outline: $('scriptOutlineText').value,
+      script: { // 完整保存
+        title: $('scriptTitleInput').value,
+        genre: $('scriptGenreSelect').value,
+        status: $('scriptStatusSelect').value,
+        logline: $('scriptLoglineInput').value,
+        outline: $('scriptOutlineText').value,
+        characters: state.editing.characters || [],
+        scenes: state.editing.scenes || [],
+      },
+    };
+    Object.assign(state.editing, patch.script);
+    try {
+      await api.updateScript(state.editing.id, patch);
+      A.toast && A.toast('💾 已保存', 'success');
+      renderList(); // 更新列表卡片
+    } catch (err) {
+      A.toast && A.toast('保存失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 导出 ========== */
+  function doExport(fmt) {
+    if (!state.editing) return;
+    var url = (api.mediaUrl ? api.mediaUrl('') : '') + api.exportScript(state.editing.id, fmt);
+    // 通过后端静态代理下载
+    var backend = (window.HM && window.HM.api && window.HM.api._backendBase) || '';
+    if (backend) url = backend + api.exportScript(state.editing.id, fmt);
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.download = '';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    A.toast && A.toast('📤 已开始下载', 'success');
+  }
+
+  /* ========== 绑定事件 ========== */
+  function bind() {
+    $('scriptNewBtn').addEventListener('click', createScript);
+    $('scriptBackBtn').addEventListener('click', function () {
+      state.editing = null;
+      showListView();
+      loadList();
+    });
+    $('scriptSaveBtn').addEventListener('click', saveCurrent);
+    $('scriptSnapshotBtn').addEventListener('click', snapshotCurrent);
+    // 导出下拉
+    var exportBtn = $('scriptExportBtn');
+    var exportMenu = document.querySelector('.hm-script-export-menu');
+    if (exportBtn && exportMenu) {
+      exportBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        exportMenu.hidden = !exportMenu.hidden;
+      });
+      exportMenu.addEventListener('click', function (e) {
+        var a = e.target.closest('a[data-fmt]');
+        if (!a) return;
+        doExport(a.getAttribute('data-fmt'));
+        exportMenu.hidden = true;
+      });
+      document.addEventListener('click', function () { exportMenu.hidden = true; });
+    }
+    // 左侧 Tab
+    document.addEventListener('click', function (e) {
+      var tab = e.target.closest('[data-stab]');
+      if (!tab || !tab.closest('.hm-script-side-tabs')) return;
+      var stab = tab.getAttribute('data-stab');
+      state.editingSideTab = stab;
+      document.querySelectorAll('.hm-script-side-tab').forEach(function (t) { t.classList.toggle('is-active', t === tab); });
+      document.querySelectorAll('.hm-script-side-panel').forEach(function (p) { p.hidden = p.id !== ('scriptPanel-' + stab); });
+      if (stab === 'characters') renderCharList();
+      if (stab === 'outline') $('scriptOutlineText').value = state.editing ? (state.editing.outline || '') : '';
+      if (stab === 'versions') renderVersionList();
+    });
+    // 左侧按钮
+    $('scriptAddScene').addEventListener('click', addScene);
+    $('scriptAddChar').addEventListener('click', addChar);
+    $('scriptNewVer').addEventListener('click', snapshotCurrent);
+    // 场次编辑
+    ['scNumber', 'scTitle', 'scLocation', 'scTime', 'scDesc'].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', function () {
+        var sc = currentScene();
+        if (!sc || !state.editing) return;
+        var patch = {};
+        var fieldMap = { scNumber: 'number', scTitle: 'title', scLocation: 'location', scTime: 'timeOfDay', scDesc: 'description' };
+        patch[fieldMap[id]] = el.type === 'number' ? Number(el.value) : el.value;
+        Object.assign(sc, patch);
+        api.updateScene(state.editing.id, sc.id, patch).catch(function () {});
+      });
+    });
+    $('scDelete').addEventListener('click', deleteCurrentScene);
+    $('scriptAddShot').addEventListener('click', addShot);
+    // 元信息实时保存（debounced）
+    var debounce = null;
+    ['scriptTitleInput', 'scriptGenreSelect', 'scriptStatusSelect', 'scriptLoglineInput', 'scriptOutlineText'].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', function () {
+        bindEditorFromState();
+        clearTimeout(debounce);
+        debounce = setTimeout(function () { saveCurrent(); }, 1500);
+      });
+      el.addEventListener('change', function () {
+        bindEditorFromState();
+        clearTimeout(debounce);
+        debounce = setTimeout(function () { saveCurrent(); }, 100);
+      });
+    });
+  }
+
+  bind();
+  window.HMScript = { enter: enter, state: state };
 })();

@@ -10688,6 +10688,801 @@ body.hm-chat-open .hm-dock {
   }
 }
 
+/* =============================================================
+ * 剧本模块 (view-script)
+ * ============================================================= */
+.hm-script-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* 顶部工具条 */
+.hm-script-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.hm-script-top-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hm-script-top h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--hm-text);
+}
+.hm-script-top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hm-script-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.hm-sc-draft {
+  background: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+.hm-sc-writing {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.hm-sc-done {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* 导出菜单 */
+.hm-script-export-wrap {
+  position: relative;
+}
+.hm-script-export-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  min-width: 180px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 50;
+}
+.hm-script-export-menu a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--hm-text);
+  cursor: pointer;
+  text-decoration: none;
+}
+.hm-script-export-menu a:hover {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+/* ========== 列表视图 ========== */
+.hm-script-view-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.hm-script-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.hm-script-card {
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hm-script-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.35);
+  transform: translateY(-2px);
+}
+.hm-script-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.hm-script-card-head h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--hm-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+.hm-script-card-genre {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+.hm-script-card-logline {
+  margin: 0;
+  font-size: 13px;
+  color: var(--hm-text-dim);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hm-script-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--hm-text-dim);
+  align-items: center;
+}
+.hm-script-card-status {
+  font-size: 11px !important;
+  padding: 2px 10px !important;
+}
+.hm-script-card-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.hm-script-card:hover .hm-script-card-actions { opacity: 1; }
+.hm-script-list-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--hm-text-dim);
+}
+.hm-script-empty-emoji {
+  font-size: 56px;
+  margin-bottom: 12px;
+}
+.hm-script-list-empty h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: var(--hm-text);
+}
+
+/* ========== 编辑器视图 ========== */
+.hm-script-view-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.hm-script-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.hm-script-meta-title {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--hm-text);
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+}
+.hm-script-meta-title:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+.hm-script-meta-genre {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--hm-text);
+  font-size: 13px;
+  outline: none;
+}
+.hm-script-logline {
+  padding: 0 24px 14px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.hm-script-logline input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--hm-text);
+  font-size: 13.5px;
+  outline: none;
+}
+.hm-script-logline input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* 工作区布局 */
+.hm-script-workspace {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+.hm-script-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+.hm-script-side-tabs {
+  display: flex;
+  padding: 10px 8px;
+  gap: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.hm-script-side-tab {
+  flex: 1;
+  padding: 8px 4px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--hm-text-dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.hm-script-side-tab:hover {
+  color: var(--hm-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+.hm-script-side-tab.is-active {
+  color: var(--hm-text);
+  background: rgba(139, 92, 246, 0.2);
+}
+.hm-script-side-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+}
+.hm-script-side-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hm-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.hm-script-side-empty {
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--hm-text-dim);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* 场次列表 */
+.hm-script-scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hm-script-scene-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.hm-script-scene-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.hm-script-scene-item.is-active {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+.hm-script-scene-item-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hm-text-dim);
+  min-width: 28px;
+}
+.hm-script-scene-item.is-active .hm-script-scene-item-num {
+  color: #c4b5fd;
+}
+.hm-script-scene-item-body {
+  flex: 1;
+  min-width: 0;
+}
+.hm-script-scene-item-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--hm-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-script-scene-item-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--hm-text-dim);
+}
+.hm-script-scene-item-shots {
+  margin-left: auto;
+}
+
+/* 角色列表 */
+.hm-script-char-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hm-script-char-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+}
+.hm-script-char-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.hm-script-char-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.hm-script-char-name {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hm-text);
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  width: 100%;
+}
+.hm-script-char-name:focus {
+  background: rgba(0,0,0,0.2);
+  border-color: rgba(139,92,246,0.3);
+}
+.hm-script-char-sub {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  align-items: center;
+}
+.hm-script-char-role {
+  flex: 1;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hm-text-dim);
+  font-size: 11px;
+  outline: none;
+}
+.hm-script-char-role:focus {
+  background: rgba(0,0,0,0.2);
+  border-color: rgba(139,92,246,0.3);
+}
+.hm-script-char-desc {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hm-text-dim);
+  font-size: 11.5px;
+  resize: vertical;
+  min-height: 36px;
+  outline: none;
+}
+.hm-script-char-desc:focus {
+  background: rgba(0,0,0,0.2);
+  border-color: rgba(139,92,246,0.3);
+}
+.hm-script-char-del {
+  align-self: flex-start;
+  padding: 2px 6px !important;
+}
+
+/* 大纲 */
+.hm-script-outline-textarea {
+  width: 100%;
+  min-height: 400px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--hm-text);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  line-height: 1.7;
+}
+.hm-script-outline-textarea:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* 版本列表 */
+.hm-script-ver-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hm-script-ver-item {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+.hm-script-ver-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--hm-text);
+}
+.hm-script-ver-meta {
+  font-size: 11px;
+  color: var(--hm-text-dim);
+  margin-top: 3px;
+}
+.hm-script-ver-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* 主编辑区 */
+.hm-script-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.hm-script-scene-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--hm-text-dim);
+}
+.hm-script-scene-empty h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--hm-text);
+}
+.hm-script-scene-empty .hm-script-empty-emoji {
+  font-size: 48px;
+}
+
+/* 场次编辑头部 */
+.hm-script-scene-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.hm-script-scene-num {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.hm-script-scene-num span {
+  font-size: 10px;
+  color: var(--hm-text-dim);
+  text-transform: uppercase;
+}
+.hm-script-scene-num input {
+  width: 50px;
+  text-align: center;
+  padding: 6px 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.25);
+  color: var(--hm-text);
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+}
+.hm-script-scene-title {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.25);
+  color: var(--hm-text);
+  font-size: 18px;
+  font-weight: 600;
+  outline: none;
+}
+.hm-script-scene-title:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+.hm-script-scene-meta {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.hm-script-scene-meta input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.2);
+  color: var(--hm-text-dim);
+  font-size: 12.5px;
+  outline: none;
+}
+.hm-script-scene-meta input:focus {
+  border-color: rgba(139, 92, 246, 0.4);
+  color: var(--hm-text);
+}
+.hm-script-scene-desc {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0,0,0,0.2);
+  color: var(--hm-text-dim);
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 18px;
+}
+.hm-script-scene-desc:focus {
+  border-color: rgba(139, 92, 246, 0.4);
+  color: var(--hm-text);
+}
+
+/* 镜头区 */
+.hm-script-shots-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hm-text);
+}
+.hm-script-shots {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hm-script-empty-state {
+  text-align: center;
+  padding: 30px;
+  color: var(--hm-text-dim);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+/* 镜头卡片 */
+.hm-script-shot-card {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  position: relative;
+}
+.hm-script-shot-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  background: linear-gradient(180deg, #8b5cf6, #3b82f6);
+  border-radius: 0 2px 2px 0;
+}
+.hm-script-shot-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.hm-script-shot-num {
+  font-size: 14px;
+  font-weight: 700;
+  color: #c4b5fd;
+}
+.hm-script-shot-type {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.25);
+  color: var(--hm-text);
+  font-size: 12px;
+  outline: none;
+}
+.hm-script-shot-duration {
+  width: 70px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.25);
+  color: var(--hm-text);
+  font-size: 12px;
+  outline: none;
+}
+.hm-script-shot-desc {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0,0,0,0.2);
+  color: var(--hm-text);
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 10px;
+}
+.hm-script-shot-desc:focus {
+  border-color: rgba(139, 92, 246, 0.4);
+}
+.hm-script-shot-notes {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.15);
+  color: var(--hm-text-dim);
+  font-size: 12px;
+  resize: vertical;
+  outline: none;
+  margin-top: 10px;
+}
+
+/* 对白 */
+.hm-script-dialogues {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hm-script-dialogue {
+  display: grid;
+  grid-template-columns: 140px 80px 1fr 160px 30px;
+  gap: 8px;
+  align-items: start;
+  padding: 10px 12px;
+  background: rgba(59, 130, 246, 0.06);
+  border-radius: 10px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+.hm-script-dlg-char {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.3);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+}
+.hm-script-dlg-mood {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0,0,0,0.2);
+  color: var(--hm-text-dim);
+  font-size: 11px;
+  outline: none;
+}
+.hm-script-dlg-text {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0,0,0,0.2);
+  color: var(--hm-text);
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  min-height: 38px;
+}
+.hm-script-dlg-text:focus {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+.hm-script-dlg-action {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0,0,0,0.2);
+  color: var(--hm-text-dim);
+  font-size: 11px;
+  outline: none;
+}
+.hm-script-dlg-actions {
+  margin-top: 8px;
+}
+
+/* Pill-danger */
+.hm-pill-danger {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+.hm-pill-danger:hover {
+  background: rgba(239, 68, 68, 0.25) !important;
+}
+.hm-pill-ghost {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: var(--hm-text-dim) !important;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  .hm-script-sidebar { width: 260px; }
+  .hm-script-dialogue {
+    grid-template-columns: 1fr;
+  }
+  .hm-script-main { padding: 14px; }
+  .hm-script-scene-head { flex-wrap: wrap; }
+}
+@media (max-width: 640px) {
+  .hm-script-workspace { flex-direction: column; }
+  .hm-script-sidebar {
+    width: 100%;
+    max-height: 240px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
+
 
 </style>
   <style>
@@ -11040,7 +11835,7 @@ body.hm-chat-open .hm-dock {
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261102075537-a091645";</script>
+<script>window.HM_BUILD = "20261103021641-5feb935";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -11076,6 +11871,10 @@ body.hm-chat-open .hm-dock {
       <button class="hm-rail-item" data-rail="plan" title="企划（热榜、排行榜、日式动漫企划书）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5h10M7 12h7M7 15.5h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 3.5v3M8.5 3.5v3" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
         <span>企划</span>
+      </button>
+      <button class="hm-rail-item" data-rail="script" title="剧本编纂（场次/镜头/对白/角色）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h12a3 3 0 0 1 3 3v11l-4-2.5-4 2.5-4-2.5-3 2V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 9.5h7M8 12.5h7M8 15.5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>剧本</span>
       </button>
     </div>
 
@@ -12985,6 +13784,146 @@ body.hm-chat-open .hm-dock {
     </section>
   </main>
 
+  <!-- ======== 剧本 模块 ======== -->
+  <main class="hm-page hm-script-page" id="view-script" hidden>
+    <!-- 顶部工具条 -->
+    <div class="hm-script-top">
+      <div class="hm-script-top-left">
+        <button class="hm-pill hm-pill-ghost" id="scriptBackBtn" hidden>← 返回列表</button>
+        <h2 id="scriptPageTitle">剧本</h2>
+      </div>
+      <div class="hm-script-top-right">
+        <span class="hm-script-status" id="scriptStatusTag" hidden></span>
+        <button class="hm-pill" id="scriptSaveBtn" hidden>💾 保存草稿</button>
+        <button class="hm-pill" id="scriptSnapshotBtn" hidden>📸 版本快照</button>
+        <div class="hm-script-export-wrap" hidden id="scriptExportWrap">
+          <button class="hm-pill" id="scriptExportBtn">📤 导出 ▾</button>
+          <div class="hm-script-export-menu" hidden>
+            <a data-fmt="md">📝 Markdown (.md)</a>
+            <a data-fmt="fountain">📜 Fountain (.fountain)</a>
+            <a data-fmt="txt">📄 纯文本 (.txt)</a>
+          </div>
+        </div>
+        <button class="hm-pill hm-pill-primary" id="scriptNewBtn">＋ 新建剧本</button>
+      </div>
+    </div>
+
+    <!-- ============ 剧本列表视图 ============ -->
+    <section class="hm-script-view-list" id="scriptListView">
+      <div class="hm-script-list-grid" id="scriptGrid"></div>
+      <div class="hm-script-list-empty" id="scriptEmpty" hidden>
+        <div class="hm-script-empty-emoji">🎬</div>
+        <h3>还没有剧本</h3>
+        <p>点击「＋ 新建剧本」开始你的第一个故事</p>
+      </div>
+    </section>
+
+    <!-- ============ 剧本编辑器视图 ============ -->
+    <section class="hm-script-view-editor" id="scriptEditorView" hidden>
+      <!-- 剧本元信息条 -->
+      <div class="hm-script-meta-bar">
+        <input class="hm-script-meta-title" id="scriptTitleInput" placeholder="剧本标题">
+        <select id="scriptGenreSelect" class="hm-script-meta-genre">
+          <option value="剧情">剧情</option><option value="爱情">爱情</option>
+          <option value="悬疑">悬疑</option><option value="科幻">科幻</option>
+          <option value="奇幻">奇幻</option><option value="恐怖">恐怖</option>
+          <option value="喜剧">喜剧</option><option value="动作">动作</option>
+          <option value="动画">动画</option><option value="纪录片">纪录片</option>
+        </select>
+        <select id="scriptStatusSelect" class="hm-script-meta-genre">
+          <option value="draft">草稿</option><option value="writing">撰写中</option><option value="done">已完成</option>
+        </select>
+      </div>
+      <div class="hm-script-logline">
+        <input id="scriptLoglineInput" placeholder="一句话梗概（30秒能讲完这个故事）">
+      </div>
+
+      <!-- 编辑器主区域：左侧大纲+场次列表 / 右侧编辑区 -->
+      <div class="hm-script-workspace">
+        <!-- 左侧：Tab 切换（场次 / 角色 / 大纲 / 版本） -->
+        <aside class="hm-script-sidebar">
+          <div class="hm-script-side-tabs">
+            <button class="hm-script-side-tab is-active" data-stab="scenes" role="tab">🎬 场次</button>
+            <button class="hm-script-side-tab" data-stab="characters" role="tab">🎭 角色</button>
+            <button class="hm-script-side-tab" data-stab="outline" role="tab">📋 大纲</button>
+            <button class="hm-script-side-tab" data-stab="versions" role="tab">🕐 版本</button>
+          </div>
+
+          <!-- 场次列表 -->
+          <div class="hm-script-side-panel is-active" id="scriptPanel-scenes">
+            <div class="hm-script-side-header">
+              <span>场次列表</span>
+              <button class="hm-pill hm-pill-mini hm-pill-primary" id="scriptAddScene">＋</button>
+            </div>
+            <div class="hm-script-scene-list" id="scriptSceneList"></div>
+          </div>
+
+          <!-- 角色列表 -->
+          <div class="hm-script-side-panel" id="scriptPanel-characters" hidden>
+            <div class="hm-script-side-header">
+              <span>角色表</span>
+              <button class="hm-pill hm-pill-mini hm-pill-primary" id="scriptAddChar">＋</button>
+            </div>
+            <div class="hm-script-char-list" id="scriptCharList"></div>
+          </div>
+
+          <!-- 大纲 -->
+          <div class="hm-script-side-panel" id="scriptPanel-outline" hidden>
+            <div class="hm-script-side-header"><span>故事大纲</span></div>
+            <textarea class="hm-script-outline-textarea" id="scriptOutlineText" placeholder="写下你的故事主线、起承转合...
+
+例如：
+第一幕（起）：主角发现世界的秘密
+第二幕（承转）：面对困难，成长蜕变
+第三幕（合）：最终决战，结局..."></textarea>
+          </div>
+
+          <!-- 版本 -->
+          <div class="hm-script-side-panel" id="scriptPanel-versions" hidden>
+            <div class="hm-script-side-header">
+              <span>版本快照</span>
+              <button class="hm-pill hm-pill-mini hm-pill-primary" id="scriptNewVer">📸</button>
+            </div>
+            <div class="hm-script-ver-list" id="scriptVerList"></div>
+          </div>
+        </aside>
+
+        <!-- 右侧：当前场次编辑器 -->
+        <div class="hm-script-main">
+          <div class="hm-script-scene-editor" id="scriptSceneEditor">
+            <div class="hm-script-scene-empty" id="scriptSceneEmpty">
+              <div class="hm-script-empty-emoji">🎬</div>
+              <h3>选择左侧场次开始编辑</h3>
+              <p>或点击左侧「＋」创建第一场</p>
+            </div>
+            <div class="hm-script-scene-edit" id="scriptSceneEdit" hidden>
+              <div class="hm-script-scene-head">
+                <div class="hm-script-scene-num">
+                  <span>场次</span>
+                  <input type="number" id="scNumber" min="1" value="1">
+                </div>
+                <input type="text" id="scTitle" class="hm-script-scene-title" placeholder="场次标题 — 如: 雨夜初遇">
+                <button class="hm-pill hm-pill-danger hm-pill-mini" id="scDelete">🗑 删除</button>
+              </div>
+              <div class="hm-script-scene-meta">
+                <input type="text" id="scLocation" placeholder="📍 场景地点 — 如: 东京涩谷十字路口">
+                <input type="text" id="scTime" placeholder="🕐 时间 — 如: 深夜 2:00 / 黄昏 / 雨天">
+              </div>
+              <textarea id="scDesc" class="hm-script-scene-desc" rows="2" placeholder="场描述 / 气氛 / 环境音..."></textarea>
+
+              <!-- 镜头列表 -->
+              <div class="hm-script-shots-header">
+                <span>🎥 镜头序列</span>
+                <button class="hm-pill hm-pill-mini hm-pill-primary" id="scriptAddShot">＋ 添加镜头</button>
+              </div>
+              <div class="hm-script-shots" id="scriptShots"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
   <main class="hm-page hm-admin-page" id="view-admin" hidden>
     <div class="hm-admin-topbar-wrap">
       <div class="hm-admin-brand">
@@ -13975,6 +14914,71 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.createProposal = function (payload) { return request('/plan/proposal', { method: 'POST', body: payload }, 20000); };
   api.updateProposal = function (id, payload) { return request('/plan/proposal/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
   api.deleteProposal = function (id) { return request('/plan/proposal/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
+  /* -------------- 剧本模块 -------------- */
+  api.listScripts = function () { return request('/script', {}, 15000); };
+  api.createScript = function (payload) { return request('/script', { method: 'POST', body: payload }, 20000); };
+  api.getScript = function (id) { return request('/script/' + encodeURIComponent(id), {}, 15000); };
+  api.updateScript = function (id, payload) { return request('/script/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteScript = function (id) { return request('/script/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
+  // 角色
+  api.addCharacter = function (scriptId, char) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters', { method: 'POST', body: char }, 15000);
+  };
+  api.updateCharacter = function (scriptId, cid, char) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters/' + encodeURIComponent(cid), { method: 'PATCH', body: char }, 15000);
+  };
+  api.deleteCharacter = function (scriptId, cid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters/' + encodeURIComponent(cid), { method: 'DELETE' }, 15000);
+  };
+  // 场次
+  api.addScene = function (scriptId, scene) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes', { method: 'POST', body: scene }, 15000);
+  };
+  api.updateScene = function (scriptId, sid, scene) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid), { method: 'PATCH', body: scene }, 15000);
+  };
+  api.deleteScene = function (scriptId, sid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid), { method: 'DELETE' }, 15000);
+  };
+  // 镜头
+  api.addShot = function (scriptId, sid, shot) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots', { method: 'POST', body: shot }, 15000);
+  };
+  api.updateShot = function (scriptId, sid, shotId, shot) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId), { method: 'PATCH', body: shot }, 15000);
+  };
+  api.deleteShot = function (scriptId, sid, shotId) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId), { method: 'DELETE' }, 15000);
+  };
+  // 对白
+  api.addDialogue = function (scriptId, sid, shotId, d) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues', { method: 'POST', body: d }, 15000);
+  };
+  api.updateDialogue = function (scriptId, sid, shotId, did, d) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues/' + encodeURIComponent(did), { method: 'PATCH', body: d }, 15000);
+  };
+  api.deleteDialogue = function (scriptId, sid, shotId, did) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues/' + encodeURIComponent(did), { method: 'DELETE' }, 15000);
+  };
+  // 版本
+  api.snapshotScript = function (scriptId, label) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions', { method: 'POST', body: { label: label || '' } }, 20000);
+  };
+  api.listVersions = function (scriptId) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions', {}, 15000);
+  };
+  api.restoreVersion = function (scriptId, vid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions/' + encodeURIComponent(vid) + '/restore', { method: 'POST' }, 20000);
+  };
+  api.deleteVersion = function (scriptId, vid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions/' + encodeURIComponent(vid), { method: 'DELETE' }, 15000);
+  };
+  // 导出
+  api.exportScript = function (scriptId, format) {
+    return '/script/' + encodeURIComponent(scriptId) + '/export?format=' + encodeURIComponent(format || 'fountain');
+  };
 
   api.presets = function () { return request('/presets', {}, 15000); };
   api.catalog = function () { return request('/catalog', {}, 15000); };
@@ -16307,7 +17311,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'plan', 'history', 'admin'];
+var VIEW_IDS = ['create', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'modeling', 'director', 'storyboard', 'paint', 'plan', 'script', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -29416,6 +30420,9 @@ window.HMChat = (function () {
     if (view === 'plan' && window.HMPlan) {
       try { window.HMPlan.enter(); } catch (e) { console.error('[Plan] enter failed', e); }
     }
+    if (view === 'script' && window.HMScript) {
+      try { window.HMScript.enter(); } catch (e) { console.error('[Script] enter failed', e); }
+    }
   }
 
   function onRenderWorks() {
@@ -31783,6 +32790,772 @@ window.HMChat = (function () {
 
   init();
   window.HMPlan = { enter: enter, state: state };
+})();
+
+/* =============================================================
+ * 剧本模块（HMScript）
+ * 剧本列表 + 场次/镜头/对白编辑器 + 角色 + 大纲 + 版本快照 + 导出
+ * ============================================================= */
+(function () {
+  'use strict';
+  var api = window.HM && window.HM.api;
+  var A = window.HMApp;
+  if (!api || !A) { console.warn('[HMScript] 缺少 api 或 A'); return; }
+
+  var state = {
+    scripts: [],          // 列表
+    editing: null,        // 当前编辑的完整 script 对象
+    activeSceneId: null,  // 左侧选中的场次
+    editingSideTab: 'scenes',
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function uid() { return 's_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+  /* ========== 入口 ========== */
+  function enter() {
+    showListView();
+    loadList();
+  }
+
+  /* ========== 列表视图 ========== */
+  function showListView() {
+    $('scriptListView').hidden = false;
+    $('scriptEditorView').hidden = true;
+    $('scriptBackBtn').hidden = true;
+    $('scriptSaveBtn').hidden = true;
+    $('scriptSnapshotBtn').hidden = true;
+    $('scriptExportWrap').hidden = true;
+    $('scriptStatusTag').hidden = true;
+    $('scriptNewBtn').hidden = false;
+    $('scriptPageTitle').textContent = '剧本';
+  }
+
+  function showEditorView() {
+    $('scriptListView').hidden = true;
+    $('scriptEditorView').hidden = false;
+    $('scriptBackBtn').hidden = false;
+    $('scriptSaveBtn').hidden = false;
+    $('scriptSnapshotBtn').hidden = false;
+    $('scriptExportWrap').hidden = false;
+    $('scriptNewBtn').hidden = true;
+  }
+
+  function fmtStatus(s) {
+    return { draft: '草稿', writing: '撰写中', done: '已完成' }[s] || s;
+  }
+
+  function renderList() {
+    var grid = $('scriptGrid');
+    var empty = $('scriptEmpty');
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!state.scripts || state.scripts.length === 0) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    state.scripts.forEach(function (s) {
+      var card = document.createElement('div');
+      card.className = 'hm-script-card';
+      card.innerHTML =
+        '<div class="hm-script-card-head">' +
+          '<h4>' + (s.title || '未命名').replace(/[<>]/g, '') + '</h4>' +
+          '<span class="hm-script-card-genre">' + (s.genre || '') + '</span>' +
+        '</div>' +
+        '<p class="hm-script-card-logline">' + ((s.logline || '').replace(/[<>]/g, '') || '（暂无梗概）').slice(0, 120) + '</p>' +
+        '<div class="hm-script-card-meta">' +
+          '<span>🎭 ' + (s.characterCount || 0) + ' 角色</span>' +
+          '<span>🎬 ' + (s.sceneCount || 0) + ' 场次</span>' +
+          '<span class="hm-script-card-status hm-sc-' + (s.status || 'draft') + '">' + fmtStatus(s.status) + '</span>' +
+        '</div>' +
+        '<div class="hm-script-card-actions">' +
+          '<button class="hm-pill hm-pill-primary hm-pill-mini" data-open>✏️ 打开</button>' +
+          '<button class="hm-pill hm-pill-mini" data-dup>📋 复制</button>' +
+          '<button class="hm-pill hm-pill-mini" data-del>🗑 删除</button>' +
+        '</div>';
+      card.querySelector('[data-open]').addEventListener('click', function () { openScript(s.id); });
+      card.querySelector('[data-dup]').addEventListener('click', function () { duplicateScript(s.id); });
+      card.querySelector('[data-del]').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.confirm('确定删除「' + s.title + '」？此操作不可恢复。')) deleteScript(s.id);
+      });
+      card.addEventListener('click', function () { openScript(s.id); });
+      grid.appendChild(card);
+    });
+  }
+
+  async function loadList() {
+    try {
+      var data = await api.listScripts();
+      state.scripts = (data && data.items) || [];
+      renderList();
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function createScript() {
+    var title = window.prompt('剧本标题？', '');
+    if (title === null) return;
+    try {
+      var data = await api.createScript({ title: title || '未命名剧本' });
+      if (data && data.script) {
+        state.editing = data.script;
+        state.activeSceneId = null;
+        showEditorView();
+        bindEditorFromState();
+        renderAll();
+      }
+    } catch (err) {
+      A.toast && A.toast('创建失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function openScript(id) {
+    try {
+      var data = await api.getScript(id);
+      if (data && data.script) {
+        state.editing = data.script;
+        state.activeSceneId = (state.editing.scenes && state.editing.scenes.length > 0)
+          ? state.editing.scenes[0].id : null;
+        showEditorView();
+        bindEditorFromState();
+        renderAll();
+      }
+    } catch (err) {
+      A.toast && A.toast('加载失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function duplicateScript(id) {
+    try {
+      var data = await api.getScript(id);
+      if (!data || !data.script) return;
+      var s = data.script;
+      var copy = {
+        title: (s.title || '') + ' (副本)',
+        genre: s.genre, logline: s.logline, outline: s.outline,
+        status: 'draft',
+        characters: s.characters || [],
+        scenes: s.scenes || [],
+      };
+      var nc = await api.createScript({ script: copy });
+      if (nc && nc.script) {
+        state.editing = nc.script;
+        showEditorView();
+        bindEditorFromState();
+        renderAll();
+        A.toast && A.toast('✅ 已创建副本', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('复制失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function deleteScript(id) {
+    try {
+      await api.deleteScript(id);
+      state.editing = null;
+      showListView();
+      loadList();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 编辑器视图 ========== */
+
+  function currentScene() {
+    if (!state.editing || !state.editing.scenes) return null;
+    return state.editing.scenes.find(function (sc) { return sc.id === state.activeSceneId; });
+  }
+
+  function bindEditorFromState() {
+    if (!state.editing) return;
+    $('scriptTitleInput').value = state.editing.title || '';
+    $('scriptGenreSelect').value = state.editing.genre || '剧情';
+    $('scriptStatusSelect').value = state.editing.status || 'draft';
+    $('scriptLoglineInput').value = state.editing.logline || '';
+    $('scriptOutlineText').value = state.editing.outline || '';
+    // 状态标签
+    var tag = $('scriptStatusTag');
+    tag.hidden = false;
+    tag.textContent = fmtStatus(state.editing.status);
+    tag.className = 'hm-script-status hm-sc-' + state.editing.status;
+    $('scriptPageTitle').textContent = state.editing.title || '剧本';
+
+    bindSceneEditor();
+  }
+
+  function bindSceneEditor() {
+    var sc = currentScene();
+    var empty = $('scriptSceneEmpty');
+    var edit = $('scriptSceneEdit');
+    if (!sc) {
+      empty.hidden = false;
+      edit.hidden = true;
+      return;
+    }
+    empty.hidden = true;
+    edit.hidden = false;
+    $('scNumber').value = sc.number || 1;
+    $('scTitle').value = sc.title || '';
+    $('scLocation').value = sc.location || '';
+    $('scTime').value = sc.timeOfDay || '';
+    $('scDesc').value = sc.description || '';
+    renderShots();
+  }
+
+  function renderAll() {
+    renderSceneList();
+    renderCharList();
+    renderVersionList();
+    bindEditorFromState();
+  }
+
+  /* ========== 场次列表（左侧） ========== */
+  function renderSceneList() {
+    var list = $('scriptSceneList');
+    if (!list) return;
+    list.innerHTML = '';
+    var scenes = (state.editing && state.editing.scenes) || [];
+    if (scenes.length === 0) {
+      list.innerHTML = '<div class="hm-script-side-empty">点击 ＋ 创建第一场</div>';
+      return;
+    }
+    scenes.forEach(function (sc) {
+      var item = document.createElement('div');
+      item.className = 'hm-script-scene-item' + (sc.id === state.activeSceneId ? ' is-active' : '');
+      item.innerHTML =
+        '<div class="hm-script-scene-item-num">#' + (sc.number || 0) + '</div>' +
+        '<div class="hm-script-scene-item-body">' +
+          '<div class="hm-script-scene-item-title">' + (sc.title || '未命名场次').replace(/[<>]/g, '') + '</div>' +
+          '<div class="hm-script-scene-item-meta">' +
+            '<span>' + (sc.location || '—') + '</span>' +
+            '<span class="hm-script-scene-item-shots">🎥 ' + (sc.shots ? sc.shots.length : 0) + '</span>' +
+          '</div>' +
+        '</div>';
+      item.addEventListener('click', function () {
+        state.activeSceneId = sc.id;
+        renderSceneList();
+        bindEditorFromState();
+      });
+      list.appendChild(item);
+    });
+  }
+
+  async function addScene() {
+    if (!state.editing) return;
+    try {
+      var data = await api.addScene(state.editing.id, { title: '新场次', location: '', timeOfDay: '', description: '', shots: [] });
+      if (data && data.scene) {
+        // 同步前端 state
+        state.editing.scenes = state.editing.scenes || [];
+        state.editing.scenes.push(data.scene);
+        state.activeSceneId = data.scene.id;
+        renderSceneList();
+        bindEditorFromState();
+        A.toast && A.toast('✅ 场次已添加', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('添加失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  async function deleteCurrentScene() {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    if (!window.confirm('确定删除场次 #' + sc.number + '「' + sc.title + '」？')) return;
+    try {
+      await api.deleteScene(state.editing.id, sc.id);
+      state.editing.scenes = state.editing.scenes.filter(function (x) { return x.id !== sc.id; });
+      state.editing.scenes.forEach(function (s, i) { s.number = i + 1; });
+      state.activeSceneId = state.editing.scenes.length > 0 ? state.editing.scenes[0].id : null;
+      renderSceneList();
+      bindEditorFromState();
+      A.toast && A.toast('已删除', 'success');
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 镜头列表（右侧） ========== */
+  var SHOT_TYPES = [
+    { v: 'extreme-close-up', l: '极端特写' },
+    { v: 'close-up', l: '特写' },
+    { v: 'medium-close-up', l: '中近景' },
+    { v: 'medium', l: '中景' },
+    { v: 'medium-wide', l: '中远景' },
+    { v: 'wide', l: '全景' },
+    { v: 'extreme-wide', l: '大全景' },
+    { v: 'aerial', l: '航拍' },
+    { v: 'over-shoulder', l: '过肩' },
+    { v: 'two-shot', l: '双人镜头' },
+    { v: 'insert', l: '插入' },
+    { v: 'tracking', l: '跟拍' },
+  ];
+  function shotTypeLabel(v) {
+    var m = SHOT_TYPES.find(function (t) { return t.v === v; });
+    return m ? m.l : v;
+  }
+
+  function renderShots() {
+    var list = $('scriptShots');
+    var sc = currentScene();
+    if (!list || !sc) return;
+    list.innerHTML = '';
+    var shots = sc.shots || [];
+    if (shots.length === 0) {
+      list.innerHTML = '<div class="hm-script-empty-state">点击「＋ 添加镜头」开始构建镜头序列</div>';
+      return;
+    }
+    shots.forEach(function (sh) {
+      var card = document.createElement('div');
+      card.className = 'hm-script-shot-card';
+      card.innerHTML =
+        '<div class="hm-script-shot-head">' +
+          '<div class="hm-script-shot-num">🎥 #' + (sh.number || 0) + '</div>' +
+          '<select class="hm-script-shot-type" data-shot-type="' + sh.id + '">' +
+            SHOT_TYPES.map(function (t) { return '<option value="' + t.v + '"' + (t.v === sh.type ? ' selected' : '') + '>' + t.l + '</option>'; }).join('') +
+          '</select>' +
+          '<input type="number" class="hm-script-shot-duration" min="0" value="' + (sh.duration || 0) + '" data-shot-dur="' + sh.id + '" placeholder="秒">' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-shot-del="' + sh.id + '">🗑</button>' +
+        '</div>' +
+        '<textarea class="hm-script-shot-desc" rows="2" data-shot-desc="' + sh.id + '" placeholder="镜头描述 / 构图 / 运动...">' + (sh.description || '').replace(/[<>]/g, '') + '</textarea>' +
+        '<div class="hm-script-dialogues" id="dlgs_' + sh.id + '"></div>' +
+        '<div class="hm-script-dlg-actions"><button class="hm-pill hm-pill-mini" data-dlg-add="' + sh.id + '">💬 添加对白</button></div>' +
+        '<textarea class="hm-script-shot-notes" rows="1" data-shot-notes="' + sh.id + '" placeholder="备注 / 音效 / 转场...">' + (sh.notes || '').replace(/[<>]/g, '') + '</textarea>';
+      list.appendChild(card);
+    });
+    // 渲染对白
+    shots.forEach(function (sh) { renderDialogues(sh); });
+    // 绑定事件
+    list.querySelectorAll('[data-shot-type]').forEach(function (el) {
+      el.addEventListener('change', function () { patchShot(sh.id, { type: el.value }); });
+    });
+    list.querySelectorAll('[data-shot-dur]').forEach(function (el) {
+      el.addEventListener('input', function () { patchShot(sh.id, { duration: Number(el.value) }); });
+    });
+    list.querySelectorAll('[data-shot-desc]').forEach(function (el) {
+      el.addEventListener('input', function () { patchShot(sh.id, { description: el.value }); });
+    });
+    list.querySelectorAll('[data-shot-notes]').forEach(function (el) {
+      el.addEventListener('input', function () { patchShot(sh.id, { notes: el.value }); });
+    });
+    list.querySelectorAll('[data-shot-del]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!window.confirm('删除镜头 #' + sh.number + '？')) return;
+        deleteShot(sh.id);
+      });
+    });
+    list.querySelectorAll('[data-dlg-add]').forEach(function (el) {
+      el.addEventListener('click', function () { addDialogue(sh.id); });
+    });
+  }
+
+  function renderDialogues(shot) {
+    var container = $('dlgs_' + shot.id);
+    if (!container) return;
+    container.innerHTML = '';
+    var characters = (state.editing && state.editing.characters) || [];
+    var dlgs = shot.dialogue || [];
+    dlgs.forEach(function (d) {
+      var div = document.createElement('div');
+      div.className = 'hm-script-dialogue';
+      var charOptions = '<option value="">— 选择角色 —</option>' + characters.map(function (c) {
+        return '<option value="' + c.id + '"' + (c.id === d.characterId ? ' selected' : '') + '>' + (c.name || '') + '</option>';
+      }).join('');
+      div.innerHTML =
+        '<select class="hm-script-dlg-char" data-dlg-char="' + shot.id + ':' + d.id + '">' + charOptions + '</select>' +
+        '<input class="hm-script-dlg-mood" placeholder="语气" value="' + (d.mood || '').replace(/[<>]/g, '') + '" data-dlg-mood="' + shot.id + ':' + d.id + '">' +
+        '<textarea class="hm-script-dlg-text" rows="2" placeholder="对白...">' + (d.text || '').replace(/[<>]/g, '') + '</textarea>' +
+        '<input class="hm-script-dlg-action" placeholder="动作 / 表情（括号内）" value="' + (d.action || '').replace(/[<>]/g, '') + '" data-dlg-action="' + shot.id + ':' + d.id + '">' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-dlg-del="' + shot.id + ':' + d.id + '">✕</button>';
+      container.appendChild(div);
+    });
+    // 绑定
+    container.querySelectorAll('.hm-script-dialogue').forEach(function (dlgEl, i) {
+      var d = dlgs[i];
+      var shotId = shot.id;
+      dlgEl.querySelector('[data-dlg-char]').addEventListener('change', function (e) {
+        var char = characters.find(function (c) { return c.id === e.target.value; });
+        patchDialogue(shotId, d.id, { characterId: e.target.value, characterName: char ? char.name : '' });
+      });
+      dlgEl.querySelector('.hm-script-dlg-text').addEventListener('input', function (e) {
+        patchDialogue(shotId, d.id, { text: e.target.value });
+      });
+      dlgEl.querySelector('[data-dlg-mood]').addEventListener('input', function (e) {
+        patchDialogue(shotId, d.id, { mood: e.target.value });
+      });
+      dlgEl.querySelector('[data-dlg-action]').addEventListener('input', function (e) {
+        patchDialogue(shotId, d.id, { action: e.target.value });
+      });
+      dlgEl.querySelector('[data-dlg-del]').addEventListener('click', function () {
+        deleteDialogue(shotId, d.id);
+      });
+    });
+  }
+
+  async function addShot() {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    try {
+      var data = await api.addShot(state.editing.id, sc.id, { type: 'medium', duration: 3, description: '', notes: '', dialogue: [] });
+      if (data && data.shot) {
+        sc.shots = sc.shots || [];
+        sc.shots.push(data.shot);
+        renderShots();
+      }
+    } catch (err) {
+      A.toast && A.toast('添加镜头失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function patchShot(shotId, patch) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    var sh = (sc.shots || []).find(function (x) { return x.id === shotId; });
+    if (!sh) return;
+    Object.assign(sh, patch);
+    try { await api.updateShot(state.editing.id, sc.id, shotId, patch); } catch (e) {}
+  }
+  async function deleteShot(shotId) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    try {
+      await api.deleteShot(state.editing.id, sc.id, shotId);
+      sc.shots = (sc.shots || []).filter(function (x) { return x.id !== shotId; });
+      sc.shots.forEach(function (s, i) { s.number = i + 1; });
+      renderShots();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function addDialogue(shotId) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    var sh = (sc.shots || []).find(function (x) { return x.id === shotId; });
+    if (!sh) return;
+    try {
+      var data = await api.addDialogue(state.editing.id, sc.id, shotId, { text: '', action: '', mood: '' });
+      if (data && data.dialogue) {
+        sh.dialogue = sh.dialogue || [];
+        sh.dialogue.push(data.dialogue);
+        renderShots(); // 重绘（简单处理）
+      }
+    } catch (err) {
+      A.toast && A.toast('添加对白失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function patchDialogue(shotId, did, patch) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    var sh = (sc.shots || []).find(function (x) { return x.id === shotId; });
+    if (!sh) return;
+    var d = (sh.dialogue || []).find(function (x) { return x.id === did; });
+    if (!d) return;
+    Object.assign(d, patch);
+    try { await api.updateDialogue(state.editing.id, sc.id, shotId, did, patch); } catch (e) {}
+  }
+  async function deleteDialogue(shotId, did) {
+    var sc = currentScene();
+    if (!sc || !state.editing) return;
+    var sh = (sc.shots || []).find(function (x) { return x.id === shotId; });
+    try {
+      await api.deleteDialogue(state.editing.id, sc.id, shotId, did);
+      if (sh) sh.dialogue = (sh.dialogue || []).filter(function (x) { return x.id !== did; });
+      renderShots();
+    } catch (err) {
+      A.toast && A.toast('删除对白失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 角色侧栏 ========== */
+  function renderCharList() {
+    var list = $('scriptCharList');
+    if (!list) return;
+    list.innerHTML = '';
+    var chars = (state.editing && state.editing.characters) || [];
+    if (chars.length === 0) {
+      list.innerHTML = '<div class="hm-script-side-empty">点击 ＋ 添加角色</div>';
+      return;
+    }
+    chars.forEach(function (c, i) {
+      var item = document.createElement('div');
+      item.className = 'hm-script-char-item';
+      item.innerHTML =
+        '<div class="hm-script-char-avatar">' + ((c.name || '?')[0] || '?') + '</div>' +
+        '<div class="hm-script-char-body">' +
+          '<input class="hm-script-char-name" value="' + (c.name || '') + '" placeholder="角色名" data-cname="' + c.id + '">' +
+          '<div class="hm-script-char-sub">' +
+            '<input class="hm-script-char-role" value="' + (c.role || '') + '" placeholder="定位（主角/女主/反派...）" data-crole="' + c.id + '">' +
+            '<span class="hm-script-char-gender">' + (c.gender || '') + '</span>' +
+          '</div>' +
+          '<textarea class="hm-script-char-desc" rows="2" placeholder="性格 / 外貌 / 背景...">' + (c.description || '').replace(/[<>]/g, '') + '</textarea>' +
+        '</div>' +
+        '<button class="hm-pill hm-pill-mini hm-pill-danger hm-script-char-del" data-cdel="' + c.id + '">🗑</button>';
+      list.appendChild(item);
+    });
+    list.querySelectorAll('[data-cname]').forEach(function (el) {
+      el.addEventListener('input', function () { patchChar(el.getAttribute('data-cname'), { name: el.value }); });
+    });
+    list.querySelectorAll('[data-crole]').forEach(function (el) {
+      el.addEventListener('input', function () { patchChar(el.getAttribute('data-crole'), { role: el.value }); });
+    });
+    list.querySelectorAll('.hm-script-char-desc').forEach(function (el, i) {
+      var c = chars[i];
+      el.addEventListener('input', function () { patchChar(c.id, { description: el.value }); });
+    });
+    list.querySelectorAll('[data-cdel]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!window.confirm('删除角色？')) return;
+        deleteChar(el.getAttribute('data-cdel'));
+      });
+    });
+  }
+
+  async function addChar() {
+    if (!state.editing) return;
+    var name = window.prompt('角色名？', '');
+    if (!name) return;
+    try {
+      var data = await api.addCharacter(state.editing.id, { name: name, role: '', gender: '—', age: '', description: '' });
+      if (data && data.character) {
+        state.editing.characters = state.editing.characters || [];
+        state.editing.characters.push(data.character);
+        renderCharList();
+        renderShots(); // 更新对白里的角色下拉
+      }
+    } catch (err) {
+      A.toast && A.toast('添加失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function patchChar(cid, patch) {
+    if (!state.editing) return;
+    var c = (state.editing.characters || []).find(function (x) { return x.id === cid; });
+    if (!c) return;
+    Object.assign(c, patch);
+    try { await api.updateCharacter(state.editing.id, cid, patch); } catch (e) {}
+  }
+  async function deleteChar(cid) {
+    if (!state.editing) return;
+    try {
+      await api.deleteCharacter(state.editing.id, cid);
+      state.editing.characters = (state.editing.characters || []).filter(function (x) { return x.id !== cid; });
+      renderCharList();
+      renderShots();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 版本侧栏 ========== */
+  function renderVersionList() {
+    var list = $('scriptVerList');
+    if (!list) return;
+    list.innerHTML = '';
+    var versions = (state.editing && state.editing.versions) || [];
+    if (versions.length === 0) {
+      list.innerHTML = '<div class="hm-script-side-empty">点击 📸 创建版本快照<br>最多保存 20 个</div>';
+      return;
+    }
+    versions.forEach(function (v) {
+      var t = new Date(v.createdAt);
+      var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+      var tstr = pad(t.getMonth() + 1) + '/' + pad(t.getDate()) + ' ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
+      var item = document.createElement('div');
+      item.className = 'hm-script-ver-item';
+      item.innerHTML =
+        '<div class="hm-script-ver-label">' + (v.label || '快照').replace(/[<>]/g, '') + '</div>' +
+        '<div class="hm-script-ver-meta">' + tstr + ' · 🎭' + (v.characterCount || 0) + ' 🎬' + (v.sceneCount || 0) + '</div>' +
+        '<div class="hm-script-ver-actions">' +
+          '<button class="hm-pill hm-pill-mini" data-restore="' + v.id + '">↺ 恢复</button>' +
+          '<button class="hm-pill hm-pill-mini hm-pill-danger" data-vdel="' + v.id + '">🗑</button>' +
+        '</div>';
+      list.appendChild(item);
+    });
+    list.querySelectorAll('[data-restore]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!window.confirm('恢复到此版本？当前状态会先自动保存为一个快照')) return;
+        restoreVersion(el.getAttribute('data-restore'));
+      });
+    });
+    list.querySelectorAll('[data-vdel]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (!window.confirm('删除这个版本？')) return;
+        deleteVersion(el.getAttribute('data-vdel'));
+      });
+    });
+  }
+
+  async function snapshotCurrent() {
+    if (!state.editing) return;
+    var label = window.prompt('版本备注（可选）', '');
+    try {
+      // 先保存当前
+      await saveCurrent();
+      var data = await api.snapshotScript(state.editing.id, label || '');
+      if (data && data.version) {
+        state.editing.versions = state.editing.versions || [];
+        state.editing.versions.unshift(data.version);
+        renderVersionList();
+        A.toast && A.toast('📸 快照已保存', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('快照失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function restoreVersion(vid) {
+    if (!state.editing) return;
+    try {
+      var data = await api.restoreVersion(state.editing.id, vid);
+      if (data && data.script) {
+        state.editing = data.script;
+        state.activeSceneId = (state.editing.scenes && state.editing.scenes.length > 0)
+          ? state.editing.scenes[0].id : null;
+        renderAll();
+        A.toast && A.toast('✅ 已恢复到选定版本', 'success');
+      }
+    } catch (err) {
+      A.toast && A.toast('恢复失败: ' + (err && err.message || err), 'error');
+    }
+  }
+  async function deleteVersion(vid) {
+    if (!state.editing) return;
+    try {
+      await api.deleteVersion(state.editing.id, vid);
+      state.editing.versions = (state.editing.versions || []).filter(function (v) { return v.id !== vid; });
+      renderVersionList();
+    } catch (err) {
+      A.toast && A.toast('删除失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 保存 ========== */
+  async function saveCurrent() {
+    if (!state.editing) return;
+    // 收集元信息
+    var patch = {
+      title: $('scriptTitleInput').value,
+      genre: $('scriptGenreSelect').value,
+      status: $('scriptStatusSelect').value,
+      logline: $('scriptLoglineInput').value,
+      outline: $('scriptOutlineText').value,
+      script: { // 完整保存
+        title: $('scriptTitleInput').value,
+        genre: $('scriptGenreSelect').value,
+        status: $('scriptStatusSelect').value,
+        logline: $('scriptLoglineInput').value,
+        outline: $('scriptOutlineText').value,
+        characters: state.editing.characters || [],
+        scenes: state.editing.scenes || [],
+      },
+    };
+    Object.assign(state.editing, patch.script);
+    try {
+      await api.updateScript(state.editing.id, patch);
+      A.toast && A.toast('💾 已保存', 'success');
+      renderList(); // 更新列表卡片
+    } catch (err) {
+      A.toast && A.toast('保存失败: ' + (err && err.message || err), 'error');
+    }
+  }
+
+  /* ========== 导出 ========== */
+  function doExport(fmt) {
+    if (!state.editing) return;
+    var url = (api.mediaUrl ? api.mediaUrl('') : '') + api.exportScript(state.editing.id, fmt);
+    // 通过后端静态代理下载
+    var backend = (window.HM && window.HM.api && window.HM.api._backendBase) || '';
+    if (backend) url = backend + api.exportScript(state.editing.id, fmt);
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.download = '';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    A.toast && A.toast('📤 已开始下载', 'success');
+  }
+
+  /* ========== 绑定事件 ========== */
+  function bind() {
+    $('scriptNewBtn').addEventListener('click', createScript);
+    $('scriptBackBtn').addEventListener('click', function () {
+      state.editing = null;
+      showListView();
+      loadList();
+    });
+    $('scriptSaveBtn').addEventListener('click', saveCurrent);
+    $('scriptSnapshotBtn').addEventListener('click', snapshotCurrent);
+    // 导出下拉
+    var exportBtn = $('scriptExportBtn');
+    var exportMenu = document.querySelector('.hm-script-export-menu');
+    if (exportBtn && exportMenu) {
+      exportBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        exportMenu.hidden = !exportMenu.hidden;
+      });
+      exportMenu.addEventListener('click', function (e) {
+        var a = e.target.closest('a[data-fmt]');
+        if (!a) return;
+        doExport(a.getAttribute('data-fmt'));
+        exportMenu.hidden = true;
+      });
+      document.addEventListener('click', function () { exportMenu.hidden = true; });
+    }
+    // 左侧 Tab
+    document.addEventListener('click', function (e) {
+      var tab = e.target.closest('[data-stab]');
+      if (!tab || !tab.closest('.hm-script-side-tabs')) return;
+      var stab = tab.getAttribute('data-stab');
+      state.editingSideTab = stab;
+      document.querySelectorAll('.hm-script-side-tab').forEach(function (t) { t.classList.toggle('is-active', t === tab); });
+      document.querySelectorAll('.hm-script-side-panel').forEach(function (p) { p.hidden = p.id !== ('scriptPanel-' + stab); });
+      if (stab === 'characters') renderCharList();
+      if (stab === 'outline') $('scriptOutlineText').value = state.editing ? (state.editing.outline || '') : '';
+      if (stab === 'versions') renderVersionList();
+    });
+    // 左侧按钮
+    $('scriptAddScene').addEventListener('click', addScene);
+    $('scriptAddChar').addEventListener('click', addChar);
+    $('scriptNewVer').addEventListener('click', snapshotCurrent);
+    // 场次编辑
+    ['scNumber', 'scTitle', 'scLocation', 'scTime', 'scDesc'].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', function () {
+        var sc = currentScene();
+        if (!sc || !state.editing) return;
+        var patch = {};
+        var fieldMap = { scNumber: 'number', scTitle: 'title', scLocation: 'location', scTime: 'timeOfDay', scDesc: 'description' };
+        patch[fieldMap[id]] = el.type === 'number' ? Number(el.value) : el.value;
+        Object.assign(sc, patch);
+        api.updateScene(state.editing.id, sc.id, patch).catch(function () {});
+      });
+    });
+    $('scDelete').addEventListener('click', deleteCurrentScene);
+    $('scriptAddShot').addEventListener('click', addShot);
+    // 元信息实时保存（debounced）
+    var debounce = null;
+    ['scriptTitleInput', 'scriptGenreSelect', 'scriptStatusSelect', 'scriptLoglineInput', 'scriptOutlineText'].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', function () {
+        bindEditorFromState();
+        clearTimeout(debounce);
+        debounce = setTimeout(function () { saveCurrent(); }, 1500);
+      });
+      el.addEventListener('change', function () {
+        bindEditorFromState();
+        clearTimeout(debounce);
+        debounce = setTimeout(function () { saveCurrent(); }, 100);
+      });
+    });
+  }
+
+  bind();
+  window.HMScript = { enter: enter, state: state };
 })();
 
 </script>

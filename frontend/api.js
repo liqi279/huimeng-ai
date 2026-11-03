@@ -231,6 +231,71 @@
   api.updateProposal = function (id, payload) { return request('/plan/proposal/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
   api.deleteProposal = function (id) { return request('/plan/proposal/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
 
+  /* -------------- 剧本模块 -------------- */
+  api.listScripts = function () { return request('/script', {}, 15000); };
+  api.createScript = function (payload) { return request('/script', { method: 'POST', body: payload }, 20000); };
+  api.getScript = function (id) { return request('/script/' + encodeURIComponent(id), {}, 15000); };
+  api.updateScript = function (id, payload) { return request('/script/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteScript = function (id) { return request('/script/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
+  // 角色
+  api.addCharacter = function (scriptId, char) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters', { method: 'POST', body: char }, 15000);
+  };
+  api.updateCharacter = function (scriptId, cid, char) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters/' + encodeURIComponent(cid), { method: 'PATCH', body: char }, 15000);
+  };
+  api.deleteCharacter = function (scriptId, cid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters/' + encodeURIComponent(cid), { method: 'DELETE' }, 15000);
+  };
+  // 场次
+  api.addScene = function (scriptId, scene) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes', { method: 'POST', body: scene }, 15000);
+  };
+  api.updateScene = function (scriptId, sid, scene) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid), { method: 'PATCH', body: scene }, 15000);
+  };
+  api.deleteScene = function (scriptId, sid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid), { method: 'DELETE' }, 15000);
+  };
+  // 镜头
+  api.addShot = function (scriptId, sid, shot) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots', { method: 'POST', body: shot }, 15000);
+  };
+  api.updateShot = function (scriptId, sid, shotId, shot) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId), { method: 'PATCH', body: shot }, 15000);
+  };
+  api.deleteShot = function (scriptId, sid, shotId) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId), { method: 'DELETE' }, 15000);
+  };
+  // 对白
+  api.addDialogue = function (scriptId, sid, shotId, d) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues', { method: 'POST', body: d }, 15000);
+  };
+  api.updateDialogue = function (scriptId, sid, shotId, did, d) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues/' + encodeURIComponent(did), { method: 'PATCH', body: d }, 15000);
+  };
+  api.deleteDialogue = function (scriptId, sid, shotId, did) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues/' + encodeURIComponent(did), { method: 'DELETE' }, 15000);
+  };
+  // 版本
+  api.snapshotScript = function (scriptId, label) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions', { method: 'POST', body: { label: label || '' } }, 20000);
+  };
+  api.listVersions = function (scriptId) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions', {}, 15000);
+  };
+  api.restoreVersion = function (scriptId, vid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions/' + encodeURIComponent(vid) + '/restore', { method: 'POST' }, 20000);
+  };
+  api.deleteVersion = function (scriptId, vid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions/' + encodeURIComponent(vid), { method: 'DELETE' }, 15000);
+  };
+  // 导出
+  api.exportScript = function (scriptId, format) {
+    return '/script/' + encodeURIComponent(scriptId) + '/export?format=' + encodeURIComponent(format || 'fountain');
+  };
+
   api.presets = function () { return request('/presets', {}, 15000); };
   api.catalog = function () { return request('/catalog', {}, 15000); };
   api.mediaModels = function () { return request('/media-models', {}, 15000); };
