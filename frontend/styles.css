@@ -13276,3 +13276,21 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   .hm-anim-kf-fields { grid-template-columns: 60px 60px 1fr; }
   .hm-anim-tween-fields { grid-template-columns: 1fr; }
 }
+
+/* ============ 侧边栏拖拽排序 ============ */
+.hm-rail-top .hm-rail-item[draggable="true"] {
+  cursor: grab;
+}
+.hm-rail-top .hm-rail-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+.hm-rail-top .hm-rail-item.is-dragging {
+  opacity: 0.35;
+  transform: scale(0.96);
+}
+.hm-rail-placeholder {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #6366f1, transparent);
+  border-radius: 2px;
+  margin: 2px 0;
+}

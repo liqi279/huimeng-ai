@@ -20,7 +20,8 @@
     forum: 'anidream.forum.v1',
     mode: 'anidream.mode.v1',
     preset: 'anidream.preset.v1',
-    credit: 'anidream.credit.v1'
+    credit: 'anidream.credit.v1',
+    railOrder: 'anidream.railOrder.v1'
   };
 
   var ICON_DOWNLOAD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l4-4m-4 4l-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
@@ -168,6 +169,75 @@
       }
       event.preventDefault();
       A.switchView(view);
+    });
+  }
+
+  // 侧边栏拖拽排序
+  function initRailDragSort() {
+    var railTop = document.querySelector('.hm-rail-top');
+    if (!railTop) return;
+
+    var items = railTop.querySelectorAll('.hm-rail-item[data-rail]');
+
+    // 恢复保存的顺序
+    try {
+      var order = readJSON(LS.railOrder, null);
+      if (Array.isArray(order) && order.length) {
+        var map = {};
+        items.forEach(function (el) { map[el.getAttribute('data-rail')] = el; });
+        order.forEach(function (rail) {
+          if (map[rail]) railTop.appendChild(map[rail]);
+        });
+      }
+    } catch (e) { /* ignore */ }
+
+    var dragged = null;
+    var placeholder = document.createElement('div');
+    placeholder.className = 'hm-rail-placeholder';
+
+    function getItems() {
+      return railTop.querySelectorAll('.hm-rail-item[data-rail]');
+    }
+
+    getItems().forEach(function (el) {
+      el.setAttribute('draggable', 'true');
+
+      el.addEventListener('dragstart', function (e) {
+        dragged = el;
+        el.classList.add('is-dragging');
+        try {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', el.getAttribute('data-rail') || '');
+        } catch (err) { /* ignore */ }
+      });
+
+      el.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        if (!dragged || dragged === el) return;
+        try { e.dataTransfer.dropEffect = 'move'; } catch (err) { /* ignore */ }
+        var rect = el.getBoundingClientRect();
+        var midY = rect.top + rect.height / 2;
+        if (e.clientY < midY) {
+          railTop.insertBefore(dragged, el);
+        } else {
+          railTop.insertBefore(dragged, el.nextSibling);
+        }
+      });
+
+      el.addEventListener('drop', function (e) {
+        e.preventDefault();
+      });
+
+      el.addEventListener('dragend', function () {
+        el.classList.remove('is-dragging');
+        dragged = null;
+        // 保存新顺序
+        var newOrder = Array.from(getItems())
+          .map(function (x) { return x.getAttribute('data-rail'); })
+          .filter(Boolean);
+        writeJSON(LS.railOrder, newOrder);
+        if (A.toast) A.toast('已保存侧边栏顺序', 'success');
+      });
     });
   }
 
@@ -1858,6 +1928,7 @@
   async function init() {
     readPrefs();
     bindRail();
+    initRailDragSort();
     bindTheme();
     bindModes();
     bindPresetModal();
