@@ -4130,11 +4130,12 @@ function bindEvents() {
   });
 
   els.apiConfigBtn.addEventListener('click', function () {
-    if (window.HMAdmin && HMAdmin.isAdmin()) {
-      switchView('admin');
-    } else {
-      openApiModal();
-    }
+    switchView('admin');
+    // 切到 admin view 后自动选中「API接入管理」Tab
+    setTimeout(function () {
+      var tab = document.querySelector('.hm-admin-top-tab[data-top="api"]');
+      if (tab) tab.click();
+    }, 30);
   });
   els.apiClose.addEventListener('click', closeApiModal);
   els.apiSave.addEventListener('click', saveRayinConfig);
