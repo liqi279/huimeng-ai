@@ -14395,7 +14395,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261104171735-a5f823d";</script>
+<script>window.HM_BUILD = "20261104173621-6692fff";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -33936,17 +33936,17 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
  *     chat.speak('主人，蓝莓酱在这里～');
  *
  * 后端：
- *   - Ollama（默认 http://localhost:11434，模型 qwen3:4b，stream:false、think:false）
+ *   - Ollama（默认走页面同源后端的 /api/ollama 代理，由后端转发到本机 11434；
+ *     若页面无后端，则回退到 http://localhost:11434；模型 qwen3:4b）
  *   - 任意 OpenAI 兼容接口（/chat/completions）
  *   - 语音输入：Web Speech API（SpeechRecognition，zh-CN）
  *   - 语音朗读：SpeechSynthesis（可自动选中文音色）
  *
- * 注意（很常见）：GitHub Pages 是 HTTPS 页面，浏览器会拦截对
- * http://localhost 的混合内容请求。要让网页里的音乐播放器连本地
- * Ollama，需要：
- *   1) 用 http 页面 / 本地文件打开，或给 Ollama 配 HTTPS 反向代理；
- *   2) Ollama 启动前设置环境变量 OLLAMA_ORIGINS=*，允许跨域。
- * 桌面版桌宠（Electron）走主进程 fetch，不受该限制。
+ * 关于 HTTPS 页面访问本地 Ollama：
+ *   GitHub Pages 等 HTTPS 页面无法直接请求 http://localhost（混合内容拦截）。
+ *   本插件默认把接口地址设为「页面后端的 /api/ollama 代理」（同源 HTTPS），
+ *   由后端转发到本机 Ollama，从而绕过混合内容限制。
+ *   桌面版桌宠（Electron）走主进程 fetch，不受该限制。
  */
 (function (global) {
   'use strict';
@@ -33958,13 +33958,30 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
 
   var DEFAULT_SETTINGS = {
     provider: 'ollama',              // ollama | openai
-    baseUrl: 'http://localhost:11434',
+    baseUrl: '',                     // 空 = 自动：优先用页面后端 /api/ollama 代理，其次 http://localhost:11434
     model: 'qwen3:4b',
     apiKey: '',
     tts: true,                       // 自动朗读回复
     voiceURI: '',                    // 指定音色，空 = 自动选择中文音色
     duckMusic: true                  // 说话时自动暂停音乐，说完恢复
   };
+
+  /* 读取页面同源后端的 API base（绘梦 api.js 暴露的 HM.api.base）。
+   * 若存在，则 Ollama 接口走同源代理 `${base}/ollama`，
+   * 让 HTTPS 页面也能访问本机 Ollama，避免混合内容拦截。 */
+  function hmApiBase() {
+    try {
+      var hm = global.HM && global.HM.api;
+      return (hm && typeof hm.base === 'string' && hm.base) || '';
+    } catch (e) { return ''; }
+  }
+
+  function autoBase(provider) {
+    if (provider === 'openai') return 'https://api.openai.com/v1';
+    var hm = hmApiBase();
+    if (hm) return hm + '/ollama';
+    return 'http://localhost:11434';
+  }
 
   /* 与桌宠 main.js 中 SYSTEM_PROMPT 保持一致，保证跨端人格统一 */
   var SYSTEM_PROMPT = [
@@ -34114,6 +34131,13 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
         }
       }
     } catch (e) { /* 隐私模式 / file:// 下 localStorage 可能不可用 */ }
+
+    /* 兼容旧版本：之前默认写死了 http://localhost:11434。
+     * 若当前页面有同源后端代理，则迁移为自动（空字符串），
+     * 让 HTTPS 页面也能正常访问本机 Ollama。 */
+    if (out.baseUrl === 'http://localhost:11434' && hmApiBase()) {
+      out.baseUrl = '';
+    }
     return out;
   }
 
@@ -34149,9 +34173,9 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
     var raw = (err && err.message) || String(err || '');
     if (/Failed to fetch|NetworkError|Load failed/i.test(raw)) {
       return '无法连接 AI 服务。常见原因：\n' +
-        '1) Ollama 没启动（终端执行 ollama serve）；\n' +
-        '2) 页面是 HTTPS，浏览器拦截了 http://localhost 的混合内容；\n' +
-        '3) Ollama 未允许跨域，启动前需设置 OLLAMA_ORIGINS=*。';
+        '1) 本机 Ollama 没启动（终端执行 ollama serve）；\n' +
+        '2) 还没拉取模型（执行 ollama pull qwen3:4b）；\n' +
+        '3) 接口地址配置错误，留空会自动使用页面后端 /api/ollama 代理。';
     }
     if (/timeout|abort/i.test(raw)) return '请求超时了，主人再试一次好吗？';
     if (/HTTP 40[13]|Unauthorized|api key/i.test(raw)) return '接口鉴权失败，请检查 API Key。';
@@ -34214,15 +34238,16 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
       '  <div class="mc-field"><label>服务提供方</label>',
       '    <select id="mc-provider"><option value="ollama">Ollama（本地）</option><option value="openai">OpenAI 兼容接口</option></select>',
       '  </div>',
-      '  <div class="mc-field"><label>接口地址</label><input id="mc-base" placeholder="http://localhost:11434"></div>',
+      '  <div class="mc-field"><label>接口地址</label><input id="mc-base" placeholder="留空自动（页面后端 /api/ollama 代理）"></div>',
       '  <div class="mc-field"><label>模型</label><input id="mc-model" placeholder="qwen3:4b"></div>',
       '  <div class="mc-field"><label>API Key（Ollama 无需填写）</label><input id="mc-key" type="password" placeholder="sk-..."></div>',
       '  <div class="mc-field"><label>朗读音色</label><select id="mc-voice"><option value="">自动选择中文音色</option></select></div>',
       '  <label class="mc-switch"><input type="checkbox" id="mc-duck">说话时暂停音乐</label>',
       '  <button class="mc-save" id="mc-save" type="button">保存设置</button>',
       '  <div class="mc-hint" style="margin-top:10px">' +
-        'Ollama 需在启动前设置 <b>OLLAMA_ORIGINS=*</b> 允许网页跨域；' +
-        '若页面是 HTTPS，浏览器会拦截 http://localhost 请求，请改用 http 页面或给 Ollama 配 HTTPS 反向代理。' +
+        '接口地址留空时自动使用页面后端的 <b>/api/ollama</b> 代理（同源 HTTPS，可绕过混合内容限制），' +
+        '由后端转发到本机 Ollama（默认 127.0.0.1:11434）。请确保本机已启动 Ollama，' +
+        '并执行 <b>ollama pull qwen3:4b</b> 拉取模型。' +
       '</div>',
       '</div>'
     ].join('');
@@ -34430,7 +34455,7 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
     }
 
     function askOllama(userText) {
-      var base = String(settings.baseUrl || '').replace(/\/+$/, '');
+      var base = normalizeBase(settings.provider, settings.baseUrl);
       var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
       var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 120000) : null;
       return fetch(base + '/api/chat', {
@@ -34535,9 +34560,10 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
 
     /* ---- 设置 ---- */
     function syncStatus() {
+      var base = currentBaseDisplay();
       statusEl.textContent = settings.provider === 'openai'
         ? 'OpenAI 兼容 · ' + (settings.model || '未设置模型')
-        : '本地 Ollama · ' + (settings.model || 'qwen3:4b');
+        : 'Ollama · ' + (settings.model || 'qwen3:4b') + ' · ' + base;
     }
 
     function fillVoiceOptions(keep) {
@@ -34558,7 +34584,8 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
 
     function applySettingsToUI() {
       $('mc-provider').value = settings.provider;
-      $('mc-base').value = settings.baseUrl;
+      $('mc-base').value = settings.baseUrl || '';
+      $('mc-base').placeholder = autoBase(settings.provider);
       $('mc-model').value = settings.model;
       $('mc-key').value = settings.apiKey;
       $('mc-duck').checked = !!settings.duckMusic;
@@ -34568,17 +34595,28 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
     }
 
     function normalizeBase(provider, base) {
-      var b = String(base || '').trim().replace(/\/+$/, '');
-      if (!b) return provider === 'ollama' ? 'http://localhost:11434' : 'https://api.openai.com/v1';
-      if (provider === 'ollama' && /localhost|127\.0\.0\.1/.test(b) && !/^http/.test(b)) b = 'http://' + b;
+      var b = String(base == null ? '' : base).trim().replace(/\/+$/, '');
+      if (!b) return autoBase(provider);
+      if (provider === 'ollama' && /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(b)) b = 'http://' + b;
+      if (provider === 'ollama' && !/^https?:\/\//i.test(b)) {
+        // 允许用户只填 host:port；若是相对路径（/api/...）则保留，否则补 http
+        if (b.charAt(0) !== '/') b = 'http://' + b;
+      }
       return b;
+    }
+
+    function currentBaseDisplay() {
+      var b = String(settings.baseUrl || '').trim();
+      return b || autoBase(settings.provider);
     }
 
     function saveSettings() {
       var provider = $('mc-provider').value === 'openai' ? 'openai' : 'ollama';
+      // baseUrl 保留原始输入（空字符串 = 自动跟随页面后端代理），
+      // 真正的地址解析在请求时由 normalizeBase 完成，这样页面换环境也能自适应。
       settings = {
         provider: provider,
-        baseUrl: normalizeBase(provider, $('mc-base').value),
+        baseUrl: String($('mc-base').value || '').trim().replace(/\/+$/, ''),
         model: String($('mc-model').value || (provider === 'ollama' ? 'qwen3:4b' : 'gpt-4o-mini')).trim(),
         apiKey: String($('mc-key').value || '').trim(),
         tts: settings.tts,
@@ -34600,7 +34638,7 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
         if (patch[key] !== undefined) next[key] = patch[key];
       }
       next.provider = next.provider === 'openai' ? 'openai' : 'ollama';
-      next.baseUrl = normalizeBase(next.provider, next.baseUrl);
+      next.baseUrl = String(next.baseUrl == null ? '' : next.baseUrl).trim().replace(/\/+$/, '');
       settings = next;
       writeSettings(settings);
       applySettingsToUI();
@@ -34628,11 +34666,13 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
       var provider = $('mc-provider').value;
       var base = $('mc-base');
       var model = $('mc-model');
+      base.placeholder = autoBase(provider);
       if (provider === 'ollama') {
-        if (!base.value || /openai\.com/i.test(base.value)) base.value = 'http://localhost:11434';
+        // 清空让其走自动（页面后端代理 / localhost），除非用户已填非默认地址
+        if (!base.value || /openai\.com|api\.openai/i.test(base.value)) base.value = '';
         if (!model.value || model.value === 'gpt-4o-mini') model.value = 'qwen3:4b';
       } else {
-        if (!base.value || /localhost|127\.0\.0\.1/i.test(base.value)) base.value = 'https://api.openai.com/v1';
+        if (!base.value || /localhost|127\.0\.0\.1|\/ollama/i.test(base.value)) base.value = '';
         if (!model.value || model.value === 'qwen3:4b') model.value = 'gpt-4o-mini';
       }
     });

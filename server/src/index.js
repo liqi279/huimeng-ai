@@ -27,6 +27,7 @@ const scriptRoutes = require('./routes/script');
 const artRoutes = require('./routes/art');
 const ouaRoutes = require('./routes/oua');
 const animationRoutes = require('./routes/animation');
+const ollamaRoutes = require('./routes/ollama');
 
 const app = express();
 
@@ -35,6 +36,12 @@ const corsOrigin = config.CORS_ORIGIN === '*'
   : config.CORS_ORIGIN.split(',').map((value) => value.trim()).filter(Boolean);
 
 app.use(cors({ origin: corsOrigin }));
+
+/* Ollama 代理必须放在 express.json 之前，才能原样转发请求体（含流式 / 大体积）。
+ * 前端请求 /api/ollama/* ，后端转发到本机 http://127.0.0.1:11434/* ，
+ * 这样 HTTPS 页面也能通过同源代理访问本地 Ollama，避免混合内容拦截。 */
+app.use('/api/ollama', ollamaRoutes);
+
 app.use(express.json({ limit: '25mb' }));
 
 app.use('/api', healthRoutes);
