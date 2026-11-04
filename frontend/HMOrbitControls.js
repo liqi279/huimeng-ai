@@ -8,6 +8,7 @@
     this.target = new THREE.Vector3(0, 1.2, 0);
     this.minDistance = 2;
     this.maxDistance = 120;
+    this.enabled = true;
     this.enableDamping = true;
     this.dampingFactor = 0.08;
     this.enablePan = true;
@@ -43,23 +44,24 @@
       if (e.button === 0) self._state = 'rotate';
       else if (e.button === 2) self._state = 'pan';
       else return;
-      if (self._state === 'rotate') self._rotateStart.set(e.clientX, e.clientY);
-      if (self._state === 'pan') self._panStart.set(e.clientX, e.clientY);
+      if (self._state === 'rotate') { self._rotateStart.x = e.clientX; self._rotateStart.y = e.clientY; }
+      if (self._state === 'pan') { self._panStart.x = e.clientX; self._panStart.y = e.clientY; }
       e.preventDefault();
     };
     this._onMove = function (e) {
+      if (!self.enabled) return;
       if (self._state === 'rotate' && self.enableRotate) {
         var dx = e.clientX - self._rotateStart.x;
         var dy = e.clientY - self._rotateStart.y;
         self._sphericalDelta.theta -= dx * 0.005 * self.rotateSpeed;
         self._sphericalDelta.phi -= dy * 0.005 * self.rotateSpeed;
-        self._rotateStart.set(e.clientX, e.clientY);
+        self._rotateStart.x = e.clientX; self._rotateStart.y = e.clientY;
       } else if (self._state === 'pan' && self.enablePan) {
         var dx2 = e.clientX - self._panStart.x;
         var dy2 = e.clientY - self._panStart.y;
         self._panLeftRight(-2 * dx2 / self.domElement.clientWidth);
         self._panUpDown(2 * dy2 / self.domElement.clientHeight);
-        self._panStart.set(e.clientX, e.clientY);
+        self._panStart.x = e.clientX; self._panStart.y = e.clientY;
       }
     };
     this._onUp = function () { self._state = 'none'; };
