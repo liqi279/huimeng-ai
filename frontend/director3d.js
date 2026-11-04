@@ -311,7 +311,13 @@ window.HMDirector3D = (function () {
     scene.background = new THREE.Color(0x0a0e16);
     scene.fog = new THREE.Fog(0x0a0e16, 30, 80);
     camera = new THREE.PerspectiveCamera(40, 1, 0.05, 500);
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    } catch (err) {
+      console.error('[Director3D] WebGL 初始化失败', err);
+      showWebGLFallback();
+      return false;
+    }
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -353,6 +359,20 @@ window.HMDirector3D = (function () {
     tControls = new window.HMTransformControls(camera, canvas);
     scene.add(tControls._group);
     setupGLTFLoader();
+    return true;
+  }
+
+  function showWebGLFallback() {
+    try {
+      if (!container) return;
+      container.style.position = 'relative';
+      var tip = document.createElement('div');
+      tip.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;color:#8b93a1;font-size:13px;line-height:1.7;z-index:5;background:#0a0e16';
+      tip.innerHTML = '<div style="font-size:30px">🖥️</div>' +
+        '<div style="color:#e6e9ef;font-weight:600">当前浏览器未启用 WebGL</div>' +
+        '<div>3D 导演台需要 WebGL 渲染。<br>请在 Chrome / Edge 设置中开启「使用图形加速」，<br>或访问 <code style="color:#7ca2ff">chrome://gpu</code> 检查是否被禁用。</div>';
+      container.appendChild(tip);
+    } catch (e) {}
   }
 
   function resize() {
@@ -818,7 +838,7 @@ window.HMDirector3D = (function () {
 
   /* ---------- 主循环 ---------- */
   function loop() {
-    if (!active) { rafId = null; return; }
+    if (!active || !renderer) { rafId = null; return; }
     if (camMode) {
       applyFly();
       var qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), camFly.yaw);
@@ -831,6 +851,7 @@ window.HMDirector3D = (function () {
 
   /* ---------- 截图 / 存档 ---------- */
   function captureShot() {
+    if (!renderer) return;
     renderer.render(scene, camera);
     var url; try { url = renderer.domElement.toDataURL('image/png'); } catch (e) { return; }
     var a = document.createElement('a');
@@ -907,7 +928,8 @@ window.HMDirector3D = (function () {
     inspectorEl = document.getElementById('d3Inspector');
     objListEl = document.getElementById('d3ObjList');
     if (!canvas || !container) return;
-    setupScene(); bound = true;
+    bound = true;
+    if (!setupScene()) { bound = true; return; }
     loadScene();
     if (!objects.length) { addPrimitive('cube'); addPrimitive('sphere'); addPrimitive('mannequin'); selectObject(null); }
     canvas.addEventListener('mousedown', onDown);
@@ -925,6 +947,7 @@ window.HMDirector3D = (function () {
 
   function enter() {
     active = true; if (!bound) init();
+    if (!renderer) { syncTopBar(); return; }
     resize(); syncTopBar();
     requestAnimationFrame(resize);
     if (rafId) cancelAnimationFrame(rafId);
