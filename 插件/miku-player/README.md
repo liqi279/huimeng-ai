@@ -132,7 +132,10 @@ miku-vinyl-player/
 ### 最简用法
 
 ```html
-<script src="dist/miku-player.js"></script>
+<!-- 线上地址（GitHub Pages，任意页面可直接引用） -->
+<script src="https://liqi279.github.io/huimeng-ai/miku-player.js"></script>
+<!-- 或本地路径 -->
+<!-- <script src="dist/miku-player.js"></script> -->
 <script>
   MikuPlayer.init();   // 默认挂到 body，右下角悬浮
 </script>

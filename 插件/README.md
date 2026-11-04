@@ -13,10 +13,10 @@
 参见 [`blender-bridge/README.md`](./blender-bridge/README.md)。
 
 ### 初音胶片播放器（嵌入任意页面）
-只需引入一个 JS 文件：
+只需引入一个 JS 文件（已部署到 GitHub Pages，可直接用线上地址）：
 
 ```html
-<script src="插件/miku-player/dist/miku-player.js"></script>
+<script src="https://liqi279.github.io/huimeng-ai/miku-player.js"></script>
 <script>
   // 挂到 body（默认右下角悬浮）
   MikuPlayer.init();
