@@ -13951,6 +13951,99 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   .hm-api-stat strong { font-size: 22px; }
 }
 
+/* ========= API 接入管理 — 调用日志 ========= */
+.hm-api-sec {
+  margin-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 22px;
+}
+.hm-api-sec-title {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 14px; font-size: 14px; font-weight: 600;
+  color: #e7e2fb; letter-spacing: 0.02em;
+}
+.hm-api-sec-bar {
+  width: 3px; height: 14px; border-radius: 2px;
+  background: linear-gradient(180deg, #60a5fa, #a78bfa);
+}
+.hm-api-sec-sub {
+  font-size: 11px; font-weight: 400; color: rgba(160, 155, 185, 0.6);
+}
+.hm-api-log-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+.hm-api-tool-btn.small { padding: 5px 10px; font-size: 11.5px; }
+
+.hm-api-log-empty {
+  padding: 32px 20px; text-align: center;
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+.hm-api-log-empty-ico { font-size: 32px; margin-bottom: 8px; }
+.hm-api-log-empty p { margin: 0; font-size: 13px; color: #c9c1e2; }
+.hm-api-log-empty small { font-size: 11px; color: rgba(160, 155, 185, 0.55); }
+
+.hm-api-log-wrap {
+  max-height: 480px; overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(14, 12, 28, 0.55);
+}
+.hm-api-log-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 11.5px; font-variant-numeric: tabular-nums;
+}
+.hm-api-log-table thead { position: sticky; top: 0; z-index: 1; }
+.hm-api-log-table th {
+  text-align: left; padding: 9px 12px;
+  background: rgba(16, 14, 30, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 500; color: rgba(200, 195, 220, 0.6);
+  font-size: 10.5px; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.hm-api-log-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #c9c1e2;
+  vertical-align: middle;
+}
+.hm-api-log-table tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
+.hm-api-log-table tr.is-fail td { background: rgba(248, 113, 113, 0.05); }
+.hm-api-log-table tr.is-fail:hover td { background: rgba(248, 113, 113, 0.09); }
+
+.hm-api-log-ts { color: rgba(180, 175, 205, 0.7); white-space: nowrap; font-size: 11px; }
+.hm-api-log-status {
+  width: 28px; text-align: center; font-weight: 700; font-size: 13px;
+}
+.hm-api-log-status.is-ok  { color: #4ade80; }
+.hm-api-log-status.is-fail { color: #f87171; }
+.hm-api-log-provider {
+  max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: rgba(160, 190, 255, 0.9); font-family: 'SF Mono', monospace; font-size: 10.5px;
+}
+.hm-api-log-model {
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: rgba(196, 181, 253, 0.85);
+}
+.hm-api-log-latency { color: #fbbf24; white-space: nowrap; text-align: right; font-size: 11px; }
+.hm-api-log-prompt {
+  max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: rgba(220, 215, 240, 0.85); font-size: 11px;
+}
+.hm-api-log-err {
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #fca5a5; font-size: 11px;
+}
+.hm-api-log-more { margin-top: 10px; font-size: 11px; color: rgba(160, 155, 185, 0.55); }
+
+/* 滚动条美化 */
+.hm-api-log-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.hm-api-log-wrap::-webkit-scrollbar-track { background: transparent; }
+.hm-api-log-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12); border-radius: 4px;
+}
+.hm-api-log-wrap::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+
 </style>
   <style>
 /* =============================================================
@@ -14302,7 +14395,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 .hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }
 
 </style>
-<script>window.HM_BUILD = "20261104034923-c07749f";</script>
+<script>window.HM_BUILD = "20261104035920-96b10a6";</script>
 </head>
 <body data-view="create">
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
@@ -18691,7 +18784,79 @@ const CATALOG_FALLBACK = {
     { id: 'flux', engine: 'flux', model: 'flux', name: 'FLUX.1', badge: '免密钥', hint: '通用大模型 · 高质量' },
     { id: 'flux-realism', engine: 'flux', model: 'flux-realism', name: 'FLUX Realism', badge: '免密钥', hint: '写实质感 · 细腻' },
   ],
-  providers: [],
+  providers: [
+    {
+      id: 'siliconflow', name: '硅基流动 SiliconFlow',
+      base: 'https://api.siliconflow.cn/v1',
+      color: '#60a5fa',
+      keyUrl: 'https://cloud.siliconflow.cn/account/ak',
+      models: [
+        { id: 'Kwai-Kolors/Kolors', name: 'Kolors 中文动漫', badge: '动漫 · 官方' },
+        { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', badge: '通用 · 快速' },
+        { id: 'black-forest-labs/FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用 · 高质量' },
+        { id: 'stabilityai/stable-diffusion-3.5-large', name: 'SD 3.5 Large', badge: 'SD · 标准' }
+      ]
+    },
+    {
+      id: 'modelscope', name: '魔搭 ModelScope',
+      base: 'https://api-inference.modelscope.cn/v1',
+      color: '#34d399',
+      keyUrl: 'https://modelscope.cn/my/myaccesstoken',
+      models: [
+        { id: 'Kolors', name: 'Kolors 中文动漫', badge: '动漫 · 官方' },
+        { id: 'FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用' }
+      ]
+    },
+    {
+      id: 'together', name: 'Together AI',
+      base: 'https://api.together.xyz/v1',
+      color: '#fb923c',
+      keyUrl: 'https://api.together.xyz/settings/api-keys',
+      models: [
+        { id: 'black-forest-labs/FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
+        { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', badge: '快速' },
+        { id: 'stabilityai/stable-diffusion-xl-base-1.0', name: 'SDXL 1.0', badge: 'SD · 经典' }
+      ]
+    },
+    {
+      id: 'openrouter', name: 'OpenRouter',
+      base: 'https://openrouter.ai/api/v1',
+      color: '#f472b6',
+      keyUrl: 'https://openrouter.ai/keys',
+      models: [
+        { id: 'black-forest-labs/flux.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
+        { id: 'google/imagen-3.0-free', name: 'Imagen 3.0 Free', badge: '免费' }
+      ]
+    },
+    {
+      id: 'dashscope', name: '阿里百炼 DashScope',
+      base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      color: '#6366f1',
+      keyUrl: 'https://dashscope.console.aliyun.com/apiKey',
+      models: [
+        { id: 'flux-schnell', name: 'FLUX Schnell', badge: '阿里 · 官方' },
+        { id: 'wanx-v1', name: '通义万相', badge: '阿里 · 中文' }
+      ]
+    },
+    {
+      id: 'ark', name: '火山方舟 Ark',
+      base: 'https://ark.cn-beijing.volces.com/api/v3',
+      color: '#ef4444',
+      keyUrl: 'https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey',
+      models: [
+        { id: 'doubao-1-5-vision-pro-32k-250115', name: '豆包 Vision Pro', badge: '火山' }
+      ]
+    },
+    {
+      id: 'hunyuan', name: '混元 Hunyuan',
+      base: 'https://api.hunyuan.cloud.tencent.com/v1',
+      color: '#06b6d4',
+      keyUrl: 'https://cloud.tencent.com/product/hunyuan',
+      models: [
+        { id: 'hunyuan-image', name: '混元生图', badge: '腾讯' }
+      ]
+    }
+  ],
   loras: [],
   rayin: [
     /* GPT 图像模型（OpenAI key → /images/generations） */
@@ -21691,6 +21856,18 @@ function createLoadingCard(job) {
 
 function markJobError(job, err) {
   job.status = 'error';
+  try {
+    apiLogPush({
+      provider: 'state.engine=' + state.engine + (state.providerId ? '; providerId=' + state.providerId : ''),
+      endpoint: 'generate',
+      model: job.modelName || job.model || '',
+      promptPreview: (job.fullPrompt || '').slice(0, 60),
+      status: 'fail',
+      latencyMs: Math.round(Date.now() - (job.startedAt || Date.now())),
+      errorMsg: (err && (err.message || err.hint || String(err))) || '',
+      jobId: job.id
+    });
+  } catch (e) {}
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;
 
@@ -21717,6 +21894,19 @@ function markJobDone(job, url, seed, elapsed) {
   job.url = url;
   job.seed = seed;
   job.elapsed = elapsed;
+
+  /* API 调用日志 */
+  try {
+    apiLogPush({
+      provider: 'state.engine=' + state.engine + (state.providerId ? '; providerId=' + state.providerId : ''),
+      endpoint: 'generate',
+      model: job.modelName || job.model || '',
+      promptPreview: (job.fullPrompt || '').slice(0, 60),
+      status: 'ok',
+      latencyMs: Math.round(elapsed || (Date.now() - (job.startedAt || Date.now()))),
+      jobId: job.id
+    });
+  } catch (e) {}
 
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;
@@ -43642,13 +43832,20 @@ window.HMChat = (function () {
     var total = providers.length;
     var enabledCount = providers.filter(function (p) { return p.enabled; }).length;
 
+    /* ---- 读取调用日志 ---- */
+    var apiLogs = [];
+    try { apiLogs = JSON.parse(localStorage.getItem('anidream.api-logs.v1') || '[]'); } catch (e) {}
+    var okCount = apiLogs.filter(function (l) { return l.status === 'ok'; }).length;
+    var failCount = apiLogs.length - okCount;
+
     var html = '';
     html += '<div class="hm-admin-body hm-api-body">';
     html += '  <header class="hm-api-header">' +
       '    <div class="hm-api-header-stats">' +
       '      <div class="hm-api-stat"><strong>' + total + '</strong><small>接入总数</small></div>' +
       '      <div class="hm-api-stat"><strong>' + enabledCount + '</strong><small>已启用</small></div>' +
-      '      <div class="hm-api-stat"><strong>' + providers.filter(function (p) { return apiTestState[p.id] === 'ok'; }).length + '</strong><small>在线</small></div>' +
+      '      <div class="hm-api-stat"><strong>' + (providers.filter(function (p) { return apiTestState[p.id] === 'ok'; }).length) + '</strong><small>在线</small></div>' +
+      '      <div class="hm-api-stat"><strong>' + apiLogs.length + '</strong><small>累计调用</small></div>' +
       '    </div>' +
       '    <div class="hm-api-header-actions">' +
       '      <button class="hm-api-tool-btn" data-api-act="test-all">🔍 测试全部</button>' +
@@ -43658,15 +43855,65 @@ window.HMChat = (function () {
       '    </div>' +
       '  </header>';
 
-    html += '  <div class="hm-api-grid">';
+    html += '  <section class="hm-api-sec">' +
+      '    <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>API 接入列表</h3>' +
+      '    <div class="hm-api-grid">';
     providers.forEach(function (p) { html += apiCardHtml(p); });
-    html += '  </div>';
+    html += '    </div>' +
+      '  </section>';
 
-    html += '  <p class="hm-api-footer">密钥仅保存在本浏览器（localStorage），不会上传服务器。每个接入都独立启用，默认引擎在「生成」页底部切换。</p>';
+    html += '  <section class="hm-api-sec">' +
+      '    <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>调用日志 <span class="hm-api-sec-sub">成功 ' + okCount + ' · 失败 ' + failCount + ' · 最多保留 500 条</span></h3>' +
+      '    <div class="hm-api-log-actions">' +
+      '      <button class="hm-api-tool-btn small" data-log-act="clear">🗑 清空日志</button>' +
+      '      <button class="hm-api-tool-btn small" data-log-act="export">📤 导出日志 CSV</button>' +
+      '    </div>';
+
+    if (!apiLogs.length) {
+      html += '<div class="hm-api-log-empty">' +
+        '<div class="hm-api-log-empty-ico">📡</div>' +
+        '<p>还没有调用记录</p>' +
+        '<small>在「生成」页出图成功或失败后会自动写日志</small>' +
+        '</div>';
+    } else {
+      html += '<div class="hm-api-log-wrap"><table class="hm-api-log-table"><thead><tr>' +
+        '<th>时间</th><th>状态</th><th>Provider</th><th>模型</th><th>耗时</th><th>提示词</th><th>错误</th>' +
+        '</tr></thead><tbody>';
+      apiLogs.slice(0, 200).forEach(function (l) { html += logRowHtml(l); });
+      html += '</tbody></table></div>';
+      if (apiLogs.length > 200) html += '<p class="hm-api-log-more">仅显示最近 200 条（共 ' + apiLogs.length + '）</p>';
+    }
+    html += '  </section>';
+
+    html += '  <p class="hm-api-footer">密钥仅保存在本浏览器（localStorage），不会上传服务器。调用日志同样仅本地，可随时清空。</p>';
     html += '</div>';
 
     body.innerHTML = html;
     bindApiPanel(body);
+  }
+
+  function logRowHtml(l) {
+    var d = new Date(l.ts);
+    var hh = String(d.getHours()).padStart(2, '0');
+    var mm = String(d.getMinutes()).padStart(2, '0');
+    var ss = String(d.getSeconds()).padStart(2, '0');
+    var dateStr = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hh + ':' + mm + ':' + ss;
+    var statusClass = l.status === 'ok' ? 'is-ok' : 'is-fail';
+    var statusIcon = l.status === 'ok' ? '✓' : '✗';
+    var provider = hmEsc(l.provider || '');
+    var model = hmEsc(l.model || '');
+    var latency = (l.latencyMs != null ? Math.round(l.latencyMs) + ' ms' : '—');
+    var prompt = hmEsc((l.promptPreview || '').slice(0, 55));
+    var err = hmEsc((l.errorMsg || '').slice(0, 60));
+    return '<tr class="' + statusClass + '">' +
+      '<td class="hm-api-log-ts">' + dateStr + '</td>' +
+      '<td class="hm-api-log-status ' + statusClass + '">' + statusIcon + '</td>' +
+      '<td class="hm-api-log-provider">' + provider + '</td>' +
+      '<td class="hm-api-log-model">' + model + '</td>' +
+      '<td class="hm-api-log-latency">' + latency + '</td>' +
+      '<td class="hm-api-log-prompt" title="' + hmEsc(l.promptPreview || '') + '">' + prompt + '</td>' +
+      '<td class="hm-api-log-err" title="' + hmEsc(l.errorMsg || '') + '">' + err + '</td>' +
+      '</tr>';
   }
 
   function bindApiPanel(body) {
@@ -43724,6 +43971,48 @@ window.HMChat = (function () {
           try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
           renderApiPanel(document.getElementById('adminBody'));
         }
+        return;
+      }
+
+      /* 调用日志操作 */
+      var logActBtn = e.target.closest('[data-log-act]');
+      if (logActBtn) {
+        var logAct = logActBtn.dataset.logAct;
+        if (logAct === 'clear') {
+          if (!confirm('确定清空所有调用日志？（最多保留 500 条，清空后不可恢复）')) return;
+          try { localStorage.removeItem('anidream.api-logs.v1'); } catch (e) {}
+          if (window.HMApp && HMApp.toast) HMApp.toast('日志已清空', 'info');
+        } else if (logAct === 'export') {
+          try {
+            var list = JSON.parse(localStorage.getItem('anidream.api-logs.v1') || '[]');
+            var bom = '\ufeff';
+            var csv = bom + 'ts,date,status,provider,endpoint,model,latencyMs,promptPreview,errorMsg,jobId\n';
+            list.forEach(function (l) {
+              var row = [
+                l.ts || '',
+                new Date(l.ts || 0).toISOString(),
+                l.status || '',
+                '"' + String(l.provider || '').replace(/"/g, '""') + '"',
+                l.endpoint || '',
+                '"' + String(l.model || '').replace(/"/g, '""') + '"',
+                l.latencyMs || '',
+                '"' + String(l.promptPreview || '').replace(/"/g, '""') + '"',
+                '"' + String(l.errorMsg || '').replace(/"/g, '""') + '"',
+                l.jobId || ''
+              ].join(',');
+              csv += row + '\n';
+            });
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'anidream-api-logs.csv';
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+          } catch (err) {
+            if (window.HMApp && HMApp.toast) HMApp.toast('导出失败：' + err.message, 'error');
+          }
+        }
+        renderApiPanel(document.getElementById('adminBody'));
         return;
       }
 

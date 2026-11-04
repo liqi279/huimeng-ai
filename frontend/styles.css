@@ -13942,3 +13942,96 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   .hm-api-header-stats { gap: 16px; }
   .hm-api-stat strong { font-size: 22px; }
 }
+
+/* ========= API 接入管理 — 调用日志 ========= */
+.hm-api-sec {
+  margin-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 22px;
+}
+.hm-api-sec-title {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 14px; font-size: 14px; font-weight: 600;
+  color: #e7e2fb; letter-spacing: 0.02em;
+}
+.hm-api-sec-bar {
+  width: 3px; height: 14px; border-radius: 2px;
+  background: linear-gradient(180deg, #60a5fa, #a78bfa);
+}
+.hm-api-sec-sub {
+  font-size: 11px; font-weight: 400; color: rgba(160, 155, 185, 0.6);
+}
+.hm-api-log-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+.hm-api-tool-btn.small { padding: 5px 10px; font-size: 11.5px; }
+
+.hm-api-log-empty {
+  padding: 32px 20px; text-align: center;
+  border-radius: 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+.hm-api-log-empty-ico { font-size: 32px; margin-bottom: 8px; }
+.hm-api-log-empty p { margin: 0; font-size: 13px; color: #c9c1e2; }
+.hm-api-log-empty small { font-size: 11px; color: rgba(160, 155, 185, 0.55); }
+
+.hm-api-log-wrap {
+  max-height: 480px; overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(14, 12, 28, 0.55);
+}
+.hm-api-log-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 11.5px; font-variant-numeric: tabular-nums;
+}
+.hm-api-log-table thead { position: sticky; top: 0; z-index: 1; }
+.hm-api-log-table th {
+  text-align: left; padding: 9px 12px;
+  background: rgba(16, 14, 30, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 500; color: rgba(200, 195, 220, 0.6);
+  font-size: 10.5px; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.hm-api-log-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #c9c1e2;
+  vertical-align: middle;
+}
+.hm-api-log-table tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
+.hm-api-log-table tr.is-fail td { background: rgba(248, 113, 113, 0.05); }
+.hm-api-log-table tr.is-fail:hover td { background: rgba(248, 113, 113, 0.09); }
+
+.hm-api-log-ts { color: rgba(180, 175, 205, 0.7); white-space: nowrap; font-size: 11px; }
+.hm-api-log-status {
+  width: 28px; text-align: center; font-weight: 700; font-size: 13px;
+}
+.hm-api-log-status.is-ok  { color: #4ade80; }
+.hm-api-log-status.is-fail { color: #f87171; }
+.hm-api-log-provider {
+  max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: rgba(160, 190, 255, 0.9); font-family: 'SF Mono', monospace; font-size: 10.5px;
+}
+.hm-api-log-model {
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: rgba(196, 181, 253, 0.85);
+}
+.hm-api-log-latency { color: #fbbf24; white-space: nowrap; text-align: right; font-size: 11px; }
+.hm-api-log-prompt {
+  max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: rgba(220, 215, 240, 0.85); font-size: 11px;
+}
+.hm-api-log-err {
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #fca5a5; font-size: 11px;
+}
+.hm-api-log-more { margin-top: 10px; font-size: 11px; color: rgba(160, 155, 185, 0.55); }
+
+/* 滚动条美化 */
+.hm-api-log-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.hm-api-log-wrap::-webkit-scrollbar-track { background: transparent; }
+.hm-api-log-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12); border-radius: 4px;
+}
+.hm-api-log-wrap::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }

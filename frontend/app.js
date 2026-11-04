@@ -55,7 +55,79 @@ const CATALOG_FALLBACK = {
     { id: 'flux', engine: 'flux', model: 'flux', name: 'FLUX.1', badge: '免密钥', hint: '通用大模型 · 高质量' },
     { id: 'flux-realism', engine: 'flux', model: 'flux-realism', name: 'FLUX Realism', badge: '免密钥', hint: '写实质感 · 细腻' },
   ],
-  providers: [],
+  providers: [
+    {
+      id: 'siliconflow', name: '硅基流动 SiliconFlow',
+      base: 'https://api.siliconflow.cn/v1',
+      color: '#60a5fa',
+      keyUrl: 'https://cloud.siliconflow.cn/account/ak',
+      models: [
+        { id: 'Kwai-Kolors/Kolors', name: 'Kolors 中文动漫', badge: '动漫 · 官方' },
+        { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', badge: '通用 · 快速' },
+        { id: 'black-forest-labs/FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用 · 高质量' },
+        { id: 'stabilityai/stable-diffusion-3.5-large', name: 'SD 3.5 Large', badge: 'SD · 标准' }
+      ]
+    },
+    {
+      id: 'modelscope', name: '魔搭 ModelScope',
+      base: 'https://api-inference.modelscope.cn/v1',
+      color: '#34d399',
+      keyUrl: 'https://modelscope.cn/my/myaccesstoken',
+      models: [
+        { id: 'Kolors', name: 'Kolors 中文动漫', badge: '动漫 · 官方' },
+        { id: 'FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用' }
+      ]
+    },
+    {
+      id: 'together', name: 'Together AI',
+      base: 'https://api.together.xyz/v1',
+      color: '#fb923c',
+      keyUrl: 'https://api.together.xyz/settings/api-keys',
+      models: [
+        { id: 'black-forest-labs/FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
+        { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', badge: '快速' },
+        { id: 'stabilityai/stable-diffusion-xl-base-1.0', name: 'SDXL 1.0', badge: 'SD · 经典' }
+      ]
+    },
+    {
+      id: 'openrouter', name: 'OpenRouter',
+      base: 'https://openrouter.ai/api/v1',
+      color: '#f472b6',
+      keyUrl: 'https://openrouter.ai/keys',
+      models: [
+        { id: 'black-forest-labs/flux.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
+        { id: 'google/imagen-3.0-free', name: 'Imagen 3.0 Free', badge: '免费' }
+      ]
+    },
+    {
+      id: 'dashscope', name: '阿里百炼 DashScope',
+      base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      color: '#6366f1',
+      keyUrl: 'https://dashscope.console.aliyun.com/apiKey',
+      models: [
+        { id: 'flux-schnell', name: 'FLUX Schnell', badge: '阿里 · 官方' },
+        { id: 'wanx-v1', name: '通义万相', badge: '阿里 · 中文' }
+      ]
+    },
+    {
+      id: 'ark', name: '火山方舟 Ark',
+      base: 'https://ark.cn-beijing.volces.com/api/v3',
+      color: '#ef4444',
+      keyUrl: 'https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey',
+      models: [
+        { id: 'doubao-1-5-vision-pro-32k-250115', name: '豆包 Vision Pro', badge: '火山' }
+      ]
+    },
+    {
+      id: 'hunyuan', name: '混元 Hunyuan',
+      base: 'https://api.hunyuan.cloud.tencent.com/v1',
+      color: '#06b6d4',
+      keyUrl: 'https://cloud.tencent.com/product/hunyuan',
+      models: [
+        { id: 'hunyuan-image', name: '混元生图', badge: '腾讯' }
+      ]
+    }
+  ],
   loras: [],
   rayin: [
     /* GPT 图像模型（OpenAI key → /images/generations） */
@@ -3055,6 +3127,18 @@ function createLoadingCard(job) {
 
 function markJobError(job, err) {
   job.status = 'error';
+  try {
+    apiLogPush({
+      provider: 'state.engine=' + state.engine + (state.providerId ? '; providerId=' + state.providerId : ''),
+      endpoint: 'generate',
+      model: job.modelName || job.model || '',
+      promptPreview: (job.fullPrompt || '').slice(0, 60),
+      status: 'fail',
+      latencyMs: Math.round(Date.now() - (job.startedAt || Date.now())),
+      errorMsg: (err && (err.message || err.hint || String(err))) || '',
+      jobId: job.id
+    });
+  } catch (e) {}
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;
 
@@ -3081,6 +3165,19 @@ function markJobDone(job, url, seed, elapsed) {
   job.url = url;
   job.seed = seed;
   job.elapsed = elapsed;
+
+  /* API 调用日志 */
+  try {
+    apiLogPush({
+      provider: 'state.engine=' + state.engine + (state.providerId ? '; providerId=' + state.providerId : ''),
+      endpoint: 'generate',
+      model: job.modelName || job.model || '',
+      promptPreview: (job.fullPrompt || '').slice(0, 60),
+      status: 'ok',
+      latencyMs: Math.round(elapsed || (Date.now() - (job.startedAt || Date.now()))),
+      jobId: job.id
+    });
+  } catch (e) {}
 
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;

@@ -728,13 +728,20 @@
     var total = providers.length;
     var enabledCount = providers.filter(function (p) { return p.enabled; }).length;
 
+    /* ---- 读取调用日志 ---- */
+    var apiLogs = [];
+    try { apiLogs = JSON.parse(localStorage.getItem('anidream.api-logs.v1') || '[]'); } catch (e) {}
+    var okCount = apiLogs.filter(function (l) { return l.status === 'ok'; }).length;
+    var failCount = apiLogs.length - okCount;
+
     var html = '';
     html += '<div class="hm-admin-body hm-api-body">';
     html += '  <header class="hm-api-header">' +
       '    <div class="hm-api-header-stats">' +
       '      <div class="hm-api-stat"><strong>' + total + '</strong><small>接入总数</small></div>' +
       '      <div class="hm-api-stat"><strong>' + enabledCount + '</strong><small>已启用</small></div>' +
-      '      <div class="hm-api-stat"><strong>' + providers.filter(function (p) { return apiTestState[p.id] === 'ok'; }).length + '</strong><small>在线</small></div>' +
+      '      <div class="hm-api-stat"><strong>' + (providers.filter(function (p) { return apiTestState[p.id] === 'ok'; }).length) + '</strong><small>在线</small></div>' +
+      '      <div class="hm-api-stat"><strong>' + apiLogs.length + '</strong><small>累计调用</small></div>' +
       '    </div>' +
       '    <div class="hm-api-header-actions">' +
       '      <button class="hm-api-tool-btn" data-api-act="test-all">🔍 测试全部</button>' +
@@ -744,15 +751,65 @@
       '    </div>' +
       '  </header>';
 
-    html += '  <div class="hm-api-grid">';
+    html += '  <section class="hm-api-sec">' +
+      '    <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>API 接入列表</h3>' +
+      '    <div class="hm-api-grid">';
     providers.forEach(function (p) { html += apiCardHtml(p); });
-    html += '  </div>';
+    html += '    </div>' +
+      '  </section>';
 
-    html += '  <p class="hm-api-footer">密钥仅保存在本浏览器（localStorage），不会上传服务器。每个接入都独立启用，默认引擎在「生成」页底部切换。</p>';
+    html += '  <section class="hm-api-sec">' +
+      '    <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>调用日志 <span class="hm-api-sec-sub">成功 ' + okCount + ' · 失败 ' + failCount + ' · 最多保留 500 条</span></h3>' +
+      '    <div class="hm-api-log-actions">' +
+      '      <button class="hm-api-tool-btn small" data-log-act="clear">🗑 清空日志</button>' +
+      '      <button class="hm-api-tool-btn small" data-log-act="export">📤 导出日志 CSV</button>' +
+      '    </div>';
+
+    if (!apiLogs.length) {
+      html += '<div class="hm-api-log-empty">' +
+        '<div class="hm-api-log-empty-ico">📡</div>' +
+        '<p>还没有调用记录</p>' +
+        '<small>在「生成」页出图成功或失败后会自动写日志</small>' +
+        '</div>';
+    } else {
+      html += '<div class="hm-api-log-wrap"><table class="hm-api-log-table"><thead><tr>' +
+        '<th>时间</th><th>状态</th><th>Provider</th><th>模型</th><th>耗时</th><th>提示词</th><th>错误</th>' +
+        '</tr></thead><tbody>';
+      apiLogs.slice(0, 200).forEach(function (l) { html += logRowHtml(l); });
+      html += '</tbody></table></div>';
+      if (apiLogs.length > 200) html += '<p class="hm-api-log-more">仅显示最近 200 条（共 ' + apiLogs.length + '）</p>';
+    }
+    html += '  </section>';
+
+    html += '  <p class="hm-api-footer">密钥仅保存在本浏览器（localStorage），不会上传服务器。调用日志同样仅本地，可随时清空。</p>';
     html += '</div>';
 
     body.innerHTML = html;
     bindApiPanel(body);
+  }
+
+  function logRowHtml(l) {
+    var d = new Date(l.ts);
+    var hh = String(d.getHours()).padStart(2, '0');
+    var mm = String(d.getMinutes()).padStart(2, '0');
+    var ss = String(d.getSeconds()).padStart(2, '0');
+    var dateStr = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hh + ':' + mm + ':' + ss;
+    var statusClass = l.status === 'ok' ? 'is-ok' : 'is-fail';
+    var statusIcon = l.status === 'ok' ? '✓' : '✗';
+    var provider = hmEsc(l.provider || '');
+    var model = hmEsc(l.model || '');
+    var latency = (l.latencyMs != null ? Math.round(l.latencyMs) + ' ms' : '—');
+    var prompt = hmEsc((l.promptPreview || '').slice(0, 55));
+    var err = hmEsc((l.errorMsg || '').slice(0, 60));
+    return '<tr class="' + statusClass + '">' +
+      '<td class="hm-api-log-ts">' + dateStr + '</td>' +
+      '<td class="hm-api-log-status ' + statusClass + '">' + statusIcon + '</td>' +
+      '<td class="hm-api-log-provider">' + provider + '</td>' +
+      '<td class="hm-api-log-model">' + model + '</td>' +
+      '<td class="hm-api-log-latency">' + latency + '</td>' +
+      '<td class="hm-api-log-prompt" title="' + hmEsc(l.promptPreview || '') + '">' + prompt + '</td>' +
+      '<td class="hm-api-log-err" title="' + hmEsc(l.errorMsg || '') + '">' + err + '</td>' +
+      '</tr>';
   }
 
   function bindApiPanel(body) {
@@ -810,6 +867,48 @@
           try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
           renderApiPanel(document.getElementById('adminBody'));
         }
+        return;
+      }
+
+      /* 调用日志操作 */
+      var logActBtn = e.target.closest('[data-log-act]');
+      if (logActBtn) {
+        var logAct = logActBtn.dataset.logAct;
+        if (logAct === 'clear') {
+          if (!confirm('确定清空所有调用日志？（最多保留 500 条，清空后不可恢复）')) return;
+          try { localStorage.removeItem('anidream.api-logs.v1'); } catch (e) {}
+          if (window.HMApp && HMApp.toast) HMApp.toast('日志已清空', 'info');
+        } else if (logAct === 'export') {
+          try {
+            var list = JSON.parse(localStorage.getItem('anidream.api-logs.v1') || '[]');
+            var bom = '\ufeff';
+            var csv = bom + 'ts,date,status,provider,endpoint,model,latencyMs,promptPreview,errorMsg,jobId\n';
+            list.forEach(function (l) {
+              var row = [
+                l.ts || '',
+                new Date(l.ts || 0).toISOString(),
+                l.status || '',
+                '"' + String(l.provider || '').replace(/"/g, '""') + '"',
+                l.endpoint || '',
+                '"' + String(l.model || '').replace(/"/g, '""') + '"',
+                l.latencyMs || '',
+                '"' + String(l.promptPreview || '').replace(/"/g, '""') + '"',
+                '"' + String(l.errorMsg || '').replace(/"/g, '""') + '"',
+                l.jobId || ''
+              ].join(',');
+              csv += row + '\n';
+            });
+            var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'anidream-api-logs.csv';
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+          } catch (err) {
+            if (window.HMApp && HMApp.toast) HMApp.toast('导出失败：' + err.message, 'error');
+          }
+        }
+        renderApiPanel(document.getElementById('adminBody'));
         return;
       }
 
