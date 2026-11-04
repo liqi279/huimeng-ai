@@ -187,7 +187,7 @@ ipcMain.handle("ai:reply", async (_event, message, history) => {
             { role: "user", content: userMessage }
           ],
           stream: false,
-          think: false,
+          think: true, // qwen3 会忽略 think:false 并把推理混进 content；think:true 会把推理隔离到 message.thinking，只取 content 即为干净回复,
           options: { temperature: 0.75, num_ctx: 4096 }
         })
       });

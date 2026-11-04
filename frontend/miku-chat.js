@@ -518,7 +518,11 @@
           model: settings.model || 'qwen3:4b',
           messages: buildMessages(userText),
           stream: false,
-          think: false,
+          // 实测：部分 Ollama 模型（如 qwen3 某些版本）会忽略 think:false，
+          // 把推理过程直接混进 content 且不带 <think> 标签，无法过滤。
+          // 改用 think:true，让推理进入独立的 message.thinking 字段，
+          // 这里只取 message.content，输出始终是干净的回复。
+          think: true,
           options: { temperature: 0.75, num_ctx: 4096 }
         })
       }).then(function (res) {
