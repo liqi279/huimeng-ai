@@ -353,7 +353,7 @@ window.HMDirector3D = (function () {
     raycaster = new THREE.Raycaster(); pointer = new THREE.Vector2();
     orbit = new window.HMOrbitControls(camera, canvas); orbit.enableDamping = true;
     orbit.target.copy(camOrbit.target);
-    var initPos = new THREE.Vector3().setFromSpherical(new THREE.Spherical(camOrbit.dist, camOrbit.pitch + Math.PI / 2, camOrbit.yaw)).add(camOrbit.target);
+    var initPos = new THREE.Vector3().setFromSpherical(new THREE.Spherical(camOrbit.dist, Math.PI / 2 - camOrbit.pitch, camOrbit.yaw)).add(camOrbit.target);
     camera.position.copy(initPos);
 
     tControls = new window.HMTransformControls(camera, canvas);
@@ -828,7 +828,7 @@ window.HMDirector3D = (function () {
   function resetCamera() {
     if (camMode) { camFly = { pos: new THREE.Vector3(0, 3.5, 13), yaw: -0.65, pitch: -0.06 }; return; }
     camOrbit = { yaw: -0.65, pitch: 0.4, dist: 17, target: new THREE.Vector3(0, 1.2, 0) };
-    var pos = new THREE.Vector3().setFromSpherical(new THREE.Spherical(camOrbit.dist, camOrbit.pitch + Math.PI / 2, camOrbit.yaw)).add(camOrbit.target);
+    var pos = new THREE.Vector3().setFromSpherical(new THREE.Spherical(camOrbit.dist, Math.PI / 2 - camOrbit.pitch, camOrbit.yaw)).add(camOrbit.target);
     camera.position.copy(pos); orbit.target.copy(camOrbit.target);
     orbit._spherical.setFromVector3(camera.position.clone().sub(orbit.target));
     orbit._sphericalDelta.set(0, 0, 0); orbit._panOffset.set(0, 0, 0);
