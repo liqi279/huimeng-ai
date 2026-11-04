@@ -66,6 +66,10 @@
           destroyAllCharts();
           body.innerHTML = '';
           switchSubTab('overview');
+        } else if (top === 'api') {
+          subTabsWrap.style.display = 'none';
+          destroyAllCharts();
+          renderApiPanel(body);
         } else {
           /* 占位 Tab */
           subTabsWrap.style.display = 'none';
@@ -518,6 +522,356 @@
     document.addEventListener('DOMContentLoaded', ensureAdminApi);
   } else {
     ensureAdminApi();
+  }
+
+  /* =========================================================
+   * API接入管理 —— 可视化卡片面板
+   * 数据源：HMApp.state.providers（anidream.providers.v1）
+   *        HMApp.state.prefs 里 rayin 密钥（anidream.rayin.v1）
+   *        HMApp.state.catalog.providers（后端 /catalog 下发的预设）
+   * ========================================================= */
+
+  var apiTestState = {}; // {providerId: 'ok' | 'fail' | 'loading'}
+
+  function hmEsc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function maskKey(key) {
+    if (!key) return '未配置';
+    if (key.length <= 8) return '••••••••';
+    return key.slice(0, 3) + '••••••••' + key.slice(-4);
+  }
+
+  function getProviders() {
+    var App = window.HMApp;
+    if (!App) return [];
+    var catalog = (App.state && App.state.catalog && App.state.catalog.providers) || [];
+    var saved = (App.state && App.state.providers) || {};
+    var list = catalog.map(function (p) {
+      var s = saved[p.id] || {};
+      return {
+        id: p.id,
+        name: p.name,
+        base: s.base || p.base || '',
+        key: s.key || '',
+        model: s.model || (p.models && p.models[0] ? p.models[0].id : ''),
+        enabled: p.id === (App.state && App.state.providerId) || !!s.key,
+        preset: p
+      };
+    });
+    // RayinAPI 单独一条
+    var prefs = (App.state && App.state.prefs) || {};
+    var rayinPrefs = prefs.rayin || {};
+    list.push({
+      id: '__rayin__',
+      name: 'RayinAPI（GPT-image / Gemini Banana）',
+      base: rayinPrefs.base || 'https://www.rayinai.com/v1',
+      key: rayinPrefs.key || '',
+      model: prefs.gptModel || 'gpt-image-2',
+      model2: prefs.bananaModel || 'gemini-3.1-flash-image',
+      enabled: !!rayinPrefs.key || true,
+      isRayin: true
+    });
+    // 自定义已填但 catalog 里没有的
+    Object.keys(saved).forEach(function (id) {
+      if (id === '__rayin__') return;
+      if (!list.find(function (p) { return p.id === id; })) {
+        list.push({
+          id: id, name: id,
+          base: saved[id].base || '',
+          key: saved[id].key || '',
+          model: saved[id].model || '',
+          enabled: !!saved[id].key,
+          isCustom: true
+        });
+      }
+    });
+    return list;
+  }
+
+  function saveApiCard(id, base, key, model, model2, enabled) {
+    var App = window.HMApp;
+    if (!App) return;
+    var prefs = App.state.prefs = App.state.prefs || {};
+    var providers = App.state.providers = App.state.providers || {};
+
+    if (id === '__rayin__') {
+      prefs.rayin = prefs.rayin || {};
+      prefs.rayin.base = base;
+      prefs.rayin.key = key;
+      prefs.gptModel = model;
+      prefs.bananaModel = model2 || prefs.bananaModel;
+      if (enabled) App.state.engine = 'gpt-image';
+      // 持久化
+      try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(prefs.rayin)); } catch (e) {}
+      try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
+    } else {
+      providers[id] = { base: base, key: key, model: model };
+      if (enabled) App.state.providerId = id;
+      try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
+      try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
+    }
+    if (App.toast) App.toast('已保存 ' + id, 'success');
+  }
+
+  function deleteApiCard(id) {
+    var App = window.HMApp;
+    if (!App) return;
+    if (!confirm('确定删除这个 API 接入配置？密钥将从本地清除。')) return;
+    if (id === '__rayin__') {
+      try { localStorage.removeItem('anidream.rayin.v1'); } catch (e) {}
+      App.state.prefs = App.state.prefs || {};
+      App.state.prefs.rayin = { base: 'https://www.rayinai.com/v1', key: '' };
+    } else {
+      delete App.state.providers[id];
+      try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
+      if (App.state.providerId === id) App.state.providerId = null;
+    }
+    if (App.toast) App.toast('已删除 ' + id, 'info');
+    renderApiPanel(document.getElementById('adminBody'));
+  }
+
+  /* 简单 ping 测试（用 models endpoint 或 /v1/models） */
+  function testApi(id, base, key) {
+    var App = window.HMApp;
+    if (!App || !base) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
+    var url = base.replace(/\/+$/, '') + '/models';
+    var headers = key ? { 'Authorization': 'Bearer ' + key } : {};
+    return new Promise(function (resolve) {
+      var timeout = setTimeout(function () { resolve({ ok: false, msg: '请求超时' }); }, 8000);
+      fetch(url, { method: 'GET', headers: headers })
+        .then(function (r) {
+          clearTimeout(timeout);
+          if (r.ok) return r.json();
+          return r.text().then(function (txt) {
+            try { var j = JSON.parse(txt); resolve({ ok: false, msg: (j && j.error && j.error.message) || ('HTTP ' + r.status) }); }
+            catch (e) { resolve({ ok: false, msg: 'HTTP ' + r.status }); }
+          });
+        })
+        .then(function (data) {
+          if (Array.isArray(data.data) && data.data.length) {
+            resolve({ ok: true, msg: '连接成功 · ' + data.data.length + ' 个模型' });
+          } else {
+            resolve({ ok: true, msg: '连接成功' });
+          }
+        })
+        .catch(function (err) {
+          clearTimeout(timeout);
+          resolve({ ok: false, msg: err.message || '网络错误' });
+        });
+    });
+  }
+
+  function apiCardHtml(p) {
+    var state = apiTestState[p.id] || '';
+    var stateHtml = '';
+    if (state === 'loading') stateHtml = '<span class="hm-api-state is-testing"><i></i>测试中…</span>';
+    else if (state === 'ok') stateHtml = '<span class="hm-api-state is-ok">● 在线</span>';
+    else if (state === 'fail') stateHtml = '<span class="hm-api-state is-bad">● 离线</span>';
+    else stateHtml = '<span class="hm-api-state is-idle">○ 未测试</span>';
+
+    var keyMask = p._showKey ? hmEsc(p.key) : maskKey(p.key);
+    var keyEye = p._showKey ? '👁‍🗨' : '👁';
+
+    var extraField = '';
+    if (p.isRayin) {
+      extraField =
+        '<label class="hm-api-field"><span>Gemini Banana 模型</span>' +
+        '<input class="hm-api-input" data-ik="model2" value="' + hmEsc(p.model2 || '') + '" placeholder="gemini-3.1-flash-image"></label>';
+    }
+
+    return '<div class="hm-api-card" data-api="' + hmEsc(p.id) + '">' +
+      '<div class="hm-api-card-head">' +
+        '<div class="hm-api-card-title">' +
+          '<span class="hm-api-card-dot" style="background:' + (p.isRayin ? '#a78bfa' : (p.preset && p.preset.color) || '#60a5fa') + '"></span>' +
+          '<strong>' + hmEsc(p.name) + '</strong>' +
+          (p.isCustom ? '<em class="hm-api-tag">自定义</em>' : '') +
+        '</div>' +
+        '<div class="hm-api-card-head-right">' +
+          stateHtml +
+          '<label class="hm-api-switch" title="启用/禁用">' +
+            '<input type="checkbox" data-ik="enabled"' + (p.enabled ? ' checked' : '') + '>' +
+            '<span></span>' +
+          '</label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="hm-api-card-body">' +
+        '<label class="hm-api-field"><span>接口地址</span>' +
+          '<input class="hm-api-input" data-ik="base" value="' + hmEsc(p.base) + '" placeholder="https://.../v1"></label>' +
+        '<label class="hm-api-field"><span>API Key</span>' +
+          '<div class="hm-api-key-row">' +
+            '<input class="hm-api-input" data-ik="key" type="' + (p._showKey ? 'text' : 'password') + '" value="' + hmEsc(p.key) + '" placeholder="sk-...">' +
+            '<button class="hm-api-eye" data-eye title="显示/隐藏">' + keyEye + '</button>' +
+          '</div></label>' +
+        '<label class="hm-api-field"><span>' + (p.isRayin ? 'GPT-image 模型' : '默认模型 ID') + '</span>' +
+          '<input class="hm-api-input" data-ik="model" value="' + hmEsc(p.model) + '" placeholder="..."></label>' +
+        extraField +
+      '</div>' +
+      '<div class="hm-api-card-foot">' +
+        '<div class="hm-api-foot-msg" data-msg></div>' +
+        '<div class="hm-api-foot-btns">' +
+          '<button class="hm-api-btn hm-api-btn-ghost" data-test>测试连接</button>' +
+          '<button class="hm-api-btn hm-api-btn-primary" data-save>保存</button>' +
+          (!p.preset && p.id !== '__rayin__' ? '<button class="hm-api-btn hm-api-btn-danger" data-del>删除</button>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderApiPanel(body) {
+    var App = window.HMApp;
+    if (!body || !App) return;
+    var providers = getProviders();
+    var total = providers.length;
+    var enabledCount = providers.filter(function (p) { return p.enabled; }).length;
+
+    var html = '';
+    html += '<div class="hm-admin-body hm-api-body">';
+    html += '  <header class="hm-api-header">' +
+      '    <div class="hm-api-header-stats">' +
+      '      <div class="hm-api-stat"><strong>' + total + '</strong><small>接入总数</small></div>' +
+      '      <div class="hm-api-stat"><strong>' + enabledCount + '</strong><small>已启用</small></div>' +
+      '      <div class="hm-api-stat"><strong>' + providers.filter(function (p) { return apiTestState[p.id] === 'ok'; }).length + '</strong><small>在线</small></div>' +
+      '    </div>' +
+      '    <div class="hm-api-header-actions">' +
+      '      <button class="hm-api-tool-btn" data-api-act="test-all">🔍 测试全部</button>' +
+      '      <button class="hm-api-tool-btn" data-api-act="export">📤 导出配置</button>' +
+      '      <button class="hm-api-tool-btn" data-api-act="import">📥 导入配置</button>' +
+      '      <button class="hm-api-tool-btn" data-api-act="add-custom">＋ 新增接入</button>' +
+      '    </div>' +
+      '  </header>';
+
+    html += '  <div class="hm-api-grid">';
+    providers.forEach(function (p) { html += apiCardHtml(p); });
+    html += '  </div>';
+
+    html += '  <p class="hm-api-footer">密钥仅保存在本浏览器（localStorage），不会上传服务器。每个接入都独立启用，默认引擎在「生成」页底部切换。</p>';
+    html += '</div>';
+
+    body.innerHTML = html;
+    bindApiPanel(body);
+  }
+
+  function bindApiPanel(body) {
+    if (!body) return;
+
+    /* 全局按钮 */
+    body.addEventListener('click', function (e) {
+      var tool = e.target.closest('[data-api-act]');
+      if (tool) {
+        var act = tool.dataset.apiAct;
+        var providers = getProviders();
+        if (act === 'test-all') {
+          providers.forEach(function (p) { testAndUpdate(p.id); });
+        } else if (act === 'export') {
+          var data = { providers: (window.HMApp.state && window.HMApp.state.providers) || {} };
+          data.rayin = (window.HMApp.state && window.HMApp.state.prefs && window.HMApp.state.prefs.rayin) || {};
+          var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'anidream-api-config.json';
+          a.click();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+        } else if (act === 'import') {
+          var inp = document.createElement('input');
+          inp.type = 'file'; inp.accept = 'application/json';
+          inp.onchange = function () {
+            var f = inp.files && inp.files[0]; if (!f) return;
+            var r = new FileReader();
+            r.onload = function () {
+              try {
+                var j = JSON.parse(r.result);
+                var App = window.HMApp;
+                if (j.providers) {
+                  App.state.providers = j.providers;
+                  try { localStorage.setItem('anidream.providers.v1', JSON.stringify(j.providers)); } catch (e) {}
+                }
+                if (j.rayin) {
+                  App.state.prefs = App.state.prefs || {};
+                  App.state.prefs.rayin = j.rayin;
+                  try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(j.rayin)); } catch (e) {}
+                }
+                if (App.toast) App.toast('导入成功', 'success');
+                renderApiPanel(document.getElementById('adminBody'));
+              } catch (err) { if (window.HMApp.toast) window.HMApp.toast('导入失败：' + err.message, 'error'); }
+            };
+            r.readAsText(f);
+          };
+          inp.click();
+        } else if (act === 'add-custom') {
+          var id = prompt('请输入新接入的唯一 ID（例如 my-provider）', 'custom-' + Date.now());
+          if (!id) return;
+          var App = window.HMApp;
+          App.state.providers = App.state.providers || {};
+          App.state.providers[id] = { base: '', key: '', model: '' };
+          try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
+          renderApiPanel(document.getElementById('adminBody'));
+        }
+        return;
+      }
+
+      /* 卡内按钮 */
+      var card = e.target.closest('.hm-api-card');
+      if (!card) return;
+      var id = card.dataset.api;
+      var p = getProviders().find(function (x) { return x.id === id; });
+      if (!p) return;
+
+      if (e.target.closest('[data-eye]')) {
+        p._showKey = !p._showKey;
+        renderApiPanel(document.getElementById('adminBody'));
+        return;
+      }
+      if (e.target.closest('[data-test]')) {
+        testAndUpdate(id);
+        return;
+      }
+      if (e.target.closest('[data-save]')) {
+        saveFromCard(card, p);
+        return;
+      }
+      if (e.target.closest('[data-del]')) {
+        deleteApiCard(id);
+        return;
+      }
+    });
+  }
+
+  function saveFromCard(card, p) {
+    var inputs = card.querySelectorAll('[data-ik]');
+    var payload = { base: p.base, key: p.key, model: p.model, model2: p.model2, enabled: p.enabled };
+    inputs.forEach(function (el) {
+      var k = el.dataset.ik;
+      if (k === 'enabled') payload.enabled = el.checked;
+      else payload[k] = el.value.trim();
+    });
+    saveApiCard(p.id, payload.base, payload.key, payload.model, payload.model2, payload.enabled);
+  }
+
+  function testAndUpdate(id) {
+    var p = getProviders().find(function (x) { return x.id === id; });
+    if (!p) return;
+    apiTestState[id] = 'loading';
+    var card = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-msg]');
+    if (card) card.textContent = '连接测试中…';
+    renderApiPanel(document.getElementById('adminBody'));
+
+    var base = p.base;
+    var key = p.key;
+    testApi(id, base, key).then(function (res) {
+      apiTestState[id] = res.ok ? 'ok' : 'fail';
+      var c = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-msg]');
+      if (c) { c.textContent = res.msg; c.className = 'hm-api-foot-msg ' + (res.ok ? 'is-ok' : 'is-bad'); }
+      /* 只更新状态灯，不重渲染（避免输入框丢失焦点） */
+      var stateEl = document.querySelector('.hm-api-card[data-api="' + id + '"] .hm-api-state');
+      if (stateEl) {
+        stateEl.className = 'hm-api-state is-' + (res.ok ? 'ok' : 'bad');
+        stateEl.textContent = (res.ok ? '● 在线' : '● 离线');
+      }
+    });
   }
 
   /* 全局暴露 */
