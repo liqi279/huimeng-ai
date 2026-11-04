@@ -1,138 +1,34 @@
 'use strict';
 /* =============================================================
- * 绘梦 · 导演台 HMDirector3D（Three.js WebGL 版）
- * 依赖全局 THREE、HMOrbitControls、HMTransformControls
- * 入口：侧边栏 data-rail="director3d"
+ * 绘梦 · 导演台 HMDirector3D（Three.js WebGL + GLB + AI 3D 生成）
+ * 依赖全局 THREE / HMOrbitControls / HMTransformControls / HMDRACOLoader / HMGLTFLoader
+ * 支持：上传 .glb / .gltf 真实模型 · Tripo AI 文字/图片生成 3D
  * ============================================================= */
 window.HMDirector3D = (function () {
   var THREE = window.THREE;
-  if (!THREE) {
-    console.error('[Director3D] THREE.js 未加载');
-    return null;
-  }
+  if (!THREE) { console.error('[Director3D] THREE.js 未加载'); return null; }
+  if (!window.HMGLTFLoader) { console.error('[Director3D] HMGLTFLoader 未加载'); return null; }
 
   var LS_SCENE = 'anidream.director3d.scene.v2';
+  var LS_TRIPO_KEY = 'anidream.tripo.key';
+  var TRIPO_API_BASE = 'https://api.tripo3d.ai/v2/openapi';
 
-  var canvas = null, container = null, inspectorEl = null, objListEl = null;
-  var renderer, scene, camera;
-  var orbit, tControls;
-  var raycaster, pointer;
+  var canvas, container, inspectorEl, objListEl;
+  var renderer, scene, camera, orbit, tControls;
+  var raycaster, pointer, gltfLoader, dracoLoader;
 
   var active = false, bound = false, rafId = null;
-  var objects = [];      // { id, name, kind, three }
-  var selectedId = null;
-  var seq = 1;
+  var objects = [];
+  var selectedId = null, seq = 1;
 
-  var showGrid = true;
-  var camMode = false;
+  var showGrid = true, camMode = false;
   var camFly = { pos: new THREE.Vector3(0, 3.5, 13), yaw: -0.65, pitch: -0.06 };
   var camOrbit = { yaw: -0.65, pitch: 0.4, dist: 17, target: new THREE.Vector3(0, 1.2, 0) };
 
   var ambient, dirLight, fillLight, spotLight, spotTarget;
-  var spotOn = false;
-  var keys = {};
+  var spotOn = false, keys = {};
 
-  /* ---------- 人偶 rig ---------- */
-  var POSE_PRESETS = {
-    idle: { root: [0, 0, 0], torsoY: 0, torsoX: 0, headY: 0, headX: 0, lShZ: 40, lShX: 0, lEl: 10, rShZ: -40, rShX: 0, rEl: -10, lHp: 0, lKn: 0, rHp: 0, rKn: 0 },
-    walk: { root: [0, 0, 0], torsoY: 0, torsoX: 0, headY: 0, headX: 0, lShZ: 20, lShX: -10, lEl: 30, rShZ: -20, rShX: -10, rEl: -30, lHp: -30, lKn: 20, rHp: 30, rKn: -20 },
-    run: { root: [0, 0, -0.2], torsoY: 8, torsoX: 0, headY: -2, headX: 0, lShZ: 60, lShX: -20, lEl: 60, rShZ: -60, rShX: -20, rEl: -60, lHp: -60, lKn: 40, rHp: 60, rKn: -40 },
-    poseA: { root: [0, 0.3, 0], torsoY: 10, torsoX: 0, headY: 15, headX: 0, lShZ: 90, lShX: -10, lEl: 90, rShZ: -30, rShX: -10, rEl: 30, lHp: 0, lKn: 0, rHp: 0, rKn: 0 },
-    poseB: { root: [0, 0, 0], torsoY: -8, torsoX: -5, headY: -10, headX: 5, lShZ: -20, lShX: 20, lEl: -40, rShZ: 20, rShX: -20, rEl: 40, lHp: 20, lKn: -30, rHp: -10, rKn: 0 }
-  };
-
-  function makeMannequin(name) {
-    var root = new THREE.Group();
-    root.name = name;
-
-    var matSkin = new THREE.MeshStandardMaterial({ color: 0xe8cfb4, roughness: 0.85, metalness: 0.02 });
-    var matCloth = new THREE.MeshStandardMaterial({ color: 0x7c5cf6, roughness: 0.75, metalness: 0.02 });
-    var matHair = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
-
-    // 大腿
-    var lThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.55, 16), matCloth);
-    lThigh.position.set(-0.14, 0.28, 0);
-    var lHp = new THREE.Group(); lHp.position.set(-0.14, 0.5, 0); lHp.add(lThigh);
-    var lShin = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 16), matCloth);
-    lShin.position.set(0, -0.5, 0);
-    var lKn = new THREE.Group(); lShin.position.set(0, 0.28, 0); lKn.add(lShin); lThigh.add(lKn);
-    var lFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.32), matSkin);
-    lFoot.position.set(0, 0.04, 0.08);
-    lShin.add(lFoot);
-
-    var rThigh = lThigh.clone(); rThigh.scale.x = -1;
-    var rHp = new THREE.Group(); rHp.position.set(0.14, 0.5, 0); rHp.add(rThigh);
-    var rShin = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 16), matCloth);
-    rShin.position.set(0, -0.5, 0);
-    var rKn = new THREE.Group(); rShin.position.set(0, 0.28, 0); rKn.add(rShin); rThigh.add(rKn);
-    var rFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.32), matSkin);
-    rFoot.position.set(0, 0.04, 0.08);
-    rShin.add(rFoot);
-
-    // 躯干
-    var torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.55, 6, 12), matCloth);
-    torso.position.set(0, 0.95, 0);
-    var torsoGrp = new THREE.Group(); torsoGrp.add(torso); torsoGrp.position.set(0, 0.95, 0);
-
-    // 手臂
-    var lUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.45, 16), matCloth);
-    lUpperArm.position.set(0, -0.23, 0);
-    var lEl = new THREE.Group(); lEl.position.set(0, -0.45, 0); lUpperArm.add(lEl);
-    var lForeArm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.42, 16), matSkin);
-    lForeArm.position.set(0, -0.21, 0); lEl.add(lForeArm);
-    var lHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), matSkin); lHand.position.set(0, -0.45, 0); lEl.add(lHand);
-    var lSh = new THREE.Group(); lSh.position.set(-0.32, 0.24, 0); lSh.add(lUpperArm);
-
-    var rUpperArm = lUpperArm.clone();
-    var rEl = new THREE.Group(); rEl.position.set(0, -0.45, 0); rUpperArm.add(rEl);
-    var rForeArm = lForeArm.clone(); rForeArm.position.set(0, -0.21, 0); rEl.add(rForeArm);
-    var rHand = lHand.clone(); rHand.position.set(0, -0.45, 0); rEl.add(rHand);
-    var rSh = new THREE.Group(); rSh.position.set(0.32, 0.24, 0); rSh.add(rUpperArm);
-
-    torsoGrp.add(lSh); torsoGrp.add(rSh);
-
-    // 头
-    var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.12, 12), matSkin);
-    neck.position.set(0, 0.38, 0);
-    var head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 24), matSkin);
-    head.position.set(0, 0.58, 0);
-    var hair = new THREE.Mesh(new THREE.SphereGeometry(0.185, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.75), matHair);
-    hair.position.set(0, 0.62, -0.03);
-    var headGrp = new THREE.Group(); headGrp.position.set(0, 1.32, 0);
-    headGrp.add(neck); headGrp.add(head); headGrp.add(hair);
-
-    torsoGrp.add(headGrp);
-    root.add(lHp); root.add(rHp); root.add(torsoGrp);
-
-    root.userData.bones = {
-      root: root, torso: torsoGrp, head: headGrp,
-      lSh: lSh, lEl: lEl, rSh: rSh, rEl: rEl,
-      lHp: lHp, lKn: lKn, rHp: rHp, rKn: rKn
-    };
-    applyPose(root, POSE_PRESETS.idle);
-    return root;
-  }
-
-  function applyPose(root, pose) {
-    if (!pose || !root || !root.userData.bones) return;
-    var b = root.userData.bones;
-    if (pose.root) root.position.set(pose.root[0], pose.root[1], pose.root[2]);
-    b.torso.rotation.set(0, (pose.torsoY || 0) * Math.PI / 180, 0);
-    b.torso.rotation.x = (pose.torsoX || 0) * Math.PI / 180;
-    b.head.rotation.set((pose.headX || 0) * Math.PI / 180, (pose.headY || 0) * Math.PI / 180, 0);
-    b.lSh.rotation.z = (pose.lShZ || 0) * Math.PI / 180;
-    b.lSh.rotation.x = (pose.lShX || 0) * Math.PI / 180;
-    b.lEl.rotation.x = (pose.lEl || 0) * Math.PI / 180;
-    b.rSh.rotation.z = (pose.rShZ || 0) * Math.PI / 180;
-    b.rSh.rotation.x = (pose.rShX || 0) * Math.PI / 180;
-    b.rEl.rotation.x = (pose.rEl || 0) * Math.PI / 180;
-    b.lHp.rotation.x = (pose.lHp || 0) * Math.PI / 180;
-    b.lKn.rotation.x = (pose.lKn || 0) * Math.PI / 180;
-    b.rHp.rotation.x = (pose.rHp || 0) * Math.PI / 180;
-    b.rKn.rotation.x = (pose.rKn || 0) * Math.PI / 180;
-  }
-
-  /* ---------- 几何体工厂 ---------- */
+  /* ---------- 基础几何体 ---------- */
   function makePrimitive(kind) {
     var mat = new THREE.MeshStandardMaterial({ color: 0xe9edf4, roughness: 0.7, metalness: 0.05 });
     var geo;
@@ -151,14 +47,267 @@ window.HMDirector3D = (function () {
     return m;
   }
 
+  /* ---------- 人偶 rig ---------- */
+  function makeMannequin(name) {
+    var root = new THREE.Group(); root.name = name;
+    var matSkin = new THREE.MeshStandardMaterial({ color: 0xe8cfb4, roughness: 0.85 });
+    var matCloth = new THREE.MeshStandardMaterial({ color: 0x7c5cf6, roughness: 0.75 });
+    var matHair = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
+
+    var lThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.55, 16), matCloth);
+    lThigh.position.set(-0.14, 0.28, 0);
+    var lHp = new THREE.Group(); lHp.position.set(-0.14, 0.5, 0); lHp.add(lThigh);
+    var lShin = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 16), matCloth);
+    var lKn = new THREE.Group(); lShin.position.set(0, 0.28, 0); lKn.add(lShin); lThigh.add(lKn);
+    var lFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.32), matSkin); lFoot.position.set(0, 0.04, 0.08); lShin.add(lFoot);
+
+    var rThigh = lThigh.clone(); rThigh.scale.x = -1;
+    var rHp = new THREE.Group(); rHp.position.set(0.14, 0.5, 0); rHp.add(rThigh);
+    var rShin = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 16), matCloth);
+    var rKn = new THREE.Group(); rShin.position.set(0, 0.28, 0); rKn.add(rShin); rThigh.add(rKn);
+    var rFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.32), matSkin); rFoot.position.set(0, 0.04, 0.08); rShin.add(rFoot);
+
+    var torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.55, 6, 12), matCloth);
+    torso.position.set(0, 0.95, 0);
+    var torsoGrp = new THREE.Group(); torsoGrp.add(torso); torsoGrp.position.set(0, 0.95, 0);
+
+    var lUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.45, 16), matCloth);
+    lUpperArm.position.set(0, -0.23, 0);
+    var lEl = new THREE.Group(); lEl.position.set(0, -0.45, 0); lUpperArm.add(lEl);
+    var lForeArm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.42, 16), matSkin);
+    lForeArm.position.set(0, -0.21, 0); lEl.add(lForeArm);
+    var lHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), matSkin); lHand.position.set(0, -0.45, 0); lEl.add(lHand);
+    var lSh = new THREE.Group(); lSh.position.set(-0.32, 0.24, 0); lSh.add(lUpperArm);
+
+    var rUpperArm = lUpperArm.clone();
+    var rEl = new THREE.Group(); rEl.position.set(0, -0.45, 0); rUpperArm.add(rEl);
+    var rForeArm = lForeArm.clone(); rForeArm.position.set(0, -0.21, 0); rEl.add(rForeArm);
+    var rHand = lHand.clone(); rHand.position.set(0, -0.45, 0); rEl.add(rHand);
+    var rSh = new THREE.Group(); rSh.position.set(0.32, 0.24, 0); rSh.add(rUpperArm);
+
+    torsoGrp.add(lSh); torsoGrp.add(rSh);
+
+    var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.12, 12), matSkin); neck.position.set(0, 0.38, 0);
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 24), matSkin); head.position.set(0, 0.58, 0);
+    var hair = new THREE.Mesh(new THREE.SphereGeometry(0.185, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.75), matHair); hair.position.set(0, 0.62, -0.03);
+    var headGrp = new THREE.Group(); headGrp.position.set(0, 1.32, 0);
+    headGrp.add(neck); headGrp.add(head); headGrp.add(hair);
+
+    torsoGrp.add(headGrp);
+    root.add(lHp); root.add(rHp); root.add(torsoGrp);
+
+    root.userData.bones = { root: root, torso: torsoGrp, head: headGrp, lSh: lSh, lEl: lEl, rSh: rSh, rEl: rEl, lHp: lHp, lKn: lKn, rHp: rHp, rKn: rKn };
+    applyPose(root, POSE_PRESETS.idle);
+    root.traverse(function (c) { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return root;
+  }
+
+  var POSE_PRESETS = {
+    idle:   { root: [0, 0, 0], torsoY: 0, headY: 0, lShZ: 40, lEl: 10, rShZ: -40, rEl: -10, lHp: 0, lKn: 0, rHp: 0, rKn: 0 },
+    walk:   { root: [0, 0, 0], torsoY: 0, headY: 0, lShZ: 20, lEl: 30, rShZ: -20, rEl: -30, lHp: -30, lKn: 20, rHp: 30, rKn: -20 },
+    run:    { root: [0, 0, -0.2], torsoY: 8, headY: -2, lShZ: 60, lEl: 60, rShZ: -60, rEl: -60, lHp: -60, lKn: 40, rHp: 60, rKn: -40 },
+    poseA:  { root: [0, 0.3, 0], torsoY: 10, headY: 15, lShZ: 90, lEl: 90, rShZ: -30, rEl: 30, lHp: 0, lKn: 0, rHp: 0, rKn: 0 },
+    poseB:  { root: [0, 0, 0], torsoY: -8, headY: -10, lShZ: -20, lEl: -40, rShZ: 20, rEl: 40, lHp: 20, lKn: -30, rHp: -10, rKn: 0 }
+  };
+
+  function applyPose(root, pose) {
+    if (!pose || !root || !root.userData.bones) return;
+    var b = root.userData.bones;
+    if (pose.root) root.position.set(pose.root[0], pose.root[1], pose.root[2]);
+    b.torso.rotation.set((pose.torsoX || 0) * Math.PI / 180, (pose.torsoY || 0) * Math.PI / 180, 0);
+    b.head.rotation.set((pose.headX || 0) * Math.PI / 180, (pose.headY || 0) * Math.PI / 180, 0);
+    b.lSh.rotation.z = (pose.lShZ || 0) * Math.PI / 180;
+    b.lSh.rotation.x = (pose.lShX || 0) * Math.PI / 180;
+    b.lEl.rotation.x = (pose.lEl || 0) * Math.PI / 180;
+    b.rSh.rotation.z = (pose.rShZ || 0) * Math.PI / 180;
+    b.rSh.rotation.x = (pose.rShX || 0) * Math.PI / 180;
+    b.rEl.rotation.x = (pose.rEl || 0) * Math.PI / 180;
+    b.lHp.rotation.x = (pose.lHp || 0) * Math.PI / 180;
+    b.lKn.rotation.x = (pose.lKn || 0) * Math.PI / 180;
+    b.rHp.rotation.x = (pose.rHp || 0) * Math.PI / 180;
+    b.rKn.rotation.x = (pose.rKn || 0) * Math.PI / 180;
+  }
+
+  /* ---------- 加载真实 GLB / GLTF ---------- */
+  function setupGLTFLoader() {
+    gltfLoader = new window.HMGLTFLoader();
+    gltfLoader.crossOrigin = 'anonymous';
+    try {
+      dracoLoader = new window.HMDRACOLoader();
+      // draco_decoder.js / wasm 可能不存在，但 loader 会 fallback 并警告；普通模型不用 Draco 也能加载
+      gltfLoader.setDRACOLoader(dracoLoader);
+    } catch (e) { /* Draco 可选 */ }
+  }
+
+  // 自动归一化：居中 + 缩放到合适高度（目标 2.2 单位），并将底面贴 y=0
+  function normalizeModel(root, targetHeight) {
+    targetHeight = targetHeight || 2.2;
+    var box = new THREE.Box3().setFromObject(root);
+    var size = box.getSize(new THREE.Vector3());
+    var center = box.getCenter(new THREE.Vector3());
+    var maxDim = Math.max(size.x, size.y, size.z) || 1;
+    var scale = targetHeight / maxDim;
+    root.scale.multiplyScalar(scale);
+    box.setFromObject(root);
+    size = box.getSize(new THREE.Vector3());
+    center = box.getCenter(new THREE.Vector3());
+    // 居中 XZ，让底面贴 y=0
+    root.position.x -= center.x;
+    root.position.z -= center.z;
+    root.position.y -= box.min.y;
+  }
+
+  function finalizeLoaded(root, name) {
+    root.traverse(function (c) {
+      if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; }
+      if (c.isMesh && c.material) {
+        if (Array.isArray(c.material)) c.material.forEach(matTweak);
+        else matTweak(c.material);
+      }
+    });
+    normalizeModel(root);
+    root.userData.loaded = true;
+    var n = objects.length;
+    root.position.x += ((n % 5) - 2) * 2.8;
+    root.position.z += Math.floor(n / 5) * 2.4;
+    var o = { id: 'o' + (seq++), name: name || '真实模型 ' + seq, kind: 'glb', three: root };
+    objects.push(o);
+    scene.add(root);
+    selectObject(o.id);
+    renderObjectList(); renderInspector();
+    return o;
+  }
+
+  function matTweak(m) {
+    // 修复部分 glTF 模型的黑色材质问题
+    if (m && typeof m === 'object') {
+      if ('outputColorSpace' in m) { try { m.outputColorSpace = THREE.SRGBColorSpace; } catch(e){} }
+      if (m.map) { try { m.map.colorSpace = THREE.SRGBColorSpace; } catch(e){} }
+    }
+  }
+
+  function loadGLBFromArrayBuffer(arrayBuffer, filename) {
+    try {
+      gltfLoader.parse(arrayBuffer, '', function (gltf) {
+        var root = gltf.scene;
+        var name = (filename || '').replace(/\.(glb|gltf)$/i, '') || '真实模型';
+        finalizeLoaded(root, name);
+        toast('✓ 已导入：' + name, 'success');
+      }, function (err) {
+        console.error('[GLTF] parse error', err);
+        toast('✗ 模型解析失败：' + (err.message || '文件可能不是有效的 .glb / .gltf'), 'error');
+      });
+    } catch (e) {
+      console.error(e);
+      toast('✗ 加载异常：' + e.message, 'error');
+    }
+  }
+
+  function loadGLBFromURL(url, name) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        loadGLBFromArrayBuffer(xhr.response, name);
+      } else {
+        toast('✗ 下载失败 HTTP ' + xhr.status, 'error');
+      }
+    };
+    xhr.onerror = function () { toast('✗ 网络错误（可能 CORS 或 URL 不可达）', 'error'); };
+    xhr.send();
+  }
+
+  /* ---------- Tripo AI 3D ---------- */
+  function getTripoKey() {
+    try { return localStorage.getItem(LS_TRIPO_KEY) || ''; } catch (e) { return ''; }
+  }
+  function setTripoKey(k) {
+    try { localStorage.setItem(LS_TRIPO_KEY, k); } catch (e) {}
+  }
+
+  async function tripoTextToModel(prompt) {
+    var key = getTripoKey();
+    if (!key) throw new Error('请先填写并保存 Tripo API Key');
+    var body = JSON.stringify({
+      prompt: prompt,
+      model_version: 'v1',
+      form: 'mesh',
+      face_limit: 40000,
+      texture: true,
+      pbr: true,
+      auto_size: true
+    });
+    var resp = await fetch(TRIPO_API_BASE + '/task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: body
+    });
+    if (!resp.ok) {
+      var txt = await resp.text();
+      throw new Error('提交任务失败 HTTP ' + resp.status + '：' + txt.slice(0, 300));
+    }
+    var json = await resp.json();
+    if (!json.data || !json.data.task_id) throw new Error('响应缺少 task_id：' + JSON.stringify(json).slice(0, 300));
+    return json.data.task_id;
+  }
+
+  async function tripoImageToModel(imageDataUrl) {
+    var key = getTripoKey();
+    if (!key) throw new Error('请先填写并保存 Tripo API Key');
+    var resp = await fetch(TRIPO_API_BASE + '/task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({
+        image_urls: [imageDataUrl],
+        model_version: 'v1',
+        form: 'mesh',
+        face_limit: 40000,
+        texture: true,
+        pbr: true,
+        auto_size: true
+      })
+    });
+    if (!resp.ok) {
+      var txt = await resp.text();
+      throw new Error('提交任务失败 HTTP ' + resp.status + '：' + txt.slice(0, 300));
+    }
+    var json = await resp.json();
+    if (!json.data || !json.data.task_id) throw new Error('响应缺少 task_id');
+    return json.data.task_id;
+  }
+
+  async function pollTripoTask(taskId, onProgress) {
+    var key = getTripoKey();
+    for (var i = 0; i < 60; i++) { // 最多等 5 分钟
+      await new Promise(function (r) { setTimeout(r, 5000); });
+      var resp = await fetch(TRIPO_API_BASE + '/task?task_id=' + encodeURIComponent(taskId), {
+        headers: { 'Authorization': 'Bearer ' + key }
+      });
+      if (!resp.ok) throw new Error('查询失败 HTTP ' + resp.status);
+      var json = await resp.json();
+      var data = json.data || {};
+      var st = data.status;
+      if (onProgress) onProgress(st, i);
+      if (st === 'succeeded') {
+        var modelUrl = (data.result && data.result.model && data.result.model.url)
+                   || (data.result && data.result.url)
+                   || (data.model && data.model.url);
+        if (!modelUrl) throw new Error('任务成功但未返回模型下载地址：' + JSON.stringify(data).slice(0, 400));
+        return modelUrl;
+      }
+      if (st === 'failed') throw new Error('AI 生成失败：' + ((data.error || {}).message || data.message || '未知错误'));
+      // 其他状态：queued / running / timeout 继续轮询
+    }
+    throw new Error('等待超时（5 分钟），任务可能仍在运行中');
+  }
+
   /* ---------- 场景搭建 ---------- */
   function setupScene() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0e16);
     scene.fog = new THREE.Fog(0x0a0e16, 30, 80);
-
     camera = new THREE.PerspectiveCamera(40, 1, 0.05, 500);
-
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     renderer.shadowMap.enabled = true;
@@ -169,60 +318,38 @@ window.HMDirector3D = (function () {
 
     var grid = new THREE.GridHelper(60, 60, 0x333c52, 0x1f2638);
     grid.material.opacity = 0.7; grid.material.transparent = true;
-    scene.add(grid);
-    scene.userData.grid = grid;
+    scene.add(grid); scene.userData.grid = grid;
 
-    var axes = new THREE.AxesHelper(2);
-    axes.position.set(0, 0.001, 0);
-    scene.add(axes);
+    scene.add(new THREE.AxesHelper(2));
 
-    // 地面接收阴影
-    var ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(100, 100),
-      new THREE.ShadowMaterial({ opacity: 0.22 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
+    var ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.ShadowMaterial({ opacity: 0.22 }));
+    ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
     scene.add(ground);
 
-    ambient = new THREE.AmbientLight(0xffffff, 0.35);
-    scene.add(ambient);
-
+    ambient = new THREE.AmbientLight(0xffffff, 0.35); scene.add(ambient);
     dirLight = new THREE.DirectionalLight(0xfff2dc, 1.1);
-    dirLight.position.set(6, 10, 5);
-    dirLight.castShadow = true;
+    dirLight.position.set(6, 10, 5); dirLight.castShadow = true;
     dirLight.shadow.mapSize.set(1024, 1024);
     dirLight.shadow.camera.left = -14; dirLight.shadow.camera.right = 14;
     dirLight.shadow.camera.top = 14; dirLight.shadow.camera.bottom = -14;
     dirLight.shadow.camera.near = 1; dirLight.shadow.camera.far = 40;
-    dirLight.shadow.bias = -0.0005;
     scene.add(dirLight);
-
     fillLight = new THREE.DirectionalLight(0x9fb8ff, 0.4);
-    fillLight.position.set(-8, 6, -5);
-    scene.add(fillLight);
-
+    fillLight.position.set(-8, 6, -5); scene.add(fillLight);
     spotLight = new THREE.SpotLight(0xffffff, 2.2, 30, Math.PI / 6, 0.5, 1.0);
-    spotLight.position.set(4, 8, 4);
-    spotLight.target = spotTarget = new THREE.Object3D(); spotTarget.position.set(0, 1, 0);
-    scene.add(spotLight); scene.add(spotTarget);
-    spotLight.castShadow = true;
-    spotLight.visible = false;
+    spotLight.position.set(4, 8, 4); spotLight.castShadow = true;
+    spotTarget = new THREE.Object3D(); spotTarget.position.set(0, 1, 0);
+    scene.add(spotLight); scene.add(spotTarget); spotLight.visible = false;
 
-    raycaster = new THREE.Raycaster();
-    raycaster.params.Points = { threshold: 0.1 };
-    pointer = new THREE.Vector2();
-
-    orbit = new window.HMOrbitControls(camera, canvas);
-    orbit.enableDamping = true;
+    raycaster = new THREE.Raycaster(); pointer = new THREE.Vector2();
+    orbit = new window.HMOrbitControls(camera, canvas); orbit.enableDamping = true;
     orbit.target.copy(camOrbit.target);
-    var initPos = new THREE.Vector3().setFromSpherical(
-      new THREE.Spherical(camOrbit.dist, camOrbit.pitch + Math.PI / 2, camOrbit.yaw)
-    ).add(camOrbit.target);
+    var initPos = new THREE.Vector3().setFromSpherical(new THREE.Spherical(camOrbit.dist, camOrbit.pitch + Math.PI / 2, camOrbit.yaw)).add(camOrbit.target);
     camera.position.copy(initPos);
 
     tControls = new window.HMTransformControls(camera, canvas);
     scene.add(tControls._group);
+    setupGLTFLoader();
   }
 
   function resize() {
@@ -234,42 +361,24 @@ window.HMDirector3D = (function () {
   }
 
   /* ---------- 对象管理 ---------- */
-  function findObject(id) {
-    for (var i = 0; i < objects.length; i++) if (objects[i].id === id) return objects[i];
-    return null;
-  }
+  function findObject(id) { for (var i = 0; i < objects.length; i++) if (objects[i].id === id) return objects[i]; return null; }
 
   function addPrimitive(kind) {
-    var nameMap = {
-      cube: '立方体', sphere: '球体', cylinder: '圆柱', cone: '圆锥',
-      capsule: '胶囊', torus: '圆环', plane: '平面', mannequin: '人偶'
-    };
-    var threeObj = kind === 'mannequin' ? makeMannequin(nameMap.mannequin + ' ' + (seq + 1)) : makePrimitive(kind);
+    var nameMap = { cube:'立方体', sphere:'球体', cylinder:'圆柱', cone:'圆锥', capsule:'胶囊', torus:'圆环', plane:'平面', mannequin:'人偶' };
+    var three = kind === 'mannequin' ? makeMannequin(nameMap.mannequin) : makePrimitive(kind);
     var n = objects.length;
-    threeObj.position.set(((n % 5) - 2) * 2.4, kind === 'plane' ? 0 : 0, Math.floor(n / 5) * 2.2);
-    threeObj.userData.id = 'o' + (seq);
-    var o = {
-      id: 'o' + (seq++),
-      name: (nameMap[kind] || '白模') + ' ' + (seq - 1),
-      kind: kind,
-      three: threeObj
-    };
-    objects.push(o);
-    scene.add(threeObj);
-    selectObject(o.id);
-    renderObjectList();
+    three.position.set(((n % 5) - 2) * 2.4, kind === 'plane' ? 0 : 0, Math.floor(n / 5) * 2.2);
+    three.userData.id = 'o' + seq;
+    var o = { id: 'o' + (seq++), name: (nameMap[kind] || '白模') + ' ' + (seq - 1), kind: kind, three: three };
+    objects.push(o); scene.add(three); selectObject(o.id); renderObjectList();
   }
 
   function deleteObject(id) {
-    var o = findObject(id);
-    if (!o) return;
+    var o = findObject(id); if (!o) return;
     scene.remove(o.three);
     o.three.traverse(function (c) {
       if (c.geometry) c.geometry.dispose();
-      if (c.material) {
-        if (Array.isArray(c.material)) c.material.forEach(function (m) { m.dispose(); });
-        else c.material.dispose();
-      }
+      if (c.material) { if (Array.isArray(c.material)) c.material.forEach(function (m){ m.dispose(); }); else c.material.dispose(); }
     });
     objects = objects.filter(function (x) { return x.id !== id; });
     if (selectedId === id) selectObject(null);
@@ -277,38 +386,24 @@ window.HMDirector3D = (function () {
   }
 
   function duplicateObject(id) {
-    var src = findObject(id);
-    if (!src) return;
+    var src = findObject(id); if (!src) return;
     var clone = src.three.clone(true);
     clone.traverse(function (c) {
-      if (c.isMesh && c.geometry && src.three.geometry !== c.geometry) {}
-      if (c.isMesh && !c.geometry) {}
-    });
-    // 深拷贝材质
-    clone.traverse(function (c) {
       if (c.isMesh && c.material) {
-        if (Array.isArray(c.material)) c.material = c.material.map(function (m) { return m.clone(); });
+        if (Array.isArray(c.material)) c.material = c.material.map(function (m){ return m.clone(); });
         else c.material = c.material.clone();
       }
     });
     clone.position.x += 1.6; clone.position.z += 1.6;
-    var newId = 'o' + (seq++);
-    clone.userData.id = newId;
+    var newId = 'o' + (seq++); clone.userData.id = newId;
     var o = { id: newId, name: src.name + ' 副本', kind: src.kind, three: clone };
-    objects.push(o);
-    scene.add(clone);
-    selectObject(newId);
-    renderObjectList();
+    objects.push(o); scene.add(clone); selectObject(newId); renderObjectList();
   }
 
   function selectObject(id) {
     selectedId = id;
     var o = id ? findObject(id) : null;
-    if (o) {
-      tControls.setObject(o.three);
-    } else {
-      tControls.setObject(null);
-    }
+    if (o) tControls.setObject(o.three); else tControls.setObject(null);
     renderObjectList(); renderInspector();
   }
 
@@ -323,8 +418,7 @@ window.HMDirector3D = (function () {
     for (var i = 0; i < hits.length; i++) {
       var obj = hits[i].object;
       while (obj.parent && roots.indexOf(obj) < 0) obj = obj.parent;
-      var id = obj.userData.id;
-      var o = findObject(id);
+      var o = findObject(obj.userData.id);
       if (o) return o;
     }
     return null;
@@ -333,77 +427,52 @@ window.HMDirector3D = (function () {
   /* ---------- 事件 ---------- */
   function onDown(e) {
     if (!active) return;
-    // gizmo 先尝试
-    if (tControls.onMouseDown(e)) {
-      orbit.enabled = false;
-      return;
-    }
+    if (tControls.onMouseDown(e)) { orbit.enabled = false; return; }
     if (e.button === 0) {
       var hit = pickFromEvent(e);
       if (hit) { selectObject(hit.id); orbit.enabled = false; return; }
     }
     selectObject(null);
   }
-  function onMove(e) {
-    if (tControls._dragging) tControls.onMouseMove(e);
-  }
-  function onUp() {
-    if (tControls._dragging) tControls.onMouseUp();
-    orbit.enabled = true;
-  }
-
+  function onMove(e) { if (tControls._dragging) tControls.onMouseMove(e); }
+  function onUp() { if (tControls._dragging) tControls.onMouseUp(); orbit.enabled = true; }
   function onKeyDown(e) {
     if (!active) return;
     var tag = (e.target && e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-    if (e.key === 'Delete' || e.key === 'Backspace') {
-      if (selectedId) { e.preventDefault(); deleteObject(selectedId); }
-      return;
-    }
+    if (e.key === 'Delete' || e.key === 'Backspace') { if (selectedId) { e.preventDefault(); deleteObject(selectedId); } return; }
     keys[e.key.toLowerCase()] = true;
     if (e.key.toLowerCase() === 'g') { showGrid = !showGrid; scene.userData.grid.visible = showGrid; syncTopBar(); }
   }
   function onKeyUp(e) { keys[e.key.toLowerCase()] = false; }
 
-  /* ---------- 飞航 ---------- */
   function applyFly() {
     if (!camMode) return;
     var fwd = new THREE.Vector3(-Math.sin(camFly.yaw), 0, -Math.cos(camFly.yaw));
     var right = new THREE.Vector3(fwd.z, 0, -fwd.x);
     var d = new THREE.Vector3();
-    if (keys['w']) d.add(fwd);
-    if (keys['s']) d.sub(fwd);
-    if (keys['a']) d.sub(right);
-    if (keys['d']) d.add(right);
-    if (keys['q']) d.y -= 1;
-    if (keys['e']) d.y += 1;
-    if (d.lengthSq() > 0) {
-      d.normalize().multiplyScalar(0.16);
-      camFly.pos.add(d);
-    }
+    if (keys['w']) d.add(fwd); if (keys['s']) d.sub(fwd);
+    if (keys['a']) d.sub(right); if (keys['d']) d.add(right);
+    if (keys['q']) d.y -= 1; if (keys['e']) d.y += 1;
+    if (d.lengthSq() > 0) camFly.pos.add(d.normalize().multiplyScalar(0.16));
     camera.position.copy(camFly.pos);
   }
 
   /* ---------- Inspector ---------- */
-  function esc(t) {
-    return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
   function renderObjectList() {
     if (!objListEl) return;
-    if (!objects.length) {
-      objListEl.innerHTML = '<div class="hm-d3-list-empty">左侧选几何体或添加人偶</div>';
-      return;
-    }
+    if (!objects.length) { objListEl.innerHTML = '<div class="hm-d3-list-empty">还没有物体</div>'; return; }
     objListEl.innerHTML = objects.map(function (o) {
-      var glyph = o.kind === 'mannequin' ? '🧍'
+      var glyph = o.kind === 'glb' ? '📦'
+                  : o.kind === 'mannequin' ? '🧍'
                   : o.kind === 'sphere' ? '●'
                   : o.kind === 'cube' ? '■'
                   : o.kind === 'torus' ? '◯' : '▮';
+      var swatchColor = { glb: '#dfe4ef', mannequin: '#e8cfb4', sphere: '#9fb0d0', cube: '#b9c4d9', torus: '#dfe4ef', cylinder:'#a6b4cc', cone:'#c3ceff', capsule:'#c6d1eb', plane:'#8f9ab0' }[o.kind] || '#e9edf4';
       return '<div class="hm-d3-obj' + (o.id === selectedId ? ' is-active' : '') + '" data-oid="' + o.id + '">' +
-        '<span class="hm-d3-swatch" style="background:' + ({ cube: '#b9c4d9', sphere: '#9fb0d0', cylinder: '#a6b4cc', cone: '#c3ceff', capsule: '#c6d1eb', torus: '#dfe4ef', plane: '#8f9ab0', mannequin: '#e8cfb4' }[o.kind] || '#e9edf4') + '">' + glyph + '</span>' +
+        '<span class="hm-d3-swatch" style="background:' + swatchColor + '">' + glyph + '</span>' +
         '<span class="hm-d3-obj-name" title="' + esc(o.name) + '">' + esc(o.name) + '</span>' +
         '<button class="hm-d3-obj-del" data-del="' + o.id + '" title="删除">✕</button></div>';
     }).join('');
@@ -413,9 +482,8 @@ window.HMDirector3D = (function () {
     if (!inspectorEl) return;
     var o = selectedId ? findObject(selectedId) : null;
     var html = '<div class="hm-d3-sec-title">选中物体</div>';
-    if (!o) {
-      html += '<div class="hm-d3-empty">点击画布中的白模<br>或左侧列表选中后<br>即可调整</div>';
-    } else {
+    if (!o) { html += '<div class="hm-d3-empty">点击画布中的物体<br>或左侧列表选中</div>'; }
+    else {
       var p = o.three.position, r = o.three.rotation, s = o.three.scale;
       html += '<div class="hm-d3-xyz">' +
         '<div><span>X</span><input type="number" step="0.1" data-prop="pos" data-axis="0" value="' + p.x.toFixed(2) + '"></div>' +
@@ -437,6 +505,9 @@ window.HMDirector3D = (function () {
           '<button type="button" data-pose="run">🏃 Run</button>' +
           '<button type="button" data-pose="poseA">💪 Pose A</button>' +
           '<button type="button" data-pose="poseB">🎭 Pose B</button></div>';
+      }
+      if (o.kind === 'glb') {
+        html += '<div class="hm-d3-empty">📦 真实模型，可在 Blender 等工具中进一步编辑</div>';
       }
       html += '<div class="hm-d3-actions">' +
         '<button type="button" data-act="mode-t">▣ 移动</button>' +
@@ -478,8 +549,6 @@ window.HMDirector3D = (function () {
           var el = parseFloat(inspectorEl.querySelector('[data-light="dirElev"]').value) * Math.PI / 180;
           var r = 12;
           dirLight.position.set(Math.cos(el) * Math.sin(az) * r, Math.sin(el) * r, Math.cos(el) * Math.cos(az) * r);
-          dirLight.target.position.set(0, 1, 0);
-          dirLight.target.updateMatrixWorld();
           dirLight.shadow.camera.updateProjectionMatrix();
         } else if (lp === 'fill') fillLight.intensity = v;
         else if (lp === 'spotAngle') spotLight.angle = v * Math.PI / 180;
@@ -494,15 +563,11 @@ window.HMDirector3D = (function () {
       var v = parseFloat(t.value); if (!isFinite(v)) return;
       if (prop === 'pos') setXYZ(obj.three.position, ax, v);
       else if (prop === 'rot') setXYZ(obj.three.rotation, ax, v * Math.PI / 180);
-      else if (prop === 'scl') { setXYZ(obj.three.scale, ax, Math.max(0.05, v)); }
+      else if (prop === 'scl') setXYZ(obj.three.scale, ax, Math.max(0.05, v));
     });
     inspectorEl.addEventListener('click', function (e) {
       var spotCb = e.target.closest('#d3SpotOn');
-      if (spotCb) {
-        spotOn = spotCb.checked;
-        spotLight.visible = spotOn;
-        renderInspector(); return;
-      }
+      if (spotCb) { spotOn = spotCb.checked; spotLight.visible = spotOn; renderInspector(); return; }
       var btn = e.target.closest('[data-act]');
       if (btn) {
         var act = btn.getAttribute('data-act');
@@ -520,14 +585,9 @@ window.HMDirector3D = (function () {
       }
     });
   }
+  function setXYZ(vec, axis, v) { if (axis === 0) vec.x = v; else if (axis === 1) vec.y = v; else vec.z = v; }
 
-  function setXYZ(vec, axis, v) {
-    if (axis === 0) vec.x = v;
-    else if (axis === 1) vec.y = v;
-    else if (axis === 2) vec.z = v;
-  }
-
-  /* ---------- 侧栏 / 顶栏 ---------- */
+  /* ---------- 顶栏 / 侧栏 ---------- */
   function bindTopBar() {
     var shapes = document.getElementById('d3Shapes');
     if (shapes) shapes.addEventListener('click', function (e) {
@@ -540,7 +600,75 @@ window.HMDirector3D = (function () {
       var row = e.target.closest('[data-oid]');
       if (row) selectObject(row.getAttribute('data-oid'));
     });
+    // 上传 GLB
+    var fileInput = document.getElementById('d3FileInput');
+    var uploadBtn = document.getElementById('d3UploadBtn');
+    if (uploadBtn && fileInput) {
+      uploadBtn.addEventListener('click', function () { fileInput.click(); });
+      fileInput.addEventListener('change', function () {
+        var f = fileInput.files && fileInput.files[0]; if (!f) return;
+        var reader = new FileReader();
+        reader.onload = function () { loadGLBFromArrayBuffer(reader.result, f.name); };
+        reader.onerror = function () { toast('✗ 文件读取失败', 'error'); };
+        reader.readAsArrayBuffer(f);
+        fileInput.value = ''; // 允许再选同一个文件
+      });
+    }
 
+    // AI modal
+    var aiBtn = document.getElementById('d3AiGenBtn');
+    var aiModal = document.getElementById('d3AiModal');
+    var aiClose = document.getElementById('d3AiClose');
+    if (document.getElementById('d3AiGenBtnSide')) {
+      document.getElementById('d3AiGenBtnSide').addEventListener('click', openAiModal);
+    }
+    // 侧栏 "AI 生成 3D" 按钮
+    var aiSideBtn = document.getElementById('d3AiGenSide');
+    if (!aiSideBtn) {
+      aiSideBtn = document.getElementById('d3AiGenBtn'); // 可能存在重复 ID，兜底
+    }
+    var rootUpload = document.getElementById('d3UploadBtn');
+    if (rootUpload) {
+      // 实际是侧栏里的上传按钮，上面已经绑过
+    }
+    // 再检查一次 AI 生成按钮 ID
+    document.querySelectorAll('[data-ai-open]').forEach(function (b) { b.addEventListener('click', openAiModal); });
+    // 侧栏的 AI 按钮 id 改下（刚才 html 里用的是 d3AiGenBtn，但那里没绑定）—— 让事件委托兜底：
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('#d3SideAiGenBtn');
+      if (btn) openAiModal();
+    });
+
+    if (aiClose) aiClose.addEventListener('click', closeAiModal);
+    if (aiModal) aiModal.addEventListener('click', function (e) { if (e.target === aiModal) closeAiModal(); });
+    document.querySelectorAll('.hm-d3-model-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.hm-d3-model-tab').forEach(function (t) { t.classList.remove('is-active'); });
+        tab.classList.add('is-active');
+        var tabKey = tab.getAttribute('data-ai-tab');
+        var providerHint = document.querySelector('.hm-d3-gen-provider');
+        if (providerHint) {
+          if (tabKey === 'tripo') providerHint.textContent = '通过 Tripo 官方 API · 生成耗时 30-90 秒 · 结果为 .glb 导入当前场景';
+          else providerHint.textContent = 'Trellis（微软开源）请输入自建服务 API 地址（可选）';
+        }
+      });
+    });
+    var keyInput = document.getElementById('d3TripoKey');
+    if (keyInput) keyInput.value = getTripoKey();
+    var keySaveBtn = document.getElementById('d3TripoKeySave');
+    var keyStatus = document.getElementById('d3TripoKeyStatus');
+    if (keySaveBtn) keySaveBtn.addEventListener('click', function () {
+      setTripoKey(keyInput.value.trim());
+      if (keyStatus) { keyStatus.hidden = false; setTimeout(function () { keyStatus.hidden = true; }, 2000); }
+    });
+    var modelType = document.getElementById('d3AiModelType');
+    var imgField = document.getElementById('d3AiImageField');
+    if (modelType && imgField) {
+      modelType.addEventListener('change', function () { imgField.hidden = modelType.value !== 'image_to_model'; });
+    }
+    if (aiBtn) aiBtn.addEventListener('click', onGenerateAi3D);
+
+    // 顶栏按钮
     var camBtn = document.getElementById('d3CameraBtn');
     if (camBtn) camBtn.addEventListener('click', toggleCamMode);
     var shotBtn = document.getElementById('d3ShotBtn');
@@ -551,11 +679,58 @@ window.HMDirector3D = (function () {
     if (resetBtn) resetBtn.addEventListener('click', resetCamera);
     var saveBtn = document.getElementById('d3SaveBtn');
     if (saveBtn) saveBtn.addEventListener('click', saveScene);
+  }
 
-    // 切换 gizmo 模式按钮
-    document.querySelectorAll('.hm-d3-btn[data-mode]').forEach(function (b) {
-      b.addEventListener('click', function () { tControls.setMode(b.getAttribute('data-mode')); });
-    });
+  function openAiModal() {
+    var m = document.getElementById('d3AiModal'); if (m) m.hidden = false;
+  }
+  function closeAiModal() {
+    var m = document.getElementById('d3AiModal'); if (m) m.hidden = true;
+  }
+
+  function setAiStatus(html, cls) {
+    var el = document.getElementById('d3AiResult');
+    if (!el) return;
+    el.innerHTML = '<div class="hm-d3-gen-status' + (cls ? ' ' + cls : '') + '">' + html + '</div>';
+  }
+
+  async function onGenerateAi3D() {
+    var btn = document.getElementById('d3AiGenBtn');
+    var modelType = document.getElementById('d3AiModelType').value;
+    var prompt = document.getElementById('d3AiPrompt').value.trim();
+    if (!prompt && modelType === 'text_to_model') { toast('请填写 Prompt', 'error'); return; }
+    btn.disabled = true;
+    btn.textContent = '⏳ 生成中...';
+    try {
+      var taskId;
+      if (modelType === 'text_to_model') {
+        setAiStatus('🚀 提交任务：' + esc(prompt.slice(0, 60)) + '...');
+        taskId = await tripoTextToModel(prompt);
+      } else {
+        var imgInput = document.getElementById('d3AiImageInput');
+        var file = imgInput && imgInput.files && imgInput.files[0];
+        if (!file) throw new Error('请先选择参考图');
+        var dataUrl = await new Promise(function (res, rej) {
+          var r = new FileReader();
+          r.onload = function () { res(r.result); };
+          r.onerror = rej; r.readAsDataURL(file);
+        });
+        setAiStatus('🚀 提交图片任务...');
+        taskId = await tripoImageToModel(dataUrl);
+      }
+      setAiStatus('✅ 任务已提交 (task_id=' + taskId + ')，等待 Tripo 处理（通常 30-90 秒）...');
+      var url = await pollTripoTask(taskId, function (st, round) {
+        setAiStatus('🔄 任务状态: ' + st + ' · 第 ' + (round + 1) + ' 次查询');
+      });
+      setAiStatus('📥 下载模型中...');
+      loadGLBFromURL(url, 'ai-' + (prompt || 'image').slice(0, 20).replace(/[^a-zA-Z0-9_-]/g, '_'));
+      closeAiModal();
+    } catch (e) {
+      console.error(e);
+      setAiStatus('✗ ' + (e.message || '未知错误') + '<div style="margin-top:6px;font-size:11px;color:#7b8494">如遇 CORS 拒绝，需在自建后端做代理；也可直接到 <a href="https://platform.tripo3d.ai" target="_blank" style="color:#7ca2ff">Tripo 控制台</a> 下载 .glb 后用上方「上传 GLB」导入。</div>', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = '🚀 开始生成';
+    }
   }
 
   function syncTopBar() {
@@ -572,14 +747,12 @@ window.HMDirector3D = (function () {
   function toggleCamMode() {
     camMode = !camMode;
     if (camMode) {
-      // 从轨道相机状态过渡到飞航
       var sph = new THREE.Spherical().setFromVector3(camera.position.clone().sub(orbit.target));
       camFly.pos.copy(camera.position);
       camFly.yaw = sph.theta;
       camFly.pitch = sph.phi - Math.PI / 2;
       orbit.enabled = false;
     } else {
-      // 回到轨道相机
       var target = new THREE.Vector3(0, 1.2, 0);
       var dir = camera.position.clone().sub(target).normalize();
       camOrbit.yaw = Math.atan2(dir.x, dir.z);
@@ -593,20 +766,12 @@ window.HMDirector3D = (function () {
   }
 
   function resetCamera() {
-    if (camMode) {
-      camFly = { pos: new THREE.Vector3(0, 3.5, 13), yaw: -0.65, pitch: -0.06 };
-    } else {
-      camOrbit = { yaw: -0.65, pitch: 0.4, dist: 17, target: new THREE.Vector3(0, 1.2, 0) };
-      var pos = new THREE.Vector3().setFromSpherical(
-        new THREE.Spherical(camOrbit.dist, camOrbit.pitch + Math.PI / 2, camOrbit.yaw)
-      ).add(camOrbit.target);
-      camera.position.copy(pos);
-      orbit.target.copy(camOrbit.target);
-      // 让 orbit 立刻进入稳定状态
-      orbit._spherical.setFromVector3(camera.position.clone().sub(orbit.target));
-      orbit._sphericalDelta.set(0, 0, 0);
-      orbit._panOffset.set(0, 0, 0);
-    }
+    if (camMode) { camFly = { pos: new THREE.Vector3(0, 3.5, 13), yaw: -0.65, pitch: -0.06 }; return; }
+    camOrbit = { yaw: -0.65, pitch: 0.4, dist: 17, target: new THREE.Vector3(0, 1.2, 0) };
+    var pos = new THREE.Vector3().setFromSpherical(new THREE.Spherical(camOrbit.dist, camOrbit.pitch + Math.PI / 2, camOrbit.yaw)).add(camOrbit.target);
+    camera.position.copy(pos); orbit.target.copy(camOrbit.target);
+    orbit._spherical.setFromVector3(camera.position.clone().sub(orbit.target));
+    orbit._sphericalDelta.set(0, 0, 0); orbit._panOffset.set(0, 0, 0);
   }
 
   function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
@@ -616,32 +781,33 @@ window.HMDirector3D = (function () {
     if (!active) { rafId = null; return; }
     if (camMode) {
       applyFly();
-      // 飞航：先 yaw，再 pitch
       var qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), camFly.yaw);
       var qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), camFly.pitch);
       camera.quaternion.copy(qy).multiply(qx);
-    } else {
-      orbit.update();
-    }
-    tControls.update();
-    renderer.render(scene, camera);
+    } else { orbit.update(); }
+    tControls.update(); renderer.render(scene, camera);
     rafId = requestAnimationFrame(loop);
   }
 
   /* ---------- 截图 / 存档 ---------- */
   function captureShot() {
-    var url = null;
-    try { renderer.render(scene, camera); url = renderer.domElement.toDataURL('image/png'); } catch (e) { return; }
+    renderer.render(scene, camera);
+    var url; try { url = renderer.domElement.toDataURL('image/png'); } catch (e) { return; }
     var a = document.createElement('a');
     var ts = new Date();
-    var stamp = String(ts.getFullYear()) + String(ts.getMonth() + 1).padStart(2, '0') + String(ts.getDate()).padStart(2, '0') +
-      '-' + String(ts.getHours()).padStart(2, '0') + String(ts.getMinutes()).padStart(2, '0') + String(ts.getSeconds()).padStart(2, '0');
+    var stamp = String(ts.getFullYear()) + String(ts.getMonth() + 1).padStart(2, '0') + String(ts.getDate()).padStart(2, '0') + '-' + String(ts.getHours()).padStart(2, '0') + String(ts.getMinutes()).padStart(2, '0') + String(ts.getSeconds()).padStart(2, '0');
     a.href = url; a.download = '导演台取景-' + stamp + '.png';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     toast('已保存取景截图', 'success');
   }
   function toast(msg, kind) {
     if (window.HMApp && window.HMApp.toast) return window.HMApp.toast(msg, kind);
+    try {
+      var d = document.createElement('div');
+      d.textContent = msg; d.style.cssText = 'position:fixed;left:50%;top:20px;transform:translateX(-50%);padding:8px 16px;border-radius:8px;background:#11151f;color:#e6e9ef;font-size:13px;z-index:10000;border:1px solid #2a3142;box-shadow:0 8px 24px rgba(0,0,0,.4)';
+      document.body.appendChild(d);
+      setTimeout(function () { d.style.transition = 'opacity .3s'; d.style.opacity = '0'; setTimeout(function () { d.remove(); }, 300); }, 2400);
+    } catch (e) {}
   }
 
   function saveScene() {
@@ -649,37 +815,30 @@ window.HMDirector3D = (function () {
       var data = {
         version: 2,
         objects: objects.map(function (o) {
-          return {
-            id: o.id, name: o.name, kind: o.kind,
+          return { id: o.id, name: o.name, kind: o.kind,
             pos: [o.three.position.x, o.three.position.y, o.three.position.z],
             rot: [o.three.rotation.x, o.three.rotation.y, o.three.rotation.z],
-            scale: [o.three.scale.x, o.three.scale.y, o.three.scale.z]
-          };
+            scale: [o.three.scale.x, o.three.scale.y, o.three.scale.z] };
         }),
-        camera: {
-          pos: [camera.position.x, camera.position.y, camera.position.z],
-          quat: [camera.quaternion.x, camera.quaternion.y, camera.quaternion.z, camera.quaternion.w]
-        },
+        camera: { pos: [camera.position.x, camera.position.y, camera.position.z], quat: [camera.quaternion.x, camera.quaternion.y, camera.quaternion.z, camera.quaternion.w] },
         seq: seq
       };
       localStorage.setItem(LS_SCENE, JSON.stringify(data));
-      toast('场景已保存到本地', 'success');
+      toast('场景已保存', 'success');
     } catch (e) { toast('保存失败', 'error'); }
   }
 
   function loadScene() {
-    var raw = null;
-    try { raw = localStorage.getItem(LS_SCENE); } catch (e) { return; }
-    if (!raw) return;
     try {
+      var raw = localStorage.getItem(LS_SCENE); if (!raw) return;
       var data = JSON.parse(raw);
       if (data && Array.isArray(data.objects)) {
-        objects.forEach(function (o) { scene.remove(o.three); });
-        objects = []; selectedId = null;
+        objects.forEach(function (o) { scene.remove(o.three); }); objects = []; selectedId = null;
         var maxSeq = 0;
         data.objects.forEach(function (s) {
           var threeObj;
           if (s.kind === 'mannequin') threeObj = makeMannequin(s.name);
+          else if (s.kind === 'glb') return; // glb 存档无法恢复二进制，跳过
           else threeObj = makePrimitive(s.kind);
           threeObj.position.set(s.pos[0], s.pos[1], s.pos[2]);
           threeObj.rotation.set(s.rot[0], s.rot[1], s.rot[2]);
@@ -696,7 +855,7 @@ window.HMDirector3D = (function () {
           camera.quaternion.set(data.camera.quat[0], data.camera.quat[1], data.camera.quat[2], data.camera.quat[3]);
         }
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
   }
 
   /* ---------- 生命周期 ---------- */
@@ -707,42 +866,28 @@ window.HMDirector3D = (function () {
     inspectorEl = document.getElementById('d3Inspector');
     objListEl = document.getElementById('d3ObjList');
     if (!canvas || !container) return;
-    setupScene();
-    bound = true;
+    setupScene(); bound = true;
     loadScene();
-    if (!objects.length) {
-      addPrimitive('cube'); addPrimitive('sphere'); addPrimitive('mannequin');
-      selectObject(null);
-    }
-
+    if (!objects.length) { addPrimitive('cube'); addPrimitive('sphere'); addPrimitive('mannequin'); selectObject(null); }
     canvas.addEventListener('mousedown', onDown);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
-
-    bindTopBar();
-    bindInspector();
-    syncTopBar();
-    renderObjectList();
-    renderInspector();
+    bindTopBar(); bindInspector(); syncTopBar(); renderObjectList(); renderInspector();
   }
 
   function enter() {
-    active = true;
-    if (!bound) init();
-    resize();
-    syncTopBar();
+    active = true; if (!bound) init();
+    resize(); syncTopBar();
     if (rafId) cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(loop);
   }
 
   function leave() {
-    active = false;
-    keys = {};
+    active = false; keys = {};
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    // 保存当前状态
     try { saveScene(); } catch (e) {}
   }
 
