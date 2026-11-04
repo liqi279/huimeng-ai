@@ -1,0 +1,26 @@
+蓝莓酱本地 AI 接入补丁（Ollama + Qwen3 4B）
+
+适用：你上传的 Blueberry-AI-Pet 项目，已安装 Ollama，并已成功下载 qwen3:4b。
+
+安装方法：
+1. 先完全退出蓝莓酱桌宠。
+2. 解压本 ZIP。
+3. 将解压出的文件覆盖复制到你原来的 Blueberry-AI-Pet 项目文件夹。
+   注意：不要删除原项目的 node_modules 文件夹，也不要重新安装 Electron。
+4. 确认 Ollama 正在运行。CMD 输入：ollama list
+   应能看到 qwen3:4b。
+5. 在项目文件夹地址栏输入 cmd，打开命令提示符，执行：npm start
+6. 点击“和我聊天”测试。
+
+默认设置：
+- 接口：本地 Ollama
+- 地址：http://localhost:11434
+- 模型：qwen3:4b
+- API Key：留空即可
+
+聊天窗口右上角“设置”可切换到 OpenAI 兼容接口。
+本补丁保留原有桌宠窗口、三个按钮和聊天窗口结构；新增本地模型对话及蓝莓酱角色提示词。
+如果连接失败，先确认 Ollama 正在运行，再在 CMD 测试：
+curl http://localhost:11434/api/tags
+
+说明：此 ZIP 不包含 node_modules，以免覆盖你本机已经修复好的 Electron 安装。

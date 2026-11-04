@@ -5,7 +5,8 @@
 | 目录 | 插件 | 说明 |
 |---|---|---|
 | [`blender-bridge/`](./blender-bridge/) | Blender 桥接插件 | 把本地 Blender 渲染到网页平台并可视化操作（WebSocket + 视口画面流） |
-| [`miku-player/`](./miku-player/) | 初音胶片音乐播放器 | 可嵌入任何网页的悬浮音乐播放器，内置初音未来 Live2D 唱跳形象 |
+| [`miku-player/`](./miku-player/) | 初音胶片音乐播放器 | 可嵌入任何网页的悬浮音乐播放器，内置初音未来 Live2D 唱跳形象、蓝莓酱形象与 AI 语音聊天 |
+| [`blueberry-ai-pet/`](./blueberry-ai-pet/) | 蓝莓酱 AI 桌宠 | Electron 透明桌宠 + AI 聊天，附带单文件 Web SDK（`BlueberryPet.init()`），可接入任意页面或桌面工程 |
 
 ## 快速使用
 

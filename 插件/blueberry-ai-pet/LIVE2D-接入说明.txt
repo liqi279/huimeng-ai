@@ -1,0 +1,26 @@
+蓝莓酱 Live2D 第二阶段接入说明
+
+本版本已完成：
+- Electron 桌宠主窗口使用无边框透明窗口，窗口背景透明。
+- 桌宠页面改为透明舞台，不再把带底色的原始参考图伪装成透明立绘。
+- 增加 PixiJS + pixi-live2d-display + Live2D Cubism Core 的运行时检测与模型加载入口。
+- 预留模型点击反馈、双击打开聊天、隐藏和退出操作。
+- 保留原聊天窗口、Ollama/Qwen3 think 内容过滤和设置功能。
+
+要运行真正的 Live2D 模型，还需要用户自行取得并按许可使用 Cubism SDK：
+1. 从 Live2D 官方开发者页面取得 Cubism SDK for Web / Cubism Core。
+2. 将兼容版本的运行文件放入 vendor/live2d/，文件名按页面引用：
+   - live2dcubismcore.min.js
+   - pixi.min.js
+   - pixi-live2d-display.min.js
+3. 将 Cubism 导出的模型目录放入 live2d/model/，并确保入口文件为：
+   live2d/model/blueberry.model3.json
+4. 模型目录还应包含 model3.json 引用的 .moc3、纹理、physics3.json、motions、expressions 等文件。
+
+重要限制：当前项目没有 Cubism 模型文件，也没有随包附带 Cubism Core / Web Framework。
+因此本版本是可接入真实模型的运行框架，不代表已经实现眨眼、呼吸、头发物理或完整动作。具体动作取决于模型中已有的参数、动作和物理配置。
+
+测试：
+- npm install
+- npm start
+- 没有运行库或模型时，页面会显示等待模型提示，不会伪造 Live2D 动画。

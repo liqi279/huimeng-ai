@@ -1,0 +1,17 @@
+﻿蓝莓酱桌宠 v0.1.3 交互修复补丁
+
+使用方法：
+1. 完全退出蓝莓酱桌宠（点右上角 ×）。
+2. 将本压缩包内的 main.js、preload.js、renderer.js 复制到 E:\Blueberry-AI-Pet\
+3. Windows 询问是否覆盖时，选择“替换目标中的文件”。
+4. 在 E:\Blueberry-AI-Pet\ 地址栏输入 cmd 并回车。
+5. 执行 npm start。
+
+本补丁修复方向：
+- 调整 Electron preload 的 sandbox 设置，避免桌面窗口无法调用桥接 API。
+- 增加主进程/渲染进程通信 ping 检查。
+- 为按钮交互增加可见状态和错误提示。
+- 聊天窗口创建时记录加载错误。
+
+说明：本补丁不改动 package.json，不会删除 node_modules，也不接触 API Key。
+如果仍不能互动，请把桌宠上显示的错误文字或 userData 下的 blueberry-debug.log 发回。

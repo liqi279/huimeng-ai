@@ -1,0 +1,7 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>和蓝莓酱聊天</title><link rel="stylesheet" href="chat.css"></head>
+<body><header><div><b>和蓝莓酱聊天</b><small>今天也请多关照哦</small></div><button id="settingsBtn">⚙ 设置</button></header>
+<section id="messages"><div class="bubble pet">主人！终于来聊天啦～有什么想和蓝莓酱说的吗？</div></section>
+<form id="form"><input id="input" placeholder="对蓝莓酱说点什么…" autocomplete="off"><button>发送</button></form>
+<div class="hint" id="connectionHint">默认连接本机 Ollama · Qwen3 4B（无需 API Key）</div>
+<div id="settings" class="modal hidden"><div class="panel"><h3>AI 接口设置</h3><label>接口类型<select id="provider"><option value="ollama">本地 Ollama（免费）</option><option value="openai">OpenAI 兼容接口</option></select></label><label>模型名称<input id="model" placeholder="qwen3:4b"></label><label>服务地址<input id="baseUrl" placeholder="http://localhost:11434"></label><label id="apiKeyLabel">API Key（本地 Ollama 不需要）<input id="apiKey" type="password" placeholder="仅远程接口需要"></label><p>本地模式默认使用 Ollama 的 http://localhost:11434 和 qwen3:4b。切换为 OpenAI 兼容接口时，请填写该服务支持的模型、地址和密钥。</p><div class="buttons"><button type="button" id="cancel">取消</button><button type="button" id="save">保存设置</button></div></div></div>
+<script src="chat.js"></script></body></html>

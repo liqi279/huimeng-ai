@@ -1,6 +1,6 @@
 # 初音未来 · 胶片音乐播放器
 
-一个**单文件离线可用**的可悬浮网页音乐播放器，以黑胶胶片为播放器形象，内置初音未来（Hatsune Miku）Live2D 虚拟形象：播放时她随音乐**唱跳编排好的成套舞蹈**，口型实时贴合歌声。
+一个**单文件离线可用**的可悬浮网页音乐播放器，以黑胶胶片为播放器形象，内置初音未来（Hatsune Miku）Live2D 虚拟形象：播放时她随音乐**唱跳编排好的成套舞蹈**，口型实时贴合歌声。并集成蓝莓酱（Blueberry-AI-Pet）立绘形象与 AI 语音聊天（Ollama / Qwen3、OpenAI 兼容、语音输入与朗读）。
 
 双击 `index.html` 即可运行，无需服务器、无需联网、无需安装任何东西。
 
@@ -19,7 +19,8 @@
 | 虚拟形象 | 初音未来 Live2D 模型，**真实 Cubism 2 引擎**渲染 |
 | 口型 | 演唱时嘴型开合实时贴合音量（`PARAM_MOUTH_OPEN_Y`） |
 | 唱跳 | 播放时按顺序表演 **6 段成套编排舞蹈**（详见下文），右键菜单可开关 |
-| 备选形象 | 右键菜单可切换：胶片 / 初音未来 / Spine 骨骼动画 / AE 序列帧 / 内置歌手 |
+| 备选形象 | 右键菜单可切换：胶片 / 初音未来 / 蓝莓酱 / Spine 骨骼动画 / AE 序列帧 / 内置歌手 |
+| AI 语音聊天 | `miku-chat.js` 扩展：Ollama（qwen3:4b，过滤 `<think>` 思考）/ OpenAI 兼容接口、语音输入（zh-CN）、回复自动朗读；说话时自动暂停音乐 |
 
 ## 成套编舞说明
 
@@ -43,6 +44,7 @@
 ```
 miku-vinyl-player/
 ├── index.html          主程序（约 1.4 MB，单文件即可运行）
+├── miku-chat.js        AI 语音聊天扩展（可选，配合播放器使用）
 ├── README.md           本说明
 ├── lib/                渲染引擎脚本（index.html 启动时优先加载本地，缺失则回退 CDN）
 │   ├── pixi.min.js             pixi.js 6.5.10（渲染层，WebGL）
@@ -173,9 +175,52 @@ miku-vinyl-player/
 | `player.play()` | 播放 |
 | `player.pause()` | 暂停 |
 | `player.toggle()` | 播放/暂停切换 |
+| `player.setAvatar(type)` | 切换形象：`disc` / `live2d` / `blueberry` / `spine` / `ae` / `builtin`，返回是否成功 |
+| `player.getAvatar()` | 当前形象标识 |
+| `player.avatarList()` | 可用形象列表 `[{ id, name, type }]` |
 | `player.destroy()` | 从页面移除播放器 |
 | `player.el` | 播放器容器 DOM 元素 |
 | `player.audio` | 底层 `<audio>` 元素 |
+
+### 切换形象（含蓝莓酱）
+
+```html
+<script src="dist/miku-player.js"></script>
+<script>
+  var player = MikuPlayer.init(null, { avatar: 'blueberry' }); // 初始就是蓝莓酱
+  // 或运行时切换
+  player.setAvatar('blueberry');   // 蓝莓酱（AI 桌宠立绘，单帧 AE 引擎，离线可用）
+  player.setAvatar('live2d');      // 初音未来
+  console.log(player.avatarList());
+</script>
+```
+
+### AI 语音聊天（可选扩展）
+
+`miku-chat.js` 把蓝莓酱的 AI 与语音能力挂到播放器上：页面右下角出现对话按钮，播放器右键菜单也多一项「AI 语音聊天」。
+
+```html
+<script src="dist/miku-player.js"></script>
+<script src="dist/miku-chat.js"></script>
+<script>
+  var player = MikuPlayer.init();
+  var chat = MikuChat.init({ player: player });   // 绑定播放器：说话时自动暂停音乐
+  // chat.ask('放首轻快的歌').then(r => console.log(r.text));
+  // chat.speak('主人，音乐已经准备好啦～');
+  // chat.configure({ provider: 'ollama', baseUrl: 'http://localhost:11434', model: 'qwen3:4b' });
+</script>
+```
+
+| 方法 | 说明 |
+|---|---|
+| `MikuChat.open()` / `close()` / `toggle()` | 打开 / 关闭 / 切换聊天面板 |
+| `MikuChat.ask(text)` | 发送消息，返回 `Promise<{ text }>` |
+| `MikuChat.speak(text)` / `stopSpeak()` | 朗读 / 停止朗读 |
+| `MikuChat.listen()` | 启动语音输入（zh-CN） |
+| `MikuChat.configure(patch)` | 修改并保存接口配置（localStorage） |
+| `MikuChat.bindPlayer(api)` | 绑定播放器，朗读时自动暂停 / 恢复音乐 |
+
+**跨域与 HTTPS**：Ollama 启动前需设置 `OLLAMA_ORIGINS=*`；HTTPS 页面会被浏览器拦截对 `http://localhost` 的请求，请用 http 页面打开或为 Ollama 配置 HTTPS 反向代理。
 
 ### 从源码重新构建
 

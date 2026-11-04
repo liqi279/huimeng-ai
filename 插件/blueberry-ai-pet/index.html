@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>蓝莓酱桌宠</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="window">
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span> 蓝莓酱 <small>AI PET · v0.1</small></div>
+    <div class="window-actions">
+      <button id="topBtn" title="切换置顶">置顶</button>
+      <button id="hideBtn" title="隐藏">－</button>
+      <button id="quitBtn" title="退出">×</button>
+    </div>
+  </header>
+  <main>
+    <div class="status"><span id="moodDot"></span><span id="mood">今天心情：期待和主人玩耍</span></div>
+    <div class="portrait-wrap" id="portrait">
+      <img src="assets/blueberry-reference.webp" alt="蓝莓酱角色参考图">
+      <div class="speech" id="speech">主人！你来啦！今天想和蓝莓酱做什么？</div>
+      <div class="sparkle">✦</div>
+    </div>
+    <div class="name">蓝莓酱 <span>♡</span></div>
+    <div class="subtitle">你的桌面小伙伴</div>
+    <div class="actions">
+      <button class="primary" id="chatBtn">和我聊天</button>
+      <button id="patBtn">摸摸头</button>
+      <button id="danceBtn">表演一下</button>
+    </div>
+    <div class="footer"><span id="clock">正在陪伴你</span><span>● 本地运行</span></div>
+  </main>
+</div>
+<script src="renderer.js"></script>
+</body></html>

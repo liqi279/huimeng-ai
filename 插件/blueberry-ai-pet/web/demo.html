@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>蓝莓酱 AI 桌宠 · Web SDK 演示</title>
+  <style>
+    body {
+      margin: 0; min-height: 100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at 20% 10%, #1d2544, #0b0e19 62%);
+      color: #e8eefc;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .panel {
+      width: min(620px, calc(100vw - 40px));
+      padding: 32px 30px; border-radius: 20px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(140,170,255,.18);
+    }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { color: #9aa7c2; font-size: 13.5px; line-height: 1.8; margin: 8px 0; }
+    code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    button {
+      border: 1px solid rgba(140,170,255,.35); background: rgba(120,150,255,.16);
+      color: #e8eefc; padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size: 13px;
+    }
+    button:hover { background: rgba(120,150,255,.3); }
+    pre {
+      margin-top: 18px; padding: 14px; border-radius: 12px; overflow: auto;
+      background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.08);
+      font-size: 12px; line-height: 1.6; color: #c9d6f5;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>蓝莓酱 AI 桌宠 · Web SDK</h1>
+    <p>右下角就是蓝莓酱：<b>拖动</b>移动位置，<b>单击</b>打招呼，<b>双击</b>打开聊天，<b>右键</b>打开菜单。</p>
+    <p>AI 默认为本地 Ollama（<code>qwen3:4b</code>）。启动 Ollama 前请设置 <code>OLLAMA_ORIGINS=*</code>；若是 HTTPS 页面，浏览器会拦截 <code>http://localhost</code>，请用 http 页面打开。</p>
+    <div class="btns">
+      <button id="open">打开聊天</button>
+      <button id="ask">问一个问题</button>
+      <button id="say">头顶气泡</button>
+      <button id="speak">朗读测试</button>
+      <button id="hide">隐藏 / 显示</button>
+    </div>
+    <pre>BlueberryPet.init({
+  height: 280, right: 32, bottom: 24,
+  api: { provider: 'ollama', baseUrl: 'http://localhost:11434', model: 'qwen3:4b' }
+});</pre>
+  </div>
+
+  <script src="./blueberry-pet-web.js"></script>
+  <script>
+    var pet = BlueberryPet.init({
+      height: 280,
+      right: 32,
+      bottom: 24,
+      api: { provider: 'ollama', baseUrl: 'http://localhost:11434', model: 'qwen3:4b' }
+    });
+
+    document.getElementById('open').onclick = function () { pet.openChat(); };
+    document.getElementById('ask').onclick = function () {
+      pet.ask('用一句话介绍一下你自己吧').then(function (r) { console.log(r); });
+    };
+    document.getElementById('say').onclick = function () { pet.say('主人今天也要开心呀～'); };
+    document.getElementById('speak').onclick = function () { pet.speak('我是蓝莓酱，很高兴见到主人。'); };
+    var hidden = false;
+    document.getElementById('hide').onclick = function () {
+      hidden = !hidden;
+      hidden ? pet.hide() : pet.show();
+    };
+  </script>
+</body>
+</html>
