@@ -705,6 +705,12 @@
     if (prevView === 'director' && view !== 'director' && window.HMDirector) {
       try { window.HMDirector.pause(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'director3d' && view !== 'director3d' && window.HMDirector3D) {
+      try { window.HMDirector3D.leave(); } catch (e) { /* ignore */ }
+    }
+    if (view === 'director3d' && window.HMDirector3D) {
+      try { window.HMDirector3D.enter(); } catch (e) { /* ignore */ }
+    }
     if (prevView === 'storyboard' && view !== 'storyboard' && window.HMStoryboard) {
       try { window.HMStoryboard.pause(); } catch (e) { /* ignore */ }
     }
@@ -2407,6 +2413,11 @@
     /* 导演台初始化 */
     if (window.HMDirector) {
       try { window.HMDirector.init(); } catch (e) { console.error('[Director] init failed', e); }
+    }
+
+    /* 3D 导演台初始化 */
+    if (window.HMDirector3D) {
+      try { window.HMDirector3D.init(); } catch (e) { console.error('[Director3D] init failed', e); }
     }
 
     /* 右侧 AI 聊天面板初始化 */

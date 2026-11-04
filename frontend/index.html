@@ -27,8 +27,12 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg>
         <span>建模</span>
       </button>
-      <button class="hm-rail-item" data-rail="director" title="导演台（视频剪辑与多轨道合成）">
+      <button class="hm-rail-item" data-rail="director" title="合成（视频剪辑与多轨道合成）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9l5 3-5 3V9Z" fill="currentColor" opacity=".8"/><path d="M3 9h2M3 15h2M19 9h2M19 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/></svg>
+        <span>合成</span>
+      </button>
+      <button class="hm-rail-item" data-rail="director3d" title="导演台（3D 无限画布 · 白模摆位 · 打光与取景）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7l1.5 2h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M18.5 11.2h.01" fill="currentColor" stroke="currentColor" stroke-width="1.2"/></svg>
         <span>导演台</span>
       </button>
       <button class="hm-rail-item" data-rail="storyboard" title="故事版（分镜创作）">
@@ -1378,6 +1382,112 @@
         <div class="hm-dir-track-ruler" id="dirTrackRuler"></div>
         <div class="hm-dir-track-list" id="dirTrackList"></div>
       </div>
+    </div>
+  </main>
+
+  <!-- ===================== 导演台（3D 无限画布） ===================== -->
+  <main class="hm-page hm-d3-page" id="view-director3d" hidden>
+    <style>
+      .hm-d3-page{display:flex;flex-direction:column;height:calc(100vh - 60px);min-height:0;background:var(--hm-bg,#0f1320);padding:12px 14px;gap:10px}
+      .hm-d3-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;flex-wrap:wrap}
+      .hm-d3-title{display:flex;align-items:center;gap:10px}
+      .hm-d3-logo{font-size:18px;color:#52c41a}
+      .hm-d3-title h2{font-size:18px;margin:0;color:var(--hm-text,#e6e9ef)}
+      .hm-d3-sub{font-size:12px;color:var(--hm-dim,#8b93a1)}
+      .hm-d3-tools{display:flex;gap:8px;flex-wrap:wrap}
+      .hm-d3-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;background:var(--hm-accent,#4f8cff);color:#fff;white-space:nowrap}
+      .hm-d3-btn:hover{filter:brightness(1.08)}
+      .hm-d3-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+      .hm-d3-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef)}
+      .hm-d3-btn.ghost:hover{background:#242a3a}
+      .hm-d3-btn.is-on{background:#52c41a;border-color:#52c41a;color:#fff}
+      .hm-d3-main{flex:1;min-height:0;display:flex;gap:10px;min-width:0}
+      .hm-d3-side,.hm-d3-inspector{flex:none;width:212px;display:flex;flex-direction:column;gap:8px;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;padding:10px;overflow-y:auto}
+      .hm-d3-inspector{width:248px}
+      .hm-d3-sec-title{font-size:11px;letter-spacing:.08em;color:var(--hm-dim,#8b93a1);text-transform:uppercase;padding:2px 2px 4px;border-bottom:1px solid var(--hm-line,#2a3142)}
+      .hm-d3-shapes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      .hm-d3-shapes button{font-size:12px;padding:8px 4px;border-radius:8px;border:1px solid var(--hm-line,#2a3142);background:#11151f;color:var(--hm-text,#e6e9ef);cursor:pointer}
+      .hm-d3-shapes button:hover{border-color:var(--hm-accent,#4f8cff);background:#1a2130}
+      .hm-d3-list{display:flex;flex-direction:column;gap:4px;min-height:60px}
+      .hm-d3-list-empty{font-size:11px;color:#5f6775;padding:10px 2px;text-align:center}
+      .hm-d3-obj{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:1px solid transparent;background:#141a26;font-size:12px;color:#c8d0e0;cursor:pointer}
+      .hm-d3-obj:hover{background:#1a2130}
+      .hm-d3-obj.is-active{border-color:var(--hm-accent,#4f8cff);background:#1b2536}
+      .hm-d3-obj-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .hm-d3-obj-del{width:20px;height:20px;border-radius:6px;border:none;background:transparent;color:#8b93a1;cursor:pointer;font-size:13px;line-height:1}
+      .hm-d3-obj-del:hover{color:#ff7875;background:rgba(255,120,117,.12)}
+      .hm-d3-viewport{flex:1;min-width:0;position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--hm-line,#2a3142);background:#0b0f19}
+      .hm-d3-viewport canvas{display:block;width:100%;height:100%}
+      .hm-d3-hint{position:absolute;left:12px;bottom:10px;font-size:11px;color:#98a1b2;background:rgba(10,14,22,.72);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:5px 10px;pointer-events:none;backdrop-filter:blur(6px)}
+      .hm-d3-cam-frame{position:absolute;inset:0;pointer-events:none;border:1px solid rgba(255,92,122,.35)}
+      .hm-d3-cam-tag{position:absolute;left:12px;top:10px;font-size:11px;font-weight:700;letter-spacing:.1em;color:#ff5c7a;background:rgba(10,14,22,.72);border:1px solid rgba(255,92,122,.4);border-radius:6px;padding:4px 9px}
+      .hm-d3-cam-bar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);font-size:11px;color:#c8d0e0;background:rgba(10,14,22,.78);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:5px 12px;white-space:nowrap}
+      .hm-d3-corner{position:absolute;width:26px;height:26px;border:2px solid rgba(255,92,122,.75)}
+      .hm-d3-corner.tl{left:8px;top:8px;border-right:none;border-bottom:none}
+      .hm-d3-corner.tr{right:8px;top:8px;border-left:none;border-bottom:none}
+      .hm-d3-corner.bl{left:8px;bottom:8px;border-right:none;border-top:none}
+      .hm-d3-corner.br{right:8px;bottom:8px;border-left:none;border-top:none}
+      .hm-d3-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+      .hm-d3-row label{flex:none;width:56px;font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-d3-row input[type=range]{flex:1;min-width:0;accent-color:#4f8cff}
+      .hm-d3-row input[type=number]{flex:1;min-width:0;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:12px;padding:5px 7px}
+      .hm-d3-row input[type=number]:focus{outline:none;border-color:var(--hm-accent,#4f8cff)}
+      .hm-d3-xyz{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+      .hm-d3-xyz input{width:100%}
+      .hm-d3-xyz span{font-size:10px;color:#7b8494;text-align:center;display:block;margin-bottom:2px}
+      .hm-d3-empty{font-size:11.5px;line-height:1.7;color:#6f7787;text-align:center;padding:16px 6px}
+      .hm-d3-actions{display:flex;gap:6px;margin-top:6px}
+      .hm-d3-actions button{flex:1;font-size:11.5px;padding:7px 4px;border-radius:7px;border:1px solid var(--hm-line,#2a3142);background:#11151f;color:var(--hm-text,#e6e9ef);cursor:pointer}
+      .hm-d3-actions button:hover{border-color:var(--hm-accent,#4f8cff)}
+      .hm-d3-swatch{width:16px;height:16px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:#e8ecf2}
+      @media (max-width:1180px){
+        .hm-d3-side{width:170px}
+        .hm-d3-inspector{width:206px}
+        .hm-d3-viewport{min-width:240px}
+      }
+    </style>
+    <div class="hm-d3-bar">
+      <div class="hm-d3-title">
+        <span class="hm-d3-logo">🎥</span>
+        <h2>导演台</h2>
+        <span class="hm-d3-sub">3D 无限画布 · 白模摆位 · 打光取景</span>
+      </div>
+      <div class="hm-d3-tools">
+        <button class="hm-d3-btn ghost" id="d3CameraBtn" title="进入摄像头取景模式">🎥 摄像头模式</button>
+        <button class="hm-d3-btn ghost" id="d3ShotBtn" title="把当前画面截图为 PNG" disabled>📷 截图</button>
+        <button class="hm-d3-btn ghost is-on" id="d3GridBtn" title="显示/隐藏地面网格">▦ 网格</button>
+        <button class="hm-d3-btn ghost" id="d3ResetCamBtn" title="复位到默认视角">↺ 复位视角</button>
+        <button class="hm-d3-btn" id="d3SaveBtn" title="保存当前场景到本地">💾 保存场景</button>
+      </div>
+    </div>
+
+    <div class="hm-d3-main">
+      <aside class="hm-d3-side">
+        <div class="hm-d3-sec-title">添加白模</div>
+        <div class="hm-d3-shapes" id="d3Shapes">
+          <button type="button" data-shape="cube">■ 立方体</button>
+          <button type="button" data-shape="sphere">● 球体</button>
+          <button type="button" data-shape="cylinder">▮ 圆柱</button>
+          <button type="button" data-shape="cone">▲ 圆锥</button>
+          <button type="button" data-shape="capsule">◗ 胶囊</button>
+          <button type="button" data-shape="plane">▭ 平面</button>
+        </div>
+        <div class="hm-d3-sec-title">场景物体</div>
+        <div class="hm-d3-list" id="d3ObjList"></div>
+      </aside>
+
+      <div class="hm-d3-viewport" id="d3Viewport">
+        <canvas id="d3Canvas"></canvas>
+        <div class="hm-d3-hint" id="d3Hint">左键拖拽旋转视角 · 右键平移 · 滚轮缩放 · 点击模型选中</div>
+        <div class="hm-d3-cam-frame" id="d3CamFrame" hidden>
+          <span class="hm-d3-cam-tag">● CAMERA</span>
+          <i class="hm-d3-corner tl"></i><i class="hm-d3-corner tr"></i>
+          <i class="hm-d3-corner bl"></i><i class="hm-d3-corner br"></i>
+          <div class="hm-d3-cam-bar">WASD 移动 · Q/E 升降 · 左键拖拽转向 · 点击模型仍可移动</div>
+        </div>
+      </div>
+
+      <aside class="hm-d3-inspector" id="d3Inspector"></aside>
     </div>
   </main>
 
@@ -3460,6 +3570,7 @@
   <script src="auth-ui.js"></script>
   <script src="app.js"></script>
   <script src="storyboard.js"></script>
+  <script src="director3d.js"></script>
   <script src="paint.js"></script>
   <script src="toolimage.js"></script>
   <script src="toolreference.js"></script>
