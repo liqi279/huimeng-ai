@@ -1,628 +1,355 @@
 'use strict';
 /* =============================================================
- * 绘梦 · 导演台 HMDirector3D（3D 无限画布）
- * 纯 Canvas2D 软件渲染：白模几何体、轨道相机、基础打光、取景截图
- * 容器在 index.html 的 #view-director3d
+ * 绘梦 · 导演台 HMDirector3D（Three.js WebGL 版）
+ * 依赖全局 THREE、HMOrbitControls、HMTransformControls
  * 入口：侧边栏 data-rail="director3d"
  * ============================================================= */
 window.HMDirector3D = (function () {
-  var RAD = Math.PI / 180;
-  var LS_SCENE = 'anidream.director3d.scene.v1';
-  var FOV = 50;
+  var THREE = window.THREE;
+  if (!THREE) {
+    console.error('[Director3D] THREE.js 未加载');
+    return null;
+  }
 
-  var canvas = null;
-  var ctx = null;
-  var viewport = null;
-  var inspectorEl = null;
-  var objListEl = null;
+  var LS_SCENE = 'anidream.director3d.scene.v2';
 
-  var active = false;
-  var bound = false;
-  var running = false;
-  var raf = null;
-  var VW = 0, VH = 0, DPR = 1;
+  var canvas = null, container = null, inspectorEl = null, objListEl = null;
+  var renderer, scene, camera;
+  var orbit, tControls;
+  var raycaster, pointer;
 
-  /* ---------------- 场景状态 ---------------- */
-  var objects = [];
+  var active = false, bound = false, rafId = null;
+  var objects = [];      // { id, name, kind, three }
   var selectedId = null;
   var seq = 1;
+
   var showGrid = true;
   var camMode = false;
+  var camFly = { pos: new THREE.Vector3(0, 3.5, 13), yaw: -0.65, pitch: -0.06 };
+  var camOrbit = { yaw: -0.65, pitch: 0.4, dist: 17, target: new THREE.Vector3(0, 1.2, 0) };
 
-  var camOrbit = { yaw: -0.65, pitch: 0.36, dist: 17, target: [0, 1.1, 0] };
-  var camFly = { pos: [0, 3.2, 12], yaw: -0.65, pitch: -0.06 };
-  var light = { azimuth: 42, elevation: 48, intensity: 1.05, ambient: 0.34 };
-
-  var pickBoxes = [];
-  var gizmoAxes = [];
-  var drag = null;
+  var ambient, dirLight, fillLight, spotLight, spotTarget;
+  var spotOn = false;
   var keys = {};
 
-  /* ---------------- 向量工具 ---------------- */
-  function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
-  function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
-  function mul(a, k) { return [a[0] * k, a[1] * k, a[2] * k]; }
-  function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
-  function cross(a, b) {
-    return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-  }
-  function len(a) { return Math.sqrt(dot(a, a)); }
-  function normalize(a) { var l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
-  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
-
-  /* ---------------- 网格生成 ---------------- */
-  /* 所有白模统一：底面在 y=0，高度 2，中心线 x=z=0 */
-
-  function makeCube() {
-    var v = [
-      [-1, 0, -1], [1, 0, -1], [1, 0, 1], [-1, 0, 1],
-      [-1, 2, -1], [1, 2, -1], [1, 2, 1], [-1, 2, 1]
-    ];
-    var f = [
-      [0, 1, 2, 3], [4, 7, 6, 5],
-      [3, 2, 6, 7], [1, 0, 4, 5],
-      [0, 3, 7, 4], [2, 1, 5, 6]
-    ];
-    return { verts: v, faces: f };
-  }
-
-  function makePlane() {
-    var v = [[-1, 0, -1], [1, 0, -1], [1, 0, 1], [-1, 0, 1]];
-    return { verts: v, faces: [[0, 1, 2, 3], [3, 2, 1, 0]] };
-  }
-
-  /* 旋转体：profile 为 [[radius, y], ...]，绕 Y 轴旋转 seg 段 */
-  function lathe(profile, seg) {
-    var verts = [];
-    var rings = [];
-    for (var i = 0; i < profile.length; i++) {
-      var r = profile[i][0];
-      var y = profile[i][1];
-      var ring = { start: verts.length, count: 0 };
-      if (r <= 1e-6) {
-        verts.push([0, y, 0]);
-        ring.count = 1;
-      } else {
-        for (var j = 0; j < seg; j++) {
-          var a = (j / seg) * Math.PI * 2;
-          verts.push([Math.cos(a) * r, y, Math.sin(a) * r]);
-        }
-        ring.count = seg;
-      }
-      rings.push(ring);
-    }
-    var faces = [];
-    for (var k = 0; k < rings.length - 1; k++) {
-      var A = rings[k], B = rings[k + 1];
-      for (var s = 0; s < seg; s++) {
-        var s2 = (s + 1) % seg;
-        if (A.count === 1 && B.count === seg) {
-          faces.push([A.start, B.start + s, B.start + s2]);
-        } else if (A.count === seg && B.count === 1) {
-          faces.push([A.start + s, B.start, A.start + s2]);
-        } else if (A.count === seg && B.count === seg) {
-          faces.push([A.start + s, A.start + s2, B.start + s2, B.start + s]);
-        }
-      }
-    }
-    /* 底面 / 顶面封口 */
-    if (profile[0][0] > 1e-6) {
-      var base = [];
-      for (var b = 0; b < seg; b++) base.push(rings[0].start + b);
-      faces.push(base);
-    }
-    var lastRing = rings[rings.length - 1];
-    if (profile[profile.length - 1][0] > 1e-6) {
-      var top = [];
-      for (var t = 0; t < seg; t++) top.push(lastRing.start + t);
-      faces.push(top);
-    }
-    return { verts: verts, faces: faces };
-  }
-
-  function makeSphere() {
-    var N = 10, prof = [];
-    for (var i = 0; i <= N; i++) {
-      var t = (i / N) * Math.PI;
-      prof.push([Math.sin(t), 1 - Math.cos(t)]);
-    }
-    return lathe(prof, 16);
-  }
-
-  function makeCylinder() {
-    return lathe([[0.9, 0], [0.9, 2]], 18);
-  }
-
-  function makeCone() {
-    return lathe([[1, 0], [0, 2]], 20);
-  }
-
-  function makeCapsule() {
-    var r = 0.55, y0 = 0.55, y1 = 1.45, N = 4, prof = [];
-    prof.push([0, 0]);
-    for (var i = 1; i <= N; i++) {
-      var t = (i / N) * (Math.PI / 2);
-      prof.push([r * Math.sin(t), y0 - r * Math.cos(t)]);
-    }
-    prof.push([r, y1]);
-    for (var j = 1; j < N; j++) {
-      var t2 = (j / N) * (Math.PI / 2);
-      prof.push([r * Math.cos(t2), y1 + r * Math.sin(t2)]);
-    }
-    prof.push([0, y1 + r]);
-    return lathe(prof, 16);
-  }
-
-  var MESH_CACHE = {};
-  var SHAPES = {
-    cube: { name: '立方体', build: makeCube },
-    sphere: { name: '球体', build: makeSphere },
-    cylinder: { name: '圆柱', build: makeCylinder },
-    cone: { name: '圆锥', build: makeCone },
-    capsule: { name: '胶囊', build: makeCapsule },
-    plane: { name: '平面', build: makePlane }
+  /* ---------- 人偶 rig ---------- */
+  var POSE_PRESETS = {
+    idle: { root: [0, 0, 0], torsoY: 0, torsoX: 0, headY: 0, headX: 0, lShZ: 40, lShX: 0, lEl: 10, rShZ: -40, rShX: 0, rEl: -10, lHp: 0, lKn: 0, rHp: 0, rKn: 0 },
+    walk: { root: [0, 0, 0], torsoY: 0, torsoX: 0, headY: 0, headX: 0, lShZ: 20, lShX: -10, lEl: 30, rShZ: -20, rShX: -10, rEl: -30, lHp: -30, lKn: 20, rHp: 30, rKn: -20 },
+    run: { root: [0, 0, -0.2], torsoY: 8, torsoX: 0, headY: -2, headX: 0, lShZ: 60, lShX: -20, lEl: 60, rShZ: -60, rShX: -20, rEl: -60, lHp: -60, lKn: 40, rHp: 60, rKn: -40 },
+    poseA: { root: [0, 0.3, 0], torsoY: 10, torsoX: 0, headY: 15, headX: 0, lShZ: 90, lShX: -10, lEl: 90, rShZ: -30, rShX: -10, rEl: 30, lHp: 0, lKn: 0, rHp: 0, rKn: 0 },
+    poseB: { root: [0, 0, 0], torsoY: -8, torsoX: -5, headY: -10, headX: 5, lShZ: -20, lShX: 20, lEl: -40, rShZ: 20, rShX: -20, rEl: 40, lHp: 20, lKn: -30, rHp: -10, rKn: 0 }
   };
 
-  function getMesh(type) {
-    if (!MESH_CACHE[type]) {
-      var def = SHAPES[type] || SHAPES.cube;
-      MESH_CACHE[type] = def.build();
+  function makeMannequin(name) {
+    var root = new THREE.Group();
+    root.name = name;
+
+    var matSkin = new THREE.MeshStandardMaterial({ color: 0xe8cfb4, roughness: 0.85, metalness: 0.02 });
+    var matCloth = new THREE.MeshStandardMaterial({ color: 0x7c5cf6, roughness: 0.75, metalness: 0.02 });
+    var matHair = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
+
+    // 大腿
+    var lThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.55, 16), matCloth);
+    lThigh.position.set(-0.14, 0.28, 0);
+    var lHp = new THREE.Group(); lHp.position.set(-0.14, 0.5, 0); lHp.add(lThigh);
+    var lShin = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 16), matCloth);
+    lShin.position.set(0, -0.5, 0);
+    var lKn = new THREE.Group(); lShin.position.set(0, 0.28, 0); lKn.add(lShin); lThigh.add(lKn);
+    var lFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.32), matSkin);
+    lFoot.position.set(0, 0.04, 0.08);
+    lShin.add(lFoot);
+
+    var rThigh = lThigh.clone(); rThigh.scale.x = -1;
+    var rHp = new THREE.Group(); rHp.position.set(0.14, 0.5, 0); rHp.add(rThigh);
+    var rShin = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 16), matCloth);
+    rShin.position.set(0, -0.5, 0);
+    var rKn = new THREE.Group(); rShin.position.set(0, 0.28, 0); rKn.add(rShin); rThigh.add(rKn);
+    var rFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.32), matSkin);
+    rFoot.position.set(0, 0.04, 0.08);
+    rShin.add(rFoot);
+
+    // 躯干
+    var torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.55, 6, 12), matCloth);
+    torso.position.set(0, 0.95, 0);
+    var torsoGrp = new THREE.Group(); torsoGrp.add(torso); torsoGrp.position.set(0, 0.95, 0);
+
+    // 手臂
+    var lUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.45, 16), matCloth);
+    lUpperArm.position.set(0, -0.23, 0);
+    var lEl = new THREE.Group(); lEl.position.set(0, -0.45, 0); lUpperArm.add(lEl);
+    var lForeArm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.42, 16), matSkin);
+    lForeArm.position.set(0, -0.21, 0); lEl.add(lForeArm);
+    var lHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), matSkin); lHand.position.set(0, -0.45, 0); lEl.add(lHand);
+    var lSh = new THREE.Group(); lSh.position.set(-0.32, 0.24, 0); lSh.add(lUpperArm);
+
+    var rUpperArm = lUpperArm.clone();
+    var rEl = new THREE.Group(); rEl.position.set(0, -0.45, 0); rUpperArm.add(rEl);
+    var rForeArm = lForeArm.clone(); rForeArm.position.set(0, -0.21, 0); rEl.add(rForeArm);
+    var rHand = lHand.clone(); rHand.position.set(0, -0.45, 0); rEl.add(rHand);
+    var rSh = new THREE.Group(); rSh.position.set(0.32, 0.24, 0); rSh.add(rUpperArm);
+
+    torsoGrp.add(lSh); torsoGrp.add(rSh);
+
+    // 头
+    var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.12, 12), matSkin);
+    neck.position.set(0, 0.38, 0);
+    var head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 24), matSkin);
+    head.position.set(0, 0.58, 0);
+    var hair = new THREE.Mesh(new THREE.SphereGeometry(0.185, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.75), matHair);
+    hair.position.set(0, 0.62, -0.03);
+    var headGrp = new THREE.Group(); headGrp.position.set(0, 1.32, 0);
+    headGrp.add(neck); headGrp.add(head); headGrp.add(hair);
+
+    torsoGrp.add(headGrp);
+    root.add(lHp); root.add(rHp); root.add(torsoGrp);
+
+    root.userData.bones = {
+      root: root, torso: torsoGrp, head: headGrp,
+      lSh: lSh, lEl: lEl, rSh: rSh, rEl: rEl,
+      lHp: lHp, lKn: lKn, rHp: rHp, rKn: rKn
+    };
+    applyPose(root, POSE_PRESETS.idle);
+    return root;
+  }
+
+  function applyPose(root, pose) {
+    if (!pose || !root || !root.userData.bones) return;
+    var b = root.userData.bones;
+    if (pose.root) root.position.set(pose.root[0], pose.root[1], pose.root[2]);
+    b.torso.rotation.set(0, (pose.torsoY || 0) * Math.PI / 180, 0);
+    b.torso.rotation.x = (pose.torsoX || 0) * Math.PI / 180;
+    b.head.rotation.set((pose.headX || 0) * Math.PI / 180, (pose.headY || 0) * Math.PI / 180, 0);
+    b.lSh.rotation.z = (pose.lShZ || 0) * Math.PI / 180;
+    b.lSh.rotation.x = (pose.lShX || 0) * Math.PI / 180;
+    b.lEl.rotation.x = (pose.lEl || 0) * Math.PI / 180;
+    b.rSh.rotation.z = (pose.rShZ || 0) * Math.PI / 180;
+    b.rSh.rotation.x = (pose.rShX || 0) * Math.PI / 180;
+    b.rEl.rotation.x = (pose.rEl || 0) * Math.PI / 180;
+    b.lHp.rotation.x = (pose.lHp || 0) * Math.PI / 180;
+    b.lKn.rotation.x = (pose.lKn || 0) * Math.PI / 180;
+    b.rHp.rotation.x = (pose.rHp || 0) * Math.PI / 180;
+    b.rKn.rotation.x = (pose.rKn || 0) * Math.PI / 180;
+  }
+
+  /* ---------- 几何体工厂 ---------- */
+  function makePrimitive(kind) {
+    var mat = new THREE.MeshStandardMaterial({ color: 0xe9edf4, roughness: 0.7, metalness: 0.05 });
+    var geo;
+    switch (kind) {
+      case 'sphere': geo = new THREE.SphereGeometry(0.9, 32, 24); break;
+      case 'cylinder': geo = new THREE.CylinderGeometry(0.8, 0.9, 2, 32); geo.translate(0, 1, 0); break;
+      case 'cone': geo = new THREE.ConeGeometry(1, 2, 32); geo.translate(0, 1, 0); break;
+      case 'capsule': geo = new THREE.CapsuleGeometry(0.55, 1.1, 10, 18); geo.translate(0, 0.95, 0); break;
+      case 'torus': geo = new THREE.TorusGeometry(0.9, 0.25, 16, 48); geo.rotateX(Math.PI / 2); geo.translate(0, 1, 0); break;
+      case 'plane': geo = new THREE.PlaneGeometry(2, 2); break;
+      case 'cube':
+      default: geo = new THREE.BoxGeometry(1.8, 2, 1.8); geo.translate(0, 1, 0); break;
     }
-    return MESH_CACHE[type];
+    var m = new THREE.Mesh(geo, mat);
+    m.castShadow = true; m.receiveShadow = true;
+    return m;
   }
 
-  /* ---------------- 变换 ---------------- */
-  function rotatePoint(p, rot) {
-    var rx = rot[0] * RAD, ry = rot[1] * RAD, rz = rot[2] * RAD;
-    var x = p[0], y = p[1], z = p[2];
-    var cy = Math.cos(rx), sy = Math.sin(rx);
-    var y1 = y * cy - z * sy, z1 = y * sy + z * cy;
-    var cx = Math.cos(ry), sx = Math.sin(ry);
-    var x2 = x * cx + z1 * sx, z2 = -x * sx + z1 * cx;
-    var cz = Math.cos(rz), sz = Math.sin(rz);
-    var x3 = x2 * cz - y1 * sz, y3 = x2 * sz + y1 * cz;
-    return [x3, y3, z2];
+  /* ---------- 场景搭建 ---------- */
+  function setupScene() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0e16);
+    scene.fog = new THREE.Fog(0x0a0e16, 30, 80);
+
+    camera = new THREE.PerspectiveCamera(40, 1, 0.05, 500);
+
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+
+    var grid = new THREE.GridHelper(60, 60, 0x333c52, 0x1f2638);
+    grid.material.opacity = 0.7; grid.material.transparent = true;
+    scene.add(grid);
+    scene.userData.grid = grid;
+
+    var axes = new THREE.AxesHelper(2);
+    axes.position.set(0, 0.001, 0);
+    scene.add(axes);
+
+    // 地面接收阴影
+    var ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 100),
+      new THREE.ShadowMaterial({ opacity: 0.22 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    ambient = new THREE.AmbientLight(0xffffff, 0.35);
+    scene.add(ambient);
+
+    dirLight = new THREE.DirectionalLight(0xfff2dc, 1.1);
+    dirLight.position.set(6, 10, 5);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.set(1024, 1024);
+    dirLight.shadow.camera.left = -14; dirLight.shadow.camera.right = 14;
+    dirLight.shadow.camera.top = 14; dirLight.shadow.camera.bottom = -14;
+    dirLight.shadow.camera.near = 1; dirLight.shadow.camera.far = 40;
+    dirLight.shadow.bias = -0.0005;
+    scene.add(dirLight);
+
+    fillLight = new THREE.DirectionalLight(0x9fb8ff, 0.4);
+    fillLight.position.set(-8, 6, -5);
+    scene.add(fillLight);
+
+    spotLight = new THREE.SpotLight(0xffffff, 2.2, 30, Math.PI / 6, 0.5, 1.0);
+    spotLight.position.set(4, 8, 4);
+    spotLight.target = spotTarget = new THREE.Object3D(); spotTarget.position.set(0, 1, 0);
+    scene.add(spotLight); scene.add(spotTarget);
+    spotLight.castShadow = true;
+    spotLight.visible = false;
+
+    raycaster = new THREE.Raycaster();
+    raycaster.params.Points = { threshold: 0.1 };
+    pointer = new THREE.Vector2();
+
+    orbit = new window.HMOrbitControls(camera, canvas);
+    orbit.enableDamping = true;
+    orbit.target.copy(camOrbit.target);
+    var initPos = new THREE.Vector3().setFromSpherical(
+      new THREE.Spherical(camOrbit.dist, camOrbit.pitch + Math.PI / 2, camOrbit.yaw)
+    ).add(camOrbit.target);
+    camera.position.copy(initPos);
+
+    tControls = new window.HMTransformControls(camera, canvas);
+    scene.add(tControls._group);
   }
 
-  function transformVertex(local, obj) {
-    var p = [local[0] * obj.scale[0], local[1] * obj.scale[1], local[2] * obj.scale[2]];
-    p = rotatePoint(p, obj.rot);
-    return [p[0] + obj.pos[0], p[1] + obj.pos[1], p[2] + obj.pos[2]];
-  }
-
-  function objectCenter(obj) {
-    var c = [0, obj.type === 'plane' ? 0 : 1, 0];
-    c = rotatePoint([c[0] * obj.scale[0], c[1] * obj.scale[1], c[2] * obj.scale[2]], obj.rot);
-    return [c[0] + obj.pos[0], c[1] + obj.pos[1], c[2] + obj.pos[2]];
-  }
-
-  /* ---------------- 相机 ---------------- */
-  function orbitEye() {
-    var y = camOrbit.yaw, p = camOrbit.pitch, d = camOrbit.dist;
-    return [
-      camOrbit.target[0] + Math.cos(p) * Math.sin(y) * d,
-      camOrbit.target[1] + Math.sin(p) * d,
-      camOrbit.target[2] + Math.cos(p) * Math.cos(y) * d
-    ];
-  }
-
-  function getCamera() {
-    var eye, yaw, pitch;
-    if (camMode) {
-      eye = camFly.pos.slice();
-      yaw = camFly.yaw;
-      pitch = camFly.pitch;
-    } else {
-      eye = orbitEye();
-      yaw = camOrbit.yaw;
-      pitch = camOrbit.pitch;
-    }
-    var forward = normalize([
-      -Math.cos(pitch) * Math.sin(yaw),
-      -Math.sin(pitch),
-      -Math.cos(pitch) * Math.cos(yaw)
-    ]);
-    var worldUp = [0, 1, 0];
-    var right = normalize(cross(forward, worldUp));
-    var up = cross(right, forward);
-    return { eye: eye, forward: forward, right: right, up: up };
-  }
-
-  function focalLength() {
-    return (VH / 2) / Math.tan(FOV * RAD / 2);
-  }
-
-  function projectPoint(p, cam) {
-    var v = sub(p, cam.eye);
-    var zr = dot(v, cam.forward);
-    if (zr <= 0.08) return null;
-    var xr = dot(v, cam.right);
-    var yr = dot(v, cam.up);
-    var f = focalLength();
-    return { x: VW / 2 + (xr / zr) * f, y: VH / 2 - (yr / zr) * f, z: zr };
-  }
-
-  /* ---------------- 渲染 ---------------- */
   function resize() {
-    if (!canvas || !viewport) return;
-    var rect = viewport.getBoundingClientRect();
-    var w = Math.max(1, Math.round(rect.width));
-    var h = Math.max(1, Math.round(rect.height));
-    var dpr = Math.min(2, window.devicePixelRatio || 1);
-    if (canvas.width === Math.round(w * dpr) && canvas.height === Math.round(h * dpr) && VW === w && VH === h) return;
-    VW = w; VH = h; DPR = dpr;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
+    if (!container || !renderer) return;
+    var rect = container.getBoundingClientRect();
+    var w = Math.max(1, rect.width), h = Math.max(1, rect.height);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
   }
 
-  function lightVector() {
-    var az = light.azimuth * RAD, el = light.elevation * RAD;
-    return normalize([Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)]);
+  /* ---------- 对象管理 ---------- */
+  function findObject(id) {
+    for (var i = 0; i < objects.length; i++) if (objects[i].id === id) return objects[i];
+    return null;
   }
 
-  function shadeColor(n) {
-    var L = lightVector();
-    var lum = light.ambient + light.intensity * Math.max(0, dot(n, L));
-    lum = clamp(lum, 0, 1.5);
-    var base = [233, 237, 243], dark = [96, 108, 132];
-    var k = Math.min(1, lum);
-    var r = dark[0] + (base[0] - dark[0]) * k;
-    var g = dark[1] + (base[1] - dark[1]) * k;
-    var b = dark[2] + (base[2] - dark[2]) * k;
-    if (lum > 1) {
-      var e = (lum - 1) * 0.75;
-      r += (255 - r) * e; g += (255 - g) * e; b += (255 - b) * e;
-    }
-    return 'rgb(' + Math.round(clamp(r, 0, 255)) + ',' +
-      Math.round(clamp(g, 0, 255)) + ',' + Math.round(clamp(b, 0, 255)) + ')';
+  function addPrimitive(kind) {
+    var nameMap = {
+      cube: '立方体', sphere: '球体', cylinder: '圆柱', cone: '圆锥',
+      capsule: '胶囊', torus: '圆环', plane: '平面', mannequin: '人偶'
+    };
+    var threeObj = kind === 'mannequin' ? makeMannequin(nameMap.mannequin + ' ' + (seq + 1)) : makePrimitive(kind);
+    var n = objects.length;
+    threeObj.position.set(((n % 5) - 2) * 2.4, kind === 'plane' ? 0 : 0, Math.floor(n / 5) * 2.2);
+    threeObj.userData.id = 'o' + (seq);
+    var o = {
+      id: 'o' + (seq++),
+      name: (nameMap[kind] || '白模') + ' ' + (seq - 1),
+      kind: kind,
+      three: threeObj
+    };
+    objects.push(o);
+    scene.add(threeObj);
+    selectObject(o.id);
+    renderObjectList();
   }
 
-  function drawBackground() {
-    var g = ctx.createLinearGradient(0, 0, 0, VH);
-    g.addColorStop(0, '#0e1522');
-    g.addColorStop(0.55, '#0a0e17');
-    g.addColorStop(1, '#06080e');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, VW, VH);
-    /* 地平线柔光 */
-    var hg = ctx.createRadialGradient(VW / 2, VH * 0.62, 10, VW / 2, VH * 0.62, Math.max(VW, VH) * 0.8);
-    hg.addColorStop(0, 'rgba(79,140,255,0.10)');
-    hg.addColorStop(1, 'rgba(79,140,255,0)');
-    ctx.fillStyle = hg;
-    ctx.fillRect(0, 0, VW, VH);
+  function deleteObject(id) {
+    var o = findObject(id);
+    if (!o) return;
+    scene.remove(o.three);
+    o.three.traverse(function (c) {
+      if (c.geometry) c.geometry.dispose();
+      if (c.material) {
+        if (Array.isArray(c.material)) c.material.forEach(function (m) { m.dispose(); });
+        else c.material.dispose();
+      }
+    });
+    objects = objects.filter(function (x) { return x.id !== id; });
+    if (selectedId === id) selectObject(null);
+    renderObjectList(); renderInspector();
   }
 
-  function drawGrid(cam) {
-    if (!showGrid) return;
-    var ext = 18;
-    var step = 1;
-    var baseX = Math.round(camMode ? camFly.pos[0] : camOrbit.target[0]);
-    var baseZ = Math.round(camMode ? camFly.pos[2] : camOrbit.target[2]);
-    var i, x0, z0, a, b, major;
-    for (i = -ext; i <= ext; i += step) {
-      /* 沿 Z 方向的线（固定 x） */
-      x0 = baseX + i;
-      a = projectPoint([x0, 0, baseZ - ext], cam);
-      b = projectPoint([x0, 0, baseZ + ext], cam);
-      major = (x0 % 5 === 0);
-      strokeSeg(a, b, major, Math.abs(i));
-      /* 沿 X 方向的线（固定 z） */
-      z0 = baseZ + i;
-      a = projectPoint([baseX - ext, 0, z0], cam);
-      b = projectPoint([baseX + ext, 0, z0], cam);
-      major = (z0 % 5 === 0);
-      strokeSeg(a, b, major, Math.abs(i));
-    }
-    /* 坐标轴 */
-    var o = projectPoint([baseX, 0, baseZ], cam);
-    var px = projectPoint([baseX + 3, 0, baseZ], cam);
-    var pz = projectPoint([baseX, 0, baseZ + 3], cam);
-    if (o && px) {
-      ctx.strokeStyle = 'rgba(255,92,122,0.55)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(px.x, px.y); ctx.stroke();
-    }
-    if (o && pz) {
-      ctx.strokeStyle = 'rgba(79,140,255,0.55)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(pz.x, pz.y); ctx.stroke();
-    }
+  function duplicateObject(id) {
+    var src = findObject(id);
+    if (!src) return;
+    var clone = src.three.clone(true);
+    clone.traverse(function (c) {
+      if (c.isMesh && c.geometry && src.three.geometry !== c.geometry) {}
+      if (c.isMesh && !c.geometry) {}
+    });
+    // 深拷贝材质
+    clone.traverse(function (c) {
+      if (c.isMesh && c.material) {
+        if (Array.isArray(c.material)) c.material = c.material.map(function (m) { return m.clone(); });
+        else c.material = c.material.clone();
+      }
+    });
+    clone.position.x += 1.6; clone.position.z += 1.6;
+    var newId = 'o' + (seq++);
+    clone.userData.id = newId;
+    var o = { id: newId, name: src.name + ' 副本', kind: src.kind, three: clone };
+    objects.push(o);
+    scene.add(clone);
+    selectObject(newId);
+    renderObjectList();
   }
 
-  function strokeSeg(a, b, major, distIndex) {
-    if (!a || !b) return;
-    var fade = clamp(1 - distIndex / 20, 0.06, 1);
-    if (major) {
-      ctx.strokeStyle = 'rgba(120,140,170,' + (0.26 * fade).toFixed(3) + ')';
-      ctx.lineWidth = 1;
+  function selectObject(id) {
+    selectedId = id;
+    var o = id ? findObject(id) : null;
+    if (o) {
+      tControls.setObject(o.three);
     } else {
-      ctx.strokeStyle = 'rgba(96,112,140,' + (0.13 * fade).toFixed(3) + ')';
-      ctx.lineWidth = 1;
+      tControls.setObject(null);
     }
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
+    renderObjectList(); renderInspector();
   }
 
-  function draw() {
-    if (!canvas || !ctx) return;
-    resize();
-    if (VW <= 0 || VH <= 0) return;
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    drawBackground();
-    var cam = getCamera();
-    drawGrid(cam);
-
-    /* 收集所有面 */
-    var polys = [];
-    pickBoxes = [];
-    var objCenter, mesh, verts, i, j;
-    for (i = 0; i < objects.length; i++) {
-      var obj = objects[i];
-      mesh = getMesh(obj.type);
-      verts = [];
-      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      var depthSum = 0, depthCount = 0;
-      for (j = 0; j < mesh.verts.length; j++) {
-        var wp = transformVertex(mesh.verts[j], obj);
-        var sp = projectPoint(wp, cam);
-        verts.push({ w: wp, s: sp });
-        if (sp) {
-          if (sp.x < minX) minX = sp.x;
-          if (sp.y < minY) minY = sp.y;
-          if (sp.x > maxX) maxX = sp.x;
-          if (sp.y > maxY) maxY = sp.y;
-          depthSum += sp.z; depthCount++;
-        }
-      }
-      objCenter = objectCenter(obj);
-      if (depthCount) {
-        pickBoxes.push({
-          id: obj.id,
-          x0: minX, y0: minY, x1: maxX, y1: maxY,
-          depth: depthSum / depthCount
-        });
-      }
-      /* 面 */
-      for (j = 0; j < mesh.faces.length; j++) {
-        var face = mesh.faces[j];
-        var pts = [];
-        var ok = true;
-        for (var k = 0; k < face.length; k++) {
-          var sv = verts[face[k]];
-          if (!sv || !sv.s) { ok = false; break; }
-          pts.push(sv.s);
-        }
-        if (!ok || pts.length < 3) continue;
-        /* 世界法线：按面中心朝外 */
-        var w0 = verts[face[0]].w, w1 = verts[face[1]].w, w2 = verts[face[2]].w;
-        var n = normalize(cross(sub(w1, w0), sub(w2, w0)));
-        var fc = [0, 0, 0];
-        for (var q = 0; q < face.length; q++) {
-          var wq = verts[face[q]].w;
-          fc[0] += wq[0]; fc[1] += wq[1]; fc[2] += wq[2];
-        }
-        fc = mul(fc, 1 / face.length);
-        if (dot(n, sub(fc, objCenter)) < 0) n = mul(n, -1);
-        /* 背面剔除 */
-        if (dot(n, sub(cam.eye, fc)) <= 0) continue;
-        var dsum = 0;
-        for (var m = 0; m < pts.length; m++) dsum += pts[m].z;
-        polys.push({ pts: pts, depth: dsum / pts.length, normal: n, id: obj.id });
-      }
-    }
-
-    polys.sort(function (a, b) { return b.depth - a.depth; });
-
-    for (i = 0; i < polys.length; i++) {
-      var poly = polys[i];
-      var selected = (poly.id === selectedId);
-      ctx.beginPath();
-      ctx.moveTo(poly.pts[0].x, poly.pts[0].y);
-      for (j = 1; j < poly.pts.length; j++) ctx.lineTo(poly.pts[j].x, poly.pts[j].y);
-      ctx.closePath();
-      ctx.fillStyle = shadeColor(poly.normal);
-      ctx.fill();
-      ctx.lineWidth = selected ? 1.4 : 1;
-      ctx.strokeStyle = selected ? 'rgba(79,140,255,0.85)' : 'rgba(255,255,255,0.10)';
-      ctx.stroke();
-    }
-
-    drawGizmo(cam);
-    drawSelectionBadge(cam);
-  }
-
-  function drawSelectionBadge(cam) {
-    if (!selectedId) return;
-    var obj = findObject(selectedId);
-    if (!obj) return;
-    var sp = projectPoint(objectCenter(obj), cam);
-    if (!sp) return;
-    ctx.font = '600 11px system-ui, sans-serif';
-    ctx.fillStyle = 'rgba(79,140,255,0.9)';
-    ctx.fillText(obj.name, sp.x + 12, sp.y - 12);
-  }
-
-  function drawGizmo(cam) {
-    gizmoAxes = [];
-    if (!selectedId) return;
-    var obj = findObject(selectedId);
-    if (!obj) return;
-    var origin = objectCenter(obj);
-    var originSp = projectPoint(origin, cam);
-    if (!originSp) return;
-    var axes = [
-      { key: 'x', dir: [1, 0, 0], color: '#ff5c7a' },
-      { key: 'y', dir: [0, 1, 0], color: '#52c41a' },
-      { key: 'z', dir: [0, 0, 1], color: '#4f8cff' }
-    ];
-    var L = 1.8;
-    for (var i = 0; i < axes.length; i++) {
-      var ax = axes[i];
-      var end = add(origin, mul(ax.dir, L));
-      var endSp = projectPoint(end, cam);
-      if (!endSp) continue;
-      ctx.strokeStyle = ax.color;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(originSp.x, originSp.y);
-      ctx.lineTo(endSp.x, endSp.y);
-      ctx.stroke();
-      /* 轴端小球 */
-      ctx.beginPath();
-      ctx.arc(endSp.x, endSp.y, 4.5, 0, Math.PI * 2);
-      ctx.fillStyle = ax.color;
-      ctx.fill();
-      gizmoAxes.push({
-        key: ax.key,
-        ox: originSp.x, oy: originSp.y,
-        ex: endSp.x, ey: endSp.y,
-        dir: ax.dir
-      });
-    }
-  }
-
-  /* ---------------- 拾取 ---------------- */
-  function localPoint(e) {
+  /* ---------- 拾取 ---------- */
+  function pickFromEvent(e) {
     var rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  }
-
-  function pickObject(x, y) {
-    var best = null;
-    for (var i = 0; i < pickBoxes.length; i++) {
-      var b = pickBoxes[i];
-      var pad = 4;
-      if (x >= b.x0 - pad && x <= b.x1 + pad && y >= b.y0 - pad && y <= b.y1 + pad) {
-        if (!best || b.depth < best.depth) best = b;
-      }
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    var roots = objects.map(function (o) { return o.three; });
+    var hits = raycaster.intersectObjects(roots, true);
+    for (var i = 0; i < hits.length; i++) {
+      var obj = hits[i].object;
+      while (obj.parent && roots.indexOf(obj) < 0) obj = obj.parent;
+      var id = obj.userData.id;
+      var o = findObject(id);
+      if (o) return o;
     }
-    return best;
+    return null;
   }
 
-  function hitGizmoAxis(x, y) {
-    var best = null, bestDist = 10;
-    for (var i = 0; i < gizmoAxes.length; i++) {
-      var a = gizmoAxes[i];
-      var dx = a.ex - a.ox, dy = a.ey - a.oy;
-      var l2 = dx * dx + dy * dy;
-      var t = l2 ? ((x - a.ox) * dx + (y - a.oy) * dy) / l2 : 0;
-      t = clamp(t, 0, 1);
-      var px = a.ox + dx * t, py = a.oy + dy * t;
-      var d = Math.hypot(x - px, y - py);
-      if (d < bestDist) { bestDist = d; best = a; }
-    }
-    return best;
-  }
-
-  /* ---------------- 交互 ---------------- */
-  function onMouseDown(e) {
-    if (!canvas) return;
-    e.preventDefault();
-    var p = localPoint(e);
-    /* 右键 / 中键：平移视图 */
-    if (e.button === 2 || e.button === 1) {
-      drag = { mode: 'pan', x: e.clientX, y: e.clientY };
+  /* ---------- 事件 ---------- */
+  function onDown(e) {
+    if (!active) return;
+    // gizmo 先尝试
+    if (tControls.onMouseDown(e)) {
+      orbit.enabled = false;
       return;
     }
-    /* gizmo 轴优先 */
-    var axis = hitGizmoAxis(p.x, p.y);
-    if (axis) {
-      var obj = findObject(selectedId);
-      if (obj) {
-        drag = {
-          mode: 'axis',
-          axis: axis,
-          obj: obj,
-          startPos: obj.pos.slice(),
-          sx: e.clientX,
-          sy: e.clientY
-        };
-        return;
-      }
-    }
-    /* 选中物体 */
-    var hit = pickObject(p.x, p.y);
-    if (hit) {
-      selectObject(hit.id);
-      drag = { mode: 'move', x: e.clientX, y: e.clientY, depth: hit.depth };
-      return;
-    }
-    /* 空白 */
-    if (camMode) {
-      drag = { mode: 'look', x: e.clientX, y: e.clientY };
-    } else {
-      drag = { mode: 'orbit', x: e.clientX, y: e.clientY };
+    if (e.button === 0) {
+      var hit = pickFromEvent(e);
+      if (hit) { selectObject(hit.id); orbit.enabled = false; return; }
     }
     selectObject(null);
   }
-
-  function onMouseMove(e) {
-    if (!drag) return;
-    var dx = e.clientX - drag.x;
-    var dy = e.clientY - drag.y;
-    var cam = getCamera();
-    if (drag.mode === 'orbit') {
-      camOrbit.yaw -= dx * 0.006;
-      camOrbit.pitch = clamp(camOrbit.pitch + dy * 0.006, -1.45, 1.45);
-      drag.x = e.clientX; drag.y = e.clientY;
-    } else if (drag.mode === 'look') {
-      camFly.yaw -= dx * 0.005;
-      camFly.pitch = clamp(camFly.pitch - dy * 0.005, -1.45, 1.45);
-      drag.x = e.clientX; drag.y = e.clientY;
-    } else if (drag.mode === 'pan') {
-      var k = (camMode ? 0.02 : camOrbit.dist / 900);
-      var move = add(mul(cam.right, -dx * k), mul(cam.up, dy * k));
-      if (camMode) {
-        camFly.pos = add(camFly.pos, move);
-      } else {
-        camOrbit.target = add(camOrbit.target, move);
-      }
-      drag.x = e.clientX; drag.y = e.clientY;
-    } else if (drag.mode === 'move') {
-      var obj = findObject(selectedId);
-      if (obj) {
-        var f = focalLength() || 1;
-        var scale = (drag.depth || 1) / f;
-        var d = add(mul(cam.right, dx * scale), mul(cam.up, -dy * scale));
-        obj.pos = add(obj.pos, d);
-        syncInspectorValues(obj);
-      }
-      drag.x = e.clientX; drag.y = e.clientY;
-    } else if (drag.mode === 'axis') {
-      var a = drag.axis;
-      var sx = a.ex - a.ox, sy = a.ey - a.oy;
-      var l = Math.hypot(sx, sy);
-      if (l > 1) {
-        var proj = ((e.clientX - drag.sx) * sx + (e.clientY - drag.sy) * sy) / l;
-        var world = proj * (1.8 / l);
-        var o = drag.obj;
-        o.pos = [
-          drag.startPos[0] + a.dir[0] * world,
-          drag.startPos[1] + a.dir[1] * world,
-          drag.startPos[2] + a.dir[2] * world
-        ];
-        syncInspectorValues(o);
-      }
-    }
+  function onMove(e) {
+    if (tControls._dragging) tControls.onMouseMove(e);
   }
-
-  function onMouseUp() {
-    drag = null;
-  }
-
-  function onWheel(e) {
-    if (!canvas) return;
-    e.preventDefault();
-    var delta = e.deltaY > 0 ? 1 : -1;
-    if (camMode) {
-      camFly.pos = add(camFly.pos, mul(getCamera().forward, delta * 1.2));
-    } else {
-      camOrbit.dist = clamp(camOrbit.dist * (delta > 0 ? 1.12 : 0.89), 2, 120);
-    }
+  function onUp() {
+    if (tControls._dragging) tControls.onMouseUp();
+    orbit.enabled = true;
   }
 
   function onKeyDown(e) {
@@ -630,99 +357,34 @@ window.HMDirector3D = (function () {
     var tag = (e.target && e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      if (selectedId) {
-        e.preventDefault();
-        deleteObject(selectedId);
-      }
+      if (selectedId) { e.preventDefault(); deleteObject(selectedId); }
       return;
     }
     keys[e.key.toLowerCase()] = true;
-    if (e.key.toLowerCase() === 'g') {
-      showGrid = !showGrid;
-      syncToolButtons();
-    }
+    if (e.key.toLowerCase() === 'g') { showGrid = !showGrid; scene.userData.grid.visible = showGrid; syncTopBar(); }
   }
+  function onKeyUp(e) { keys[e.key.toLowerCase()] = false; }
 
-  function onKeyUp(e) {
-    keys[e.key.toLowerCase()] = false;
-  }
-
+  /* ---------- 飞航 ---------- */
   function applyFly() {
     if (!camMode) return;
-    var cam = getCamera();
-    var speed = 0.14;
-    var right = [cam.right[0], 0, cam.right[2]];
-    if (len(right) < 0.2) right = [1, 0, 0];
-    right = normalize(right);
-    var fwd = [cam.forward[0], 0, cam.forward[2]];
-    if (len(fwd) < 0.2) fwd = [0, 0, -1];
-    fwd = normalize(fwd);
-    var d = [0, 0, 0];
-    if (keys['w']) d = add(d, fwd);
-    if (keys['s']) d = add(d, mul(fwd, -1));
-    if (keys['a']) d = add(d, mul(right, -1));
-    if (keys['d']) d = add(d, right);
-    if (keys['q']) d = add(d, [0, -1, 0]);
-    if (keys['e']) d = add(d, [0, 1, 0]);
-    if (len(d) > 0) camFly.pos = add(camFly.pos, mul(normalize(d), speed));
-  }
-
-  /* ---------------- 场景操作 ---------------- */
-  function findObject(id) {
-    for (var i = 0; i < objects.length; i++) {
-      if (objects[i].id === id) return objects[i];
+    var fwd = new THREE.Vector3(-Math.sin(camFly.yaw), 0, -Math.cos(camFly.yaw));
+    var right = new THREE.Vector3(fwd.z, 0, -fwd.x);
+    var d = new THREE.Vector3();
+    if (keys['w']) d.add(fwd);
+    if (keys['s']) d.sub(fwd);
+    if (keys['a']) d.sub(right);
+    if (keys['d']) d.add(right);
+    if (keys['q']) d.y -= 1;
+    if (keys['e']) d.y += 1;
+    if (d.lengthSq() > 0) {
+      d.normalize().multiplyScalar(0.16);
+      camFly.pos.add(d);
     }
-    return null;
+    camera.position.copy(camFly.pos);
   }
 
-  function addShape(type) {
-    var def = SHAPES[type] || SHAPES.cube;
-    var obj = {
-      id: 'o' + (seq++),
-      type: type in SHAPES ? type : 'cube',
-      name: (def.name || '白模') + ' ' + seq,
-      pos: [0, 0, 0],
-      rot: [0, 0, 0],
-      scale: [1, 1, 1]
-    };
-    /* 沿 X 轴错开摆放，避免重叠 */
-    var n = objects.length;
-    obj.pos = [(n % 6 - 2) * 2.6, 0, Math.floor(n / 6) * 2.6];
-    objects.push(obj);
-    selectObject(obj.id);
-    renderObjectList();
-  }
-
-  function deleteObject(id) {
-    objects = objects.filter(function (o) { return o.id !== id; });
-    if (selectedId === id) selectedId = null;
-    renderObjectList();
-    renderInspector();
-  }
-
-  function duplicateObject(id) {
-    var src = findObject(id);
-    if (!src) return;
-    var obj = {
-      id: 'o' + (seq++),
-      type: src.type,
-      name: src.name + ' 副本',
-      pos: [src.pos[0] + 1.6, src.pos[1], src.pos[2] + 1.6],
-      rot: src.rot.slice(),
-      scale: src.scale.slice()
-    };
-    objects.push(obj);
-    selectObject(obj.id);
-    renderObjectList();
-  }
-
-  function selectObject(id) {
-    selectedId = id;
-    renderObjectList();
-    renderInspector();
-  }
-
-  /* ---------------- 侧栏 / 属性面板 ---------------- */
+  /* ---------- Inspector ---------- */
   function esc(t) {
     return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -732,115 +394,171 @@ window.HMDirector3D = (function () {
   function renderObjectList() {
     if (!objListEl) return;
     if (!objects.length) {
-      objListEl.innerHTML = '<div class="hm-d3-list-empty">还没有白模，点击左侧添加</div>';
+      objListEl.innerHTML = '<div class="hm-d3-list-empty">左侧选几何体或添加人偶</div>';
       return;
     }
     objListEl.innerHTML = objects.map(function (o) {
+      var glyph = o.kind === 'mannequin' ? '🧍'
+                  : o.kind === 'sphere' ? '●'
+                  : o.kind === 'cube' ? '■'
+                  : o.kind === 'torus' ? '◯' : '▮';
       return '<div class="hm-d3-obj' + (o.id === selectedId ? ' is-active' : '') + '" data-oid="' + o.id + '">' +
-        '<span class="hm-d3-swatch"></span>' +
+        '<span class="hm-d3-swatch" style="background:' + ({ cube: '#b9c4d9', sphere: '#9fb0d0', cylinder: '#a6b4cc', cone: '#c3ceff', capsule: '#c6d1eb', torus: '#dfe4ef', plane: '#8f9ab0', mannequin: '#e8cfb4' }[o.kind] || '#e9edf4') + '">' + glyph + '</span>' +
         '<span class="hm-d3-obj-name" title="' + esc(o.name) + '">' + esc(o.name) + '</span>' +
-        '<button class="hm-d3-obj-del" data-del="' + o.id + '" title="删除">✕</button>' +
-        '</div>';
+        '<button class="hm-d3-obj-del" data-del="' + o.id + '" title="删除">✕</button></div>';
     }).join('');
-  }
-
-  function numRow(label, key, axis, value) {
-    return '<div class="hm-d3-row"><label>' + label + '</label>' +
-      '<input type="number" step="0.1" data-prop="' + key + '" data-axis="' + axis + '" value="' + value + '"></div>';
   }
 
   function renderInspector() {
     if (!inspectorEl) return;
-    var obj = selectedId ? findObject(selectedId) : null;
-    var html = '';
-    html += '<div class="hm-d3-sec-title">选中物体</div>';
-    if (!obj) {
-      html += '<div class="hm-d3-empty">点击画布中的白模<br>或左侧列表选中后<br>即可调整位置 / 旋转 / 缩放</div>';
+    var o = selectedId ? findObject(selectedId) : null;
+    var html = '<div class="hm-d3-sec-title">选中物体</div>';
+    if (!o) {
+      html += '<div class="hm-d3-empty">点击画布中的白模<br>或左侧列表选中后<br>即可调整</div>';
     } else {
-      var p = obj.pos, r = obj.rot, s = obj.scale;
+      var p = o.three.position, r = o.three.rotation, s = o.three.scale;
       html += '<div class="hm-d3-xyz">' +
-        '<div><span>位置 X</span><input type="number" step="0.1" data-prop="pos" data-axis="0" value="' + p[0].toFixed(2) + '"></div>' +
-        '<div><span>位置 Y</span><input type="number" step="0.1" data-prop="pos" data-axis="1" value="' + p[1].toFixed(2) + '"></div>' +
-        '<div><span>位置 Z</span><input type="number" step="0.1" data-prop="pos" data-axis="2" value="' + p[2].toFixed(2) + '"></div>' +
-        '</div>';
+        '<div><span>X</span><input type="number" step="0.1" data-prop="pos" data-axis="0" value="' + p.x.toFixed(2) + '"></div>' +
+        '<div><span>Y</span><input type="number" step="0.1" data-prop="pos" data-axis="1" value="' + p.y.toFixed(2) + '"></div>' +
+        '<div><span>Z</span><input type="number" step="0.1" data-prop="pos" data-axis="2" value="' + p.z.toFixed(2) + '"></div></div>';
       html += '<div class="hm-d3-xyz">' +
-        '<div><span>旋转 X°</span><input type="number" step="1" data-prop="rot" data-axis="0" value="' + r[0].toFixed(1) + '"></div>' +
-        '<div><span>旋转 Y°</span><input type="number" step="1" data-prop="rot" data-axis="1" value="' + r[1].toFixed(1) + '"></div>' +
-        '<div><span>旋转 Z°</span><input type="number" step="1" data-prop="rot" data-axis="2" value="' + r[2].toFixed(1) + '"></div>' +
-        '</div>';
+        '<div><span>RX°</span><input type="number" step="1" data-prop="rot" data-axis="0" value="' + (r.x * 180 / Math.PI).toFixed(1) + '"></div>' +
+        '<div><span>RY°</span><input type="number" step="1" data-prop="rot" data-axis="1" value="' + (r.y * 180 / Math.PI).toFixed(1) + '"></div>' +
+        '<div><span>RZ°</span><input type="number" step="1" data-prop="rot" data-axis="2" value="' + (r.z * 180 / Math.PI).toFixed(1) + '"></div></div>';
       html += '<div class="hm-d3-xyz">' +
-        '<div><span>缩放 X</span><input type="number" step="0.05" min="0.05" data-prop="scale" data-axis="0" value="' + s[0].toFixed(2) + '"></div>' +
-        '<div><span>缩放 Y</span><input type="number" step="0.05" min="0.05" data-prop="scale" data-axis="1" value="' + s[1].toFixed(2) + '"></div>' +
-        '<div><span>缩放 Z</span><input type="number" step="0.05" min="0.05" data-prop="scale" data-axis="2" value="' + s[2].toFixed(2) + '"></div>' +
+        '<div><span>SX</span><input type="number" step="0.05" min="0.05" data-prop="scl" data-axis="0" value="' + s.x.toFixed(2) + '"></div>' +
+        '<div><span>SY</span><input type="number" step="0.05" min="0.05" data-prop="scl" data-axis="1" value="' + s.y.toFixed(2) + '"></div>' +
+        '<div><span>SZ</span><input type="number" step="0.05" min="0.05" data-prop="scl" data-axis="2" value="' + s.z.toFixed(2) + '"></div></div>';
+      if (o.kind === 'mannequin') {
+        html += '<div class="hm-d3-sec-title" style="margin-top:6px">Pose</div>';
+        html += '<div class="hm-d3-shapes" style="grid-template-columns:1fr 1fr">' +
+          '<button type="button" data-pose="idle">🌙 Idle</button>' +
+          '<button type="button" data-pose="walk">🚶 Walk</button>' +
+          '<button type="button" data-pose="run">🏃 Run</button>' +
+          '<button type="button" data-pose="poseA">💪 Pose A</button>' +
+          '<button type="button" data-pose="poseB">🎭 Pose B</button></div>';
+      }
+      html += '<div class="hm-d3-actions">' +
+        '<button type="button" data-act="mode-t">▣ 移动</button>' +
+        '<button type="button" data-act="mode-r">↻ 旋转</button>' +
+        '<button type="button" data-act="mode-s">↕ 缩放</button>' +
         '</div>';
       html += '<div class="hm-d3-actions">' +
         '<button type="button" data-act="dup">复制</button>' +
-        '<button type="button" data-act="reset">复位</button>' +
-        '<button type="button" data-act="del">删除</button>' +
-        '</div>';
+        '<button type="button" data-act="del">删除</button></div>';
     }
-    html += '<div class="hm-d3-sec-title" style="margin-top:8px">打光</div>';
-    html += '<div class="hm-d3-row"><label>主光方位</label><input type="range" min="0" max="360" step="1" data-light="azimuth" value="' + light.azimuth + '"></div>';
-    html += '<div class="hm-d3-row"><label>主光高度</label><input type="range" min="-20" max="90" step="1" data-light="elevation" value="' + light.elevation + '"></div>';
-    html += '<div class="hm-d3-row"><label>主光强度</label><input type="range" min="0" max="2" step="0.02" data-light="intensity" value="' + light.intensity + '"></div>';
-    html += '<div class="hm-d3-row"><label>环境光</label><input type="range" min="0" max="1" step="0.02" data-light="ambient" value="' + light.ambient + '"></div>';
+    html += '<div class="hm-d3-sec-title" style="margin-top:10px">灯光</div>';
+    html += '<div class="hm-d3-row"><label>环境光</label><input type="range" min="0" max="1" step="0.02" data-light="ambient" value="' + ambient.intensity.toFixed(2) + '"></div>';
+    html += '<div class="hm-d3-row"><label>主光强度</label><input type="range" min="0" max="3" step="0.02" data-light="dirIntensity" value="' + dirLight.intensity.toFixed(2) + '"></div>';
+    html += '<div class="hm-d3-row"><label>主光方位</label><input type="range" min="-180" max="180" step="1" data-light="dirAzim" value="45"></div>';
+    html += '<div class="hm-d3-row"><label>主光高度</label><input type="range" min="-30" max="90" step="1" data-light="dirElev" value="50"></div>';
+    html += '<div class="hm-d3-row"><label>补光强度</label><input type="range" min="0" max="2" step="0.02" data-light="fill" value="' + fillLight.intensity.toFixed(2) + '"></div>';
+    html += '<div class="hm-d3-row"><label>聚光灯</label>' +
+      '<input type="checkbox" id="d3SpotOn" style="margin-left:auto">' +
+      '<span style="font-size:11px;color:#7b8494">' + (spotOn ? '开' : '关') + '</span></div>';
+    if (spotOn) {
+      html += '<div class="hm-d3-row"><label>锥角</label><input type="range" min="5" max="60" step="1" data-light="spotAngle" value="30"></div>';
+      html += '<div class="hm-d3-row"><label>强度</label><input type="range" min="0" max="4" step="0.05" data-light="spotI" value="' + spotLight.intensity.toFixed(2) + '"></div>';
+    }
+    html += '<div class="hm-d3-row"><label>曝光</label><input type="range" min="0.4" max="1.6" step="0.02" data-light="exposure" value="' + renderer.toneMappingExposure.toFixed(2) + '"></div>';
     inspectorEl.innerHTML = html;
-  }
-
-  /* 拖拽时同步数字输入框，避免整块重绘导致焦点丢失 */
-  function syncInspectorValues(obj) {
-    if (!inspectorEl) return;
-    ['pos', 'rot', 'scale'].forEach(function (key) {
-      var inputs = inspectorEl.querySelectorAll('[data-prop="' + key + '"]');
-      for (var i = 0; i < inputs.length; i++) {
-        var ax = parseInt(inputs[i].getAttribute('data-axis'), 10);
-        var v = obj[key][ax];
-        if (document.activeElement !== inputs[i]) {
-          inputs[i].value = v.toFixed(2);
-        }
-      }
-    });
   }
 
   function bindInspector() {
     if (!inspectorEl) return;
     inspectorEl.addEventListener('input', function (e) {
-      var t = e.target;
-      if (!t) return;
+      var t = e.target; if (!t) return;
       var lp = t.getAttribute('data-light');
       if (lp) {
-        light[lp] = parseFloat(t.value);
+        var v = parseFloat(t.value);
+        if (lp === 'ambient') ambient.intensity = v;
+        else if (lp === 'dirIntensity') dirLight.intensity = v;
+        else if (lp === 'dirAzim' || lp === 'dirElev') {
+          var az = parseFloat(inspectorEl.querySelector('[data-light="dirAzim"]').value) * Math.PI / 180;
+          var el = parseFloat(inspectorEl.querySelector('[data-light="dirElev"]').value) * Math.PI / 180;
+          var r = 12;
+          dirLight.position.set(Math.cos(el) * Math.sin(az) * r, Math.sin(el) * r, Math.cos(el) * Math.cos(az) * r);
+          dirLight.target.position.set(0, 1, 0);
+          dirLight.target.updateMatrixWorld();
+          dirLight.shadow.camera.updateProjectionMatrix();
+        } else if (lp === 'fill') fillLight.intensity = v;
+        else if (lp === 'spotAngle') spotLight.angle = v * Math.PI / 180;
+        else if (lp === 'spotI') spotLight.intensity = v;
+        else if (lp === 'exposure') renderer.toneMappingExposure = v;
         return;
       }
       var prop = t.getAttribute('data-prop');
       if (!prop || !selectedId) return;
       var obj = findObject(selectedId);
-      if (!obj) return;
       var ax = parseInt(t.getAttribute('data-axis'), 10);
-      var v = parseFloat(t.value);
-      if (!isFinite(v)) return;
-      if (prop === 'scale') v = Math.max(0.05, v);
-      obj[prop][ax] = v;
+      var v = parseFloat(t.value); if (!isFinite(v)) return;
+      if (prop === 'pos') setXYZ(obj.three.position, ax, v);
+      else if (prop === 'rot') setXYZ(obj.three.rotation, ax, v * Math.PI / 180);
+      else if (prop === 'scl') { setXYZ(obj.three.scale, ax, Math.max(0.05, v)); }
     });
     inspectorEl.addEventListener('click', function (e) {
+      var spotCb = e.target.closest('#d3SpotOn');
+      if (spotCb) {
+        spotOn = spotCb.checked;
+        spotLight.visible = spotOn;
+        renderInspector(); return;
+      }
       var btn = e.target.closest('[data-act]');
-      if (!btn || !selectedId) return;
-      var act = btn.getAttribute('data-act');
-      if (act === 'dup') duplicateObject(selectedId);
-      else if (act === 'del') deleteObject(selectedId);
-      else if (act === 'reset') {
-        var obj = findObject(selectedId);
-        if (obj) {
-          obj.rot = [0, 0, 0];
-          obj.scale = [1, 1, 1];
-          renderInspector();
-        }
+      if (btn) {
+        var act = btn.getAttribute('data-act');
+        if (act === 'mode-t') tControls.setMode('translate');
+        else if (act === 'mode-r') tControls.setMode('rotate');
+        else if (act === 'mode-s') tControls.setMode('scale');
+        else if (act === 'dup') duplicateObject(selectedId);
+        else if (act === 'del') deleteObject(selectedId);
+        return;
+      }
+      var pose = e.target.closest('[data-pose]');
+      if (pose && selectedId) {
+        var o = findObject(selectedId);
+        if (o && o.kind === 'mannequin') applyPose(o.three, POSE_PRESETS[pose.getAttribute('data-pose')] || POSE_PRESETS.idle);
       }
     });
   }
 
-  /* ---------------- 顶部工具栏 ---------------- */
-  function syncToolButtons() {
+  function setXYZ(vec, axis, v) {
+    if (axis === 0) vec.x = v;
+    else if (axis === 1) vec.y = v;
+    else if (axis === 2) vec.z = v;
+  }
+
+  /* ---------- 侧栏 / 顶栏 ---------- */
+  function bindTopBar() {
+    var shapes = document.getElementById('d3Shapes');
+    if (shapes) shapes.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-shape]'); if (!btn) return;
+      addPrimitive(btn.getAttribute('data-shape'));
+    });
+    if (objListEl) objListEl.addEventListener('click', function (e) {
+      var del = e.target.closest('[data-del]');
+      if (del) { deleteObject(del.getAttribute('data-del')); return; }
+      var row = e.target.closest('[data-oid]');
+      if (row) selectObject(row.getAttribute('data-oid'));
+    });
+
+    var camBtn = document.getElementById('d3CameraBtn');
+    if (camBtn) camBtn.addEventListener('click', toggleCamMode);
+    var shotBtn = document.getElementById('d3ShotBtn');
+    if (shotBtn) shotBtn.addEventListener('click', captureShot);
+    var gridBtn = document.getElementById('d3GridBtn');
+    if (gridBtn) gridBtn.addEventListener('click', function () { showGrid = !showGrid; scene.userData.grid.visible = showGrid; syncTopBar(); });
+    var resetBtn = document.getElementById('d3ResetCamBtn');
+    if (resetBtn) resetBtn.addEventListener('click', resetCamera);
+    var saveBtn = document.getElementById('d3SaveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveScene);
+
+    // 切换 gizmo 模式按钮
+    document.querySelectorAll('.hm-d3-btn[data-mode]').forEach(function (b) {
+      b.addEventListener('click', function () { tControls.setMode(b.getAttribute('data-mode')); });
+    });
+  }
+
+  function syncTopBar() {
     var gridBtn = document.getElementById('d3GridBtn');
     if (gridBtn) gridBtn.classList.toggle('is-on', showGrid);
     var camBtn = document.getElementById('d3CameraBtn');
@@ -851,95 +569,102 @@ window.HMDirector3D = (function () {
     if (frame) frame.hidden = !camMode;
   }
 
-  function bindToolbar() {
-    var shapes = document.getElementById('d3Shapes');
-    if (shapes) {
-      shapes.addEventListener('click', function (e) {
-        var btn = e.target.closest('[data-shape]');
-        if (!btn) return;
-        addShape(btn.getAttribute('data-shape'));
-      });
+  function toggleCamMode() {
+    camMode = !camMode;
+    if (camMode) {
+      // 从轨道相机状态过渡到飞航
+      var sph = new THREE.Spherical().setFromVector3(camera.position.clone().sub(orbit.target));
+      camFly.pos.copy(camera.position);
+      camFly.yaw = sph.theta;
+      camFly.pitch = sph.phi - Math.PI / 2;
+      orbit.enabled = false;
+    } else {
+      // 回到轨道相机
+      var target = new THREE.Vector3(0, 1.2, 0);
+      var dir = camera.position.clone().sub(target).normalize();
+      camOrbit.yaw = Math.atan2(dir.x, dir.z);
+      camOrbit.pitch = Math.asin(clamp(dir.y, -1, 1));
+      camOrbit.dist = camera.position.distanceTo(target);
+      orbit.target.copy(target);
+      resetCamera();
+      orbit.enabled = true;
     }
-    if (objListEl) {
-      objListEl.addEventListener('click', function (e) {
-        var del = e.target.closest('[data-del]');
-        if (del) {
-          deleteObject(del.getAttribute('data-del'));
-          return;
-        }
-        var row = e.target.closest('[data-oid]');
-        if (row) selectObject(row.getAttribute('data-oid'));
-      });
-    }
-    var camBtn = document.getElementById('d3CameraBtn');
-    if (camBtn) {
-      camBtn.addEventListener('click', function () {
-        camMode = !camMode;
-        if (camMode) {
-          camFly.pos = orbitEye();
-          camFly.yaw = camOrbit.yaw;
-          camFly.pitch = camOrbit.pitch;
-        } else {
-          /* 退出取景时回到轨道视角，保持看向同一方向 */
-          camOrbit.yaw = camFly.yaw;
-          camOrbit.pitch = clamp(camFly.pitch, -1.45, 1.45);
-        }
-        syncToolButtons();
-      });
-    }
-    var shotBtn = document.getElementById('d3ShotBtn');
-    if (shotBtn) shotBtn.addEventListener('click', captureShot);
-    var gridBtn = document.getElementById('d3GridBtn');
-    if (gridBtn) {
-      gridBtn.addEventListener('click', function () {
-        showGrid = !showGrid;
-        syncToolButtons();
-      });
-    }
-    var resetBtn = document.getElementById('d3ResetCamBtn');
-    if (resetBtn) {
-      resetBtn.addEventListener('click', function () {
-        if (camMode) {
-          camFly.pos = [0, 3.2, 12];
-          camFly.yaw = -0.65;
-          camFly.pitch = -0.06;
-        } else {
-          camOrbit = { yaw: -0.65, pitch: 0.36, dist: 17, target: [0, 1.1, 0] };
-        }
-      });
-    }
-    var saveBtn = document.getElementById('d3SaveBtn');
-    if (saveBtn) saveBtn.addEventListener('click', saveScene);
+    syncTopBar();
   }
 
-  /* ---------------- 截图 / 存档 ---------------- */
+  function resetCamera() {
+    if (camMode) {
+      camFly = { pos: new THREE.Vector3(0, 3.5, 13), yaw: -0.65, pitch: -0.06 };
+    } else {
+      camOrbit = { yaw: -0.65, pitch: 0.4, dist: 17, target: new THREE.Vector3(0, 1.2, 0) };
+      var pos = new THREE.Vector3().setFromSpherical(
+        new THREE.Spherical(camOrbit.dist, camOrbit.pitch + Math.PI / 2, camOrbit.yaw)
+      ).add(camOrbit.target);
+      camera.position.copy(pos);
+      orbit.target.copy(camOrbit.target);
+      // 让 orbit 立刻进入稳定状态
+      orbit._spherical.setFromVector3(camera.position.clone().sub(orbit.target));
+      orbit._sphericalDelta.set(0, 0, 0);
+      orbit._panOffset.set(0, 0, 0);
+    }
+  }
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  /* ---------- 主循环 ---------- */
+  function loop() {
+    if (!active) { rafId = null; return; }
+    if (camMode) {
+      applyFly();
+      // 飞航：先 yaw，再 pitch
+      var qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), camFly.yaw);
+      var qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), camFly.pitch);
+      camera.quaternion.copy(qy).multiply(qx);
+    } else {
+      orbit.update();
+    }
+    tControls.update();
+    renderer.render(scene, camera);
+    rafId = requestAnimationFrame(loop);
+  }
+
+  /* ---------- 截图 / 存档 ---------- */
   function captureShot() {
-    if (!canvas) return;
-    var url;
-    try { url = canvas.toDataURL('image/png'); } catch (e) { return; }
+    var url = null;
+    try { renderer.render(scene, camera); url = renderer.domElement.toDataURL('image/png'); } catch (e) { return; }
     var a = document.createElement('a');
     var ts = new Date();
-    var stamp = String(ts.getFullYear()) +
-      String(ts.getMonth() + 1).padStart(2, '0') +
-      String(ts.getDate()).padStart(2, '0') + '-' +
-      String(ts.getHours()).padStart(2, '0') +
-      String(ts.getMinutes()).padStart(2, '0') +
-      String(ts.getSeconds()).padStart(2, '0');
-    a.href = url;
-    a.download = '导演台取景-' + stamp + '.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    if (window.HMApp && window.HMApp.toast) window.HMApp.toast('已保存取景截图', 'success');
+    var stamp = String(ts.getFullYear()) + String(ts.getMonth() + 1).padStart(2, '0') + String(ts.getDate()).padStart(2, '0') +
+      '-' + String(ts.getHours()).padStart(2, '0') + String(ts.getMinutes()).padStart(2, '0') + String(ts.getSeconds()).padStart(2, '0');
+    a.href = url; a.download = '导演台取景-' + stamp + '.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast('已保存取景截图', 'success');
+  }
+  function toast(msg, kind) {
+    if (window.HMApp && window.HMApp.toast) return window.HMApp.toast(msg, kind);
   }
 
   function saveScene() {
     try {
-      localStorage.setItem(LS_SCENE, JSON.stringify({ objects: objects, seq: seq, light: light }));
-      if (window.HMApp && window.HMApp.toast) window.HMApp.toast('场景已保存到本地', 'success');
-    } catch (e) {
-      if (window.HMApp && window.HMApp.toast) window.HMApp.toast('保存失败：本地存储不可用', 'error');
-    }
+      var data = {
+        version: 2,
+        objects: objects.map(function (o) {
+          return {
+            id: o.id, name: o.name, kind: o.kind,
+            pos: [o.three.position.x, o.three.position.y, o.three.position.z],
+            rot: [o.three.rotation.x, o.three.rotation.y, o.three.rotation.z],
+            scale: [o.three.scale.x, o.three.scale.y, o.three.scale.z]
+          };
+        }),
+        camera: {
+          pos: [camera.position.x, camera.position.y, camera.position.z],
+          quat: [camera.quaternion.x, camera.quaternion.y, camera.quaternion.z, camera.quaternion.w]
+        },
+        seq: seq
+      };
+      localStorage.setItem(LS_SCENE, JSON.stringify(data));
+      toast('场景已保存到本地', 'success');
+    } catch (e) { toast('保存失败', 'error'); }
   }
 
   function loadScene() {
@@ -949,105 +674,77 @@ window.HMDirector3D = (function () {
     try {
       var data = JSON.parse(raw);
       if (data && Array.isArray(data.objects)) {
-        objects = data.objects.filter(function (o) {
-          return o && o.type && SHAPES[o.type] && Array.isArray(o.pos);
-        }).map(function (o) {
-          return {
-            id: o.id || ('o' + (seq++)),
-            type: o.type,
-            name: o.name || '白模',
-            pos: o.pos.slice(0, 3),
-            rot: Array.isArray(o.rot) ? o.rot.slice(0, 3) : [0, 0, 0],
-            scale: Array.isArray(o.scale) ? o.scale.slice(0, 3) : [1, 1, 1]
-          };
+        objects.forEach(function (o) { scene.remove(o.three); });
+        objects = []; selectedId = null;
+        var maxSeq = 0;
+        data.objects.forEach(function (s) {
+          var threeObj;
+          if (s.kind === 'mannequin') threeObj = makeMannequin(s.name);
+          else threeObj = makePrimitive(s.kind);
+          threeObj.position.set(s.pos[0], s.pos[1], s.pos[2]);
+          threeObj.rotation.set(s.rot[0], s.rot[1], s.rot[2]);
+          threeObj.scale.set(s.scale[0], s.scale[1], s.scale[2]);
+          threeObj.userData.id = s.id;
+          scene.add(threeObj);
+          objects.push({ id: s.id, name: s.name, kind: s.kind, three: threeObj });
+          var n = parseInt(String(s.id).replace(/\D/g, ''), 10);
+          if (n > maxSeq) maxSeq = n;
         });
-        if (typeof data.seq === 'number') seq = data.seq;
-        if (data.light) {
-          light.azimuth = data.light.azimuth != null ? data.light.azimuth : light.azimuth;
-          light.elevation = data.light.elevation != null ? data.light.elevation : light.elevation;
-          light.intensity = data.light.intensity != null ? data.light.intensity : light.intensity;
-          light.ambient = data.light.ambient != null ? data.light.ambient : light.ambient;
+        seq = Math.max(maxSeq + 1, seq);
+        if (data.camera) {
+          camera.position.set(data.camera.pos[0], data.camera.pos[1], data.camera.pos[2]);
+          camera.quaternion.set(data.camera.quat[0], data.camera.quat[1], data.camera.quat[2], data.camera.quat[3]);
         }
       }
     } catch (e) { /* ignore */ }
   }
 
-  /* ---------------- 主循环 ---------------- */
-  function loop() {
-    if (!active) { running = false; return; }
-    applyFly();
-    draw();
-    raf = requestAnimationFrame(loop);
-  }
-
-  function startLoop() {
-    if (running) return;
-    running = true;
-    raf = requestAnimationFrame(loop);
-  }
-
-  function stopLoop() {
-    running = false;
-    if (raf) cancelAnimationFrame(raf);
-    raf = null;
-  }
-
-  /* ---------------- 生命周期 ---------------- */
+  /* ---------- 生命周期 ---------- */
   function init() {
     if (bound) return;
     canvas = document.getElementById('d3Canvas');
-    viewport = document.getElementById('d3Viewport');
+    container = document.getElementById('d3Viewport');
     inspectorEl = document.getElementById('d3Inspector');
     objListEl = document.getElementById('d3ObjList');
-    if (!canvas || !viewport) return;
-    ctx = canvas.getContext('2d');
+    if (!canvas || !container) return;
+    setupScene();
     bound = true;
-
-    canvas.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    canvas.addEventListener('wheel', onWheel, { passive: false });
-    canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('keyup', onKeyUp);
-
-    bindToolbar();
-    bindInspector();
     loadScene();
     if (!objects.length) {
-      addShape('cube');
-      addShape('sphere');
-      addShape('capsule');
+      addPrimitive('cube'); addPrimitive('sphere'); addPrimitive('mannequin');
+      selectObject(null);
     }
-    selectedId = null;
+
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    bindTopBar();
+    bindInspector();
+    syncTopBar();
     renderObjectList();
     renderInspector();
-    syncToolButtons();
-    draw();
   }
 
   function enter() {
     active = true;
     if (!bound) init();
     resize();
-    renderObjectList();
-    renderInspector();
-    syncToolButtons();
-    startLoop();
+    syncTopBar();
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(loop);
   }
 
   function leave() {
     active = false;
     keys = {};
-    drag = null;
-    stopLoop();
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    // 保存当前状态
+    try { saveScene(); } catch (e) {}
   }
 
-  return {
-    init: init,
-    enter: enter,
-    leave: leave,
-    addShape: addShape,
-    saveScene: saveScene
-  };
+  return { init: init, enter: enter, leave: leave };
 })();
