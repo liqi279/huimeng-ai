@@ -61,7 +61,8 @@ window.HMDirector3D = (function () {
     var lKn = new THREE.Group(); lShin.position.set(0, 0.28, 0); lKn.add(lShin); lThigh.add(lKn);
     var lFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.32), matSkin); lFoot.position.set(0, 0.04, 0.08); lShin.add(lFoot);
 
-    var rThigh = lThigh.clone(); rThigh.scale.x = -1;
+    var rThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.55, 16), matCloth);
+    rThigh.position.set(0.14, 0.28, 0);
     var rHp = new THREE.Group(); rHp.position.set(0.14, 0.5, 0); rHp.add(rThigh);
     var rShin = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.5, 16), matCloth);
     var rKn = new THREE.Group(); rShin.position.set(0, 0.28, 0); rKn.add(rShin); rThigh.add(rKn);
@@ -79,10 +80,12 @@ window.HMDirector3D = (function () {
     var lHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), matSkin); lHand.position.set(0, -0.45, 0); lEl.add(lHand);
     var lSh = new THREE.Group(); lSh.position.set(-0.32, 0.24, 0); lSh.add(lUpperArm);
 
-    var rUpperArm = lUpperArm.clone();
+    var rUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.095, 0.45, 16), matCloth);
+    rUpperArm.position.set(0, -0.23, 0);
     var rEl = new THREE.Group(); rEl.position.set(0, -0.45, 0); rUpperArm.add(rEl);
-    var rForeArm = lForeArm.clone(); rForeArm.position.set(0, -0.21, 0); rEl.add(rForeArm);
-    var rHand = lHand.clone(); rHand.position.set(0, -0.45, 0); rEl.add(rHand);
+    var rForeArm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.42, 16), matSkin);
+    rForeArm.position.set(0, -0.21, 0); rEl.add(rForeArm);
+    var rHand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), matSkin); rHand.position.set(0, -0.45, 0); rEl.add(rHand);
     var rSh = new THREE.Group(); rSh.position.set(0.32, 0.24, 0); rSh.add(rUpperArm);
 
     torsoGrp.add(lSh); torsoGrp.add(rSh);
@@ -363,7 +366,61 @@ window.HMDirector3D = (function () {
   /* ---------- 对象管理 ---------- */
   function findObject(id) { for (var i = 0; i < objects.length; i++) if (objects[i].id === id) return objects[i]; return null; }
 
-  function addPrimitive(kind) {
+  /* ---------- 内置真实女性白模（CC0 · 3DAssets.dev #25411） ---------- */
+  function b64ToArrayBuffer(b64) {
+    var bin = atob(b64), len = bin.length, buf = new Uint8Array(len);
+    for (var i = 0; i < len; i++) buf[i] = bin.charCodeAt(i);
+    return buf.buffer;
+  }
+
+  function makeWhiteMaterial() {
+    return new THREE.MeshStandardMaterial({ color: 0xEDF0F6, roughness: 0.85, metalness: 0.02 });
+  }
+
+  function loadBuiltinFemale(cb, failCb) {
+    var b64 = window.HM_FEMALE_GLB_B64;
+    if (!b64 || !gltfLoader) { failCb && failCb(); return; }
+    gltfLoader.parse(b64ToArrayBuffer(b64), '', function (gltf) {
+      var root = gltf.scene;
+      root.traverse(function (c) {
+        if (c.isMesh) {
+          c.castShadow = true; c.receiveShadow = true;
+          var mat = makeWhiteMaterial();
+          c.material = Array.isArray(c.material) ? c.material.map(function () { return mat; }) : mat;
+        }
+      });
+      normalizeModel(root, 1.78);
+      cb(root);
+    }, function (err) {
+      console.warn('[Mannequin] 内置白模解析失败，回退程序化人偶', err);
+      failCb && failCb();
+    });
+  }
+
+  function addBuiltinMannequin() {
+    loadBuiltinFemale(function (root) {
+      var n = objects.length;
+      root.position.x += ((n % 5) - 2) * 1.6;
+      root.position.z += Math.floor(n / 5) * 1.4;
+      var o = { id: 'o' + (seq++), name: '成年女性白模', kind: 'mannequin', builtin: true, three: root };
+      objects.push(o); scene.add(root); selectObject(o.id);
+    }, function () { addPrimitive('mannequin', true); });
+  }
+
+  function restoreBuiltinMannequin(s) {
+    loadBuiltinFemale(function (root) {
+      root.position.set(s.pos[0], s.pos[1], s.pos[2]);
+      root.rotation.set(s.rot[0], s.rot[1], s.rot[2]);
+      root.scale.set(s.scale[0], s.scale[1], s.scale[2]);
+      root.userData.id = s.id;
+      scene.add(root);
+      objects.push({ id: s.id, name: s.name, kind: 'mannequin', builtin: true, three: root });
+      renderObjectList();
+    }, function () {});
+  }
+
+  function addPrimitive(kind, forceProcedural) {
+    if (kind === 'mannequin' && !forceProcedural && window.HM_FEMALE_GLB_B64) { addBuiltinMannequin(); return; }
     var nameMap = { cube:'立方体', sphere:'球体', cylinder:'圆柱', cone:'圆锥', capsule:'胶囊', torus:'圆环', plane:'平面', mannequin:'人偶' };
     var three = kind === 'mannequin' ? makeMannequin(nameMap.mannequin) : makePrimitive(kind);
     var n = objects.length;
@@ -497,7 +554,7 @@ window.HMDirector3D = (function () {
         '<div><span>SX</span><input type="number" step="0.05" min="0.05" data-prop="scl" data-axis="0" value="' + s.x.toFixed(2) + '"></div>' +
         '<div><span>SY</span><input type="number" step="0.05" min="0.05" data-prop="scl" data-axis="1" value="' + s.y.toFixed(2) + '"></div>' +
         '<div><span>SZ</span><input type="number" step="0.05" min="0.05" data-prop="scl" data-axis="2" value="' + s.z.toFixed(2) + '"></div></div>';
-      if (o.kind === 'mannequin') {
+      if (o.kind === 'mannequin' && !o.builtin) {
         html += '<div class="hm-d3-sec-title" style="margin-top:6px">Pose</div>';
         html += '<div class="hm-d3-shapes" style="grid-template-columns:1fr 1fr">' +
           '<button type="button" data-pose="idle">🌙 Idle</button>' +
@@ -617,27 +674,10 @@ window.HMDirector3D = (function () {
 
     // AI modal
     var aiBtn = document.getElementById('d3AiGenBtn');
+    var aiOpenBtn = document.getElementById('d3AiOpenBtn');
     var aiModal = document.getElementById('d3AiModal');
     var aiClose = document.getElementById('d3AiClose');
-    if (document.getElementById('d3AiGenBtnSide')) {
-      document.getElementById('d3AiGenBtnSide').addEventListener('click', openAiModal);
-    }
-    // 侧栏 "AI 生成 3D" 按钮
-    var aiSideBtn = document.getElementById('d3AiGenSide');
-    if (!aiSideBtn) {
-      aiSideBtn = document.getElementById('d3AiGenBtn'); // 可能存在重复 ID，兜底
-    }
-    var rootUpload = document.getElementById('d3UploadBtn');
-    if (rootUpload) {
-      // 实际是侧栏里的上传按钮，上面已经绑过
-    }
-    // 再检查一次 AI 生成按钮 ID
-    document.querySelectorAll('[data-ai-open]').forEach(function (b) { b.addEventListener('click', openAiModal); });
-    // 侧栏的 AI 按钮 id 改下（刚才 html 里用的是 d3AiGenBtn，但那里没绑定）—— 让事件委托兜底：
-    document.addEventListener('click', function (e) {
-      var btn = e.target.closest('#d3SideAiGenBtn');
-      if (btn) openAiModal();
-    });
+    if (aiOpenBtn) aiOpenBtn.addEventListener('click', openAiModal);
 
     if (aiClose) aiClose.addEventListener('click', closeAiModal);
     if (aiModal) aiModal.addEventListener('click', function (e) { if (e.target === aiModal) closeAiModal(); });
@@ -815,7 +855,7 @@ window.HMDirector3D = (function () {
       var data = {
         version: 2,
         objects: objects.map(function (o) {
-          return { id: o.id, name: o.name, kind: o.kind,
+          return { id: o.id, name: o.name, kind: o.kind, builtin: !!o.builtin,
             pos: [o.three.position.x, o.three.position.y, o.three.position.z],
             rot: [o.three.rotation.x, o.three.rotation.y, o.three.rotation.z],
             scale: [o.three.scale.x, o.three.scale.y, o.three.scale.z] };
@@ -836,9 +876,10 @@ window.HMDirector3D = (function () {
         objects.forEach(function (o) { scene.remove(o.three); }); objects = []; selectedId = null;
         var maxSeq = 0;
         data.objects.forEach(function (s) {
+          if (s.kind === 'glb') return; // glb 存档无法恢复二进制，跳过
+          if (s.kind === 'mannequin' && s.builtin) { restoreBuiltinMannequin(s); return; }
           var threeObj;
           if (s.kind === 'mannequin') threeObj = makeMannequin(s.name);
-          else if (s.kind === 'glb') return; // glb 存档无法恢复二进制，跳过
           else threeObj = makePrimitive(s.kind);
           threeObj.position.set(s.pos[0], s.pos[1], s.pos[2]);
           threeObj.rotation.set(s.rot[0], s.rot[1], s.rot[2]);
@@ -876,11 +917,16 @@ window.HMDirector3D = (function () {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     bindTopBar(); bindInspector(); syncTopBar(); renderObjectList(); renderInspector();
+    window.addEventListener('resize', resize);
+    if (window.ResizeObserver) {
+      try { new window.ResizeObserver(function () { resize(); }).observe(container); } catch (e) {}
+    }
   }
 
   function enter() {
     active = true; if (!bound) init();
     resize(); syncTopBar();
+    requestAnimationFrame(resize);
     if (rafId) cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(loop);
   }

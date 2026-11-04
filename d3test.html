@@ -1,0 +1,2314 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="frontend/styles.css"><style>
+        .hm-modeling{display:flex;flex-direction:column;gap:12px;height:calc(100vh - 140px);min-height:480px}
+        .hm-m-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;flex-wrap:wrap}
+        .hm-m-dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}
+        .hm-m-dot.on{background:#3ecf6e}.hm-m-dot.err{background:#ff5c5c}.hm-m-dot.conn{background:#f5a623}
+        .hm-m-status{font-size:12px;color:var(--hm-dim,#8b93a1);white-space:nowrap}
+        .hm-m-bar .hm-m-spacer{flex:1}
+        .hm-m-bar input{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:8px;background:#11151f;color:var(--hm-text,#e6e9ef);padding:7px 10px}
+        .hm-m-bar input[type=text]{width:150px}
+        .hm-m-body{display:flex;gap:12px;flex:1;min-height:0}
+        .hm-m-viewport{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;overflow:hidden}
+        .hm-m-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;background:repeating-conic-gradient(#1e2433 0 25%,#181d2a 0 50%) 0 0/24px 24px}
+        .hm-m-canvas{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+        .hm-m-empty{color:var(--hm-dim,#8b93a1);font-size:13px;text-align:center;padding:20px}
+        .hm-m-side{width:300px;flex:none;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;padding:14px;overflow:auto}
+        .hm-m-side h3{margin:4px 0 10px;font-size:13px;color:var(--hm-dim,#8b93a1);font-weight:600;letter-spacing:.3px}
+        .hm-m-group{margin-bottom:16px}
+        .hm-m-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+        .hm-m-row label{font-size:12px;color:var(--hm-dim,#8b93a1);width:56px;flex:none}
+        .hm-m-row input,.hm-m-row select{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;background:#11151f;color:var(--hm-text,#e6e9ef);padding:6px 8px}
+        .hm-m-row input[type=text],.hm-m-row input[type=number],.hm-m-row select{flex:1;min-width:0}
+        .hm-m-btn{font-size:12px;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;background:var(--hm-accent,#4f8cff);color:#fff;white-space:nowrap}
+        .hm-m-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef)}
+        .hm-m-btn.ghost:hover{background:#242a3a}
+        .hm-m-grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+        .hm-m-log{max-height:110px;overflow:auto;font-size:11px;color:var(--hm-dim,#8b93a1);background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:6px;margin-top:4px;line-height:1.5}
+        .hm-m-log div.err{color:#ff7c7c}
+        .hm-m-color{width:36px;padding:2px;height:30px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;background:#11151f}
+        .hm-m-tabs{display:flex;gap:8px}
+        .hm-m-tab{font-size:13px;border:1px solid var(--hm-line,#2a3142);border-radius:8px;background:var(--hm-surface,#1b2030);color:var(--hm-dim,#8b93a1);padding:7px 16px;cursor:pointer}
+        .hm-m-tab.is-active{background:var(--hm-accent,#4f8cff);color:#fff;border-color:var(--hm-accent,#4f8cff)}
+        .hm-m-platform{flex:1;min-height:0;display:flex;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;overflow:hidden}
+        .hm-m-platform-stage{flex:1;position:relative;overflow:hidden;background:#0a0d14;cursor:crosshair;display:flex;align-items:center;justify-content:center}
+        .hm-m-platform-img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+      </style><style>html,body{margin:0;height:100%;background:#0a0e16}.hm-page{display:flex!important;height:100vh}</style></head><body><main class="hm-page hm-d3-page" id="view-director3d" hidden>
+    <style>
+      .hm-d3-page{display:flex;flex-direction:column;height:calc(100vh - 60px);min-height:0;background:var(--hm-bg,#0f1320);padding:12px 14px;gap:10px}
+      .hm-d3-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;flex-wrap:wrap}
+      .hm-d3-title{display:flex;align-items:center;gap:10px}
+      .hm-d3-logo{font-size:18px;color:#52c41a}
+      .hm-d3-title h2{font-size:18px;margin:0;color:var(--hm-text,#e6e9ef)}
+      .hm-d3-sub{font-size:12px;color:var(--hm-dim,#8b93a1)}
+      .hm-d3-tools{display:flex;gap:8px;flex-wrap:wrap}
+      .hm-d3-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;background:var(--hm-accent,#4f8cff);color:#fff;white-space:nowrap}
+      .hm-d3-btn:hover{filter:brightness(1.08)}
+      .hm-d3-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+      .hm-d3-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef)}
+      .hm-d3-btn.ghost:hover{background:#242a3a}
+      .hm-d3-btn.is-on{background:#52c41a;border-color:#52c41a;color:#fff}
+      .hm-d3-main{flex:1;min-height:0;display:flex;gap:10px;min-width:0}
+      .hm-d3-side,.hm-d3-inspector{flex:none;width:212px;display:flex;flex-direction:column;gap:8px;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;padding:10px;overflow-y:auto}
+      .hm-d3-inspector{width:248px}
+      .hm-d3-sec-title{font-size:11px;letter-spacing:.08em;color:var(--hm-dim,#8b93a1);text-transform:uppercase;padding:2px 2px 4px;border-bottom:1px solid var(--hm-line,#2a3142)}
+      .hm-d3-shapes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      .hm-d3-shapes button{font-size:12px;padding:8px 4px;border-radius:8px;border:1px solid var(--hm-line,#2a3142);background:#11151f;color:var(--hm-text,#e6e9ef);cursor:pointer}
+      .hm-d3-shapes button:hover{border-color:var(--hm-accent,#4f8cff);background:#1a2130}
+      .hm-d3-list{display:flex;flex-direction:column;gap:4px;min-height:60px}
+      .hm-d3-list-empty{font-size:11px;color:#5f6775;padding:10px 2px;text-align:center}
+      .hm-d3-obj{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:1px solid transparent;background:#141a26;font-size:12px;color:#c8d0e0;cursor:pointer}
+      .hm-d3-obj:hover{background:#1a2130}
+      .hm-d3-obj.is-active{border-color:var(--hm-accent,#4f8cff);background:#1b2536}
+      .hm-d3-obj-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .hm-d3-obj-del{width:20px;height:20px;border-radius:6px;border:none;background:transparent;color:#8b93a1;cursor:pointer;font-size:13px;line-height:1}
+      .hm-d3-obj-del:hover{color:#ff7875;background:rgba(255,120,117,.12)}
+      .hm-d3-viewport{flex:1;min-width:0;position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--hm-line,#2a3142);background:#0b0f19}
+      .hm-d3-viewport canvas{display:block;width:100%;height:100%}
+      .hm-d3-hint{position:absolute;left:12px;bottom:10px;font-size:11px;color:#98a1b2;background:rgba(10,14,22,.72);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:5px 10px;pointer-events:none;backdrop-filter:blur(6px)}
+      .hm-d3-cam-frame{position:absolute;inset:0;pointer-events:none;border:1px solid rgba(255,92,122,.35)}
+      .hm-d3-cam-tag{position:absolute;left:12px;top:10px;font-size:11px;font-weight:700;letter-spacing:.1em;color:#ff5c7a;background:rgba(10,14,22,.72);border:1px solid rgba(255,92,122,.4);border-radius:6px;padding:4px 9px}
+      .hm-d3-cam-bar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);font-size:11px;color:#c8d0e0;background:rgba(10,14,22,.78);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:5px 12px;white-space:nowrap}
+      .hm-d3-corner{position:absolute;width:26px;height:26px;border:2px solid rgba(255,92,122,.75)}
+      .hm-d3-corner.tl{left:8px;top:8px;border-right:none;border-bottom:none}
+      .hm-d3-corner.tr{right:8px;top:8px;border-left:none;border-bottom:none}
+      .hm-d3-corner.bl{left:8px;bottom:8px;border-right:none;border-top:none}
+      .hm-d3-corner.br{right:8px;bottom:8px;border-left:none;border-top:none}
+      .hm-d3-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+      .hm-d3-row label{flex:none;width:56px;font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-d3-row input[type=range]{flex:1;min-width:0;accent-color:#4f8cff}
+      .hm-d3-row input[type=number]{flex:1;min-width:0;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:12px;padding:5px 7px}
+      .hm-d3-row input[type=number]:focus{outline:none;border-color:var(--hm-accent,#4f8cff)}
+      .hm-d3-xyz{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+      .hm-d3-xyz input{width:100%}
+      .hm-d3-xyz span{font-size:10px;color:#7b8494;text-align:center;display:block;margin-bottom:2px}
+      .hm-d3-empty{font-size:11.5px;line-height:1.7;color:#6f7787;text-align:center;padding:16px 6px}
+      .hm-d3-actions{display:flex;gap:6px;margin-top:6px}
+      .hm-d3-actions button{flex:1;font-size:11.5px;padding:7px 4px;border-radius:7px;border:1px solid var(--hm-line,#2a3142);background:#11151f;color:var(--hm-text,#e6e9ef);cursor:pointer}
+      .hm-d3-actions button:hover{border-color:var(--hm-accent,#4f8cff)}
+      .hm-d3-swatch{width:16px;height:16px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:#e8ecf2}
+      @media (max-width:1180px){
+        .hm-d3-side{width:170px}
+        .hm-d3-inspector{width:206px}
+        .hm-d3-viewport{min-width:240px}
+      }
+      .hm-d3-modal{position:fixed;inset:0;background:rgba(3,5,10,.82);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center}
+      .hm-d3-modal[hidden]{display:none}
+      .hm-d3-modal-card{width:520px;max-width:92vw;background:linear-gradient(180deg,#171d2b,#10141d);border:1px solid #2a3142;border-radius:16px;padding:20px 22px;box-shadow:0 24px 80px rgba(0,0,0,.55);max-height:88vh;overflow-y:auto}
+      .hm-d3-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+      .hm-d3-modal-title{font-size:16px;font-weight:600;color:#e6e9ef;display:flex;align-items:center;gap:8px}
+      .hm-d3-modal-close{background:transparent;border:none;color:#8b93a1;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px}
+      .hm-d3-modal-close:hover{background:#242a3a;color:#e6e9ef}
+      .hm-d3-field{margin-bottom:12px}
+      .hm-d3-field label{display:block;font-size:11px;color:#8b93a1;margin-bottom:4px}
+      .hm-d3-field textarea,.hm-d3-field input[type=text],.hm-d3-field select{width:100%;background:#11151f;border:1px solid #2a3142;border-radius:8px;color:#e6e9ef;font-size:13px;padding:8px 10px;box-sizing:border-box;font-family:inherit}
+      .hm-d3-field textarea{min-height:90px;resize:vertical}
+      .hm-d3-field textarea:focus,.hm-d3-field input:focus,.hm-d3-field select:focus{outline:none;border-color:#4f8cff}
+      .hm-d3-api-key-row{display:flex;gap:8px}
+      .hm-d3-api-key-row input{flex:1}
+      .hm-d3-api-key-saved{font-size:10.5px;color:#52c41a;margin-top:4px}
+      .hm-d3-model-tabs{display:flex;gap:4px;margin-bottom:14px;background:#11151f;border:1px solid #2a3142;border-radius:8px;padding:3px}
+      .hm-d3-model-tab{flex:1;padding:7px 4px;text-align:center;font-size:12px;border-radius:6px;cursor:pointer;color:#8b93a1;border:none;background:transparent}
+      .hm-d3-model-tab.is-active{background:#242a3a;color:#e6e9ef}
+      .hm-d3-row-btns{display:flex;gap:8px;margin-top:6px}
+      .hm-d3-gen-btn{flex:1;background:linear-gradient(135deg,#ff5c7a,#4f8cff);border:none;border-radius:8px;padding:11px;color:#fff;font-weight:600;font-size:13px;cursor:pointer}
+      .hm-d3-gen-btn:disabled{opacity:.5;cursor:not-allowed}
+      .hm-d3-gen-provider{font-size:11px;color:#7b8494;margin-top:6px;text-align:center}
+      .hm-d3-gen-result{margin-top:12px}
+      .hm-d3-gen-status{font-size:12px;color:#c8d0e0;padding:10px;background:#11151f;border-radius:8px;border:1px solid #2a3142}
+      .hm-d3-gen-status.error{border-color:#ff7875;color:#ff9c98}
+      .hm-d3-gen-status.ok{border-color:#52c41a;color:#7fd17e}
+    </style>
+    <div class="hm-d3-bar">
+      <div class="hm-d3-title">
+        <span class="hm-d3-logo">🎥</span>
+        <h2>导演台</h2>
+        <span class="hm-d3-sub">3D 无限画布 · 白模摆位 · 打光取景</span>
+      </div>
+      <div class="hm-d3-tools">
+        <button class="hm-d3-btn ghost" id="d3CameraBtn" title="进入摄像头取景模式">🎥 摄像头模式</button>
+        <button class="hm-d3-btn ghost" id="d3ShotBtn" title="把当前画面截图为 PNG" disabled>📷 截图</button>
+        <button class="hm-d3-btn ghost is-on" id="d3GridBtn" title="显示/隐藏地面网格">▦ 网格</button>
+        <button class="hm-d3-btn ghost" id="d3ResetCamBtn" title="复位到默认视角">↺ 复位视角</button>
+        <button class="hm-d3-btn" id="d3SaveBtn" title="保存当前场景到本地">💾 保存场景</button>
+      </div>
+    </div>
+
+    <div class="hm-d3-main">
+      <aside class="hm-d3-side">
+        <div class="hm-d3-sec-title">📂 真实模型</div>
+        <div class="hm-d3-actions" style="margin-top:0">
+          <button type="button" id="d3UploadBtn" style="flex:1">⬆ 上传 GLB</button>
+          <input type="file" id="d3FileInput" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" hidden>
+        </div>
+        <div class="hm-d3-empty" style="padding:6px 4px 10px">上传 .glb / .gltf 真实模型（Blender / Maya / Sketchfab 导出）</div>
+        <div class="hm-d3-actions" style="margin-top:2px">
+          <button type="button" id="d3AiOpenBtn" style="flex:1;background:linear-gradient(135deg,#ff5c7a,#4f8cff);color:#fff;border:none">✨ AI 生成 3D</button>
+        </div>
+        <div class="hm-d3-sec-title" style="margin-top:10px">🧊 白模</div>
+        <div class="hm-d3-shapes" id="d3Shapes">
+          <button type="button" data-shape="cube">■ 立方体</button>
+          <button type="button" data-shape="sphere">● 球体</button>
+          <button type="button" data-shape="cylinder">▮ 圆柱</button>
+          <button type="button" data-shape="cone">▲ 圆锥</button>
+          <button type="button" data-shape="capsule">◗ 胶囊</button>
+          <button type="button" data-shape="plane">▭ 平面</button>
+          <button type="button" data-shape="torus">◯ 圆环</button>
+          <button type="button" data-shape="mannequin">🧍 女性白模</button>
+        </div>
+        <div class="hm-d3-sec-title">场景物体</div>
+        <div class="hm-d3-list" id="d3ObjList"></div>
+      </aside>
+
+      <div class="hm-d3-viewport" id="d3Viewport">
+        <canvas id="d3Canvas"></canvas>
+        <div class="hm-d3-hint" id="d3Hint">左键拖拽旋转视角 · 右键平移 · 滚轮缩放 · 点击模型选中</div>
+        <div class="hm-d3-cam-frame" id="d3CamFrame" hidden>
+          <span class="hm-d3-cam-tag">● CAMERA</span>
+          <i class="hm-d3-corner tl"></i><i class="hm-d3-corner tr"></i>
+          <i class="hm-d3-corner bl"></i><i class="hm-d3-corner br"></i>
+          <div class="hm-d3-cam-bar">WASD 移动 · Q/E 升降 · 左键拖拽转向 · 点击模型仍可移动</div>
+        </div>
+      </div>
+
+      <aside class="hm-d3-inspector" id="d3Inspector"></aside>
+    </div>
+  </main><div class="hm-d3-modal" id="d3AiModal" hidden>
+    <div class="hm-d3-modal-card">
+      <div class="hm-d3-modal-head">
+        <div class="hm-d3-modal-title">✨ AI 生成 3D 模型</div>
+        <button class="hm-d3-modal-close" id="d3AiClose" title="关闭">✕</button>
+      </div>
+      <div class="hm-d3-model-tabs">
+        <button type="button" class="hm-d3-model-tab is-active" data-ai-tab="tripo">Tripo AI</button>
+        <button type="button" class="hm-d3-model-tab" data-ai-tab="trellis">Trellis（本地自建）</button>
+      </div>
+      <div class="hm-d3-field">
+        <label>🔑 Tripo API Key（存储在浏览器 localStorage，不会上传服务器）</label>
+        <div class="hm-d3-api-key-row">
+          <input type="password" id="d3TripoKey" placeholder="sk-xxxxxxxxxxxxxxxx" autocomplete="off">
+          <button type="button" id="d3TripoKeySave" class="hm-d3-btn ghost" style="padding:6px 10px">保存</button>
+        </div>
+        <div class="hm-d3-api-key-saved" id="d3TripoKeyStatus" hidden>✓ 已保存，下次自动加载</div>
+        <div style="font-size:10.5px;color:#7b8494;margin-top:4px">注册: <a href="https://platform.tripo3d.ai/en/" target="_blank" style="color:#7ca2ff">platform.tripo3d.ai</a>（$1/次，支持文字或图片生成）</div>
+      </div>
+      <div class="hm-d3-field">
+        <label>🎨 描述 Prompt（支持英文效果更好）</label>
+        <textarea id="d3AiPrompt" placeholder="a cute cartoon fox, low poly, white background..."></textarea>
+      </div>
+      <div class="hm-d3-field">
+        <label>🎯 模型类型</label>
+        <select id="d3AiModelType">
+          <option value="text_to_model">文字 → 3D</option>
+          <option value="image_to_model">图片 → 3D</option>
+        </select>
+      </div>
+      <div class="hm-d3-field" id="d3AiImageField" hidden>
+        <label>🖼 上传参考图（image_to_model）</label>
+        <input type="file" id="d3AiImageInput" accept="image/*" style="padding:6px">
+      </div>
+      <div class="hm-d3-row-btns">
+        <button type="button" class="hm-d3-gen-btn" id="d3AiGenBtn">🚀 开始生成（文字）</button>
+      </div>
+      <div class="hm-d3-gen-provider">通过 Tripo 官方 API · 生成耗时 30-90 秒 · 结果为 .glb 导入当前场景</div>
+      <div class="hm-d3-gen-result" id="d3AiResult"></div>
+    </div>
+  </div>
+  <main class="hm-page hm-sb-page" id="view-storyboard" hidden>
+    <style>
+      .hm-sb-page{display:flex;flex-direction:column;height:calc(100vh - 60px);min-height:0;background:var(--hm-bg,#0f1320);padding:14px 16px;gap:12px}
+      .hm-sb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;flex-wrap:wrap}
+      .hm-sb-title{display:flex;align-items:center;gap:10px;min-width:0}
+      .hm-sb-logo{font-size:18px;color:#52c41a}
+      .hm-sb-title h2{font-size:18px;color:var(--hm-text,#e6e9ef);margin:0;white-space:nowrap}
+      .hm-sb-name{background:transparent;border:1px solid transparent;border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:14px;font-weight:600;padding:4px 8px;min-width:120px;max-width:240px}
+      .hm-sb-name:hover{border-color:var(--hm-line,#2a3142)}
+      .hm-sb-name:focus{outline:none;border-color:var(--hm-accent,#4f8cff);background:#11151f}
+      .hm-sb-sub{font-size:12px;color:var(--hm-dim,#8b93a1);white-space:nowrap}
+      .hm-sb-tools{display:flex;gap:8px;flex-wrap:wrap}
+      .hm-sb-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;background:var(--hm-accent,#4f8cff);color:#fff;white-space:nowrap}
+      .hm-sb-btn:hover{filter:brightness(1.08)}
+      .hm-sb-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef)}
+      .hm-sb-btn.ghost:hover{background:#242a3a}
+      .hm-sb-body{flex:1;min-height:0;display:flex;gap:12px}
+      .hm-sb-board{flex:1;min-width:0;overflow:auto;padding:2px 6px 24px 2px}
+      .hm-sb-scene{margin-bottom:22px}
+      .hm-sb-scene-head{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--hm-surface2,#15192a);border:1px solid var(--hm-line,#2a3142);border-radius:10px;margin-bottom:10px;position:sticky;top:0;z-index:3;flex-wrap:wrap}
+      .hm-sb-scene-no{width:22px;height:22px;flex:none;border-radius:50%;background:var(--hm-accent,#4f8cff);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+      .hm-sb-scene-title{background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:13px;font-weight:600;padding:5px 8px;width:150px}
+      .hm-sb-scene-title:focus{outline:none;border-color:var(--hm-accent,#4f8cff)}
+      .hm-sb-scene-desc{flex:1;min-width:120px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--hm-dim,#8b93a1);font-size:12px;padding:5px 8px}
+      .hm-sb-scene-desc:focus{outline:none;border-color:var(--hm-accent,#4f8cff);background:#11151f;color:var(--hm-text,#e6e9ef)}
+      .hm-sb-scene-count{font-size:11px;color:var(--hm-dim,#8b93a1);font-family:monospace;white-space:nowrap}
+      .hm-sb-mini{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:5px 8px;background:transparent;color:var(--hm-dim,#8b93a1);cursor:pointer;white-space:nowrap}
+      .hm-sb-mini:hover{color:var(--hm-text,#e6e9ef);border-color:#3d465c}
+      .hm-sb-mini.danger:hover{color:#ff5c7a;border-color:#ff5c7a}
+      .hm-sb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+      .hm-sb-card{background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:10px;overflow:hidden;cursor:grab;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s;touch-action:none}
+      .hm-sb-card:hover{border-color:#3d465c}
+      .hm-sb-card.is-sel{border-color:#ff5c7a;box-shadow:0 0 0 1px #ff5c7a inset}
+      .hm-sb-card.is-press-drag{opacity:.35}
+      .hm-sb-card.drop-target{border-color:var(--hm-accent,#4f8cff);box-shadow:0 0 0 1px var(--hm-accent,#4f8cff) inset}
+      .hm-sb-grid.drop-target{outline:1px dashed var(--hm-accent,#4f8cff);outline-offset:4px;border-radius:12px}
+      .hm-sb-scene-head.drop-target{border-color:var(--hm-accent,#4f8cff)}
+      .hm-sb-ghost{position:fixed!important;z-index:250;pointer-events:none;opacity:.92;transform:rotate(-1.5deg);box-shadow:0 12px 30px rgba(0,0,0,.55);cursor:grabbing}
+      body.hm-sb-dragging{cursor:grabbing;user-select:none}
+      .hm-sb-ctx{position:fixed;z-index:300;min-width:140px;background:#1b2030;border:1px solid #2a3142;border-radius:8px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:2px}
+      .hm-sb-ctx[hidden]{display:none!important}
+      .hm-sb-ctx button{border:none;background:transparent;color:#e6e9ef;font-size:12px;text-align:left;padding:7px 10px;border-radius:6px;cursor:pointer;font-family:inherit}
+      .hm-sb-ctx button:hover{background:#2a3142}
+      .hm-sb-ctx button.danger{color:#ff5c7a}
+      .hm-sb-ctx button.danger:hover{background:rgba(255,92,122,.16)}
+      .hm-sb-thumb{position:relative;aspect-ratio:16/9;background:#0a0d14;overflow:hidden}
+      .hm-sb-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+      .hm-sb-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#4a5568;font-size:11px}
+      .hm-sb-ph svg{width:26px;height:26px;opacity:.5}
+      .hm-sb-idx{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.66);color:#fff;font-size:11px;font-weight:600;padding:2px 6px;border-radius:5px;font-family:monospace}
+      .hm-sb-card-body{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+      .hm-sb-card-title{font-size:12px;color:var(--hm-text,#e6e9ef);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hm-sb-card-tags{display:flex;gap:5px;flex-wrap:wrap}
+      .hm-sb-tag{font-size:10px;color:var(--hm-dim,#8b93a1);background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:4px;padding:1px 5px;font-family:monospace}
+      .hm-sb-addcard{display:flex;align-items:center;justify-content:center;min-height:150px;border:1px dashed #38405a;border-radius:10px;color:#6b7689;font-size:12px;cursor:pointer;background:transparent;transition:border-color .15s,color .15s}
+      .hm-sb-addcard:hover{border-color:var(--hm-accent,#4f8cff);color:var(--hm-accent,#4f8cff)}
+      .hm-sb-addcard.drop-target{border-color:var(--hm-accent,#4f8cff);color:var(--hm-accent,#4f8cff)}
+      .hm-sb-inspector{width:300px;flex:none;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;display:flex;flex-direction:column;min-height:0}
+      .hm-sb-insp-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--hm-line,#2a3142);font-size:13px;color:var(--hm-text,#e6e9ef);flex:none}
+      .hm-sb-insp-head b{font-weight:600}
+      .hm-sb-insp-index{font-family:monospace;font-size:12px;color:#ff5c7a}
+      .hm-sb-insp-empty{margin:auto;padding:24px;text-align:center;font-size:12px;color:var(--hm-dim,#8b93a1);line-height:1.7}
+      .hm-sb-insp-body{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+      .hm-sb-field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-sb-field select,.hm-sb-field input,.hm-sb-field textarea{background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:12px;padding:6px 8px;font-family:inherit;resize:vertical;width:100%;box-sizing:border-box}
+      .hm-sb-field select:focus,.hm-sb-field input:focus,.hm-sb-field textarea:focus{outline:none;border-color:var(--hm-accent,#4f8cff)}
+      .hm-sb-field textarea{min-height:58px}
+      .hm-sb-insp-thumb{aspect-ratio:16/9;background:#0a0d14;border:1px solid var(--hm-line,#2a3142);border-radius:8px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+      .hm-sb-insp-thumb img{width:100%;height:100%;object-fit:cover}
+      .hm-sb-thumb-actions{display:flex;gap:8px}
+      .hm-sb-thumb-actions>.hm-sb-mini{flex:1;text-align:center}
+      .hm-sb-insp-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;border-top:1px solid var(--hm-line,#2a3142);flex:none}
+      .hm-sb-insp-actions .hm-sb-mini{text-align:center}
+      .hm-sb-play{position:fixed;inset:0;z-index:130;background:rgba(4,6,12,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px}
+      .hm-sb-play-stage{flex:1;width:100%;display:flex;align-items:center;justify-content:center;min-height:0}
+      .hm-sb-play-stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 10px 44px rgba(0,0,0,.6)}
+      .hm-sb-play-ph{width:min(70vw,880px);aspect-ratio:16/9;background:#0a0d14;border:1px solid #2a3142;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#5a6579;font-size:14px}
+      .hm-sb-play-cap{max-width:min(82vw,880px);text-align:center;color:#c8d0e0;font-size:14px;min-height:20px}
+      .hm-sb-play-bar{width:min(82vw,880px);display:flex;align-items:center;gap:12px;color:#8b93a1;font-size:12px;font-family:monospace}
+      .hm-sb-prog{flex:1;height:4px;background:#222a3a;border-radius:2px;overflow:hidden}
+      .hm-sb-prog i{display:block;height:100%;width:0;background:#ff5c7a}
+      @media (max-width:900px){.hm-sb-body{flex-direction:column}.hm-sb-inspector{width:auto;max-height:44%}}
+    </style>
+    <div class="hm-sb-top">
+      <div class="hm-sb-title">
+        <span class="hm-sb-logo">▤</span>
+        <h2>故事版</h2>
+        <input id="sbProjectName" class="hm-sb-name" value="未命名分镜" maxlength="40" title="项目名称">
+        <span class="hm-sb-sub" id="sbMeta">0 个场次 · 0 个镜头</span>
+      </div>
+      <div class="hm-sb-tools">
+        <button class="hm-sb-btn ghost" id="sbAddSceneBtn">+ 添加场次</button>
+        <button class="hm-sb-btn ghost" id="sbImportBtn">导入 JSON</button>
+        <input type="file" id="sbImportInput" accept="application/json,.json" hidden>
+        <button class="hm-sb-btn ghost" id="sbExportBtn">导出 JSON</button>
+        <button class="hm-sb-btn ghost" id="sbPrintBtn">打印 / PDF</button>
+        <button class="hm-sb-btn" id="sbPlayBtn">▶ 播放预览</button>
+      </div>
+    </div>
+
+    <div class="hm-sb-body">
+      <div class="hm-sb-board" id="sbBoard"></div>
+      <aside class="hm-sb-inspector" id="sbInspector">
+        <div class="hm-sb-insp-head">
+          <b>镜头详情</b>
+          <span class="hm-sb-insp-index" id="sbInspIndex"></span>
+        </div>
+        <div class="hm-sb-insp-empty" id="sbInspEmpty">点击左侧镜头卡片<br>即可编辑景别、运镜、时长与描述</div>
+        <div class="hm-sb-insp-body" id="sbInspBody" hidden>
+          <div class="hm-sb-field">画面预览</div>
+          <div class="hm-sb-insp-thumb" id="sbInspThumb" title="点击上传 / 替换画面"></div>
+          <div class="hm-sb-thumb-actions">
+            <button class="hm-sb-mini" id="sbInspUpload">上传画面</button>
+            <button class="hm-sb-mini danger" id="sbInspClearImg">清除画面</button>
+          </div>
+          <label class="hm-sb-field">所属场次<select id="sbInspScene"></select></label>
+          <label class="hm-sb-field">景别<select id="sbInspShot"></select></label>
+          <label class="hm-sb-field">运镜<select id="sbInspMove"></select></label>
+          <label class="hm-sb-field">视角<select id="sbInspAngle"></select></label>
+          <label class="hm-sb-field">时长（秒）<input type="number" id="sbInspDur" min="0.5" step="0.5"></label>
+          <label class="hm-sb-field">画面描述<textarea id="sbInspDesc" placeholder="这一镜头发生了什么"></textarea></label>
+          <label class="hm-sb-field">对白 / 音效<textarea id="sbInspDialogue" placeholder="对白、旁白或音效"></textarea></label>
+          <label class="hm-sb-field">备注<textarea id="sbInspNotes" placeholder="拍摄要点、参考、情绪"></textarea></label>
+        </div>
+        <div class="hm-sb-insp-actions">
+          <button class="hm-sb-mini" id="sbInspPrev">↑ 上一镜头</button>
+          <button class="hm-sb-mini" id="sbInspNext">↓ 下一镜头</button>
+          <button class="hm-sb-mini" id="sbInspDup">复制镜头</button>
+          <button class="hm-sb-mini danger" id="sbInspDel">删除镜头</button>
+        </div>
+      </aside>
+    </div>
+
+    <input type="file" id="sbImageInput" accept="image/*" hidden>
+
+    <!-- 动态预览（Animatic） -->
+    <div class="hm-sb-play" id="sbPlayOverlay" hidden>
+      <div class="hm-sb-play-stage" id="sbPlayStage"></div>
+      <div class="hm-sb-play-cap" id="sbPlayCap"></div>
+      <div class="hm-sb-play-bar">
+        <span id="sbPlayIndex">1/1</span>
+        <div class="hm-sb-prog"><i id="sbPlayProg"></i></div>
+        <button class="hm-sb-mini" id="sbPlayToggle">暂停</button>
+        <button class="hm-sb-mini" id="sbPlayClose">关闭</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== 着色（参考 RETAS PaintMan） ===================== -->
+  <main class="hm-page hm-pt-page" id="view-paint" hidden>
+    <style>
+      .hm-pt-page{display:flex;flex-direction:column;height:calc(100vh - 60px);min-height:0;background:var(--hm-bg,#0f1320);padding:14px 16px;gap:12px}
+      .hm-pt-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;flex-wrap:wrap}
+      .hm-pt-title{display:flex;align-items:center;gap:10px;min-width:0}
+      .hm-pt-logo{font-size:18px;color:#52c41a}
+      .hm-pt-title h2{font-size:18px;color:var(--hm-text,#e6e9ef);margin:0;white-space:nowrap}
+      .hm-pt-name{background:transparent;border:1px solid transparent;border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:14px;font-weight:600;padding:4px 8px;min-width:120px;max-width:240px}
+      .hm-pt-name:hover{border-color:var(--hm-line,#2a3142)}
+      .hm-pt-name:focus{outline:none;border-color:#52c41a;background:#11151f}
+      .hm-pt-sub{font-size:12px;color:var(--hm-dim,#8b93a1);white-space:nowrap;font-family:monospace}
+      .hm-pt-actions{display:flex;gap:8px;flex-wrap:wrap}
+      .hm-pt-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;background:#52c41a;color:#0b1206;font-weight:600;white-space:nowrap}
+      .hm-pt-btn:hover{filter:brightness(1.08)}
+      .hm-pt-btn.ghost{background:transparent;border:1px solid var(--hm-line,#2a3142);color:var(--hm-text,#e6e9ef);font-weight:400}
+      .hm-pt-btn.ghost:hover{background:#242a3a}
+      .hm-pt-body{flex:1;min-height:0;display:flex;gap:12px}
+      .hm-pt-tools{width:214px;flex:none;overflow:auto;background:var(--hm-surface2,#15192a);border:1px solid var(--hm-line,#2a3142);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+      .hm-pt-sec{font-size:12px;color:var(--hm-dim,#8b93a1);font-weight:600;letter-spacing:.04em}
+      .hm-pt-toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      .hm-pt-tool{display:flex;flex-direction:column;align-items:center;gap:3px;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:8px;color:var(--hm-text,#e6e9ef);font-size:18px;padding:9px 4px;cursor:pointer;line-height:1}
+      .hm-pt-tool span{font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-pt-tool.is-active{border-color:#52c41a;color:#52c41a;box-shadow:0 0 0 1px #52c41a inset}
+      .hm-pt-tool.is-active span{color:#52c41a}
+      .hm-pt-field{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--hm-dim,#8b93a1)}
+      .hm-pt-field b{color:var(--hm-text,#e6e9ef);float:right;font-family:monospace}
+      .hm-pt-field input[type=range]{width:100%;accent-color:#52c41a}
+      .hm-pt-check{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--hm-text,#e6e9ef);cursor:pointer}
+      .hm-pt-check input{accent-color:#52c41a}
+      .hm-pt-zoom{display:flex;align-items:center;gap:6px}
+      .hm-pt-zoom span{margin-left:auto;font-size:11px;color:var(--hm-dim,#8b93a1);font-family:monospace}
+      .hm-pt-mini{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:6px;padding:5px 9px;background:transparent;color:var(--hm-dim,#8b93a1);cursor:pointer;white-space:nowrap}
+      .hm-pt-mini:hover{color:var(--hm-text,#e6e9ef);border-color:#3d465c}
+      .hm-pt-layerbar{display:flex;gap:6px;flex-wrap:wrap}
+      .hm-pt-layerbar .hm-pt-mini{flex:1;min-width:0;padding:5px 4px;font-size:11px}
+      .hm-pt-layerlist{display:flex;flex-direction:column;gap:6px;max-height:38vh;overflow:auto}
+      .hm-pt-layer{display:flex;align-items:center;gap:6px;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:8px;padding:6px 8px;font-size:12px;color:var(--hm-text,#e6e9ef);cursor:pointer}
+      .hm-pt-layer.is-active{border-color:#52c41a;box-shadow:0 0 0 1px #52c41a inset}
+      .hm-pt-layer.is-locked{opacity:.7}
+      .hm-pt-eye{width:20px;height:20px;flex:none;border-radius:50%;border:1px solid #3a4256;background:#1b2030;color:#52c41a;cursor:pointer;line-height:1;font-size:11px;padding:0}
+      .hm-pt-eye.is-off{color:#4a5265}
+      .hm-pt-lock{width:20px;height:20px;flex:none;border-radius:50%;border:1px solid #3a4256;background:#1b2030;color:#ffce5c;cursor:pointer;line-height:1;font-size:10px;padding:0}
+      .hm-pt-lock.is-unlocked{color:#5a6579}
+      .hm-pt-layername{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+      .hm-pt-layerop{width:56px;flex:none;accent-color:#52c41a}
+      .hm-pt-layerval{font-size:10px;color:var(--hm-dim,#8b93a1);font-family:monospace;width:26px;text-align:right;flex:none}
+      .hm-pt-layernote{font-size:10px;color:var(--hm-dim,#8b93a1)}
+      .hm-pt-hint{font-size:11px;color:#5a6579;line-height:1.6;margin-top:auto;padding-top:8px;border-top:1px dashed var(--hm-line,#2a3142)}
+      .hm-pt-stage{flex:1;min-width:0;min-height:240px;position:relative;overflow:auto;background:#0b0e16;border:1px solid var(--hm-line,#2a3142);border-radius:10px;display:flex;padding:18px}
+      .hm-pt-canvaswrap{position:relative;margin:auto;flex:none;background:#fff;box-shadow:0 10px 34px rgba(0,0,0,.55);width:640px;height:360px}
+      .hm-pt-canvaswrap canvas{position:absolute;inset:0;width:100%;height:100%}
+      .hm-pt-hit{touch-action:none;cursor:crosshair}
+      .hm-pt-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5a6579;font-size:14px;pointer-events:none;background:#0b0e16;border-radius:10px}
+      .hm-pt-empty[hidden]{display:none}
+      .hm-pt-chart{width:248px;flex:none;display:flex;flex-direction:column;background:var(--hm-surface2,#15192a);border:1px solid var(--hm-line,#2a3142);border-radius:10px;min-height:0}
+      .hm-pt-chart-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--hm-line,#2a3142);font-size:13px;font-weight:600;color:var(--hm-text,#e6e9ef)}
+      .hm-pt-chart-head em{font-style:normal;font-size:11px;color:var(--hm-dim,#8b93a1);font-family:monospace}
+      .hm-pt-colors{flex:1;overflow:auto;padding:6px}
+      .hm-pt-color{display:flex;align-items:center;gap:8px;padding:6px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+      .hm-pt-color:hover{background:#1b2030}
+      .hm-pt-color.is-active{border-color:#52c41a;background:rgba(82,196,26,.08)}
+      .hm-pt-color i{width:18px;height:18px;border-radius:4px;border:1px solid #3a4256;flex:none}
+      .hm-pt-color b{font-size:11px;font-family:monospace;color:var(--hm-dim,#8b93a1);width:32px;flex:none}
+      .hm-pt-color span{flex:1;font-size:12px;color:var(--hm-text,#e6e9ef);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .hm-pt-color em{font-size:10px;color:#5a6579;font-style:normal;font-family:monospace}
+      .hm-pt-color-del{width:16px;height:16px;line-height:14px;text-align:center;border-radius:50%;color:#ff5c7a;font-style:normal;border:1px solid transparent;cursor:pointer}
+      .hm-pt-color-del:hover{background:rgba(255,92,122,.16);border-color:#ff5c7a}
+      .hm-pt-addrow{display:flex;gap:6px;padding:8px;border-top:1px solid var(--hm-line,#2a3142)}
+      .hm-pt-addrow input[type=color]{width:30px;height:28px;border:none;background:transparent;cursor:pointer;padding:0}
+      .hm-pt-addrow input[type=text]{flex:1;min-width:0;background:#11151f;border:1px solid var(--hm-line,#2a3142);border-radius:6px;color:var(--hm-text,#e6e9ef);font-size:12px;padding:5px 7px}
+      .hm-pt-addrow input[type=text]:focus{outline:none;border-color:#52c41a}
+      .hm-pt-cur{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--hm-line,#2a3142);font-size:11px;color:var(--hm-dim,#8b93a1)}
+      .hm-pt-cur i{width:20px;height:20px;border-radius:4px;border:1px solid #3a4256}
+      .hm-pt-cur b{color:#52c41a;font-family:monospace}
+      .hm-pt-cur span#ptCurName{color:var(--hm-text,#e6e9ef)}
+      @media (max-width:1100px){.hm-pt-body{flex-direction:column}.hm-pt-tools{width:auto;max-height:32vh}.hm-pt-chart{width:auto;max-height:34vh}.hm-pt-stage{min-height:300px}.hm-pt-hint{display:none}}
+    </style>
+    <div class="hm-pt-top">
+      <div class="hm-pt-title">
+        <span class="hm-pt-logo">◐</span>
+        <h2>着色</h2>
+        <input id="ptName" class="hm-pt-name" value="未命名着色" maxlength="40" title="项目名称">
+        <span class="hm-pt-sub" id="ptMeta">1280×720 · 14 色</span>
+      </div>
+      <div class="hm-pt-actions">
+        <button class="hm-pt-btn ghost" id="ptImportBtn">导入线稿</button>
+        <input type="file" id="ptImportInput" accept="image/*" hidden>
+        <button class="hm-pt-btn ghost" id="ptUndoBtn">撤销</button>
+        <button class="hm-pt-btn ghost" id="ptRedoBtn">重做</button>
+        <button class="hm-pt-btn ghost" id="ptClearBtn">清空上色</button>
+        <button class="hm-pt-btn" id="ptExportBtn">导出 PNG</button>
+      </div>
+    </div>
+    <div class="hm-pt-body">
+      <aside class="hm-pt-tools">
+        <div class="hm-pt-sec">工具</div>
+        <div class="hm-pt-toolgrid" id="ptTools">
+          <button class="hm-pt-tool is-active" data-tool="bucket">▨<span>油漆桶</span></button>
+          <button class="hm-pt-tool" data-tool="brush">✎<span>画笔</span></button>
+          <button class="hm-pt-tool" data-tool="eraser">⌫<span>橡皮</span></button>
+          <button class="hm-pt-tool" data-tool="picker">◉<span>吸管</span></button>
+        </div>
+        <label class="hm-pt-field">笔刷大小 <b id="ptSizeVal">12</b>
+          <input type="range" id="ptSize" min="1" max="80" value="12">
+        </label>
+        <label class="hm-pt-field">填充容差 <b id="ptTolVal">24</b>
+          <input type="range" id="ptTol" min="0" max="100" value="24">
+        </label>
+        <label class="hm-pt-check"><input type="checkbox" id="ptBlockLine" checked> 线稿遮挡填充</label>
+        <label class="hm-pt-check"><input type="checkbox" id="ptGapClose" checked> 闭合线条缝隙</label>
+        <div class="hm-pt-sec">缩放</div>
+        <div class="hm-pt-zoom">
+          <button class="hm-pt-mini" id="ptZoomOut">−</button>
+          <button class="hm-pt-mini" id="ptZoomFit">适配</button>
+          <button class="hm-pt-mini" id="ptZoomIn">+</button>
+          <span id="ptZoomVal">100%</span>
+        </div>
+        <div class="hm-pt-sec">图层</div>
+        <div class="hm-pt-layerbar">
+          <button class="hm-pt-mini" id="ptAddLayer" title="新建图层">+ 新建</button>
+          <button class="hm-pt-mini" id="ptDupLayer" title="复制图层">复制</button>
+          <button class="hm-pt-mini" id="ptUpLayer" title="上移">↑</button>
+          <button class="hm-pt-mini" id="ptDownLayer" title="下移">↓</button>
+          <button class="hm-pt-mini" id="ptDelLayer" title="删除图层">删除</button>
+        </div>
+        <div class="hm-pt-layerlist" id="ptLayerList"></div>
+        <div class="hm-pt-hint">参考 RETAS PaintMan 上色流程：先导入线稿，再按色指定表逐块填充，最后导出 PNG。</div>
+      </aside>
+      <section class="hm-pt-stage" id="ptStage">
+        <div class="hm-pt-canvaswrap" id="ptCanvasWrap">
+          <canvas id="ptPaintCanvas" width="1280" height="720"></canvas>
+          <canvas id="ptLineCanvas" class="hm-pt-hit" width="1280" height="720"></canvas>
+        </div>
+        <div class="hm-pt-empty" id="ptEmpty">导入线稿后即可开始上色</div>
+      </section>
+      <aside class="hm-pt-chart">
+        <div class="hm-pt-chart-head"><span>色指定表</span><em id="ptMeta2">-</em></div>
+        <div class="hm-pt-colors" id="ptColors"></div>
+        <div class="hm-pt-addrow">
+          <input type="color" id="ptNewColor" value="#ffcfae" title="选择颜色">
+          <input type="text" id="ptNewName" placeholder="颜色名称" maxlength="12">
+          <button class="hm-pt-mini" id="ptAddColor">添加</button>
+        </div>
+        <div class="hm-pt-cur">
+          <span>当前色</span><i id="ptCurSwatch"></i><b id="ptCurCode">102</b><span id="ptCurName">肌肤</span>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ======== 企划 模块 ======== -->
+  <main class="hm-page hm-plan-page" id="view-plan" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>企划</h2>
+        <p id="planSubtitle">实时热榜 · 热度排行榜 · 类别搜索 · 日式动漫企划书</p>
+      </div>
+      <div class="hm-page-actions">
+        <!-- 主 Tab：热榜 / 排行榜 / 搜索 / 企划书 -->
+        <div class="hm-plan-main-tabs" role="tablist">
+          <button class="hm-plan-main-tab is-active" data-ptab="trending" role="tab">🔥 热榜</button>
+          <button class="hm-plan-main-tab" data-ptab="ranking" role="tab">🏆 排行榜</button>
+          <button class="hm-plan-main-tab" data-ptab="search" role="tab">🔎 搜索</button>
+          <button class="hm-plan-main-tab" data-ptab="proposal" role="tab">📝 企划书</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== 热榜 ======== -->
+    <section class="hm-plan-section is-active" id="planTrending">
+      <div class="hm-plan-toolbar">
+        <div class="hm-plan-platform-tabs" role="tablist">
+          <button class="hm-plan-plat is-active" data-platform="douyin" role="tab">🎵 抖音</button>
+          <button class="hm-plan-plat" data-platform="weibo" role="tab">🔴 微博</button>
+          <button class="hm-plan-plat" data-platform="zhihu" role="tab">💡 知乎</button>
+          <button class="hm-plan-plat" data-platform="bilibili" role="tab">📺 B站</button>
+          <button class="hm-plan-plat" data-platform="baidu" role="tab">🔍 百度</button>
+          <button class="hm-plan-plat" data-platform="toutiao" role="tab">📰 头条</button>
+          <button class="hm-plan-plat" data-platform="douban" role="tab">📚 豆瓣</button>
+        </div>
+        <div class="hm-plan-toolbar-right">
+          <span class="hm-plan-fresh" id="planTrendingFresh">上次刷新：—</span>
+          <button class="hm-pill hm-pill-primary" id="planTrendingRefresh">🔄 刷新</button>
+          <button class="hm-pill" id="planAutoRefresh">⏸ 自动刷新</button>
+        </div>
+      </div>
+      <div class="hm-plan-list" id="planTrendingList"></div>
+      <div class="hm-page-empty" id="planTrendingEmpty" hidden>
+        <div class="hm-page-empty-icon">🔥</div>
+        <h3>热榜加载中...</h3>
+        <p>首次加载需要几秒，请稍候</p>
+      </div>
+    </section>
+
+    <!-- ======== 排行榜 ======== -->
+    <section class="hm-plan-section" id="planRanking">
+      <div class="hm-plan-toolbar">
+        <div class="hm-plan-cat-tabs" role="tablist">
+          <button class="hm-plan-cat is-active" data-category="anime" role="tab">🎬 动漫</button>
+          <button class="hm-plan-cat" data-category="movie" role="tab">🎥 影视</button>
+          <button class="hm-plan-cat" data-category="game" role="tab">🎮 游戏</button>
+          <button class="hm-plan-cat" data-category="music" role="tab">🎵 音乐</button>
+          <button class="hm-plan-cat" data-category="tech" role="tab">💻 科技</button>
+          <button class="hm-plan-cat" data-category="animeip" role="tab">🌟 动漫IP</button>
+        </div>
+        <div class="hm-plan-toolbar-right">
+          <span class="hm-plan-fresh" id="planRankingFresh">构建时间：—</span>
+          <button class="hm-pill hm-pill-primary" id="planRankingRefresh">♻️ 重新聚合</button>
+        </div>
+      </div>
+      <div class="hm-plan-ranking" id="planRankingList"></div>
+    </section>
+
+    <!-- ======== 搜索 ======== -->
+    <section class="hm-plan-section" id="planSearch">
+      <div class="hm-plan-toolbar">
+        <div class="hm-plan-search-bar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="planSearchInput" type="search" placeholder="输入关键词，搜索所有平台热榜..." autocomplete="off">
+          <select id="planSearchCategory" class="hm-plan-search-select">
+            <option value="">全部类别</option>
+            <option value="anime">🎬 动漫</option>
+            <option value="movie">🎥 影视</option>
+            <option value="game">🎮 游戏</option>
+            <option value="music">🎵 音乐</option>
+            <option value="tech">💻 科技</option>
+            <option value="animeip">🌟 动漫IP</option>
+          </select>
+          <select id="planSearchPlatform" class="hm-plan-search-select">
+            <option value="">全部平台</option>
+            <option value="douyin">🎵 抖音</option>
+            <option value="weibo">🔴 微博</option>
+            <option value="zhihu">💡 知乎</option>
+            <option value="bilibili">📺 B站</option>
+            <option value="baidu">🔍 百度</option>
+            <option value="toutiao">📰 头条</option>
+            <option value="douban">📚 豆瓣</option>
+          </select>
+          <button class="hm-pill hm-pill-primary" id="planSearchBtn">🔎 搜索</button>
+        </div>
+      </div>
+      <div class="hm-plan-search-results" id="planSearchResults">
+        <div class="hm-plan-search-placeholder">
+          <div class="hm-plan-search-emoji">🔎</div>
+          <h3>输入关键词开始搜索</h3>
+          <p>例如：AI 动漫、新海诚、ComfyUI、国创</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== 企划书 ======== -->
+    <section class="hm-plan-section" id="planProposal">
+      <div class="hm-plan-toolbar">
+        <div class="hm-plan-toolbar-left">
+          <h3 id="planProposalTitle">📝 我的企划书</h3>
+        </div>
+        <div class="hm-plan-toolbar-right">
+          <button class="hm-pill hm-pill-primary" id="planNewProposal">＋ 新建企划书</button>
+          <button class="hm-pill" id="planSaveProposal" hidden>💾 保存</button>
+          <button class="hm-pill" id="planProposalBack" hidden>← 返回列表</button>
+        </div>
+      </div>
+
+      <!-- 企划书列表 -->
+      <div class="hm-plan-proposal-list" id="planProposalList">
+        <div class="hm-plan-proposal-empty">
+          <div class="hm-plan-search-emoji">📝</div>
+          <h3>还没有企划书</h3>
+          <p>点击「＋ 新建企划书」开始撰写你的日式动漫企划</p>
+          <button class="hm-pill hm-pill-primary" id="planNewProposalEmpty">＋ 新建企划书</button>
+        </div>
+      </div>
+
+      <!-- 企划书编辑页（日式动漫企划书格式） -->
+      <div class="hm-plan-proposal-editor" id="planProposalEditor" hidden>
+        <div class="hm-plan-proposal-nav">
+          <a data-pstep="concept" class="is-active">① 企划核心</a>
+          <a data-pstep="worldview">② 世界观</a>
+          <a data-pstep="characters">③ 角色设定</a>
+          <a data-pstep="selling">④ 卖点与运营</a>
+          <a data-pstep="schedule">⑤ 排期与预算</a>
+        </div>
+
+        <!-- Step 1: 企划核心 -->
+        <div class="hm-plan-pstep" id="planPstep-concept">
+          <h3>① 企划核心（コンセプト）</h3>
+          <div class="hm-plan-grid-2">
+            <label class="hm-plan-field">
+              <span>日文标题（タイトル）</span>
+              <input type="text" data-prop="concept.titleJp" placeholder="例：君の名は。">
+            </label>
+            <label class="hm-plan-field">
+              <span>英文标题</span>
+              <input type="text" data-prop="concept.titleEn" placeholder="例：Your Name.">
+            </label>
+          </div>
+          <label class="hm-plan-field">
+            <span>一句话梗概（ログライン / Logline）<i class="hm-plan-hint">30秒能讲完的故事核心</i></span>
+            <textarea rows="2" data-prop="concept.logline" placeholder="例：东京的少年和乡下的少女，在梦中交换了身体——但当他们试图见面时，发现一切可能只是一场幻觉。"></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>宣传语（キャッチコピー）</span>
+            <input type="text" data-prop="concept.tagline" placeholder="例：「前前前世，我就已经在寻找你了」">
+          </label>
+          <div class="hm-plan-grid-3">
+            <label class="hm-plan-field">
+              <span>题材（ジャンル）</span>
+              <select data-prop="concept.genre">
+                <option value="奇幻">奇幻</option><option value="恋爱">恋爱</option>
+                <option value="校园">校园</option><option value="科幻">科幻</option>
+                <option value="冒险">冒险</option><option value="治愈">治愈</option>
+                <option value="悬疑">悬疑</option><option value="热血">热血</option>
+                <option value="日常">日常</option><option value="机战">机战</option>
+              </select>
+            </label>
+            <label class="hm-plan-field">
+              <span>目标年龄层</span>
+              <select data-prop="concept.targetAge">
+                <option value="全年龄">全年龄</option>
+                <option value="青少年">青少年（12+）</option>
+                <option value="青年">青年（18+）</option>
+                <option value="儿童">儿童（6+）</option>
+              </select>
+            </label>
+            <label class="hm-plan-field">
+              <span>集数 / 时长</span>
+              <input type="text" data-prop="concept.runtime" placeholder="24分钟/集">
+            </label>
+          </div>
+          <div class="hm-plan-grid-2">
+            <label class="hm-plan-field">
+              <span>播放档期（放送期間）</span>
+              <input type="text" data-prop="concept.broadcastPeriod" placeholder="2026年1月～3月（冬番）">
+            </label>
+            <label class="hm-plan-field">
+              <span>总预算（予算）</span>
+              <input type="text" data-prop="concept.budget" placeholder="2000万日元 / 150万人民币">
+            </label>
+          </div>
+          <label class="hm-plan-field">
+            <span>集数</span>
+            <input type="number" data-prop="concept.episodes" placeholder="12" min="1" max="100">
+          </label>
+        </div>
+
+        <!-- Step 2: 世界观 -->
+        <div class="hm-plan-pstep" id="planPstep-worldview" hidden>
+          <h3>② 世界观（世界観）</h3>
+          <label class="hm-plan-field">
+            <span>故事舞台（舞台）<i class="hm-plan-hint">如：近未来东京 / 虚构大陆アルタイル</i></span>
+            <input type="text" data-prop="worldview.location" placeholder="例：2045 年的新宿">
+          </label>
+          <label class="hm-plan-field">
+            <span>时代背景（時代）</span>
+            <input type="text" data-prop="worldview.era" placeholder="例：近未来 / 中世纪 / 现代">
+          </label>
+          <label class="hm-plan-field">
+            <span>世界观设定（世界観設定）</span>
+            <textarea rows="4" data-prop="worldview.worldview" placeholder="描述这个世界的基本规则、社会结构、特殊存在..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>力量体系（能力・魔法システム）</span>
+            <textarea rows="3" data-prop="worldview.powerSystem" placeholder="这个世界里的特殊能力、战斗系统、魔法体系..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>核心主题（テーマ）<i class="hm-plan-hint">2-3 个关键词</i></span>
+            <input type="text" data-prop="worldview.themes" placeholder="例：身份认同 / 时间流逝 / 羁绊">
+          </label>
+          <label class="hm-plan-field">
+            <span>企划原点（きっかけ / Setting）<i class="hm-plan-hint">为什么要做这部作品？</i></span>
+            <textarea rows="3" data-prop="worldview.setting" placeholder="最初的灵感来源、想表达什么、给谁看..."></textarea>
+          </label>
+        </div>
+
+        <!-- Step 3: 角色设定 -->
+        <div class="hm-plan-pstep" id="planPstep-characters" hidden>
+          <h3>③ 角色设定（キャラクター設定）</h3>
+          <div class="hm-plan-char-list" id="planCharList"></div>
+          <button class="hm-pill hm-pill-primary" id="planCharAdd">＋ 添加角色</button>
+        </div>
+
+        <!-- Step 4: 卖点与运营 -->
+        <div class="hm-plan-pstep" id="planPstep-selling" hidden>
+          <h3>④ 卖点（セールスポイント）</h3>
+          <div class="hm-plan-sp-list" id="planSpList"></div>
+          <button class="hm-pill hm-pill-primary" id="planSpAdd">＋ 添加卖点</button>
+
+          <h3 style="margin-top:28px">运营计划（プロモーション）</h3>
+          <label class="hm-plan-field">
+            <span>先行预告（ティザー）</span>
+            <textarea rows="2" data-prop="promotion.teaser" placeholder="上映前 6 个月发布 15 秒 teaser..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>正式 PV</span>
+            <textarea rows="2" data-prop="promotion.pv" placeholder="..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>社交媒体策略（SNS）</span>
+            <textarea rows="2" data-prop="promotion.socialMedia" placeholder="X / Instagram / B站 / 抖音..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>线下活动（イベント）</span>
+            <textarea rows="2" data-prop="promotion.events" placeholder="东京动画节 / 上海 Anime Expo ..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>联动合作（コラボ）</span>
+            <textarea rows="2" data-prop="promotion.collaborations" placeholder="音乐、品牌、游戏联动..."></textarea>
+          </label>
+          <label class="hm-plan-field">
+            <span>周边商品（グッズ）</span>
+            <textarea rows="2" data-prop="promotion.merch" placeholder="手办、原画集、OST、小说..."></textarea>
+          </label>
+        </div>
+
+        <!-- Step 5: 排期 -->
+        <div class="hm-plan-pstep" id="planPstep-schedule" hidden>
+          <h3>⑤ 排期（スケジュール）</h3>
+          <div class="hm-plan-sched-list" id="planSchedList"></div>
+          <button class="hm-pill hm-pill-primary" id="planSchedAdd">＋ 添加阶段</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======== 剧本 模块 ======== -->
+  <main class="hm-page hm-script-page" id="view-script" hidden>
+    <!-- 顶部工具条 -->
+    <div class="hm-script-top">
+      <div class="hm-script-top-left">
+        <button class="hm-pill hm-pill-ghost" id="scriptBackBtn" hidden>← 返回列表</button>
+        <h2 id="scriptPageTitle">剧本</h2>
+      </div>
+      <div class="hm-script-top-right">
+        <span class="hm-script-status" id="scriptStatusTag" hidden></span>
+        <button class="hm-pill" id="scriptSaveBtn" hidden>💾 保存草稿</button>
+        <button class="hm-pill" id="scriptSnapshotBtn" hidden>📸 版本快照</button>
+        <div class="hm-script-export-wrap" hidden id="scriptExportWrap">
+          <button class="hm-pill" id="scriptExportBtn">📤 导出 ▾</button>
+          <div class="hm-script-export-menu" hidden>
+            <a data-fmt="md">📝 Markdown (.md)</a>
+            <a data-fmt="fountain">📜 Fountain (.fountain)</a>
+            <a data-fmt="txt">📄 纯文本 (.txt)</a>
+          </div>
+        </div>
+        <button class="hm-pill hm-pill-primary" id="scriptNewBtn">＋ 新建剧本</button>
+      </div>
+    </div>
+
+    <!-- ============ 剧本列表视图 ============ -->
+    <section class="hm-script-view-list" id="scriptListView">
+      <div class="hm-script-list-grid" id="scriptGrid"></div>
+      <div class="hm-script-list-empty" id="scriptEmpty" hidden>
+        <div class="hm-script-empty-emoji">🎬</div>
+        <h3>还没有剧本</h3>
+        <p>点击「＋ 新建剧本」开始你的第一个故事</p>
+      </div>
+    </section>
+
+    <!-- ============ 剧本编辑器视图 ============ -->
+    <section class="hm-script-view-editor" id="scriptEditorView" hidden>
+      <!-- 剧本元信息条 -->
+      <div class="hm-script-meta-bar">
+        <input class="hm-script-meta-title" id="scriptTitleInput" placeholder="剧本标题">
+        <select id="scriptGenreSelect" class="hm-script-meta-genre">
+          <option value="剧情">剧情</option><option value="爱情">爱情</option>
+          <option value="悬疑">悬疑</option><option value="科幻">科幻</option>
+          <option value="奇幻">奇幻</option><option value="恐怖">恐怖</option>
+          <option value="喜剧">喜剧</option><option value="动作">动作</option>
+          <option value="动画">动画</option><option value="纪录片">纪录片</option>
+        </select>
+        <select id="scriptStatusSelect" class="hm-script-meta-genre">
+          <option value="draft">草稿</option><option value="writing">撰写中</option><option value="done">已完成</option>
+        </select>
+      </div>
+      <div class="hm-script-logline">
+        <input id="scriptLoglineInput" placeholder="一句话梗概（30秒能讲完这个故事）">
+      </div>
+
+      <!-- 编辑器主区域：左侧大纲+场次列表 / 右侧编辑区 -->
+      <div class="hm-script-workspace">
+        <!-- 左侧：Tab 切换（场次 / 角色 / 大纲 / 版本） -->
+        <aside class="hm-script-sidebar">
+          <div class="hm-script-side-tabs">
+            <button class="hm-script-side-tab is-active" data-stab="scenes" role="tab">🎬 场次</button>
+            <button class="hm-script-side-tab" data-stab="characters" role="tab">🎭 角色</button>
+            <button class="hm-script-side-tab" data-stab="outline" role="tab">📋 大纲</button>
+            <button class="hm-script-side-tab" data-stab="versions" role="tab">🕐 版本</button>
+          </div>
+
+          <!-- 场次列表 -->
+          <div class="hm-script-side-panel is-active" id="scriptPanel-scenes">
+            <div class="hm-script-side-header">
+              <span>场次列表</span>
+              <button class="hm-pill hm-pill-mini hm-pill-primary" id="scriptAddScene">＋</button>
+            </div>
+            <div class="hm-script-scene-list" id="scriptSceneList"></div>
+          </div>
+
+          <!-- 角色列表 -->
+          <div class="hm-script-side-panel" id="scriptPanel-characters" hidden>
+            <div class="hm-script-side-header">
+              <span>角色表</span>
+              <button class="hm-pill hm-pill-mini hm-pill-primary" id="scriptAddChar">＋</button>
+            </div>
+            <div class="hm-script-char-list" id="scriptCharList"></div>
+          </div>
+
+          <!-- 大纲 -->
+          <div class="hm-script-side-panel" id="scriptPanel-outline" hidden>
+            <div class="hm-script-side-header"><span>故事大纲</span></div>
+            <textarea class="hm-script-outline-textarea" id="scriptOutlineText" placeholder="写下你的故事主线、起承转合...
+
+例如：
+第一幕（起）：主角发现世界的秘密
+第二幕（承转）：面对困难，成长蜕变
+第三幕（合）：最终决战，结局..."></textarea>
+          </div>
+
+          <!-- 版本 -->
+          <div class="hm-script-side-panel" id="scriptPanel-versions" hidden>
+            <div class="hm-script-side-header">
+              <span>版本快照</span>
+              <button class="hm-pill hm-pill-mini hm-pill-primary" id="scriptNewVer">📸</button>
+            </div>
+            <div class="hm-script-ver-list" id="scriptVerList"></div>
+          </div>
+        </aside>
+
+        <!-- 右侧：当前场次编辑器 -->
+        <div class="hm-script-main">
+          <div class="hm-script-scene-editor" id="scriptSceneEditor">
+            <div class="hm-script-scene-empty" id="scriptSceneEmpty">
+              <div class="hm-script-empty-emoji">🎬</div>
+              <h3>选择左侧场次开始编辑</h3>
+              <p>或点击左侧「＋」创建第一场</p>
+            </div>
+            <div class="hm-script-scene-edit" id="scriptSceneEdit" hidden>
+              <div class="hm-script-scene-head">
+                <div class="hm-script-scene-num">
+                  <span>场次</span>
+                  <input type="number" id="scNumber" min="1" value="1">
+                </div>
+                <input type="text" id="scTitle" class="hm-script-scene-title" placeholder="场次标题 — 如: 雨夜初遇">
+                <button class="hm-pill hm-pill-danger hm-pill-mini" id="scDelete">🗑 删除</button>
+              </div>
+              <div class="hm-script-scene-meta">
+                <input type="text" id="scLocation" placeholder="📍 场景地点 — 如: 东京涩谷十字路口">
+                <input type="text" id="scTime" placeholder="🕐 时间 — 如: 深夜 2:00 / 黄昏 / 雨天">
+              </div>
+              <textarea id="scDesc" class="hm-script-scene-desc" rows="2" placeholder="场描述 / 气氛 / 环境音..."></textarea>
+
+              <!-- 镜头列表 -->
+              <div class="hm-script-shots-header">
+                <span>🎥 镜头序列</span>
+                <button class="hm-pill hm-pill-mini hm-pill-primary" id="scriptAddShot">＋ 添加镜头</button>
+              </div>
+              <div class="hm-script-shots" id="scriptShots"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <main class="hm-page hm-art-page" id="view-art" hidden>
+    <!-- 顶部工具条 -->
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎨 美术设定设计</h2>
+        <span class="hm-art-top-sub">日本动画现场交付标准 · 美術監督 负责</span>
+      </div>
+      <div class="hm-art-top-right">
+        <button class="hm-pill" id="artImportBtn">📥 批量导入</button>
+        <button class="hm-pill" id="artChecklistBtn">📋 会审检查表</button>
+        <button class="hm-pill hm-pill-primary" id="artNewBtn">＋ 新建条目</button>
+      </div>
+    </div>
+
+    <!-- ============ 列表视图 ============ -->
+    <section class="hm-art-view-list" id="artListView">
+      <!-- 分类大 Tab -->
+      <div class="hm-art-cat-tabs" id="artCatTabs"></div>
+
+      <!-- 当前分类下的子节 Tab -->
+      <div class="hm-art-section-tabs" id="artSectionTabs"></div>
+
+      <!-- 筛选条 -->
+      <div class="hm-art-filter-bar">
+        <input class="hm-art-search" id="artSearch" placeholder="🔍 搜索标题 / 标签 / 内容...">
+        <select id="artStatusFilter" class="hm-art-filter">
+          <option value="all">全部状态</option>
+          <option value="draft">草稿</option>
+          <option value="wip">制作中</option>
+          <option value="review">审图中</option>
+          <option value="final">定稿</option>
+        </select>
+        <select id="artTypeFilter" class="hm-art-filter">
+          <option value="all">全部类型</option>
+          <option value="lineart">线稿</option>
+          <option value="painting">彩稿</option>
+          <option value="model">设定三视图</option>
+          <option value="color">色卡</option>
+          <option value="layout">Layout</option>
+          <option value="doc">文档</option>
+        </select>
+      </div>
+
+      <!-- 卡片网格 -->
+      <div class="hm-art-grid" id="artGrid"></div>
+      <div class="hm-art-empty" id="artEmpty" hidden>
+        <div class="hm-art-empty-emoji">🎨</div>
+        <h3>该分类还没有设定资料</h3>
+        <p>点击「＋ 新建条目」创建第一张设定板</p>
+      </div>
+    </section>
+
+    <!-- ============ 条目编辑器 ============ -->
+    <section class="hm-art-view-editor" id="artEditorView" hidden>
+      <div class="hm-art-editor-top">
+        <button class="hm-pill hm-pill-ghost" id="artBackBtn">← 返回列表</button>
+        <h3 id="artEditorTitle">美术条目</h3>
+        <div class="hm-art-editor-meta">
+          <span id="artEditorPath" class="hm-art-editor-path"></span>
+          <span class="hm-art-editor-version" id="artVerTag">Ver1.0</span>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-body">
+        <!-- 左侧：基本信息 -->
+        <div class="hm-art-editor-left">
+          <div class="hm-art-form-row">
+            <label>主标题</label>
+            <input id="artTitle" placeholder="如: 涩谷十字路口 BG 样板 - 黄昏">
+          </div>
+          <div class="hm-art-form-row">
+            <label>日文原名（可选）</label>
+            <input id="artSubtitle" placeholder="如: 涩谷十字路口 - 黄昏">
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>大分类</label>
+              <select id="artCategory"></select>
+            </div>
+            <div>
+              <label>子节</label>
+              <select id="artSection"></select>
+            </div>
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>条目类型</label>
+              <select id="artSpecType">
+                <option value="lineart">线稿</option><option value="painting">彩稿</option>
+                <option value="model">设定三视图</option><option value="color">色卡</option>
+                <option value="layout">Layout</option><option value="doc">文档</option>
+              </select>
+            </div>
+            <div>
+              <label>交付格式</label>
+              <input id="artSpecFormat" placeholder="psd / ai / png / pdf" value="psd">
+            </div>
+          </div>
+          <div class="hm-art-form-row hm-art-form-2col">
+            <div>
+              <label>分辨率</label>
+              <input id="artSpecRes" placeholder="如: 1920x1080 / A3">
+            </div>
+            <div>
+              <label>状态</label>
+              <select id="artStatus">
+                <option value="draft">草稿 Ver0.x</option>
+                <option value="wip">制作中 Ver1.x</option>
+                <option value="review">审图中 Ver1.x</option>
+                <option value="final">定稿 Ver2.0 確定</option>
+              </select>
+            </div>
+          </div>
+          <div class="hm-art-form-row">
+            <label>版本号</label>
+            <input id="artVersion" value="Ver1.0" placeholder="Ver1.0 → Ver1.1 → Ver2.0 確定">
+          </div>
+          <div class="hm-art-form-row">
+            <label>标签（朝/昼/夕/夜/雨/霧/雪... 回车添加）</label>
+            <input id="artTags" placeholder="输入后回车添加，如: 朝 昼 夜 雨">
+          </div>
+        </div>
+
+        <!-- 右侧：媒体 + 色卡 + 内容 -->
+        <div class="hm-art-editor-right">
+          <!-- 媒体占位 -->
+          <div class="hm-art-form-block">
+            <label>🎯 关联媒体（缩略图 / 多版本）</label>
+            <div class="hm-art-media-placeholders">
+              <div class="hm-art-media-ph">
+                <div class="hm-art-media-label">缩略图</div>
+                <div class="hm-art-media-box" id="artMediaThumb">🖼️ 拖入或点击上传</div>
+              </div>
+              <div class="hm-art-media-ph">
+                <div class="hm-art-media-label">多版本源文件</div>
+                <div class="hm-art-media-box" id="artMediaSources">📁 初稿 / 改修 / 定稿 多版本管理</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 色卡 -->
+          <div class="hm-art-form-block">
+            <label>🎨 色卡（Color Spec）</label>
+            <div class="hm-art-color-sections">
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">基础色</div>
+                <div class="hm-art-color-grid" id="artPaletteGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="palette">＋ 添加颜色</button>
+              </div>
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">阴影色</div>
+                <div class="hm-art-color-grid" id="artShadowGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="shadows">＋ 添加阴影</button>
+              </div>
+              <div class="hm-art-color-group">
+                <div class="hm-art-color-group-label">高光色</div>
+                <div class="hm-art-color-grid" id="artHighlightGrid"></div>
+                <button class="hm-pill hm-pill-mini" data-add-color="highlights">＋ 添加高光</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 技术规格 -->
+          <div class="hm-art-form-block">
+            <label>📝 文字说明 / 规格书</label>
+            <textarea id="artContent" rows="8" placeholder="光照方向 / 阴影软硬 / 空气透视 / 笔触规范 / 物理特例 / 禁忌元素..."></textarea>
+          </div>
+
+          <!-- 审图备注 -->
+          <div class="hm-art-form-block">
+            <label>📒 审图备注 / 变更记录</label>
+            <textarea id="artNotes" rows="4" placeholder="审图日 / 变更内容 / 对接画师..."></textarea>
+          </div>
+
+          <!-- 角色设定专属（category === 'character' 时显示） -->
+          <div id="artCharacterBlock" hidden>
+            <!-- 角色卡：基础信息 -->
+            <div class="hm-art-form-block hm-char-card">
+              <label>🧑‍🎤 角色卡（基础信息）</label>
+              <div class="hm-char-card-row">
+                <div class="hm-char-avatar" id="charAvatar">?</div>
+                <div class="hm-char-fields">
+                  <div class="hm-char-field"><label>角色定位</label><input id="charRole" placeholder="如: 主角 / 反派 / 配角 / 吉祥物"></div>
+                  <div class="hm-char-field"><label>性别</label><select id="charGender"><option value="">—</option><option>男</option><option>女</option><option>其他</option><option>无性</option></select></div>
+                  <div class="hm-char-field"><label>年龄</label><input id="charAge" placeholder="如: 16 / 永恒"></div>
+                  <div class="hm-char-field"><label>身高</label><input id="charHeight" placeholder="如: 172cm"></div>
+                  <div class="hm-char-field"><label>体重</label><input id="charWeight" placeholder="如: 58kg"></div>
+                  <div class="hm-char-field"><label>声优</label><input id="charVoiceActor" placeholder="如: 花泽香菜"></div>
+                  <div class="hm-char-field hm-char-field-full"><label>口头禅 / Signature</label><input id="charSignature" placeholder="如: 「命运的齿轮开始转动了」"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 角色色 -->
+            <div class="hm-art-form-block">
+              <label>🎨 角色色（头发 / 瞳孔 / 皮肤 / 服装）</label>
+              <div class="hm-char-colors">
+                <div class="hm-char-color-item"><label>头发色</label><input type="color" id="charHairColor" value="#8B5A2B"><span class="hm-char-color-hex" id="charHairHex">#8B5A2B</span></div>
+                <div class="hm-char-color-item"><label>瞳孔色</label><input type="color" id="charEyeColor" value="#2E3A59"><span class="hm-char-color-hex" id="charEyeHex">#2E3A59</span></div>
+                <div class="hm-char-color-item"><label>皮肤色</label><input type="color" id="charSkinColor" value="#FFDBAC"><span class="hm-char-color-hex" id="charSkinHex">#FFDBAC</span></div>
+                <div class="hm-char-color-item"><label>服装主色</label><input type="color" id="charOutfitColor" value="#4A5568"><span class="hm-char-color-hex" id="charOutfitHex">#4A5568</span></div>
+              </div>
+            </div>
+
+            <!-- Model Sheet 三视图 -->
+            <div class="hm-art-form-block">
+              <label>📐 Model Sheet 标准人设表（正 / 侧 / 背）</label>
+              <div class="hm-char-modelsheet">
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.front">
+                  <div class="hm-char-ms-label">正面 Front</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.side">
+                  <div class="hm-char-ms-label">侧面 Side</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+                <div class="hm-char-ms-slot" data-upload-slot="modelSheet.back">
+                  <div class="hm-char-ms-label">背面 Back</div>
+                  <div class="hm-char-ms-box"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 表情集 -->
+            <div class="hm-art-form-block">
+              <label>😊 表情集（喜 / 怒 / 哀 / 惧 / 吃惊 / 冷漠）</label>
+              <div class="hm-char-grid hm-char-grid-6" id="charExpressionsGrid"></div>
+            </div>
+
+            <!-- 口型集 -->
+            <div class="hm-art-form-block">
+              <label>👄 口型集（A / I / U / E / O）</label>
+              <div class="hm-char-grid hm-char-grid-5" id="charMouthGrid"></div>
+            </div>
+
+            <!-- 姿势集 -->
+            <div class="hm-art-form-block">
+              <label>🎬 基础姿势集（站姿 / 行走 / 待机 Pose）</label>
+              <div class="hm-char-grid hm-char-grid-3" id="charPosesGrid"></div>
+              <button class="hm-pill hm-pill-mini hm-pill-ghost" id="charAddPoseBtn">＋ 添加姿势</button>
+            </div>
+
+            <!-- 特殊变体 -->
+            <div class="hm-art-form-block">
+              <label>✨ 特殊变体（变身前 / 后 · 破损 · 老化 · Q 版）</label>
+              <div class="hm-char-variants" id="charVariantsList"></div>
+              <button class="hm-pill hm-pill-mini hm-pill-ghost" id="charAddVariantBtn">＋ 添加变体</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-footer">
+        <button class="hm-pill" id="artDeleteBtn">🗑 删除</button>
+        <button class="hm-pill hm-pill-primary" id="artSaveBtn">💾 保存条目</button>
+      </div>
+    </section>
+
+    <!-- ============ 会审检查表（抽屉弹层） ============ -->
+    <div class="hm-art-checklist-overlay" id="artChecklistOverlay" hidden>
+      <div class="hm-art-checklist-panel">
+        <div class="hm-art-checklist-head">
+          <h3>📋 设定会审检查表</h3>
+          <button class="hm-pill hm-pill-mini" id="artChecklistClose">✕ 关闭</button>
+        </div>
+        <div class="hm-art-checklist-body" id="artChecklistBody"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ 原画（Original Animation） ============ -->
+  <main class="hm-page hm-oua-page" id="view-oua" hidden>
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎬 原画（Original Animation）</h2>
+        <span class="hm-art-top-sub">日式传统二维赛璐璐 · 本番原画 / 動画 / 中割り</span>
+      </div>
+      <div class="hm-art-top-right">
+        <button class="hm-pill" id="ouaExportBtn">📤 导出时间分配表</button>
+        <button class="hm-pill" id="ouaImportBtn">📥 批量导入</button>
+        <button class="hm-pill hm-pill-primary" id="ouaNewBtn">＋ 新建镜头</button>
+      </div>
+    </div>
+
+    <!-- 团队大 Tab -->
+    <div class="hm-oua-team-tabs" id="ouaTeamTabs">
+      <button class="hm-oua-team-tab active" data-team="first">🎨 第一原画（本番原画 · ラフ原画）</button>
+      <button class="hm-oua-team-tab" data-team="second">🎬 第二原画（動画 · 中割り）</button>
+    </div>
+
+    <!-- 筛选条 -->
+    <div class="hm-art-filter-bar">
+      <input class="hm-art-search" id="ouaSearch" placeholder="🔍 搜索镜号 / 标题 / 动作描述...">
+      <select id="ouaStatusFilter" class="hm-art-filter">
+        <option value="all">全部状态</option>
+        <option value="todo">未开始</option>
+        <option value="wip">进行中</option>
+        <option value="review">审图中</option>
+        <option value="final">定稿</option>
+      </select>
+      <input class="hm-art-search" id="ouaShotFilter" placeholder="镜号前缀（如 1-）" style="max-width:150px">
+    </div>
+
+    <!-- 列表 -->
+    <section class="hm-art-view-list" id="ouaListView">
+      <div class="hm-oua-list-head">
+        <span id="ouaListCount" class="hm-art-top-sub">0 镜头</span>
+        <div class="hm-oua-list-sort">
+          <button class="hm-pill hm-pill-mini" data-sort="shotNo">按镜号</button>
+          <button class="hm-pill hm-pill-mini" data-sort="updatedAt">按更新时间</button>
+        </div>
+      </div>
+      <div class="hm-oua-grid" id="ouaGrid"></div>
+    </section>
+
+    <!-- 编辑器 -->
+    <section class="hm-art-view-editor" id="ouaEditorView" hidden>
+      <div class="hm-art-editor-top">
+        <button class="hm-pill hm-pill-ghost" id="ouaBackBtn">← 返回列表</button>
+        <h3 id="ouaEditorTitle">镜头</h3>
+        <div class="hm-art-editor-meta">
+          <span id="ouaShotTag" class="hm-art-editor-path">—</span>
+          <span class="hm-art-editor-version" id="ouaStatusTag">未开始</span>
+        </div>
+      </div>
+
+      <div class="hm-oua-editor-body">
+        <!-- 顶部基础信息 -->
+        <div class="hm-oua-top-row">
+          <div class="hm-art-form-row"><label>镜号</label><input id="ouaShotNo" placeholder="如: 1-01, 2-03"></div>
+          <div class="hm-art-form-row"><label>镜头标题</label><input id="ouaTitle" placeholder="如: 主角奔跑入场"></div>
+          <div class="hm-art-form-row"><label>关联场次</label><input id="ouaSceneRef" placeholder="如: scene_abc"></div>
+          <div class="hm-art-form-row"><label>状态</label>
+            <select id="ouaStatus">
+              <option value="todo">未开始</option>
+              <option value="wip">进行中</option>
+              <option value="review">审图中</option>
+              <option value="final">定稿</option>
+            </select>
+          </div>
+          <div class="hm-art-form-row"><label>版本号</label><input id="ouaVersion" value="Ver1.0"></div>
+          <div class="hm-art-form-row"><label>标签</label><input id="ouaTags" placeholder="回车添加"></div>
+        </div>
+
+        <!-- 第一原画区 -->
+        <div id="ouaFirstBlock" class="hm-oua-team-block">
+          <h4 class="hm-oua-block-title">🎨 第一原画（本番原画）— K 帧 · 时间分配 · 运镜</h4>
+          <div class="hm-oua-block-inner">
+            <div class="hm-oua-kframes-col">
+              <div class="hm-art-form-block">
+                <label>👤 原画担当（作画监督）</label>
+                <input id="ouaDirector" placeholder="如: 山田太郎">
+              </div>
+              <div class="hm-art-form-block">
+                <label>🔢 K 帧关键姿势（时间轴）</label>
+                <div class="hm-oua-kframes" id="ouaKeyframesList"></div>
+                <button class="hm-pill hm-pill-mini hm-pill-ghost" id="ouaAddKeyframe">＋ 添加 K 帧</button>
+              </div>
+            </div>
+
+            <div class="hm-oua-info-col">
+              <div class="hm-art-form-row hm-art-form-2col">
+                <div>
+                  <label>🎥 运镜指示</label>
+                  <select id="ouaCameraMove">
+                    <option>固定</option><option>左 PAN→</option><option>右 →PAN</option>
+                    <option>上 ↑TILT</option><option>下 ↓TILT</option>
+                    <option>前 DOLLY IN</option><option>后 DOLLY OUT</option>
+                    <option>回転</option><option>组合</option>
+                  </select>
+                </div>
+                <div><label>运镜时长（秒）</label><input id="ouaCameraDuration" placeholder="如: 3.0"></div>
+              </div>
+              <div class="hm-art-form-block">
+                <label>⏱ 时间分配表（タイムシート）</label>
+                <textarea id="ouaTimeSheet" rows="2" placeholder="如: 0:00 起始 Pose → 0:1.2 中间 → 0:2.8 结束"></textarea>
+              </div>
+              <div class="hm-art-form-block">
+                <label>📝 动作描述</label>
+                <textarea id="ouaActionFlow" rows="3" placeholder="角色从左到右奔跑，途中跃过障碍..."></textarea>
+              </div>
+              <div class="hm-art-form-row hm-art-form-2col">
+                <div><label>💬 对白进入时间</label><input id="ouaDialoguePoint" placeholder="如: 0:03.5"></div>
+                <div><label>🔊 音效进入时间</label><input id="ouaSfxPoint" placeholder="如: 0:00.0"></div>
+              </div>
+              <div class="hm-art-form-block">
+                <label>📐 Layout 对接参考（逗号分隔 URL）</label>
+                <input id="ouaLayoutRef" placeholder="如: /uploads/assets/art-1.png, /uploads/assets/art-2.png">
+              </div>
+              <div class="hm-art-form-block">
+                <label>🖊 原画绘画注意点</label>
+                <textarea id="ouaDrawingNotes" rows="2" placeholder="线条风格 / 变形 / 禁忌 / 透视基准..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第二原画区 -->
+        <div id="ouaSecondBlock" class="hm-oua-team-block" hidden>
+          <h4 class="hm-oua-block-title">🎬 第二原画（動画）— 中割り · 质量检查 · 反馈</h4>
+          <div class="hm-oua-block-inner">
+            <div class="hm-oua-kframes-col">
+              <div class="hm-art-form-block">
+                <label>🧑‍💻 动画师担当</label>
+                <input id="ouaAnimator" placeholder="如: 佐々木花子">
+              </div>
+              <div class="hm-art-form-row hm-art-form-2col">
+                <div>
+                  <label>起始 K 帧 (A)</label>
+                  <select id="ouaKeyASelect"></select>
+                </div>
+                <div>
+                  <label>结束 K 帧 (B)</label>
+                  <select id="ouaKeyBSelect"></select>
+                </div>
+              </div>
+              <div class="hm-art-form-row">
+                <label>总中割帧数</label>
+                <input id="ouaTotalFrames" type="number" min="0" placeholder="如: 12">
+              </div>
+              <div class="hm-art-form-block">
+                <label>🎞 中割补间帧列表</label>
+                <div class="hm-oua-tweens" id="ouaTweensList"></div>
+                <button class="hm-pill hm-pill-mini hm-pill-ghost" id="ouaAddTween">＋ 添加中割帧</button>
+              </div>
+            </div>
+
+            <div class="hm-oua-info-col">
+              <div class="hm-art-form-block">
+                <label>✅ 形状守恒检查（shape check）</label>
+                <textarea id="ouaShapeCheck" rows="2" placeholder="帧3 手臂变形 → 修正"></textarea>
+              </div>
+              <div class="hm-art-form-block">
+                <label>🛤 运动轨迹检查（motion check）</label>
+                <textarea id="ouaMotionCheck" rows="2" placeholder="跳跃抛物线 帧4-6 偏下 → 微调"></textarea>
+              </div>
+              <div class="hm-art-form-row hm-art-form-2col">
+                <div>
+                  <label>📨 反馈状态</label>
+                  <select id="ouaFeedbackStatus">
+                    <option value="pending">待提交</option>
+                    <option value="submitted">已提交</option>
+                    <option value="reviewing">审图中</option>
+                    <option value="fixing">修正中</option>
+                    <option value="approved">已通过</option>
+                  </select>
+                </div>
+                <div><label>🔁 修正次数</label><input id="ouaRevisionCount" type="number" min="0"></div>
+              </div>
+              <div class="hm-art-form-block">
+                <label>📒 审图反馈备注</label>
+                <textarea id="ouaFeedbackNote" rows="4" placeholder="第一原画 / 动画监督的修正意见..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hm-art-form-block">
+          <label>🧑 角色引用（逗号分隔）</label>
+          <input id="ouaCharacterRef" placeholder="如: 角色A, 角色B">
+        </div>
+      </div>
+
+      <div class="hm-art-editor-footer">
+        <button class="hm-pill" id="ouaDeleteBtn">🗑 删除</button>
+        <button class="hm-pill hm-pill-ghost" id="ouaSaveBtn">💾 保存</button>
+        <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ 动画（中间帧处理 · Tweening） ============ -->
+  <main class="hm-page hm-anim-page" id="view-animation" hidden>
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎞️ 动画 · 中间帧处理</h2>
+        <span class="hm-art-top-sub">中割り / Tweening · 帧序列 · 节奏曲线</span>
+      </div>
+      <div class="hm-art-top-right">
+        <button class="hm-pill" id="animExportBtn">📤 导出帧表</button>
+        <button class="hm-pill hm-pill-primary" id="animNewBtn">＋ 新建序列</button>
+      </div>
+    </div>
+
+    <!-- 筛选 -->
+    <div class="hm-art-filter-bar">
+      <input class="hm-art-search" id="animSearch" placeholder="🔍 搜索序列名 / 镜号 / 标签...">
+      <select id="animStatusFilter" class="hm-art-filter">
+        <option value="all">全部状态</option>
+        <option value="todo">未开始</option>
+        <option value="wip">进行中</option>
+        <option value="review">审图中</option>
+        <option value="final">定稿</option>
+      </select>
+    </div>
+
+    <!-- 列表 -->
+    <section class="hm-art-view-list" id="animListView">
+      <div class="hm-anim-list-head">
+        <span id="animListCount" class="hm-art-top-sub">0 序列</span>
+      </div>
+      <div class="hm-anim-grid" id="animGrid"></div>
+    </section>
+
+    <!-- 编辑器 -->
+    <section class="hm-art-view-editor" id="animEditorView" hidden>
+      <div class="hm-art-editor-top">
+        <button class="hm-pill hm-pill-ghost" id="animBackBtn">← 返回列表</button>
+        <h3 id="animEditorTitle">序列</h3>
+        <div class="hm-art-editor-meta">
+          <span id="animShotTag" class="hm-art-editor-path">—</span>
+          <span class="hm-art-editor-version" id="animStatusTag">未开始</span>
+        </div>
+      </div>
+
+      <div class="hm-anim-editor-body">
+        <!-- 元信息 -->
+        <div class="hm-anim-meta-row">
+          <div class="hm-art-form-row"><label>序列名称</label><input id="animName"></div>
+          <div class="hm-art-form-row"><label>关联镜号</label><input id="animShotNo" placeholder="如: 1-01"></div>
+          <div class="hm-art-form-row"><label>关联场次</label><input id="animSceneRef"></div>
+          <div class="hm-art-form-row"><label>状态</label>
+            <select id="animStatus">
+              <option value="todo">未开始</option>
+              <option value="wip">进行中</option>
+              <option value="review">审图中</option>
+              <option value="final">定稿</option>
+            </select>
+          </div>
+          <div class="hm-art-form-row"><label>帧率 (fps)</label>
+            <select id="animFrameRate">
+              <option value="12">12 fps (loose)</option>
+              <option value="15">15 fps</option>
+              <option value="24" selected>24 fps (日本TV)</option>
+              <option value="30">30 fps</option>
+              <option value="60">60 fps</option>
+            </select>
+          </div>
+          <div class="hm-art-form-row"><label>标签</label><input id="animTags" placeholder="逗号分隔"></div>
+        </div>
+
+        <!-- K帧编辑 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">🔢 K 帧（关键帧时间轴）</h4>
+          <div class="hm-anim-kfs" id="animKfList"></div>
+          <button class="hm-pill hm-pill-mini hm-pill-ghost" id="animAddKf">＋ 添加 K 帧</button>
+        </div>
+
+        <!-- 自动生成中割 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">⚡ 自动生成中割帧</h4>
+          <div class="hm-anim-gen-row">
+            <div class="hm-art-form-row">
+              <label>起始 K 帧 (A)</label>
+              <select id="animGenA"></select>
+            </div>
+            <div class="hm-art-form-row">
+              <label>结束 K 帧 (B)</label>
+              <select id="animGenB"></select>
+            </div>
+            <div class="hm-art-form-row">
+              <label>中割数量</label>
+              <input id="animGenCount" type="number" min="1" max="30" value="2">
+            </div>
+            <div class="hm-art-form-row">
+              <label>节奏曲线</label>
+              <select id="animGenTiming">
+                <option value="linear">均匀 linear</option>
+                <option value="ease-in">缓入 ease-in</option>
+                <option value="ease-out">缓出 ease-out</option>
+                <option value="ease-in-out">缓入缓出 ease-in-out</option>
+              </select>
+            </div>
+            <div class="hm-art-form-row hm-anim-gen-btn">
+              <label>&nbsp;</label>
+              <button class="hm-pill hm-pill-primary" id="animGenerateBtn">🚀 生成</button>
+            </div>
+          </div>
+          <div class="hm-anim-gen-hint" id="animGenHint">选择两个 K 帧，设置中割数量和节奏，一键自动生成帧号 / 秒数</div>
+        </div>
+
+        <!-- 中割帧列表 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">🎞 中割帧列表（Tweening）</h4>
+          <div class="hm-anim-tweens" id="animTweenList"></div>
+          <div class="hm-anim-tween-actions">
+            <button class="hm-pill hm-pill-mini hm-pill-ghost" id="animAddTween">＋ 手动添加中割帧</button>
+            <button class="hm-pill hm-pill-mini" id="animTweenMarkWip">全标进行中</button>
+            <button class="hm-pill hm-pill-mini" id="animTweenMarkFinal">全标定稿</button>
+          </div>
+        </div>
+
+        <!-- 全帧时间轴预览 -->
+        <div class="hm-anim-block">
+          <h4 class="hm-anim-block-title">📊 全帧时间轴预览（K帧 + 中割）</h4>
+          <div class="hm-anim-timeline" id="animTimeline"></div>
+        </div>
+
+        <!-- 备注 -->
+        <div class="hm-art-form-block">
+          <label>📝 整体备注</label>
+          <textarea id="animNotes" rows="3" placeholder="动作说明 / 节奏注意点 / 原画对接备注..."></textarea>
+        </div>
+      </div>
+
+      <div class="hm-art-editor-footer">
+        <button class="hm-pill" id="animDeleteBtn">🗑 删除</button>
+        <button class="hm-pill hm-pill-ghost" id="animSaveBtn">💾 保存</button>
+        <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
+      </div>
+    </section>
+  </main>
+
+  <main class="hm-page hm-admin-page" id="view-admin" hidden>
+    <div class="hm-admin-topbar-wrap">
+      <div class="hm-admin-brand">
+        <div class="hm-admin-logo">绘</div>
+        <h1>设置</h1>
+      </div>
+      <div class="hm-admin-top-tabs">
+        <button class="hm-admin-top-tab is-active" data-top="admin"><span>管理台</span></button>
+        <button class="hm-admin-top-tab" data-top="stats"><span>创作统计</span></button>
+        <button class="hm-admin-top-tab" data-top="settings"><span>软件设置</span></button>
+        <button class="hm-admin-top-tab" data-top="api"><span>API接入管理</span></button>
+      </div>
+    </div>
+    <div class="hm-admin-subtabs-wrap" id="adminSubTabs">
+      <button class="hm-admin-tab is-active" data-tab="overview"><span>概览</span></button>
+      <button class="hm-admin-tab" data-tab="ranking"><span>消耗排行</span></button>
+      <button class="hm-admin-tab" data-tab="logs"><span>调用日志</span></button>
+      <button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span></button>
+      <button class="hm-admin-tab" data-tab="projects"><span>项目管理</span></button>
+    </div>
+    <div class="hm-admin-body" id="adminBody"></div>
+  </main>
+
+  <div class="hm-dock" id="hmDock">
+    <!-- 可上下拖动的分隔条 -->
+    <div class="hm-resizer" id="dockResizer" role="separator" aria-orientation="horizontal" aria-label="拖动调整输入区高度" title="上下拖动调整输入区域大小">
+      <div class="hm-resizer-bar"></div>
+      <div class="hm-resizer-handle">
+        <span></span><span></span>
+      </div>
+    </div>
+
+    <div class="hm-tabs" id="promptTabs">
+      <button class="hm-tab is-active" data-tab="0">1</button>
+      <button class="hm-tab" data-tab="1">2</button>
+      <button class="hm-tab hm-tab-add" id="addPromptTab" aria-label="新增描述">+</button>
+    </div>
+
+    <div class="hm-composer" id="composer">
+      <!-- 多模态参考主体上传区：生图 → 图片；视频 → 图片/视频/音频；音频 → 音频 -->
+      <div class="hm-ref" id="refDrop" aria-label="上传或拖入参考主体" hidden>
+        <input type="file" id="refInput" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp3,audio/wav,audio/ogg" hidden multiple>
+        <!-- 空状态 -->
+        <div class="hm-ref-empty" id="refEmpty">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="13" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5.5 16.5l4.2-4 3.2 2.8 2.5-2.3 3.1 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <span id="refEmptyText">拖入或上传参考图（最多 10 张）</span>
+          <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 @1 @2 … 引用</span>
+        </div>
+
+        <!-- 参考图网格 -->
+        <div class="hm-ref-grid" id="refGrid" hidden></div>
+
+        <!-- 右侧悬浮工具条（图四） -->
+        <div class="hm-ref-right-bar" id="refRightBar" hidden>
+          <button type="button" class="hm-ref-right-btn hm-ref-right-select" id="refSelectBtn" title="选择素材">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>选择素材</span>
+          </button>
+          <button type="button" class="hm-ref-right-btn hm-ref-right-clear" id="refClearBtn" title="全部删除">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>全部删除</span>
+          </button>
+        </div>
+
+        <!-- 选择模式顶部工具条（图五） -->
+        <div class="hm-ref-select-toolbar" id="refSelectToolbar" hidden>
+          <span class="hm-ref-select-count" id="refSelectCount">已选 0</span>
+          <button type="button" class="hm-ref-select-cancel" id="refSelectCancel">取消</button>
+          <button type="button" class="hm-ref-select-delete" id="refSelectDelete" title="删除选中">删除选中</button>
+          <button type="button" class="hm-ref-select-clear" id="refSelectClear" title="全部删除">全部删除</button>
+        </div>
+
+        <span class="hm-ref-state" id="refState">未添加</span>
+        <button class="hm-ref-remove" id="refRemove" type="button" aria-label="清空所有参考" title="清空全部参考">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <!-- 参考主体限制说明（动态显示） -->
+      <div class="hm-ref-limits" id="refLimits" hidden>
+        <span id="refLimitsText" class="hm-ref-limits-text"></span>
+      </div>
+
+      <div class="hm-prompt prompt-wrap">
+        <textarea id="promptInput" maxlength="1800" placeholder="描述你想生成的画面..."></textarea>
+        <span class="hm-count" id="charCount">0 / 1800</span>
+        <button class="hm-expand" id="expandPrompt" aria-label="展开输入区">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <div class="hm-actions">
+        <div class="hm-actions-left">
+          <button class="hm-sq" id="refPickBtn" title="上传参考图" aria-label="上传参考图">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+          </button>
+          <button class="hm-chip hm-chip-accent" id="assetsBtn" title="资产库">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h16M6.5 4.5h11L20 8.5v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9l2.5-4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13.5h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>资产库</span>
+          </button>
+          <button class="hm-sq" id="seedRandom" title="换一个随机种子" aria-label="随机种子">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="hm-chip" id="presetBtn" title="风格预设（风格 / 滤镜 / 运镜）">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M7 12h10M9 18h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <span id="presetChipText">预设</span>
+          </button>
+          <button class="hm-chip" id="inspireBtn" title="随机注入一条灵感描述">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/><circle cx="15" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="15" r="1.2" fill="currentColor"/></svg>
+            <span>随机</span>
+          </button>
+
+          <!-- 滑动调节组 -->
+          <div class="hm-slider-group">
+            <div class="hm-slider" title="提示词字体大小">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M9 10h6M5 15h14M7 20h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <input type="range" id="fontSizeSlider" min="10" max="22" step="1" value="13">
+              <span id="fontSizeLabel" class="hm-slider-val">13</span>
+            </div>
+            <div class="hm-slider" title="参考主体强度">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+              <input type="range" id="refWeightSlider" min="0" max="100" step="5" value="70">
+              <span id="refWeightLabel" class="hm-slider-val">70%</span>
+            </div>
+          </div>
+          <button class="hm-chip is-on" id="translateToggle" role="switch" aria-checked="true" title="中文智能英译">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h8M9 4v2M11 8c0 3.2-2.4 5.6-6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7 11c1.2 2 2.8 3.4 5 4.4M13.5 20l3.6-9 3.6 9M14.8 17.2h4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>中文</span>
+          </button>
+        </div>
+
+        <div class="hm-actions-right">
+          <div class="hm-menu-wrap">
+            <button class="hm-chip hm-chip-mode" id="engineBtn" aria-haspopup="true" aria-expanded="false">
+              <svg class="hm-mode-ico" data-ico="image" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 16l4.2-4.2 3.3 3 2.8-2.4 4.7 4.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8.8" cy="9.2" r="1.2" fill="currentColor"/></svg>
+              <svg class="hm-mode-ico" data-ico="video" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6.5" width="12.5" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 10.5l4-2.2v7.4l-4-2.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              <svg class="hm-mode-ico" data-ico="audio" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 3.2V6.8L8 10H5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 9.2a4 4 0 010 5.6M17.8 7a7 7 0 010 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <span id="engineModeText">生图</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-mode-menu" id="modeMenu" aria-hidden="true">
+              <button data-mode="audio">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 3.2V6.8L8 10H5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 9.2a4 4 0 010 5.6M17.8 7a7 7 0 010 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                <span>音频</span>
+              </button>
+              <button data-mode="image" class="is-active">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 16l4.2-4.2 3.3 3 2.8-2.4 4.7 4.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8.8" cy="9.2" r="1.2" fill="currentColor"/></svg>
+                <span>生图</span>
+              </button>
+              <button data-mode="video">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6.5" width="12.5" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 10.5l4-2.2v7.4l-4-2.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                <span>视频</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap">
+            <button class="hm-chip hm-chip-model" id="engineModelBtn" aria-haspopup="true" aria-expanded="false" title="当前模型">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l7.5 4.3v8.4L12 20.5l-7.5-4.3V7.8L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12l7.5-4.2M12 12v8.5M12 12L4.5 7.8" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+              <span id="enginePillText">SANA 动漫</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-model-menu" id="modelMenu" aria-hidden="true">
+              <div data-mode-panel="image">
+                <span class="hm-menu-label">免费模型</span>
+                <div class="hm-chip-grid" id="freeModelList"></div>
+                <span class="hm-menu-label">RayinAI</span>
+                <div class="hm-chip-grid" id="rayinModelList"></div>
+                <span class="hm-menu-label">LoRA 风格</span>
+                <div class="hm-chip-grid" id="loraList"></div>
+              </div>
+              <div data-mode-panel="video" hidden>
+                <span class="hm-menu-label">视频模型</span>
+                <div class="hm-chip-grid">
+                  <button data-vmodel="sora-2">Sora 2</button>
+                  <button data-vmodel="sora-2-pro">Sora 2 Pro</button>
+                  <button data-vmodel="veo-3">Veo 3</button>
+                </div>
+                <p class="hm-menu-note">视频为异步任务，需 Node 后端代理生成</p>
+              </div>
+              <div data-mode-panel="audio" hidden>
+                <span class="hm-menu-label">音频模型</span>
+                <div class="hm-chip-grid">
+                  <button data-amodel="tts-1">TTS-1</button>
+                  <button data-amodel="tts-1-hd">TTS-1 HD</button>
+                  <button data-amodel="gpt-4o-mini-tts">GPT-4o mini TTS</button>
+                </div>
+                <p class="hm-menu-note">语音由 Node 后端 TTS 合成</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-av-only">
+            <button class="hm-chip" id="ratioBtn" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span id="ratioLabel">1:1</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-ratio-menu" id="ratioPicker" aria-hidden="true"></div>
+          </div>
+
+          <div class="hm-menu-wrap hm-av-only">
+            <button class="hm-chip" id="scaleBtn" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+              <span id="scaleChipText">2K</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-scale-menu" id="scalePicker" aria-hidden="true">
+              <button data-scale="1k" class="is-active">标清 1K</button>
+              <button data-scale="2k">高清 2K</button>
+              <button data-scale="4k">超清 4K</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-video-only" hidden>
+            <button class="hm-chip" id="durationBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="durationChipText">5秒</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="durationMenu" aria-hidden="true">
+              <button data-duration="5" class="is-active">5 秒</button>
+              <button data-duration="10">10 秒</button>
+            </div>
+          </div>
+
+          <!-- 视频时长滑块（轮滑选择） -->
+          <div class="hm-duration-slider hm-video-only" hidden>
+            <input type="range" id="durationSlider" min="1" max="30" step="1" value="5" aria-label="视频时长">
+            <span class="hm-duration-label" id="durationSliderLabel">5秒</span>
+          </div>
+
+          <div class="hm-menu-wrap hm-audio-only" hidden>
+            <button class="hm-chip" id="voiceBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="voiceChipText">音色 · alloy</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="voiceMenu" aria-hidden="true">
+              <button data-voice="alloy" class="is-active">alloy</button>
+              <button data-voice="echo">echo</button>
+              <button data-voice="fable">fable</button>
+              <button data-voice="onyx">onyx</button>
+              <button data-voice="nova">nova</button>
+              <button data-voice="shimmer">shimmer</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-audio-only" hidden>
+            <button class="hm-chip" id="audioFmtBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="audioFmtText">WAV</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="audioFmtMenu" aria-hidden="true">
+              <button data-format="wav" class="is-active">WAV</button>
+              <button data-format="mp3">MP3</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-audio-only" hidden>
+            <button class="hm-chip" id="sampleRateBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="sampleRateText">48k</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up" id="sampleRateMenu" aria-hidden="true">
+              <button data-rate="24000">24k</button>
+              <button data-rate="48000" class="is-active">48k</button>
+            </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-av-only">
+            <button class="hm-chip" id="seedBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="seedChipText">自动</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-seed-menu" id="seedPop" aria-hidden="true">
+              <label for="seedInput">种子</label>
+              <input class="seed-input" id="seedInput" type="number" min="1" max="2147483647" inputmode="numeric">
+              <p>留空或点击旋转按钮使用随机种子</p>
+            </div>
+          </div>
+
+          <div class="hm-stepper hm-av-only" id="countPicker">
+            <button data-step="-1" aria-label="减少张数">−</button>
+            <span id="countValue">1</span>
+            <button data-step="1" aria-label="增加张数">+</button>
+          </div>
+
+          <button class="hm-send" id="generateBtn" aria-label="开始生成">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="gen-text" hidden><strong>开始生成</strong><small id="genHint">免费 · 约 10 秒</small></span>
+          </button>
+        </div>
+      </div>
+
+      <select id="engineSelect" class="hm-visually-hidden" aria-label="选择生图模型" tabindex="-1">
+        <option value="flux">FLUX.1 · 免费（无需密钥）</option>
+        <option value="openai">免费额度平台模型</option>
+        <option value="gpt-image">GPT-image · RayinAPI</option>
+        <option value="banana">Gemini Banana · RayinAI</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="hm-meta" hidden>
+    <span id="stageModelName">星野动漫</span>
+    <span id="stageModelTag">二次元动漫</span>
+    <span id="stageResultCount">0 张作品</span>
+    <span id="queueText">空闲</span>
+    <span id="composerEngineNote">FLUX.1 · 免费算力</span>
+    <span id="planTag">FREE</span>
+    <p id="composerNotice">免费通道 · 无水印 · 生成后可直接下载原图</p>
+    <p id="engineNote">免费通道，无需配置即可生成</p>
+    <p id="refNote">仅 GPT-image 引擎支持参考图（图生图）</p>
+    <span id="worksTotalHidden">0</span>
+  </div>
+
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+  <aside class="hm-panel" id="sidebar" aria-hidden="true">
+    <div class="hm-panel-head">
+      <div>
+        <h2>风格模型</h2>
+        <p>按动漫类型分组选择</p>
+      </div>
+      <div class="hm-panel-head-right">
+        <span class="count-pill" id="modelCount">16 款</span>
+        <button class="hm-icon-btn" id="sidebarClose" aria-label="关闭风格面板">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="model-groups" id="modelGroups"></div>
+  </aside>
+
+  <div class="modal hm-modal-wide" id="presetModal" aria-hidden="true">
+    <div class="modal-card hm-preset-card">
+      <button class="modal-close" id="presetClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="hm-preset-head">
+        <div class="hm-preset-tabs" id="presetTabs">
+          <button data-cat="风格" class="is-active">风格</button>
+          <button data-cat="滤镜">滤镜</button>
+          <button data-cat="运镜">运镜</button>
+          <button data-cat="自定义">自定义</button>
+        </div>
+        <label class="hm-preset-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="presetSearch" type="search" placeholder="搜索预设..." autocomplete="off">
+        </label>
+      </div>
+      <p class="hm-preset-section" id="presetSectionTitle">点击预设</p>
+      <div class="hm-preset-grid" id="presetGrid"></div>
+      <div class="hm-preset-foot">
+        <span id="presetHint">选择后会把预设关键词写进提示词，可继续手动修改。</span>
+        <button class="hm-pill" id="presetClear">清除预设</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hm-modal-wide" id="assetModal" aria-hidden="true">
+    <div class="modal-card hm-asset-card">
+      <button class="modal-close" id="assetModalClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="hm-asset-head">
+        <h2>资产库</h2>
+        <label class="hm-preset-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.6 15.6L20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="assetModalSearch" type="search" placeholder="搜索资产..." autocomplete="off">
+        </label>
+        <span class="hm-zoom-badge" id="assetModalCount">0 项</span>
+        <button class="hm-pill hm-pill-primary" id="assetModalImport">导入素材</button>
+      </div>
+      <div class="hm-asset-grid" id="assetModalGrid"></div>
+      <div class="hm-page-empty hm-asset-empty" id="assetModalEmpty">
+        <div class="hm-page-empty-icon">资</div>
+        <h3>还没有资产</h3>
+        <p>导入参考图、视频或音频，生成时可直接取用</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hm-editor" id="promptEditor" aria-hidden="true">
+    <div class="hm-editor-inner">
+      <div class="hm-editor-head">
+        <span>画面描述</span>
+        <button class="hm-icon-btn" id="promptEditorClose" aria-label="关闭编辑器">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <textarea id="promptEditorInput" maxlength="1800" placeholder="描述你想生成的画面..."></textarea>
+      <div class="hm-editor-foot">
+        <span id="promptEditorCount">0 / 1800</span>
+        <span class="hm-editor-tip">支持中文，开启「中文」后自动英译</span>
+        <button class="hm-pill hm-pill-primary" id="promptEditorApply">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lb-close" id="lbClose" aria-label="关闭">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="lb-stage" id="lbStage">
+      <img id="lbImage" alt="生成的作品">
+    </div>
+    <div class="lb-zoom-bar" id="lbZoomBar" hidden>
+      <button class="lb-zb-btn" id="lbFit" title="适应窗口 (0)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="lb-zb-btn" id="lbZoomOut" title="缩小 (-)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 11h6M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+      <span class="lb-zb-label" id="lbZoomLabel">100%</span>
+      <button class="lb-zb-btn" id="lbZoomIn" title="放大 (+)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 11h6M11 8v6M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+      <span class="lb-zb-sep"></span>
+      <button class="lb-zb-btn" id="lbRotL" title="向左旋转 90° (←)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.34-5.66M4 4v4h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="lb-zb-btn" id="lbRot180" title="旋转 180°">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 1 3 6.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M3 4v5h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="lb-zb-btn" id="lbRotR" title="向右旋转 90° (→)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="lb-zb-sep"></span>
+      <button class="lb-zb-btn" id="lbReset" title="重置 (R)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="lb-bar">
+      <div class="lb-copy">
+        <p id="lbPrompt"></p>
+        <span id="lbMeta"></span>
+      </div>
+      <button class="primary-btn" id="lbDownload">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l4-4m-4 4l-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        下载原图
+      </button>
+    </div>
+  </div>
+
+  <div class="modal" id="helpModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="helpClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">QUICK START</span>
+      <h2>三步画出你的想象</h2>
+      <div class="guide-list">
+        <div class="guide-item">
+          <span class="guide-index">01</span>
+          <div><strong>选择风格模型</strong><p>点击底部「风格」，4 组 16 款动漫风格，涵盖赛璐璐、国风、机甲与电影光影。</p></div>
+        </div>
+        <div class="guide-item">
+          <span class="guide-index">02</span>
+          <div><strong>写下画面描述</strong><p>中文也可以。开启「中文」智能英译后，描述会自动转为更精准的英文提示词。</p></div>
+        </div>
+        <div class="guide-item">
+          <span class="guide-index">03</span>
+          <div><strong>生成并下载原图</strong><p>生成完成后点击下载按钮保存原图；作品会同步到右上「个人空间」。</p></div>
+        </div>
+      </div>
+      <p class="guide-note">免密钥通道由 SANA 提供，秒级出图。也可在「接入设置」填入免费额度平台（硅基流动 / 魔搭 / Together）的密钥，使用 FLUX、Kolors 等动漫模型；再叠加「动漫 LoRA 风格」即可获得番剧质感。请勿生成违法违规内容。</p>
+      <button class="primary-btn wide" id="helpDone">开始创作</button>
+    </div>
+  </div>
+
+  <div class="modal" id="apiModal" aria-hidden="true">
+    <div class="modal-card api-card">
+      <button class="modal-close" id="apiClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">RAYINAPI</span>
+      <h2>接入 GPT-image 与 Gemini Banana</h2>
+      <p class="api-desc">服务端已内置 GPT-image 与 Gemini 默认密钥，开箱即用。API Key 可留空（用服务端默认值），填写则用你自己的 key 覆盖。密钥仅保存在本浏览器。</p>
+
+      <div class="api-form">
+        <label class="field">
+          <span>API 地址</span>
+          <input id="apiBaseInput" type="text" placeholder="https://www.rayinai.com/v1" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>API Key（可选 · 留空用服务端默认）</span>
+          <input id="apiKeyInput" type="password" placeholder="sk-...（可留空）" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>GPT-image 模型 ID</span>
+          <input id="gptModelInput" type="text" placeholder="gemini-3-pro-image" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>Gemini Banana 模型 ID</span>
+          <input id="bananaModelInput" type="text" placeholder="gemini-3.1-flash-image" autocomplete="off">
+        </label>
+      </div>
+
+      <p class="api-hint" id="apiHint">保存后即可在底部「生图」菜单切换模型。</p>
+      <p class="api-hint" id="backendStatus">后端状态检测中…</p>
+
+      <div class="api-actions">
+        <button class="subtle-btn" id="fetchModelsBtn">读取账号模型</button>
+        <button class="primary-btn" id="apiSave">保存并启用</button>
+      </div>
+
+      <div class="api-divider">免费额度平台（可选 · 注册即送额度）</div>
+      <div class="api-form">
+        <label class="field">
+          <span>平台</span>
+          <select id="providerSelect"></select>
+        </label>
+        <label class="field">
+          <span>接口地址</span>
+          <input id="providerBaseInput" type="text" placeholder="https://api.siliconflow.cn/v1" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>API Key</span>
+          <input id="providerKeyInput" type="password" placeholder="免费注册后获取" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>默认模型 ID</span>
+          <input id="providerModelInput" type="text" placeholder="Kwai-Kolors/Kolors" autocomplete="off">
+        </label>
+      </div>
+      <p class="api-hint" id="providerHint">密钥仅保存在本浏览器。
+        <a id="providerKeyLink" href="https://cloud.siliconflow.cn/account/ak" target="_blank" rel="noopener">获取密钥</a>
+      </p>
+      <button class="subtle-btn wide" id="providerSave">保存平台配置</button>
+    </div>
+  </div>
+
+  <div class="hm-ctx" id="hmCtx" hidden>
+    <button data-cmd="preview"><span class="hm-ctx-ico">◉</span>预览</button>
+    <button data-cmd="restore"><span class="hm-ctx-ico">↻</span>恢复生成参数</button>
+    <button data-cmd="ref"><span class="hm-ctx-ico">▣</span>仅增加参考素材</button>
+    <button data-cmd="prompt"><span class="hm-ctx-ico">文</span>仅增加提示词</button>
+    <button data-cmd="params"><span class="hm-ctx-ico">☰</span>参数查看</button>
+    <div class="hm-ctx-line"></div>
+    <button data-cmd="copy"><span class="hm-ctx-ico">⧉</span>复制</button>
+    <button data-cmd="cut"><span class="hm-ctx-ico">✂</span>剪切</button>
+    <button data-cmd="rename"><span class="hm-ctx-ico">✎</span>重命名</button>
+    <button data-cmd="download"><span class="hm-ctx-ico">↓</span>下载</button>
+    <button data-cmd="canvas"><span class="hm-ctx-ico">▤</span>发送到画布</button>
+    <div class="hm-ctx-line"></div>
+    <button data-cmd="delete" class="is-danger"><span class="hm-ctx-ico">✕</span>删除</button>
+  </div>
+
+  <div class="hm-ctx" id="deskCtx" hidden>
+    <button id="deskCtxPaste" data-dcmd="paste"><span class="hm-ctx-ico">⧉</span>粘贴</button>
+    <button data-dcmd="newfolder"><span class="hm-ctx-ico">＋</span>新建文件夹</button>
+    <button data-dcmd="tidy"><span class="hm-ctx-ico">▦</span>整理图片</button>
+    <button data-dcmd="selectall"><span class="hm-ctx-ico">✓</span>全选</button>
+  </div>
+
+  <div class="hm-ctx" id="folderCtx" hidden>
+    <button data-fcmd="open"><span class="hm-ctx-ico">📂</span>打开项目</button>
+    <button data-fcmd="newsub"><span class="hm-ctx-ico">📁</span>新建子文件夹</button>
+    <button data-fcmd="zip"><span class="hm-ctx-ico">📦</span>导出压缩包</button>
+    <button data-fcmd="download"><span class="hm-ctx-ico">📥</span>批量下载</button>
+    <button data-fcmd="rename"><span class="hm-ctx-ico">✏️</span>重命名</button>
+    <button data-fcmd="copy"><span class="hm-ctx-ico">📋</span>复制</button>
+    <button data-fcmd="delete"><span class="hm-ctx-ico">🗑️</span>删除项目</button>
+  </div>
+
+  <div class="modal" id="paramModal" aria-hidden="true">
+    <div class="modal-card hm-param-card">
+      <button class="modal-close" data-close-param aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">GENERATION INFO</span>
+      <h2 id="paramTitle">参数查看</h2>
+      <div class="hm-param-body" id="paramBody"></div>
+      <div class="hm-param-foot">
+        <button class="hm-pill" id="paramCopy">复制提示词</button>
+        <button class="hm-pill" id="paramRestore">恢复参数</button>
+        <button class="hm-pill hm-pill-primary" id="paramDownload">下载原图</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="renameModal" aria-hidden="true">
+    <div class="modal-card hm-rename-card">
+      <span class="modal-kicker">RENAME</span>
+      <h2 id="renameTitle">重命名</h2>
+      <input id="renameInput" type="text" maxlength="40" autocomplete="off">
+      <div class="hm-rename-foot">
+        <button class="hm-pill" id="renameCancel">取消</button>
+        <button class="hm-pill hm-pill-primary" id="renameOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="folderPreviewModal" aria-hidden="true" hidden>
+    <div class="modal-card hm-folder-preview-card">
+      <div class="modal-head hm-folder-prev-head">
+        <span class="modal-kicker">FOLDER</span>
+        <h2 id="folderPrevTitle">文件夹预览</h2>
+        <button class="modal-close" data-close-folder-prev aria-label="关闭">✕</button>
+      </div>
+      <div class="hm-folder-prev-body" id="folderPrevBody"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="userAdminModal" aria-hidden="true">
+    <div class="modal-card hm-admin-card">
+      <button class="modal-close" id="userAdminClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <span class="modal-kicker">SUPER ADMIN</span>
+      <h2>用户管理</h2>
+      <p class="api-desc">查看所有账号，创建新用户、调整角色或重置密码。</p>
+
+      <div class="hm-admin-create">
+        <input id="adminNewUser" type="text" placeholder="新用户名（≥3 字符）" autocomplete="off">
+        <input id="adminNewPass" type="password" placeholder="密码（≥6 字符）" autocomplete="off">
+        <select id="adminNewRole">
+          <option value="user">普通用户</option>
+          <option value="admin">超级管理员</option>
+        </select>
+        <button class="hm-pill hm-pill-primary" id="adminCreateBtn">创建</button>
+      </div>
+
+      <div class="hm-admin-list" id="adminUserList"></div>
+    </div>
+  </div>
+
+  <div class="hm-auth" id="hmAuth" hidden aria-hidden="true">
+    <div class="hm-auth-bg" aria-hidden="true">
+      <span class="hm-auth-blob b1"></span>
+      <span class="hm-auth-blob b2"></span>
+      <span class="hm-auth-blob b3"></span>
+    </div>
+    <div class="hm-auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <div class="hm-auth-brand">
+        <div class="hm-auth-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>绘梦 · AI 动漫创作</h1>
+        <p>登录后作品与桌面布局在所有设备同步</p>
+      </div>
+
+      <div class="hm-auth-tabs">
+        <button class="is-active" data-auth-tab="login" id="authTabLogin">登录</button>
+        <button data-auth-tab="register" id="authTabRegister">注册</button>
+      </div>
+
+      <form class="hm-auth-form" id="authForm" autocomplete="off">
+        <h2 id="authTitle">欢迎回来</h2>
+        <p class="hm-auth-sub" id="authSub">登录你的账号继续创作</p>
+
+        <label class="hm-auth-field">
+          <span>用户名</span>
+          <input id="authUsername" type="text" placeholder="请输入用户名" autocomplete="username">
+        </label>
+
+        <label class="hm-auth-field">
+          <span>密码</span>
+          <input id="authPassword" type="password" placeholder="请输入密码" autocomplete="current-password">
+        </label>
+
+        <label class="hm-auth-field" id="authConfirmWrap" hidden>
+          <span>确认密码</span>
+          <input id="authConfirm" type="password" placeholder="再次输入密码" autocomplete="new-password">
+        </label>
+
+        <div class="hm-auth-error" id="authError" hidden></div>
+
+        <button type="submit" class="hm-auth-submit" id="authSubmit">
+          <span id="authSubmitText">登录</span>
+          <span class="hm-auth-spin" hidden aria-hidden="true"></span>
+        </button>
+
+        <p class="hm-auth-switch">
+          <span id="authSwitchHint">还没有账号？</span>
+          <button type="button" class="hm-auth-link" id="authSwitchBtn">立即注册</button>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+  <!-- 版本更新通知（右下角浮动卡片，不遮罩页面） -->
+  <div class="hm-update-modal" id="updateModal" hidden role="dialog" aria-label="绘梦 AI 更新通知">
+    <div class="hm-update-card">
+      <div class="hm-update-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="hm-update-body">
+        <h3 class="hm-update-title">绘梦 AI 已更新</h3>
+        <p class="hm-update-desc">新版本已发布，点击下方按钮刷新页面即可体验。</p>
+      </div>
+      <div class="hm-update-actions">
+        <button class="hm-update-confirm" id="updateConfirm" type="button">立即更新</button>
+        <button class="hm-update-close" id="updateClose" type="button" aria-label="关闭">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 注意：以下两个组件放在 body 直接子元素，不能放 composer 内 =====
+       因为 .hm-composer 有 backdrop-filter，会强制成为 containing block，
+       导致 position:fixed 元素降级为相对于 composer 定位而非视口。
+       另外必须放在所有 <script> 之前，否则 app.js 的 bindEls() 取到 null（预览/浮层失效）。 -->
+
+  <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
+  <div class="hm-ref-hover" id="refHover" hidden>
+    <img alt="预览">
+    <div class="hm-ref-hover-actions">
+      <button type="button" class="hm-ref-hover-view" title="全屏查看">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        查看
+      </button>
+      <button type="button" class="hm-ref-hover-at" title="@主体">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        @主体
+      </button>
+    </div>
+  </div>
+
+  <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
+  <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
+    <button class="hm-ref-fs-close" type="button" id="refFsClose" aria-label="关闭全屏" title="关闭">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <div class="hm-ref-fs-idx" id="refFsIdx"></div>
+    <img class="hm-ref-fs-img" id="refFsImg" alt="全屏预览">
+    <!-- 底部控制条：🔍- ⟳ 🔍+ ⬇ -->
+    <div class="hm-ref-fs-controls">
+      <button type="button" class="hm-ref-fs-btn" id="refFsZoomOut" title="缩小">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M16 16l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsReset" title="重置">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsZoomIn" title="放大">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="hm-ref-fs-btn" id="refFsDownload" title="下载">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10l5 5 5-5M12 15V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="jszip.min.js"></script>
+  <script src="chart.umd.min.js"></script>
+  <script src="api.js"></script>
+  <script src="auth-ui.js"></script>
+  <script src="app.js"></script>
+  <script src="three.min.js"></script>
+  <script src="HMOrbitControls.js"></script>
+  <script src="HMTransformControls.js"></script>
+  <script src="HMDRACOLoader.js"></script>
+  <script src="HMGLTFLoader.js"></script>
+  <script src="female-mannequin-glb.js"></script>
+  <script src="storyboard.js"></script>
+  <script src="director3d.js"></script>
+  <script src="paint.js"></script>
+  <script src="toolimage.js"></script>
+  <script src="toolreference.js"></script>
+  <script src="tooltraining.js"></script>
+  <script src="toolrestore.js"></script>
+  <script src="toolworkflow.js"></script>
+  <script src="toolvideo.js"></script>
+  <script src="chat.js"></script>
+  <script src="ui.js"></script>
+  <script src="desk.js"></script>
+  <script src="admin.js"></script>
+
+</body>
+</html><script src="frontend/three.min.js"></script><script src="frontend/HMOrbitControls.js"></script><script src="frontend/HMTransformControls.js"></script><script src="frontend/HMDRACOLoader.js"></script><script src="frontend/HMGLTFLoader.js"></script><script src="frontend/female-mannequin-glb.js"></script><script src="frontend/director3d.js"></script><script>window.HMDirector3D.init();window.HMDirector3D.enter();</script></body></html>
