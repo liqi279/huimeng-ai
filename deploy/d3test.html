@@ -32695,30 +32695,7 @@ window.HMStoryboard = (function () {
       });
       html += '</div>';
     });
-    html += '
-<style>#hmAuth{display:none!important}.hm-page{display:none!important}#view-director3d{display:flex!important;position:fixed;inset:0;z-index:99999}</style>
-<script>
-window.__selfTest = {};
-try { var c = document.createElement('canvas'); window.__selfTest.webgl = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { window.__selfTest.webgl = false; }
-window.addEventListener('load', function () {
-  setTimeout(function () {
-    try {
-      var loader = new window.HMGLTFLoader();
-      var b64 = window.HM_FEMALE_GLB_B64;
-      var bin = atob(b64), buf = new Uint8Array(bin.length);
-      for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-      loader.parse(buf.buffer, '', function (g) {
-        var m = 0;
-        var bb = new window.THREE.Box3().setFromObject(g.scene);
-        g.scene.traverse(function (o) { if (o.isMesh) m++; });
-        window.__selfTest.gltf = { ok: true, meshes: m, size: [bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z] };
-      }, function (e) { window.__selfTest.gltf = { ok: false, msg: String((e && e.message) || e) }; });
-    } catch (e) { window.__selfTest.gltf = { ok: false, msg: String(e) }; }
-    try { window.HMDirector3D.init(); window.HMDirector3D.enter(); } catch (e) { console.error('BOOT', e); }
-  }, 80);
-});
-</script>
-</body></html>';
+    html += '</body></html>';
 
     var w = window.open('', '_blank');
     if (!w) { toast('请允许弹出窗口后再打印', 'error'); return; }
@@ -52262,5 +52239,28 @@ window.HMChat = (function () {
 
 </script>
 
+
+<style>#hmAuth{display:none!important}.hm-page{display:none!important}#view-director3d{display:flex!important;position:fixed;inset:0;z-index:99999}</style>
+<script>
+window.__selfTest = {};
+try { var c = document.createElement('canvas'); window.__selfTest.webgl = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { window.__selfTest.webgl = false; }
+window.addEventListener('load', function () {
+  setTimeout(function () {
+    try {
+      var loader = new window.HMGLTFLoader();
+      var b64 = window.HM_FEMALE_GLB_B64;
+      var bin = atob(b64), buf = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+      loader.parse(buf.buffer, '', function (g) {
+        var m = 0;
+        var bb = new window.THREE.Box3().setFromObject(g.scene);
+        g.scene.traverse(function (o) { if (o.isMesh) m++; });
+        window.__selfTest.gltf = { ok: true, meshes: m, size: [bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z] };
+      }, function (e) { window.__selfTest.gltf = { ok: false, msg: String((e && e.message) || e) }; });
+    } catch (e) { window.__selfTest.gltf = { ok: false, msg: String(e) }; }
+    try { window.HMDirector3D.init(); window.HMDirector3D.enter(); } catch (e) { console.error('BOOT', e); }
+  }, 80);
+});
+</script>
 </body>
 </html>
