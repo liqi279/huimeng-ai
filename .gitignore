@@ -3,3 +3,6 @@ server/data/
 server/uploads/
 .DS_Store
 *.log
+
+# 本地部署密钥（勿提交）
+.deploy/

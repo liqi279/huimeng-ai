@@ -2424,6 +2424,14 @@
     if (window.HMChat) {
       try { window.HMChat.init(); } catch (e) { console.error('[Chat] init failed', e); }
     }
+
+    /* 初音未来 · 胶片悬浮音乐播放器插件 */
+    if (window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
+      try {
+        window.MikuPlayer.init();
+        window.__HM_MIKU_MOUNTED = true;
+      } catch (e) { console.error('[MikuPlayer] init failed', e); }
+    }
   }
 
   window.HMUI = {
