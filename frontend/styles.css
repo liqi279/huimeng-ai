@@ -5229,23 +5229,11 @@ body:not([data-view="create"]) .hm-canvas {
     #0a111c;
 }
 
-/* view 切换：opacity 交叉淡入淡出，避免 display:none 瞬间漏底闪帧 */
+/* view 切换：display 原子替换（同一帧内完成，无任何过渡帧）——
+   opacity 交叉淡入淡出会让旧页淡出时露出底层背景，即用户看到的闪帧；
+   页面底色本身不透明，瞬时硬切不会产生任何中间画面，彻底杜绝闪帧 */
 .hm-page[hidden] {
-  display: block !important;
-  visibility: hidden;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(2px);
-  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
-  z-index: 30;
-}
-.hm-page.is-active {
-  visibility: visible;
-  pointer-events: auto;
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear;
-  z-index: 41;
+  display: none !important;
 }
 
 .hm-page-head {

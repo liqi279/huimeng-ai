@@ -5,9 +5,8 @@
  * 顶栏子模块切换：原画 / 动画 / 着色
  * （三个子模块为既有视图，功能不变，仅入口并入「作画」顶栏）
  *
- * 防闪帧：切换时优先使用 View Transitions API——浏览器先对当前
- * 画面截图，再原子地替换 DOM 并交叉淡入，中间不会出现空白帧或
- * 背景透闪；不支持的浏览器回退为普通切换。
+ * 防闪帧：视图切换为 display 原子替换（同帧完成，无过渡帧），
+ * 配合 .hm-page 不透明底色，不会产生任何中间画面。
  * ============================================================= */
 (function () {
   var GROUP = ['oua', 'animation', 'paint'];
@@ -24,13 +23,7 @@
   }
 
   function goView(target) {
-    if (!(window.HMApp && window.HMApp.switchView)) return;
-    if (typeof document.startViewTransition === 'function') {
-      /* 原子切换：旧画面截图 → DOM 替换 → 新画面淡入，无空白帧 */
-      document.startViewTransition(function () {
-        window.HMApp.switchView(target);
-      });
-    } else {
+    if (window.HMApp && window.HMApp.switchView) {
       window.HMApp.switchView(target);
     }
   }
