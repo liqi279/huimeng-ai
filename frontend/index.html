@@ -1439,6 +1439,18 @@
       .hm-d3-actions{display:flex;gap:6px;margin-top:6px}
       .hm-d3-actions button{flex:1;font-size:11.5px;padding:7px 4px;border-radius:7px;border:1px solid var(--hm-line,#2a3142);background:#11151f;color:var(--hm-text,#e6e9ef);cursor:pointer}
       .hm-d3-actions button:hover{border-color:var(--hm-accent,#4f8cff)}
+      .hm-d3-actions button.is-on{border-color:var(--hm-accent,#4f8cff);background:rgba(79,140,255,.18);color:#fff}
+      .hm-d3-actions button kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5px;padding:1px 3px;border-radius:3px;background:#2a3142;color:#9fb0cc;border:1px solid #3a4560;margin-left:2px}
+      /* 视口内的变换模式浮条：点击白模后出现，支持 M/R/S 快捷切换 */
+      .hm-d3-gizmo{position:absolute;right:12px;top:12px;display:flex;gap:4px;padding:4px;border-radius:10px;background:rgba(10,14,22,.78);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px);z-index:4}
+      .hm-d3-gizmo[hidden]{display:none}
+      .hm-d3-gizmo button{display:flex;align-items:center;gap:4px;font-size:11.5px;padding:5px 9px;border-radius:7px;border:1px solid transparent;background:transparent;color:#9aa5b8;cursor:pointer}
+      .hm-d3-gizmo button:hover{background:#202838;color:#e6e9ef}
+      .hm-d3-gizmo button.is-on{background:rgba(79,140,255,.22);border-color:rgba(79,140,255,.6);color:#dbe7ff}
+      .hm-d3-gizmo kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;line-height:1;padding:2px 4px;border-radius:4px;background:#2a3142;color:#9fb0cc;border:1px solid #3a4560}
+      .hm-d3-gizmo button.is-on kbd{background:#4f8cff;color:#0b1220;border-color:#4f8cff}
+      /* 拖动模型时的光标反馈 */
+      #d3Viewport.d3-dragging,#d3Viewport.d3-dragging canvas{cursor:grabbing !important}
       .hm-d3-swatch{width:16px;height:16px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:#e8ecf2}
       @media (max-width:1180px){
         .hm-d3-side{width:170px}
@@ -1515,7 +1527,12 @@
 
       <div class="hm-d3-viewport" id="d3Viewport">
         <canvas id="d3Canvas"></canvas>
-        <div class="hm-d3-hint" id="d3Hint">左键拖拽旋转视角 · 右键平移 · 滚轮缩放 · 点击模型选中</div>
+        <div class="hm-d3-gizmo" id="d3GizmoBar" hidden>
+          <button type="button" data-gizmo="translate"><kbd>M</kbd> 移动</button>
+          <button type="button" data-gizmo="rotate"><kbd>R</kbd> 旋转</button>
+          <button type="button" data-gizmo="scale"><kbd>S</kbd> 缩放</button>
+        </div>
+        <div class="hm-d3-hint" id="d3Hint">点击白模：直接拖动即移动 · 按 R 后拖动旋转 · 按 S 后拖动缩放（Shift 上下移动）</div>
         <div class="hm-d3-cam-frame" id="d3CamFrame" hidden>
           <span class="hm-d3-cam-tag">● CAMERA</span>
           <i class="hm-d3-corner tl"></i><i class="hm-d3-corner tr"></i>

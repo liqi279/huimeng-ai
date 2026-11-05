@@ -13,13 +13,15 @@ window.HMDirector3D = (function () {
   var LS_TRIPO_KEY = 'anidream.tripo.key';
   var TRIPO_API_BASE = 'https://api.tripo3d.ai/v2/openapi';
 
-  var canvas, container, inspectorEl, objListEl;
+  var canvas, container, inspectorEl, objListEl, gizmoBarEl;
   var renderer, scene, camera, orbit, tControls;
   var raycaster, pointer, gltfLoader, dracoLoader;
 
   var active = false, bound = false, rafId = null;
   var objects = [];
   var selectedId = null, seq = 1;
+
+  var dragMove = null;   // 在视口里直接拖动白模的状态
 
   var showGrid = true, camMode = false;
   var camFly = { pos: new THREE.Vector3(0, 3.5, 13), yaw: -0.65, pitch: -0.06 };
@@ -481,7 +483,33 @@ window.HMDirector3D = (function () {
     selectedId = id;
     var o = id ? findObject(id) : null;
     if (o) tControls.setObject(o.three); else tControls.setObject(null);
+    syncGizmoBar();
     renderObjectList(); renderInspector();
+  }
+
+  /* ---------- 变换模式（3D 空间内直接操作） ---------- */
+  function setGizmoMode(mode, opts) {
+    if (!tControls) return;
+    if (mode !== 'translate' && mode !== 'rotate' && mode !== 'scale') return;
+    if (tControls.mode !== mode) tControls.setMode(mode);
+    syncGizmoBar();
+    renderInspector();
+    if (opts && opts.announce) {
+      var label = mode === 'translate' ? '移动（M）' : mode === 'rotate' ? '旋转（R）' : '缩放（S）';
+      toast('模式：' + label);
+    }
+  }
+
+  /* 选中物体时，在视口右上角显示 M/R/S 切换浮条 */
+  function syncGizmoBar() {
+    if (!gizmoBarEl) return;
+    var show = !!selectedId && !!tControls && !!(tControls.getObject && tControls.getObject());
+    gizmoBarEl.hidden = !show;
+    if (!show) return;
+    var buttons = gizmoBarEl.querySelectorAll('[data-gizmo]');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].classList.toggle('is-on', buttons[i].getAttribute('data-gizmo') === tControls.mode);
+    }
   }
 
   /* ---------- 拾取 ---------- */
@@ -501,27 +529,137 @@ window.HMDirector3D = (function () {
     return null;
   }
 
+  /* 屏幕坐标 → 与地面平行、过 y 高度的平面交点（用于拖动白模） */
+  function screenToGroundPlane(e, y) {
+    var rect = canvas.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    var ray = raycaster.ray;
+    var denom = ray.direction.y;
+    if (Math.abs(denom) < 1e-6) return null;
+    var t = (y - ray.origin.y) / denom;
+    if (t < 0) return null;
+    return ray.origin.clone().add(ray.direction.clone().multiplyScalar(t));
+  }
+
+  /* 直接拖动白模：随当前模式移动 / 旋转 / 缩放（M/R/S），Shift 可上下移动 */
+  function beginDragMove(e, o) {
+    dragMove = {
+      id: o.id,
+      startPos: o.three.position.clone(),
+      startRotY: o.three.rotation.y,
+      startRotX: o.three.rotation.x,
+      startScale: o.three.scale.clone(),
+      start: screenToGroundPlane(e, o.three.position.y),
+      startX: e.clientX,
+      startY: e.clientY,
+      moved: false
+    };
+    if (container) container.classList.add('d3-dragging');
+  }
+
+  function applyDragMove(e) {
+    if (!dragMove) return;
+    if (!dragMove.moved) {
+      var dx = e.clientX - dragMove.startX, dy = e.clientY - dragMove.startY;
+      if (dx * dx + dy * dy < 9) return;   // 小于 3px 视为点击
+      dragMove.moved = true;
+    }
+    var o = findObject(dragMove.id);
+    if (!o) return;
+    var mode = tControls ? tControls.mode : 'translate';
+    if (mode === 'rotate') {
+      // 左右拖动 → 绕 Y 轴旋转；按住 Shift 改为绕 X 轴
+      if (e.shiftKey) o.three.rotation.x = dragMove.startRotX + (e.clientY - dragMove.startY) * 0.01;
+      else o.three.rotation.y = dragMove.startRotY + (e.clientX - dragMove.startX) * 0.01;
+    } else if (mode === 'scale') {
+      // 左右拖动 → 等比缩放（向上拖动也可放大）
+      var f = Math.max(0.08, 1 + (e.clientX - dragMove.startX + (dragMove.startY - e.clientY)) * 0.004);
+      o.three.scale.set(
+        Math.max(0.05, dragMove.startScale.x * f),
+        Math.max(0.05, dragMove.startScale.y * f),
+        Math.max(0.05, dragMove.startScale.z * f)
+      );
+    } else if (e.shiftKey) {
+      o.three.position.y = Math.max(0, dragMove.startPos.y - (e.clientY - dragMove.startY) * 0.01);
+    } else {
+      if (!dragMove.start) return;
+      var cur = screenToGroundPlane(e, o.three.position.y);
+      if (!cur) return;
+      o.three.position.x = dragMove.startPos.x + (cur.x - dragMove.start.x);
+      o.three.position.z = dragMove.startPos.z + (cur.z - dragMove.start.z);
+    }
+    tControls.update();
+    updateTransformFields();
+  }
+
   /* ---------- 事件 ---------- */
   function onDown(e) {
     if (!active) return;
     if (tControls.onMouseDown(e)) { orbit.enabled = false; return; }
     if (e.button === 0) {
       var hit = pickFromEvent(e);
-      if (hit) { selectObject(hit.id); orbit.enabled = false; return; }
+      if (hit) {
+        selectObject(hit.id);
+        orbit.enabled = false;
+        // 点击白模后可直接在 3D 空间里拖动它（不必再去右侧面板改数值）
+        beginDragMove(e, hit);
+        return;
+      }
     }
     selectObject(null);
   }
-  function onMove(e) { if (tControls._dragging) tControls.onMouseMove(e); }
-  function onUp() { if (tControls._dragging) tControls.onMouseUp(); orbit.enabled = true; }
+  function onMove(e) {
+    if (tControls._dragging) { tControls.onMouseMove(e); updateTransformFields(); return; }
+    applyDragMove(e);
+  }
+  function onUp() {
+    if (tControls._dragging) tControls.onMouseUp();
+    if (dragMove) {
+      if (dragMove.moved) { updateTransformFields(); try { saveScene(); } catch (err) {} }
+      dragMove = null;
+      if (container) container.classList.remove('d3-dragging');
+    }
+    orbit.enabled = true;
+  }
   function onKeyDown(e) {
     if (!active) return;
     var tag = (e.target && e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    var key = e.key.toLowerCase();
+    if (e.key === 'Escape') { if (selectedId) { selectObject(null); } return; }
     if (e.key === 'Delete' || e.key === 'Backspace') { if (selectedId) { e.preventDefault(); deleteObject(selectedId); } return; }
-    keys[e.key.toLowerCase()] = true;
-    if (e.key.toLowerCase() === 'g') { showGrid = !showGrid; scene.userData.grid.visible = showGrid; syncTopBar(); }
+    // 快捷键按英文首字母：M=Move(移动) / R=Rotate(旋转) / S=Scale(缩放)
+    // 摄像头飞行模式用 WASD 控制机位，此时让 W/A/S/D 保持控制相机。
+    if (!camMode && selectedId && (key === 'm' || key === 'r' || key === 's')) {
+      e.preventDefault();
+      setGizmoMode(key === 'm' ? 'translate' : key === 'r' ? 'rotate' : 'scale', { announce: true });
+      return;
+    }
+    keys[key] = true;
+    if (key === 'g') { showGrid = !showGrid; scene.userData.grid.visible = showGrid; syncTopBar(); }
   }
   function onKeyUp(e) { keys[e.key.toLowerCase()] = false; }
+
+  /* 只更新右侧数值框，避免拖动时整块重建 DOM */
+  function updateTransformFields() {
+    if (!inspectorEl || !selectedId) return;
+    var o = findObject(selectedId);
+    if (!o) return;
+    var p = o.three.position, r = o.three.rotation, s = o.three.scale;
+    var inputs = inspectorEl.querySelectorAll('input[data-prop]');
+    for (var i = 0; i < inputs.length; i++) {
+      var t = inputs[i];
+      if (t === document.activeElement) continue;
+      var prop = t.getAttribute('data-prop');
+      var ax = parseInt(t.getAttribute('data-axis'), 10);
+      var v = prop === 'pos' ? (ax === 0 ? p.x : ax === 1 ? p.y : p.z)
+            : prop === 'rot' ? (ax === 0 ? r.x : ax === 1 ? r.y : r.z) * 180 / Math.PI
+            : (ax === 0 ? s.x : ax === 1 ? s.y : s.z);
+      t.value = v.toFixed(prop === 'rot' ? 1 : 2);
+    }
+  }
 
   function applyFly() {
     if (!camMode) return;
@@ -586,10 +724,11 @@ window.HMDirector3D = (function () {
       if (o.kind === 'glb') {
         html += '<div class="hm-d3-empty">📦 真实模型，可在 Blender 等工具中进一步编辑</div>';
       }
+      var mode = tControls ? tControls.mode : 'translate';
       html += '<div class="hm-d3-actions">' +
-        '<button type="button" data-act="mode-t">▣ 移动</button>' +
-        '<button type="button" data-act="mode-r">↻ 旋转</button>' +
-        '<button type="button" data-act="mode-s">↕ 缩放</button>' +
+        '<button type="button" data-act="mode-t" class="' + (mode === 'translate' ? 'is-on' : '') + '">▣ 移动 <kbd>M</kbd></button>' +
+        '<button type="button" data-act="mode-r" class="' + (mode === 'rotate' ? 'is-on' : '') + '">↻ 旋转 <kbd>R</kbd></button>' +
+        '<button type="button" data-act="mode-s" class="' + (mode === 'scale' ? 'is-on' : '') + '">↕ 缩放 <kbd>S</kbd></button>' +
         '</div>';
       html += '<div class="hm-d3-actions">' +
         '<button type="button" data-act="dup">复制</button>' +
@@ -648,9 +787,9 @@ window.HMDirector3D = (function () {
       var btn = e.target.closest('[data-act]');
       if (btn) {
         var act = btn.getAttribute('data-act');
-        if (act === 'mode-t') tControls.setMode('translate');
-        else if (act === 'mode-r') tControls.setMode('rotate');
-        else if (act === 'mode-s') tControls.setMode('scale');
+        if (act === 'mode-t') setGizmoMode('translate');
+        else if (act === 'mode-r') setGizmoMode('rotate');
+        else if (act === 'mode-s') setGizmoMode('scale');
         else if (act === 'dup') duplicateObject(selectedId);
         else if (act === 'del') deleteObject(selectedId);
         return;
@@ -927,6 +1066,7 @@ window.HMDirector3D = (function () {
     container = document.getElementById('d3Viewport');
     inspectorEl = document.getElementById('d3Inspector');
     objListEl = document.getElementById('d3ObjList');
+    gizmoBarEl = document.getElementById('d3GizmoBar');
     if (!canvas || !container) return;
     bound = true;
     if (!setupScene()) { bound = true; return; }
@@ -938,7 +1078,14 @@ window.HMDirector3D = (function () {
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
-    bindTopBar(); bindInspector(); syncTopBar(); renderObjectList(); renderInspector();
+    if (gizmoBarEl) {
+      gizmoBarEl.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-gizmo]');
+        if (!btn) return;
+        setGizmoMode(btn.getAttribute('data-gizmo'), { announce: true });
+      });
+    }
+    bindTopBar(); bindInspector(); syncTopBar(); syncGizmoBar(); renderObjectList(); renderInspector();
     window.addEventListener('resize', resize);
     if (window.ResizeObserver) {
       try { new window.ResizeObserver(function () { resize(); }).observe(container); } catch (e) {}
