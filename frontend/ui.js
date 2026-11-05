@@ -23,7 +23,8 @@
     credit: 'anidream.credit.v1',
     railOrder: 'anidream.railOrder.v1',
     season: 'anidream.season.v1',
-    seasonFx: 'anidream.seasonFx.v1'
+    seasonFx: 'anidream.seasonFx.v1',
+    homeMode: 'anidream.homeMode.v1'
   };
 
   var ICON_DOWNLOAD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l4-4m-4 4l-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
@@ -62,7 +63,88 @@
   var modalFilter = '';
 
   var posts = [];
-  var canvasCleared = false;
+
+  /* ---------------- 侧边栏「桌面 / 画布」模式切换 ----------------
+   * 第一个侧栏按钮是双模式入口：点击后在按钮右侧弹出菜单，
+   * 选择「画布」则按钮与视图都变为画布，选择「桌面」则变回桌面。
+   */
+  var homeMode = 'create'; // 'create' = 桌面, 'canvas' = 画布
+
+  function syncHomeBtn() {
+    var btn = document.getElementById('railHomeBtn');
+    var label = document.getElementById('railHomeLabel');
+    if (!btn) return;
+    var isCanvas = homeMode === 'canvas';
+    if (label) label.textContent = isCanvas ? '画布' : '桌面';
+    btn.setAttribute('data-rail', homeMode);
+    btn.title = (isCanvas ? '画布' : '桌面') + '（点击在 桌面/画布 之间切换）';
+    var icDesk = btn.querySelector('.hm-home-ic-desktop');
+    var icCanvas = btn.querySelector('.hm-home-ic-canvas');
+    if (icDesk) icDesk.style.display = isCanvas ? 'none' : '';
+    if (icCanvas) icCanvas.style.display = isCanvas ? '' : 'none';
+    var menu = document.getElementById('homeModeMenu');
+    if (menu) {
+      menu.querySelectorAll('[data-hmode]').forEach(function (item) {
+        item.classList.toggle('is-current', item.getAttribute('data-hmode') === homeMode);
+      });
+    }
+  }
+
+  function setHomeMode(mode, opts) {
+    if (mode !== 'create' && mode !== 'canvas') return;
+    homeMode = mode;
+    try { localStorage.setItem(LS.homeMode, mode); } catch (err) {}
+    syncHomeBtn();
+    closeHomeMenu();
+    if (!(opts && opts.silent) && window.HMApp && window.HMApp.switchView) {
+      window.HMApp.switchView(mode);
+    }
+  }
+
+  function toggleHomeMenu() {
+    var menu = document.getElementById('homeModeMenu');
+    if (!menu) return;
+    syncHomeBtn();
+    menu.hidden = !menu.hidden;
+  }
+
+  function closeHomeMenu() {
+    var menu = document.getElementById('homeModeMenu');
+    if (menu) menu.hidden = true;
+  }
+
+  function bindHomeSwitch() {
+    syncHomeBtn();
+    var menu = document.getElementById('homeModeMenu');
+    if (menu) {
+      menu.addEventListener('click', function (event) {
+        var item = event.target.closest('[data-hmode]');
+        if (!item) return;
+        event.stopPropagation();
+        setHomeMode(item.getAttribute('data-hmode'));
+      });
+    }
+    document.addEventListener('click', function (event) {
+      var m = document.getElementById('homeModeMenu');
+      if (!m || m.hidden) return;
+      if (event.target.closest('#homeModeMenu') || event.target.closest('#railHomeBtn')) return;
+      closeHomeMenu();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeHomeMenu();
+    });
+  }
+
+  function initHomeMode() {
+    var saved = 'create';
+    try { saved = localStorage.getItem(LS.homeMode) || 'create'; } catch (err) {}
+    if (saved !== 'canvas' && saved !== 'create') saved = 'create';
+    homeMode = saved;
+    syncHomeBtn();
+    if (saved === 'canvas' && window.HMApp && window.HMApp.switchView) {
+      window.HMApp.switchView('canvas');
+    }
+  }
 
   var credit = { total: 300, used: 0 };
 
@@ -605,6 +687,12 @@
     document.addEventListener('click', function (event) {
       var item = event.target.closest('[data-rail]');
       if (!item) return;
+      if (item.id === 'railHomeBtn') {
+        /* 桌面/画布双模式按钮：点击弹出模式菜单而不是直接切视图 */
+        event.preventDefault();
+        toggleHomeMenu();
+        return;
+      }
       var view = item.getAttribute('data-rail');
       if (!view) return;
       if (item.disabled || DISABLED_RAILS[view]) {
@@ -612,6 +700,7 @@
         return;
       }
       event.preventDefault();
+      closeHomeMenu();
       A.switchView(view);
     });
   }
@@ -753,9 +842,14 @@
     if (view === 'toolworkflow' && window.HMToolWorkflow) {
       try { window.HMToolWorkflow.enter(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'canvas' && view !== 'canvas' && window.HMCanvas) {
+      try { window.HMCanvas.leave(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
-    if (view === 'canvas') renderCanvas();
+    if (view === 'canvas' && window.HMCanvas) {
+      try { window.HMCanvas.enter(); } catch (e) { console.error('[Canvas] enter failed', e); }
+    }
     if (view === 'assets') { renderAssetPage(); loadProjects(); }
     if (view === 'writing') loadDraft();
     if (view === 'forum') renderForum();
@@ -789,9 +883,7 @@
   }
 
   function onRenderWorks() {
-    canvasCleared = false;
     updateRailBadges();
-    if (state.view === 'canvas') renderCanvas();
   }
 
   /* ---------------- 生成模式 ---------------- */
@@ -1991,85 +2083,6 @@
     A.toast('素材已删除', 'info');
   }
 
-  /* ---------------- 画布 ---------------- */
-  function bindCanvas() {
-    var zoom = document.getElementById('canvasZoom');
-    if (zoom) {
-      zoom.addEventListener('input', function () { setBoardZoom(Number(zoom.value)); });
-      setBoardZoom(Number(zoom.value));
-    }
-
-    var clear = document.getElementById('canvasClear');
-    if (clear) {
-      clear.addEventListener('click', function () {
-        if (!A.state.works.length) return;
-        if (!window.confirm('清空画布展示？作品仍会保留在「成片」中。')) return;
-        canvasCleared = true;
-        renderCanvas();
-        A.toast('画布已清空，作品仍在成片', 'info');
-      });
-    }
-
-    var board = document.getElementById('canvasBoard');
-    if (board) {
-      board.addEventListener('click', function (event) {
-        var card = event.target.closest('[data-board]');
-        if (!card) return;
-        var work = A.state.works.find(function (item) { return item.id === card.getAttribute('data-board'); });
-        if (!work) return;
-        var action = event.target.closest('[data-bact]');
-        if (action && action.getAttribute('data-bact') === 'download') {
-          A.downloadImage(work.url || work.thumb, A.fileNameFor(work));
-          return;
-        }
-        A.openLightbox(work);
-      });
-    }
-  }
-
-  function setBoardZoom(value) {
-    var board = document.getElementById('canvasBoard');
-    var label = document.getElementById('canvasZoomVal');
-    var zoom = Math.max(60, Math.min(160, value || 100));
-    if (board) board.style.setProperty('--board-min', Math.round(220 * zoom / 100) + 'px');
-    if (label) label.textContent = zoom + '%';
-  }
-
-  function boardCard(work) {
-    var wide = work.type === 'video';
-    var url = esc(work.url || work.thumb || '');
-    var media;
-    if (work.type === 'video') {
-      media = '<video src="' + url + '" muted playsinline preload="metadata"></video>';
-    } else if (work.type === 'audio') {
-      media = '<audio src="' + url + '" controls preload="metadata"></audio>';
-    } else {
-      media = '<img src="' + esc(work.thumb || work.url) + '" alt="' + esc(work.prompt) + '" loading="lazy">';
-    }
-    return '<figure class="hm-board-card' + (wide ? ' is-wide' : '') + '" data-board="' + esc(work.id) + '">' +
-      media +
-      '<div class="hm-board-actions">' +
-        '<button data-bact="download" title="下载">' + ICON_DOWNLOAD + '</button>' +
-      '</div>' +
-      '<figcaption><span>' + esc(work.modelName || 'AI') + '</span><span>' + (work.type === 'video' ? '视频' : work.type === 'audio' ? '音频' : '图片') + '</span></figcaption>' +
-    '</figure>';
-  }
-
-  function renderCanvas() {
-    var board = document.getElementById('canvasBoard');
-    var empty = document.getElementById('canvasEmpty');
-    if (!board) return;
-
-    var works = (A.state.works || []).slice(0, 48);
-    if (canvasCleared || !works.length) {
-      board.innerHTML = '';
-      if (empty) empty.hidden = false;
-      return;
-    }
-    if (empty) empty.hidden = true;
-    board.innerHTML = works.map(boardCard).join('');
-  }
-
   /* ---------------- 写作 ---------------- */
   function bindWriting() {
     var templates = document.getElementById('writingTemplates');
@@ -2328,8 +2341,6 @@
     if (input) input.value = '';
     var count = document.getElementById('writingCount');
     if (count) count.textContent = '0 / 6000';
-    canvasCleared = false;
-    renderCanvas();
     A.toast('本地作品与草稿已清理', 'success');
   }
 
@@ -2379,6 +2390,8 @@
   async function init() {
     readPrefs();
     bindRail();
+    bindHomeSwitch();
+    initHomeMode();
     initRailDragSort();
     bindTheme();
     startSeasonAmbient();
@@ -2387,7 +2400,6 @@
     bindAssetUI();
     bindWriting();
     bindForum();
-    bindCanvas();
     bindEditor();
     bindTools();
 
@@ -2442,11 +2454,11 @@
     setMode: setMode,
     openPresetModal: openPresetModal,
     openAssetModal: openAssetModal,
+    setHomeMode: setHomeMode,
     openEditor: function () {
       var expand = document.getElementById('expandPrompt');
       if (expand) expand.click();
-    },
-    renderCanvas: renderCanvas
+    }
   };
 
   init();
