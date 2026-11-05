@@ -16802,3 +16802,17 @@ body[data-view='paint'] #view-paint {
   color: #d8b4fe;
   font-size: 11.5px;
 }
+
+/* 作画组子模块切换防闪帧：统一底色 + 快速淡入遮盖重绘白闪 */
+body[data-view='sakuga'] #view-sakuga.is-active,
+body[data-view='oua'] #view-oua.is-active,
+body[data-view='animation'] #view-animation.is-active,
+body[data-view='paint'] #view-paint.is-active {
+  animation: sakugaFadeIn 0.16s ease-out;
+  background-color: #0f1320;
+}
+
+@keyframes sakugaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

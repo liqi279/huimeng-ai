@@ -27,20 +27,6 @@
     });
   }
 
-  var lastAutoLaunch = 0;
-
-  function onViewMaybeAutoLaunch() {
-    syncTabs();
-    /* 每次切入「CSP作画」子模块时，自动尝试唤起本地 CSP（10 秒冷却防抖动） */
-    if (currentView() !== 'sakuga') return;
-    var now = Date.now();
-    if (now - lastAutoLaunch < 10000) return;
-    lastAutoLaunch = now;
-    window.setTimeout(function () {
-      if (currentView() === 'sakuga') launchCSP();
-    }, 350);
-  }
-
   function bindTabs() {
     var bar = $('sakugaTabs');
     if (!bar) return;
@@ -51,8 +37,10 @@
       if (!target || target === currentView()) return;
       if (window.HMApp && window.HMApp.switchView) window.HMApp.switchView(target);
     });
-    /* 视图变化时同步高亮（含侧栏直进、快捷键切视图等情况） */
-    var observer = new MutationObserver(onViewMaybeAutoLaunch);
+    /* 视图变化时同步高亮（含侧栏直进、快捷键切视图等情况）。
+       唤起 CSP 仅由「连接本地CSP」按钮手动触发，避免切页时
+       反复注入探测 iframe 造成闪帧与浏览器协议确认弹窗。 */
+    var observer = new MutationObserver(syncTabs);
     observer.observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
     syncTabs();
   }
