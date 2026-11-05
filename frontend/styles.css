@@ -16245,3 +16245,249 @@ body.rail-collapsed .hm-page {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============ 次元宇宙 · 赛博漩涡 ============ */
+.dv-vortex-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  background: radial-gradient(circle at 50% 50%, rgba(8, 12, 30, 0.9), rgba(3, 5, 15, 0.95));
+  box-shadow:
+    0 0 10px rgba(34, 211, 238, 0.35),
+    inset 0 0 8px rgba(168, 85, 247, 0.25);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.dv-vortex-btn:hover {
+  transform: scale(1.08);
+  border-color: rgba(244, 114, 182, 0.7);
+  box-shadow:
+    0 0 18px rgba(168, 85, 247, 0.55),
+    0 0 6px rgba(34, 211, 238, 0.6),
+    inset 0 0 10px rgba(244, 114, 182, 0.3);
+}
+.dv-vortex-btn::after {
+  /* 扫描线 */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.04) 0px,
+    rgba(255, 255, 255, 0.04) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+.dv-vortex-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.dv-vortex-btn-small { width: 36px; height: 36px; }
+
+/* 漩涡全屏过渡层 */
+.dv-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(2, 4, 12, 0);
+  display: none;
+  align-items: flex-start;
+  justify-content: flex-start;
+  pointer-events: auto;
+  overflow: hidden;
+}
+.dv-overlay-canvas {
+  position: fixed;
+  transform-origin: center center;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 24px rgba(168, 85, 247, 0.7));
+}
+
+/* 次元宇宙页面 */
+.dv-page {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: none;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(34, 211, 238, 0.10), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(168, 85, 247, 0.12), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(244, 114, 182, 0.05), transparent 70%),
+    linear-gradient(160deg, #05030f 0%, #0a0620 45%, #06030f 100%);
+  color: #e8f7ff;
+  opacity: 0;
+  transition: opacity .3s ease;
+  overflow: hidden;
+}
+.dv-page.is-visible { opacity: 1; }
+
+.dv-page::before {
+  /* 网格背景 */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 85%);
+  pointer-events: none;
+}
+.dv-page::after {
+  /* 扫描线 */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.025) 0,
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  pointer-events: none;
+}
+
+.dv-topbar {
+  position: relative;
+  z-index: 3;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.18);
+  background: rgba(5, 3, 15, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.dv-topbar-left { display: flex; align-items: center; gap: 14px; }
+.dv-topbar-right { display: flex; align-items: center; gap: 10px; }
+.dv-brand { display: flex; flex-direction: column; line-height: 1.1; }
+.dv-brand-mark {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  background: linear-gradient(90deg, #22d3ee, #a855f7, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dv-brand-sub {
+  font-size: 9px;
+  letter-spacing: 0.34em;
+  color: rgba(148, 163, 184, 0.7);
+  margin-top: 3px;
+}
+.dv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.06);
+  color: #67e8f9;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: default;
+}
+.dv-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: dvPulse 1.6s ease-in-out infinite;
+}
+@keyframes dvPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.75); }
+}
+
+.dv-symbols {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+}
+.dv-sym {
+  position: absolute;
+  font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols", sans-serif;
+  will-change: transform, left, top;
+  user-select: none;
+}
+
+.dv-center {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24px;
+}
+.dv-title {
+  margin: 0 0 18px;
+  font-size: clamp(28px, 5vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: linear-gradient(92deg, #ffffff 0%, #67e8f9 40%, #c084fc 70%, #f9a8d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 40px rgba(168, 85, 247, 0.35);
+}
+.dv-sub {
+  margin: 0;
+  font-size: clamp(14px, 2.2vw, 20px);
+  color: rgba(203, 213, 225, 0.85);
+  letter-spacing: 0.04em;
+}
+.dv-dots {
+  animation: dvBlink 1.2s steps(4) infinite;
+  color: #67e8f9;
+}
+@keyframes dvBlink {
+  0% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+.dv-meta {
+  margin-top: 34px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.75);
+  letter-spacing: 0.16em;
+}
+.dv-meta i {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(34, 211, 238, 0.5);
+  display: inline-block;
+}
+.dv-meta span { padding: 0 2px; }
+
+body.dv-open .hm-rail,
+body.dv-open .hm-topbar,
+body.dv-open .shell,
+body.dv-open .hm-page {
+  pointer-events: none;
+}
