@@ -3537,7 +3537,7 @@ async function downloadImage(url, filename) {
 
 /* ---------------- 大图预览 ---------------- */
 /* ---------- Lightbox 状态 ---------- */
-var lbState = { scale: 1, rotate: 0, tx: 0, ty: 0, dragging: false, startX: 0, startY: 0, startTx: 0, startTy: 0, bound: false, isImage: false };
+var lbState = { scale: 1, rotate: 0, tx: 0, ty: 0, dragging: false, startX: 0, startY: 0, startTx: 0, startTy: 0, lastX: 0, lastY: 0, pointerId: null, animTimer: null, bound: false, isImage: false };
 
 function lbApply() {
   var img = els.lbImage;
@@ -3563,6 +3563,14 @@ function lbZoom(factor, cx, cy) {
     var py = cy - rect.top - rect.height / 2;
     lbState.tx = px - (px - lbState.tx) * (next / prev);
     lbState.ty = py - (py - lbState.ty) * (next / prev);
+    // 拖动过程中滚轮缩放：把拖动基准点移到当前指针与当前偏移，
+    // 否则下一次 pointermove 会按旧的 startTx/startTy 计算，图片被“拽”回原处。
+    if (lbState.dragging) {
+      lbState.startTx = lbState.tx;
+      lbState.startTy = lbState.ty;
+      lbState.startX = lbState.lastX;
+      lbState.startY = lbState.lastY;
+    }
   }
   lbState.scale = next;
   lbApply();
@@ -3591,34 +3599,52 @@ function bindLightboxGestures() {
   lbState.bound = true;
   var img = els.lbImage, stage = els.lbStage;
 
-  // 滚轮缩放
+  // 滚轮缩放：关掉过渡，缩放后仍可立即拖动
   stage.addEventListener('wheel', function (e) {
     if (!lbState.isImage) return;
     e.preventDefault();
+    img.classList.add('no-anim');
+    clearTimeout(lbState.animTimer);
+    lbState.animTimer = setTimeout(function () {
+      if (!lbState.dragging) img.classList.remove('no-anim');
+    }, 200);
     var factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
     lbZoom(factor, e.clientX, e.clientY);
   }, { passive: false });
 
-  // 拖拽平移
+  // 拖拽平移：任意缩放比例下都可拖动（不再限制 scale > 1）
   img.addEventListener('pointerdown', function (e) {
-    if (!lbState.isImage || lbState.scale <= 1) return;
+    if (!lbState.isImage) return;
+    if (lbState.dragging) return;          // 已在拖动：忽略第二根手指，避免与缩放/双指手势打架
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     lbState.dragging = true;
+    lbState.pointerId = e.pointerId;
     lbState.startX = e.clientX; lbState.startY = e.clientY;
+    lbState.lastX = e.clientX; lbState.lastY = e.clientY;
     lbState.startTx = lbState.tx; lbState.startTy = lbState.ty;
-    img.setPointerCapture(e.pointerId);
-    img.style.cursor = 'grabbing';
+    try { img.setPointerCapture(e.pointerId); } catch (err) {}
+    img.classList.add('no-anim');
     e.preventDefault();
   });
   img.addEventListener('pointermove', function (e) {
     if (!lbState.dragging) return;
+    if (e.pointerId != null && e.pointerId !== lbState.pointerId) return;
+    lbState.lastX = e.clientX; lbState.lastY = e.clientY;
     lbState.tx = lbState.startTx + (e.clientX - lbState.startX);
     lbState.ty = lbState.startTy + (e.clientY - lbState.startY);
     lbApply();
   });
-  img.addEventListener('pointerup', function (e) {
-    lbState.dragging = false; img.style.cursor = lbState.scale > 1 ? 'grab' : '';
+  function endDrag(e) {
+    if (!lbState.dragging) return;
+    if (e && e.pointerId != null && e.pointerId !== lbState.pointerId) return;
+    lbState.dragging = false;
+    lbState.pointerId = null;
+    img.classList.remove('no-anim');
     try { img.releasePointerCapture(e.pointerId); } catch (err) {}
-  });
+  }
+  img.addEventListener('pointerup', endDrag);
+  img.addEventListener('pointercancel', endDrag);
+  img.addEventListener('dragstart', function (e) { e.preventDefault(); });
 
   // 按钮
   var bar = document.getElementById('lbZoomBar');
@@ -3662,7 +3688,14 @@ function openLightbox(item) {
 
   // 重置变换
   lbState.scale = 1; lbState.rotate = 0; lbState.tx = 0; lbState.ty = 0;
-  if (els.lbImage) { els.lbImage.style.transform = ''; els.lbImage.style.cursor = ''; }
+  lbState.dragging = false; lbState.pointerId = null;
+  clearTimeout(lbState.animTimer);
+  if (els.lbImage) {
+    els.lbImage.style.transform = '';
+    els.lbImage.style.cursor = '';
+    els.lbImage.classList.remove('no-anim');
+    els.lbImage.draggable = false;
+  }
 
   if (type === 'image') {
     els.lbImage.style.display = '';

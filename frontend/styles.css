@@ -2122,6 +2122,12 @@ body[data-view="works"] .view-works {
   user-select: none;
   -webkit-user-drag: none;
 }
+/* 拖动或滚轮缩放时关闭过渡，保证图片严格跟随指针，不被 0.18s 动画拖慢 */
+.lb-stage #lbImage.no-anim {
+  transition: none;
+  cursor: grabbing;
+}
+.lb-stage #lbImage.drag-ready { cursor: grab; }
 
 .lb-inner {
   position: absolute;
