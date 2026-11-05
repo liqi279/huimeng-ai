@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/health', (req, res) => {
   res.json({
     ok: true,
-    version: '1.0.0',
+    version: '1.1.0',
     rayinConfigured: Boolean(config.RAYIN_KEY),
     engines: ['flux', 'openai', 'gpt-image', 'banana'],
     modes: ['image', 'video', 'audio'],
