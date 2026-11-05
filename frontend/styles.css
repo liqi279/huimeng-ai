@@ -16493,7 +16493,7 @@ body.dv-open .hm-page {
 }
 
 /* =============================================================
- * 作画模块 · 共享顶栏（原画 / 动画 / 着色 / CSP作画）+ CSP 联动页
+ * 作画模块 · 共享顶栏（原画 / 动画 / 着色）
  * ============================================================= */
 .sakuga-tabs {
   display: none;
@@ -16513,7 +16513,6 @@ body.dv-open .hm-page {
   transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-body[data-view='sakuga'] .sakuga-tabs,
 body[data-view='oua'] .sakuga-tabs,
 body[data-view='animation'] .sakuga-tabs,
 body[data-view='paint'] .sakuga-tabs {
@@ -16564,13 +16563,13 @@ body.rail-collapsed .sakuga-tabs {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 14px rgba(139, 92, 246, 0.18);
 }
 
-.sakuga-tab-csp.is-active {
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.26), rgba(139, 92, 246, 0.18));
-  border-color: rgba(34, 211, 238, 0.4);
+/* 作画组视图给共享顶栏让位 + 常驻不透明底色（杜绝切换时背景透闪） */
+#view-oua,
+#view-animation,
+#view-paint {
+  background-color: #0f1320;
 }
 
-/* 作画组视图给共享顶栏让位 */
-body[data-view='sakuga'] #view-sakuga,
 body[data-view='oua'] #view-oua,
 body[data-view='animation'] #view-animation,
 body[data-view='paint'] #view-paint {
@@ -16583,236 +16582,4 @@ body[data-view='paint'] #view-paint {
 @media (max-width: 640px) {
   .sakuga-tabs { left: 50px; }
   .sakuga-tab { padding: 0 10px; font-size: 12px; }
-}
-
-/* ---------------- CSP作画 · 联动面板 ---------------- */
-.hm-csp-page .hm-page-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-}
-
-.hm-csp-page .hm-page-head h2 {
-  margin: 0 0 4px;
-  font-size: 20px;
-}
-
-.hm-csp-page .hm-page-sub {
-  margin: 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.hm-csp-page .hm-page-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.csp-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 99px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 11.5px;
-  color: var(--text-2);
-  font-style: normal;
-}
-
-.csp-status em {
-  font-style: normal;
-}
-
-.csp-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #8f88ad;
-  flex: none;
-}
-
-.csp-dot[data-state='launching'] {
-  background: #f5b942;
-  animation: cspPulse 0.9s ease-in-out infinite;
-}
-
-.csp-dot[data-state='launched'] {
-  background: var(--green);
-  box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
-}
-
-.csp-dot[data-state='notfound'] {
-  background: var(--danger);
-}
-
-@keyframes cspPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(0.78); }
-}
-
-.csp-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
-  max-width: 1180px;
-}
-
-.csp-card {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(22, 18, 40, 0.66), rgba(14, 12, 26, 0.5));
-  padding: 18px 20px 20px;
-}
-
-.csp-card-wide {
-  grid-column: 1 / -1;
-}
-
-.csp-card h3 {
-  margin: 0 0 10px;
-  font-size: 14.5px;
-}
-
-.csp-card-sub {
-  margin: -4px 0 12px;
-  font-size: 11.5px;
-  color: var(--muted);
-}
-
-.csp-steps {
-  margin: 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.csp-steps li {
-  font-size: 12.5px;
-  line-height: 1.65;
-  color: var(--text-2);
-}
-
-.csp-steps b {
-  display: block;
-  color: var(--text);
-  margin-bottom: 1px;
-}
-
-.csp-note {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(251, 113, 133, 0.3);
-  background: rgba(251, 113, 133, 0.07);
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--text-2);
-}
-
-.csp-note b {
-  color: #fda4af;
-}
-
-.csp-note p {
-  margin: 6px 0 0;
-}
-
-.csp-note a {
-  color: var(--cyan);
-}
-
-.csp-drop {
-  border: 1.5px dashed rgba(167, 139, 250, 0.35);
-  border-radius: 14px;
-  padding: 26px 16px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 12.5px;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-
-.csp-drop.is-drag {
-  border-color: var(--cyan);
-  background: rgba(34, 211, 238, 0.07);
-  color: var(--text-2);
-}
-
-.csp-drop svg {
-  width: 30px;
-  height: 30px;
-  margin-bottom: 8px;
-  color: var(--violet);
-}
-
-.csp-drop p {
-  margin: 0;
-}
-
-.csp-link {
-  color: var(--cyan);
-  text-decoration: underline;
-  font-size: inherit;
-  padding: 0;
-}
-
-.csp-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.csp-preview-item {
-  width: 72px;
-  height: 72px;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-}
-
-.csp-api-table {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.csp-api-table > div {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  font-size: 12px;
-  color: var(--text-2);
-  flex-wrap: wrap;
-}
-
-.csp-api-table code {
-  flex: none;
-  padding: 3px 9px;
-  border-radius: 8px;
-  background: rgba(139, 92, 246, 0.14);
-  border: 1px solid rgba(167, 139, 250, 0.25);
-  color: #d8b4fe;
-  font-size: 11.5px;
-}
-
-/* 作画组子模块切换防闪帧：统一底色 + 快速淡入遮盖重绘白闪 */
-body[data-view='sakuga'] #view-sakuga.is-active,
-body[data-view='oua'] #view-oua.is-active,
-body[data-view='animation'] #view-animation.is-active,
-body[data-view='paint'] #view-paint.is-active {
-  animation: sakugaFadeIn 0.16s ease-out;
-  background-color: #0f1320;
-}
-
-@keyframes sakugaFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }

@@ -832,8 +832,8 @@
   var prevView = null;
 
   function onView(view) {
-    /* 原画 / 动画 / 着色 / CSP作画 同属「作画」模块，统一高亮作画侧栏按钮 */
-    var railView = (view === 'oua' || view === 'animation' || view === 'paint') ? 'sakuga' : view;
+    /* 原画 / 动画 / 着色同属「作画」模块，统一高亮作画侧栏按钮 */
+    var railView = (view === 'animation' || view === 'paint') ? 'oua' : view;
     document.querySelectorAll('[data-rail]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-rail') === railView);
     });
