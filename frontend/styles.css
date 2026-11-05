@@ -5236,6 +5236,15 @@ body:not([data-view="create"]) .hm-canvas {
   display: none !important;
 }
 
+/* 首帧校准（配合 body 后首行 boot 脚本）：JS 初始化前，
+   若用户上次处于画布模式，首帧直接呈现画布，不再先显示桌面再跳变 */
+body[data-view="canvas"] #view-create {
+  display: none !important;
+}
+body[data-view="canvas"] #view-canvas {
+  display: block !important;
+}
+
 .hm-page-head {
   display: flex;
   align-items: flex-start;

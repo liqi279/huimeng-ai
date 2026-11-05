@@ -9,6 +9,19 @@
   <link rel="stylesheet" href="styles-admin.css">
 </head>
 <body data-view="create">
+  <script>
+  /* 首帧前校准：在页面任何内容绘制前，把用户上次保存的视图与侧栏状态
+     应用到 body，避免 JS 初始化后再切换造成的刷新闪帧 */
+  (function () {
+    try {
+      var mode = localStorage.getItem('anidream.homeMode.v1');
+      if (mode === 'canvas') document.body.dataset.view = 'canvas';
+      if (localStorage.getItem('anidream.railCollapsed.v1') === '1') {
+        document.body.classList.add('rail-collapsed');
+      }
+    } catch (e) {}
+  })();
+  </script>
   <aside class="hm-rail" id="hmRail" aria-label="主导航">
     <div class="hm-rail-top">
       <button class="hm-rail-item is-active" data-rail="create" id="railHomeBtn" title="桌面（点击在 桌面/画布 之间切换）">
