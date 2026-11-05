@@ -105,7 +105,17 @@
     var menu = document.getElementById('homeModeMenu');
     if (!menu) return;
     syncHomeBtn();
-    menu.hidden = !menu.hidden;
+    if (menu.hidden) {
+      var btn = document.getElementById('railHomeBtn');
+      if (btn && btn.getBoundingClientRect) {
+        var r = btn.getBoundingClientRect();
+        menu.style.left = (r.right + 8) + 'px';
+        menu.style.top = r.top + 'px';
+      }
+      menu.hidden = false;
+    } else {
+      menu.hidden = true;
+    }
   }
 
   function closeHomeMenu() {

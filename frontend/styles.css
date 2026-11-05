@@ -14052,9 +14052,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 
 /* ================= 侧边栏「桌面/画布」切换弹窗 ================= */
 .hm-home-menu {
-  position: absolute;
-  left: 74px;
-  top: 14px;
+  position: fixed;
   width: 230px;
   padding: 8px;
   border-radius: 14px;
