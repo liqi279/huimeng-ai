@@ -1,8 +1,16 @@
 node_modules/
-server/data/
 server/uploads/
 .DS_Store
 *.log
 
 # 本地部署密钥（勿提交）
 .deploy/
+
+# ===== 数据data：运行时 / 物理数据不入库 =====
+data/mysql/data/
+data/runtime/cert/
+data/runtime/sessions.json
+data/config/
+data/library/books.json
+data/library/favorites.json
+data/library/reading-history.json

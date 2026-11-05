@@ -46,7 +46,25 @@ module.exports = {
      设置后作品/用户/桌面/资产全部存入外部数据库，Render 重启不再丢数据。
      不设置则回退到本地 JSON 文件（data/ 目录，重启会清空）。 */
   DATABASE_URL: env('DATABASE_URL', ''),
-  DATA_DIR: process.env.DATA_DIR ? path.resolve(env('DATA_DIR', '')) : path.join(serverRoot, 'data'),
+  /* 项目统一的「数据data」根目录：所有数据文件（运行时数据、MySQL、
+     图书馆种子）都集中在这里，见 data/README.md */
+  DATA_ROOT: process.env.DATA_ROOT
+    ? path.resolve(env('DATA_ROOT', ''))
+    : path.resolve(serverRoot, '..', 'data'),
+  /* 运行时数据目录（用户、作品、媒体、证书等），已从 server/data 迁到 data/runtime */
+  DATA_DIR: process.env.DATA_DIR
+    ? path.resolve(env('DATA_DIR', ''))
+    : path.resolve(serverRoot, '..', 'data', 'runtime'),
+  /* ---------- 图书馆 MySQL ---------- */
+  /* LIBRARY_STORE=mysql 时启用 MySQL；未配置或连接失败自动回退 JSON 文件存储 */
+  LIBRARY_STORE: env('LIBRARY_STORE', 'auto'), // auto | mysql | file
+  MYSQL_HOST: env('MYSQL_HOST', '127.0.0.1'),
+  MYSQL_PORT: Number(env('MYSQL_PORT', '3306')),
+  MYSQL_USER: env('MYSQL_USER', 'huimeng'),
+  MYSQL_PASSWORD: env('MYSQL_PASSWORD', 'huimeng_lib_2026'),
+  MYSQL_DATABASE: env('MYSQL_DATABASE', 'huimeng_library'),
+  /* 表空间上限参考值（仅用于向接口/管理页展示，实际由 my.cnf 控制） */
+  LIBRARY_STORAGE_LIMIT: env('LIBRARY_STORAGE_LIMIT', '500G'),
   FRONTEND_DIR: process.env.FRONTEND_DIR
     ? path.resolve(env('FRONTEND_DIR', ''))
     : path.resolve(serverRoot, '..', 'frontend'),

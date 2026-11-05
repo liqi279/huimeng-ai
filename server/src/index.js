@@ -28,6 +28,7 @@ const artRoutes = require('./routes/art');
 const ouaRoutes = require('./routes/oua');
 const animationRoutes = require('./routes/animation');
 const ollamaRoutes = require('./routes/ollama');
+const libraryRoutes = require('./routes/library');
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/api', scriptRoutes);
 app.use('/api', artRoutes);
 app.use('/api', ouaRoutes);
 app.use('/api', animationRoutes);
+app.use('/api', libraryRoutes);
 
 app.use('/api', (req, res) => {
   res.status(404).json({

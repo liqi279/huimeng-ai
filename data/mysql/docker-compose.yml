@@ -1,0 +1,37 @@
+# =============================================================
+# 绘梦 · 图书馆 MySQL 8（本地开发 / 单机部署）
+# 用法：cd data/mysql && docker compose up -d
+# 数据落盘：data/mysql/data/（该目录不入 Git，容量按需增长至 500G）
+# =============================================================
+
+services:
+  library-mysql:
+    image: mysql:8.0
+    container_name: huimeng-library-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+      - --innodb_data_file_path=ibdata1:12M:autoextend:max:500G
+      - --innodb_autoextend_increment=64
+      - --innodb_file_per_table=ON
+      - --innodb_buffer_pool_size=1G
+      - --innodb_log_file_size=512M
+      - --max_allowed_packet=64M
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-huimeng_root_2026}
+      MYSQL_DATABASE: huimeng_library
+      MYSQL_USER: huimeng
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-huimeng_lib_2026}
+      TZ: Asia/Shanghai
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - ./data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-huimeng_root_2026}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10

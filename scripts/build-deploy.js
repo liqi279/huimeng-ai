@@ -69,7 +69,7 @@ if (!html.includes(styleAdminTag.slice(0, 40))) {
   throw new Error('未找到 styles-admin.css 的 link 标签');
 }
 
-const scripts = ['three.min.js', 'HMOrbitControls.js', 'HMTransformControls.js', 'HMDRACOLoader.js', 'HMGLTFLoader.js', 'female-mannequin-glb.js', 'miku-player.js', 'miku-chat.js', 'jszip.min.js', 'chart.umd.min.js', 'api.js', 'auth-ui.js', 'app.js', 'storyboard.js', 'director3d.js', 'paint.js', 'toolimage.js', 'toolreference.js', 'tooltraining.js', 'toolrestore.js', 'toolworkflow.js', 'toolvideo.js', 'chat.js', 'canvas.js', 'ui.js', 'desk.js', 'admin.js'];
+const scripts = ['three.min.js', 'HMOrbitControls.js', 'HMTransformControls.js', 'HMDRACOLoader.js', 'HMGLTFLoader.js', 'female-mannequin-glb.js', 'miku-player.js', 'miku-chat.js', 'jszip.min.js', 'chart.umd.min.js', 'api.js', 'auth-ui.js', 'app.js', 'storyboard.js', 'director3d.js', 'paint.js', 'toolimage.js', 'toolreference.js', 'tooltraining.js', 'toolrestore.js', 'toolworkflow.js', 'toolvideo.js', 'chat.js', 'canvas.js', 'library.js', 'ui.js', 'desk.js', 'admin.js'];
 for (const file of scripts) {
   const re = new RegExp('<script[^>]*src=["\']' + file.replace(/\./g, '\\.') + '["\'][^>]*></script>', 'i');
   if (!re.test(html)) throw new Error('未找到脚本标签：' + file);
@@ -86,6 +86,21 @@ if (fs.existsSync(feLibDir)) {
     fs.copyFileSync(path.join(feLibDir, file), path.join(deployLibDir, file));
   }
 }
+
+/* 图书馆种子数据：内联进单文件，静态部署（无后端）时作为离线书架 */
+const seedPath = path.join(ROOT, 'data', 'library', 'books.seed.json');
+if (!fs.existsSync(seedPath)) throw new Error('缺少图书馆种子数据：data/library/books.seed.json');
+const seedRaw = fs.readFileSync(seedPath, 'utf8');
+let seedData;
+try {
+  seedData = JSON.parse(seedRaw);
+} catch (err) {
+  throw new Error('图书馆种子数据不是合法 JSON：' + err.message);
+}
+const seedTag = '<script>window.HM_LIBRARY_SEED = '
+  + inlineScript(JSON.stringify(seedData))
+  + ';</script>\n</head>';
+html = html.replace('</head>', seedTag);
 
 if (/<script[^>]+src=|<link[^>]+href=/i.test(html)) {
   throw new Error('仍有未内联的外部资源引用');

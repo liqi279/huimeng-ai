@@ -24,7 +24,8 @@
     railOrder: 'anidream.railOrder.v1',
     season: 'anidream.season.v1',
     seasonFx: 'anidream.seasonFx.v1',
-    homeMode: 'anidream.homeMode.v1'
+    homeMode: 'anidream.homeMode.v1',
+    railCollapsed: 'anidream.railCollapsed.v1'
   };
 
   var ICON_DOWNLOAD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l4-4m-4 4l-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
@@ -157,6 +158,44 @@
   }
 
   var credit = { total: 300, used: 0 };
+
+  /* ---------------- 侧边栏显示 / 隐藏 ----------------
+   * 侧栏右缘中间的小按钮：折叠 rail 与主内容左偏移，主区域自动扩展。
+   */
+  function setRailCollapsed(collapsed) {
+    document.body.classList.toggle('rail-collapsed', !!collapsed);
+    try { localStorage.setItem(LS.railCollapsed, collapsed ? '1' : '0'); } catch (err) {}
+    var btn = document.getElementById('railToggleBtn');
+    if (btn) {
+      btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      btn.title = collapsed ? '显示侧边栏' : '隐藏侧边栏';
+      btn.setAttribute('aria-label', btn.title);
+      btn.classList.toggle('is-collapsed', !!collapsed);
+    }
+    /* 画布 / 导演台等依赖容器尺寸的视图重新计算 */
+    window.setTimeout(function () {
+      if (window.HMCanvas && typeof window.HMCanvas.relayout === 'function') {
+        try { window.HMCanvas.relayout(); } catch (err) {}
+      }
+      window.dispatchEvent(new Event('resize'));
+    }, 320);
+  }
+
+  function bindRailToggle() {
+    var btn = document.getElementById('railToggleBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      setRailCollapsed(!document.body.classList.contains('rail-collapsed'));
+    });
+  }
+
+  function initRailCollapsed() {
+    var saved = '0';
+    try { saved = localStorage.getItem(LS.railCollapsed) || '0'; } catch (err) {}
+    setRailCollapsed(saved === '1');
+  }
 
   /* ---------------- 本地存储 ---------------- */
   function readJSON(key, fallback) {
@@ -855,10 +894,16 @@
     if (prevView === 'canvas' && view !== 'canvas' && window.HMCanvas) {
       try { window.HMCanvas.leave(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'library' && view !== 'library' && window.HMLibrary) {
+      try { window.HMLibrary.leave(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas' && window.HMCanvas) {
       try { window.HMCanvas.enter(); } catch (e) { console.error('[Canvas] enter failed', e); }
+    }
+    if (view === 'library' && window.HMLibrary) {
+      try { window.HMLibrary.enter(); } catch (e) { console.error('[Library] enter failed', e); }
     }
     if (view === 'assets') { renderAssetPage(); loadProjects(); }
     if (view === 'writing') loadDraft();
@@ -2402,6 +2447,8 @@
     bindRail();
     bindHomeSwitch();
     initHomeMode();
+    bindRailToggle();
+    initRailCollapsed();
     initRailDragSort();
     bindTheme();
     startSeasonAmbient();
