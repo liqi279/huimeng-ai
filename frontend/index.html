@@ -58,9 +58,9 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
         <span>故事版</span>
       </button>
-      <button class="hm-rail-item" data-rail="paint" title="着色（PaintMan 上色）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l7-7 5 5-7 7H5v-5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6l3-3 6 6-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="17" r="1.4" fill="currentColor" opacity=".8"/></svg>
-        <span>着色</span>
+      <button class="hm-rail-item" data-rail="sakuga" title="作画（原画 / 动画 / 着色 / CSP作画）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
+        <span>作画</span>
       </button>
       <button class="hm-rail-item" data-rail="plan" title="企划（热榜、排行榜、日式动漫企划书）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5h10M7 12h7M7 15.5h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 3.5v3M8.5 3.5v3" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
@@ -73,14 +73,6 @@
       <button class="hm-rail-item" data-rail="art" title="美术设定设计（6 大分类 · 日本动画交付标准）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
         <span>美术设定</span>
-      </button>
-      <button class="hm-rail-item" data-rail="oua" title="原画（第一原画 K 帧 · 第二原画中割）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 9h10M7 12h7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="16" r="2.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M19 18.5L22 21" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <span>原画</span>
-      </button>
-      <button class="hm-rail-item" data-rail="animation" title="动画（中间帧生成 · 帧序列 · 节奏曲线）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 12h4M16 12h4M12 4v4M12 16v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
-        <span>动画</span>
       </button>
     </div>
 
@@ -1794,6 +1786,71 @@
         <button class="hm-sb-mini" id="sbPlayToggle">暂停</button>
         <button class="hm-sb-mini" id="sbPlayClose">关闭</button>
       </div>
+    </div>
+  </main>
+
+  <!-- ============ 作画模块 · 共享顶栏（原画 / 动画 / 着色 / CSP作画） ============ -->
+  <nav class="sakuga-tabs" id="sakugaTabs" aria-label="作画子模块切换">
+    <span class="sakuga-tabs-brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      作画
+    </span>
+    <button class="sakuga-tab" data-sakuga="oua" type="button">原画</button>
+    <button class="sakuga-tab" data-sakuga="animation" type="button">动画</button>
+    <button class="sakuga-tab" data-sakuga="paint" type="button">着色</button>
+    <button class="sakuga-tab sakuga-tab-csp" data-sakuga="sakuga" type="button">CSP作画</button>
+  </nav>
+
+  <!-- ===================== CSP作画（本地 CLIP STUDIO PAINT 联动） ===================== -->
+  <main class="hm-page hm-csp-page" id="view-sakuga" hidden>
+    <header class="hm-page-head">
+      <div>
+        <h2>🖌 CSP作画 · CLIP STUDIO PAINT 联动</h2>
+        <p class="hm-page-sub">唤起本机已安装的 CSP 进行专业作画，完成稿一键导回平台资产库</p>
+      </div>
+      <div class="hm-page-actions">
+        <span class="csp-status" id="cspStatus"><i class="csp-dot" id="cspDot"></i><em id="cspStatusText">未检测</em></span>
+        <button class="hm-btn hm-btn-primary" id="cspLaunchBtn" type="button">🚀 启动本地 CSP</button>
+      </div>
+    </header>
+
+    <div class="csp-grid">
+      <section class="csp-card">
+        <h3>🔗 联动流程</h3>
+        <ol class="csp-steps">
+          <li><b>导出参考稿</b><span>在「原画 / 着色」中完成线稿，导出 PNG 作为 CSP 作画底稿</span></li>
+          <li><b>本地 CSP 作画</b><span>点击上方「启动本地 CSP」，在你自己的 CLIP STUDIO PAINT 中打开底稿作画</span></li>
+          <li><b>导回完成稿</b><span>作画完成后导出 PNG / JPG，在下方「导入完成稿」传回平台资产库</span></li>
+        </ol>
+        <div class="csp-note" id="cspNote" hidden>
+          <b>未检测到 CSP 被唤起</b>
+          <p>平台通过系统协议唤起你电脑上<strong>已正版安装</strong>的 CLIP STUDIO PAINT。若未安装，请前往
+          <a href="https://www.clipstudio.net/" target="_blank" rel="noopener">CELSYS 官网</a> 下载试用版或购买正版。
+          桌面软件无法嵌入网页内运行，作画过程在本机 CSP 窗口中进行。</p>
+        </div>
+      </section>
+
+      <section class="csp-card">
+        <h3>📥 导入完成稿</h3>
+        <p class="csp-card-sub">支持 PNG / JPG / WebP，导入后进入「资产」模块统一管理</p>
+        <div class="csp-drop" id="cspDropZone">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5m0 0l-4 4m4-4l4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <p>拖放图片到此处，或 <button class="csp-link" id="cspImportBtn" type="button">点击选择文件</button></p>
+          <input type="file" id="cspImportInput" accept="image/*" multiple hidden>
+        </div>
+        <div class="csp-preview" id="cspPreview"></div>
+      </section>
+
+      <section class="csp-card csp-card-wide">
+        <h3>🔌 联动接口（HMCSPBridge）</h3>
+        <p class="csp-card-sub">插件文件位于仓库 <code>插件/CSP作画模块插件/</code>，供第三方页面或脚本调用</p>
+        <div class="csp-api-table" id="cspApiTable">
+          <div><code>HMCSPBridge.launch()</code><span>唤起本地 CSP（协议探测，自动显示引导）</span></div>
+          <div><code>HMCSPBridge.status()</code><span>当前联动状态：unknown / launching / launched / notfound</span></div>
+          <div><code>HMCSPBridge.importFiles(files)</code><span>把 FileList 图片导入平台资产库</span></div>
+          <div><code>HMCSPBridge.openAssets()</code><span>跳转到平台「资产」模块</span></div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -3746,6 +3803,7 @@
   <script src="chat.js"></script>
   <script src="canvas.js"></script>
   <script src="library.js"></script>
+  <script src="sakuga.js"></script>
   <script src="ui.js"></script>
   <script src="dimverse.js"></script>
   <script src="desk.js"></script>
