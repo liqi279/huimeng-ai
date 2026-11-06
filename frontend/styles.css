@@ -6270,14 +6270,20 @@ body.hm-light .hm-rail-item.is-active {
 }
 body.hm-light .hm-rail-credit span { color: #1e293b; }
 
-/* 浅色主题下把手沿用侧栏白底，避免出现一块深色凸起 */
+/* 浅色主题下把手沿用侧栏白底、箭头转深色，避免白底白箭头 */
 body.hm-light .hm-rail-toggle {
   background: #ffffff;
-  color: #94a3b8;
+  color: #475569;
 }
 body.hm-light .hm-rail-toggle:hover {
   background: #f1f5f9;
-  color: #1e293b;
+  color: #0f172a;
+}
+body.hm-light .hm-chat-edge-toggle {
+  color: #475569;
+}
+body.hm-light .hm-chat-edge-toggle:hover {
+  color: #0f172a;
 }
 
 body.hm-light .hm-top {
@@ -9659,13 +9665,13 @@ body.hm-chat-open .hm-chat-panel { transform: translateX(0); }
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-right: none;
   border-radius: 10px 0 0 10px;
-  color: #8fa3b8;
+  color: rgba(230, 240, 255, 0.85);
   cursor: pointer;
   z-index: 3;
   transition: color 0.15s ease, background 0.15s ease;
 }
 .hm-chat-edge-toggle:hover {
-  color: #c4b5fd;
+  color: rgba(255, 255, 255, 0.96);
   background: rgba(139, 92, 246, 0.18);
 }
 .hm-chat-edge-toggle svg {
@@ -14454,7 +14460,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   border-radius: 0 7px 7px 0;
   border: 0;
   background: #0b1320;
-  color: #7f8ba0;
+  color: rgba(230, 240, 255, 0.85);
   box-shadow: none;
   cursor: pointer;
   transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, color 0.2s ease;
@@ -14468,7 +14474,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 
 .hm-rail-toggle:hover {
   background: #121b2b;
-  color: #c8d7ec;
+  color: rgba(255, 255, 255, 0.96);
 }
 
 body.rail-collapsed .hm-rail {
