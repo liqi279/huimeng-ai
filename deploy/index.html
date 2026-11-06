@@ -36612,6 +36612,11 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
     host.appendChild(wrap);
     var vinylEl = wrap.querySelector('#vinyl-widget');
     if (vinylEl) vinylEl.style.pointerEvents = 'auto';
+    /* menu and mini-ball are siblings of #vinyl-widget, they inherit pointer-events:none from the host */
+    var ctxEl = wrap.querySelector('#ctx-menu');
+    if (ctxEl) ctxEl.style.pointerEvents = 'auto';
+    var miniEl = wrap.querySelector('#mini-ball');
+    if (miniEl) miniEl.style.pointerEvents = 'auto';
 
     // 可选：覆盖位置
     if (options.position) {
