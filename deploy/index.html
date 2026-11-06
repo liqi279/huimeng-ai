@@ -3332,6 +3332,116 @@ body {
   background: rgba(56, 189, 248, 0.13);
 }
 
+/* 时间筛选：日期区间面板（独立追加，不改既有 .hm-menu 规则） */
+.hm-menu-wide {
+  width: 268px;
+  padding: 7px;
+}
+
+.hm-range-quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  padding: 2px 2px 6px;
+}
+
+.hm-range-quick > button {
+  padding: 6px 4px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.04);
+  color: #b9c9db;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.hm-range-quick > button:hover {
+  background: rgba(56, 189, 248, 0.11);
+  color: #eaf6ff;
+}
+
+.hm-range-quick > button.is-active {
+  border-color: rgba(56, 189, 248, 0.28);
+  background: rgba(56, 189, 248, 0.13);
+  color: #7dd3fc;
+}
+
+.hm-range-dates {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 2px 3px;
+}
+
+.hm-range-dates input[type="date"] {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(120, 170, 210, 0.22);
+  background: rgba(10, 20, 32, 0.9);
+  color: #cfe3f5;
+  font-size: 11px;
+  font-family: inherit;
+  color-scheme: dark;
+  outline: none;
+}
+
+.hm-range-dates input[type="date"]:focus {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.hm-range-wave {
+  color: #6f869c;
+  font-size: 11px;
+}
+
+.hm-range-actions {
+  display: flex;
+  gap: 6px;
+  padding: 4px 2px 2px;
+}
+
+.hm-range-actions > button {
+  flex: 1;
+  padding: 6px 4px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.14);
+  color: #cfe9ff;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.hm-range-actions > button:hover {
+  background: rgba(56, 189, 248, 0.24);
+}
+
+.hm-range-actions > button#worksRangeReset {
+  flex: 0 0 62px;
+  border-color: rgba(120, 170, 210, 0.22);
+  background: transparent;
+  color: #9db0c4;
+}
+
+.hm-range-actions > button#worksRangeReset:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e6f1fb;
+}
+
+.hm-range-tip {
+  margin: 2px 2px 4px;
+  color: #fda4af;
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.hm-range-tip[hidden] {
+  display: none;
+}
 @keyframes hmMenuIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -17105,7 +17215,27 @@ body.dv-open .hm-page {
           <span id="worksSortText">时间筛选</span>
           <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <div class="hm-menu" id="worksSortMenu" aria-hidden="true">
+        <div class="hm-menu hm-menu-wide" id="worksSortMenu" aria-hidden="true">
+          <div class="hm-range-quick">
+            <button data-range="7">近 7 天</button>
+            <button data-range="30">近 30 天</button>
+            <button data-range="month">本月</button>
+            <button data-range="lastMonth">上月</button>
+            <button data-range="quarter">本季</button>
+            <button data-range="year">今年</button>
+            <button data-range="all" class="is-active">全部</button>
+          </div>
+          <div class="hm-range-dates">
+            <input type="date" id="worksRangeFrom" aria-label="起始日期">
+            <span class="hm-range-wave">~</span>
+            <input type="date" id="worksRangeTo" aria-label="结束日期">
+          </div>
+          <div class="hm-range-actions">
+            <button id="worksRangeApply">应用区间</button>
+            <button id="worksRangeReset">清空</button>
+          </div>
+          <div class="hm-range-tip" id="worksRangeTip" hidden></div>
+          <div class="hm-ctx-line"></div>
           <button data-sort="newest" class="is-active">最新优先</button>
           <button data-sort="oldest">最早优先</button>
         </div>
@@ -22147,6 +22277,9 @@ const state = {
   activePrompt: 0,
   worksSort: 'newest',
   worksFilter: 'all',
+  worksDateFrom: /^\d{4}-\d{2}-\d{2}$/.test(storedPrefs.worksDateFrom || '') ? storedPrefs.worksDateFrom : '',
+  worksDateTo: /^\d{4}-\d{2}-\d{2}$/.test(storedPrefs.worksDateTo || '') ? storedPrefs.worksDateTo : '',
+  worksRangeKey: typeof storedPrefs.worksRangeKey === 'string' && storedPrefs.worksRangeKey ? storedPrefs.worksRangeKey : 'all',
   mode: 'image',
   duration: 5,
   voice: 'alloy',
@@ -22476,6 +22609,53 @@ function updateRatioLabel() {
   if (els.ratioBtn) els.ratioBtn.title = '画面比例 ' + size.ratio.id + ' · ' + detail;
 }
 
+/* 时间筛选：本地时区按天取边界（结束日期含当天 23:59:59.999） */
+function worksDayStart(str) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(str || ''));
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function worksDayEndExclusive(str) {
+  const d = worksDayStart(str);
+  if (!d) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+}
+
+function inWorksDateRange(ts) {
+  const from = worksDayStart(state.worksDateFrom);
+  const toEx = worksDayEndExclusive(state.worksDateTo);
+  if (!from && !toEx) return true;
+  const t = Number(ts) || 0;
+  if (from && t < from.getTime()) return false;
+  if (toEx && t >= toEx.getTime()) return false;
+  return true;
+}
+
+function worksDateStr(d) {
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + day;
+}
+
+function worksQuickRange(kind) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let from = new Date(today);
+  let to = new Date(today);
+  if (kind === '7') from.setDate(from.getDate() - 6);
+  else if (kind === '30') from.setDate(from.getDate() - 29);
+  else if (kind === 'month') from.setDate(1);
+  else if (kind === 'lastMonth') {
+    from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    to = new Date(today.getFullYear(), today.getMonth(), 0);
+  } else if (kind === 'quarter') from.setMonth(Math.floor(from.getMonth() / 3) * 3, 1);
+  else if (kind === 'year') from.setMonth(0, 1);
+  else return { from: '', to: '' };
+  return { from: worksDateStr(from), to: worksDateStr(to) };
+}
+
 function filteredWorks() {
   let list = state.works.slice();
   if (state.worksFilter === 'free') {
@@ -22483,6 +22663,7 @@ function filteredWorks() {
   } else if (state.worksFilter === 'paid') {
     list = list.filter(function (w) { return (w.engine || 'flux') !== 'flux'; });
   }
+  list = list.filter(function (w) { return inWorksDateRange(w.createdAt); });
   list.sort(function (a, b) {
     const da = a.createdAt || 0;
     const db = b.createdAt || 0;
@@ -23533,7 +23714,10 @@ function persistPrefs() {
     lora: state.lora,
     videoModel: state.videoModel,
     audioModel: state.audioModel,
-    providerId: state.providerId
+    providerId: state.providerId,
+    worksDateFrom: state.worksDateFrom,
+    worksDateTo: state.worksDateTo,
+    worksRangeKey: state.worksRangeKey
   });
 }
 
@@ -26350,19 +26534,96 @@ function bindEvents() {
     toast('已清空作品', 'info');
   });
 
-  if (els.worksSortMenu) {
-    els.worksSortMenu.addEventListener('click', function (event) {
-      const btn = event.target.closest('[data-sort]');
-      if (!btn) return;
-      state.worksSort = btn.dataset.sort;
+  const worksRangeFrom = document.getElementById('worksRangeFrom');
+  const worksRangeTo = document.getElementById('worksRangeTo');
+  const worksRangeTip = document.getElementById('worksRangeTip');
+
+  function worksRangeLabel() {
+    if (!state.worksDateFrom && !state.worksDateTo) return '时间筛选';
+    return (state.worksDateFrom || '…') + ' ~ ' + (state.worksDateTo || '…');
+  }
+
+  function hideWorksRangeTip() {
+    if (!worksRangeTip) return;
+    worksRangeTip.hidden = true;
+    worksRangeTip.textContent = '';
+  }
+
+  function syncWorksRangeUI() {
+    if (worksRangeFrom) worksRangeFrom.value = state.worksDateFrom || '';
+    if (worksRangeTo) worksRangeTo.value = state.worksDateTo || '';
+    if (els.worksSortText) els.worksSortText.textContent = worksRangeLabel();
+    if (els.worksSortMenu) {
+      els.worksSortMenu.querySelectorAll('[data-range]').forEach(function (el) {
+        el.classList.toggle('is-active', el.dataset.range === state.worksRangeKey);
+      });
       els.worksSortMenu.querySelectorAll('[data-sort]').forEach(function (el) {
         el.classList.toggle('is-active', el.dataset.sort === state.worksSort);
       });
-      renderWorks();
-      closeAllMenus();
-      switchView('works');
+    }
+  }
+
+  function applyWorksRange(from, to, key) {
+    state.worksDateFrom = from || '';
+    state.worksDateTo = to || '';
+    state.worksRangeKey = key || '';
+    hideWorksRangeTip();
+    persistPrefs();
+    syncWorksRangeUI();
+    renderWorks();
+  }
+
+  if (els.worksSortMenu) {
+    els.worksSortMenu.addEventListener('click', function (event) {
+      const sortBtn = event.target.closest('[data-sort]');
+      if (sortBtn) {
+        state.worksSort = sortBtn.dataset.sort;
+        persistPrefs();
+        syncWorksRangeUI();
+        renderWorks();
+        closeAllMenus();
+        switchView('works');
+        return;
+      }
+
+      const quick = event.target.closest('[data-range]');
+      if (quick) {
+        const range = worksQuickRange(quick.dataset.range);
+        /* 快捷项立即生效，并把起止日期回填到输入框（菜单保持打开，便于确认区间） */
+        applyWorksRange(range.from, range.to, quick.dataset.range);
+        return;
+      }
+
+      if (event.target.closest('#worksRangeApply')) {
+        const from = worksRangeFrom ? worksRangeFrom.value : '';
+        const to = worksRangeTo ? worksRangeTo.value : '';
+        if (from && to && from > to) {
+          if (worksRangeTip) {
+            worksRangeTip.hidden = false;
+            worksRangeTip.textContent = '起始日期不能晚于结束日期，请调整后再应用。';
+          }
+          return;
+        }
+        applyWorksRange(from, to, 'custom');
+        closeAllMenus();
+        return;
+      }
+
+      if (event.target.closest('#worksRangeReset')) {
+        applyWorksRange('', '', 'all');
+        closeAllMenus();
+      }
     });
   }
+
+  if (els.worksSortBtn) {
+    els.worksSortBtn.addEventListener('click', function () {
+      hideWorksRangeTip();
+      syncWorksRangeUI();
+    });
+  }
+
+  syncWorksRangeUI();
 
   if (els.worksFilterMenu) {
     els.worksFilterMenu.addEventListener('click', function (event) {
