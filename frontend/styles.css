@@ -14477,6 +14477,64 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   color: rgba(255, 255, 255, 0.96);
 }
 
+/* 把手箭头「呼吸式发光」：亮度与光晕在 2.8s 内缓入缓出起伏，
+   最低点保持当前亮度、最高点略亮并带一圈冷色光晕；只动画 filter，不触发重排 */
+.hm-rail-toggle svg,
+.hm-chat-edge-toggle svg {
+  animation: hm-handle-breath 2.8s ease-in-out infinite;
+  will-change: filter;
+}
+
+@keyframes hm-handle-breath {
+  0%,
+  100% {
+    filter: brightness(1) drop-shadow(0 0 0 rgba(198, 216, 255, 0));
+  }
+  50% {
+    filter: brightness(1.12) drop-shadow(0 0 5px rgba(198, 216, 255, 0.45));
+  }
+}
+
+/* hover 时停止呼吸并锁定较亮一档，鼠标移开自动恢复 */
+.hm-rail-toggle:hover svg,
+.hm-chat-edge-toggle:hover svg {
+  animation: none;
+  filter: brightness(1.14) drop-shadow(0 0 6px rgba(198, 216, 255, 0.5));
+}
+
+/* 浅色主题：光晕改用深色阴影，避免白底出现发白光斑 */
+body.hm-light .hm-rail-toggle svg,
+body.hm-light .hm-chat-edge-toggle svg {
+  animation-name: hm-handle-breath-light;
+}
+
+@keyframes hm-handle-breath-light {
+  0%,
+  100% {
+    filter: brightness(1) drop-shadow(0 0 0 rgba(15, 23, 42, 0));
+  }
+  50% {
+    filter: brightness(1.05) drop-shadow(0 0 3px rgba(15, 23, 42, 0.35));
+  }
+}
+
+body.hm-light .hm-rail-toggle:hover svg,
+body.hm-light .hm-chat-edge-toggle:hover svg {
+  animation: none;
+  filter: brightness(1.08) drop-shadow(0 0 4px rgba(15, 23, 42, 0.45));
+}
+
+/* 用户偏好减少动态：关闭呼吸动画，仅保留静态亮度 */
+@media (prefers-reduced-motion: reduce) {
+  .hm-rail-toggle svg,
+  .hm-chat-edge-toggle svg,
+  body.hm-light .hm-rail-toggle svg,
+  body.hm-light .hm-chat-edge-toggle svg {
+    animation: none;
+    filter: none;
+  }
+}
+
 body.rail-collapsed .hm-rail {
   transform: translateX(-64px);
 }
