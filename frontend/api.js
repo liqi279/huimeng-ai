@@ -179,6 +179,11 @@
     return (data && data.text) || '';
   };
 
+  /* 通用 GET —— 管理台（admin.js）等模块依赖此方法读取 /admin/* 接口 */
+  api.get = function (path, timeoutMs) {
+    return request(path, {}, timeoutMs || 20000);
+  };
+
   api.listWorks = function () { return request('/works', {}, 20000); };
   api.saveWork = function (work) { return request('/works', { method: 'POST', body: { work: work } }, 15000); };
   api.deleteWork = function (id) { return request('/works/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };

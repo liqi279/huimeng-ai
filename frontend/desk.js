@@ -1157,10 +1157,18 @@
     else if (isFolder) key = card.dataset.folder;
     else key = card.dataset.work;
 
-    if (event.ctrlKey || event.metaKey || event.shiftKey) toggleSelect(key);
-    else if (!view.selected[key]) selectOnly(key);
+    /* 普通单击不再立刻 selectOnly：否则按下鼠标就会把卡片加入批量选择，
+       弹出「已选 N 项 / 合并到新文件夹…」操作条。
+       只有 Ctrl/⌘/Shift 组合键才立即切换选中；普通拖拽在真正开始拖动时才补选中。 */
+    var plainClick = !(event.ctrlKey || event.metaKey || event.shiftKey);
+    if (!plainClick) toggleSelect(key);
 
     var ids = selectedIds();
+    var pendingKey = null;
+    if (plainClick && !view.selected[key]) {
+      ids = [key];        /* 先按单张参与拖拽，拖动超过阈值后再 selectOnly */
+      pendingKey = key;
+    }
     if (!ids.length) return;
 
     view.z += 1;
@@ -1185,6 +1193,7 @@
       items: items,
       maxLeft: Math.max(1, maxLeft),
       moved: false,
+      pendingKey: pendingKey,
       pointerId: event.pointerId
     };
     window.addEventListener('pointermove', onPointerMove);
@@ -1204,6 +1213,11 @@
     if (!drag.moved && Math.abs(dx) + Math.abs(dy) < DRAG_THRESHOLD) return;
     if (!drag.moved) {
       drag.moved = true;
+      /* 真正开始拖动时才把卡片补进选中（单击不会触发） */
+      if (drag.pendingKey) {
+        selectOnly(drag.pendingKey);
+        drag.pendingKey = null;
+      }
       try { event.preventDefault(); } catch (e) {}
     }
     drag.items.forEach(function (item) {

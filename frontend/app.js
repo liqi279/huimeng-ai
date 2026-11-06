@@ -4118,15 +4118,16 @@ var DISABLED_VIEWS = {};
 function bindEvents() {
   document.addEventListener('click', function (event) {
     const viewBtn = event.target.closest('[data-view]');
-    if (viewBtn) {
-      var view = viewBtn.dataset.view;
-      if (DISABLED_VIEWS[view] || viewBtn.disabled) {
-        var label = viewBtn.querySelector('span')?.textContent || view;
-        HM.toast && HM.toast('「' + label + '」功能开发中，敬请期待', 'info');
-        return;
-      }
-      switchView(view);
+    /* switchView 会把 data-view 写到 <body> 上，closest 会匹配到 body 本身，
+       导致任意点击都重复触发一次 switchView（会重置视图内的 Tab/面板状态） */
+    if (!viewBtn || viewBtn === document.body || viewBtn === document.documentElement) return;
+    var view = viewBtn.dataset.view;
+    if (DISABLED_VIEWS[view] || viewBtn.disabled) {
+      var label = viewBtn.querySelector('span')?.textContent || view;
+      HM.toast && HM.toast('「' + label + '」功能开发中，敬请期待', 'info');
+      return;
     }
+    switchView(view);
   });
 
   /* 顶栏「个人空间」：回到根桌面（之前被误加入置灰视图，点了没反应） */
@@ -4260,12 +4261,10 @@ function bindEvents() {
   });
 
   els.apiConfigBtn.addEventListener('click', function () {
+    // 标记目标顶 Tab：管理台的 onView 会据此直接渲染「API接入管理」面板，
+    // 避免过去的 30ms 定时器与 onView 重置 Tab / 概览渲染之间的竞态。
+    window.HM_ADMIN_TARGET = 'api';
     switchView('admin');
-    // 切到 admin view 后自动选中「API接入管理」Tab
-    setTimeout(function () {
-      var tab = document.querySelector('.hm-admin-top-tab[data-top="api"]');
-      if (tab) tab.click();
-    }, 30);
   });
   els.apiClose.addEventListener('click', closeApiModal);
   els.apiSave.addEventListener('click', saveRayinConfig);

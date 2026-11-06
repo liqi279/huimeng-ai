@@ -110,20 +110,28 @@
     if (_origOnView) _origOnView(view);
     if (view === 'admin') {
       if (!eventsBound) bindAdminEvents();
-      /* 重置 Tab 状态 */
-      currentTopTab = 'admin';
+      /* 重置 Tab 状态；顶栏「API接入管理」入口可通过 HM_ADMIN_TARGET 指定落地 Tab */
+      var target = window.HM_ADMIN_TARGET || 'admin';
+      window.HM_ADMIN_TARGET = null;
+      currentTopTab = target;
       var page = document.getElementById('view-admin');
       if (page) {
         page.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
-          t.classList.toggle('is-active', t.dataset.top === 'admin');
+          t.classList.toggle('is-active', t.dataset.top === target);
         });
         page.querySelectorAll('.hm-admin-tab').forEach(function (t) {
           t.classList.toggle('is-active', t.dataset.tab === currentSubTab);
         });
       }
       var subTabsWrap = document.getElementById('adminSubTabs');
-      if (subTabsWrap) subTabsWrap.style.display = '';
+      var adminBody = document.getElementById('adminBody');
       destroyAllCharts();
+      if (target === 'api') {
+        if (subTabsWrap) subTabsWrap.style.display = 'none';
+        if (adminBody) renderApiPanel(adminBody);
+        return;
+      }
+      if (subTabsWrap) subTabsWrap.style.display = '';
       /* 延迟一帧确保 DOM 可见后再渲染（Chart.js 需要 canvas 有尺寸） */
       requestAnimationFrame(function () {
         loadTab(currentSubTab);
@@ -141,10 +149,15 @@
     charts = {};
   }
 
+  var loadSeq = 0;
+
   function loadTab(tab) {
+    /* 当前不在「管理台」顶 Tab 时不要渲染，否则会把「API接入管理」等面板覆盖成加载中/仪表盘 */
+    if (currentTopTab !== 'admin') return;
     destroyAllCharts();
     var body = document.getElementById('adminBody');
     if (!body) return;
+    var seq = ++loadSeq;
     body.innerHTML = '<div class="hm-admin-loading"><span>加载中…</span></div>';
 
     var apiMap = {
@@ -158,11 +171,13 @@
     if (!fn) { body.innerHTML = '<p>Tab 未实现</p>'; return; }
 
     fn().then(function (data) {
+      if (seq !== loadSeq || currentTopTab !== 'admin') return;
       body.innerHTML = '';
       var renderers = { overview: renderOverview, ranking: renderRanking,
                         logs: renderLogs, accounts: renderAccounts, projects: renderProjects };
       if (renderers[tab]) renderers[tab](data, body);
     }).catch(function (err) {
+      if (seq !== loadSeq || currentTopTab !== 'admin') return;
       body.innerHTML = '<div class="hm-admin-error">' +
         '<h3>加载失败</h3><p>' + (err && err.message ? err.message : String(err)) + '</p></div>';
     });
