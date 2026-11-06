@@ -17220,6 +17220,29 @@ body.dv-open .hm-page {
         </div>
       </div>
 
+      <button class="hm-pill hm-select" id="avatarToggleBtn" aria-pressed="false" title="唤出 / 收起虚拟形象">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.8 19.6c1.1-4 3.9-6 7.2-6s6.1 2 7.2 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>虚拟形象</span>
+      </button>
+<style>
+#avatarToggleBtn.on{background:rgba(56,189,248,.22);border-color:rgba(56,189,248,.55);color:#dff3ff;}
+#avatarToggleBtn.waiting{opacity:.6;}
+</style>
+<script>
+(function () {
+  var btn = document.getElementById('avatarToggleBtn');
+  if (!btn) return;
+  function vis() { var a = document.getElementById('avatar-widget'); return a && a.style.display !== 'none'; }
+  function sync() { btn.classList.toggle('on', !!vis()); btn.setAttribute('aria-pressed', vis() ? 'true' : 'false'); }
+  btn.addEventListener('click', function () {
+    var api = window.__hmAvatarApi;
+    if (!api) { btn.classList.add('waiting'); setTimeout(function () { btn.classList.remove('waiting'); }, 1500); return; }
+    if (vis()) { api.__hideAvatar(); } else { api.__showAvatar(); }
+    sync();
+  });
+  setInterval(sync, 600);
+})();
+</script>
       <div class="hm-menu-wrap">
         <button class="hm-pill hm-select" id="worksSortBtn" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.6V12l3 1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -35482,12 +35505,11 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
     else if (act === 'prev') { load(idx < 0 ? 0 : idx - 1, true); }
     else if (act === 'next') { load(idx < 0 ? 0 : idx + 1, true); }
     
-    else if (act === 'avatar-toggle') { var av = avatarEl.style.display !== 'none'; avatarEl.style.display = av ? 'none' : 'block'; try { localStorage.setItem('hm.avatar.hidden', av ? '1' : '0'); } catch (_) {} closeMenu(); }
+    else if (act === 'avatar-toggle') { var avv = avatarEl.style.display !== 'none'; if (avv) hideAvatar(); else showAvatar(); closeMenu(); }
   });
   avatarMenu.addEventListener('click', function (e) {
     if (e.target.closest('[data-act="avatar-hide"]')) {
-      avatarEl.style.display = 'none';
-      try { localStorage.setItem('hm.avatar.hidden', '1'); } catch (_) {}
+      hideAvatar();
       closeAvatarMenu();
     }
   });
@@ -36837,7 +36859,7 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
   });
   /* 鎭㈠涓婃鐨勬樉闅愪笌浣嶇疆 */
   try {
-    if (localStorage.getItem('hm.avatar.hidden') === '1') avatarEl.style.display = 'none';
+    avatarEl.style.display = 'none';   /* 默认不显示，等按钮唤出 */
     var ap = localStorage.getItem('hm.avatar.pos');
     if (ap) {
       var ao = JSON.parse(ap);
@@ -36873,7 +36895,7 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
    * 宿主可通过 options.avatar 指定初始形象；也可随时调用 setAvatar(type)。 */
   var initialAvatar = (opts && opts.avatar) || 'live2d';
   if (!AVATARS[initialAvatar]) initialAvatar = 'live2d';
-  var initialTimer = setTimeout(function () { mountAvatar(initialAvatar); }, 1200);
+  var initialTimer = null;   /* 不自动浮出：由顶栏「虚拟形象」按钮唤出 */
 
   /* 对外暴露形象控制接口：
    *   widget.__setAvatar(type)  切换形象（disc | live2d | blueberry | spine | ae | builtin）
@@ -36888,6 +36910,33 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
   };
   widget.__avatars = AVATARS;
   widget.__getAvatar = function () { return avatarType; };
+
+  /* ---- 显隐与按需挂载（默认不自动浮出） ---- */
+  var avatarMounted = false;
+  function showAvatar() {
+    if (!avatarMounted) { avatarMounted = true; mountAvatar(initialAvatar); }
+    avatarEl.style.display = 'block';
+    try { localStorage.setItem('hm.avatar.hidden', '0'); } catch (_) {}
+    syncAvatarButton(true);
+    return true;
+  }
+  function hideAvatar() {
+    avatarEl.style.display = 'none';
+    try { localStorage.setItem('hm.avatar.hidden', '1'); } catch (_) {}
+    syncAvatarButton(false);
+    return true;
+  }
+  function syncAvatarButton(on) {
+    var b = document.getElementById('avatarToggleBtn');
+    if (!b) return;
+    b.classList.toggle('on', !!on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  widget.__showAvatar = showAvatar;
+  widget.__hideAvatar = hideAvatar;
+  widget.__isAvatarVisible = function () { return avatarEl.style.display !== 'none'; };
+  window.__hmAvatarApi = widget;
+  syncAvatarButton(false);
 })();
   }
 
