@@ -6916,6 +6916,21 @@ body.hm-light .hm-page-empty {
   line-height: 1;
 }
 .hm-inline-cancel:hover { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+/* 新建/重命名空名校验提示 */
+.hm-inline-hint {
+  flex: none;
+  margin-left: 4px;
+  color: #f87171;
+  font-size: 11px;
+  white-space: nowrap;
+  animation: hm-hint-in 0.16s ease-out;
+}
+.hm-inline-input[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.65);
+  background: rgba(248, 113, 113, 0.08);
+}
+@keyframes hm-hint-in { from { opacity: 0; transform: translateX(-3px); } to { opacity: 1; transform: none; } }
+.hm-rename-hint { margin: 6px 0 0; color: #f87171; font-size: 12px; }
 
 /* ---------- 文件夹拖拽 Drop Over 高亮 ---------- */
 .hm-proj-folder.is-drop-over {
@@ -20899,6 +20914,7 @@ body.dv-open .hm-page {
       <span class="modal-kicker">RENAME</span>
       <h2 id="renameTitle">重命名</h2>
       <input id="renameInput" type="text" maxlength="40" autocomplete="off">
+      <p class="hm-rename-hint" id="renameHint" hidden>请输入文件夹名称</p>
       <div class="hm-rename-foot">
         <button class="hm-pill" id="renameCancel">取消</button>
         <button class="hm-pill hm-pill-primary" id="renameOk">确定</button>
@@ -56922,7 +56938,8 @@ window.HMChat = (function () {
       html += '<div class="hm-proj-folder is-renaming" style="padding-left:' + (10 + depth * 14) + 'px">' +
         '<span class="hm-tree-toggle is-leaf" style="visibility:hidden">·</span>' +
         '<span class="hm-folder-ico">📁</span>' +
-        '<input class="hm-inline-input" data-folder-inline="' + esc(node.id) + '" data-inline-kind="rename" value="' + esc(val) + '" maxlength="40" autocomplete="off">' +
+        '<input class="hm-inline-input" data-folder-inline="' + esc(node.id) + '" data-inline-kind="rename" value="' + esc(val) + '" maxlength="40" autocomplete="off"' + (view.inline.error ? ' aria-invalid="true"' : '') + '>' +
+        (view.inline.error ? '<span class="hm-inline-hint">' + esc(view.inline.error) + '</span>' : '') +
         '<button class="hm-inline-cancel" data-inline-cancel="' + esc(node.id) + '">✕</button>' +
         '</div>';
       return html;  /* 渲染这一行就停，children 也不画（重命名时整个节点变为纯 input） */
@@ -56975,7 +56992,8 @@ window.HMChat = (function () {
     return '<div class="hm-proj-folder is-inline-new" style="padding-left:' + (10 + depth * 14) + 'px">' +
       '<span class="hm-tree-toggle is-leaf" style="visibility:hidden">·</span>' +
       '<span class="hm-folder-ico hm-inline-plus">＋</span>' +
-      '<input class="hm-inline-input" data-folder-inline-parent="' + esc(parentId || '') + '" data-inline-kind="new" value="' + esc(val) + '" placeholder="新建文件夹..." maxlength="40" autocomplete="off">' +
+      '<input class="hm-inline-input" data-folder-inline-parent="' + esc(parentId || '') + '" data-inline-kind="new" value="' + esc(val) + '" placeholder="新建文件夹..." maxlength="40" autocomplete="off"' + (view.inline && view.inline.error ? ' aria-invalid="true"' : '') + '>' +
+      (view.inline && view.inline.error ? '<span class="hm-inline-hint">' + esc(view.inline.error) + '</span>' : '') +
       '<button class="hm-inline-cancel" data-inline-cancel="' + esc(parentId || '') + '">✕</button>' +
       '</div>';
   }
@@ -57055,24 +57073,41 @@ window.HMChat = (function () {
   function startInlineCreate(parentId) {
     /* 自动展开父节点，让 inline 行可见 */
     if (parentId) view.expanded[parentId] = true;
-    view.inline = { parentId: parentId || null, rowId: null, isNew: true, value: '' };
+    view.inline = { parentId: parentId || null, rowId: null, isNew: true, value: '', error: '' };
     renderPanel();
   }
   function startInlineRename(rowId) {
     var folder = desk.folders.find(function (f) { return f.id === rowId; });
     if (!folder) return;
-    view.inline = { parentId: folder.parentId || null, rowId: rowId, isNew: false, value: folder.name };
+    view.inline = { parentId: folder.parentId || null, rowId: rowId, isNew: false, value: folder.name, error: '' };
     renderPanel();
   }
   function cancelInline() {
     view.inline = null;
     renderPanel();
   }
-  function commitInline(value) {
-    value = (value || '').trim();
+  /* 空名校验：不创建、不写入、不关闭编辑器；给出可见提示并保留焦点 */
+  function rejectEmptyInline(name) {
     var inline = view.inline;
+    if (!inline) return;
+    inline.error = inline.isNew ? '请输入文件夹名称' : '名称不能为空';
+    inline.value = name;
+    renderPanel();
+    var list = byId('projList');
+    var ip = list ? list.querySelector('.hm-inline-input') : null;
+    if (ip) {
+      ip.focus();
+      try { ip.select(); } catch (e) {}
+    }
+  }
+  function commitInline(value, el) {
+    var inline = view.inline;
+    if (!inline) { renderPanel(); return; }
+    var raw = value == null ? '' : String(value);
+    var trimmed = raw.trim();
+    if (!trimmed) { rejectEmptyInline(raw); return; }  /* 空名/纯空格/取消：绝不创建 */
     view.inline = null;
-    if (!value || !inline) { renderPanel(); return; }
+    value = trimmed;
     if (inline.isNew) {
       /* 同级去重 */
       var parentId = inline.parentId || null;
@@ -57102,31 +57137,23 @@ window.HMChat = (function () {
   function newFolder(parentId, cb) {
     /* newFolder(cb) 兼容旧调用 → 根目录创建 */
     if (typeof parentId === 'function') { cb = parentId; parentId = null; }
-    var base = '新建文件夹';
-    /* 同级（同一个 parentId 下）的 folder 名字不能重复 */
-    var siblings = desk.folders.filter(function (f) { return (f.parentId || null) === (parentId || null); });
-    var names = siblings.map(function (f) { return f.name; });
-    var name = base;
-    var index = 2;
-    while (names.indexOf(name) >= 0) {
-      name = base + ' ' + index;
-      index += 1;
-    }
     var parentName = null;
     if (parentId) {
       var parent = desk.folders.find(function (f) { return f.id === parentId; });
       parentName = parent ? parent.name : null;
     }
-    askName(parentName ? '在「' + parentName + '」下新建子文件夹' : '新建文件夹', name, function (value) {
-      if (!value) return;
-      var folder = { id: 'f' + A.uid(), name: value, parentId: parentId || null, createdAt: Date.now() };
+    /* 不再预填默认名：名称为空/纯空格/取消都不创建 */
+    askName(parentName ? '在「' + parentName + '」下新建子文件夹' : '新建文件夹', '', function (value) {
+      var name = (value || '').trim();
+      if (!name) return;
+      var folder = { id: 'f' + A.uid(), name: name, parentId: parentId || null, createdAt: Date.now() };
       desk.folders.unshift(folder);
       /* 自动展开父节点，让新子文件夹可见 */
       if (parentId) view.expanded[parentId] = true;
       persistNow();
       renderPanel();
       if (cb) cb(folder);
-      A.toast('已创建文件夹「' + value + '」' + (parentName ? '（在「' + parentName + '」下）' : ''), 'success');
+      A.toast('已创建文件夹「' + name + '」' + (parentName ? '（在「' + parentName + '」下）' : ''), 'success');
     });
   }
 
@@ -58308,13 +58335,16 @@ window.HMChat = (function () {
     var modal = byId('renameModal');
     var input = byId('renameInput');
     var head = byId('renameTitle');
+    var hint = byId('renameHint');
     if (!modal || !input) {
-      if (cb) cb(value);
-      return;
+      return;  /* 没有输入框就不兜底创建，避免静默生成默认名 */
     }
     view.renameCb = cb;
     if (head) head.textContent = title || '重命名';
     input.value = value || '';
+    input.placeholder = value ? '' : '请输入文件夹名称';
+    input.removeAttribute('aria-invalid');
+    if (hint) hint.hidden = true;
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     setTimeout(function () {
@@ -58334,10 +58364,20 @@ window.HMChat = (function () {
 
   function confirmRename() {
     var input = byId('renameInput');
+    var hint = byId('renameHint');
     var value = input ? input.value.trim() : '';
+    if (!value) {
+      /* 空名/纯空格：不提交、不创建；提示并把焦点留在输入框 */
+      if (hint) hint.hidden = false;
+      if (input) {
+        input.setAttribute('aria-invalid', 'true');
+        input.focus();
+      }
+      return;
+    }
     var cb = view.renameCb;
     closeRename();
-    if (value && cb) cb(value);
+    if (cb) cb(value);
   }
 
   /* ---------------- 历史记录 ---------------- */
@@ -58493,13 +58533,20 @@ window.HMChat = (function () {
         var ip = event.target.closest('.hm-inline-input');
         if (!ip) return;
         if (view.inline) view.inline.value = ip.value;
+        /* 用户开始补名字 → 立即清掉错误提示 */
+        if (view.inline && view.inline.error) {
+          view.inline.error = '';
+          ip.removeAttribute('aria-invalid');
+          var hint = ip.parentNode ? ip.parentNode.querySelector('.hm-inline-hint') : null;
+          if (hint) hint.parentNode.removeChild(hint);
+        }
       });
       projList.addEventListener('keydown', function (event) {
         var ip = event.target.closest('.hm-inline-input');
         if (!ip) return;
         if (event.key === 'Enter') {
           event.preventDefault();
-          commitInline(ip.value);
+          commitInline(ip.value, ip);
         } else if (event.key === 'Escape') {
           event.preventDefault();
           /* 只取消行内编辑，不把整个项目面板一起关掉 */
@@ -58512,7 +58559,7 @@ window.HMChat = (function () {
         if (!ip) return;
         /* 点击 cancel 按钮 → cancelInline 会先执行 */
         setTimeout(function () {
-          if (view.inline && document.activeElement !== ip) commitInline(ip.value);
+          if (view.inline && document.activeElement !== ip) commitInline(ip.value, ip);
         }, 150);
       }, true);  /* 捕获阶段 */
 
@@ -59016,7 +59063,7 @@ window.HMChat = (function () {
         if (view.inline) {
           event.preventDefault();
           var curInput = projList ? projList.querySelector('.hm-inline-input') : null;
-          commitInline(curInput ? curInput.value : view.inline.value);
+          commitInline(curInput ? curInput.value : view.inline.value, curInput);
           return;
         }
         /* 1. 侧栏 projList 有 active/selected folder → 重命名
