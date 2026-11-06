@@ -12902,7 +12902,9 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 .hm-oua-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* 页面本身是 fixed + top/bottom，高度由上下边自动撑满；写死 100% 会按视口算，
+     多出 46px 顶栏高度导致底部被裁 */
+  height: auto;
   padding: 20px 24px;
   overflow-y: auto;
   gap: 14px;
@@ -13184,7 +13186,7 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 /* ============ 动画（中间帧 Tweening）模块 ============ */
 .hm-anim-page {
   display: flex; flex-direction: column;
-  height: 100%; padding: 20px 24px; overflow-y: auto; gap: 14px;
+  height: auto; padding: 20px 24px; overflow-y: auto; gap: 14px;
 }
 
 .hm-anim-list-head { display: flex; justify-content: space-between; align-items: center; }
