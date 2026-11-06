@@ -3442,6 +3442,17 @@ body {
 .hm-range-tip[hidden] {
   display: none;
 }
+.hm-range-now {
+  margin: 2px 2px 6px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  color: #9fd8f5;
+  font-size: 11px;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
 @keyframes hmMenuIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -17216,6 +17227,7 @@ body.dv-open .hm-page {
           <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <div class="hm-menu hm-menu-wide" id="worksSortMenu" aria-hidden="true">
+          <div class="hm-range-now" id="worksRangeNow">当前区间：全部</div>
           <div class="hm-range-quick">
             <button data-range="7">近 7 天</button>
             <button data-range="30">近 30 天</button>
@@ -26537,9 +26549,10 @@ function bindEvents() {
   const worksRangeFrom = document.getElementById('worksRangeFrom');
   const worksRangeTo = document.getElementById('worksRangeTo');
   const worksRangeTip = document.getElementById('worksRangeTip');
+  const worksRangeNow = document.getElementById('worksRangeNow');
 
-  function worksRangeLabel() {
-    if (!state.worksDateFrom && !state.worksDateTo) return '时间筛选';
+    function worksRangeLabel() {
+    if (!state.worksDateFrom && !state.worksDateTo) return '全部';
     return (state.worksDateFrom || '…') + ' ~ ' + (state.worksDateTo || '…');
   }
 
@@ -26552,7 +26565,8 @@ function bindEvents() {
   function syncWorksRangeUI() {
     if (worksRangeFrom) worksRangeFrom.value = state.worksDateFrom || '';
     if (worksRangeTo) worksRangeTo.value = state.worksDateTo || '';
-    if (els.worksSortText) els.worksSortText.textContent = worksRangeLabel();
+      if (els.worksSortText) els.worksSortText.textContent = '时间筛选';
+    if (worksRangeNow) worksRangeNow.textContent = '当前区间：' + worksRangeLabel();
     if (els.worksSortMenu) {
       els.worksSortMenu.querySelectorAll('[data-range]').forEach(function (el) {
         el.classList.toggle('is-active', el.dataset.range === state.worksRangeKey);
