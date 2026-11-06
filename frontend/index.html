@@ -71,9 +71,17 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
         <span>故事版</span>
       </button>
-      <button class="hm-rail-item" data-rail="oua" title="作画（原画 / 动画 / 着色）">
+      <button class="hm-rail-item" data-rail="oua" title="原画（本番原画 / 動画 · 中割り）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
-        <span>作画</span>
+        <span>原画</span>
+      </button>
+      <button class="hm-rail-item" data-rail="animation" title="动画（動画 · 帧序列与播放）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M3 15h18" stroke="currentColor" stroke-width="1.1" opacity=".55"/><path d="M10.5 9.5l4 2.5-4 2.5v-5Z" fill="currentColor" opacity=".85"/></svg>
+        <span>动画</span>
+      </button>
+      <button class="hm-rail-item" data-rail="paint" title="着色（赛璐璐上色 · PaintMan 工作流）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.6 12.4l5.3-5.3a1.7 1.7 0 0 1 2.4 0l3.6 3.6a1.7 1.7 0 0 1 0 2.4l-5.3 5.3a1.7 1.7 0 0 1-2.4 0l-3.6-3.6a1.7 1.7 0 0 1 0-2.4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 7.5L15 13" stroke="currentColor" stroke-width="1.3" opacity=".65"/><path d="M19.4 15.2c.9 1.2 1.4 2 1.4 2.6a1.4 1.4 0 1 1-2.8 0c0-.6.5-1.4 1.4-2.6Z" fill="currentColor" opacity=".85"/></svg>
+        <span>着色</span>
       </button>
       <button class="hm-rail-item" data-rail="plan" title="企划（热榜、排行榜、日式动漫企划书）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5h10M7 12h7M7 15.5h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 3.5v3M8.5 3.5v3" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
@@ -1802,16 +1810,7 @@
     </div>
   </main>
 
-  <!-- ============ 作画模块 · 共享顶栏（原画 / 动画 / 着色） ============ -->
-  <nav class="sakuga-tabs" id="sakugaTabs" aria-label="作画子模块切换">
-    <span class="sakuga-tabs-brand">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      作画
-    </span>
-    <button class="sakuga-tab" data-sakuga="oua" type="button">原画</button>
-    <button class="sakuga-tab" data-sakuga="animation" type="button">动画</button>
-    <button class="sakuga-tab" data-sakuga="paint" type="button">着色</button>
-  </nav>
+  <!-- 原画 / 动画 / 着色 已提升为侧栏一级入口，各自独立视图，不再共用「作画」顶栏 -->
 
   <!-- ===================== 着色（参考 RETAS PaintMan） ===================== -->
   <main class="hm-page hm-pt-page" id="view-paint" hidden>
@@ -3762,7 +3761,6 @@
   <script src="chat.js"></script>
   <script src="canvas.js"></script>
   <script src="library.js"></script>
-  <script src="sakuga.js"></script>
   <script src="ui.js"></script>
   <script src="dimverse.js"></script>
   <script src="desk.js"></script>

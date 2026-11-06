@@ -6278,6 +6278,16 @@ body.hm-light .hm-rail-item.is-active {
 }
 body.hm-light .hm-rail-credit span { color: #1e293b; }
 
+/* 浅色主题下把手沿用侧栏白底，避免出现一块深色凸起 */
+body.hm-light .hm-rail-toggle {
+  background: #ffffff;
+  color: #94a3b8;
+}
+body.hm-light .hm-rail-toggle:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
 body.hm-light .hm-top {
   background: #ffffff;
   border-bottom-color: rgba(15, 23, 42, 0.08);
@@ -6414,6 +6424,7 @@ body.hm-light .hm-page-empty {
 
 @media (max-width: 820px) {
   .hm-rail { width: 56px; }
+  .hm-rail-toggle { left: 55px; }
   .hm-top, .hm-canvas, .hm-works, .hm-dock, .hm-page { left: 56px; }
   .hm-rail-item { width: 48px; }
   .hm-rail-item span { display: none; }
@@ -6427,6 +6438,7 @@ body.hm-light .hm-page-empty {
 
 @media (max-width: 640px) {
   .hm-rail { width: 50px; }
+  .hm-rail-toggle { left: 49px; }
   .hm-top, .hm-canvas, .hm-works, .hm-dock, .hm-page { left: 50px; }
   .hm-rail-item { width: 42px; }
   .hm-top { padding: 0 10px 0 10px; }
@@ -14432,36 +14444,37 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* 贴边把手：与侧栏同底色、无独立描边/投影，左缘压住侧栏边框 1px，
+   外露部分只有与侧栏同色的圆角舌片，视觉上属于侧栏本身 */
 .hm-rail-toggle {
   position: fixed;
-  left: 64px;
+  left: 63px;
   top: 50%;
-  transform: translate(-50%, -50%);
-  width: 22px;
-  height: 58px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 50px;
   z-index: 95;
   display: grid;
   place-items: center;
   padding: 0;
-  border-radius: 0 12px 12px 0;
-  border: 1px solid rgba(160, 190, 230, 0.24);
-  border-left: 0;
-  background: linear-gradient(180deg, rgba(30, 44, 66, 0.94), rgba(14, 23, 36, 0.94));
-  color: #c8d7ec;
-  box-shadow: 6px 0 18px rgba(0, 0, 0, 0.35);
+  border-radius: 0 7px 7px 0;
+  border: 0;
+  background: #0b1320;
+  color: #7f8ba0;
+  box-shadow: none;
   cursor: pointer;
   transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, color 0.2s ease;
 }
 
 .hm-rail-toggle svg {
-  width: 15px;
-  height: 15px;
+  width: 12px;
+  height: 12px;
   transition: transform 0.28s ease;
 }
 
 .hm-rail-toggle:hover {
-  background: linear-gradient(180deg, rgba(52, 76, 110, 0.98), rgba(24, 38, 58, 0.98));
-  color: #fff;
+  background: #121b2b;
+  color: #c8d7ec;
 }
 
 body.rail-collapsed .hm-rail {
@@ -14470,9 +14483,7 @@ body.rail-collapsed .hm-rail {
 
 body.rail-collapsed .hm-rail-toggle {
   left: 0;
-  border-left: 1px solid rgba(160, 190, 230, 0.24);
-  border-right: 0;
-  border-radius: 0 12px 12px 0;
+  border-radius: 0 7px 7px 0;
 }
 
 body.rail-collapsed .hm-rail-toggle svg {
@@ -16500,93 +16511,12 @@ body.dv-open .hm-page {
 /* =============================================================
  * 作画模块 · 共享顶栏（原画 / 动画 / 着色）
  * ============================================================= */
-.sakuga-tabs {
-  display: none;
-  position: fixed;
-  top: 46px;
-  left: 64px;
-  right: 0;
-  height: 46px;
-  z-index: 45;
-  align-items: center;
-  gap: 6px;
-  padding: 0 20px;
-  background: rgba(10, 9, 18, 0.92);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-bottom: 1px solid var(--line);
-  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-view='oua'] .sakuga-tabs,
-body[data-view='animation'] .sakuga-tabs,
-body[data-view='paint'] .sakuga-tabs {
-  display: flex;
-}
-
-body.rail-collapsed .sakuga-tabs {
-  left: 0;
-}
-
-.sakuga-tabs-brand {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-right: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-2);
-}
-
-.sakuga-tabs-brand svg {
-  width: 17px;
-  height: 17px;
-  color: var(--pink);
-}
-
-.sakuga-tab {
-  height: 30px;
-  padding: 0 16px;
-  border-radius: 9px;
-  font-size: 12.5px;
-  font-weight: 550;
-  color: var(--muted);
-  border: 1px solid transparent;
-  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-}
-
-.sakuga-tab:hover {
-  color: var(--text-2);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.sakuga-tab.is-active {
-  color: #fff;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.32), rgba(244, 114, 182, 0.16));
-  border-color: rgba(167, 139, 250, 0.38);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 14px rgba(139, 92, 246, 0.18);
-}
-
-/* 作画组视图给共享顶栏让位 + 常驻不透明底色（杜绝切换时背景透闪） */
+/* 原画 / 动画 / 着色 已是一级视图，各自独立入口，不再有「作画」共享顶栏。
+   仅保留常驻不透明底色（杜绝视图切换时背景透闪） */
 #view-oua,
 #view-animation,
 #view-paint {
   background-color: #0f1320;
-}
-
-body[data-view='oua'] #view-oua,
-body[data-view='animation'] #view-animation,
-body[data-view='paint'] #view-paint {
-  padding-top: 62px;
-}
-
-@media (max-width: 820px) {
-  .sakuga-tabs { left: 56px; padding: 0 10px; }
-}
-@media (max-width: 640px) {
-  .sakuga-tabs { left: 50px; }
-  .sakuga-tab { padding: 0 10px; font-size: 12px; }
 }
 
 </style>
@@ -16941,7 +16871,7 @@ body[data-view='paint'] #view-paint {
 
 </style>
 <script>window.HM_LIBRARY_SEED = {"version":1,"updatedAt":"2026-11-05","note":"绘梦图书馆 · 书籍种子数据。MySQL 初始化与前端离线兜底共用此文件。","books":[{"id":"lib-0001","title":"夜航船","author":"张岱","category":"古典笔记","tags":["古典","笔记","博物"],"intro":"明末清初的博物笔记。张岱以「夜航船」为舟中闲谈之所，把天文、地理、人物、艺文、方术收进一部书里。读它像坐在一条慢船上，听同舱的旅人一件件讲古。","accent":"#7d5a3c","pages":[{"title":"序·夜航船","content":"天下学问，惟夜航船最难对付。盖村夫俗子，皆能言之。然一涉疑义，则瞠目而莫对。\n\n昔有僧人与士子同宿夜航船。士子高谈阔论，僧畏慑，卷缩而睡。僧见其语有破绽，问曰：澹台灭明是一个人、是两个人？士子曰：是两个人。僧曰：这等尧舜是一个人、两个人？士子曰：自然是一个人。僧乃笑曰：这等说起来，且待小僧伸伸脚。\n\n余所记载，皆眼前极浅之事，但勿使僧人伸脚则已矣。"},{"title":"天文部·星象","content":"二十八宿，分列四方。东方苍龙七宿：角、亢、氐、房、心、尾、箕；北方玄武七宿：斗、牛、女、虚、危、室、壁；西方白虎七宿：奎、娄、胃、昴、毕、觜、参；南方朱雀七宿：井、鬼、柳、星、张、翼、轸。\n\n古人不以星为远物，而以星为邻。夜坐庭中，指某星为某官、某星为某分野，仿佛天上亦有一朝一野，与人间相映。"},{"title":"地理部·山川","content":"五岳者，东岳泰山、西岳华山、南岳衡山、北岳恒山、中岳嵩山。\n\n泰山之阳，汶水西流；其阴，济水东流。阳谷皆入汶，阴谷皆入济。当其南北分者，古长城也。最高日观峰，在长城南十五里。\n\n山不必高，得其势则雄；水不必深，得其曲则远。画者取山，先取山骨；文人写水，先写水声。"},{"title":"人物部·名士","content":"魏晋名士，多尚清谈。或扪虱而谈，或临风长啸，或雪夜访戴，造门不入而返。人问其故，曰：乘兴而来，兴尽而返，何必见戴？\n\n此等行事，看似疏狂，实有一种自重。不与俗同，亦不强人从己。后人读之，如见其衣袂飘然，行于松风之下。"},{"title":"艺文部·书画","content":"书者，心画也。意在笔先，然后落墨。笔有中锋、侧锋，墨有浓淡干湿。一画之中，虚实相生，疏密相间，方成气韵。\n\n画山水者，最忌满纸填塞。留白处不是空，是云、是水、是远天。善画者，画到七分便住手，余三分留与看画人自己去想。"},{"title":"卷末·舟中语","content":"夜航船中，灯火如豆，人声渐低。有人讲一段旧事，有人补一句典故，有人只倚着船舷听水。\n\n天将明未明时，江面起雾，两岸的山只剩下淡淡的影子。船夫说：快到了。众人便各自收拾行李，仿佛昨夜那些话，都留在了水里。"}]},{"id":"lib-0002","title":"山海经","author":"佚名","category":"上古神话","tags":["神话","地理","异兽"],"intro":"中国最早的神话地理书。山经海经，记异兽、奇木、神祇与远国。它不是一册地图，而是一场没有尽头的远游。","accent":"#4f6b5a","pages":[{"title":"南山经·鹊山","content":"南山经之首曰鹊山。其首曰招摇之山，临于西海之上，多桂，多金玉。有兽焉，其状如禺而白耳，伏行人走，其名曰狌狌，食之善走。\n\n丽麂之水出焉，而西流注于海，其中多育沛，佩之无瘕疾。"},{"title":"西山经·昆仑","content":"昆仑之丘，实惟帝之下都，神陆吾司之。其神状虎身而九尾，人面而虎爪，是神也，司天之九部及帝之囿时。\n\n有木焉，其状如棠而黄华赤实，其味如李而无核，名曰沙棠，可以御水，食之使人不溺。"},{"title":"北山经·幽都","content":"北海之内，有山名曰幽都之山，黑水出焉。其上有玄鸟、玄蛇、玄豹、玄虎、玄狐蓬尾。\n\n有大玄之山，有玄丘之民。玄丘之民，衣玄衣，食玄稻。天光不入，唯星照之。"},{"title":"东山经·青丘","content":"青丘之山，其阳多玉，其阴多青䨼。有兽焉，其状如狐而九尾，其音如婴儿，能食人；食者不蛊。\n\n有鸟焉，其状如鸠，其音若呵，名曰灌灌，佩之不惑。"},{"title":"海内经·归墟","content":"东海之外大壑，少昊之国。少昊孺帝颛顼于此，弃其琴瑟。\n\n大壑之中，有山名曰归墟。百川之水，尽归于墟，而墟不盈。星汉之流，亦注于其间。故老相传：归墟之下，别有一片天。"}]},{"id":"lib-0003","title":"世说新语","author":"刘义庆","category":"志人小说","tags":["魏晋","人物","清谈"],"intro":"分德行、言语、政事、雅量等三十六门，记汉末至东晋名士的言行。短短数行，人物风神便立起来了。","accent":"#5a5f7d","pages":[{"title":"德行第一","content":"陈太丘与友期行，期日中。过中不至，太丘舍去，去后乃至。元方时年七岁，门外戏。客问元方：尊君在不？答曰：待君久不至，已去。友人便怒曰：非人哉！与人期行，相委而去。元方曰：君与家君期日中，日中不至，则是无信；对子骂父，则是无礼。友人惭，下车引之，元方入门不顾。"},{"title":"言语第二","content":"谢太傅寒雪日内集，与儿女讲论文义。俄而雪骤，公欣然曰：白雪纷纷何所似？兄子胡儿曰：撒盐空中差可拟。兄女曰：未若柳絮因风起。公大笑乐。\n\n即公大兄无奕女，左将军王凝之妻也。"},{"title":"雅量第六","content":"王子猷居山阴，夜大雪，眠觉，开室命酌酒，四望皎然。因起彷徨，咏左思招隐诗，忽忆戴安道。时戴在剡，即便夜乘小船就之。经宿方至，造门不前而返。人问其故，王曰：吾本乘兴而行，兴尽而返，何必见戴？"},{"title":"任诞第二十三","content":"刘伶病酒，渴甚，从妇求酒。妇捐酒毁器，涕泣谏曰：君饮太过，非摄生之道，必宜断之。伶曰：甚善。我不能自禁，唯当祝鬼神自誓断之耳，便可具酒肉。妇曰：敬闻命。供酒肉于神前，请伶祝誓。伶跪而祝曰：天生刘伶，以酒为名，一饮一斛，五斗解酲。妇人之言，慎不可听。便引酒进肉，隗然已醉矣。"},{"title":"巧艺第二十一","content":"顾长康画人，或数年不点目精。人问其故，顾曰：四体妍蚩，本无关于妙处；传神写照，正在阿堵中。\n\n又画裴叔则，颊上益三毛。人问其故，顾曰：裴楷俊朗有识具，正此是其识具。看画者寻之，定觉益三毛如有神明，殊胜未安时。"}]},{"id":"lib-0004","title":"陶庵梦忆","author":"张岱","category":"明清小品","tags":["小品","回忆","江南"],"intro":"张岱自记平生所见：灯市、梨园、园林、茶楼、西湖雪夜。明亡之后，旧事只能入梦，于是把梦一笔一笔写下来。","accent":"#8a5a46","pages":[{"title":"湖心亭看雪","content":"崇祯五年十二月，余住西湖。大雪三日，湖中人鸟声俱绝。\n\n是日更定矣，余挐一小舟，拥毳衣炉火，独往湖心亭看雪。雾凇沆砀，天与云与山与水，上下一白。湖上影子，惟长堤一痕、湖心亭一点、与余舟一芥、舟中人两三粒而已。\n\n到亭上，有两人铺毡对坐，一童子烧酒炉正沸。见余大喜曰：湖中焉得更有此人！拉余同饮。余强饮三大白而别。问其姓氏，是金陵人，客此。及下船，舟子喃喃曰：莫说相公痴，更有痴似相公者。"},{"title":"西湖七月半","content":"西湖七月半，一无可看，止可看看七月半之人。\n\n看七月半之人，以五类看之：其一，楼船箫鼓，峨冠盛筵，灯火优傒，声光相乱，名为看月而实不见月者，看之；其二，亦船亦楼，名娃闺秀，携及童娈，笑啼杂之，还坐露台，左右盼望，身在月下而实不看月者，看之。"},{"title":"柳敬亭说书","content":"柳敬亭之善说书，人所共知。其说景阳冈武松打虎，描写刻画，微入毫发，然又找截干净，并不唠叨。\n\n响处如巨雷，说到疾处，两腕如铁，口中如沸。听者屏息，至紧要时，忽住口，众人皆仰面看之，敬亭徐啜一茶，复说下去。"},{"title":"金山夜戏","content":"崇祯二年中秋后一日，余道镇江往兖。日晡，至北固，舣舟江口。月光倒囊入水，江涛吞吐，露气吸之，噀天为白。\n\n余大惊喜，移舟过金山寺，已二鼓矣。经龙王堂，入大殿，皆漆静。林下漏月光，疏疏如残雪。余呼小傒携戏具，盛张灯火大殿中，唱韩蕲王金山及长江大战诸剧。锣鼓喧阗，一寺人皆起看。有老僧以手背揉眼，翕然张口，呵欠与笑嚏俱至。剧完，已曙，解缆过江。山僧至山脚，目送久之，不知是人、是怪、是鬼。"},{"title":"卷末·梦与记","content":"余今所记，皆过去之事。明知是梦，犹记之不休，何也？\n\n盖人之于世，所不能忘者，非富贵，非功名，乃一二小事：一盏灯、一场雪、一句唱词、一个旧人。记之，则梦可久；不记，则连梦也没有了。"}]},{"id":"lib-0005","title":"浮生六记","author":"沈复","category":"自传散文","tags":["清人","生活","爱情"],"intro":"沈复记与妻芸娘的家常岁月：插花、煮茶、游园、贫中作乐。文字清淡，悲喜都在生活细处。","accent":"#6f7c55","pages":[{"title":"闺房记乐","content":"余忆童稚时，能张目对日，明察秋毫。见藐小微物，必细察其纹理，故时有物外之趣。\n\n夏蚊成雷，私拟作群鹤舞空，心之所向，则或千或百果然鹤也。昂首观之，项为之强。又留蚊于素帐中，徐喷以烟，使其冲烟飞鸣，作青云白鹤观，果如鹤唳云端，怡然称快。"},{"title":"闲情记趣","content":"余与芸居沧浪亭畔，终日不言而心会。芸善插花，取梅一枝，去其冗枝，留其疏影，置于胆瓶，若有风致。\n\n夏夜，芸以纱囊盛茉莉，悬于帐中，香气清远。余笑曰：此所谓生香也。芸曰：香有生者，有熟者，熟者近俗，生者近仙。"},{"title":"坎坷记愁","content":"芸娘病中，犹强起为余理书。余止之，芸曰：我见书乱，心亦乱；理之，则心安。\n\n是夜雨，灯花落尽。芸执余手曰：愿来世得为君妇，仍如今日。余不能答，唯颔首。窗外雨声，如有人在远处低低地哭。"},{"title":"浪游记快","content":"由山阴至杭州，舟行三日。两岸桑麻，村落相望。\n\n至西湖，见断桥残雪未消，柳色初青。余与芸赁一小舟，泊于湖心，煮茶看山。芸曰：山水之乐，得之心而寓之茶也。余大笑，茶泼于衣。"},{"title":"养生记道","content":"心不烦则神清，神清则气顺。饮食有节，起居有常，不妄作劳。\n\n余谓养生无他，只是不与烦恼同住。晨起看花，午后读书，黄昏散步，夜来安睡。此生已足。"}]},{"id":"lib-0006","title":"幽梦影","author":"张潮","category":"清言小品","tags":["清言","格言","雅趣"],"intro":"以短句写闲情与哲思，一句一条，如月下清谈。后人评点附于句后，读来像围坐一桌的友人各说一句。","accent":"#6b5b8a","pages":[{"title":"卷一·读书","content":"少年读书，如隙中窥月；中年读书，如庭中望月；老年读书，如台上玩月。皆以阅历之浅深，为所得之浅深耳。\n\n读经宜冬，其神专也；读史宜夏，其时久也；读诸子宜秋，其致别也；读诸集宜春，其机畅也。"},{"title":"卷二·山水","content":"山之光，水之声，月之色，花之香，文人之韵致，美人之姿态，皆无可名状，无可执着，真足以摄召魂梦，颠倒情思。\n\n因雪想高士，因花想美人，因酒想侠客，因月想好友，因山水想得意诗文。"},{"title":"卷三·闲情","content":"人莫乐于闲，非无所事事之谓也。闲则能读书，闲则能游名胜，闲则能交益友，闲则能饮酒，闲则能著书。天下之乐，孰大于是？\n\n花不可无蝶，山不可无泉，石不可无苔，水不可无藻，乔木不可无藤萝，人不可无癖。"},{"title":"卷四·友道","content":"对渊博友，如读异书；对风雅友，如读名人诗文；对谨饬友，如读圣贤经传；对滑稽友，如阅传奇小说。\n\n一介之士，必有密友。密友不必是生死之交，但能于我有益，即友也。"},{"title":"卷末·一梦","content":"幽梦一影，不过灯下随笔。然数百年后，仍有人于夜半翻及，忽觉灯下亦有一人，与自己同坐。\n\n此即所谓：书不必厚，得其一句，可抵一梦。"}]},{"id":"lib-0007","title":"东京梦华录","author":"孟元老","category":"宋人笔记","tags":["宋","城市","风俗"],"intro":"追忆北宋汴京的市井繁华：街巷、酒楼、瓦子、节令。一卷书里，元宵的灯与州桥的夜市都还亮着。","accent":"#8f6a3f","pages":[{"title":"序·梦华","content":"仆从先人宦游南北，崇宁癸未到京师，卜居于州西金梁桥西夹道之南。正当辇毂之下，太平日久，人物繁阜。\n\n垂髫之童，但习鼓舞；班白之老，不识干戈。时节相次，各有观赏。灯宵月夕，雪际花时，乞巧登高，教池游苑。\n\n一旦兵火，靖康丙午之明年，出京南来，避地江左，情绪牢落，渐入桑榆。暗想当年，节物风流，人情和美，但成怅恨。"},{"title":"州桥夜市","content":"出朱雀门，直至龙津桥。自州桥南去，当街水饭、爊肉、干脯。王楼前獾儿、野狐肉、脯鸡。梅家、鹿家鹅鸭鸡兔、肚肺鳝鱼、包子鸡皮、腰肾鸡碎，每个不过十五文。\n\n夏月麻腐鸡皮、麻饮细粉、素签沙糖、冰雪冷元子、水晶角儿、生腌水木瓜、药木瓜、鸡头穰沙糖、绿豆甘草冰雪凉水、荔枝膏、广芥瓜儿、咸菜、杏片、梅子姜、莴苣笋、芥辣瓜旋儿、细料馉饳儿、香糖果子、间道糖荔枝、越梅、离刀紫苏膏、金丝党梅、香橙元，皆用梅红匣儿盛贮。"},{"title":"元宵灯节","content":"正月十五日元宵，大内前自岁前冬至后，开封府绞缚山棚，立木正对宣德楼。游人已集御街两廊下，奇术异能，歌舞百戏，鳞鳞相切，乐声嘈杂十馀里。\n\n灯山上彩，金碧相射，锦绣交辉。面北悉以彩结，山启上皆画神仙故事。或坊市卖药卖卦之人，横列三二，皆结彩棚，铺陈冠梳、珠翠、头面、衣着、花朵、领抹、靴鞋、玩好之类。"},{"title":"酒楼瓦子","content":"凡京师酒店，门首皆缚彩楼欢门，唯任店入其门，一直主廊约百馀步，南北天井两廊皆小阁子，向晚灯烛荧煌，上下相照。浓妆妓女数百，聚于主廊槏面上，以待酒客呼唤，望之宛若神仙。\n\n瓦子中，多有货药、卖卦、喝故衣、探搏、饮食、剃剪纸画令曲之类。终日居此，不觉抵暮。"},{"title":"卷末·回首","content":"仆今追念，回首怅然，岂非华胥之梦觉哉？\n\n旧京的街巷早已改了名字，灯市也换了地方。可若有人在夜里翻到这一卷，看见州桥的夜市、宣德楼的灯山，那些灯火便又从纸上一点点亮起来。"}]},{"id":"lib-0008","title":"芥子园画传","author":"李渔","category":"画论技法","tags":["绘画","技法","画谱"],"intro":"中国最著名的绘画入门谱。树石、兰竹、人物、山水，皆有法度；学画者由此入，亦可由此出。","accent":"#5c7a72","pages":[{"title":"序·画有法","content":"学画者，先明法度，后求变化。法度不立，则笔墨无所归；法度既立，则笔下自生变化。\n\n然法者，所以教人，非所以限人。拘于法而不能脱，是为画匠；能脱法而不失其正，是为画者。"},{"title":"树谱·枝干","content":"画树先画干。干有直有曲，曲者取其势，直者取其骨。\n\n分枝处谓之丫，丫有向背。向枝宜短，背枝宜长；向枝宜实，背枝宜虚。叶生于枝末，攒三聚五，疏密相间。"},{"title":"石谱·皴法","content":"画石之法，先立轮廓，后加皴擦。轮廓者，石之骨也；皴者，石之纹理也。\n\n披麻皴宜于土山，斧劈皴宜于石山，折带皴宜于方石。皴不宜繁，繁则滞；不宜简，简则薄。"},{"title":"兰竹谱","content":"写兰如写草书，笔笔相连，气脉不断。叶分向背，向叶肥，背叶瘦。\n\n画竹先立竿，竿有节。节节相承，上细下粗。然后出枝，枝生于节；然后布叶，叶生于枝。叶有仰有覆，有聚有散，所谓个字形、介字形者是也。"},{"title":"山水谱·构图","content":"山水构图，有高远、深远、平远三法。高远者，仰视山巅；深远者，窥其后；平远者，望其前。\n\n一幅之中，主山居要，客山辅之。近景宜实，中景宜虚，远景宜淡。水随山转，云随水行。留白者，非无物也，是无尽之意。"}]},{"id":"lib-0009","title":"徐霞客游记","author":"徐霞客","category":"游记地理","tags":["地理","游记","山川"],"intro":"一个人用三十余年走遍山川，把所见写成日记。文字朴素，却让我们看见四百年前的山是怎样立着、水是怎样流着。","accent":"#5d6b46","pages":[{"title":"游天台山日记","content":"癸丑之三月晦，自宁海出西门。云散日朗，人意山光，俱有喜态。\n\n三十里，至梁隍山。闻此处有虎，行旅皆戒严。余独与一僧一仆俱行，日暮宿于野店。\n\n次日，行十五里，至太白山下。山势渐高，溪声渐急。"},{"title":"游雁荡山日记","content":"余与仲昭、仲明同游雁荡。初入灵峰，见两崖夹峙，中开一线，天光如线。\n\n上有洞，洞中石乳下垂，如莲如笋。僧言此中有龙湫，水自岩顶坠下，如匹练。"},{"title":"游黄山日记","content":"黄山之胜，在峰、在石、在松、在云。\n\n初入山，雾甚。行数里，雾忽开，群峰出其下，如波涛涌起。石皆奇峭，松皆偃蹇，有虬龙之状。\n\n至文殊院，宿于楼上看日出。夜深风急，星斗灿然。"},{"title":"游庐山日记","content":"庐山以瀑名。三叠泉尤奇。水自三处石崖叠落，一叠如帘，二叠如练，三叠如雷霆。\n\n余坐崖下，衣袂尽湿。仰视水自天来，不知所自。此身如在画中，又不在画中。"},{"title":"卷末·行脚","content":"余行三十年，所见山川，不可胜记。或问：何苦如此？\n\n余曰：人各有癖。余之癖在山水。得见一峰之奇，便忘其劳；得闻一瀑之声，便忘其饥。\n\n此身有限，山川无尽。惟愿长作行脚，看水穷处，坐看云起时。"}]},{"id":"lib-0010","title":"搜神记","author":"干宝","category":"志怪小说","tags":["志怪","神话","民间传说"],"intro":"东晋志怪集。神、鬼、妖、异人，皆如邻里之事一般被认真记下。古人记怪，其实是在记人心。","accent":"#6b4f6b","pages":[{"title":"干将莫邪","content":"干将莫邪为楚王作剑，三年乃成。王怒，欲杀之。剑有雌雄，其妻莫邪有孕，干将将杀，谓妻曰：吾为王作剑，三年乃成，王怒必杀我。\n\n汝若生男，告之曰：出户望南山，松生石上，剑在其背。\n\n成，王果杀之。其妻生男，名曰赤比。赤比壮，问父所在，母语之。赤比出户，不见南山，但见松柱，乃破之，得剑。"},{"title":"董永卖身","content":"董永，千乘人。少偏孤，与父居。肆力田亩，牛车载父自随。父亡，无以葬，乃自卖为奴，以备丧事。\n\n道逢一妇人，求为永妻。永与俱至主家。主令织缣三百匹，乃放归。妇人一旬而毕。\n\n将归，谓永曰：我，天之织女也。缘君至孝，天帝令我助君偿债。言讫，凌空而去。"},{"title":"韩凭妻","content":"宋康王舍人韩凭，娶妻何氏，美。康王夺之。凭怨，王囚之，论为城旦。\n\n妻乃阴遗凭书，曰：其雨淫淫，河大水深，日出当心。\n\n王问群臣，莫能解。凭自杀。妻乃阴腐其衣，王与之登台，妻遂自投台下。左右揽之，衣不中手而死。\n\n遗书于带曰：王利其生，妾利其死。愿以尸骨赐凭合葬。王怒，弗听。\n\n于是冢相望也。王曰：尔夫妇相爱不已，若能使冢合，则吾弗阻也。宿昔之间，便有大梓木生于二冢之端，旬日而大盈抱，屈体相就，根交于下，枝错于上。"},{"title":"李寄斩蛇","content":"东越闽中，有庸岭，高数十里。其西北隰中有大蛇，长七八丈，大十馀围。\n\n土俗常惧。东冶都尉及属城长吏，多有死者。祭以牛羊，故不得祸。\n\n或与人梦，或下谕巫祝，欲得啖童女年十二三者。都尉令长并共患之。\n\n将乐县李诞家，有女名寄，应募而行。寄乃告请好剑及咋蛇犬。至八月朝，便诣庙中坐。先将数石米糍，用蜜灌之，以置穴口。\n\n蛇便出，头大如囷，目如二尺镜。寄便放犬，犬就啮咋；寄从后斫得数创。蛇出，至庭而死。"},{"title":"卷末·怪与常","content":"干宝自序曰：虽考先志于载籍，收遗逸于当时，盖非一耳一目之所亲闻睹也，又安敢谓无失实者哉？\n\n卫朔失国，二传互其所闻；吕望事周，子长存其两说。\n\n然则怪与常，岂有定哉？今日之怪，或为他日之常；此地之常，或为彼地之怪。记之，以待知者。"}]}]};</script>
-<script>window.HM_BUILD = "20261106083158-bbbbbbb";</script>
+<script>window.HM_BUILD = "20261106092845-08a4aba";</script>
 </head>
 <body data-view="create">
   <script>
@@ -17006,9 +16936,17 @@ body[data-view='paint'] #view-paint {
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
         <span>故事版</span>
       </button>
-      <button class="hm-rail-item" data-rail="oua" title="作画（原画 / 动画 / 着色）">
+      <button class="hm-rail-item" data-rail="oua" title="原画（本番原画 / 動画 · 中割り）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
-        <span>作画</span>
+        <span>原画</span>
+      </button>
+      <button class="hm-rail-item" data-rail="animation" title="动画（動画 · 帧序列与播放）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M3 15h18" stroke="currentColor" stroke-width="1.1" opacity=".55"/><path d="M10.5 9.5l4 2.5-4 2.5v-5Z" fill="currentColor" opacity=".85"/></svg>
+        <span>动画</span>
+      </button>
+      <button class="hm-rail-item" data-rail="paint" title="着色（赛璐璐上色 · PaintMan 工作流）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.6 12.4l5.3-5.3a1.7 1.7 0 0 1 2.4 0l3.6 3.6a1.7 1.7 0 0 1 0 2.4l-5.3 5.3a1.7 1.7 0 0 1-2.4 0l-3.6-3.6a1.7 1.7 0 0 1 0-2.4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 7.5L15 13" stroke="currentColor" stroke-width="1.3" opacity=".65"/><path d="M19.4 15.2c.9 1.2 1.4 2 1.4 2.6a1.4 1.4 0 1 1-2.8 0c0-.6.5-1.4 1.4-2.6Z" fill="currentColor" opacity=".85"/></svg>
+        <span>着色</span>
       </button>
       <button class="hm-rail-item" data-rail="plan" title="企划（热榜、排行榜、日式动漫企划书）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5h10M7 12h7M7 15.5h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 3.5v3M8.5 3.5v3" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
@@ -18737,16 +18675,7 @@ body[data-view='paint'] #view-paint {
     </div>
   </main>
 
-  <!-- ============ 作画模块 · 共享顶栏（原画 / 动画 / 着色） ============ -->
-  <nav class="sakuga-tabs" id="sakugaTabs" aria-label="作画子模块切换">
-    <span class="sakuga-tabs-brand">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      作画
-    </span>
-    <button class="sakuga-tab" data-sakuga="oua" type="button">原画</button>
-    <button class="sakuga-tab" data-sakuga="animation" type="button">动画</button>
-    <button class="sakuga-tab" data-sakuga="paint" type="button">着色</button>
-  </nav>
+  <!-- 原画 / 动画 / 着色 已提升为侧栏一级入口，各自独立视图，不再共用「作画」顶栏 -->
 
   <!-- ===================== 着色（参考 RETAS PaintMan） ===================== -->
   <main class="hm-page hm-pt-page" id="view-paint" hidden>
@@ -49847,67 +49776,6 @@ window.HMChat = (function () {
 'use strict';
 
 /* =============================================================
- * 绘梦 · 作画模块（HMSakuga）
- * 顶栏子模块切换：原画 / 动画 / 着色
- * （三个子模块为既有视图，功能不变，仅入口并入「作画」顶栏）
- *
- * 防闪帧：视图切换为 display 原子替换（同帧完成，无过渡帧），
- * 配合 .hm-page 不透明底色，不会产生任何中间画面。
- * ============================================================= */
-(function () {
-  var GROUP = ['oua', 'animation', 'paint'];
-
-  function $(id) { return document.getElementById(id); }
-
-  function currentView() { return document.body.dataset.view || ''; }
-
-  function syncTabs() {
-    var view = currentView();
-    document.querySelectorAll('#sakugaTabs .sakuga-tab').forEach(function (tab) {
-      tab.classList.toggle('is-active', tab.getAttribute('data-sakuga') === view);
-    });
-  }
-
-  function goView(target) {
-    if (window.HMApp && window.HMApp.switchView) {
-      window.HMApp.switchView(target);
-    }
-  }
-
-  function bindTabs() {
-    var bar = $('sakugaTabs');
-    if (!bar) return;
-    bar.addEventListener('click', function (event) {
-      var tab = event.target.closest('.sakuga-tab');
-      if (!tab) return;
-      var target = tab.getAttribute('data-sakuga');
-      if (!target || target === currentView()) return;
-      goView(target);
-    });
-    /* 视图变化时同步高亮（含侧栏直进、快捷键切视图等情况） */
-    var observer = new MutationObserver(syncTabs);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
-    syncTabs();
-  }
-
-  window.HMSakuga = {
-    isGroupView: function (view) { return GROUP.indexOf(view) >= 0; },
-    goView: goView,
-    syncTabs: syncTabs
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindTabs);
-  } else {
-    bindTabs();
-  }
-})();
-
-</script>
-  <script>
-'use strict';
-
-/* =============================================================
  * 绘梦 · V3 工作台
  * 左侧导航（桌面 / 画布 / 成片 / 工具 / 资产 / 写作 / 论坛）
  * 预设弹窗、资产库、全屏编辑器、图片 / 视频 / 音频多模态
@@ -50668,14 +50536,29 @@ window.HMChat = (function () {
 
     var items = railTop.querySelectorAll('.hm-rail-item[data-rail]');
 
-    // 恢复保存的顺序
+    // 恢复保存的顺序（旧数据里的「作画」母入口按原位置拆成 原画 / 动画 / 着色）
     try {
       var order = readJSON(LS.railOrder, null);
       if (Array.isArray(order) && order.length) {
         var map = {};
         items.forEach(function (el) { map[el.getAttribute('data-rail')] = el; });
         order.forEach(function (rail) {
+          if (rail === 'oua') {
+            ['oua', 'animation', 'paint'].forEach(function (key) {
+              if (map[key]) railTop.appendChild(map[key]);
+            });
+            return;
+          }
           if (map[rail]) railTop.appendChild(map[rail]);
+        });
+        /* 旧顺序里没有的新入口跟随「原画」，避免被排到最前或最末。
+           倒序插入，保证最终排列为 原画 → 动画 → 着色 */
+        ['paint', 'animation'].forEach(function (key) {
+          if (!map[key] || order.indexOf(key) >= 0) return;
+          var anchor = map.oua;
+          if (anchor && anchor.parentNode === railTop) {
+            railTop.insertBefore(map[key], anchor.nextSibling);
+          }
         });
       }
     } catch (e) { /* ignore */ }
@@ -50739,8 +50622,8 @@ window.HMChat = (function () {
   var prevView = null;
 
   function onView(view) {
-    /* 原画 / 动画 / 着色同属「作画」模块，统一高亮作画侧栏按钮 */
-    var railView = (view === 'animation' || view === 'paint') ? 'oua' : view;
+    /* 原画 / 动画 / 着色 已是一级入口，各自高亮自己的侧栏按钮 */
+    var railView = view;
     document.querySelectorAll('[data-rail]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-rail') === railView);
     });
@@ -55307,6 +55190,7 @@ window.HMChat = (function () {
  * HMOUA — Original Animation 原画（第一原画 / 第二原画 · 中割り）
  * ======================================================================== */
 (function () {
+  var A = window.HMApp;
   var state = {
     list: [], team: 'first', sortBy: 'updatedAt',
     editing: null, draft: null, saveTimer: null,

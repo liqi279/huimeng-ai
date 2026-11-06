@@ -761,14 +761,29 @@
 
     var items = railTop.querySelectorAll('.hm-rail-item[data-rail]');
 
-    // 恢复保存的顺序
+    // 恢复保存的顺序（旧数据里的「作画」母入口按原位置拆成 原画 / 动画 / 着色）
     try {
       var order = readJSON(LS.railOrder, null);
       if (Array.isArray(order) && order.length) {
         var map = {};
         items.forEach(function (el) { map[el.getAttribute('data-rail')] = el; });
         order.forEach(function (rail) {
+          if (rail === 'oua') {
+            ['oua', 'animation', 'paint'].forEach(function (key) {
+              if (map[key]) railTop.appendChild(map[key]);
+            });
+            return;
+          }
           if (map[rail]) railTop.appendChild(map[rail]);
+        });
+        /* 旧顺序里没有的新入口跟随「原画」，避免被排到最前或最末。
+           倒序插入，保证最终排列为 原画 → 动画 → 着色 */
+        ['paint', 'animation'].forEach(function (key) {
+          if (!map[key] || order.indexOf(key) >= 0) return;
+          var anchor = map.oua;
+          if (anchor && anchor.parentNode === railTop) {
+            railTop.insertBefore(map[key], anchor.nextSibling);
+          }
         });
       }
     } catch (e) { /* ignore */ }
@@ -832,8 +847,8 @@
   var prevView = null;
 
   function onView(view) {
-    /* 原画 / 动画 / 着色同属「作画」模块，统一高亮作画侧栏按钮 */
-    var railView = (view === 'animation' || view === 'paint') ? 'oua' : view;
+    /* 原画 / 动画 / 着色 已是一级入口，各自高亮自己的侧栏按钮 */
+    var railView = view;
     document.querySelectorAll('[data-rail]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-rail') === railView);
     });
@@ -5400,6 +5415,7 @@
  * HMOUA — Original Animation 原画（第一原画 / 第二原画 · 中割り）
  * ======================================================================== */
 (function () {
+  var A = window.HMApp;
   var state = {
     list: [], team: 'first', sortBy: 'updatedAt',
     editing: null, draft: null, saveTimer: null,
