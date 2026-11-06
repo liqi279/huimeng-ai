@@ -36530,8 +36530,11 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
     var host = resolveContainer(container);
     var wrap = document.createElement('div');
     wrap.className = 'miku-player-host';
+    wrap.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;overflow:visible;pointer-events:none;z-index:99998;';
     wrap.innerHTML = WIDGET_HTML;
     host.appendChild(wrap);
+    var vinylEl = wrap.querySelector('#vinyl-widget');
+    if (vinylEl) vinylEl.style.pointerEvents = 'auto';
 
     // 可选：覆盖位置
     if (options.position) {
