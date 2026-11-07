@@ -14,3 +14,7 @@ data/config/
 data/library/books.json
 data/library/favorites.json
 data/library/reading-history.json
+
+# Python 缓存
+__pycache__/
+*.pyc
