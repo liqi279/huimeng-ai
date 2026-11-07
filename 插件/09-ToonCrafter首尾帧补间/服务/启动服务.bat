@@ -1,32 +1,47 @@
 @echo off
-chcp 65001 >nul
-setlocal
 cd /d "%~dp0"
-
+title ToonCrafter Ê×Î²Ö¡²¹¼ä - ±¾µØÍÆÀí·şÎñ
 echo ============================================
-echo  ToonCrafter é¦–å°¾å¸§è¡¥é—´ Â· æœ¬åœ°æ¨ç†æœåŠ¡ï¼ˆWindowsï¼‰
+echo  ToonCrafter Ê×Î²Ö¡²¹¼ä ±¾µØÍÆÀí·şÎñ
 echo ============================================
+echo.
 
-where python >nul 2>nul
-if errorlevel 1 (
-  echo [é”™è¯¯] æœªæ‰¾åˆ° pythonï¼Œè¯·å…ˆå®‰è£… Python 3.10 å¹¶åŠ å…¥ PATH
+set PY=
+where py >nul 2>nul && set PY=py -3
+if not defined PY (
+  where python >nul 2>nul && set PY=python
+)
+if not defined PY (
+  echo [´íÎó] Î´ÕÒµ½ Python£¬ÇëÏÈ°²×° Python 3.10 ²¢¹´Ñ¡ Add to PATH
   pause
   exit /b 1
 )
 
-if not exist ".venv" (
-  echo [1/2] é¦–æ¬¡å®‰è£…ä¾èµ–ï¼ˆtorch + å®˜æ–¹ä¾èµ–ï¼Œéœ€æ•° GB ä¸‹è½½ï¼‰...
-  python -m venv .venv
-  call .venv\Scripts\activate.bat
+if not exist ".venv\Scripts\python.exe" (
+  echo [1/2] Ê×´Î°²×°ÒÀÀµ£¬ĞèÒªÊı GB ÏÂÔØ£¬ÇëÄÍĞÄµÈ´ı...
+  %PY% -m venv .venv
+  if errorlevel 1 goto FAIL
+  call ".venv\Scripts\activate.bat"
   python -m pip install --upgrade pip
   python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
   python -m pip install flask flask-cors ftfy regex tqdm einops omegaconf pandas imageio imageio-ffmpeg opencv-python-headless
+  if errorlevel 1 goto FAIL
 ) else (
-  call .venv\Scripts\activate.bat
+  call ".venv\Scripts\activate.bat"
 )
 
-echo [2/2] å¯åŠ¨æ¨ç†æœåŠ¡ï¼šhttp://127.0.0.1:7861
-echo æƒé‡é¦–æ¬¡ä½¿ç”¨ä¼šè‡ªåŠ¨ä» HuggingFace ä¸‹è½½ï¼ˆçº¦æ•° GBï¼‰
+echo.
+echo [2/2] Æô¶¯·şÎñ: http://127.0.0.1:7861
+echo Ê×´ÎÊ¹ÓÃ»á×Ô¶¯ÏÂÔØÄ£ĞÍÈ¨ÖØ£¬Ô¼Êı GB
+echo ä¯ÀÀÆ÷´ò¿ª http://127.0.0.1:7861/api/health ¿É×Ô¼ì
+echo.
 python server.py --port 7861 --warmup 320_512
+goto END
 
+:FAIL
+echo.
+echo [Ê§°Ü] ÒÀÀµ°²×°Ê§°Ü£¬Çë°Ñ±¾´°¿Ú±¨´íÄÚÈİ½ØÍ¼·´À¡
+
+:END
+echo.
 pause

@@ -81,3 +81,20 @@ python server.py --port 7861 --warmup 320_512
 | CUDA out of memory | 换 `256_256`，或降低 steps |
 | 5090/新卡不支持 | 需更新 torch 至该卡支持版本，再重装官方依赖 |
 | 生成 1–3 分钟 | 正常，512 / 50 步在 4090 约 25–40s，首次含模型加载更慢 |
+
+## Windows 一键启动（推荐）
+
+双击 `启动服务.bat` 即可（首次会自动建 venv、装 torch cu121 与依赖，再启动 7861）。
+
+> 注意：`.bat` 必须是 **GBK 编码 + CRLF 换行**，用 UTF-8 保存会导致 cmd 把中文当乱码、
+> 命令被拆断，出现 `'cors' 不是内部或外部命令` 等报错。
+
+自检：浏览器打开 <http://127.0.0.1:7861/api/health>，返回 JSON 且 `device: cuda` 即正常。
+
+## Linux / macOS
+
+```bash
+bash install.sh
+source .venv/bin/activate
+python server.py --port 7861 --warmup 320_512
+```
