@@ -5192,19 +5192,20 @@ body {
   z-index: 90;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 6px;
   padding: 10px 0 12px;
   background: #0b1320;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 1px 0 0 rgba(0, 0, 0, 0.3);
-  overflow-y: auto;
+  overflow: hidden;
   overflow-x: hidden;
 }
 
 .hm-rail::-webkit-scrollbar { width: 0; }
 
 .hm-rail-top,
+.hm-rail-mid,
 .hm-rail-bottom {
   display: flex;
   flex-direction: column;
@@ -5213,8 +5214,26 @@ body {
   width: 100%;
 }
 
+.hm-rail-top { flex: none; }
+
+/* 中段：编集/资产/工具/图书馆，超出高度时滚动，隐藏滚动条 */
+.hm-rail-mid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+.hm-rail-mid::-webkit-scrollbar { display: none; }
+.hm-rail-mid:focus-visible { outline: 1px solid rgba(125, 211, 252, 0.45); outline-offset: -2px; }
+
 .hm-rail-bottom {
-  padding-top: 6px;
+  flex: none;
+  padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.055);
   gap: 6px;
 }
@@ -17110,18 +17129,6 @@ body.dv-open .hm-page {
           <span class="hm-home-menu-check">✓</span>
         </button>
       </div>
-      <button class="hm-rail-item" data-rail="tools" title="工具（效率工具集）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5a4 4 0 0 0 5 5L10 19a2.5 2.5 0 0 1-3.5-3.5L16 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <span>工具</span>
-      </button>
-      <button class="hm-rail-item" data-rail="assets" title="资产（参考图、成片、音频素材统一管理）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 6.5v11c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
-        <span>资产</span>
-      </button>
-      <button class="hm-rail-item" data-rail="library" title="图书馆（复古书架 · 藏书阅读）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h4.5a2 2 0 0 1 2 2V20a2 2 0 0 0-2-2H4V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 4.5h-4.5a2 2 0 0 0-2 2V20a2 2 0 0 1 2-2H20V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.6 8.5h1.8M6.6 12h1.8M15.6 8.5h1.8M15.6 12h1.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".75"/></svg>
-        <span>图书馆</span>
-      </button>
       <button class="hm-rail-item" data-rail="modeling" title="3D建模（Blender 远程操作）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg>
         <span>建模</span>
@@ -17162,9 +17169,24 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
         <span>美术设定</span>
       </button>
+    </div>
+
+    <div class="hm-rail-mid" tabindex="0" aria-label="更多模块（可滚动）">
       <button class="hm-rail-item" data-rail="collection" title="编集（番剧最终导出版本集中管理）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" stroke="currentColor" stroke-width="1.3" opacity=".75"/><path d="M10.5 9.5l4 2.5-4 2.5v-5Z" fill="currentColor" opacity=".85"/></svg>
         <span>编集</span>
+      </button>
+      <button class="hm-rail-item" data-rail="assets" title="资产（参考图、成片、音频素材统一管理）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 6.5v11c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
+        <span>资产</span>
+      </button>
+      <button class="hm-rail-item" data-rail="tools" title="工具（效率工具集）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5a4 4 0 0 0 5 5L10 19a2.5 2.5 0 0 1-3.5-3.5L16 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>工具</span>
+      </button>
+      <button class="hm-rail-item" data-rail="library" title="图书馆（复古书架 · 藏书阅读）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h4.5a2 2 0 0 1 2 2V20a2 2 0 0 0-2-2H4V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 4.5h-4.5a2 2 0 0 0-2 2V20a2 2 0 0 1 2-2H20V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.6 8.5h1.8M6.6 12h1.8M15.6 8.5h1.8M15.6 12h1.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".75"/></svg>
+        <span>图书馆</span>
       </button>
     </div>
 
@@ -51992,6 +52014,34 @@ window.HMChat = (function () {
     });
   }
 
+  /* 侧栏中段：键盘滚动 + 选中项自动滚入视野 */
+  function initRailMidScroll() {
+    var mid = document.querySelector('.hm-rail-mid');
+    if (!mid) return;
+    mid.addEventListener('keydown', function (e) {
+      var step = 52;
+      var h = mid.clientHeight;
+      if (e.key === 'ArrowDown') { mid.scrollTop += step; e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { mid.scrollTop -= step; e.preventDefault(); }
+      else if (e.key === 'PageDown') { mid.scrollTop += h; e.preventDefault(); }
+      else if (e.key === 'PageUp') { mid.scrollTop -= h; e.preventDefault(); }
+      else if (e.key === 'Home') { mid.scrollTop = 0; e.preventDefault(); }
+      else if (e.key === 'End') { mid.scrollTop = mid.scrollHeight; e.preventDefault(); }
+    });
+    document.addEventListener('click', function (e) {
+      var it = e.target && e.target.closest ? e.target.closest('.hm-rail-item') : null;
+      if (!it || !mid.contains(it)) return;
+      setTimeout(function () { it.scrollIntoView({ block: 'nearest' }); }, 0);
+    });
+    if (window.MutationObserver) {
+      var mo = new MutationObserver(function () {
+        var act = mid.querySelector('.hm-rail-item.is-active');
+        if (act) act.scrollIntoView({ block: 'nearest' });
+      });
+      mo.observe(mid, { attributes: true, subtree: true, attributeFilter: ['class'] });
+    }
+  }
+
   async function init() {
     readPrefs();
     bindRail();
@@ -52000,6 +52050,7 @@ window.HMChat = (function () {
     bindRailToggle();
     initRailCollapsed();
     initRailDragSort();
+    initRailMidScroll();
     bindTheme();
     startSeasonAmbient();
     bindModes();
