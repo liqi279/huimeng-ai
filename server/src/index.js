@@ -6,12 +6,14 @@ const express = require('express');
 const cors = require('cors');
 const config = require('./config');
 const store = require('./store');
+const userData = require('./user-data');
 const certUtil = require('./cert');
 
 const healthRoutes = require('./routes/health');
 const translateRoutes = require('./routes/translate');
 const worksRoutes = require('./routes/works');
 const deskRoutes = require('./routes/desk');
+const userdataRoutes = require('./routes/userdata');
 const assetsRoutes = require('./routes/assets');
 const presetsRoutes = require('./routes/presets');
 const catalogRoutes = require('./routes/catalog');
@@ -49,6 +51,8 @@ app.use('/api', healthRoutes);
 app.use('/api', authRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', translateRoutes);
+/* 用户数据同步路由必须在 works/desk 之前：/works/:id/asset 等更具体的路径先匹配 */
+app.use('/api', userdataRoutes);
 app.use('/api', worksRoutes);
 app.use('/api', deskRoutes);
 app.use('/api', assetsRoutes);
@@ -131,6 +135,14 @@ store.ensureDirs()
     } else {
       console.error('[init] 账号数据库不可用：' + ((userState && userState.error) || '未知原因') +
         ' → /api/auth/* 将返回 503。请配置 MySQL，或设置 USER_STORE=auto/file。');
+    }
+
+    /* 用户作品/项目数据存储：账号库可用 MySQL 就用 MySQL，否则回落到文件（并告警）
+       图片走 S3 兼容对象存储；未配置时回落本地盘（仅开发用）。 */
+    try {
+      await userData.init();
+    } catch (err) {
+      console.error('[init] 用户数据存储初始化失败：' + (err && err.message));
     }
 
     app.listen(config.PORT, () => {
