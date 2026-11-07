@@ -101,6 +101,12 @@
     var base = apiBase();
     var el = $('tcApiState');
     if (!base) { toast('请填写推理服务地址', 'error'); return; }
+    if (window.location.protocol === 'https:' && base.indexOf('http://') === 0) {
+      if (el) el.textContent = '被浏览器拦截（https 页面不能访问 http 本地服务）';
+      setBadge(false, '请用本地版打开');
+      if (!silent) toast('https 页面无法访问 http 本地推理服务，请打开本地单文件版或本机 http 服务', 'error');
+      return;
+    }
     if (el) el.textContent = '检测中…';
     var ctrl = window.AbortController ? new AbortController() : null;
     var timer = ctrl ? window.setTimeout(function () { ctrl.abort(); }, 6000) : null;
