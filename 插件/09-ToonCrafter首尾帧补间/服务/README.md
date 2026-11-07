@@ -79,13 +79,15 @@ python server.py --port 7861 --warmup 320_512
 |---|---|
 | `checkpoint Not Found` | 权重没下完，重跑启动或手动 `huggingface-cli download` |
 | CUDA out of memory | 换 `256_256`，或降低 steps |
-| `Cannot connect to proxy` / `ProxyError` | 系统代理未启动或已失效。`启动服务.bat` 安装依赖时会自动忽略代理并改用清华 PyPI / 阿里云 PyTorch 镜像；如你的网络必须走代理，请先启动代理软件再运行 |
+| `Cannot connect to proxy` / `ProxyError` | 代理软件未启动或端口不对。`启动服务.bat` 默认走代理 `http://127.0.0.1:7890`（会优先读取系统 `HTTP_PROXY`），pip 与模型权重都走该代理；端口不同请改脚本开头的 `PROXY` 变量 |
 | 5090/新卡不支持 | 需更新 torch 至该卡支持版本，再重装官方依赖 |
 | 生成 1–3 分钟 | 正常，512 / 50 步在 4090 约 25–40s，首次含模型加载更慢 |
 
 ## Windows 一键启动（推荐）
 
 双击 `启动服务.bat` 即可（首次会自动建 venv、装 torch cu121 与依赖，再启动 7861）。
+
+脚本采用**代理下载模式**：优先读取系统 `HTTP_PROXY` / `HTTPS_PROXY`，未设置时默认 `http://127.0.0.1:7890`（Clash 常用端口），pip 与 HuggingFace 权重下载都会走该代理。端口不一致时修改脚本开头的 `PROXY` 变量即可。
 
 > 注意：`.bat` 必须是 **GBK 编码 + CRLF 换行**，用 UTF-8 保存会导致 cmd 把中文当乱码、
 > 命令被拆断，出现 `'cors' 不是内部或外部命令` 等报错。
