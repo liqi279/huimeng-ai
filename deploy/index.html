@@ -21545,6 +21545,44 @@ body.dv-open .hm-page {
     </section>
   </main>
 
+  <style id="hmAccountAdminCss">
+  .hm-admin-tab .hm-admin-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;line-height:1}
+  .hm-acc-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 14px}
+  .hm-acc-filter{padding:6px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.28);background:transparent;color:inherit;font-size:12.5px;cursor:pointer}
+  .hm-acc-filter.is-active{background:rgba(124,162,255,.18);border-color:rgba(124,162,255,.55);color:#cfe0ff}
+  .hm-acc-list{display:flex;flex-direction:column;gap:10px}
+  .hm-acc-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:rgba(15,23,42,.38);border:1px solid rgba(148,163,184,.16)}
+  .hm-acc-avatar{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#7ca2ff,#a78bfa);color:#fff;font-weight:700;font-size:16px;flex:0 0 auto}
+  .hm-acc-info{min-width:0;flex:1}
+  .hm-acc-name{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:inherit;flex-wrap:wrap}
+  .hm-acc-meta{margin-top:4px;font-size:12px;color:#8b94a6;display:flex;gap:12px;flex-wrap:wrap}
+  .hm-acc-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.7}
+  .hm-acc-pill.is-pending{background:rgba(245,158,11,.16);color:#fbbf24}
+  .hm-acc-pill.is-approved{background:rgba(16,185,129,.16);color:#34d399}
+  .hm-acc-pill.is-rejected{background:rgba(239,68,68,.16);color:#f87171}
+  .hm-acc-pill.is-admin{background:rgba(167,139,250,.18);color:#c4b5fd}
+  .hm-acc-pill.is-user{background:rgba(148,163,184,.16);color:#cbd5e1}
+  .hm-acc-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .hm-acc-actions button{padding:6px 10px;border-radius:9px;border:1px solid rgba(148,163,184,.28);background:transparent;color:inherit;font-size:12.5px;cursor:pointer}
+  .hm-acc-actions button:hover{border-color:rgba(124,162,255,.6)}
+  .hm-acc-actions button.is-primary{background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.5);color:#6ee7b7}
+  .hm-acc-actions button.is-danger{color:#f87171;border-color:rgba(239,68,68,.4)}
+  .hm-acc-actions button:disabled{opacity:.4;cursor:not-allowed}
+  .hm-acc-empty{padding:28px;text-align:center;color:#8b94a6;font-size:13px}
+  .hm-acc-storage{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:14px;border-radius:12px;font-size:12.5px;border:1px solid rgba(148,163,184,.22);background:rgba(148,163,184,.08)}
+  .hm-acc-storage.is-file{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.1);color:#fbbf24}
+  .hm-acc-storage.is-mysql{border-color:rgba(16,185,129,.45);background:rgba(16,185,129,.1);color:#34d399}
+  .hm-acc-storage b{font-weight:700}
+  .hm-acc-storage .hm-acc-storage-tip{color:#cbd5e1;font-size:12px}
+  .hm-acc-storage button{margin-left:8px;padding:5px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:transparent;color:inherit;font-size:12px;cursor:pointer}
+  .hm-acc-storage>b,.hm-acc-storage>span:first-child{margin-right:auto}
+  #authPendingModal .modal-card,#hmApplyNoticeModal .modal-card,#hmProfileModal .modal-card{max-width:460px}
+  .hm-profile-field{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+  .hm-profile-field label{font-size:12.5px;color:#8b94a6}
+  .hm-profile-field input,.hm-profile-field textarea{width:100%;padding:9px 11px;border-radius:10px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.5);color:inherit;font-size:13px;font-family:inherit}
+  .hm-profile-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+  </style>
+
   <main class="hm-page hm-admin-page" id="view-admin" hidden>
     <div class="hm-admin-topbar-wrap">
       <div class="hm-admin-brand">
@@ -21562,7 +21600,7 @@ body.dv-open .hm-page {
       <button class="hm-admin-tab is-active" data-tab="overview"><span>概览</span></button>
       <button class="hm-admin-tab" data-tab="ranking"><span>消耗排行</span></button>
       <button class="hm-admin-tab" data-tab="logs"><span>调用日志</span></button>
-      <button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span></button>
+      <button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span><i class="hm-admin-tab-badge" id="accountsPendingBadge" hidden>0</i></button>
       <button class="hm-admin-tab" data-tab="projects"><span>项目管理</span></button>
     </div>
     <div class="hm-admin-body" id="adminBody"></div>
@@ -22179,6 +22217,58 @@ body.dv-open .hm-page {
     </div>
   </div>
 
+  <!-- 注册申请已提交提示 -->
+  <div class="modal" id="authPendingModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="authPendingClose" type="button" aria-label="关闭">✕</button>
+      <span class="modal-kicker">申请已提交</span>
+      <h2>注册申请已提交</h2>
+      <p class="api-desc" style="margin-top:10px;line-height:1.8">注册申请已提交，请等待管理员通过。<br>审批通过后，使用同一个用户名和密码即可登录。</p>
+      <div class="hm-profile-actions">
+        <button class="hm-pill hm-pill-primary" id="authPendingOk" type="button">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 超管：新注册申请提醒 -->
+  <div class="modal" id="hmApplyNoticeModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="hmApplyNoticeClose" type="button" aria-label="关闭">✕</button>
+      <span class="modal-kicker">待审批</span>
+      <h2>有新的注册申请</h2>
+      <p class="api-desc" id="hmApplyNoticeText" style="margin-top:10px;line-height:1.8">有 1 个新账号正在等待审批。</p>
+      <div class="hm-profile-actions">
+        <button class="hm-pill hm-pill-ghost" id="hmApplyNoticeLater" type="button">稍后处理</button>
+        <button class="hm-pill hm-pill-primary" id="hmApplyNoticeGo" type="button">去审批</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 个人资料（数据存后端 MySQL，不只存 localStorage） -->
+  <div class="modal" id="hmProfileModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="hmProfileClose" type="button" aria-label="关闭">✕</button>
+      <span class="modal-kicker">个人资料</span>
+      <h2>编辑个人资料</h2>
+      <div class="hm-profile-field">
+        <label for="hmProfileName">显示名</label>
+        <input id="hmProfileName" type="text" maxlength="64" placeholder="例如：小明">
+      </div>
+      <div class="hm-profile-field">
+        <label for="hmProfileEmail">邮箱</label>
+        <input id="hmProfileEmail" type="email" maxlength="190" placeholder="you@example.com">
+      </div>
+      <div class="hm-profile-field">
+        <label for="hmProfileBio">简介</label>
+        <textarea id="hmProfileBio" rows="3" maxlength="500" placeholder="简单介绍一下自己"></textarea>
+      </div>
+      <div class="hm-profile-actions">
+        <button class="hm-pill hm-pill-ghost" id="hmProfileCancel" type="button">取消</button>
+        <button class="hm-pill hm-pill-primary" id="hmProfileSave" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
   <div class="hm-auth" id="hmAuth" hidden aria-hidden="true">
     <div class="hm-auth-bg" aria-hidden="true">
       <span class="hm-auth-blob b1"></span>
@@ -22206,6 +22296,11 @@ body.dv-open .hm-page {
         <label class="hm-auth-field">
           <span>用户名</span>
           <input id="authUsername" type="text" placeholder="请输入用户名" autocomplete="username">
+        </label>
+
+        <label class="hm-auth-field" id="authEmailWrap" hidden>
+          <span>邮箱（选填）</span>
+          <input id="authEmail" type="email" placeholder="用于找回账号，可留空" autocomplete="email">
         </label>
 
         <label class="hm-auth-field">
@@ -22708,8 +22803,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.setToken = setAuthToken;
   api.getToken = authToken;
 
-  api.register = function (username, password) {
-    return request('/auth/register', { method: 'POST', body: { username: username, password: password } }, 60000);
+  api.register = function (username, password, email) {
+    return request('/auth/register', { method: 'POST', body: { username: username, password: password, email: email || '' } }, 60000);
   };
   api.login = function (username, password) {
     return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 60000);
@@ -22741,6 +22836,35 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.deleteUser = function (id) {
     return request('/auth/users/' + encodeURIComponent(id), { method: 'DELETE' }, 15000);
   };
+  /* 审批流 */
+  api.setUserStatus = function (id, status, note) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/status', { method: 'PATCH', body: { status: status, note: note || '' } }, 15000);
+  };
+  api.pendingCount = function () {
+    return request('/auth/users/pending-count', {}, 12000);
+  };
+  api.storeStatus = function () {
+    return request('/auth/store-status', {}, 12000);
+  };
+  api.migrateFileUsers = function () {
+    return request('/auth/users/migrate-file', { method: 'POST', body: {} }, 60000);
+  };
+  api.exportUsers = function () {
+    return request('/auth/users/export', {}, 20000);
+  };
+  /* 个人资料 / 偏好：全部走后端，localStorage 只做短期缓存 */
+  api.getProfile = function () {
+    return request('/auth/profile', {}, 15000);
+  };
+  api.updateProfile = function (patch) {
+    return request('/auth/profile', { method: 'PATCH', body: patch || {} }, 15000);
+  };
+  api.getPreferences = function () {
+    return request('/auth/preferences', {}, 15000);
+  };
+  api.updatePreferences = function (patch) {
+    return request('/auth/preferences', { method: 'PATCH', body: patch || {} }, 15000);
+  };
 
   HM.api = api;
 })();
@@ -22770,6 +22894,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     els.password = document.getElementById('authPassword');
     els.confirmWrap = document.getElementById('authConfirmWrap');
     els.confirm = document.getElementById('authConfirm');
+    els.emailWrap = document.getElementById('authEmailWrap');
+    els.email = document.getElementById('authEmail');
     els.error = document.getElementById('authError');
     els.submit = document.getElementById('authSubmit');
     els.submitText = document.getElementById('authSubmitText');
@@ -22823,10 +22949,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     els.tabLogin.classList.toggle('is-active', !isReg);
     els.tabRegister.classList.toggle('is-active', isReg);
     els.confirmWrap.hidden = !isReg;
+    if (els.emailWrap) els.emailWrap.hidden = !isReg;
     if (isReg) {
       els.title.textContent = '创建账号';
-      els.sub.textContent = '注册后你的作品将云端同步';
-      els.submitText.textContent = '注册并登录';
+      els.sub.textContent = '提交后需超级管理员审批通过才能登录';
+      els.submitText.textContent = '提交注册申请';
       els.switchHint.textContent = '已有账号？';
       els.switchBtn.textContent = '去登录';
       els.password.setAttribute('autocomplete', 'new-password');
@@ -22846,6 +22973,72 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     els.error.hidden = false;
   }
   function clearError() { els.error.hidden = true; els.error.textContent = ''; }
+
+  /* ---------- 通用小弹窗 ---------- */
+  function openModal(id) {
+    var m = document.getElementById(id);
+    if (!m) return;
+    m.classList.add('is-open');
+    m.setAttribute('aria-hidden', 'false');
+  }
+  function closeModal(id) {
+    var m = document.getElementById(id);
+    if (!m) return;
+    m.classList.remove('is-open');
+    m.setAttribute('aria-hidden', 'true');
+  }
+  function showPendingModal(msg) {
+    var text = document.querySelector('#authPendingModal .api-desc');
+    if (text && msg) text.innerHTML = msg + '<br>审批通过后，使用同一个用户名和密码即可登录。';
+    openModal('authPendingModal');
+  }
+
+  /* ---------- 个人资料（后端 MySQL 为准） ---------- */
+  async function openProfileModal() {
+    var u = (window.HMApp && window.HMApp.user) || {};
+    var nameEl = document.getElementById('hmProfileName');
+    var emailEl = document.getElementById('hmProfileEmail');
+    var bioEl = document.getElementById('hmProfileBio');
+    if (nameEl) nameEl.value = u.displayName || u.username || '';
+    if (emailEl) emailEl.value = u.email || '';
+    if (bioEl) bioEl.value = '';
+    openModal('hmProfileModal');
+    try {
+      var res = await api.getProfile();
+      var p = (res && res.profile) || {};
+      if (nameEl) nameEl.value = p.displayName || u.username || '';
+      if (emailEl) emailEl.value = p.email || '';
+      if (bioEl) bioEl.value = p.bio || '';
+    } catch (e) {}
+  }
+
+  async function saveProfile() {
+    var btn = document.getElementById('hmProfileSave');
+    var nameEl = document.getElementById('hmProfileName');
+    var emailEl = document.getElementById('hmProfileEmail');
+    var bioEl = document.getElementById('hmProfileBio');
+    if (btn) { btn.disabled = true; btn.textContent = '保存中…'; }
+    try {
+      var res = await api.updateProfile({
+        displayName: (nameEl && nameEl.value || '').trim(),
+        email: (emailEl && emailEl.value || '').trim(),
+        bio: (bioEl && bioEl.value || '').trim()
+      });
+      var p = (res && res.profile) || {};
+      window.HMApp = window.HMApp || {};
+      window.HMApp.user = Object.assign({}, window.HMApp.user || {}, {
+        displayName: p.displayName || '',
+        email: p.email || ''
+      });
+      try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
+      closeModal('hmProfileModal');
+      if (window.HMApp.toast) window.HMApp.toast('资料已保存到服务器', 'success');
+    } catch (err) {
+      if (window.HMApp.toast) window.HMApp.toast((err && err.message) || '保存失败', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '保存'; }
+    }
+  }
 
   function setSubmitting(on) {
     submitting = on;
@@ -22887,8 +23080,19 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
     try {
       var res = mode === 'register'
-        ? await api.register(username, password)
+        ? await api.register(username, password, (els.email && els.email.value || '').trim())
         : await api.login(username, password);
+
+      /* 审批制：注册只提交申请，后端不返回 token */
+      if (mode === 'register' && res && res.pending) {
+        if (els.password) els.password.value = '';
+        if (els.confirm) els.confirm.value = '';
+        mode = 'login';
+        applyMode();
+        showPendingModal(res.message || '注册申请已提交，请等待管理员通过');
+        return;
+      }
+
       if (res && res.token) api.setToken(res.token);
       /* 登录成功即证明后端在线（预热前 ping 可能因冷启动超时，把在线标记纠正过来） */
       if (api) api.online = true;
@@ -22903,6 +23107,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
          作品与桌面放到后台并行加载，不再让用户干等 */
       hideLogin();
       updateUserUI();
+      /* 超管登录后立刻检查是否有待审批注册申请（角标 + 弹框） */
+      if (window.HMUI && typeof window.HMUI.refreshPendingBadge === 'function') {
+        try { window.HMUI.refreshPendingBadge(); } catch (e) {}
+      }
       resetSearchBox();
       if (window.HMApp && window.HMApp.toast) {
         window.HMApp.toast(mode === 'register' ? '注册成功，欢迎加入绘梦' : '登录成功', 'success');
@@ -23148,12 +23356,32 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       if (!btn) return;
       var cmd = btn.dataset.ucmd;
       if (cmd === 'logout') handleLogout();
-      else if (cmd === 'admin') { toggleUserMenu(false); openAdminModal(); }
+      else if (cmd === 'admin') {
+        toggleUserMenu(false);
+        /* 审批制账号管理已并入「设置 → 管理台 → 账号管理」 */
+        if (window.HMUI && typeof window.HMUI.openAccountAdmin === 'function') window.HMUI.openAccountAdmin();
+        else openAdminModal();
+      }
       else if (cmd === 'profile') {
         toggleUserMenu(false);
-        var u = (window.HMApp && window.HMApp.user) || {};
-        toast('当前账号：' + (u.username || '') + '（' + roleLabel(u.role) + '）', 'info');
+        openProfileModal();
       }
+    });
+
+    /* 注册申请 / 新申请提醒 / 个人资料 弹窗 */
+    ['authPendingClose', 'authPendingOk'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', function () { closeModal('authPendingModal'); });
+    });
+    var profileSaveBtn = document.getElementById('hmProfileSave');
+    if (profileSaveBtn) profileSaveBtn.addEventListener('click', saveProfile);
+    ['hmProfileClose', 'hmProfileCancel'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', function () { closeModal('hmProfileModal'); });
+    });
+    ['hmProfileModal', 'authPendingModal'].forEach(function (id) {
+      var m = document.getElementById(id);
+      if (m) m.addEventListener('click', function (ev) { if (ev.target === m) closeModal(id); });
     });
 
     /* 管理员弹窗 */
@@ -28877,6 +29105,14 @@ async function authBoot() {
     console.warn('[authBoot] 错误分类:', kind);
 
     if (kind === 'auth') {
+      /* 审批状态变化（账号被拒绝 / 被撤回）：明确提示并回到登录页 */
+      if (err && err.status === 403 && /审批|拒绝/.test(err.message || '')) {
+        toast(err.message, 'warn', 8000);
+        window.HMApp.user = null;
+        try { api.logout(); } catch (e) {}
+        showLogin();
+        return;
+      }
       /* ========== 401/403 ==========
          即使后端返回 401（比如 Render 重启用户数据被清），
          也不要自动 logout —— 保留缓存桌面，让用户手动重新登录。
@@ -63400,6 +63636,17 @@ window.HMChat = (function () {
     if (HM.switchView) HM.switchView('create');
   }
 
+  /* 直达「设置 → 管理台 → 账号管理」 */
+  function openAccountAdmin() {
+    if (!isAdmin()) {
+      HM.toast && HM.toast('账号管理仅超级管理员可访问', 'info');
+      return;
+    }
+    window.HM_ADMIN_TARGET = 'admin';
+    window.HM_ADMIN_SUBTAB = 'accounts';
+    if (HM.switchView) HM.switchView('admin');
+  }
+
   /* ============ 一次性事件绑定（到 index.html 里已有的 #view-admin 元素） ============ */
   function bindAdminEvents() {
     if (eventsBound) return;
@@ -63453,6 +63700,37 @@ window.HMChat = (function () {
       }
     });
 
+    /* 账号管理：筛选 + 审批操作（事件委托，列表重绘后依然有效） */
+    page.addEventListener('click', function (e) {
+      var filterBtn = e.target.closest('[data-accfilter]');
+      if (filterBtn) {
+        accountFilter = filterBtn.dataset.accfilter || 'all';
+        rerenderAccountRows();
+        return;
+      }
+      var actionBtn = e.target.closest('[data-accmd]');
+      if (actionBtn && !actionBtn.disabled) {
+        handleAccountAction(actionBtn.dataset.uid, actionBtn.dataset.accmd);
+      }
+    });
+
+    /* 新注册申请提醒弹框 */
+    var noticeModal = document.getElementById('hmApplyNoticeModal');
+    var noticeLater = document.getElementById('hmApplyNoticeLater');
+    var noticeClose = document.getElementById('hmApplyNoticeClose');
+    var noticeGo = document.getElementById('hmApplyNoticeGo');
+    if (noticeLater) noticeLater.addEventListener('click', dismissApplyNotice);
+    if (noticeClose) noticeClose.addEventListener('click', dismissApplyNotice);
+    if (noticeModal) noticeModal.addEventListener('click', function (e) { if (e.target === noticeModal) dismissApplyNotice(); });
+    if (noticeGo) noticeGo.addEventListener('click', function () {
+      dismissApplyNotice();
+      currentTopTab = 'admin';
+      window.HM_ADMIN_TARGET = null;
+      var tabsWrap = document.getElementById('adminSubTabs');
+      if (tabsWrap) tabsWrap.style.display = '';
+      switchSubTab('accounts');
+    });
+
     /* 页面内 Esc 不应该退出到桌面 —— 让 desk.js 等自己处理 */
   }
 
@@ -63471,7 +63749,12 @@ window.HMChat = (function () {
       /* 重置 Tab 状态；顶栏「API接入管理」入口可通过 HM_ADMIN_TARGET 指定落地 Tab */
       var target = window.HM_ADMIN_TARGET || 'admin';
       window.HM_ADMIN_TARGET = null;
+      if (window.HM_ADMIN_SUBTAB) {
+        currentSubTab = window.HM_ADMIN_SUBTAB;
+        window.HM_ADMIN_SUBTAB = null;
+      }
       currentTopTab = target;
+      refreshPendingBadge();
       var page = document.getElementById('view-admin');
       if (page) {
         page.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
@@ -63522,7 +63805,7 @@ window.HMChat = (function () {
       overview: HM.api.admin.overview,
       ranking:  HM.api.admin.ranking,
       logs:     HM.api.admin.logs,
-      accounts: HM.api.admin.accounts,
+      accounts: function () { return HM.api.listUsers(); },
       projects: HM.api.admin.projects,
     };
     var fn = apiMap[tab];
@@ -63781,50 +64064,242 @@ window.HMChat = (function () {
     ].join('');
   }
 
-  /* ============ 账号管理 ============ */
+  /* ============ 账号管理（真实账号 + 注册审批） ============ */
+  var accountCache = { users: [], pendingCount: 0 };
+  var accountFilter = 'all';
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtDate(ms) {
+    if (!ms) return '—';
+    try {
+      var d = new Date(Number(ms));
+      var p = function (n) { return n < 10 ? '0' + n : String(n); };
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    } catch (e) { return '—'; }
+  }
+  function statusText(s) { return s === 'pending' ? '待审批' : (s === 'rejected' ? '已拒绝' : '已通过'); }
+  function currentUserId() {
+    var u = (window.HMApp && window.HMApp.user) || {};
+    return u.id || '';
+  }
+
+  function updatePendingBadge(count) {
+    var badge = document.getElementById('accountsPendingBadge');
+    if (!badge) return;
+    var n = Number(count) || 0;
+    if (n > 0) {
+      badge.hidden = false;
+      badge.textContent = n > 99 ? '99+' : String(n);
+    } else {
+      badge.hidden = true;
+      badge.textContent = '0';
+    }
+  }
+
+  function maybeShowApplyNotice(count) {
+    var n = Number(count) || 0;
+    if (!n) return;
+    var dismissed = 0;
+    try { dismissed = Number(sessionStorage.getItem('hm.applyNoticeDismissed') || 0); } catch (e) {}
+    if (n <= dismissed) return;
+    var modal = document.getElementById('hmApplyNoticeModal');
+    var text = document.getElementById('hmApplyNoticeText');
+    if (!modal) return;
+    if (text) text.textContent = '有 ' + n + ' 个新账号正在等待审批，请及时处理。';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function dismissApplyNotice() {
+    var modal = document.getElementById('hmApplyNoticeModal');
+    if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }
+    try { sessionStorage.setItem('hm.applyNoticeDismissed', String(accountCache.pendingCount || 0)); } catch (e) {}
+  }
+
+  function refreshPendingBadge() {
+    if (!isAdmin() || !HM.api || typeof HM.api.pendingCount !== 'function') return;
+    HM.api.pendingCount().then(function (res) {
+      var count = (res && res.count) || 0;
+      accountCache.pendingCount = count;
+      updatePendingBadge(count);
+      maybeShowApplyNotice(count);
+    }).catch(function () {});
+  }
+
+  function accActions(u) {
+    var self = currentUserId() && currentUserId() === u.id;
+    var out = [];
+    if (u.status === 'pending') {
+      out.push('<button data-accmd="approve" data-uid="' + esc(u.id) + '" class="is-primary">通过</button>');
+      out.push('<button data-accmd="reject" data-uid="' + esc(u.id) + '" class="is-danger">拒绝</button>');
+    } else if (u.status === 'rejected') {
+      out.push('<button data-accmd="approve" data-uid="' + esc(u.id) + '" class="is-primary">通过</button>');
+    } else if (u.role === 'admin') {
+      out.push('<button data-accmd="demote" data-uid="' + esc(u.id) + '"' + (self ? ' disabled' : '') + '>降为用户</button>');
+    } else {
+      out.push('<button data-accmd="promote" data-uid="' + esc(u.id) + '">设为超管</button>');
+    }
+    if (u.status !== 'pending') {
+      out.push('<button data-accmd="reset" data-uid="' + esc(u.id) + '"' + (self ? ' disabled' : '') + '>重置密码</button>');
+    }
+    out.push('<button data-accmd="delete" data-uid="' + esc(u.id) + '" class="is-danger"' + (self ? ' disabled' : '') + '>删除</button>');
+    return out.join('');
+  }
+
+  function renderAccountRows() {
+    var users = accountCache.users || [];
+    var counts = {
+      all: users.length,
+      pending: users.filter(function (u) { return u.status === 'pending'; }).length,
+      approved: users.filter(function (u) { return u.status === 'approved'; }).length,
+      rejected: users.filter(function (u) { return u.status === 'rejected'; }).length,
+    };
+    var shown = accountFilter === 'all' ? users : users.filter(function (u) { return u.status === accountFilter; });
+
+    var filters = [
+      ['all', '全部'], ['pending', '待审批'], ['approved', '已通过'], ['rejected', '已拒绝']
+    ].map(function (f) {
+      return '<button class="hm-acc-filter' + (accountFilter === f[0] ? ' is-active' : '') +
+        '" data-accfilter="' + f[0] + '">' + f[1] + ' ' + counts[f[0]] + '</button>';
+    }).join('');
+
+    var rows = shown.map(function (u) {
+      var initial = (u.username || '?').slice(0, 1).toUpperCase();
+      var self = currentUserId() && currentUserId() === u.id;
+      return '<div class="hm-acc-row">' +
+        '<div class="hm-acc-avatar">' + esc(initial) + '</div>' +
+        '<div class="hm-acc-info">' +
+          '<div class="hm-acc-name">' + esc(u.username || '') +
+            (self ? '<span class="hm-acc-pill is-admin">我</span>' : '') +
+            '<span class="hm-acc-pill is-' + esc(u.status) + '">' + statusText(u.status) + '</span>' +
+            '<span class="hm-acc-pill ' + (u.role === 'admin' ? 'is-admin' : 'is-user') + '">' +
+              (u.role === 'admin' ? '超级管理员' : '普通用户') + '</span>' +
+          '</div>' +
+          '<div class="hm-acc-meta">' +
+            '<span>ID：' + esc(u.id) + '</span>' +
+            '<span>邮箱：' + esc(u.email || '—') + '</span>' +
+            '<span>注册：' + fmtDate(u.createdAt) + '</span>' +
+            (u.status === 'approved' && u.approvedAt ? '<span>通过：' + fmtDate(u.approvedAt) + '</span>' : '') +
+            (u.note ? '<span>备注：' + esc(u.note) + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="hm-acc-actions">' + accActions(u) + '</div>' +
+      '</div>';
+    }).join('');
+
+    return '<div class="hm-acc-toolbar">' + filters + '</div>' +
+      (rows ? '<div class="hm-acc-list">' + rows + '</div>' : '<div class="hm-acc-empty">暂无账号</div>');
+  }
+
   function renderAccounts(data, body) {
-    var accs = data.accounts || [];
+    accountCache = {
+      users: (data && data.users) || [],
+      pendingCount: (data && data.pendingCount) || 0,
+      storage: (data && data.storage) || '',
+      storageLabel: (data && data.storageLabel) || '',
+      storageWarning: (data && data.storageWarning) || '',
+    };
+    updatePendingBadge(accountCache.pendingCount);
+
+    var storage = accountCache.storage;
+    var isMysql = storage === 'mysql';
+    var storageHtml = '';
+    if (storage) {
+      storageHtml =
+        '<div class="hm-acc-storage ' + (isMysql ? 'is-mysql' : 'is-file') + '">' +
+          '<span>账号存储：<b>' + esc(accountCache.storageLabel || (isMysql ? 'MySQL' : '文件存储')) + '</b></span>' +
+          (isMysql ? '' : '<span class="hm-acc-storage-tip">' + esc(accountCache.storageWarning || '当前为文件存储，Render 重启可能丢失账号数据') + '</span>') +
+          (!isMysql ? '<button data-accmd="migrate">同步文件账号入库</button>' : '') +
+          '<button data-accmd="export"' + (!isMysql ? ' style="margin-left:8px"' : '') + '>导出 JSON 备份</button>' +
+        '</div>';
+    }
+
     body.innerHTML = [
       '<div class="hm-admin-panel hm-admin-panel-wide">',
         '<div class="hm-admin-panel-head"><h3>账号管理</h3>' +
-          '<div class="hm-admin-filter-tabs">' +
-            '<button class="hm-admin-filter-tab is-active">全部 ' + accs.length + '</button>' +
-            '<button class="hm-admin-filter-tab">会员用户</button>' +
-            '<button class="hm-admin-filter-tab">运营</button>' +
-            '<button class="hm-admin-filter-tab">设计师</button>' +
-          '</div>' +
+          '<span style="font-size:12px;color:#8b94a6">注册需超级管理员审批通过后才能登录</span>' +
         '</div>',
-        '<div class="hm-admin-account-grid">',
-          accs.map(function (a) {
-            var statusClass = a.status === '在线' ? 'is-online' : 'is-offline';
-            return '<div class="hm-admin-account-card">' +
-              '<div class="hm-admin-account-head">' +
-                '<div class="hm-admin-account-avatar">' + a.avatar + '</div>' +
-                '<div class="hm-admin-account-info">' +
-                  '<strong>' + a.name + '</strong>' +
-                  '<span class="hm-pill is-member">' + a.role + '</span>' +
-                '</div>' +
-                '<div class="hm-admin-account-status ' + statusClass + '">' +
-                  '<i></i>' + a.status +
-                '</div>' +
-              '</div>' +
-              '<div class="hm-admin-account-bars">' +
-                '<div class="hm-admin-account-item">' +
-                  '<span>额度</span>' +
-                  '<div class="hm-admin-mini-bar"><i style="width:' + Math.min(100, a.used / (a.credits || 1) * 100) + '%"></i></div>' +
-                  '<b>' + fmt(a.used) + '/' + fmt(a.credits) + '</b>' +
-                '</div>' +
-              '</div>' +
-              '<div class="hm-admin-account-meta">' +
-                '<span>📂 ' + a.projects + ' 项目</span>' +
-                '<span>🎨 ' + fmt(a.works) + ' 作品</span>' +
-                '<span>📅 ' + a.joinDays + ' 天</span>' +
-              '</div>' +
-            '</div>';
-          }).join(''),
-        '</div>',
+        storageHtml,
+        renderAccountRows(),
       '</div>',
     ].join('');
+    maybeShowApplyNotice(accountCache.pendingCount);
+  }
+
+  function rerenderAccountRows() {
+    if (currentSubTab !== 'accounts' || currentTopTab !== 'admin') return;
+    var body = document.getElementById('adminBody');
+    if (!body) return;
+    renderAccounts(accountCache, body);
+  }
+
+  function downloadJson(obj, filename) {
+    try {
+      var blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    } catch (e) {
+      HM.toast && HM.toast('导出失败：' + e.message, 'error');
+    }
+  }
+
+  async function handleAccountAction(uid, cmd) {
+    var api = HM.api;
+    if (!api) return;
+    try {
+      if (cmd === 'export') {
+        var snapshot = await api.exportUsers();
+        downloadJson(snapshot, 'huimeng-users-' + Date.now() + '.json');
+        HM.toast && HM.toast('已导出账号备份 JSON', 'success');
+        return;
+      }
+      if (cmd === 'migrate') {
+        if (!window.confirm('把文件存储中的账号同步进 MySQL？已存在的账号不会被覆盖。')) return;
+        var migrated = await api.migrateFileUsers();
+        HM.toast && HM.toast('已同步 ' + ((migrated && migrated.migrated) || 0) + ' 个账号到 MySQL', 'success');
+        loadTab('accounts');
+        return;
+      }
+      if (cmd === 'approve') {
+        await api.setUserStatus(uid, 'approved', '');
+        HM.toast && HM.toast('已通过该注册申请', 'success');
+      } else if (cmd === 'reject') {
+        var note = window.prompt('拒绝原因（可选，可留空）：', '');
+        if (note === null) return;
+        await api.setUserStatus(uid, 'rejected', note || '');
+        HM.toast && HM.toast('已拒绝该注册申请', 'success');
+      } else if (cmd === 'promote') {
+        if (!window.confirm('确定将该账号设为超级管理员？')) return;
+        await api.setUserRole(uid, 'admin');
+        HM.toast && HM.toast('已设为超级管理员', 'success');
+      } else if (cmd === 'demote') {
+        if (!window.confirm('确定将该超管降为普通用户？')) return;
+        await api.setUserRole(uid, 'user');
+        HM.toast && HM.toast('已降为普通用户', 'success');
+      } else if (cmd === 'reset') {
+        var pwd = window.prompt('请输入新密码（至少 6 位）：', '');
+        if (!pwd) return;
+        if (pwd.length < 6) { HM.toast && HM.toast('密码至少 6 位', 'info'); return; }
+        await api.resetUserPassword(uid, pwd);
+        HM.toast && HM.toast('密码已重置', 'success');
+      } else if (cmd === 'delete') {
+        if (!window.confirm('删除后该账号将无法登录，确定删除？')) return;
+        await api.deleteUser(uid);
+        HM.toast && HM.toast('账号已删除', 'success');
+      }
+      loadTab('accounts');
+    } catch (err) {
+      HM.toast && HM.toast((err && err.message) || '操作失败', 'error');
+    }
   }
 
   /* ============ 项目管理 ============ */
@@ -63875,6 +64350,8 @@ window.HMChat = (function () {
   /* ============ 导出到 window.HMUI ============ */
   A.openAdmin = openAdmin;
   A.closeAdmin = closeAdmin;
+  A.openAccountAdmin = openAccountAdmin;
+  A.refreshPendingBadge = refreshPendingBadge;
   A.isAdmin = isAdmin;
   A.adminLoaded = true;
 
