@@ -16576,3 +16576,119 @@ body.dv-open .hm-page {
 #view-paint {
   background-color: #0f1320;
 }
+
+/* ============ 侧边栏 · 隐藏线（折叠分界） ============
+   隐藏线固定在左下角「主题」图标的正上方。
+   线上方可用高度放不下的图标会收进隐藏区（不出现半截图标）；
+   点击隐藏线可展开 / 收起隐藏区。 */
+.hm-rail {
+  justify-content: flex-start;
+}
+
+.hm-rail-top {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hm-rail-cutline {
+  position: relative;
+  flex: none;
+  margin-top: auto;
+  width: 100%;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  color: rgba(148, 163, 184, 0.55);
+  background: none;
+  border: 0;
+  transition: color 0.18s ease;
+}
+
+.hm-rail-cutline::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.42) 0 3px, transparent 3px 7px);
+  pointer-events: none;
+}
+
+.hm-rail-cutline-label {
+  position: relative;
+  z-index: 1;
+  padding: 0 4px;
+  background: #0b1320;
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.hm-rail-cutline-icon {
+  position: relative;
+  z-index: 1;
+  width: 13px;
+  height: 13px;
+  padding: 1px;
+  background: #0b1320;
+  transition: transform 0.22s ease, opacity 0.18s ease;
+  opacity: 0;
+}
+
+/* 有图标被收进隐藏区时才出现文字提示与箭头 */
+.hm-rail.has-cut .hm-rail-cutline {
+  color: rgba(167, 139, 250, 0.85);
+  cursor: pointer;
+}
+.hm-rail.has-cut .hm-rail-cutline::before {
+  background: repeating-linear-gradient(90deg, rgba(167, 139, 250, 0.55) 0 3px, transparent 3px 7px);
+}
+.hm-rail.has-cut .hm-rail-cutline-label,
+.hm-rail.has-cut .hm-rail-cutline-icon {
+  opacity: 1;
+}
+.hm-rail.has-cut .hm-rail-cutline:hover {
+  color: #c4b5fd;
+}
+
+/* 展开隐藏区：显示全部图标，侧栏可滚动 */
+.hm-rail.is-expanded {
+  overflow-y: auto;
+}
+.hm-rail.is-expanded .hm-rail-top {
+  flex: none;
+  overflow: visible;
+}
+.hm-rail.is-expanded .hm-rail-cutline-icon {
+  transform: rotate(180deg);
+}
+.hm-rail .hm-rail-item.is-cut {
+  display: none;
+}
+
+/* 侧栏文件夹指针拖拽时跟随鼠标的 ghost */
+.hm-drag-ghost {
+  position: fixed;
+  z-index: 100010;
+  pointer-events: none;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: #e8f4ff;
+  background: rgba(30, 41, 59, 0.94);
+  border: 1px solid rgba(125, 211, 252, 0.55);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.94;
+}

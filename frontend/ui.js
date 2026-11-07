@@ -178,6 +178,7 @@
         try { window.HMCanvas.relayout(); } catch (err) {}
       }
       window.dispatchEvent(new Event('resize'));
+      scheduleRailCutline();
     }, 320);
   }
 
@@ -195,6 +196,72 @@
     var saved = '0';
     try { saved = localStorage.getItem(LS.railCollapsed) || '0'; } catch (err) {}
     setRailCollapsed(saved === '1');
+  }
+
+  /* ---------------- 侧边栏「隐藏线」 ----------------
+   * 隐藏线固定在左下角「主题」图标正上方。
+   * 线上方可用高度放不下的图标会收进隐藏区（不出现半截图标），
+   * 点击隐藏线可展开 / 收起隐藏区。
+   */
+  var railCutTimer = null;
+
+  function layoutRailCutline() {
+    var rail = document.getElementById('hmRail');
+    var cut = document.getElementById('railCutline');
+    var railTop = rail ? rail.querySelector('.hm-rail-top') : null;
+    if (!rail || !cut || !railTop) return;
+
+    var items = Array.prototype.slice.call(railTop.querySelectorAll('.hm-rail-item'));
+    if (!items.length) return;
+    items.forEach(function (el) { el.classList.remove('is-cut'); });
+
+    if (rail.classList.contains('is-expanded')) {
+      rail.classList.remove('has-cut');
+      return;
+    }
+
+    var available = cut.getBoundingClientRect().top - railTop.getBoundingClientRect().top;
+    if (available <= 0) return;
+
+    var gap = parseFloat(window.getComputedStyle(railTop).rowGap) || 0;
+    var used = 0;
+    var overflowed = false;
+    items.forEach(function (el, i) {
+      var h = el.getBoundingClientRect().height + (i ? gap : 0);
+      if (!overflowed && used + h <= available + 1) {
+        used += h;
+      } else {
+        overflowed = true;
+        el.classList.add('is-cut');
+      }
+    });
+    rail.classList.toggle('has-cut', overflowed);
+    cut.setAttribute('aria-expanded', 'false');
+  }
+
+  function scheduleRailCutline() {
+    window.clearTimeout(railCutTimer);
+    railCutTimer = window.setTimeout(layoutRailCutline, 60);
+  }
+
+  function bindRailCutline() {
+    var rail = document.getElementById('hmRail');
+    var cut = document.getElementById('railCutline');
+    if (!rail || !cut) return;
+
+    cut.addEventListener('click', function () {
+      var expanded = rail.classList.toggle('is-expanded');
+      cut.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      cut.title = expanded ? '收起隐藏区图标' : '隐藏线（上方放不下的图标会收进这里）';
+      if (expanded) rail.classList.remove('has-cut');
+      else layoutRailCutline();
+    });
+
+    window.addEventListener('resize', scheduleRailCutline);
+    scheduleRailCutline();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(scheduleRailCutline).catch(function () {});
+    }
   }
 
   /* ---------------- 本地存储 ---------------- */
@@ -2466,6 +2533,7 @@
     initHomeMode();
     bindRailToggle();
     initRailCollapsed();
+    bindRailCutline();
     initRailDragSort();
     bindTheme();
     startSeasonAmbient();

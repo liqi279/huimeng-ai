@@ -369,7 +369,7 @@
     if (isActive) classes.push('is-active');
     if (isSelected) classes.push('is-selected');
 
-    html += '<div class="' + classes.join(' ') + '" draggable="true" droppable="true"' +
+    html += '<div class="' + classes.join(' ') + '" draggable="false" droppable="true"' +
       ' data-folder-row="' + esc(node.id) + '"' +
       ' data-drag-source="folder" data-drag-id="' + esc(node.id) + '"' +
       ' style="padding-left:' + (10 + depth * 14) + 'px">' +
@@ -2129,6 +2129,104 @@
           renderPanel(); renderDesktop();
         }
       });
+
+      /* ============== 指针拖拽（鼠标/触控）：不依赖浏览器原生 HTML5 drag ============== */
+      var pdrag = null;
+      var suppressDropClick = false;
+      function clearDropMarks() {
+        projList.querySelectorAll('.is-drop-over').forEach(function (el) { el.classList.remove('is-drop-over'); });
+        projList.querySelectorAll('.is-dragging').forEach(function (el) { el.classList.remove('is-dragging'); });
+      }
+      function dragTargetAt(x, y) {
+        var el = document.elementFromPoint(x, y);
+        if (!el || !el.closest) return null;
+        return { row: el.closest('[data-folder-row]'),
+                 root: el.closest('[data-root-drop]'),
+                 inList: !!el.closest('#projList') };
+      }
+      projList.addEventListener('pointerdown', function (e) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        if (e.target.closest('.hm-inline-input, [data-folder-toggle], [data-folder-plus], [data-folder-more], [data-inline-cancel]')) return;
+        var row = e.target.closest('[data-folder-row]');
+        if (!row) return;
+        pdrag = { id: row.dataset.folderRow, el: row, x: e.clientX, y: e.clientY, moved: false, ghost: null };
+      });
+      document.addEventListener('pointermove', function (e) {
+        if (!pdrag) return;
+        if (!pdrag.moved) {
+          if (Math.abs(e.clientX - pdrag.x) < 4 && Math.abs(e.clientY - pdrag.y) < 4) return;
+          pdrag.moved = true;
+          var nameEl = pdrag.el.querySelector('.hm-proj-txt strong');
+          var ghost = document.createElement('div');
+          ghost.className = 'hm-drag-ghost';
+          ghost.textContent = nameEl ? nameEl.textContent : '文件夹';
+          document.body.appendChild(ghost);
+          pdrag.ghost = ghost;
+        }
+        e.preventDefault();
+        if (pdrag.ghost) {
+          pdrag.ghost.style.left = (e.clientX + 12) + 'px';
+          pdrag.ghost.style.top = (e.clientY + 12) + 'px';
+        }
+        clearDropMarks();
+        pdrag.el.classList.add('is-dragging');
+        var hit = dragTargetAt(e.clientX, e.clientY);
+        if (!hit) return;
+        if (hit.row && hit.row.dataset.folderRow !== pdrag.id && !isDescendantOf(pdrag.id, hit.row.dataset.folderRow)) {
+          hit.row.classList.add('is-drop-over');
+        } else if (!hit.row && (hit.root || hit.inList)) {
+          var rz = projList.querySelector('[data-root-drop]');
+          if (rz) rz.classList.add('is-drop-over');
+        }
+      });
+      function endPointerDrag(e, cancelled) {
+        if (!pdrag) return;
+        var d = pdrag;
+        pdrag = null;
+        if (!d.moved) return;
+        suppressDropClick = true;
+        if (d.ghost && d.ghost.parentNode) d.ghost.parentNode.removeChild(d.ghost);
+        clearDropMarks();
+        if (cancelled) return;
+        var hit = dragTargetAt(e.clientX, e.clientY);
+        if (!hit) return;
+        var moved = false;
+        if (hit.row && hit.row.dataset.folderRow !== d.id) {
+          var tgtId = hit.row.dataset.folderRow;
+          if (isDescendantOf(d.id, tgtId)) {
+            A.toast('不能把文件夹拖进它自己的子文件夹里', 'info');
+            return;
+          }
+          if (moveFolder(d.id, tgtId)) {
+            view.expanded[tgtId] = true;
+            var fs = desk.folders.find(function (f) { return f.id === d.id; });
+            var ft = desk.folders.find(function (f) { return f.id === tgtId; });
+            A.toast('「' + (fs ? fs.name : '文件夹') + '」已移入「' + (ft ? ft.name : '目标') + '」', 'success');
+            moved = true;
+          }
+        } else if (hit.root || hit.inList) {
+          if (moveFolder(d.id, null)) {
+            var f1 = desk.folders.find(function (f) { return f.id === d.id; });
+            A.toast('「' + (f1 ? f1.name : '文件夹') + '」已移到根目录', 'success');
+            moved = true;
+          }
+        }
+        if (moved) {
+          if (view.activeFolder === d.id || isDescendantOf(d.id, view.activeFolder)) view.activeFolder = d.id;
+          view.selectedFolders = {};
+          view.selectedFolders[d.id] = true;
+          renderPanel();
+          renderDesktop();
+        }
+      }
+      document.addEventListener('pointerup', function (e) { endPointerDrag(e, false); });
+      document.addEventListener('pointercancel', function (e) { endPointerDrag(e, true); });
+      document.addEventListener('click', function (e) {
+        if (!suppressDropClick) return;
+        suppressDropClick = false;
+        e.stopPropagation();
+        e.preventDefault();
+      }, true);
     }
 
     /* 桌面 */
