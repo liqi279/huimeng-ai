@@ -16912,6 +16912,174 @@ body.dv-open .hm-page {
   .vc-side-sec { flex: 1 1 200px; }
 }
 
+/* ============ ToonCrafter · 首尾帧补间 ============ */
+.tc-page { display: flex; flex-direction: column; }
+
+.tc-head-badge {
+  align-self: flex-start;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 650;
+  color: #c4b5fd;
+  border: 1px solid rgba(167, 139, 250, 0.42);
+  background: rgba(139, 92, 246, 0.14);
+}
+
+.tc-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.tc-panel { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; min-height: 0; }
+
+.tc-sec {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+}
+.tc-sec-h { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+
+.tc-drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 86px;
+  margin-bottom: 8px;
+  border-radius: 11px;
+  border: 1px dashed var(--line-strong);
+  background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.tc-drop:hover, .tc-drop.is-over { border-color: rgba(167, 139, 250, 0.6); background: rgba(139, 92, 246, 0.08); }
+.tc-thumb { display: none; width: 100%; height: 100%; object-fit: contain; }
+.tc-thumb.is-loaded { display: block; }
+.tc-drop.has-img .tc-drop-tip { position: absolute; left: 6px; bottom: 4px; padding: 2px 7px; border-radius: 6px; background: rgba(0, 0, 0, 0.62); }
+.tc-drop-tip { font-size: 11px; color: var(--muted); }
+
+.tc-field { display: block; margin-bottom: 10px; }
+.tc-field span { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-2); margin-bottom: 4px; }
+.tc-field b { color: var(--pink); }
+.tc-field input[type="range"] { width: 100%; accent-color: var(--violet); }
+.tc-select, .tc-input {
+  width: 100%;
+  height: 32px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-size: 11.5px;
+  padding: 0 9px;
+}
+.tc-input:focus, .tc-select:focus { outline: none; border-color: rgba(167,139,250,.55); }
+
+.tc-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.tc-api-state { font-size: 11px; color: var(--muted); }
+.tc-api-state.is-ok { color: var(--green); }
+.tc-hint { margin: 8px 0 0; font-size: 10.5px; line-height: 1.7; color: var(--muted); }
+
+.tc-btn {
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line-strong);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-2);
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.tc-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.tc-btn-primary {
+  background: linear-gradient(135deg, rgba(139,92,246,.85), rgba(244,114,182,.7));
+  border-color: rgba(167,139,250,.5);
+  color: #fff;
+}
+.tc-btn-line { border-style: dashed; }
+
+.tc-main { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+
+.tc-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px) 0 0 / 100% 24px,
+    linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px) 0 0 / 24px 100%,
+    rgba(0,0,0,0.32);
+  overflow: hidden;
+}
+.tc-stage canvas { max-width: 100%; max-height: 100%; display: block; border-radius: 10px; box-shadow: 0 18px 48px rgba(0,0,0,0.42); }
+.tc-stage-empty { position: absolute; font-size: 12px; color: var(--muted); pointer-events: none; }
+.tc-stage-meta {
+  position: absolute; left: 10px; bottom: 8px;
+  font-size: 10.5px; color: var(--muted);
+  background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 6px;
+}
+
+.tc-toolbar { display: flex; flex-wrap: wrap; gap: 8px; flex: none; }
+
+.tc-timeline {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.028);
+  min-height: 78px;
+  flex: none;
+}
+.tc-frame {
+  position: relative;
+  flex: none;
+  width: 76px;
+  height: 58px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #000;
+}
+.tc-frame img { width: 100%; height: 100%; object-fit: cover; opacity: 0.78; }
+.tc-frame span {
+  position: absolute; left: 4px; bottom: 3px;
+  font-size: 9px; color: #fff;
+  background: rgba(0,0,0,0.6); border-radius: 4px; padding: 0 4px;
+}
+.tc-frame.is-active { border-color: rgba(167,139,250,.85); box-shadow: 0 0 0 2px rgba(139,92,246,.28); }
+.tc-frame.is-active img { opacity: 1; }
+
+.tc-cmd {
+  flex: none;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,0.38);
+  color: #a5f3d0;
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+@media (max-width: 960px) {
+  .tc-body { grid-template-columns: 1fr; overflow-y: auto; }
+  .tc-stage { min-height: 260px; }
+}
+
 </style>
   <style>
 /* =============================================================
@@ -17264,7 +17432,7 @@ body.dv-open .hm-page {
 
 </style>
 <script>window.HM_LIBRARY_SEED = {"version":1,"updatedAt":"2026-11-05","note":"绘梦图书馆 · 书籍种子数据。MySQL 初始化与前端离线兜底共用此文件。","books":[{"id":"lib-0001","title":"夜航船","author":"张岱","category":"古典笔记","tags":["古典","笔记","博物"],"intro":"明末清初的博物笔记。张岱以「夜航船」为舟中闲谈之所，把天文、地理、人物、艺文、方术收进一部书里。读它像坐在一条慢船上，听同舱的旅人一件件讲古。","accent":"#7d5a3c","pages":[{"title":"序·夜航船","content":"天下学问，惟夜航船最难对付。盖村夫俗子，皆能言之。然一涉疑义，则瞠目而莫对。\n\n昔有僧人与士子同宿夜航船。士子高谈阔论，僧畏慑，卷缩而睡。僧见其语有破绽，问曰：澹台灭明是一个人、是两个人？士子曰：是两个人。僧曰：这等尧舜是一个人、两个人？士子曰：自然是一个人。僧乃笑曰：这等说起来，且待小僧伸伸脚。\n\n余所记载，皆眼前极浅之事，但勿使僧人伸脚则已矣。"},{"title":"天文部·星象","content":"二十八宿，分列四方。东方苍龙七宿：角、亢、氐、房、心、尾、箕；北方玄武七宿：斗、牛、女、虚、危、室、壁；西方白虎七宿：奎、娄、胃、昴、毕、觜、参；南方朱雀七宿：井、鬼、柳、星、张、翼、轸。\n\n古人不以星为远物，而以星为邻。夜坐庭中，指某星为某官、某星为某分野，仿佛天上亦有一朝一野，与人间相映。"},{"title":"地理部·山川","content":"五岳者，东岳泰山、西岳华山、南岳衡山、北岳恒山、中岳嵩山。\n\n泰山之阳，汶水西流；其阴，济水东流。阳谷皆入汶，阴谷皆入济。当其南北分者，古长城也。最高日观峰，在长城南十五里。\n\n山不必高，得其势则雄；水不必深，得其曲则远。画者取山，先取山骨；文人写水，先写水声。"},{"title":"人物部·名士","content":"魏晋名士，多尚清谈。或扪虱而谈，或临风长啸，或雪夜访戴，造门不入而返。人问其故，曰：乘兴而来，兴尽而返，何必见戴？\n\n此等行事，看似疏狂，实有一种自重。不与俗同，亦不强人从己。后人读之，如见其衣袂飘然，行于松风之下。"},{"title":"艺文部·书画","content":"书者，心画也。意在笔先，然后落墨。笔有中锋、侧锋，墨有浓淡干湿。一画之中，虚实相生，疏密相间，方成气韵。\n\n画山水者，最忌满纸填塞。留白处不是空，是云、是水、是远天。善画者，画到七分便住手，余三分留与看画人自己去想。"},{"title":"卷末·舟中语","content":"夜航船中，灯火如豆，人声渐低。有人讲一段旧事，有人补一句典故，有人只倚着船舷听水。\n\n天将明未明时，江面起雾，两岸的山只剩下淡淡的影子。船夫说：快到了。众人便各自收拾行李，仿佛昨夜那些话，都留在了水里。"}]},{"id":"lib-0002","title":"山海经","author":"佚名","category":"上古神话","tags":["神话","地理","异兽"],"intro":"中国最早的神话地理书。山经海经，记异兽、奇木、神祇与远国。它不是一册地图，而是一场没有尽头的远游。","accent":"#4f6b5a","pages":[{"title":"南山经·鹊山","content":"南山经之首曰鹊山。其首曰招摇之山，临于西海之上，多桂，多金玉。有兽焉，其状如禺而白耳，伏行人走，其名曰狌狌，食之善走。\n\n丽麂之水出焉，而西流注于海，其中多育沛，佩之无瘕疾。"},{"title":"西山经·昆仑","content":"昆仑之丘，实惟帝之下都，神陆吾司之。其神状虎身而九尾，人面而虎爪，是神也，司天之九部及帝之囿时。\n\n有木焉，其状如棠而黄华赤实，其味如李而无核，名曰沙棠，可以御水，食之使人不溺。"},{"title":"北山经·幽都","content":"北海之内，有山名曰幽都之山，黑水出焉。其上有玄鸟、玄蛇、玄豹、玄虎、玄狐蓬尾。\n\n有大玄之山，有玄丘之民。玄丘之民，衣玄衣，食玄稻。天光不入，唯星照之。"},{"title":"东山经·青丘","content":"青丘之山，其阳多玉，其阴多青䨼。有兽焉，其状如狐而九尾，其音如婴儿，能食人；食者不蛊。\n\n有鸟焉，其状如鸠，其音若呵，名曰灌灌，佩之不惑。"},{"title":"海内经·归墟","content":"东海之外大壑，少昊之国。少昊孺帝颛顼于此，弃其琴瑟。\n\n大壑之中，有山名曰归墟。百川之水，尽归于墟，而墟不盈。星汉之流，亦注于其间。故老相传：归墟之下，别有一片天。"}]},{"id":"lib-0003","title":"世说新语","author":"刘义庆","category":"志人小说","tags":["魏晋","人物","清谈"],"intro":"分德行、言语、政事、雅量等三十六门，记汉末至东晋名士的言行。短短数行，人物风神便立起来了。","accent":"#5a5f7d","pages":[{"title":"德行第一","content":"陈太丘与友期行，期日中。过中不至，太丘舍去，去后乃至。元方时年七岁，门外戏。客问元方：尊君在不？答曰：待君久不至，已去。友人便怒曰：非人哉！与人期行，相委而去。元方曰：君与家君期日中，日中不至，则是无信；对子骂父，则是无礼。友人惭，下车引之，元方入门不顾。"},{"title":"言语第二","content":"谢太傅寒雪日内集，与儿女讲论文义。俄而雪骤，公欣然曰：白雪纷纷何所似？兄子胡儿曰：撒盐空中差可拟。兄女曰：未若柳絮因风起。公大笑乐。\n\n即公大兄无奕女，左将军王凝之妻也。"},{"title":"雅量第六","content":"王子猷居山阴，夜大雪，眠觉，开室命酌酒，四望皎然。因起彷徨，咏左思招隐诗，忽忆戴安道。时戴在剡，即便夜乘小船就之。经宿方至，造门不前而返。人问其故，王曰：吾本乘兴而行，兴尽而返，何必见戴？"},{"title":"任诞第二十三","content":"刘伶病酒，渴甚，从妇求酒。妇捐酒毁器，涕泣谏曰：君饮太过，非摄生之道，必宜断之。伶曰：甚善。我不能自禁，唯当祝鬼神自誓断之耳，便可具酒肉。妇曰：敬闻命。供酒肉于神前，请伶祝誓。伶跪而祝曰：天生刘伶，以酒为名，一饮一斛，五斗解酲。妇人之言，慎不可听。便引酒进肉，隗然已醉矣。"},{"title":"巧艺第二十一","content":"顾长康画人，或数年不点目精。人问其故，顾曰：四体妍蚩，本无关于妙处；传神写照，正在阿堵中。\n\n又画裴叔则，颊上益三毛。人问其故，顾曰：裴楷俊朗有识具，正此是其识具。看画者寻之，定觉益三毛如有神明，殊胜未安时。"}]},{"id":"lib-0004","title":"陶庵梦忆","author":"张岱","category":"明清小品","tags":["小品","回忆","江南"],"intro":"张岱自记平生所见：灯市、梨园、园林、茶楼、西湖雪夜。明亡之后，旧事只能入梦，于是把梦一笔一笔写下来。","accent":"#8a5a46","pages":[{"title":"湖心亭看雪","content":"崇祯五年十二月，余住西湖。大雪三日，湖中人鸟声俱绝。\n\n是日更定矣，余挐一小舟，拥毳衣炉火，独往湖心亭看雪。雾凇沆砀，天与云与山与水，上下一白。湖上影子，惟长堤一痕、湖心亭一点、与余舟一芥、舟中人两三粒而已。\n\n到亭上，有两人铺毡对坐，一童子烧酒炉正沸。见余大喜曰：湖中焉得更有此人！拉余同饮。余强饮三大白而别。问其姓氏，是金陵人，客此。及下船，舟子喃喃曰：莫说相公痴，更有痴似相公者。"},{"title":"西湖七月半","content":"西湖七月半，一无可看，止可看看七月半之人。\n\n看七月半之人，以五类看之：其一，楼船箫鼓，峨冠盛筵，灯火优傒，声光相乱，名为看月而实不见月者，看之；其二，亦船亦楼，名娃闺秀，携及童娈，笑啼杂之，还坐露台，左右盼望，身在月下而实不看月者，看之。"},{"title":"柳敬亭说书","content":"柳敬亭之善说书，人所共知。其说景阳冈武松打虎，描写刻画，微入毫发，然又找截干净，并不唠叨。\n\n响处如巨雷，说到疾处，两腕如铁，口中如沸。听者屏息，至紧要时，忽住口，众人皆仰面看之，敬亭徐啜一茶，复说下去。"},{"title":"金山夜戏","content":"崇祯二年中秋后一日，余道镇江往兖。日晡，至北固，舣舟江口。月光倒囊入水，江涛吞吐，露气吸之，噀天为白。\n\n余大惊喜，移舟过金山寺，已二鼓矣。经龙王堂，入大殿，皆漆静。林下漏月光，疏疏如残雪。余呼小傒携戏具，盛张灯火大殿中，唱韩蕲王金山及长江大战诸剧。锣鼓喧阗，一寺人皆起看。有老僧以手背揉眼，翕然张口，呵欠与笑嚏俱至。剧完，已曙，解缆过江。山僧至山脚，目送久之，不知是人、是怪、是鬼。"},{"title":"卷末·梦与记","content":"余今所记，皆过去之事。明知是梦，犹记之不休，何也？\n\n盖人之于世，所不能忘者，非富贵，非功名，乃一二小事：一盏灯、一场雪、一句唱词、一个旧人。记之，则梦可久；不记，则连梦也没有了。"}]},{"id":"lib-0005","title":"浮生六记","author":"沈复","category":"自传散文","tags":["清人","生活","爱情"],"intro":"沈复记与妻芸娘的家常岁月：插花、煮茶、游园、贫中作乐。文字清淡，悲喜都在生活细处。","accent":"#6f7c55","pages":[{"title":"闺房记乐","content":"余忆童稚时，能张目对日，明察秋毫。见藐小微物，必细察其纹理，故时有物外之趣。\n\n夏蚊成雷，私拟作群鹤舞空，心之所向，则或千或百果然鹤也。昂首观之，项为之强。又留蚊于素帐中，徐喷以烟，使其冲烟飞鸣，作青云白鹤观，果如鹤唳云端，怡然称快。"},{"title":"闲情记趣","content":"余与芸居沧浪亭畔，终日不言而心会。芸善插花，取梅一枝，去其冗枝，留其疏影，置于胆瓶，若有风致。\n\n夏夜，芸以纱囊盛茉莉，悬于帐中，香气清远。余笑曰：此所谓生香也。芸曰：香有生者，有熟者，熟者近俗，生者近仙。"},{"title":"坎坷记愁","content":"芸娘病中，犹强起为余理书。余止之，芸曰：我见书乱，心亦乱；理之，则心安。\n\n是夜雨，灯花落尽。芸执余手曰：愿来世得为君妇，仍如今日。余不能答，唯颔首。窗外雨声，如有人在远处低低地哭。"},{"title":"浪游记快","content":"由山阴至杭州，舟行三日。两岸桑麻，村落相望。\n\n至西湖，见断桥残雪未消，柳色初青。余与芸赁一小舟，泊于湖心，煮茶看山。芸曰：山水之乐，得之心而寓之茶也。余大笑，茶泼于衣。"},{"title":"养生记道","content":"心不烦则神清，神清则气顺。饮食有节，起居有常，不妄作劳。\n\n余谓养生无他，只是不与烦恼同住。晨起看花，午后读书，黄昏散步，夜来安睡。此生已足。"}]},{"id":"lib-0006","title":"幽梦影","author":"张潮","category":"清言小品","tags":["清言","格言","雅趣"],"intro":"以短句写闲情与哲思，一句一条，如月下清谈。后人评点附于句后，读来像围坐一桌的友人各说一句。","accent":"#6b5b8a","pages":[{"title":"卷一·读书","content":"少年读书，如隙中窥月；中年读书，如庭中望月；老年读书，如台上玩月。皆以阅历之浅深，为所得之浅深耳。\n\n读经宜冬，其神专也；读史宜夏，其时久也；读诸子宜秋，其致别也；读诸集宜春，其机畅也。"},{"title":"卷二·山水","content":"山之光，水之声，月之色，花之香，文人之韵致，美人之姿态，皆无可名状，无可执着，真足以摄召魂梦，颠倒情思。\n\n因雪想高士，因花想美人，因酒想侠客，因月想好友，因山水想得意诗文。"},{"title":"卷三·闲情","content":"人莫乐于闲，非无所事事之谓也。闲则能读书，闲则能游名胜，闲则能交益友，闲则能饮酒，闲则能著书。天下之乐，孰大于是？\n\n花不可无蝶，山不可无泉，石不可无苔，水不可无藻，乔木不可无藤萝，人不可无癖。"},{"title":"卷四·友道","content":"对渊博友，如读异书；对风雅友，如读名人诗文；对谨饬友，如读圣贤经传；对滑稽友，如阅传奇小说。\n\n一介之士，必有密友。密友不必是生死之交，但能于我有益，即友也。"},{"title":"卷末·一梦","content":"幽梦一影，不过灯下随笔。然数百年后，仍有人于夜半翻及，忽觉灯下亦有一人，与自己同坐。\n\n此即所谓：书不必厚，得其一句，可抵一梦。"}]},{"id":"lib-0007","title":"东京梦华录","author":"孟元老","category":"宋人笔记","tags":["宋","城市","风俗"],"intro":"追忆北宋汴京的市井繁华：街巷、酒楼、瓦子、节令。一卷书里，元宵的灯与州桥的夜市都还亮着。","accent":"#8f6a3f","pages":[{"title":"序·梦华","content":"仆从先人宦游南北，崇宁癸未到京师，卜居于州西金梁桥西夹道之南。正当辇毂之下，太平日久，人物繁阜。\n\n垂髫之童，但习鼓舞；班白之老，不识干戈。时节相次，各有观赏。灯宵月夕，雪际花时，乞巧登高，教池游苑。\n\n一旦兵火，靖康丙午之明年，出京南来，避地江左，情绪牢落，渐入桑榆。暗想当年，节物风流，人情和美，但成怅恨。"},{"title":"州桥夜市","content":"出朱雀门，直至龙津桥。自州桥南去，当街水饭、爊肉、干脯。王楼前獾儿、野狐肉、脯鸡。梅家、鹿家鹅鸭鸡兔、肚肺鳝鱼、包子鸡皮、腰肾鸡碎，每个不过十五文。\n\n夏月麻腐鸡皮、麻饮细粉、素签沙糖、冰雪冷元子、水晶角儿、生腌水木瓜、药木瓜、鸡头穰沙糖、绿豆甘草冰雪凉水、荔枝膏、广芥瓜儿、咸菜、杏片、梅子姜、莴苣笋、芥辣瓜旋儿、细料馉饳儿、香糖果子、间道糖荔枝、越梅、离刀紫苏膏、金丝党梅、香橙元，皆用梅红匣儿盛贮。"},{"title":"元宵灯节","content":"正月十五日元宵，大内前自岁前冬至后，开封府绞缚山棚，立木正对宣德楼。游人已集御街两廊下，奇术异能，歌舞百戏，鳞鳞相切，乐声嘈杂十馀里。\n\n灯山上彩，金碧相射，锦绣交辉。面北悉以彩结，山启上皆画神仙故事。或坊市卖药卖卦之人，横列三二，皆结彩棚，铺陈冠梳、珠翠、头面、衣着、花朵、领抹、靴鞋、玩好之类。"},{"title":"酒楼瓦子","content":"凡京师酒店，门首皆缚彩楼欢门，唯任店入其门，一直主廊约百馀步，南北天井两廊皆小阁子，向晚灯烛荧煌，上下相照。浓妆妓女数百，聚于主廊槏面上，以待酒客呼唤，望之宛若神仙。\n\n瓦子中，多有货药、卖卦、喝故衣、探搏、饮食、剃剪纸画令曲之类。终日居此，不觉抵暮。"},{"title":"卷末·回首","content":"仆今追念，回首怅然，岂非华胥之梦觉哉？\n\n旧京的街巷早已改了名字，灯市也换了地方。可若有人在夜里翻到这一卷，看见州桥的夜市、宣德楼的灯山，那些灯火便又从纸上一点点亮起来。"}]},{"id":"lib-0008","title":"芥子园画传","author":"李渔","category":"画论技法","tags":["绘画","技法","画谱"],"intro":"中国最著名的绘画入门谱。树石、兰竹、人物、山水，皆有法度；学画者由此入，亦可由此出。","accent":"#5c7a72","pages":[{"title":"序·画有法","content":"学画者，先明法度，后求变化。法度不立，则笔墨无所归；法度既立，则笔下自生变化。\n\n然法者，所以教人，非所以限人。拘于法而不能脱，是为画匠；能脱法而不失其正，是为画者。"},{"title":"树谱·枝干","content":"画树先画干。干有直有曲，曲者取其势，直者取其骨。\n\n分枝处谓之丫，丫有向背。向枝宜短，背枝宜长；向枝宜实，背枝宜虚。叶生于枝末，攒三聚五，疏密相间。"},{"title":"石谱·皴法","content":"画石之法，先立轮廓，后加皴擦。轮廓者，石之骨也；皴者，石之纹理也。\n\n披麻皴宜于土山，斧劈皴宜于石山，折带皴宜于方石。皴不宜繁，繁则滞；不宜简，简则薄。"},{"title":"兰竹谱","content":"写兰如写草书，笔笔相连，气脉不断。叶分向背，向叶肥，背叶瘦。\n\n画竹先立竿，竿有节。节节相承，上细下粗。然后出枝，枝生于节；然后布叶，叶生于枝。叶有仰有覆，有聚有散，所谓个字形、介字形者是也。"},{"title":"山水谱·构图","content":"山水构图，有高远、深远、平远三法。高远者，仰视山巅；深远者，窥其后；平远者，望其前。\n\n一幅之中，主山居要，客山辅之。近景宜实，中景宜虚，远景宜淡。水随山转，云随水行。留白者，非无物也，是无尽之意。"}]},{"id":"lib-0009","title":"徐霞客游记","author":"徐霞客","category":"游记地理","tags":["地理","游记","山川"],"intro":"一个人用三十余年走遍山川，把所见写成日记。文字朴素，却让我们看见四百年前的山是怎样立着、水是怎样流着。","accent":"#5d6b46","pages":[{"title":"游天台山日记","content":"癸丑之三月晦，自宁海出西门。云散日朗，人意山光，俱有喜态。\n\n三十里，至梁隍山。闻此处有虎，行旅皆戒严。余独与一僧一仆俱行，日暮宿于野店。\n\n次日，行十五里，至太白山下。山势渐高，溪声渐急。"},{"title":"游雁荡山日记","content":"余与仲昭、仲明同游雁荡。初入灵峰，见两崖夹峙，中开一线，天光如线。\n\n上有洞，洞中石乳下垂，如莲如笋。僧言此中有龙湫，水自岩顶坠下，如匹练。"},{"title":"游黄山日记","content":"黄山之胜，在峰、在石、在松、在云。\n\n初入山，雾甚。行数里，雾忽开，群峰出其下，如波涛涌起。石皆奇峭，松皆偃蹇，有虬龙之状。\n\n至文殊院，宿于楼上看日出。夜深风急，星斗灿然。"},{"title":"游庐山日记","content":"庐山以瀑名。三叠泉尤奇。水自三处石崖叠落，一叠如帘，二叠如练，三叠如雷霆。\n\n余坐崖下，衣袂尽湿。仰视水自天来，不知所自。此身如在画中，又不在画中。"},{"title":"卷末·行脚","content":"余行三十年，所见山川，不可胜记。或问：何苦如此？\n\n余曰：人各有癖。余之癖在山水。得见一峰之奇，便忘其劳；得闻一瀑之声，便忘其饥。\n\n此身有限，山川无尽。惟愿长作行脚，看水穷处，坐看云起时。"}]},{"id":"lib-0010","title":"搜神记","author":"干宝","category":"志怪小说","tags":["志怪","神话","民间传说"],"intro":"东晋志怪集。神、鬼、妖、异人，皆如邻里之事一般被认真记下。古人记怪，其实是在记人心。","accent":"#6b4f6b","pages":[{"title":"干将莫邪","content":"干将莫邪为楚王作剑，三年乃成。王怒，欲杀之。剑有雌雄，其妻莫邪有孕，干将将杀，谓妻曰：吾为王作剑，三年乃成，王怒必杀我。\n\n汝若生男，告之曰：出户望南山，松生石上，剑在其背。\n\n成，王果杀之。其妻生男，名曰赤比。赤比壮，问父所在，母语之。赤比出户，不见南山，但见松柱，乃破之，得剑。"},{"title":"董永卖身","content":"董永，千乘人。少偏孤，与父居。肆力田亩，牛车载父自随。父亡，无以葬，乃自卖为奴，以备丧事。\n\n道逢一妇人，求为永妻。永与俱至主家。主令织缣三百匹，乃放归。妇人一旬而毕。\n\n将归，谓永曰：我，天之织女也。缘君至孝，天帝令我助君偿债。言讫，凌空而去。"},{"title":"韩凭妻","content":"宋康王舍人韩凭，娶妻何氏，美。康王夺之。凭怨，王囚之，论为城旦。\n\n妻乃阴遗凭书，曰：其雨淫淫，河大水深，日出当心。\n\n王问群臣，莫能解。凭自杀。妻乃阴腐其衣，王与之登台，妻遂自投台下。左右揽之，衣不中手而死。\n\n遗书于带曰：王利其生，妾利其死。愿以尸骨赐凭合葬。王怒，弗听。\n\n于是冢相望也。王曰：尔夫妇相爱不已，若能使冢合，则吾弗阻也。宿昔之间，便有大梓木生于二冢之端，旬日而大盈抱，屈体相就，根交于下，枝错于上。"},{"title":"李寄斩蛇","content":"东越闽中，有庸岭，高数十里。其西北隰中有大蛇，长七八丈，大十馀围。\n\n土俗常惧。东冶都尉及属城长吏，多有死者。祭以牛羊，故不得祸。\n\n或与人梦，或下谕巫祝，欲得啖童女年十二三者。都尉令长并共患之。\n\n将乐县李诞家，有女名寄，应募而行。寄乃告请好剑及咋蛇犬。至八月朝，便诣庙中坐。先将数石米糍，用蜜灌之，以置穴口。\n\n蛇便出，头大如囷，目如二尺镜。寄便放犬，犬就啮咋；寄从后斫得数创。蛇出，至庭而死。"},{"title":"卷末·怪与常","content":"干宝自序曰：虽考先志于载籍，收遗逸于当时，盖非一耳一目之所亲闻睹也，又安敢谓无失实者哉？\n\n卫朔失国，二传互其所闻；吕望事周，子长存其两说。\n\n然则怪与常，岂有定哉？今日之怪，或为他日之常；此地之常，或为彼地之怪。记之，以待知者。"}]}]};</script>
-<script>window.HM_BUILD = "20261107100019-229ed4c";</script>
+<script>window.HM_BUILD = "20261107114722-ee574de";</script>
 </head>
 <body data-view="create">
   <script>
@@ -17687,6 +17855,11 @@ body.dv-open .hm-page {
       </div>
     </div>
     <div class="hm-tool-grid">
+      <button class="hm-tool-card" data-tool="tooltoon">
+        <span class="hm-tool-icon">补</span>
+        <strong>ToonCrafter首尾帧补间</strong>
+        <p>两张线稿自动生成中间过渡帧 · 赛璐璐友好 · 漫剧补帧核心工具</p>
+      </button>
       <button class="hm-tool-card" data-tool="toolopenvideo">
         <span class="hm-tool-icon">开</span>
         <strong>开源生视频</strong>
@@ -17757,6 +17930,86 @@ body.dv-open .hm-page {
         <strong>使用指南</strong>
         <p>三步上手，查看提示词与参考图技巧</p>
       </button>
+    </div>
+  </main>
+
+  <!-- ===================== ToonCrafter · 首尾帧补间 ===================== -->
+  <main class="hm-page tc-page" id="view-tooltoon" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>ToonCrafter · 首尾帧补间</h2>
+        <p>给两张线稿（首帧 + 尾帧），自动生成中间过渡帧 · 赛璐璐 / 线稿友好 · 浏览器预演 + 本地推理双通道</p>
+      </div>
+      <div class="tc-head-badge" id="tcMode">浏览器预演</div>
+    </div>
+
+    <div class="tc-body">
+      <aside class="tc-panel">
+        <div class="tc-sec">
+          <div class="tc-sec-h">关键帧</div>
+          <label class="tc-drop" id="tcDropFirst">
+            <input type="file" accept="image/*" id="tcFileFirst" hidden>
+            <img class="tc-thumb" id="tcThumbFirst" alt="">
+            <span class="tc-drop-tip">首帧 · 点击或拖入</span>
+          </label>
+          <label class="tc-drop" id="tcDropLast">
+            <input type="file" accept="image/*" id="tcFileLast" hidden>
+            <img class="tc-thumb" id="tcThumbLast" alt="">
+            <span class="tc-drop-tip">尾帧 · 点击或拖入</span>
+          </label>
+        </div>
+
+        <div class="tc-sec">
+          <div class="tc-sec-h">推理参数</div>
+          <label class="tc-field"><span>中间帧数 <b id="tcFramesVal">8</b></span>
+            <input type="range" id="tcFrames" min="2" max="16" step="1" value="8"></label>
+          <label class="tc-field"><span>采样步数 (DDIM) <b id="tcStepsVal">50</b></span>
+            <input type="range" id="tcSteps" min="10" max="50" step="5" value="50"></label>
+          <label class="tc-field"><span>播放帧率 <b id="tcFpsVal">12 fps</b></span>
+            <input type="range" id="tcFps" min="6" max="24" step="1" value="12"></label>
+          <label class="tc-field"><span>画幅</span>
+            <select id="tcSize" class="tc-select">
+              <option value="512x320">512 × 320（官方默认）</option>
+              <option value="320x512">320 × 512（竖屏）</option>
+              <option value="512x512">512 × 512（方形）</option>
+            </select></label>
+          <label class="tc-field"><span>运动缓动</span>
+            <select id="tcEase" class="tc-select">
+              <option value="ease">缓入缓出（默认）</option>
+              <option value="linear">匀速</option>
+              <option value="zoom">推镜（首→尾放大）</option>
+            </select></label>
+        </div>
+
+        <div class="tc-sec">
+          <div class="tc-sec-h">本地 ToonCrafter 通道</div>
+          <input class="tc-input" id="tcApi" type="text" value="http://127.0.0.1:7860" placeholder="本地服务地址">
+          <div class="tc-row">
+            <button class="tc-btn tc-btn-line" id="tcApiTest" type="button">连接测试</button>
+            <span class="tc-api-state" id="tcApiState">未连接</span>
+          </div>
+          <p class="tc-hint">官方权重需 ~24G 显存（A100 · 512 分辨率 · 50 步约 24s）。未连接时自动使用浏览器预演。</p>
+        </div>
+      </aside>
+
+      <section class="tc-main">
+        <div class="tc-stage">
+          <canvas id="tcCanvas" width="512" height="320"></canvas>
+          <div class="tc-stage-empty" id="tcStageEmpty">上传首帧与尾帧后点击「生成补间」</div>
+          <div class="tc-stage-meta" id="tcMeta">—</div>
+        </div>
+
+        <div class="tc-toolbar">
+          <button class="tc-btn tc-btn-primary" id="tcGenBtn" type="button">✨ 生成补间</button>
+          <button class="tc-btn" id="tcPlayBtn" type="button">▶ 播放</button>
+          <button class="tc-btn" id="tcExportZipBtn" type="button">导出帧序列 (ZIP)</button>
+          <button class="tc-btn" id="tcExportPngBtn" type="button">导出当前帧</button>
+          <button class="tc-btn" id="tcCmdBtn" type="button">复制推理命令</button>
+        </div>
+
+        <div class="tc-timeline" id="tcTimeline"></div>
+        <pre class="tc-cmd" id="tcCmd">python scripts/infer.py -i 首帧.png 尾帧.png -o ./results --frame_num 8 --ddim_steps 50</pre>
+      </section>
     </div>
   </main>
 
@@ -23859,7 +24112,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'oua', 'animation', 'history', 'admin'];
+var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'oua', 'animation', 'history', 'admin'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -50582,6 +50835,318 @@ window.HMChat = (function () {
 'use strict';
 
 /* =============================================================
+ * 绘梦 · ToonCrafter 首尾帧补间（模块 09）
+ * 数据/代码来源：插件/09-ToonCrafter首尾帧补间（ToonCrafter 官方仓库）
+ * 浏览器端提供「预演」：按缓动曲线重建中间帧、时间轴、循环播放、
+ * 帧序列 ZIP 导出；同时给出本地官方推理命令与接口连通性检测。
+ * ============================================================= */
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  var state = {
+    first: null,        // Image
+    last: null,         // Image
+    frames: [],         // dataURL
+    idx: 0,
+    playing: false,
+    timer: null,
+    apiOk: false,
+    w: 512,
+    h: 320
+  };
+
+  function ease(t) {
+    var mode = ($('tcEase') || {}).value || 'ease';
+    if (mode === 'linear') return t;
+    if (mode === 'zoom') return t;
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function toast(msg, type) {
+    if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type || 'info');
+  }
+
+  /* 等比裁切绘制（cover），zoom 模式下首帧轻微放大 */
+  function drawCover(ctx, img, w, h, scale, alpha) {
+    if (!img) return;
+    var s = Math.max(w / img.width, h / img.height) * (scale || 1);
+    var dw = img.width * s, dh = img.height * s;
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawAt(ctx, t) {
+    var w = state.w, h = state.h;
+    ctx.clearRect(0, 0, w, h);
+    var e = ease(t);
+    var mode = ($('tcEase') || {}).value || 'ease';
+    if (mode === 'zoom') {
+      drawCover(ctx, state.first, w, h, 1 + e * 0.12, 1 - e);
+      drawCover(ctx, state.last, w, h, 1 + e * 0.12, e);
+    } else {
+      drawCover(ctx, state.first, w, h, 1, 1 - e);
+      drawCover(ctx, state.last, w, h, 1, e);
+    }
+  }
+
+  function setSize() {
+    var v = ($('tcSize') || {}).value || '512x320';
+    var parts = v.split('x');
+    state.w = parseInt(parts[0], 10);
+    state.h = parseInt(parts[1], 10);
+    var cv = $('tcCanvas');
+    if (cv) { cv.width = state.w; cv.height = state.h; }
+  }
+
+  function loadImage(file, key, thumbId) {
+    if (!file || !/^image\//.test(file.type)) { toast('请选择图片文件', 'error'); return; }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      state[key] = img;
+      var th = $(thumbId);
+      if (th) { th.src = url; th.classList.add('is-loaded'); }
+      var drop = $(thumbId).closest('.tc-drop');
+      if (drop) drop.classList.add('has-img');
+      toast('已载入' + (key === 'first' ? '首帧' : '尾帧'), 'success');
+    };
+    img.onerror = function () { toast('图片读取失败', 'error'); };
+    img.src = url;
+  }
+
+  function bindDrop(dropId, fileId, key, thumbId) {
+    var drop = $(dropId), input = $(fileId);
+    if (!drop || !input) return;
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) loadImage(input.files[0], key, thumbId);
+    });
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('is-over'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('is-over'); });
+    });
+    drop.addEventListener('drop', function (e) {
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) loadImage(f, key, thumbId);
+    });
+  }
+
+  function frameCount() { return parseInt($('tcFrames').value, 10) + 2; }
+
+  function generate() {
+    if (!state.first || !state.last) { toast('请先上传首帧与尾帧', 'error'); return; }
+    stopPlay();
+    setSize();
+    var cv = $('tcCanvas');
+    var ctx = cv.getContext('2d');
+    var total = frameCount();
+    state.frames = [];
+    for (var i = 0; i < total; i++) {
+      var t = total === 1 ? 0 : i / (total - 1);
+      drawAt(ctx, t);
+      state.frames.push(cv.toDataURL('image/png'));
+    }
+    state.idx = 0;
+    $('tcStageEmpty').hidden = true;
+    renderTimeline();
+    showFrame(0);
+    updateMeta();
+    toast('已生成 ' + total + ' 帧（含首尾帧）', 'success');
+  }
+
+  function showFrame(i) {
+    if (!state.frames.length) return;
+    state.idx = Math.max(0, Math.min(state.frames.length - 1, i));
+    var cv = $('tcCanvas');
+    var ctx = cv.getContext('2d');
+    var img = new Image();
+    img.onload = function () { ctx.clearRect(0, 0, state.w, state.h); ctx.drawImage(img, 0, 0, state.w, state.h); };
+    img.src = state.frames[state.idx];
+    var items = $('tcTimeline').querySelectorAll('.tc-frame');
+    for (var k = 0; k < items.length; k++) items[k].classList.toggle('is-active', k === state.idx);
+    var meta = $('tcMeta');
+    if (meta) meta.textContent = '第 ' + (state.idx + 1) + ' / ' + state.frames.length + ' 帧 · ' + state.w + '×' + state.h;
+  }
+
+  function renderTimeline() {
+    var box = $('tcTimeline');
+    if (!box) return;
+    box.innerHTML = state.frames.map(function (src, i) {
+      var label = i === 0 ? '首' : (i === state.frames.length - 1 ? '尾' : String(i));
+      return '<button class="tc-frame" data-i="' + i + '" type="button">'
+        + '<img src="' + src + '" alt="">'
+        + '<span>' + label + '</span></button>';
+    }).join('');
+  }
+
+  function updateMeta() {
+    var meta = $('tcMeta');
+    if (meta) meta.textContent = state.frames.length
+      ? ('共 ' + state.frames.length + ' 帧 · ' + state.w + '×' + state.h + ' · ' + $('tcFps').value + ' fps')
+      : '—';
+  }
+
+  function play() {
+    if (!state.frames.length) { toast('请先生成补间帧', 'error'); return; }
+    if (state.playing) { stopPlay(); return; }
+    state.playing = true;
+    $('tcPlayBtn').textContent = '⏸ 暂停';
+    var fps = parseInt($('tcFps').value, 10) || 12;
+    state.timer = window.setInterval(function () {
+      showFrame((state.idx + 1) % state.frames.length);
+    }, Math.round(1000 / fps));
+  }
+
+  function stopPlay() {
+    state.playing = false;
+    if (state.timer) { window.clearInterval(state.timer); state.timer = null; }
+    var b = $('tcPlayBtn');
+    if (b) b.textContent = '▶ 播放';
+  }
+
+  function download(name, url) {
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+  }
+
+  function exportPng() {
+    if (!state.frames.length) { toast('请先生成补间帧', 'error'); return; }
+    download('tooncrafter_frame_' + String(state.idx + 1).padStart(4, '0') + '.png', state.frames[state.idx]);
+  }
+
+  function exportZip() {
+    if (!state.frames.length) { toast('请先生成补间帧', 'error'); return; }
+    if (!window.JSZip) { toast('ZIP 组件未加载', 'error'); return; }
+    var zip = new window.JSZip();
+    state.frames.forEach(function (src, i) {
+      zip.file('frame_' + String(i + 1).padStart(4, '0') + '.png', src.split(',')[1], { base64: true });
+    });
+    zip.generateAsync({ type: 'blob' }).then(function (blob) {
+      download('tooncrafter_frames.zip', URL.createObjectURL(blob));
+      toast('已导出 ' + state.frames.length + ' 帧', 'success');
+    });
+  }
+
+  function commandText() {
+    return 'python scripts/infer.py -i 首帧.png 尾帧.png -o ./results --frame_num '
+      + $('tcFrames').value + ' --ddim_steps ' + $('tcSteps').value
+      + ' --resolution ' + state.w + 'x' + state.h;
+  }
+
+  function syncCmd() {
+    var pre = $('tcCmd');
+    if (pre) pre.textContent = commandText();
+  }
+
+  function copyCmd() {
+    var text = commandText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('推理命令已复制', 'success'); },
+        function () { toast('复制失败，请手动选择文本', 'error'); });
+    } else {
+      toast('复制失败，请手动选择文本', 'error');
+    }
+  }
+
+  function testApi() {
+    var base = ($('tcApi').value || '').replace(/\/+$/, '');
+    var el = $('tcApiState');
+    if (!base) { toast('请填写本地服务地址', 'error'); return; }
+    if (el) el.textContent = '检测中…';
+    var done = false;
+    var timer = window.setTimeout(function () {
+      if (done) return;
+      done = true;
+      state.apiOk = false;
+      if (el) { el.textContent = '未连接 · 使用浏览器预演'; el.classList.remove('is-ok'); }
+    }, 4000);
+    fetch(base, { method: 'GET', mode: 'cors' }).then(function () {
+      if (done) return;
+      done = true; window.clearTimeout(timer);
+      state.apiOk = true;
+      if (el) { el.textContent = '已连接'; el.classList.add('is-ok'); }
+      var badge = $('tcMode');
+      if (badge) { badge.textContent = '本地 ToonCrafter'; badge.classList.add('is-ok'); }
+      toast('本地 ToonCrafter 服务可达', 'success');
+    }).catch(function () {
+      if (done) return;
+      done = true; window.clearTimeout(timer);
+      state.apiOk = false;
+      if (el) { el.textContent = '未连接 · 使用浏览器预演'; el.classList.remove('is-ok'); }
+      toast('本地服务不可达（需先启动 gradio_app.py）', 'error');
+    });
+  }
+
+  function bind() {
+    bindDrop('tcDropFirst', 'tcFileFirst', 'first', 'tcThumbFirst');
+    bindDrop('tcDropLast', 'tcFileLast', 'last', 'tcThumbLast');
+
+    $('tcGenBtn').addEventListener('click', generate);
+    $('tcPlayBtn').addEventListener('click', play);
+    $('tcExportZipBtn').addEventListener('click', exportZip);
+    $('tcExportPngBtn').addEventListener('click', exportPng);
+    $('tcCmdBtn').addEventListener('click', copyCmd);
+    $('tcApiTest').addEventListener('click', testApi);
+
+    $('tcFrames').addEventListener('input', function () {
+      $('tcFramesVal').textContent = this.value; syncCmd();
+    });
+    $('tcSteps').addEventListener('input', function () {
+      $('tcStepsVal').textContent = this.value; syncCmd();
+    });
+    $('tcFps').addEventListener('input', function () {
+      $('tcFpsVal').textContent = this.value + ' fps';
+      updateMeta();
+      if (state.playing) { stopPlay(); play(); }
+    });
+    $('tcSize').addEventListener('change', function () { setSize(); updateMeta(); syncCmd(); });
+    $('tcEase').addEventListener('change', function () { if (state.frames.length) generate(); });
+
+    $('tcTimeline').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-i]');
+      if (!b) return;
+      stopPlay();
+      showFrame(parseInt(b.dataset.i, 10));
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (document.body.dataset.view !== 'tooltoon') return;
+      if (e.key === ' ') { e.preventDefault(); play(); }
+      if (e.key === 'ArrowRight') { stopPlay(); showFrame(state.idx + 1); }
+      if (e.key === 'ArrowLeft') { stopPlay(); showFrame(state.idx - 1); }
+    });
+  }
+
+  var booted = false;
+  function boot() {
+    if (booted) return;
+    booted = true;
+    setSize();
+    bind();
+    syncCmd();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      if (document.getElementById('view-tooltoon')) boot();
+    });
+  } else if (document.getElementById('view-tooltoon')) boot();
+
+  window.HMToon = {
+    stop: stopPlay,
+    leave: stopPlay
+  };
+})();
+
+</script>
+  <script>
+'use strict';
+
+/* =============================================================
  * 绘梦 · V3 工作台
  * 左侧导航（桌面 / 画布 / 成片 / 工具 / 资产 / 写作 / 论坛）
  * 预设弹窗、资产库、全屏编辑器、图片 / 视频 / 音频多模态
@@ -51564,6 +52129,9 @@ window.HMChat = (function () {
     }
     if (prevView === 'voice' && view !== 'voice' && window.HMVoice) {
       try { window.HMVoice.leave(); } catch (e) { /* ignore */ }
+    }
+    if (prevView === 'tooltoon' && view !== 'tooltoon' && window.HMToon) {
+      try { window.HMToon.leave(); } catch (e) { /* ignore */ }
     }
     prevView = view;
 
@@ -53001,6 +53569,7 @@ window.HMChat = (function () {
     if (tool === 'toolrestore') { A.switchView('toolrestore'); return; }
     if (tool === 'toolworkflow') { A.switchView('toolworkflow'); return; }
     if (tool === 'toolopenvideo') { A.switchView('toolopenvideo'); return; }
+    if (tool === 'tooltoon') { A.switchView('tooltoon'); return; }
     if (tool === 'translate') return translateTool();
     if (tool === 'inspire') { A.els.inspireBtn.click(); return; }
     if (tool === 'presets') { openPresetModal(); return; }

@@ -429,6 +429,11 @@
       </div>
     </div>
     <div class="hm-tool-grid">
+      <button class="hm-tool-card" data-tool="tooltoon">
+        <span class="hm-tool-icon">补</span>
+        <strong>ToonCrafter首尾帧补间</strong>
+        <p>两张线稿自动生成中间过渡帧 · 赛璐璐友好 · 漫剧补帧核心工具</p>
+      </button>
       <button class="hm-tool-card" data-tool="toolopenvideo">
         <span class="hm-tool-icon">开</span>
         <strong>开源生视频</strong>
@@ -499,6 +504,86 @@
         <strong>使用指南</strong>
         <p>三步上手，查看提示词与参考图技巧</p>
       </button>
+    </div>
+  </main>
+
+  <!-- ===================== ToonCrafter · 首尾帧补间 ===================== -->
+  <main class="hm-page tc-page" id="view-tooltoon" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>ToonCrafter · 首尾帧补间</h2>
+        <p>给两张线稿（首帧 + 尾帧），自动生成中间过渡帧 · 赛璐璐 / 线稿友好 · 浏览器预演 + 本地推理双通道</p>
+      </div>
+      <div class="tc-head-badge" id="tcMode">浏览器预演</div>
+    </div>
+
+    <div class="tc-body">
+      <aside class="tc-panel">
+        <div class="tc-sec">
+          <div class="tc-sec-h">关键帧</div>
+          <label class="tc-drop" id="tcDropFirst">
+            <input type="file" accept="image/*" id="tcFileFirst" hidden>
+            <img class="tc-thumb" id="tcThumbFirst" alt="">
+            <span class="tc-drop-tip">首帧 · 点击或拖入</span>
+          </label>
+          <label class="tc-drop" id="tcDropLast">
+            <input type="file" accept="image/*" id="tcFileLast" hidden>
+            <img class="tc-thumb" id="tcThumbLast" alt="">
+            <span class="tc-drop-tip">尾帧 · 点击或拖入</span>
+          </label>
+        </div>
+
+        <div class="tc-sec">
+          <div class="tc-sec-h">推理参数</div>
+          <label class="tc-field"><span>中间帧数 <b id="tcFramesVal">8</b></span>
+            <input type="range" id="tcFrames" min="2" max="16" step="1" value="8"></label>
+          <label class="tc-field"><span>采样步数 (DDIM) <b id="tcStepsVal">50</b></span>
+            <input type="range" id="tcSteps" min="10" max="50" step="5" value="50"></label>
+          <label class="tc-field"><span>播放帧率 <b id="tcFpsVal">12 fps</b></span>
+            <input type="range" id="tcFps" min="6" max="24" step="1" value="12"></label>
+          <label class="tc-field"><span>画幅</span>
+            <select id="tcSize" class="tc-select">
+              <option value="512x320">512 × 320（官方默认）</option>
+              <option value="320x512">320 × 512（竖屏）</option>
+              <option value="512x512">512 × 512（方形）</option>
+            </select></label>
+          <label class="tc-field"><span>运动缓动</span>
+            <select id="tcEase" class="tc-select">
+              <option value="ease">缓入缓出（默认）</option>
+              <option value="linear">匀速</option>
+              <option value="zoom">推镜（首→尾放大）</option>
+            </select></label>
+        </div>
+
+        <div class="tc-sec">
+          <div class="tc-sec-h">本地 ToonCrafter 通道</div>
+          <input class="tc-input" id="tcApi" type="text" value="http://127.0.0.1:7860" placeholder="本地服务地址">
+          <div class="tc-row">
+            <button class="tc-btn tc-btn-line" id="tcApiTest" type="button">连接测试</button>
+            <span class="tc-api-state" id="tcApiState">未连接</span>
+          </div>
+          <p class="tc-hint">官方权重需 ~24G 显存（A100 · 512 分辨率 · 50 步约 24s）。未连接时自动使用浏览器预演。</p>
+        </div>
+      </aside>
+
+      <section class="tc-main">
+        <div class="tc-stage">
+          <canvas id="tcCanvas" width="512" height="320"></canvas>
+          <div class="tc-stage-empty" id="tcStageEmpty">上传首帧与尾帧后点击「生成补间」</div>
+          <div class="tc-stage-meta" id="tcMeta">—</div>
+        </div>
+
+        <div class="tc-toolbar">
+          <button class="tc-btn tc-btn-primary" id="tcGenBtn" type="button">✨ 生成补间</button>
+          <button class="tc-btn" id="tcPlayBtn" type="button">▶ 播放</button>
+          <button class="tc-btn" id="tcExportZipBtn" type="button">导出帧序列 (ZIP)</button>
+          <button class="tc-btn" id="tcExportPngBtn" type="button">导出当前帧</button>
+          <button class="tc-btn" id="tcCmdBtn" type="button">复制推理命令</button>
+        </div>
+
+        <div class="tc-timeline" id="tcTimeline"></div>
+        <pre class="tc-cmd" id="tcCmd">python scripts/infer.py -i 首帧.png 尾帧.png -o ./results --frame_num 8 --ddim_steps 50</pre>
+      </section>
     </div>
   </main>
 
@@ -3832,6 +3917,7 @@
   <script src="canvas.js"></script>
   <script src="library.js"></script>
   <script src="voice.js"></script>
+  <script src="toon.js"></script>
   <script src="ui.js"></script>
   <script src="dimverse.js"></script>
   <script src="desk.js"></script>

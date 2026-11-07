@@ -984,6 +984,9 @@
     if (prevView === 'voice' && view !== 'voice' && window.HMVoice) {
       try { window.HMVoice.leave(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'tooltoon' && view !== 'tooltoon' && window.HMToon) {
+      try { window.HMToon.leave(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas' && window.HMCanvas) {
@@ -2420,6 +2423,7 @@
     if (tool === 'toolrestore') { A.switchView('toolrestore'); return; }
     if (tool === 'toolworkflow') { A.switchView('toolworkflow'); return; }
     if (tool === 'toolopenvideo') { A.switchView('toolopenvideo'); return; }
+    if (tool === 'tooltoon') { A.switchView('tooltoon'); return; }
     if (tool === 'translate') return translateTool();
     if (tool === 'inspire') { A.els.inspireBtn.click(); return; }
     if (tool === 'presets') { openPresetModal(); return; }
