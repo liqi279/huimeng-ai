@@ -221,7 +221,8 @@
     if (video) {
       video.hidden = false;
       video.src = url;
-      video.play().catch(function () {});
+      var pr = video.play();
+      if (pr && pr.catch) pr.catch(function () {});
     }
     var meta = $('tcMeta');
     if (meta) {
@@ -295,7 +296,10 @@
   function playPause() {
     var v = $('tcVideo');
     if (!state.videoUrl || !v) { toast('请先生成补间视频', 'error'); return; }
-    if (v.paused) { v.play().catch(function () {}); } else { v.pause(); }
+    if (v.paused) {
+      var pr = v.play();
+      if (pr && pr.catch) pr.catch(function () {});
+    } else { v.pause(); }
   }
 
   function saveVideo() {
