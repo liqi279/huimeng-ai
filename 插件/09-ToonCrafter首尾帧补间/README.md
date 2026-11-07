@@ -70,3 +70,43 @@ python gradio_app.py
 
 - GitHub Pages 为纯静态托管，无法运行 PyTorch，因此默认走浏览器预演；真实扩散补间必须本地或自建 GPU 服务。
 - 权重文件体积大且需登录授权，未随插件打包。
+
+## 真实推理（默认模式）
+
+本插件已接入**真实模型推理**，不再使用浏览器预演。
+
+```
+插件/09-ToonCrafter首尾帧补间/
+├── 09_ToonCrafter首尾帧补间.zip     原始源码包
+├── 源码/ToonCrafter-main/           官方仓库（含 gradio_app.py、Image2Video）
+├── 服务/                            ★ 真实推理服务
+│   ├── server.py                    HTTP 封装（复用官方 Image2Video）
+│   ├── install.sh                   一键建环境（torch + 官方依赖 + flask）
+│   └── README.md                    接口文档 / 部署 / 排错
+├── 说明.txt / 使用说明.md            原始文档
+└── README.md                        本文件
+```
+
+### 启动真实推理
+
+```bash
+cd 插件/09-ToonCrafter首尾帧补间/服务
+bash install.sh
+source .venv/bin/activate
+python server.py --port 7861 --warmup 320_512
+```
+
+### 前端使用
+
+绘梦 → 工具 → ToonCrafter 首尾帧补间 → 推理服务填 `http://127.0.0.1:7861`
+→ 连接测试（显示 GPU / 显存）→ 上传首尾帧 → 生成补间（真实推理）→ 播放 / 下载 mp4 / 导出帧序列。
+
+### 与绘梦的接口
+
+| 方向 | 接口 |
+|---|---|
+| 页面 → 服务 | `POST /api/interpolate`（multipart：first, last, prompt, steps, cfg, eta, fs, seed, resolution） |
+| 页面 → 服务 | `GET /api/health`、`POST /api/warmup?resolution=320_512` |
+| 服务 → 页面 | `GET /results/<name>.mp4` |
+
+显存参考：256 ≈ 12G，512 ≈ 24G（推荐 A100/4090），1024 ≈ 40G+。
