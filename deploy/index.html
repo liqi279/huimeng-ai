@@ -8566,7 +8566,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-user-menu button:hover { background: rgba(255,255,255,0.06); color: var(--text); }
 .hm-user-menu button.is-danger:hover { background: rgba(251, 113, 133, 0.12); color: var(--danger); }
 
-/* ============ 登录 / 注册页 ============ */
+/* ============ 登录页 ============ */
 .hm-auth {
   position: fixed; inset: 0; z-index: 9999;
   display: flex; align-items: center; justify-content: center;
@@ -18323,11 +18323,23 @@ body.dv-open .hm-page {
     return 'other';
   }
 
+  /* 只有「账号确实处于待审批 / 已拒绝」才算账号被拦。
+     ACCOUNT_UNDEFINED（账号记录缺 status）属于服务端数据问题，
+     不能当成登录失效，否则每次刷新都会被踢下线。 */
+  function isAccountBlocked(err) {
+    if (!err) return false;
+    var code = String(err.code || (err.data && err.data.error && err.data.error.code) || '');
+    if (code === 'ACCOUNT_PENDING' || code === 'ACCOUNT_REJECTED') return true;
+    var msg = String(err.message || '');
+    return msg.indexOf('等待超级管理员审批') >= 0 || msg.indexOf('注册申请已被拒绝') >= 0;
+  }
+
   window.HMAuth = {
     getToken: readToken,
     setToken: writeToken,
     decodeToken: decodeToken,
     classify: classify,
+    isAccountBlocked: isAccountBlocked,
     trimStorage: trimStorage
   };
 })();
@@ -21728,10 +21740,16 @@ body.dv-open .hm-page {
   .hm-acc-storage .hm-acc-storage-tip{color:#cbd5e1;font-size:12px}
   .hm-acc-storage button{margin-left:8px;padding:5px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:transparent;color:inherit;font-size:12px;cursor:pointer}
   .hm-acc-storage>b,.hm-acc-storage>span:first-child{margin-right:auto}
-  #authPendingModal .modal-card,#hmApplyNoticeModal .modal-card,#hmProfileModal .modal-card{max-width:460px}
+  .hm-acc-create{padding:7px 14px;border-radius:999px;border:1px solid rgba(124,162,255,.45);background:rgba(124,162,255,.16);color:#cdd9ff;font-size:12.5px;font-family:inherit;cursor:pointer}
+  .hm-acc-create:hover{background:rgba(124,162,255,.28);border-color:rgba(124,162,255,.7)}
+  .hm-acc-pw-row{display:flex;gap:8px}
+  .hm-acc-pw-row input{flex:1;min-width:0}
+  .hm-acc-pw-row button{white-space:nowrap;padding:0 12px;border-radius:10px;border:1px solid rgba(148,163,184,.35);background:rgba(148,163,184,.12);color:inherit;font-size:12.5px;font-family:inherit;cursor:pointer}
+  .hm-acc-pw-row button:hover{border-color:rgba(124,162,255,.6)}
+  #hmApplyNoticeModal .modal-card,#hmProfileModal .modal-card,#hmAccountCreateModal .modal-card{max-width:460px}
   .hm-profile-field{display:flex;flex-direction:column;gap:6px;margin-top:12px}
   .hm-profile-field label{font-size:12.5px;color:#8b94a6}
-  .hm-profile-field input,.hm-profile-field textarea{width:100%;padding:9px 11px;border-radius:10px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.5);color:inherit;font-size:13px;font-family:inherit}
+  .hm-profile-field input,.hm-profile-field textarea,.hm-profile-field select{width:100%;padding:9px 11px;border-radius:10px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.5);color:inherit;font-size:13px;font-family:inherit}
   .hm-profile-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
   </style>
 
@@ -22369,19 +22387,6 @@ body.dv-open .hm-page {
     </div>
   </div>
 
-  <!-- 注册申请已提交提示 -->
-  <div class="modal" id="authPendingModal" aria-hidden="true">
-    <div class="modal-card">
-      <button class="modal-close" id="authPendingClose" type="button" aria-label="关闭">✕</button>
-      <span class="modal-kicker">申请已提交</span>
-      <h2>注册申请已提交</h2>
-      <p class="api-desc" style="margin-top:10px;line-height:1.8">注册申请已提交，请等待管理员通过。<br>审批通过后，使用同一个用户名和密码即可登录。</p>
-      <div class="hm-profile-actions">
-        <button class="hm-pill hm-pill-primary" id="authPendingOk" type="button">知道了</button>
-      </div>
-    </div>
-  </div>
-
   <!-- 超管：新注册申请提醒 -->
   <div class="modal" id="hmApplyNoticeModal" aria-hidden="true">
     <div class="modal-card">
@@ -22392,6 +22397,42 @@ body.dv-open .hm-page {
       <div class="hm-profile-actions">
         <button class="hm-pill hm-pill-ghost" id="hmApplyNoticeLater" type="button">稍后处理</button>
         <button class="hm-pill hm-pill-primary" id="hmApplyNoticeGo" type="button">去审批</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 超管：新增人员（建号即 approved，可直接登录） -->
+  <div class="modal" id="hmAccountCreateModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="accCreateClose" type="button" aria-label="关闭">✕</button>
+      <span class="modal-kicker">新增人员</span>
+      <h2>新增人员</h2>
+      <div class="hm-profile-field">
+        <label for="accNewUser">用户名</label>
+        <input id="accNewUser" type="text" placeholder="至少 3 个字符" autocomplete="off">
+      </div>
+      <div class="hm-profile-field">
+        <label for="accNewPass">密码</label>
+        <div class="hm-acc-pw-row">
+          <input id="accNewPass" type="password" placeholder="至少 6 个字符" autocomplete="new-password">
+          <button type="button" id="accGenPass">随机生成</button>
+        </div>
+      </div>
+      <div class="hm-profile-field">
+        <label for="accNewRole">角色</label>
+        <select id="accNewRole">
+          <option value="user">普通用户</option>
+          <option value="admin">超级管理员</option>
+        </select>
+      </div>
+      <div class="hm-profile-field">
+        <label for="accNewNote">备注（选填）</label>
+        <input id="accNewNote" type="text" maxlength="64" placeholder="例如：摄影组成员" autocomplete="off">
+      </div>
+      <div class="hm-auth-error" id="accCreateError" hidden></div>
+      <div class="hm-profile-actions">
+        <button class="hm-pill" id="accCreateCancel" type="button">取消</button>
+        <button class="hm-pill hm-pill-primary" id="accCreateSubmit" type="button">创建账号</button>
       </div>
     </div>
   </div>
@@ -22436,11 +22477,6 @@ body.dv-open .hm-page {
         <p>登录后作品与桌面布局在所有设备同步</p>
       </div>
 
-      <div class="hm-auth-tabs">
-        <button class="is-active" data-auth-tab="login" id="authTabLogin">登录</button>
-        <button data-auth-tab="register" id="authTabRegister">注册</button>
-      </div>
-
       <form class="hm-auth-form" id="authForm" autocomplete="off">
         <h2 id="authTitle">欢迎回来</h2>
         <p class="hm-auth-sub" id="authSub">登录你的账号继续创作</p>
@@ -22450,19 +22486,9 @@ body.dv-open .hm-page {
           <input id="authUsername" type="text" placeholder="请输入用户名" autocomplete="username">
         </label>
 
-        <label class="hm-auth-field" id="authEmailWrap" hidden>
-          <span>邮箱（选填）</span>
-          <input id="authEmail" type="email" placeholder="用于找回账号，可留空" autocomplete="email">
-        </label>
-
         <label class="hm-auth-field">
           <span>密码</span>
           <input id="authPassword" type="password" placeholder="请输入密码" autocomplete="current-password">
-        </label>
-
-        <label class="hm-auth-field" id="authConfirmWrap" hidden>
-          <span>确认密码</span>
-          <input id="authConfirm" type="password" placeholder="再次输入密码" autocomplete="new-password">
         </label>
 
         <div class="hm-auth-error" id="authError" hidden></div>
@@ -22471,11 +22497,6 @@ body.dv-open .hm-page {
           <span id="authSubmitText">登录</span>
           <span class="hm-auth-spin" hidden aria-hidden="true"></span>
         </button>
-
-        <p class="hm-auth-switch">
-          <span id="authSwitchHint">还没有账号？</span>
-          <button type="button" class="hm-auth-link" id="authSwitchBtn">立即注册</button>
-        </p>
       </form>
     </div>
   </div>
@@ -22653,6 +22674,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     var error = new Error(message || ('后端请求失败（HTTP ' + status + '）'));
     if (hint) error.hint = hint;
     error.status = status;
+    /* 保留后端错误码：前端要区分 TOKEN_INVALID / ACCOUNT_PENDING / ACCOUNT_UNDEFINED，
+       不能只靠中文文案猜。 */
+    if (data && typeof data === 'object' && data.error && typeof data.error === 'object' && data.error.code) {
+      error.code = String(data.error.code);
+    }
     return error;
   }
 
@@ -22960,9 +22986,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.setToken = setAuthToken;
   api.getToken = authToken;
 
-  api.register = function (username, password, email) {
-    return request('/auth/register', { method: 'POST', body: { username: username, password: password, email: email || '' } }, 60000);
-  };
   api.login = function (username, password) {
     return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 60000);
   };
@@ -22981,8 +23004,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   /* 管理员：用户管理 */
   api.listUsers = function () { return request('/auth/users', {}, 15000); };
-  api.createUser = function (username, password, role) {
-    return request('/auth/users', { method: 'POST', body: { username: username, password: password, role: role } }, 15000);
+  api.createUser = function (username, password, role, note) {
+    return request('/auth/users', { method: 'POST', body: { username: username, password: password, role: role, note: note || '' } }, 20000);
   };
   api.setUserRole = function (id, role) {
     return request('/auth/users/' + encodeURIComponent(id) + '/role', { method: 'PATCH', body: { role: role } }, 15000);
@@ -23031,14 +23054,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 'use strict';
 
 /* =============================================================
- * 绘梦 · 登录 / 注册 / 用户管理 UI
+ * 绘梦 · 登录 / 用户管理 UI
  * 依赖 api.js（window.HM.api）与 app.js（window.HMApp）
  * 暴露全局函数：showLogin / hideLogin / updateUserUI
  * ============================================================= */
 (function () {
   var api = (window.HM && window.HM.api) ? window.HM.api : null;
 
-  var mode = 'login'; /* 'login' | 'register' */
   var submitting = false;
 
   var els = {};
@@ -23049,18 +23071,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     els.sub = document.getElementById('authSub');
     els.username = document.getElementById('authUsername');
     els.password = document.getElementById('authPassword');
-    els.confirmWrap = document.getElementById('authConfirmWrap');
-    els.confirm = document.getElementById('authConfirm');
-    els.emailWrap = document.getElementById('authEmailWrap');
-    els.email = document.getElementById('authEmail');
     els.error = document.getElementById('authError');
     els.submit = document.getElementById('authSubmit');
     els.submitText = document.getElementById('authSubmitText');
     els.spin = document.querySelector('#authSubmit .hm-auth-spin');
-    els.switchHint = document.getElementById('authSwitchHint');
-    els.switchBtn = document.getElementById('authSwitchBtn');
-    els.tabLogin = document.getElementById('authTabLogin');
-    els.tabRegister = document.getElementById('authTabRegister');
 
     els.userWrap = document.getElementById('hmUserWrap');
     els.userPill = document.getElementById('hmUserPill');
@@ -23080,13 +23094,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
 
   /* ---------- 认证页显隐 ---------- */
-  function showLogin(tab) {
+  function showLogin() {
     if (!els.auth) cache();
     if (!els.auth) return;
-    mode = tab === 'register' ? 'register' : 'login';
     els.auth.hidden = false;
     els.auth.setAttribute('aria-hidden', 'false');
-    applyMode();
     clearError();
     setTimeout(function () { els.username && els.username.focus(); }, 50);
     /* Render 免费层休眠后首个请求要 20~60 秒唤醒：
@@ -23099,29 +23111,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (!els.auth) return;
     els.auth.hidden = true;
     els.auth.setAttribute('aria-hidden', 'true');
-  }
-
-  function applyMode() {
-    var isReg = mode === 'register';
-    els.tabLogin.classList.toggle('is-active', !isReg);
-    els.tabRegister.classList.toggle('is-active', isReg);
-    els.confirmWrap.hidden = !isReg;
-    if (els.emailWrap) els.emailWrap.hidden = !isReg;
-    if (isReg) {
-      els.title.textContent = '创建账号';
-      els.sub.textContent = '提交后需超级管理员审批通过才能登录';
-      els.submitText.textContent = '提交注册申请';
-      els.switchHint.textContent = '已有账号？';
-      els.switchBtn.textContent = '去登录';
-      els.password.setAttribute('autocomplete', 'new-password');
-    } else {
-      els.title.textContent = '欢迎回来';
-      els.sub.textContent = '登录你的账号继续创作';
-      els.submitText.textContent = '登录';
-      els.switchHint.textContent = '还没有账号？';
-      els.switchBtn.textContent = '立即注册';
-      els.password.setAttribute('autocomplete', 'current-password');
-    }
   }
 
   function setError(msg) {
@@ -23144,12 +23133,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     m.classList.remove('is-open');
     m.setAttribute('aria-hidden', 'true');
   }
-  function showPendingModal(msg) {
-    var text = document.querySelector('#authPendingModal .api-desc');
-    if (text && msg) text.innerHTML = msg + '<br>审批通过后，使用同一个用户名和密码即可登录。';
-    openModal('authPendingModal');
-  }
-
   /* ---------- 个人资料（后端 MySQL 为准） ---------- */
   async function openProfileModal() {
     var u = (window.HMApp && window.HMApp.user) || {};
@@ -23202,6 +23185,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     els.submit.disabled = on;
     els.spin.hidden = !on;
     els.submitText.hidden = on;
+    /* 冷启动提示会临时改写按钮文案，结束后恢复为「登录」 */
+    if (!on) els.submitText.textContent = '登录';
   }
 
   /* 切换账号时清掉顶栏搜索框里浏览器残留/自动填充的文字（例如 admin），
@@ -23221,12 +23206,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (submitting) return;
     var username = (els.username.value || '').trim();
     var password = els.password.value || '';
-    var confirm = els.confirm.value || '';
 
     if (!username || !password) { setError('请输入用户名和密码'); return; }
     if (username.length < 3) { setError('用户名至少 3 个字符'); return; }
     if (password.length < 6) { setError('密码至少 6 个字符'); return; }
-    if (mode === 'register' && password !== confirm) { setError('两次输入的密码不一致'); return; }
 
     setSubmitting(true);
     clearError();
@@ -23236,24 +23219,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }, 3000);
 
     try {
-      var res = mode === 'register'
-        ? await api.register(username, password, (els.email && els.email.value || '').trim())
-        : await api.login(username, password);
-
-      /* 审批制：注册只提交申请，后端不返回 token */
-      if (mode === 'register' && res && res.pending) {
-        if (els.password) els.password.value = '';
-        if (els.confirm) els.confirm.value = '';
-        mode = 'login';
-        applyMode();
-        showPendingModal(res.message || '注册申请已提交，请等待管理员通过');
-        return;
-      }
+      var res = await api.login(username, password);
 
       if (res && res.token) api.setToken(res.token);
       /* 登录成功即证明后端在线（预热前 ping 可能因冷启动超时，把在线标记纠正过来） */
       if (api) api.online = true;
-      /* 登录/注册接口已直接返回完整用户信息，不再额外请求 /auth/me，
+      /* 登录接口已直接返回完整用户信息，不再额外请求 /auth/me，
          少一个跨地域往返（用户点击到登录框关闭只保留 1 个请求） */
       var me = (res && res.user) ? { user: res.user } : await api.me();
       window.HMApp = window.HMApp || {};
@@ -23270,7 +23241,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       }
       resetSearchBox();
       if (window.HMApp && window.HMApp.toast) {
-        window.HMApp.toast(mode === 'register' ? '注册成功，欢迎加入绘梦' : '登录成功', 'success');
+        window.HMApp.toast('登录成功', 'success');
       }
       loadUserData();
     } catch (err) {
@@ -23283,7 +23254,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     } finally {
       clearTimeout(slowTimer);
       setSubmitting(false);
-      applyMode();
     }
   }
 
@@ -23386,7 +23356,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     toggleUserMenu(false);
     updateUserUI();
     resetSearchBox();
-    showLogin('login');
+    showLogin();
   }
 
   /* ---------- 管理员 - 用户管理 ---------- */
@@ -23504,13 +23474,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     cache();
     if (!els.auth) return;
 
-    els.tabLogin.addEventListener('click', function () { mode = 'login'; applyMode(); clearError(); });
-    els.tabRegister.addEventListener('click', function () { mode = 'register'; applyMode(); clearError(); });
-    els.switchBtn.addEventListener('click', function () {
-      mode = mode === 'login' ? 'register' : 'login';
-      applyMode();
-      clearError();
-    });
     els.form.addEventListener('submit', handleSubmit);
 
     /* 用户菜单 */
@@ -23540,18 +23503,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       }
     });
 
-    /* 注册申请 / 新申请提醒 / 个人资料 弹窗 */
-    ['authPendingClose', 'authPendingOk'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.addEventListener('click', function () { closeModal('authPendingModal'); });
-    });
+    /* 新申请提醒 / 个人资料 弹窗 */
     var profileSaveBtn = document.getElementById('hmProfileSave');
     if (profileSaveBtn) profileSaveBtn.addEventListener('click', saveProfile);
     ['hmProfileClose', 'hmProfileCancel'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.addEventListener('click', function () { closeModal('hmProfileModal'); });
     });
-    ['hmProfileModal', 'authPendingModal'].forEach(function (id) {
+    ['hmProfileModal'].forEach(function (id) {
       var m = document.getElementById(id);
       if (m) m.addEventListener('click', function (ev) { if (ev.target === m) closeModal(id); });
     });
@@ -29297,12 +29256,26 @@ async function authBoot() {
     console.warn('[authBoot] 错误分类:', kind);
 
     if (kind === 'auth') {
-      /* 审批状态变化（账号被拒绝 / 被撤回）：明确提示并回到登录页 */
-      if (err && err.status === 403 && /审批|拒绝/.test(err.message || '')) {
+      /* 只有「账号确实处于待审批 / 已拒绝」才清 token 回登录页。
+         线上复现：账号记录缺 status 时服务端返回 403 ACCOUNT_UNDEFINED，
+         旧逻辑看到文案里有「审批」就登出 → 每次刷新都要重新登录。 */
+      var blocked = (window.HMAuth && window.HMAuth.isAccountBlocked)
+        ? window.HMAuth.isAccountBlocked(err)
+        : /等待超级管理员审批|注册申请已被拒绝/.test(err.message || '');
+      if (err && err.status === 403 && blocked) {
         toast(err.message, 'warn', 8000);
         window.HMApp.user = null;
         try { api.logout(); } catch (e) {}
         showLogin();
+        return;
+      }
+
+      /* 其它 403：账号数据异常（如 ACCOUNT_UNDEFINED、账号记录缺 status），
+         属于服务端问题，不能因此清空登录态；保留 token 与桌面并给出明确提示。 */
+      if (err && err.status === 403) {
+        console.error('[authBoot] 403 非审批拦截，保留登录态:', err.code || '(no code)', err.message);
+        toast('账号数据异常（' + (err.code || 'HTTP 403') + '）：服务端账号记录不完整。已保持登录，请联系管理员把账号库迁到 MySQL。', 'warn', 12000);
+        try { if (window.HMStorageNotice && window.HMStorageNotice.refresh) window.HMStorageNotice.refresh(); } catch (e) {}
         return;
       }
       /* ========== 明确的 401：唯一的自动登出路径 ==========
@@ -63862,6 +63835,10 @@ window.HMChat = (function () {
     var page = document.getElementById('view-admin');
     if (!page) return;
 
+    /* 新增人员弹窗 + 非超管隐藏「账号管理」入口 */
+    bindAccCreateModal();
+    syncAccountsVisibility();
+
     page.addEventListener('click', function (e) {
       /* 顶 Tab：管理台 / 创作统计 / 软件设置 */
       var topBtn = e.target.closest('[data-top]');
@@ -63907,8 +63884,10 @@ window.HMChat = (function () {
       }
     });
 
-    /* 账号管理：筛选 + 审批操作（事件委托，列表重绘后依然有效） */
+    /* 账号管理：新增人员 + 筛选 + 审批操作（事件委托，列表重绘后依然有效） */
     page.addEventListener('click', function (e) {
+      var createBtn = e.target.closest('[data-accopen="create"]');
+      if (createBtn) { openAccCreateModal(); return; }
       var filterBtn = e.target.closest('[data-accfilter]');
       if (filterBtn) {
         accountFilter = filterBtn.dataset.accfilter || 'all';
@@ -63953,6 +63932,9 @@ window.HMChat = (function () {
     if (_origOnView) _origOnView(view);
     if (view === 'admin') {
       if (!eventsBound) bindAdminEvents();
+      /* 非超管看不到「账号管理」入口；若残留指向该 Tab，回落到概览 */
+      syncAccountsVisibility();
+      if (!isAdmin() && currentSubTab === 'accounts') currentSubTab = 'overview';
       /* 重置 Tab 状态；顶栏「API接入管理」入口可通过 HM_ADMIN_TARGET 指定落地 Tab */
       var target = window.HM_ADMIN_TARGET || 'admin';
       window.HM_ADMIN_TARGET = null;
@@ -64428,7 +64410,8 @@ window.HMChat = (function () {
     body.innerHTML = [
       '<div class="hm-admin-panel hm-admin-panel-wide">',
         '<div class="hm-admin-panel-head"><h3>账号管理</h3>' +
-          '<span style="font-size:12px;color:#8b94a6">注册需超级管理员审批通过后才能登录</span>' +
+          '<span style="font-size:12px;color:#8b94a6;margin-right:auto">账号由超级管理员创建，创建后可直接登录</span>' +
+          '<button type="button" class="hm-acc-create" data-accopen="create">＋ 新增人员</button>' +
         '</div>',
         storageHtml,
         renderAccountRows(),
@@ -64442,6 +64425,107 @@ window.HMChat = (function () {
     var body = document.getElementById('adminBody');
     if (!body) return;
     renderAccounts(accountCache, body);
+  }
+
+  /* ---------- 新增人员：直接建号（approved，建完即可登录） ---------- */
+  function accCreateError(msg) {
+    var el = document.getElementById('accCreateError');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.hidden = !msg;
+  }
+
+  function openAccCreateModal() {
+    var modal = document.getElementById('hmAccountCreateModal');
+    if (!modal) return;
+    var u = document.getElementById('accNewUser');
+    var p = document.getElementById('accNewPass');
+    var r = document.getElementById('accNewRole');
+    var n = document.getElementById('accNewNote');
+    if (u) u.value = '';
+    if (p) { p.value = ''; p.type = 'password'; }
+    if (r) r.value = 'user';
+    if (n) n.value = '';
+    accCreateError('');
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(function () { if (u) u.focus(); }, 50);
+  }
+
+  function closeAccCreateModal() {
+    var modal = document.getElementById('hmAccountCreateModal');
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  function genAccPassword() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    var buf = new Uint32Array(12);
+    var hasCrypto = !!(window.crypto && typeof window.crypto.getRandomValues === 'function');
+    if (hasCrypto) { try { window.crypto.getRandomValues(buf); } catch (e) { hasCrypto = false; } }
+    var out = '';
+    for (var i = 0; i < 12; i++) {
+      var n = hasCrypto ? buf[i] : Math.floor(Math.random() * 4294967296);
+      out += chars.charAt(n % chars.length);
+    }
+    /* 生成后切成明文，方便超管当场记下/复制给新同事 */
+    var p = document.getElementById('accNewPass');
+    if (p) { p.value = out; p.type = 'text'; }
+    accCreateError('');
+  }
+
+  async function submitAccCreate() {
+    var uEl = document.getElementById('accNewUser');
+    var pEl = document.getElementById('accNewPass');
+    var rEl = document.getElementById('accNewRole');
+    var nEl = document.getElementById('accNewNote');
+    var username = String((uEl && uEl.value) || '').trim();
+    var password = (pEl && pEl.value) || '';
+    var role = (rEl && rEl.value) === 'admin' ? 'admin' : 'user';
+    var note = String((nEl && nEl.value) || '').trim();
+    if (username.length < 3) { accCreateError('用户名至少 3 个字符'); return; }
+    if (password.length < 6) { accCreateError('密码至少 6 个字符'); return; }
+    if (!HM.api || typeof HM.api.createUser !== 'function') { accCreateError('接口未就绪，请刷新页面后重试'); return; }
+
+    var btn = document.getElementById('accCreateSubmit');
+    if (btn) { btn.disabled = true; btn.textContent = '创建中…'; }
+    accCreateError('');
+    try {
+      await HM.api.createUser(username, password, role, note);
+      closeAccCreateModal();
+      HM.toast && HM.toast('账号已创建，可直接登录', 'success');
+      /* 刷新账号列表（筛选状态保持不变） */
+      if (currentSubTab === 'accounts' && currentTopTab === 'admin') loadTab('accounts');
+    } catch (err) {
+      accCreateError((err && err.message) || '创建失败，请稍后重试');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '创建账号'; }
+    }
+  }
+
+  function bindAccCreateModal() {
+    if (bindAccCreateModal.bound) return;
+    bindAccCreateModal.bound = true;
+    var modal = document.getElementById('hmAccountCreateModal');
+    if (!modal) return;
+    var gen = document.getElementById('accGenPass');
+    if (gen) gen.addEventListener('click', genAccPassword);
+    var submit = document.getElementById('accCreateSubmit');
+    if (submit) submit.addEventListener('click', submitAccCreate);
+    ['accCreateClose', 'accCreateCancel'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', closeAccCreateModal);
+    });
+    modal.addEventListener('click', function (ev) { if (ev.target === modal) closeAccCreateModal(); });
+  }
+
+  /* 非超管：隐藏「账号管理」子 Tab 入口 */
+  function syncAccountsVisibility() {
+    var page = document.getElementById('view-admin');
+    if (!page) return;
+    var tab = page.querySelector('.hm-admin-tab[data-tab="accounts"]');
+    if (tab) tab.hidden = !isAdmin();
   }
 
   function downloadJson(obj, filename) {
@@ -66094,13 +66178,92 @@ window.HMChat = (function () {
     return 'other';
   }
 
+  /* 只有「账号确实处于待审批 / 已拒绝」才算账号被拦。
+     ACCOUNT_UNDEFINED（账号记录缺 status）属于服务端数据问题，
+     不能当成登录失效，否则每次刷新都会被踢下线。 */
+  function isAccountBlocked(err) {
+    if (!err) return false;
+    var code = String(err.code || (err.data && err.data.error && err.data.error.code) || '');
+    if (code === 'ACCOUNT_PENDING' || code === 'ACCOUNT_REJECTED') return true;
+    var msg = String(err.message || '');
+    return msg.indexOf('等待超级管理员审批') >= 0 || msg.indexOf('注册申请已被拒绝') >= 0;
+  }
+
   window.HMAuth = {
     getToken: readToken,
     setToken: writeToken,
     decodeToken: decodeToken,
     classify: classify,
+    isAccountBlocked: isAccountBlocked,
     trimStorage: trimStorage
   };
+})();
+
+/* ============================================================
+ * 存储就绪提示：账号/作品/图片仍在临时存储时必须显式告警，
+ * 不能把「写进了本地文件 + 本地盘」显示成「已同步」。
+ * ============================================================ */
+(function () {
+  'use strict';
+  if (window.HMStorageNotice) return;
+  var el = null;
+
+  function hide() { if (el) el.style.display = 'none'; }
+
+  function show(text) {
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'hmStorageNotice';
+      el.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:2147483000;max-width:560px;' +
+        'padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.6;color:#fecaca;' +
+        'background:rgba(69,10,10,.95);border:1px solid rgba(248,113,113,.45);' +
+        'box-shadow:0 8px 28px rgba(0,0,0,.45);cursor:pointer';
+      el.title = '点击打开「设置 → 云同步」查看存储状态';
+      el.addEventListener('click', function () {
+        try {
+          if (window.HMApp && window.HMApp.openAdmin) window.HMApp.openAdmin('sync');
+          else if (window.HMApp && window.HMApp.openSettings) window.HMApp.openSettings();
+        } catch (e) {}
+      });
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    el.style.display = 'block';
+  }
+
+  function refresh() {
+    var api = window.HM && window.HM.api;
+    var base = (api && api.base) || '';
+    if (!base || (typeof location !== 'undefined' && location.protocol === 'file:')) return;
+    Promise.all([
+      fetch(base + '/health', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+      fetch(base + '/auth/store-status', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]).then(function (arr) {
+      var h = arr[0] || {};
+      var s = arr[1] || {};
+      var ud = h.userData || {};
+      var stores = h.stores || {};
+      var accounts = (stores.accounts && stores.accounts.mode) || s.storage || '';
+      var dataStore = ud.dataStore || (stores.userData && stores.userData.mode) || '';
+      var objectStore = ud.objectStore || (stores.assets && stores.assets.mode) || '';
+      var bad = [];
+      if (accounts && accounts !== 'mysql') bad.push('账号库=' + (s.label || accounts));
+      if (dataStore && dataStore !== 'mysql') bad.push('作品/项目=' + (ud.dataLabel || dataStore));
+      if (objectStore && objectStore !== 's3') bad.push('图片=' + (ud.objectLabel || objectStore));
+      if (!bad.length) { hide(); return; }
+      show('⚠ 当前为临时存储：' + bad.join('，') + '。服务重启/重新部署后数据可能丢失，尚不能视为已同步。');
+    });
+  }
+
+  window.HMStorageNotice = { refresh: refresh, hide: hide };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(refresh, 1200); });
+  } else {
+    setTimeout(refresh, 1200);
+  }
+  setTimeout(refresh, 8000);
 })();
 
 (function () {
@@ -66353,6 +66516,7 @@ window.HMChat = (function () {
         if (!res.ok) {
           var err = new Error((data && data.error && data.error.message) || ('请求失败 HTTP ' + res.status));
           err.status = res.status;
+          err.code = data && data.error && data.error.code;
           err.hint = data && data.error && data.error.hint;
           err.data = data;
           throw err;
