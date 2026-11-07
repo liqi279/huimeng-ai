@@ -38,6 +38,11 @@ const RATIO_SIZE = {
   '4:3': [1024, 768],
   '9:16': [768, 1344],
   '16:9': [1344, 768],
+  '21:9': [1344, 576],
+  '2:3': [672, 1008],
+  '3:2': [1008, 672],
+  '4:5': [768, 960],
+  '5:4': [960, 768],
 };
 
 const FLUX_PRIMARY = 'https://image.pollinations.ai/prompt/';
@@ -136,9 +141,11 @@ function scaledImageSize(ratio, scale) {
 }
 
 function gptSize(ratio) {
-  if (ratio === '1:1') return '1024x1024';
-  if (ratio === '3:4' || ratio === '9:16') return '1024x1536';
-  return '1536x1024';
+  const base = RATIO_SIZE[ratio] || RATIO_SIZE['1:1'];
+  const aspect = base[0] / base[1];
+  if (aspect > 1.15) return '1536x1024';
+  if (aspect < 0.87) return '1024x1536';
+  return '1024x1024';
 }
 
 function videoSize(ratio, resolution) {
