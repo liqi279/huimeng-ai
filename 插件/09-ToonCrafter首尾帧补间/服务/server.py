@@ -40,7 +40,28 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder=None)
-CORS(app, resources={r"/api/*": {"origins": "*"}}, expose_headers=["Content-Disposition"])
+CORS(app, resources={r"/*": {"origins": "*"}}, expose_headers=["Content-Disposition"])
+
+
+@app.after_request
+def _cors_private_network(resp):
+    """允许 https 页面（如 GitHub Pages）访问本机 http 服务。
+
+    Chrome 的 Private Network Access 会先发预检，要求服务端显式声明
+    Access-Control-Allow-Private-Network，否则浏览器直接拦截请求。
+    """
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Private-Network"] = "true"
+    resp.headers["Access-Control-Max-Age"] = "86400"
+    return resp
+
+
+@app.route("/api/<path:_any>", methods=["OPTIONS"])
+def _preflight(_any):
+    return ("", 204)
+
 
 MODELS = {}
 MODEL_LOCK = threading.Lock()

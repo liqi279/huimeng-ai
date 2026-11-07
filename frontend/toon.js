@@ -127,9 +127,23 @@
       })
       .catch(function (err) {
         if (timer) window.clearTimeout(timer);
-        if (el) { el.textContent = '未连接（' + (err && err.name === 'AbortError' ? '超时' : '拒绝连接') + '）'; el.classList.remove('is-ok'); }
+        var timeout = err && err.name === 'AbortError';
+        var httpsPage = window.location.protocol === 'https:';
+        var reason = timeout ? '超时' : (httpsPage ? '被浏览器拦截 / 服务未启动' : '拒绝连接');
+        if (el) {
+          el.textContent = '未连接（' + reason + '）' + (httpsPage ? ' · 见下方提示' : '');
+          el.classList.remove('is-ok');
+        }
         setBadge(false, '服务未连接');
-        if (!silent) toast('无法连接推理服务，请确认已运行 server.py', 'error');
+        if (!silent) {
+          if (httpsPage) {
+            toast('线上 https 页面直连本机 http 服务常被拦截：请下载本地单文件版打开，或改用 HTTPS 推理服务', 'error');
+          } else if (timeout) {
+            toast('连接超时：确认 server.py 已启动且端口为 ' + base.split(':').pop(), 'error');
+          } else {
+            toast('无法连接推理服务：请先运行 server.py，并确认地址 ' + base, 'error');
+          }
+        }
       });
   }
 
