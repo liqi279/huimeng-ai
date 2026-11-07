@@ -668,6 +668,9 @@ module.exports = {
   init,
   state: currentState,
   isReady: () => state.mode === 'mysql',
+  /* 供其它数据层复用同一个连接池（作品/文档/资产表与账号同库） */
+  q,
+  databaseName,
   /* 账号 */
   listUsers,
   listPendingUsers,
