@@ -5128,10 +5128,10 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 
 /* 比例 / 档位 / 种子菜单 */
 .hm-ratio-menu {
-  width: 246px;
+  width: 312px;
   padding: 7px;
   display: none;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 4px;
 }
 
@@ -23256,11 +23256,16 @@ const MODEL_INDEX = GROUPS.flatMap(function (group) {
 
 /* ---------------- 比例 ---------------- */
 const RATIOS = [
+  { id: '16:9', w: 1344, h: 768 },
+  { id: '9:16', w: 768, h: 1344 },
+  { id: '21:9', w: 1344, h: 576 },
   { id: '1:1', w: 1024, h: 1024 },
+  { id: '2:3', w: 672, h: 1008 },
+  { id: '3:2', w: 1008, h: 672 },
   { id: '3:4', w: 768, h: 1024 },
   { id: '4:3', w: 1024, h: 768 },
-  { id: '9:16', w: 768, h: 1344 },
-  { id: '16:9', w: 1344, h: 768 }
+  { id: '4:5', w: 768, h: 960 },
+  { id: '5:4', w: 960, h: 768 }
 ];
 
 /* 清晰度档位：以 1024 基准为 1K，按倍率放大得到 2K / 4K */
