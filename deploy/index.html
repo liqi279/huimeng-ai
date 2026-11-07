@@ -3362,6 +3362,358 @@ body {
   background: rgba(56, 189, 248, 0.13);
 }
 
+/* ---------- 顶栏「时间筛选」面板 ---------- */
+.hm-time-menu {
+  width: 344px;
+  max-width: calc(100vw - 24px);
+  padding: 10px;
+  border-radius: 14px;
+  border-color: rgba(139, 92, 246, 0.38);
+  background: linear-gradient(180deg, rgba(26, 21, 48, 0.99), rgba(15, 12, 29, 0.99));
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.62), inset 0 0 0 1px rgba(167, 139, 250, 0.08);
+}
+
+.hm-tm-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1px 2px 6px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: #b7aee0;
+}
+
+.hm-tm-sec-head .hm-tm-hint {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #6f6790;
+}
+
+.hm-tm-quick {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.hm-tm-quick > button {
+  height: 31px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.045);
+  color: #c7c0e2;
+  font-size: 11.5px;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.hm-tm-quick > button:hover {
+  background: rgba(139, 92, 246, 0.18);
+  border-color: rgba(167, 139, 250, 0.32);
+  color: #fff;
+}
+
+.hm-tm-quick > button.is-active {
+  color: #fff;
+  border-color: rgba(167, 139, 250, 0.55);
+  background: linear-gradient(135deg, #7c5cff, #6d4df2);
+  box-shadow: 0 8px 18px rgba(109, 77, 242, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* 起止时间卡片 */
+.hm-tm-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.hm-tm-field {
+  padding: 7px 8px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(160deg, rgba(96, 78, 214, 0.55), rgba(52, 41, 132, 0.62));
+  cursor: pointer;
+  transition: box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.hm-tm-field[data-field="end"] {
+  background: linear-gradient(160deg, rgba(58, 52, 166, 0.6), rgba(36, 33, 104, 0.72));
+}
+
+.hm-tm-field.is-active {
+  border-color: rgba(196, 181, 253, 0.6);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.22), 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.hm-tm-field.is-invalid {
+  border-color: rgba(251, 113, 133, 0.7);
+  box-shadow: 0 0 0 2px rgba(251, 113, 133, 0.16);
+}
+
+.hm-tm-label {
+  display: block;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 6px;
+}
+
+.hm-tm-inputwrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 7px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hm-tm-inputwrap input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
+  outline: none;
+  color-scheme: dark;
+}
+
+.hm-tm-inputwrap input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.hm-tm-inputwrap input::-webkit-inner-spin-button,
+.hm-tm-inputwrap input::-webkit-clear-button {
+  display: none;
+}
+
+.hm-tm-calico {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.hm-tm-warn {
+  margin: 7px 2px 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fda4af;
+}
+
+/* 月历 */
+.hm-tm-cal {
+  margin-top: 9px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.hm-tm-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 1px 6px;
+}
+
+.hm-tm-cal-head strong {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #f1ecff;
+}
+
+.hm-tm-cal-head button {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #b9b1d8;
+  font-size: 10px;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.hm-tm-cal-head button:hover {
+  background: rgba(139, 92, 246, 0.24);
+  color: #fff;
+}
+
+.hm-tm-cal-week,
+.hm-tm-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.hm-tm-cal-week {
+  padding-bottom: 4px;
+}
+
+.hm-tm-cal-week span {
+  text-align: center;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #7e769c;
+}
+
+.hm-tm-cal-grid {
+  gap: 2px;
+}
+
+.hm-tm-day {
+  height: 29px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 550;
+  color: #ddd6f3;
+  background: transparent;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.hm-tm-day:hover {
+  background: rgba(139, 92, 246, 0.22);
+  color: #fff;
+}
+
+.hm-tm-day.is-out {
+  color: #5a5375;
+}
+
+.hm-tm-day.is-today {
+  box-shadow: inset 0 0 0 1px rgba(244, 114, 182, 0.55);
+}
+
+.hm-tm-day.in-range {
+  background: rgba(124, 92, 255, 0.16);
+  color: #e8e1ff;
+}
+
+.hm-tm-day.is-sel {
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #6d4df2);
+  box-shadow: 0 6px 14px rgba(109, 77, 242, 0.42);
+}
+
+/* 底部：排序 + 清除 / 确定 */
+.hm-tm-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.hm-tm-sort {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hm-tm-sort > span {
+  font-size: 9px;
+  color: #6f6790;
+  letter-spacing: 0.08em;
+}
+
+.hm-tm-sort button {
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  color: #948cb2;
+  font-size: 10px;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.hm-tm-sort button:hover {
+  color: #ddd6f3;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hm-tm-sort button.is-active {
+  color: #d8ccff;
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(167, 139, 250, 0.32);
+}
+
+.hm-tm-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hm-tm-clear,
+.hm-tm-ok {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.hm-tm-clear {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #b9b1d8;
+}
+
+.hm-tm-clear:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.hm-tm-ok {
+  color: #fff;
+  background: linear-gradient(135deg, #7c5cff, #6d4df2);
+  box-shadow: 0 8px 18px rgba(109, 77, 242, 0.34);
+}
+
+.hm-tm-ok:hover {
+  box-shadow: 0 10px 22px rgba(109, 77, 242, 0.48);
+}
+
+body.hm-light .hm-time-menu {
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+body.hm-light .hm-tm-sec-head { color: #334155; }
+body.hm-light .hm-tm-quick > button { color: #475569; background: rgba(15, 23, 42, 0.045); border-color: rgba(15, 23, 42, 0.08); }
+body.hm-light .hm-tm-quick > button.is-active { color: #fff; }
+body.hm-light .hm-tm-cal { background: rgba(15, 23, 42, 0.035); border-color: rgba(15, 23, 42, 0.08); }
+body.hm-light .hm-tm-cal-head strong { color: #1e293b; }
+body.hm-light .hm-tm-cal-head button { color: #475569; border-color: rgba(15, 23, 42, 0.12); }
+body.hm-light .hm-tm-cal-week span { color: #64748b; }
+body.hm-light .hm-tm-inputwrap { background: rgba(15, 23, 42, 0.05); border-color: rgba(15, 23, 42, 0.12); }
+body.hm-light .hm-tm-inputwrap input { color: #1e293b; color-scheme: light; }
+body.hm-light .hm-tm-calico { color: #64748b; }
+body.hm-light .hm-tm-label { color: rgba(255, 255, 255, 0.9); }
+body.hm-light .hm-tm-day { color: #334155; }
+body.hm-light .hm-tm-day.is-out { color: #94a3b8; }
+body.hm-light .hm-tm-foot { border-top-color: rgba(15, 23, 42, 0.08); }
+body.hm-light .hm-tm-clear { color: #475569; border-color: rgba(15, 23, 42, 0.12); }
+
 @keyframes hmMenuIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
@@ -17704,9 +18056,60 @@ body.dv-open .hm-page {
           <span id="worksSortText">时间筛选</span>
           <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <div class="hm-menu" id="worksSortMenu" aria-hidden="true">
-          <button data-sort="newest" class="is-active">最新优先</button>
-          <button data-sort="oldest">最早优先</button>
+        <div class="hm-menu hm-time-menu" id="worksSortMenu" aria-hidden="true">
+          <div class="hm-tm-sec">
+            <div class="hm-tm-sec-head"><span>时间范围</span><span class="hm-tm-hint">按作品创建时间筛选</span></div>
+            <div class="hm-tm-quick" id="tmQuick">
+              <button type="button" data-quick="all" class="is-active">全部</button>
+              <button type="button" data-quick="today">今日</button>
+              <button type="button" data-quick="yesterday">昨日</button>
+              <button type="button" data-quick="24h">近24H</button>
+              <button type="button" data-quick="7d">近 7 天</button>
+              <button type="button" data-quick="30d">近 30 天</button>
+              <button type="button" data-quick="month">本月</button>
+              <button type="button" data-quick="lastmonth">上月</button>
+              <button type="button" data-quick="quarter">本季</button>
+              <button type="button" data-quick="year">今年</button>
+              <button type="button" data-quick="custom">自定义</button>
+            </div>
+          </div>
+          <div class="hm-tm-range">
+            <div class="hm-tm-field is-active" data-field="start">
+              <span class="hm-tm-label">开始时间</span>
+              <span class="hm-tm-inputwrap">
+                <input type="datetime-local" id="tmStart" step="1" aria-label="开始时间">
+                <svg class="hm-tm-calico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+            </div>
+            <div class="hm-tm-field" data-field="end">
+              <span class="hm-tm-label">结束时间</span>
+              <span class="hm-tm-inputwrap">
+                <input type="datetime-local" id="tmEnd" step="1" aria-label="结束时间">
+                <svg class="hm-tm-calico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+            </div>
+          </div>
+          <p class="hm-tm-warn" id="tmWarn" hidden>起始时间不能晚于结束时间，本次筛选未应用</p>
+          <div class="hm-tm-cal">
+            <div class="hm-tm-cal-head">
+              <button type="button" id="tmPrev">上月</button>
+              <strong id="tmCalLabel">2026 年 11 月</strong>
+              <button type="button" id="tmNext">下月</button>
+            </div>
+            <div class="hm-tm-cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+            <div class="hm-tm-cal-grid" id="tmCalGrid"></div>
+          </div>
+          <div class="hm-tm-foot">
+            <div class="hm-tm-sort">
+              <span>排序</span>
+              <button type="button" data-sort="newest" class="is-active">最新优先</button>
+              <button type="button" data-sort="oldest">最早优先</button>
+            </div>
+            <div class="hm-tm-actions">
+              <button type="button" class="hm-tm-clear" id="tmClear">清除</button>
+              <button type="button" class="hm-tm-ok" id="tmApply">确定</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -23279,6 +23682,16 @@ function filteredWorks() {
   } else if (state.worksFilter === 'paid') {
     list = list.filter(function (w) { return (w.engine || 'flux') !== 'flux'; });
   }
+  /* 时间筛选：与筛选/排序叠加，不改变原有排序能力 */
+  const tr = tm.applied;
+  if (tr && (tr.start || tr.end)) {
+    list = list.filter(function (w) {
+      const t = Number(w.createdAt) || 0;
+      if (tr.start && t < tr.start) return false;
+      if (tr.end && t > tr.end) return false;
+      return true;
+    });
+  }
   list.sort(function (a, b) {
     const da = a.createdAt || 0;
     const db = b.createdAt || 0;
@@ -23286,6 +23699,338 @@ function filteredWorks() {
   });
   return list;
 }
+
+/* ================= 顶栏「时间筛选」面板 ================= */
+const TM_STORE_KEY = 'anidream.works.timerange.v1';
+const TM_QUICK_LABEL = {
+  all: '全部', today: '今日', yesterday: '昨日', '24h': '近24H',
+  '7d': '近 7 天', '30d': '近 30 天', month: '本月', lastmonth: '上月',
+  quarter: '本季', year: '今年', custom: '自定义'
+};
+
+const tm = {
+  applied: { quick: 'all', start: 0, end: 0 },
+  draft: { quick: 'all', start: 0, end: 0 },
+  month: new Date(),
+  field: 'start',
+  bound: false
+};
+
+function tmPad(n) { return (n < 10 ? '0' : '') + n; }
+
+function tmDayStart(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+}
+
+function tmDayEnd(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999).getTime();
+}
+
+function tmToInput(ms) {
+  if (!ms) return '';
+  const d = new Date(ms);
+  return d.getFullYear() + '-' + tmPad(d.getMonth() + 1) + '-' + tmPad(d.getDate()) +
+    'T' + tmPad(d.getHours()) + ':' + tmPad(d.getMinutes()) + ':' + tmPad(d.getSeconds());
+}
+
+function tmFromInput(value) {
+  const m = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return 0;
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)).getTime();
+}
+
+function tmQuickRange(key) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const mo = now.getMonth();
+  const d = now.getDate();
+  switch (key) {
+    case 'today':
+      return { start: tmDayStart(now), end: tmDayEnd(now) };
+    case 'yesterday': {
+      const t = new Date(y, mo, d - 1);
+      return { start: tmDayStart(t), end: tmDayEnd(t) };
+    }
+    case '24h':
+      return { start: now.getTime() - 24 * 3600 * 1000, end: now.getTime() };
+    case '7d':
+      return { start: now.getTime() - 7 * 24 * 3600 * 1000, end: now.getTime() };
+    case '30d':
+      return { start: now.getTime() - 30 * 24 * 3600 * 1000, end: now.getTime() };
+    case 'month':
+      return { start: tmDayStart(new Date(y, mo, 1)), end: tmDayEnd(new Date(y, mo + 1, 0)) };
+    case 'lastmonth':
+      return { start: tmDayStart(new Date(y, mo - 1, 1)), end: tmDayEnd(new Date(y, mo, 0)) };
+    case 'quarter': {
+      const q = Math.floor(mo / 3) * 3;
+      return { start: tmDayStart(new Date(y, q, 1)), end: tmDayEnd(new Date(y, q + 3, 0)) };
+    }
+    case 'year':
+      return { start: tmDayStart(new Date(y, 0, 1)), end: tmDayEnd(new Date(y, 11, 31)) };
+    default:
+      return { start: 0, end: 0 };
+  }
+}
+
+function tmText() {
+  const a = tm.applied;
+  if (!a.start && !a.end) return '时间筛选';
+  if (a.quick && a.quick !== 'custom' && TM_QUICK_LABEL[a.quick]) return TM_QUICK_LABEL[a.quick];
+  const year = new Date().getFullYear();
+  const fmt = function (ms) {
+    const d = new Date(ms);
+    return (d.getFullYear() === year ? '' : d.getFullYear() + '/') + (d.getMonth() + 1) + '/' + d.getDate();
+  };
+  if (a.start && a.end) return fmt(a.start) + ' - ' + fmt(a.end);
+  return fmt(a.start || a.end);
+}
+
+function tmSave() {
+  try { localStorage.setItem(TM_STORE_KEY, JSON.stringify(tm.applied)); } catch (e) {}
+}
+
+function tmLoad() {
+  try {
+    const raw = localStorage.getItem(TM_STORE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return;
+    tm.applied = {
+      quick: typeof data.quick === 'string' ? data.quick : 'custom',
+      start: Number(data.start) || 0,
+      end: Number(data.end) || 0
+    };
+    if (tm.applied.quick === 'all') { tm.applied.start = 0; tm.applied.end = 0; }
+    /* 相对区间（今日/近7天/本月…）在重新打开时按当前时间重新计算 */
+    if (tm.applied.quick && tm.applied.quick !== 'custom' && tm.applied.quick !== 'all') {
+      const r = tmQuickRange(tm.applied.quick);
+      tm.applied.start = r.start;
+      tm.applied.end = r.end;
+    }
+    tm.draft = { quick: tm.applied.quick, start: tm.applied.start, end: tm.applied.end };
+  } catch (e) {}
+}
+
+function tmSyncWarn() {
+  const bad = !!(tm.draft.start && tm.draft.end && tm.draft.start > tm.draft.end);
+  const warn = document.getElementById('tmWarn');
+  if (warn) warn.hidden = !bad;
+  const fStart = document.querySelector('.hm-tm-field[data-field="start"]');
+  const fEnd = document.querySelector('.hm-tm-field[data-field="end"]');
+  if (fStart) fStart.classList.toggle('is-invalid', bad);
+  if (fEnd) fEnd.classList.toggle('is-invalid', bad);
+  return !bad;
+}
+
+function tmSyncFieldState() {
+  document.querySelectorAll('.hm-tm-field').forEach(function (field) {
+    field.classList.toggle('is-active', field.dataset.field === tm.field);
+  });
+  tmRenderCal();
+}
+
+function tmRenderCal() {
+  const grid = document.getElementById('tmCalGrid');
+  const label = document.getElementById('tmCalLabel');
+  if (!grid) return;
+  const now = new Date();
+  const y = tm.month.getFullYear();
+  const m = tm.month.getMonth();
+  if (label) label.textContent = y + ' 年 ' + (m + 1) + ' 月';
+  const offset = new Date(y, m, 1).getDay();
+  const todayKey = tmDayStart(now);
+  const sKey = tmDayStart(new Date(tm.draft.start || tmDayStart(now)));
+  const eKey = tmDayStart(new Date(tm.draft.end || tmDayEnd(now)));
+  let html = '';
+  for (let i = 0; i < 42; i++) {
+    const dt = new Date(y, m, 1 - offset + i);
+    const key = tmDayStart(dt);
+    const cls = ['hm-tm-day'];
+    if (dt.getMonth() !== m) cls.push('is-out');
+    if (key === todayKey) cls.push('is-today');
+    if (sKey <= eKey && key >= sKey && key <= eKey) {
+      cls.push(key === sKey || key === eKey ? 'is-sel' : 'in-range');
+    }
+    html += '<button type="button" class="' + cls.join(' ') + '" data-ms="' + key + '">' + dt.getDate() + '</button>';
+  }
+  grid.innerHTML = html;
+}
+
+function tmSync() {
+  const now = new Date();
+  const showStart = tm.draft.start || tmDayStart(now);
+  const showEnd = tm.draft.end || tmDayEnd(now);
+  const inputStart = document.getElementById('tmStart');
+  const inputEnd = document.getElementById('tmEnd');
+  if (inputStart) inputStart.value = tmToInput(showStart);
+  if (inputEnd) inputEnd.value = tmToInput(showEnd);
+  document.querySelectorAll('#tmQuick [data-quick]').forEach(function (btn) {
+    btn.classList.toggle('is-active', btn.dataset.quick === tm.draft.quick);
+  });
+  document.querySelectorAll('#worksSortMenu [data-sort]').forEach(function (btn) {
+    btn.classList.toggle('is-active', btn.dataset.sort === state.worksSort);
+  });
+  document.querySelectorAll('.hm-tm-field').forEach(function (field) {
+    field.classList.toggle('is-active', field.dataset.field === tm.field);
+  });
+  if (els.worksSortText) els.worksSortText.textContent = tmText();
+  tmSyncWarn();
+  tmRenderCal();
+}
+
+function tmPickDay(ms) {
+  const day = new Date(ms);
+  const base = tm.field === 'end' ? tm.draft.end : tm.draft.start;
+  let h = 0, mi = 0, s = 0;
+  if (base) {
+    const b = new Date(base);
+    h = b.getHours(); mi = b.getMinutes(); s = b.getSeconds();
+  } else if (tm.field === 'end') {
+    h = 23; mi = 59; s = 59;
+  }
+  tm.draft[tm.field] = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, mi, s).getTime();
+  tm.draft.quick = 'custom';
+  tm.month = new Date(day.getFullYear(), day.getMonth(), 1);
+  if (tm.field === 'start') tm.field = 'end';
+  tmSync();
+}
+
+function tmApply() {
+  if (!tmSyncWarn()) return;   /* 起始晚于结束：红字提示，不应用 */
+  const d = tm.draft;
+  let start = d.start;
+  let end = d.end;
+  if (d.quick === 'all') { start = 0; end = 0; }
+  tm.applied = { quick: d.quick, start: start, end: end };
+  tmSave();
+  if (els.worksSortText) els.worksSortText.textContent = tmText();
+  renderWorks();
+  closeAllMenus();
+  switchView('works');
+  toast(start || end ? ('已筛选：' + tmText()) : '已显示全部时间', 'success');
+}
+
+function tmClear() {
+  tm.draft = { quick: 'all', start: 0, end: 0 };
+  tm.applied = { quick: 'all', start: 0, end: 0 };
+  tm.field = 'start';
+  tm.month = new Date();
+  tmSave();
+  if (els.worksSortText) els.worksSortText.textContent = '时间筛选';
+  renderWorks();
+  tmSync();
+  closeAllMenus();
+  toast('已清除时间筛选', 'info');
+}
+
+function tmBind() {
+  const menu = els.worksSortMenu;
+  if (!menu || tm.bound) return;
+  tm.bound = true;
+
+  const quick = document.getElementById('tmQuick');
+  if (quick) {
+    quick.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-quick]');
+      if (!btn) return;
+      const key = btn.dataset.quick;
+      tm.draft.quick = key;
+      if (key !== 'custom') {
+        const r = tmQuickRange(key);
+        tm.draft.start = r.start;
+        tm.draft.end = r.end;
+        const anchor = r.start || Date.now();
+        const ad = new Date(anchor);
+        tm.month = new Date(ad.getFullYear(), ad.getMonth(), 1);
+        tm.field = 'start';
+      }
+      tmSync();
+    });
+  }
+
+  const grid = document.getElementById('tmCalGrid');
+  if (grid) {
+    grid.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-ms]');
+      if (btn) tmPickDay(Number(btn.dataset.ms));
+    });
+  }
+
+  const prev = document.getElementById('tmPrev');
+  const next = document.getElementById('tmNext');
+  if (prev) prev.addEventListener('click', function () {
+    tm.month = new Date(tm.month.getFullYear(), tm.month.getMonth() - 1, 1);
+    tmRenderCal();
+  });
+  if (next) next.addEventListener('click', function () {
+    tm.month = new Date(tm.month.getFullYear(), tm.month.getMonth() + 1, 1);
+    tmRenderCal();
+  });
+
+  document.querySelectorAll('.hm-tm-field').forEach(function (field) {
+    field.addEventListener('click', function (event) {
+      tm.field = field.dataset.field;
+      tmSyncFieldState();
+      if (!event.target.closest('input')) {
+        const input = document.getElementById(tm.field === 'end' ? 'tmEnd' : 'tmStart');
+        if (input) { try { input.focus(); } catch (e) {} }
+      }
+    });
+  });
+
+  const bindInput = function (which, el) {
+    if (!el) return;
+    const handler = function () {
+      tm.draft[which] = tmFromInput(el.value);
+      tm.draft.quick = 'custom';
+      tm.field = which;
+      document.querySelectorAll('#tmQuick [data-quick]').forEach(function (btn) {
+        btn.classList.toggle('is-active', btn.dataset.quick === 'custom');
+      });
+      tmSyncFieldState();
+      tmSyncWarn();
+    };
+    el.addEventListener('change', handler);
+    el.addEventListener('blur', handler);
+  };
+  bindInput('start', document.getElementById('tmStart'));
+  bindInput('end', document.getElementById('tmEnd'));
+
+  const applyBtn = document.getElementById('tmApply');
+  const clearBtn = document.getElementById('tmClear');
+  if (applyBtn) applyBtn.addEventListener('click', tmApply);
+  if (clearBtn) clearBtn.addEventListener('click', tmClear);
+
+  /* 排序能力保留（原「最新优先 / 最早优先」） */
+  menu.addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-sort]');
+    if (!btn) return;
+    state.worksSort = btn.dataset.sort;
+    menu.querySelectorAll('[data-sort]').forEach(function (el) {
+      el.classList.toggle('is-active', el.dataset.sort === state.worksSort);
+    });
+    renderWorks();
+    closeAllMenus();
+    switchView('works');
+  });
+
+  /* 打开面板时把「已应用」同步进草稿（非全局监听，仅本按钮） */
+  if (els.worksSortBtn) {
+    els.worksSortBtn.addEventListener('click', function () {
+      tm.draft = { quick: tm.applied.quick, start: tm.applied.start, end: tm.applied.end };
+      const anchor = tm.draft.start || Date.now();
+      const ad = new Date(anchor);
+      tm.month = new Date(ad.getFullYear(), ad.getMonth(), 1);
+      tm.field = 'start';
+      tmSync();
+    });
+  }
+
+  tmSync();
+}
+
+tmLoad();
+
 
 /* 作品卡片按类型渲染图片 / 视频 / 音频 */
 function workMediaHtml(work) {
@@ -27145,19 +27890,8 @@ function bindEvents() {
     toast('已清空作品', 'info');
   });
 
-  if (els.worksSortMenu) {
-    els.worksSortMenu.addEventListener('click', function (event) {
-      const btn = event.target.closest('[data-sort]');
-      if (!btn) return;
-      state.worksSort = btn.dataset.sort;
-      els.worksSortMenu.querySelectorAll('[data-sort]').forEach(function (el) {
-        el.classList.toggle('is-active', el.dataset.sort === state.worksSort);
-      });
-      renderWorks();
-      closeAllMenus();
-      switchView('works');
-    });
-  }
+  /* 顶栏时间筛选面板：事件全部绑定在面板/按钮内部，不新增全局监听 */
+  tmBind();
 
   if (els.worksFilterMenu) {
     els.worksFilterMenu.addEventListener('click', function (event) {
