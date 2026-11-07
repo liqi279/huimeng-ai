@@ -26461,10 +26461,12 @@ function applyActualSize(job, w, h) {
   w = Math.round(Number(w) || 0);
   h = Math.round(Number(h) || 0);
   if (!w || !h || (w === job.width && h === job.height)) return;
+  if (!job.planWidth) job.planWidth = job.width;
+  if (!job.planHeight) job.planHeight = job.height;
   job.width = w;
   job.height = h;
   if (typeof toast === 'function') {
-    toast('接口仅支持固定尺寸，实际出图 ' + w + '×' + h + '（所选比例 ' + (job.ratioId || '') + '）', 'info');
+    toast('接口按固定尺寸返回 ' + w + '×' + h + '，将按所选尺寸校准', 'info');
   }
 }
 function gptQualityFor(job) {
@@ -26712,7 +26714,114 @@ function markJobDone(job, url, seed, elapsed) {
       '<div class="result-meta"><span>' + esc(job.modelName) + '</span><span>' + job.width + '×' + job.height + '</span><span>#' + esc(seed) + '</span><span>' + elapsed.toFixed(1) + 's</span></div>' +
     '</div>';
 
+  job.rawUrl = job.rawUrl || url;
   saveWork(job);
+  /* 出图后按目标像素异步校准：先显示返回图，完成后无缝替换 */
+  calibrateJobImage(job);
+}
+
+/* ---------------- 生成结果尺寸校准 ----------------
+ * 出图服务可能只按旧比例表返回近似尺寸；这里按 job.width/height 做 cover + 居中裁切，
+ * 保证展示与下载的图都是用户所选像素。原图地址保留在 job.rawUrl，失败时回退原图。 */
+var SIZECAL_MAX_DIFF = 0.02;
+
+function loadCalibrationImage(url, cors) {
+  return new Promise(function (resolve, reject) {
+    var img = new Image();
+    if (cors) img.crossOrigin = 'anonymous';
+    img.onload = function () { resolve(img); };
+    img.onerror = function () { reject(new Error('calibrate-image-load-failed')); };
+    img.src = url;
+  });
+}
+
+/* cover 缩放后居中裁出目标像素；canvas 被跨域污染时 toDataURL 会抛错，由调用方回退 */
+function drawCalibratedImage(img, targetW, targetH) {
+  var nw = img.naturalWidth || img.width;
+  var nh = img.naturalHeight || img.height;
+  if (!nw || !nh) return null;
+  var canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  var ctx = canvas.getContext('2d');
+  var scale = Math.max(targetW / nw, targetH / nh);
+  var dw = nw * scale;
+  var dh = nh * scale;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, (targetW - dw) / 2, (targetH - dh) / 2, dw, dh);
+  return canvas.toDataURL('image/jpeg', 0.95);
+}
+
+function commitCalibratedImage(job, dataUrl) {
+  if (!job.rawUrl) job.rawUrl = job.url;
+  job.url = dataUrl;
+  job.calibrated = true;
+  if (job.planWidth && job.planHeight) { job.width = job.planWidth; job.height = job.planHeight; }
+
+  var cardImg = document.querySelector('[data-job="' + job.id + '"] .result-media img');
+  if (cardImg) cardImg.src = dataUrl;
+  var cardMeta = document.querySelector('[data-job="' + job.id + '"] .result-meta span:nth-child(2)');
+  if (cardMeta) cardMeta.textContent = job.width + '\u00d7' + job.height;
+  var active = state.activeItem;
+  if (active && active.id === job.id) {
+    active.rawUrl = active.rawUrl || job.rawUrl;
+    active.url = dataUrl;
+    if (els.lbImage) els.lbImage.src = dataUrl;
+  }
+
+  var work = null;
+  for (var i = 0; i < state.works.length; i++) {
+    if (state.works[i].id === job.id) { work = state.works[i]; break; }
+  }
+  if (!work) return;
+  work.rawUrl = job.rawUrl;
+  work.url = dataUrl;
+  work.width = job.width;
+  work.height = job.height;
+  work.calibrated = true;
+  saveWorks();
+  renderWorks();
+  makeThumb(dataUrl).then(function (thumb) {
+    if (!thumb) return;
+    work.thumb = thumb;
+    saveWorks();
+    renderWorks();
+  });
+}
+
+async function calibrateJobImage(job) {
+  if (!job || job.calibrated) return;
+  if ((job.type || 'image') !== 'image' || !job.url) return;
+  var targetW = Math.round(Number(job.planWidth || job.width) || 0);
+  var targetH = Math.round(Number(job.planHeight || job.height) || 0);
+  if (!targetW || !targetH) return;
+
+  var src = job.url;
+  var img = null;
+  try { img = await loadCalibrationImage(src, false); } catch (e) { return; }
+  var nw = img.naturalWidth || 0;
+  var nh = img.naturalHeight || 0;
+  if (!nw || !nh) return;
+
+  var diff = Math.abs(nw / nh - targetW / targetH) / (targetW / targetH);
+  if (diff <= SIZECAL_MAX_DIFF && nw === targetW && nh === targetH) return;
+
+  var out = null;
+  try { out = drawCalibratedImage(img, targetW, targetH); } catch (e) { out = null; }
+  if (!out) {
+    /* 跨域取不到像素：改用匿名跨域再试一次，仍失败则保留原图 */
+    try {
+      var img2 = await loadCalibrationImage(src, true);
+      out = drawCalibratedImage(img2, targetW, targetH);
+    } catch (e2) { out = null; }
+  }
+  if (!out) {
+    console.warn('[size-calibrate] 未能校准尺寸（跨域且无 CORS），已保留原图', src);
+    toast('未能校准尺寸，已保留原图', 'info');
+    return;
+  }
+  commitCalibratedImage(job, out);
 }
 
 /* ---------------- 本地大图仓库（IndexedDB） ----------------
@@ -26819,6 +26928,7 @@ function saveWork(job) {
     id: job.id,
     type: type,
     url: job.url,
+    rawUrl: job.rawUrl || '',
     thumb: null,
     prompt: job.prompt,
     enPrompt: job.promptEn || '',
@@ -26853,7 +26963,7 @@ function saveWork(job) {
   // GPT-image 常返回 base64 内联图，直接存会超出 localStorage 容量，压缩后再落盘
   if (job.url.indexOf('data:') === 0) {
     compressDataUrl(job.url, 1280, 0.86).then(function (small) {
-      if (!small) return;
+      if (!small || work.calibrated) return;
       work.url = small;
       saveWorks();
       if (state.view === 'works') renderWorks();
@@ -26861,6 +26971,7 @@ function saveWork(job) {
   }
 
   makeThumb(job.url).then(function (thumb) {
+    if (work.calibrated) return;
     if (!thumb) return;
     work.thumb = thumb;
     saveWorks();
