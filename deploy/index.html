@@ -4867,10 +4867,10 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 
 /* 比例 / 档位 / 种子菜单 */
 .hm-ratio-menu {
-  width: 246px;
+  width: 300px;
   padding: 7px;
   display: none;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 4px;
 }
 
@@ -22284,11 +22284,16 @@ const MODEL_INDEX = GROUPS.flatMap(function (group) {
 
 /* ---------------- 比例 ---------------- */
 const RATIOS = [
+  { id: '16:9', w: 1344, h: 768 },
+  { id: '9:16', w: 768, h: 1344 },
+  { id: '21:9', w: 1344, h: 576 },
   { id: '1:1', w: 1024, h: 1024 },
+  { id: '2:3', w: 672, h: 1008 },
+  { id: '3:2', w: 1008, h: 672 },
   { id: '3:4', w: 768, h: 1024 },
   { id: '4:3', w: 1024, h: 768 },
-  { id: '9:16', w: 768, h: 1344 },
-  { id: '16:9', w: 1344, h: 768 }
+  { id: '4:5', w: 768, h: 960 },
+  { id: '5:4', w: 960, h: 768 }
 ];
 
 /* 清晰度档位：以 1024 基准为 1K，按倍率放大得到 2K / 4K */
@@ -24984,7 +24989,7 @@ function pickImage(data) {
 function gptSizeFor(job) {
   const ratio = job.ratioId || '1:1';
   if (ratio === '1:1') return '1024x1024';
-  if (ratio === '3:4' || ratio === '9:16') return '1024x1536';
+  if (ratio === '3:4' || ratio === '9:16' || ratio === '2:3' || ratio === '4:5') return '1024x1536';
   return '1536x1024';
 }
 
@@ -57087,6 +57092,17 @@ window.HMChat = (function () {
     renderPanel();
   }
   /* 空名校验：不创建、不写入、不关闭编辑器；给出可见提示并保留焦点 */
+  /* 统一文件夹命名校验：空、纯空白、默认占位名都视为未命名 → 一律不创建 */
+  var FOLDER_PLACEHOLDER_NAMES = ['新建文件夹', '未命名文件夹', '新建folder', 'newfolder', 'untitledfolder', 'untitled', '无标题文件夹'];
+  function isBlankFolderName(name) {
+    var n = name == null ? '' : String(name).trim();
+    if (!n) return true;
+    var key = n.toLowerCase().replace(/[\s_\-·()（）]+/g, '');
+    if (FOLDER_PLACEHOLDER_NAMES.indexOf(key) >= 0) return true;
+    if (/^文件夹(\d+)?$/.test(key)) return true;               /* 「文件夹 (3)」等自动兜底名 */
+    if (/^(新建|未命名)(文件夹|folder)(\d+)?$/.test(key)) return true;
+    return false;
+  }
   function rejectEmptyInline(name) {
     var inline = view.inline;
     if (!inline) return;
@@ -57100,14 +57116,23 @@ window.HMChat = (function () {
       try { ip.select(); } catch (e) {}
     }
   }
-  function commitInline(value, el) {
+  function commitInline(value, el, fromBlur) {
     var inline = view.inline;
     if (!inline) { renderPanel(); return; }
     var raw = value == null ? '' : String(value);
-    var trimmed = raw.trim();
-    if (!trimmed) { rejectEmptyInline(raw); return; }  /* 空名/纯空格/取消：绝不创建 */
+    if (isBlankFolderName(raw)) {
+      if (fromBlur) {
+        /* 失焦视为取消：不创建，只给提示 */
+        view.inline = null;
+        renderPanel();
+        A.toast('请输入文件夹名称', 'info');
+        return;
+      }
+      rejectEmptyInline(raw);  /* 空名/纯空格/默认占位名：绝不创建，保留输入态 */
+      return;
+    }
     view.inline = null;
-    value = trimmed;
+    value = raw.trim();
     if (inline.isNew) {
       /* 同级去重 */
       var parentId = inline.parentId || null;
@@ -57145,7 +57170,7 @@ window.HMChat = (function () {
     /* 不再预填默认名：名称为空/纯空格/取消都不创建 */
     askName(parentName ? '在「' + parentName + '」下新建子文件夹' : '新建文件夹', '', function (value) {
       var name = (value || '').trim();
-      if (!name) return;
+      if (isBlankFolderName(name)) return;
       var folder = { id: 'f' + A.uid(), name: name, parentId: parentId || null, createdAt: Date.now() };
       desk.folders.unshift(folder);
       /* 自动展开父节点，让新子文件夹可见 */
@@ -57979,9 +58004,9 @@ window.HMChat = (function () {
   function mergeItemsIntoFolder(ids, folderId, create) {
     var folder = folderId ? desk.folders.find(function (f) { return f.id === folderId; }) : null;
     if (!folder && create) {
-      var count = ids.length;
-      folder = { id: 'f' + A.uid(), name: '文件夹 (' + count + ')', createdAt: Date.now(), parentId: null };
-      desk.folders.unshift(folder);
+      /* 不再静默创建「文件夹 (N)」这类默认名；要求先命名再拖入 */
+      A.toast('请先用「新建文件夹」创建并命名文件夹，再把作品拖进去', 'info');
+      return null;
     }
     if (!folder) return null;
     ids.forEach(function (id) {
@@ -58366,7 +58391,7 @@ window.HMChat = (function () {
     var input = byId('renameInput');
     var hint = byId('renameHint');
     var value = input ? input.value.trim() : '';
-    if (!value) {
+    if (isBlankFolderName(value)) {
       /* 空名/纯空格：不提交、不创建；提示并把焦点留在输入框 */
       if (hint) hint.hidden = false;
       if (input) {
@@ -58559,7 +58584,7 @@ window.HMChat = (function () {
         if (!ip) return;
         /* 点击 cancel 按钮 → cancelInline 会先执行 */
         setTimeout(function () {
-          if (view.inline && document.activeElement !== ip) commitInline(ip.value, ip);
+          if (view.inline && document.activeElement !== ip) commitInline(ip.value, ip, true);
         }, 150);
       }, true);  /* 捕获阶段 */
 
