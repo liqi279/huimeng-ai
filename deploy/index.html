@@ -18180,6 +18180,158 @@ body.dv-open .hm-page {
 <script>window.HM_BUILD = "20261107121734-84655f9";</script>
 </head>
 <body data-view="create">
+<script>
+/* ============================================================
+ * 绘梦 · 登录态持久化层（HMAuth）
+ * ------------------------------------------------------------
+ * 「刷新后保持登录」依赖三件事：
+ *   1) token 真正写进了本地存储（配额满时写入会静默失败）
+ *   2) 页面启动时不被 5xx / 超时 / 断网误判成「登录失效」
+ *   3) hm.user 缓存缺失时仍能从 token payload 还原登录态
+ * 这里把这三件事集中处理，页面只调 HMAuth.getToken / setToken / classify。
+ * ============================================================ */
+(function () {
+  'use strict';
+  if (window.HMAuth) return;
+
+  var TOKEN_KEY = 'hm.token';
+  var TOKEN_BAK = 'hm.token.bak';
+
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function ssGet(k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function ssSet(k, v) { try { sessionStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function ssDel(k) { try { sessionStorage.removeItem(k); } catch (e) {} }
+
+  /* 只清理「可重建」的缓存来腾配额：旧作品快照与离线队列。
+     绝不碰 hm.token / hm.user / anidream.works.v1 / anidream.rev.v1 */
+  function trimStorage() {
+    var removed = 0;
+    try {
+      var snaps = [];
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('.snap.') > 0) snaps.push(k);
+      }
+      snaps.sort();
+      /* 只留最新 1 份（正常上限是 3 份），配额紧张时优先回收 */
+      while (snaps.length > 1) { localStorage.removeItem(snaps.shift()); removed += 1; }
+      if (localStorage.getItem('anidream.queue.v1')) {
+        localStorage.removeItem('anidream.queue.v1');
+        removed += 1;
+      }
+    } catch (e) {}
+    if (removed) console.warn('[HMAuth] 配额紧张，已清理 ' + removed + ' 项可重建缓存');
+    return removed;
+  }
+
+  function readToken() {
+    var t = lsGet(TOKEN_KEY);
+    if (t) return t;
+    /* 主键丢了但本标签页还有 → 回填主键（刷新后仍然登录） */
+    t = ssGet(TOKEN_KEY);
+    if (t) { lsSet(TOKEN_KEY, t); return t; }
+    /* 主键被误删但备份还在 → 回填 */
+    t = lsGet(TOKEN_BAK);
+    if (t) { lsSet(TOKEN_KEY, t); ssSet(TOKEN_KEY, t); return t; }
+    return '';
+  }
+
+  function writeToken(token) {
+    token = token ? String(token) : '';
+    if (!token) {
+      lsDel(TOKEN_KEY); lsDel(TOKEN_BAK); ssDel(TOKEN_KEY);
+      return true;
+    }
+    var ok = lsSet(TOKEN_KEY, token);
+    if (!ok) {
+      /* 配额满：回收可重建缓存后重试一次 */
+      trimStorage();
+      ok = lsSet(TOKEN_KEY, token);
+    }
+    if (!ok) {
+      /* 仍然写不进：降级到 sessionStorage（同标签页刷新依旧保持登录） */
+      ssSet(TOKEN_KEY, token);
+      console.warn('[HMAuth] localStorage 写入失败（可能配额已满），token 已降级存到 sessionStorage；建议清理本地缓存');
+    } else {
+      /* 主键成功时同步留一份备份，主键被外部清理时可回填 */
+      if (!lsSet(TOKEN_BAK, token)) ssSet(TOKEN_KEY, token);
+    }
+    /* 回读校验：写进去读不出来等于没登录，必须显式告警而不是静默 */
+    var back = ok ? lsGet(TOKEN_KEY) : ssGet(TOKEN_KEY);
+    if (back !== token) {
+      console.warn('[HMAuth] token 回读校验失败，本次刷新可能需要重新登录');
+      return false;
+    }
+    return true;
+  }
+
+  function b64url(str) {
+    var s = String(str || '').replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return s;
+  }
+  function utf8(bin) {
+    try {
+      if (typeof TextDecoder !== 'undefined') {
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+    } catch (e) {}
+    try { return decodeURIComponent(escape(bin)); } catch (e) { return bin; }
+  }
+  /* 解析 token payload（无 exp，因此只用于「还原用户是谁」，是否失效只看服务端 401） */
+  function decodeToken(token) {
+    var parts = String(token || '').split('.');
+    if (parts.length !== 3) return null;
+    var json = '';
+    try { json = utf8(atob(b64url(parts[1]))); } catch (e) { return null; }
+    var p = null;
+    try { p = JSON.parse(json); } catch (e) { return null; }
+    if (!p || !p.uid) return null;
+    return {
+      id: String(p.uid),
+      username: p.username || ('guest_' + String(p.uid).slice(-6)),
+      role: p.role || 'user',
+      status: p.status || 'approved'
+    };
+  }
+
+  /* 'auth' = 服务端明确否定凭证（只有这种才允许清 token / 登出）
+     'network' = 5xx / 超时 / 断网，必须保留 token，稍后重试
+     'other' = 其余业务错误，同样不动登录态 */
+  function classify(err) {
+    if (!err) return 'other';
+    var status = Number(err.status || err.statusCode || 0);
+    var raw = String(err.message || err.code || '');
+    var msg = raw.toLowerCase();
+    if (status === 401 || status === 403) return 'auth';
+    if (status >= 500 || err.offline || err.timeout || err.name === 'AbortError') return 'network';
+    if (msg.indexOf('timeout') >= 0 || msg.indexOf('超时') >= 0 ||
+        msg.indexOf('failed to fetch') >= 0 || msg.indexOf('network') >= 0 ||
+        msg.indexOf('offline') >= 0 || msg.indexOf('网络') >= 0 ||
+        msg.indexOf('无法连接') >= 0 || msg.indexOf('abort') >= 0) return 'network';
+    /* 无状态码时只认「明确说凭证无效」的措辞；
+       不能宽泛匹配 'token'，否则 500 文案里带 token 会把用户踢下线 */
+    if (msg.indexOf('未登录') >= 0 || msg.indexOf('登录已过期') >= 0 ||
+        msg.indexOf('unauthorized') >= 0 ||
+        (msg.indexOf('token') >= 0 && (msg.indexOf('invalid') >= 0 || msg.indexOf('expired') >= 0))) {
+      return 'auth';
+    }
+    return 'other';
+  }
+
+  window.HMAuth = {
+    getToken: readToken,
+    setToken: writeToken,
+    decodeToken: decodeToken,
+    classify: classify,
+    trimStorage: trimStorage
+  };
+})();
+</script>
   <script>
   /* 首帧前校准：在页面任何内容绘制前，把用户上次保存的视图与侧栏状态
      应用到 body，避免 JS 初始化后再切换造成的刷新闪帧 */
@@ -22505,9 +22657,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
 
   function authToken() {
+    /* 读取顺序 hm.token → sessionStorage → hm.token.bak（读到即回填主键）。
+       配额满导致主键没写进去时，刷新后仍能拿到 token，不会弹登录。 */
+    if (window.HMAuth && window.HMAuth.getToken) return window.HMAuth.getToken();
     try { return localStorage.getItem('hm.token') || ''; } catch (e) { return ''; }
   }
   function setAuthToken(token) {
+    /* 写入失败不再静默：先回收可重建缓存重试，再降级 sessionStorage，并回读校验。 */
+    if (window.HMAuth && window.HMAuth.setToken) { window.HMAuth.setToken(token); return; }
     try {
       if (token) localStorage.setItem('hm.token', token);
       else localStorage.removeItem('hm.token');
@@ -28997,29 +29154,29 @@ function bindEvents() {
 /* ---------------- 启动 ---------------- */
 /* ---------------- 认证引导 ---------------- */
 function classifyAuthErr(err) {
-  /* 返回 'auth' | 'network' | 'other' */
+  /* 返回 'auth' | 'network' | 'other'
+     只有服务端明确否定凭证（401/403）才是 'auth'；
+     5xx / 超时 / 断网 / 结构异常一律 'network'，保留 token 稍后重试。
+     旧实现用 msg.indexOf('token') 宽泛匹配，500 文案里带 token 就会把用户踢下线。 */
+  if (window.HMAuth && window.HMAuth.classify) return window.HMAuth.classify(err);
   if (!err) return 'other';
-  var msg = String(err.message || err || '').toLowerCase();
-  var status = err.status || err.statusCode;
-  if (status === 401 || status === 403 ||
-      msg.indexOf('unauthorized') >= 0 || msg.indexOf('forbidden') >= 0 ||
-      msg.indexOf('token') >= 0 || msg.indexOf('expired') >= 0) {
-    return 'auth';
-  }
-  if (msg.indexOf('fetch') >= 0 || msg.indexOf('network') >= 0 ||
-      msg.indexOf('abort') >= 0 || msg.indexOf('timeout') >= 0 ||
-      msg.indexOf('failed to fetch') >= 0 ||
-      status === 502 || status === 503 || status === 504) {
-    return 'network';
-  }
+  var status = Number(err.status || err.statusCode || 0);
+  if (status === 401 || status === 403) return 'auth';
+  if (status >= 500 || err.offline) return 'network';
   return 'other';
 }
 
 async function authBoot() {
   var token = (api && api.getToken) ? api.getToken() : '';
+  /* token payload 兜底：hm.user 因配额没写进去时，也能还原「我是谁」，
+     避免刷新后已登录却被当成未登录弹登录框。token 无 exp，失效与否只由服务端 401 判定。 */
+  var tokenUser = (token && window.HMAuth && window.HMAuth.decodeToken)
+    ? window.HMAuth.decodeToken(token)
+    : null;
   console.log('[authBoot] token:', token ? '存在 (' + token.length + ' chars)' : '不存在！');
 
-  if (!token) {
+  /* 只有「没有 token 且解析不出用户」才算未登录；否则先按已登录渲染 */
+  if (!token && !tokenUser) {
     window.HMApp = window.HMApp || {};
     window.HMApp.user = null;
     hideLogin();
@@ -29029,6 +29186,10 @@ async function authBoot() {
 
   /* ========== Step 1: 同步渲染缓存桌面（零闪烁） ========== */
   var cachedUser = loadJSON('hm.user', null);
+  if (!cachedUser && tokenUser) {
+    cachedUser = tokenUser;
+    try { saveJSON('hm.user', cachedUser); } catch (e) {}
+  }
   var cachedKey = cachedUser && cachedUser.id ? worksLsKey(cachedUser.id) : LS_WORKS;
   var cachedBakKey = cachedUser && cachedUser.id ? worksBakLsKey(cachedUser.id) : LS_WORKS_BAK;
   var cachedWorks = loadJSON(cachedKey, null);
@@ -29144,10 +29305,20 @@ async function authBoot() {
         showLogin();
         return;
       }
-      /* ========== 401/403 ==========
-         即使后端返回 401（比如 Render 重启用户数据被清），
-         也不要自动 logout —— 保留缓存桌面，让用户手动重新登录。
-         这样刷新不会闪登录页，不会丢视觉状态。 */
+      /* ========== 明确的 401：唯一的自动登出路径 ==========
+         401 只可能来自「签名不符 / token 缺失或无效」（token 无 exp，
+         Render 重启不会让签名失效）。此时清 token 并提示重新登录；
+         作品按 userId 存在本地，重新登录同一账号即可恢复，不会丢数据。 */
+      if (err && err.status === 401) {
+        console.warn('[authBoot] me() 返回 401，token 已失效，清理登录态（本地作品保留）');
+        toast('登录状态已失效，请重新登录（本地作品已保留）', 'warn', 8000);
+        window.HMApp.user = null;
+        try { api.logout(); } catch (e) {}
+        showLogin();
+        return;
+      }
+
+      /* 其余 403（非审批）：保留缓存桌面，让用户手动重新登录 */
       console.warn('[authBoot] me() 返回 auth 错误，但不清缓存，保持桌面');
       if (!cachedUser) {
         /* 真的没任何缓存 → 只能弹登录。
@@ -65781,6 +65952,157 @@ window.HMChat = (function () {
  *   6. 离线队列：断网时进队列，恢复网络/下次启动重放
  * localStorage / IndexedDB 降级为本地缓存。
  * ============================================================ */
+/* ============================================================
+ * 绘梦 · 登录态持久化层（HMAuth）
+ * ------------------------------------------------------------
+ * 「刷新后保持登录」依赖三件事：
+ *   1) token 真正写进了本地存储（配额满时写入会静默失败）
+ *   2) 页面启动时不被 5xx / 超时 / 断网误判成「登录失效」
+ *   3) hm.user 缓存缺失时仍能从 token payload 还原登录态
+ * 这里把这三件事集中处理，页面只调 HMAuth.getToken / setToken / classify。
+ * ============================================================ */
+(function () {
+  'use strict';
+  if (window.HMAuth) return;
+
+  var TOKEN_KEY = 'hm.token';
+  var TOKEN_BAK = 'hm.token.bak';
+
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function ssGet(k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function ssSet(k, v) { try { sessionStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function ssDel(k) { try { sessionStorage.removeItem(k); } catch (e) {} }
+
+  /* 只清理「可重建」的缓存来腾配额：旧作品快照与离线队列。
+     绝不碰 hm.token / hm.user / anidream.works.v1 / anidream.rev.v1 */
+  function trimStorage() {
+    var removed = 0;
+    try {
+      var snaps = [];
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('.snap.') > 0) snaps.push(k);
+      }
+      snaps.sort();
+      /* 只留最新 1 份（正常上限是 3 份），配额紧张时优先回收 */
+      while (snaps.length > 1) { localStorage.removeItem(snaps.shift()); removed += 1; }
+      if (localStorage.getItem('anidream.queue.v1')) {
+        localStorage.removeItem('anidream.queue.v1');
+        removed += 1;
+      }
+    } catch (e) {}
+    if (removed) console.warn('[HMAuth] 配额紧张，已清理 ' + removed + ' 项可重建缓存');
+    return removed;
+  }
+
+  function readToken() {
+    var t = lsGet(TOKEN_KEY);
+    if (t) return t;
+    /* 主键丢了但本标签页还有 → 回填主键（刷新后仍然登录） */
+    t = ssGet(TOKEN_KEY);
+    if (t) { lsSet(TOKEN_KEY, t); return t; }
+    /* 主键被误删但备份还在 → 回填 */
+    t = lsGet(TOKEN_BAK);
+    if (t) { lsSet(TOKEN_KEY, t); ssSet(TOKEN_KEY, t); return t; }
+    return '';
+  }
+
+  function writeToken(token) {
+    token = token ? String(token) : '';
+    if (!token) {
+      lsDel(TOKEN_KEY); lsDel(TOKEN_BAK); ssDel(TOKEN_KEY);
+      return true;
+    }
+    var ok = lsSet(TOKEN_KEY, token);
+    if (!ok) {
+      /* 配额满：回收可重建缓存后重试一次 */
+      trimStorage();
+      ok = lsSet(TOKEN_KEY, token);
+    }
+    if (!ok) {
+      /* 仍然写不进：降级到 sessionStorage（同标签页刷新依旧保持登录） */
+      ssSet(TOKEN_KEY, token);
+      console.warn('[HMAuth] localStorage 写入失败（可能配额已满），token 已降级存到 sessionStorage；建议清理本地缓存');
+    } else {
+      /* 主键成功时同步留一份备份，主键被外部清理时可回填 */
+      if (!lsSet(TOKEN_BAK, token)) ssSet(TOKEN_KEY, token);
+    }
+    /* 回读校验：写进去读不出来等于没登录，必须显式告警而不是静默 */
+    var back = ok ? lsGet(TOKEN_KEY) : ssGet(TOKEN_KEY);
+    if (back !== token) {
+      console.warn('[HMAuth] token 回读校验失败，本次刷新可能需要重新登录');
+      return false;
+    }
+    return true;
+  }
+
+  function b64url(str) {
+    var s = String(str || '').replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return s;
+  }
+  function utf8(bin) {
+    try {
+      if (typeof TextDecoder !== 'undefined') {
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+    } catch (e) {}
+    try { return decodeURIComponent(escape(bin)); } catch (e) { return bin; }
+  }
+  /* 解析 token payload（无 exp，因此只用于「还原用户是谁」，是否失效只看服务端 401） */
+  function decodeToken(token) {
+    var parts = String(token || '').split('.');
+    if (parts.length !== 3) return null;
+    var json = '';
+    try { json = utf8(atob(b64url(parts[1]))); } catch (e) { return null; }
+    var p = null;
+    try { p = JSON.parse(json); } catch (e) { return null; }
+    if (!p || !p.uid) return null;
+    return {
+      id: String(p.uid),
+      username: p.username || ('guest_' + String(p.uid).slice(-6)),
+      role: p.role || 'user',
+      status: p.status || 'approved'
+    };
+  }
+
+  /* 'auth' = 服务端明确否定凭证（只有这种才允许清 token / 登出）
+     'network' = 5xx / 超时 / 断网，必须保留 token，稍后重试
+     'other' = 其余业务错误，同样不动登录态 */
+  function classify(err) {
+    if (!err) return 'other';
+    var status = Number(err.status || err.statusCode || 0);
+    var raw = String(err.message || err.code || '');
+    var msg = raw.toLowerCase();
+    if (status === 401 || status === 403) return 'auth';
+    if (status >= 500 || err.offline || err.timeout || err.name === 'AbortError') return 'network';
+    if (msg.indexOf('timeout') >= 0 || msg.indexOf('超时') >= 0 ||
+        msg.indexOf('failed to fetch') >= 0 || msg.indexOf('network') >= 0 ||
+        msg.indexOf('offline') >= 0 || msg.indexOf('网络') >= 0 ||
+        msg.indexOf('无法连接') >= 0 || msg.indexOf('abort') >= 0) return 'network';
+    /* 无状态码时只认「明确说凭证无效」的措辞；
+       不能宽泛匹配 'token'，否则 500 文案里带 token 会把用户踢下线 */
+    if (msg.indexOf('未登录') >= 0 || msg.indexOf('登录已过期') >= 0 ||
+        msg.indexOf('unauthorized') >= 0 ||
+        (msg.indexOf('token') >= 0 && (msg.indexOf('invalid') >= 0 || msg.indexOf('expired') >= 0))) {
+      return 'auth';
+    }
+    return 'other';
+  }
+
+  window.HMAuth = {
+    getToken: readToken,
+    setToken: writeToken,
+    decodeToken: decodeToken,
+    classify: classify,
+    trimStorage: trimStorage
+  };
+})();
+
 (function () {
   'use strict';
 
@@ -65896,18 +66218,36 @@ window.HMChat = (function () {
     }
   }
 
-  /* 覆盖写之前调用：把「磁盘上现有的」作品列表备份成 .snap.<时间戳> */
+  /* 覆盖写之前调用：把「磁盘上现有的」作品列表备份成 .snap.<时间戳>
+     注意：快照本身也占 localStorage 配额，写太勤会把 hm.token 挤掉，
+     导致「刷新后要重新登录」。因此自动快照必须节流 + 限体积。 */
+  var SNAP_MIN_INTERVAL = 60000;              /* 自动快照最快 1 分钟一次 */
+  var SNAP_MAX_BYTES = 512 * 1024;            /* 单份快照上限 512KB */
+  var lastSnapAt = 0;
+
   function snapshotWorks(reason) {
     var u = uid();
     if (!u) return null;
+    var force = reason === 'recover';
+    if (!force && Date.now() - lastSnapAt < SNAP_MIN_INTERVAL) return null;
     var key = userWorkKey(u);
     var raw = null;
     try { raw = localStorage.getItem(key); } catch (e) {}
     if (!raw || raw.length < 3 || raw === '[]') return null;
+    if (!force && raw.length > SNAP_MAX_BYTES) {
+      console.warn('[HMSync] 作品列表过大（' + Math.round(raw.length / 1024) + 'KB），跳过自动快照以免挤占登录态');
+      return null;
+    }
     var snapKey = key + '.snap.' + Date.now();
-    try { localStorage.setItem(snapKey, raw); } catch (e) { return null; }
+    try { localStorage.setItem(snapKey, raw); }
+    catch (e) {
+      /* 配额满：先回收旧快照/离线队列再重试一次 */
+      if (window.HMAuth && window.HMAuth.trimStorage) window.HMAuth.trimStorage();
+      try { localStorage.setItem(snapKey, raw); } catch (e2) { return null; }
+    }
+    lastSnapAt = Date.now();
     pruneSnapshots(u);
-    if (reason === 'recover') console.log('[HMSync] 恢复前已快照', snapKey);
+    if (force) console.log('[HMSync] 恢复前已快照', snapKey);
     return snapKey;
   }
 
