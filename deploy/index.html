@@ -26175,6 +26175,10 @@ async function runBackendImage(job, prompt) {
     engine: job.engine,
     prompt: prompt,
     ratio: job.ratioId,
+    /* 数值比例（4 位小数），供只认 aspect 数值的接口计算尺寸：
+       21:9=2.3333、2:3=0.6667、3:2=1.5、4:5=0.8、5:4=1.25 */
+    aspect: aspectValue(job),
+    aspect_ratio: aspectValue(job),
     scale: job.scaleId,
     /* 显式像素尺寸：避免后端按自有比例表把新比例回落到默认尺寸 */
     width: job.width,
@@ -26445,6 +26449,13 @@ function gptSizeFor(job) {
   return best.size;
 }
 
+/* 比例数值：取实际像素宽/高，保留 4 位小数 */
+function aspectValue(job) {
+  const w = Number(job.width) || 0;
+  const h = Number(job.height) || 0;
+  if (!w || !h) return 1;
+  return Number((w / h).toFixed(4));
+}
 /* 实际出图尺寸与所选比例不一致时：回写卡片尺寸并提示用户 */
 function applyActualSize(job, w, h) {
   w = Math.round(Number(w) || 0);
