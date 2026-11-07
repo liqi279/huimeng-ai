@@ -16624,9 +16624,17 @@ body.dv-open .hm-page {
 }
 
 .hm-rail-top {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.hm-rail-top::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .hm-rail-cutline {
@@ -16707,9 +16715,6 @@ body.dv-open .hm-page {
 }
 .hm-rail.is-expanded .hm-rail-cutline-icon {
   transform: rotate(180deg);
-}
-.hm-rail .hm-rail-item.is-cut {
-  display: none;
 }
 
 /* 侧栏文件夹指针拖拽时跟随鼠标的 ghost */
@@ -51629,30 +51634,12 @@ window.HMChat = (function () {
     var railTop = rail ? rail.querySelector('.hm-rail-top') : null;
     if (!rail || !cut || !railTop) return;
 
-    var items = Array.prototype.slice.call(railTop.querySelectorAll('.hm-rail-item'));
-    if (!items.length) return;
-    items.forEach(function (el) { el.classList.remove('is-cut'); });
-
     if (rail.classList.contains('is-expanded')) {
       rail.classList.remove('has-cut');
       return;
     }
 
-    var available = cut.getBoundingClientRect().top - railTop.getBoundingClientRect().top;
-    if (available <= 0) return;
-
-    var gap = parseFloat(window.getComputedStyle(railTop).rowGap) || 0;
-    var used = 0;
-    var overflowed = false;
-    items.forEach(function (el, i) {
-      var h = el.getBoundingClientRect().height + (i ? gap : 0);
-      if (!overflowed && used + h <= available + 1) {
-        used += h;
-      } else {
-        overflowed = true;
-        el.classList.add('is-cut');
-      }
-    });
+    var overflowed = railTop.scrollHeight - railTop.clientHeight > 1;
     rail.classList.toggle('has-cut', overflowed);
     cut.setAttribute('aria-expanded', 'false');
   }
