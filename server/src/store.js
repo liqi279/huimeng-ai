@@ -5,6 +5,8 @@ const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
 const config = require('./config');
+const { jsonError } = require('./http');
+const userStore = require('./user-store-mysql');
 
 const WORK_CAP = 200;
 const ASSET_CAP = 200;
@@ -121,20 +123,25 @@ async function findUserById(id) {
   const list = await listUsers();
   return list.find((u) => u && u.id === id) || null;
 }
-function createUser({ username, password, role }) {
+function createUser({ username, password, role, status, email, note }) {
   return enqueue(async () => {
     const list = await listUsers();
     if (list.some((u) => u && u.username === username)) {
       return { ok: false, error: '用户名已存在' };
     }
     const { salt, hash } = hashPassword(password);
+    const finalStatus = normalizeStatus(status);
     const user = {
       id: 'u_' + crypto.randomBytes(8).toString('hex'),
       username: String(username).trim(),
+      email: email ? String(email).trim().slice(0, 190) : null,
       salt,
       hash,
       role: role === 'admin' ? 'admin' : 'user',
+      status: finalStatus,
+      note: note || '',
       createdAt: Date.now(),
+      approvedAt: finalStatus === 'approved' ? Date.now() : null,
     };
     list.push(user);
     await writeJson(usersFile, list);
@@ -159,7 +166,10 @@ function reviveUser(uid, username, role) {
         salt: crypto.randomBytes(16).toString('hex'),
         hash: '', /* 占位，revive 出来的用户下次登录时由 register/login 覆盖 */
         role: role === 'admin' ? 'admin' : 'user',
+        status: 'approved',
+        note: 'token 自动重建',
         createdAt: Date.now(),
+        approvedAt: Date.now(),
       };
       list.push(user);
       await writeJson(usersFile, list);
@@ -170,9 +180,21 @@ function reviveUser(uid, username, role) {
     return sanitizeUser(user);
   });
 }
+function normalizeStatus(value) {
+  return value === 'pending' || value === 'rejected' ? value : 'approved';
+}
 function sanitizeUser(u) {
   if (!u) return null;
-  return { id: u.id, username: u.username, role: u.role, createdAt: u.createdAt };
+  return {
+    id: u.id,
+    username: u.username,
+    email: u.email || null,
+    role: u.role === 'admin' ? 'admin' : 'user',
+    status: normalizeStatus(u.status),
+    note: u.note || '',
+    createdAt: u.createdAt,
+    approvedAt: u.approvedAt || null,
+  };
 }
 async function authenticateUser(username, password) {
   const user = await findUserByUsername(username);
@@ -189,6 +211,25 @@ function updateUserRole(id, role) {
     await writeJson(usersFile, list);
     return { ok: true, user: sanitizeUser(u) };
   });
+}
+function setUserStatus(id, status, actorId, note) {
+  return enqueue(async () => {
+    const list = await listUsers();
+    const u = list.find((x) => x && x.id === id);
+    if (!u) return { ok: false, error: '用户不存在' };
+    u.status = normalizeStatus(status);
+    u.note = note || '';
+    u.approvedAt = u.status === 'approved' ? Date.now() : null;
+    u.approvedBy = u.status === 'approved' ? (actorId || null) : null;
+    await writeJson(usersFile, list);
+    return { ok: true, user: sanitizeUser(u) };
+  });
+}
+function countPendingUsers() {
+  return listUsers().then((list) => list.filter((u) => u && normalizeStatus(u.status) === 'pending').length);
+}
+function countAdmins() {
+  return listUsers().then((list) => list.filter((u) => u && u.role === 'admin' && normalizeStatus(u.status) === 'approved').length);
 }
 function resetUserPassword(id, newPassword) {
   return enqueue(async () => {
@@ -212,6 +253,73 @@ function deleteUser(id) {
     try { await fsp.rm(userDir(id), { recursive: true, force: true }); } catch (e) {}
     return { ok: true };
   });
+}
+
+/* -------------- 用户资料 / 偏好（file 过渡模式） -------------- */
+function profileFile(userId) { return path.join(userDir(userId), 'profile.json'); }
+function prefsFile(userId) { return path.join(userDir(userId), 'prefs.json'); }
+
+async function getProfile(userId) {
+  const raw = await readJson(profileFile(userId), null);
+  return {
+    userId,
+    displayName: (raw && raw.displayName) || '',
+    email: (raw && raw.email) || '',
+    bio: (raw && raw.bio) || '',
+    avatarUrl: (raw && raw.avatarUrl) || '',
+    extra: (raw && raw.extra) || {},
+    updatedAt: (raw && raw.updatedAt) || 0,
+  };
+}
+function updateProfile(userId, patch) {
+  return enqueue(async () => {
+    const current = await getProfile(userId);
+    const next = {
+      displayName: patch.displayName == null ? current.displayName : String(patch.displayName).slice(0, 64),
+      email: patch.email == null ? current.email : String(patch.email).slice(0, 190),
+      bio: patch.bio == null ? current.bio : String(patch.bio).slice(0, 500),
+      avatarUrl: patch.avatarUrl == null ? current.avatarUrl : String(patch.avatarUrl).slice(0, 500),
+      extra: patch.extra && typeof patch.extra === 'object' ? patch.extra : current.extra,
+      updatedAt: Date.now(),
+    };
+    await fsp.mkdir(userDir(userId), { recursive: true });
+    await writeJson(profileFile(userId), next);
+    return Object.assign({ userId }, next);
+  });
+}
+async function getPreferences(userId) {
+  const raw = await readJson(prefsFile(userId), null);
+  return {
+    userId,
+    theme: (raw && raw.theme) || '',
+    language: (raw && raw.language) || '',
+    prefs: (raw && raw.prefs) || {},
+    updatedAt: (raw && raw.updatedAt) || 0,
+  };
+}
+function updatePreferences(userId, patch) {
+  return enqueue(async () => {
+    const current = await getPreferences(userId);
+    const next = {
+      theme: patch.theme == null ? current.theme : String(patch.theme).slice(0, 32),
+      language: patch.language == null ? current.language : String(patch.language).slice(0, 16),
+      prefs: patch.prefs && typeof patch.prefs === 'object' ? Object.assign({}, current.prefs, patch.prefs) : current.prefs,
+      updatedAt: Date.now(),
+    };
+    await fsp.mkdir(userDir(userId), { recursive: true });
+    await writeJson(prefsFile(userId), next);
+    return Object.assign({ userId }, next);
+  });
+}
+async function exportUsers() {
+  const list = await listUsers();
+  return {
+    exportedAt: new Date().toISOString(),
+    storage: 'json',
+    database: null,
+    count: list.length,
+    users: list,
+  };
 }
 
 /* -------------- 按用户隔离的 works / desk -------------- */
@@ -357,11 +465,85 @@ async function deleteProject(id) {
 
 /* =============================================================
  * 存储层路由：
- * - 设置了 DATABASE_URL → 使用外部 PostgreSQL（db.js），数据持久化不丢
- * - 未设置 → 回退到本地 JSON 文件（data/ 目录，Render 重启会清空）
+ * - 账号 / 用户资料 / 偏好：默认 MySQL（user-store-mysql.js）
+ *   USER_STORE=file 时才显式落本地 JSON（过渡用，Render 重启会丢）
+ * - 作品 / 桌面 / 资产：设置了 DATABASE_URL → PostgreSQL，否则本地 JSON
  * signToken / verifyToken / dirs / ensureDirs 始终在本文件实现。
  * ============================================================= */
 const USE_DB = !!config.DATABASE_URL;
+const USE_MYSQL_USERS = config.USER_STORE !== 'file';
+
+/* 文件存储实现（USER_STORE=file，或 auto 模式下 MySQL 连接失败时使用） */
+const fileAccount = {
+  listUsers,
+  findUserByUsername,
+  findUserById,
+  createUser,
+  reviveUser,
+  authenticateUser,
+  updateUserRole,
+  setUserStatus,
+  resetUserPassword,
+  deleteUser,
+  countPendingUsers,
+  countAdmins,
+  getProfile,
+  updateProfile,
+  getPreferences,
+  updatePreferences,
+  exportUsers,
+  migrateFromFile: () => Promise.resolve({ migrated: 0, total: 0, skipped: true, error: '当前为文件存储，无需同步' }),
+};
+
+const ACCOUNT_METHODS = [
+  'listUsers', 'findUserByUsername', 'findUserById', 'createUser', 'reviveUser',
+  'authenticateUser', 'updateUserRole', 'setUserStatus', 'resetUserPassword', 'deleteUser',
+  'countPendingUsers', 'countAdmins', 'getProfile', 'updateProfile',
+  'getPreferences', 'updatePreferences', 'exportUsers', 'migrateFromFile',
+];
+
+function accountProvider() {
+  if (!USE_MYSQL_USERS) return fileAccount;
+  if (userStore.isReady()) return userStore;
+  /* 显式指定 mysql 却没连上 → 明确报错，不静默落文件 */
+  if (config.USER_STORE === 'mysql') {
+    const st = userStore.state();
+    if (st.mode === 'error') {
+      throw jsonError(503, '账号数据库(MySQL)不可用：' + (st.error || '未连接'),
+        '配置 MYSQL_URL 或 MYSQL_HOST/MYSQL_USER/MYSQL_PASSWORD；或改 USER_STORE=auto 自动回落文件存储');
+    }
+  }
+  return fileAccount;
+}
+
+const account = {};
+ACCOUNT_METHODS.forEach((name) => {
+  account[name] = function () {
+    const provider = accountProvider();
+    return provider[name].apply(provider, arguments);
+  };
+});
+
+account.initUserStore = async function () {
+  if (!USE_MYSQL_USERS) {
+    console.warn('[users] 当前账号存储：文件存储（USER_STORE=file，Render 重启会丢失）');
+    return userStore.state();
+  }
+  const st = await userStore.init();
+  const state = userStore.state();
+  console.log('[users] 当前账号存储：' + (state.mode === 'mysql'
+    ? 'MySQL（' + state.database + '）'
+    : (state.mode === 'error' ? '不可用（MySQL 未连接）' : '文件存储（未入库，Render 重启可能丢失）')));
+  return state;
+};
+
+account.userStoreState = function () {
+  if (!USE_MYSQL_USERS) {
+    return { mode: 'file', label: '文件存储', database: null, warning: '当前为文件存储，Render 重启可能丢失账号数据' };
+  }
+  return userStore.state();
+};
+
 
 if (USE_DB) {
   const db = require('./db');
@@ -376,16 +558,8 @@ if (USE_DB) {
     ensureDirs,
     readJson,
     writeJson,
-    /* 用户系统 */
-    listUsers: db.listUsers,
-    findUserByUsername: db.findUserByUsername,
-    findUserById: db.findUserById,
-    createUser: db.createUser,
-    reviveUser: db.reviveUser,
-    authenticateUser: db.authenticateUser,
-    updateUserRole: db.updateUserRole,
-    resetUserPassword: db.resetUserPassword,
-    deleteUser: db.deleteUser,
+    userStorageMode: () => account.userStoreState().mode,
+    ...account,
     signToken,
     verifyToken,
     /* 作品 */
@@ -409,10 +583,10 @@ if (USE_DB) {
     deleteProject: db.deleteProject || null,
   };
 } else {
-  /* 未配置外部数据库 → 本地 JSON 文件存储。Render 免费层重启会清空磁盘，
+  /* 未配置外部数据库 → 作品等本地 JSON 文件存储。Render 免费层重启会清空磁盘，
      数据会全部丢失。启动时明确告警，避免问题被静默忽略。 */
   if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
-    console.warn('[storage] 未配置 DATABASE_URL，当前使用本地 JSON 存储，服务器重启将丢失全部数据！请在环境变量中设置 DATABASE_URL。');
+    console.warn('[storage] 未配置 DATABASE_URL，作品/桌面使用本地 JSON 存储，服务器重启将丢失！请在环境变量中设置 DATABASE_URL。');
   }
   module.exports = {
     dirs,
@@ -422,16 +596,8 @@ if (USE_DB) {
     ensureDirs,
     readJson,
     writeJson,
-    /* 用户系统 */
-    listUsers,
-    findUserByUsername,
-    findUserById,
-    createUser,
-    reviveUser,
-    authenticateUser,
-    updateUserRole,
-    resetUserPassword,
-    deleteUser,
+    userStorageMode: () => account.userStoreState().mode,
+    ...account,
     signToken,
     verifyToken,
     /* 作品 */
