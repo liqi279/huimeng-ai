@@ -5518,6 +5518,104 @@ body {
   box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.32), 0 6px 16px rgba(37, 64, 143, 0.25);
 }
 
+/* ---------- 侧栏中段：置顶 / 固定 标识 ---------- */
+.hm-rail-item.is-pinned,
+.hm-rail-item.is-fixed {
+  position: relative;
+}
+
+.hm-rail-item.is-pinned::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a78bfa;
+  box-shadow: 0 0 7px rgba(167, 139, 250, 0.85);
+  pointer-events: none;
+}
+
+.hm-rail-item.is-fixed::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  width: 5px;
+  height: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.85);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* 置顶 / 固定 · 右键菜单 */
+.hm-rail-ctx {
+  position: fixed;
+  z-index: 1500;
+  min-width: 158px;
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 170, 210, 0.22);
+  background: rgba(16, 27, 41, 0.98);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  animation: hmRailCtxIn 0.12s ease both;
+}
+
+.hm-rail-ctx-title {
+  padding: 4px 9px 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #8fa4bb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hm-rail-ctx > button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 6px;
+  text-align: left;
+  color: #b9c9db;
+  font-size: 11.5px;
+  white-space: nowrap;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.hm-rail-ctx > button:hover {
+  background: rgba(56, 189, 248, 0.11);
+  color: #eaf6ff;
+}
+
+.hm-rail-ctx > button .hm-rail-ctx-ico {
+  width: 12px;
+  text-align: center;
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+@keyframes hmRailCtxIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+body.hm-light .hm-rail-ctx {
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+body.hm-light .hm-rail-ctx-title { color: #64748b; border-bottom-color: rgba(15, 23, 42, 0.08); }
+body.hm-light .hm-rail-ctx > button { color: #334155; }
+body.hm-light .hm-rail-ctx > button:hover { background: rgba(37, 99, 235, 0.08); color: #1d4ed8; }
+
 /* 禁用态 —— 开发中暂不可用 */
 .hm-rail-item[disabled],
 .hm-rail-personal[disabled] {
@@ -17989,6 +18087,13 @@ body.dv-open .hm-page {
       </button>
     </div>
   </aside>
+
+  <!-- 侧栏中段 · 右键菜单（置顶 / 固定） -->
+  <div class="hm-rail-ctx" id="railCtxMenu" role="menu" hidden>
+    <div class="hm-rail-ctx-title" id="railCtxTitle">模块</div>
+    <button type="button" role="menuitem" data-rctx="pin"><span class="hm-rail-ctx-ico">↑</span><span id="railCtxPinText">置顶</span></button>
+    <button type="button" role="menuitem" data-rctx="fix"><span class="hm-rail-ctx-ico">◈</span><span id="railCtxFixText">固定</span></button>
+  </div>
 
   <!-- 侧边栏显示 / 隐藏：贴在侧栏右缘中间 -->
   <button type="button" class="hm-rail-toggle" id="railToggleBtn" title="隐藏侧边栏" aria-label="隐藏侧边栏" aria-expanded="true">
@@ -53117,6 +53222,7 @@ window.HMChat = (function () {
       el.setAttribute('draggable', 'true');
 
       el.addEventListener('dragstart', function (e) {
+        if (el.classList.contains('is-fixed')) { e.preventDefault(); dragged = null; return; }
         dragged = el;
         el.classList.add('is-dragging');
         try {
@@ -53127,6 +53233,7 @@ window.HMChat = (function () {
 
       el.addEventListener('dragover', function (e) {
         e.preventDefault();
+        if (el.classList.contains('is-fixed') || (dragged && dragged.classList.contains('is-fixed'))) return;
         if (!dragged || dragged === el) return;
         try { e.dataTransfer.dropEffect = 'move'; } catch (err) { /* ignore */ }
         var rect = el.getBoundingClientRect();
@@ -64031,6 +64138,239 @@ window.HMChat = (function () {
 
     init();
   })();
+</script>
+
+<script>
+/* =============================================================
+ * 侧栏中段 · 右键菜单（置顶 / 固定）
+ * 依赖：.hm-rail-top / [data-rail] / #railCtxMenu / is-pinned / is-fixed
+ * 存储：localStorage['anidream.rail.pins.v1']
+ * ============================================================= */
+(function () {
+  'use strict';
+  var PIN_KEY = 'anidream.rail.pins.v1';
+  var railTop = document.querySelector('.hm-rail-top');
+  var menu = document.getElementById('railCtxMenu');
+  if (!railTop || !menu) return;
+
+  var titleEl = document.getElementById('railCtxTitle');
+  var pinText = document.getElementById('railCtxPinText');
+  var fixText = document.getElementById('railCtxFixText');
+  var ctxItem = null;
+
+  function readStore() {
+    var fallback = { pins: [], order: [], fixed: [] };
+    try {
+      var raw = localStorage.getItem(PIN_KEY);
+      if (!raw) return fallback;
+      var obj = JSON.parse(raw);
+      if (!obj || typeof obj !== 'object') return fallback;
+      return {
+        pins: Array.isArray(obj.pins) ? obj.pins : [],
+        order: Array.isArray(obj.order) ? obj.order : [],
+        fixed: Array.isArray(obj.fixed) ? obj.fixed : []
+      };
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function railItems() {
+    return railTop.querySelectorAll('.hm-rail-item[data-rail]');
+  }
+
+  function orderList() {
+    var out = [];
+    railItems().forEach(function (el) {
+      var key = el.getAttribute('data-rail');
+      if (key) out.push(key);
+    });
+    return out;
+  }
+
+  function pinList() {
+    var out = [];
+    railItems().forEach(function (el) {
+      if (el.classList.contains('is-pinned')) out.push(el.getAttribute('data-rail'));
+    });
+    return out;
+  }
+
+  function fixedList() {
+    var out = [];
+    railItems().forEach(function (el) {
+      if (el.classList.contains('is-fixed')) out.push(el.getAttribute('data-rail'));
+    });
+    return out;
+  }
+
+  function byKey(key) {
+    if (!key) return null;
+    return railTop.querySelector('.hm-rail-item[data-rail="' + key + '"]');
+  }
+
+  function saveRailState() {
+    try {
+      localStorage.setItem(PIN_KEY, JSON.stringify({
+        pins: pinList(),
+        order: orderList(),
+        fixed: fixedList()
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  function closeMenu() {
+    if (menu.hidden) return;
+    menu.hidden = true;
+  }
+
+  function placeMenu(x, y) {
+    menu.style.left = '0px';
+    menu.style.top = '0px';
+    menu.hidden = false;
+    var w = menu.offsetWidth || 168;
+    var h = menu.offsetHeight || 96;
+    var pad = 8;
+    var left = x;
+    var top = y;
+    if (left + w > window.innerWidth - pad) left = x - w;   /* 靠右时向内偏 */
+    if (left < pad) left = pad;
+    if (top + h > window.innerHeight - pad) top = y - h;    /* 靠下时向上偏 */
+    if (top < pad) top = pad;
+    menu.style.left = Math.round(left) + 'px';
+    menu.style.top = Math.round(top) + 'px';
+  }
+
+  function syncMenuText() {
+    var pinned = !!(ctxItem && ctxItem.classList.contains('is-pinned'));
+    var fixed = !!(ctxItem && ctxItem.classList.contains('is-fixed'));
+    if (pinText) pinText.textContent = pinned ? '取消置顶' : '置顶';
+    if (fixText) fixText.textContent = fixed ? '取消固定' : '固定';
+  }
+
+  function openMenu(el, x, y) {
+    ctxItem = el;
+    if (titleEl) {
+      var label = el.querySelector('span');
+      titleEl.textContent = ((label ? label.textContent : el.textContent) || '').trim() || '模块';
+    }
+    syncMenuText();
+    placeMenu(x, y);
+  }
+
+  function togglePin(el) {
+    if (el.classList.contains('is-pinned')) {
+      /* 取消置顶：按记录的原始位置插回 */
+      el.classList.remove('is-pinned');
+      el.removeAttribute('data-pinned');
+      var prevKey = el.getAttribute('data-pinprev') || '';
+      el.removeAttribute('data-pinprev');
+      var anchor = byKey(prevKey);
+      if (anchor && anchor !== el && anchor.parentNode === railTop) {
+        railTop.insertBefore(el, anchor.nextSibling);
+      } else {
+        var firstPlain = null;
+        var list = railItems();
+        for (var i = 0; i < list.length; i++) {
+          if (!list[i].classList.contains('is-pinned')) { firstPlain = list[i]; break; }
+        }
+        if (firstPlain && firstPlain !== el) railTop.insertBefore(el, firstPlain);
+        else if (!firstPlain) railTop.appendChild(el);
+      }
+    } else {
+      /* 置顶：插到最前，并记住原位置 */
+      var prev = el.previousElementSibling;
+      var prevRail = prev && prev.getAttribute ? (prev.getAttribute('data-rail') || '') : '';
+      el.setAttribute('data-pinprev', prevRail);
+      el.classList.add('is-pinned');
+      el.setAttribute('data-pinned', '1');
+      railTop.insertBefore(el, railTop.firstElementChild);
+    }
+    saveRailState();
+  }
+
+  function toggleFix(el) {
+    if (el.classList.contains('is-fixed')) {
+      el.classList.remove('is-fixed');
+      el.removeAttribute('data-fixed');
+      el.setAttribute('data-pinned', el.classList.contains('is-pinned') ? '1' : '0');
+    } else {
+      el.classList.add('is-fixed');
+      el.setAttribute('data-fixed', '1');
+      el.setAttribute('draggable', 'false');
+    }
+    saveRailState();
+  }
+
+  function applyStoredState() {
+    var store = readStore();
+    var i, el;
+    for (i = 0; i < store.order.length; i++) {
+      el = byKey(store.order[i]);
+      if (el) railTop.appendChild(el);
+    }
+    for (i = 0; i < store.fixed.length; i++) {
+      el = byKey(store.fixed[i]);
+      if (el) {
+        el.classList.add('is-fixed');
+        el.setAttribute('data-fixed', '1');
+        el.setAttribute('draggable', 'false');
+      }
+    }
+    for (i = store.pins.length - 1; i >= 0; i--) {
+      el = byKey(store.pins[i]);
+      if (el) {
+        el.classList.add('is-pinned');
+        el.setAttribute('data-pinned', '1');
+        railTop.insertBefore(el, railTop.firstElementChild);
+      }
+    }
+  }
+
+  /* 右键：只作用于 .hm-rail-top 内的模块按钮（底部四项在外层容器，不响应） */
+  railTop.addEventListener('contextmenu', function (e) {
+    var node = e.target;
+    var item = node && node.closest ? node.closest('[data-rail]') : null;
+    if (!item || !railTop.contains(item)) return;
+    e.preventDefault();
+    openMenu(item, e.clientX, e.clientY);
+  });
+
+  menu.addEventListener('click', function (e) {
+    var node = e.target;
+    var btn = node && node.closest ? node.closest('[data-rctx]') : null;
+    if (!btn || !ctxItem) return;
+    var act = btn.getAttribute('data-rctx');
+    if (act === 'pin') togglePin(ctxItem);
+    else if (act === 'fix') toggleFix(ctxItem);
+    syncMenuText();
+    closeMenu();
+  });
+
+  document.addEventListener('click', function (e) {
+    if (menu.hidden) return;
+    if (menu.contains(e.target)) return;
+    closeMenu();
+  }, true);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) closeMenu();
+  });
+
+  railTop.addEventListener('scroll', closeMenu, true);
+
+  /* 拖拽结束后同步存储（固定项不参与，已在 initRailDragSort 内跳过） */
+  railTop.addEventListener('dragend', function () {
+    saveRailState();
+  }, true);
+
+  /* 切换视图时收起菜单 */
+  new MutationObserver(function () {
+    closeMenu();
+  }).observe(document.body, { attributes: true, attributeFilter: ['data-view', 'class'] });
+
+  applyStoredState();
+})();
 </script>
 
 </body>
