@@ -2193,6 +2193,7 @@ body[data-view="works"] .view-works {
   width: min(920px, calc(100vw - 40px));
   z-index: 2;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
@@ -2206,7 +2207,14 @@ body[data-view="works"] .view-works {
 }
 
 .lb-copy {
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+}
+
+.lb-bar .primary-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .lb-copy p {
