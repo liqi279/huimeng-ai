@@ -3,7 +3,7 @@
 const express = require('express');
 const { wrap, assert } = require('../http');
 const store = require('../store');
-const { authRequired, adminOnly, invalidateUserCache } = require('../auth');
+const { authRequired, authOptional, adminOnly, invalidateUserCache } = require('../auth');
 
 const router = express.Router();
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; /* 30 天 */
@@ -46,9 +46,16 @@ router.get('/auth/store-status', wrap(async (req, res) => {
   });
 }));
 
-/* ============ 注册：提交申请，不直接发 token ============ */
-router.post('/auth/register', wrap(async (req, res) => {
-  const { username, password, email } = req.body || {};
+/* ============ 注册：仅超管可用，创建即为 approved ============ */
+router.post('/auth/register', authOptional, wrap(async (req, res) => {
+  /* 未登录 / 非超管一律 403：不区分「没带 token」和「带了普通账号 token」，
+     避免把「注册入口已关闭」暴露成 401 登录失效。 */
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({
+      error: { message: '公开注册已关闭，仅超级管理员可在「账号管理 → 新增人员」创建账号', code: 'ADMIN_ONLY' },
+    });
+  }
+  const { username, password, email, role, note } = req.body || {};
   assert(username && typeof username === 'string', 400, '缺少用户名');
   assert(password && typeof password === 'string', 400, '缺少密码');
   assert(username.trim().length >= 3, 400, '用户名至少 3 个字符');
@@ -59,18 +66,20 @@ router.post('/auth/register', wrap(async (req, res) => {
     username: username.trim(),
     password,
     email: email ? String(email).trim() : null,
-    role: 'user',
-    status: 'pending',
-    note: '',
+    role: role === 'admin' ? 'admin' : 'user',
+    status: 'approved',
+    note: note ? String(note).slice(0, 255) : ('由超管 ' + req.user.username + ' 创建'),
   });
-  if (!result.ok) return res.status(409).json({ error: { message: result.error } });
+  if (!result.ok) {
+    return res.status(409).json({ error: { message: result.error, code: 'USERNAME_TAKEN' } });
+  }
 
-  /* 不返回 token：必须由超级管理员审批通过后才能登录 */
+  /* 直接 approved：可立即登录，不再进 pending 队列 */
   res.json({
     ok: true,
-    pending: true,
-    message: '注册申请已提交，请等待管理员通过',
-    user: { id: result.user.id, username: result.user.username, status: 'pending', createdAt: result.user.createdAt },
+    approved: true,
+    message: '账号已创建，可直接登录',
+    user: toPublic(result.user),
   });
 }));
 
@@ -162,20 +171,23 @@ router.get('/auth/users/:id/profile', authRequired, adminOnly, wrap(async (req, 
 
 /* 管理员：创建用户（直接 approved） */
 router.post('/auth/users', authRequired, adminOnly, wrap(async (req, res) => {
-  const { username, password, role, email } = req.body || {};
+  const { username, password, role, email, note } = req.body || {};
   assert(username && password, 400, '缺少用户名或密码');
   assert(String(username).trim().length >= 3, 400, '用户名至少 3 个字符');
   assert(String(password).length >= 6, 400, '密码至少 6 个字符');
+  if (email) assert(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email)), 400, '邮箱格式不正确');
   const result = await store.createUser({
     username: String(username).trim(),
     password,
     email: email ? String(email).trim() : null,
     role: role === 'admin' ? 'admin' : 'user',
     status: 'approved',
-    note: '管理员创建',
+    note: note ? String(note).slice(0, 255) : ('由超管 ' + req.user.username + ' 创建'),
   });
-  if (!result.ok) return res.status(409).json({ error: { message: result.error } });
-  res.json({ user: toPublic(result.user) });
+  if (!result.ok) {
+    return res.status(409).json({ error: { message: result.error, code: 'USERNAME_TAKEN' } });
+  }
+  res.json({ ok: true, user: toPublic(result.user) });
 }));
 
 /* ============ 管理员：审批（通过 / 拒绝） ============ */
