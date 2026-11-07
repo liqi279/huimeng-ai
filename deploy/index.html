@@ -17590,6 +17590,10 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 8.5h18" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M7 12h4M7 15.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 11.5l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>编集</span>
       </button>
+      <button class="hm-rail-item" data-rail="publish" title="宣发（发布任务 · 平台记录 · 数据看板）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2l5 3.5v-13L7 9H5a1 1 0 0 0-1 1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>宣发</span>
+      </button>
       <button class="hm-rail-item" data-rail="plan" title="企划（热榜、排行榜、日式动漫企划书）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5h10M7 12h7M7 15.5h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 3.5v3M8.5 3.5v3" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
         <span>企划</span>
@@ -20009,6 +20013,112 @@ body.dv-open .hm-page {
       </div>
     </div>
     <div class="cmp-list" id="cmpList"></div>
+  </main>
+
+  <!-- ============ 宣发（发布任务 · 平台记录 · 数据看板） ============ -->
+  <main class="hm-page" id="view-publish" hidden>
+    <style>
+      .pub-wrap{display:flex;flex-direction:column;gap:14px;padding:18px 22px 30px}
+      .pub-tabs{display:flex;gap:8px;flex-wrap:wrap}
+      .pub-panel{display:flex;flex-direction:column;gap:12px}
+      .pub-form,.pub-filter{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
+      .pub-form textarea{grid-column:1/-1;min-height:64px;padding:8px;resize:vertical;font-family:inherit}
+      .pub-file{display:flex;gap:6px;align-items:center;grid-column:span 2}
+      .pub-platforms{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#9fb3c8}
+      .pub-platforms label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+      .pub-list{display:flex;flex-direction:column;gap:10px}
+      .pub-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+      .pub-card-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .pub-card-title{font-size:14px;font-weight:600;color:#e6edf6}
+      .pub-meta{font-size:11.5px;color:#8b9bb0}
+      .pub-chip{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(96,165,250,.14);color:#9fc6ff;border:1px solid rgba(96,165,250,.3)}
+      .pub-chip.is-done{background:rgba(52,211,153,.14);color:#7ee7bd;border-color:rgba(52,211,153,.3)}
+      .pub-chip.is-fail{background:rgba(248,113,113,.14);color:#ffa3a3;border-color:rgba(248,113,113,.3)}
+      .pub-plat{border-top:1px dashed rgba(255,255,255,.09);padding-top:8px;display:grid;grid-template-columns:80px 70px 128px minmax(120px,1fr) auto auto;gap:8px;align-items:center;font-size:12px;color:#c3d2e2}
+      .pub-plat input{min-width:0}
+      .pub-btn{height:26px;padding:0 10px;border-radius:7px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cfe0f0;font-size:11.5px;cursor:pointer}
+      .pub-btn:hover{background:rgba(96,165,250,.16);border-color:rgba(96,165,250,.4)}
+      .pub-btn.is-danger{color:#ffa3a3;border-color:rgba(248,113,113,.3)}
+      .pub-table{width:100%;border-collapse:collapse;font-size:12px;color:#c3d2e2}
+      .pub-table th,.pub-table td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.07);text-align:left;white-space:nowrap}
+      .pub-table th{color:#8b9bb0;font-weight:600;font-size:11px}
+      .pub-sec-title{font-size:13px;font-weight:600;color:#dbe7f3;margin:2px 0}
+      .pub-empty{font-size:12px;color:#7f8ea3;padding:14px;text-align:center;border:1px dashed rgba(255,255,255,.1);border-radius:10px}
+      .pub-num{min-width:0}
+      body.hm-light .pub-form,body.hm-light .pub-filter,body.hm-light .pub-card{background:rgba(15,23,42,.03);border-color:rgba(15,23,42,.1)}
+      body.hm-light .pub-card-title,body.hm-light .pub-sec-title{color:#1e293b}
+      body.hm-light .pub-meta,body.hm-light .pub-empty{color:#64748b}
+    </style>
+    <div class="pub-wrap">
+      <div class="hm-art-top">
+        <div class="hm-art-top-left">
+          <h2>📣 宣发 · 分发与数据</h2>
+          <span class="hm-art-top-sub">发布任务 · 平台记录 · 数据看板 · 数据存本机</span>
+        </div>
+        <div class="hm-art-top-right pub-tabs">
+          <button type="button" class="hm-pill hm-pill-primary" data-pub-tab="tasks">发布任务</button>
+          <button type="button" class="hm-pill" data-pub-tab="records">平台记录</button>
+          <button type="button" class="hm-pill" data-pub-tab="board">数据看板</button>
+        </div>
+      </div>
+
+      <section class="pub-panel" data-pub-panel="tasks">
+        <div class="pub-form">
+          <input class="cmp-input" id="pubEp" placeholder="剧集 / 集数，如 第 1 集">
+          <input class="cmp-input" id="pubTitle" placeholder="标题">
+          <input class="cmp-input" id="pubPlan" type="datetime-local" title="计划发布时间">
+          <div class="pub-file">
+            <input class="cmp-input" id="pubFileName" readonly placeholder="未选择成片文件" style="flex:1;min-width:0">
+            <button type="button" class="pub-btn" id="pubFileBtn">选择文件</button>
+            <input type="file" id="pubFile" hidden>
+          </div>
+          <textarea class="cmp-input" id="pubDesc" placeholder="简介"></textarea>
+          <div class="pub-platforms" id="pubPlatforms"></div>
+          <div style="grid-column:1/-1;display:flex;gap:8px">
+            <button type="button" class="hm-pill hm-pill-primary" id="pubSave">＋ 新建任务</button>
+            <button type="button" class="pub-btn" id="pubCancel" hidden>取消编辑</button>
+          </div>
+        </div>
+        <div class="pub-list" id="pubTasks"></div>
+      </section>
+
+      <section class="pub-panel" data-pub-panel="records" hidden>
+        <div class="pub-list" id="pubRecords"></div>
+      </section>
+
+      <section class="pub-panel" data-pub-panel="board" hidden>
+        <div class="pub-form">
+          <select class="cmp-input" id="pubMPlatform"></select>
+          <input class="cmp-input" id="pubMEp" placeholder="剧集，如 第 1 集">
+          <input class="cmp-input" id="pubMDate" type="date">
+          <input class="cmp-input pub-num" id="pubMViews" placeholder="播放量" type="number" min="0">
+          <input class="cmp-input pub-num" id="pubMLikes" placeholder="点赞" type="number" min="0">
+          <input class="cmp-input pub-num" id="pubMComments" placeholder="评论" type="number" min="0">
+          <input class="cmp-input pub-num" id="pubMFavs" placeholder="收藏" type="number" min="0">
+          <input class="cmp-input pub-num" id="pubMShares" placeholder="分享" type="number" min="0">
+          <div style="grid-column:1/-1;display:flex;gap:8px">
+            <button type="button" class="hm-pill hm-pill-primary" id="pubMAdd">＋ 录入数据</button>
+          </div>
+        </div>
+        <div class="pub-filter">
+          <select class="cmp-input" id="pubFEp"><option value="">全部剧集</option></select>
+          <select class="cmp-input" id="pubFPlatform"><option value="">全部平台</option></select>
+          <select class="cmp-input" id="pubFRange">
+            <option value="7">近 7 天</option>
+            <option value="30">近 30 天</option>
+            <option value="all">全部</option>
+          </select>
+        </div>
+        <div class="pub-sec-title">筛选结果</div>
+        <div id="pubSum"></div>
+        <div class="pub-sec-title">按平台汇总</div>
+        <div id="pubByPlatform"></div>
+        <div class="pub-sec-title">按剧集汇总</div>
+        <div id="pubByEp"></div>
+        <div class="pub-sec-title">录入明细</div>
+        <div id="pubMetrics"></div>
+      </section>
+    </div>
   </main>
 
   <main class="hm-page hm-voice-page" id="view-voice" hidden>
@@ -24224,7 +24334,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'oua', 'animation', 'history', 'admin', 'compile'];
+var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'oua', 'animation', 'history', 'admin', 'compile', 'publish'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -62743,6 +62853,449 @@ window.HMChat = (function () {
   }).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
 })();
 
+
+  /* ===================== 宣发（发布任务 · 平台记录 · 数据看板） ===================== */
+  (function () {
+    var KEY = 'anidream.publish.v1';
+    var PLATFORMS = [
+      { id: 'bilibili', name: 'B站' },
+      { id: 'douyin', name: '抖音' },
+      { id: 'kuaishou', name: '快手' },
+      { id: 'xiaohongshu', name: '小红书' },
+      { id: 'youtube', name: 'YouTube' }
+    ];
+    var STATUS = { todo: '待发', done: '已发', fail: '失败' };
+    var view = document.getElementById('view-publish');
+    if (!view) return;
+
+    var db = load();
+    var editingId = null;
+    var pendingFile = null;
+
+    function $(id) { return document.getElementById(id); }
+
+    function load() {
+      try {
+        var data = JSON.parse(localStorage.getItem(KEY) || '{}');
+        return {
+          tasks: (Array.isArray(data.tasks) ? data.tasks : []).map(normalize),
+          metrics: Array.isArray(data.metrics) ? data.metrics : []
+        };
+      } catch (err) { return { tasks: [], metrics: [] }; }
+    }
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (err) {}
+    }
+    function uid(prefix) {
+      return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+    function esc(text) {
+      return String(text == null ? '' : text).replace(/[&<>"']/g, function (ch) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+      });
+    }
+    function platName(id) {
+      for (var i = 0; i < PLATFORMS.length; i++) if (PLATFORMS[i].id === id) return PLATFORMS[i].name;
+      return id;
+    }
+    function chipClass(st) {
+      return st === 'done' ? 'is-done' : (st === 'fail' ? 'is-fail' : '');
+    }
+    function fmtSize(n) {
+      n = Number(n) || 0;
+      if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB';
+      if (n >= 1024) return (n / 1024).toFixed(0) + ' KB';
+      return n + ' B';
+    }
+    function fmtPlan(v) { return v ? String(v).replace('T', ' ') : '未设置'; }
+    function fmtTime(v) {
+      if (!v) return '';
+      var d = new Date(v);
+      if (isNaN(d.getTime())) return String(v);
+      function p(n) { return (n < 10 ? '0' : '') + n; }
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function num(id) { return Math.max(0, Number($(id).value) || 0); }
+    function toast(msg) {
+      if (window.A && typeof window.A.toast === 'function') window.A.toast(msg, 'success');
+    }
+
+    /* ---------------- 发布任务 ---------------- */
+    function taskOf(id) {
+      for (var i = 0; i < db.tasks.length; i++) if (db.tasks[i].id === id) return db.tasks[i];
+      return null;
+    }
+    function normalize(t) {
+      t.platforms = Array.isArray(t.platforms) ? t.platforms : [];
+      t.links = t.links || {};
+      t.pstatus = t.pstatus || {};
+      t.publishedAt = t.publishedAt || {};
+      t.status = t.status || 'todo';
+      return t;
+    }
+
+    function platformRows(t) {
+      if (!t.platforms.length) return '<div class="pub-meta">未选择平台</div>';
+      return t.platforms.map(function (pid) {
+        var st = t.pstatus[pid] || t.status || 'todo';
+        var at = t.publishedAt[pid];
+        return '<div class="pub-plat">' +
+          '<span>' + esc(platName(pid)) + '</span>' +
+          '<span class="pub-chip ' + chipClass(st) + '">' + STATUS[st] + '</span>' +
+          '<span class="pub-meta">' + esc(at ? fmtTime(at) : '未发布') + '</span>' +
+          '<input class="cmp-input" data-pub-link="1" data-task="' + t.id + '" data-plat="' + pid + '" placeholder="发布链接" value="' + esc(t.links[pid] || '') + '">' +
+          '<button type="button" class="pub-btn" data-pub-copy="1" data-task="' + t.id + '" data-plat="' + pid + '">复制</button>' +
+          '<button type="button" class="pub-btn" data-pub-done="1" data-task="' + t.id + '" data-plat="' + pid + '">标记已发布</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    function taskMeta(t) {
+      var bits = ['计划 ' + esc(fmtPlan(t.planAt))];
+      if (t.file && t.file.name) bits.push('成片 ' + esc(t.file.name) + ' · ' + fmtSize(t.file.size));
+      if (t.desc) bits.push(esc(t.desc));
+      return bits.join(' ｜ ');
+    }
+
+    function renderTasks() {
+      var box = $('pubTasks');
+      if (!db.tasks.length) {
+        box.innerHTML = '<div class="pub-empty">暂无发布任务，先在上方新建一条</div>';
+        return;
+      }
+      box.innerHTML = db.tasks.map(function (t) {
+        var opts = ['todo', 'done', 'fail'].map(function (k) {
+          return '<option value="' + k + '"' + (t.status === k ? ' selected' : '') + '>' + STATUS[k] + '</option>';
+        }).join('');
+        return '<div class="pub-card">' +
+          '<div class="pub-card-head">' +
+            '<span class="pub-card-title">' + esc(t.ep || '未命名剧集') + ' · ' + esc(t.title || '未命名任务') + '</span>' +
+            '<select class="cmp-input" data-pub-status="1" data-task="' + t.id + '" style="width:82px;height:26px">' + opts + '</select>' +
+            '<button type="button" class="pub-btn" data-pub-edit="1" data-task="' + t.id + '">编辑</button>' +
+            '<button type="button" class="pub-btn is-danger" data-pub-del="1" data-task="' + t.id + '">删除</button>' +
+          '</div>' +
+          '<div class="pub-meta">' + taskMeta(t) + '</div>' +
+          platformRows(t) +
+          '</div>';
+      }).join('');
+    }
+
+    function resetForm() {
+      editingId = null;
+      pendingFile = null;
+      $('pubEp').value = '';
+      $('pubTitle').value = '';
+      $('pubPlan').value = '';
+      $('pubDesc').value = '';
+      $('pubFileName').value = '';
+      $('pubFile').value = '';
+      view.querySelectorAll('#pubPlatforms input[type="checkbox"]').forEach(function (el) { el.checked = false; });
+      $('pubSave').textContent = '＋ 新建任务';
+      $('pubCancel').hidden = true;
+    }
+
+    function saveTask() {
+      var ep = $('pubEp').value.trim();
+      var title = $('pubTitle').value.trim();
+      var platforms = [];
+      view.querySelectorAll('#pubPlatforms input[type="checkbox"]').forEach(function (el) {
+        if (el.checked) platforms.push(el.value);
+      });
+      if (!ep && !title) { toast('请填写剧集或标题'); return; }
+      if (!platforms.length) { toast('请至少选择一个平台'); return; }
+
+      if (editingId) {
+        var t = taskOf(editingId);
+        if (t) {
+          t.ep = ep; t.title = title;
+          t.planAt = $('pubPlan').value;
+          t.desc = $('pubDesc').value.trim();
+          t.platforms = platforms;
+          if (pendingFile) t.file = pendingFile;
+          save();
+        }
+      } else {
+        db.tasks.unshift(normalize({
+          id: uid('task'),
+          ep: ep,
+          title: title,
+          planAt: $('pubPlan').value,
+          desc: $('pubDesc').value.trim(),
+          platforms: platforms,
+          file: pendingFile || null,
+          status: 'todo',
+          createdAt: Date.now()
+        }));
+        save();
+      }
+      var wasEditing = !!editingId;
+      resetForm();
+      renderTasks();
+      renderRecords();
+      toast(wasEditing ? '已保存' : '已新建任务');
+    }
+
+    function editTask(id) {
+      var t = taskOf(id);
+      if (!t) return;
+      editingId = id;
+      pendingFile = null;
+      $('pubEp').value = t.ep || '';
+      $('pubTitle').value = t.title || '';
+      $('pubPlan').value = t.planAt || '';
+      $('pubDesc').value = t.desc || '';
+      $('pubFileName').value = t.file && t.file.name ? t.file.name + ' · ' + fmtSize(t.file.size) : '';
+      view.querySelectorAll('#pubPlatforms input[type="checkbox"]').forEach(function (el) {
+        el.checked = t.platforms.indexOf(el.value) >= 0;
+      });
+      $('pubSave').textContent = '保存修改';
+      $('pubCancel').hidden = false;
+      $('pubEp').focus();
+    }
+
+    function delTask(id) {
+      if (!window.confirm('删除这条发布任务及其平台记录？')) return;
+      db.tasks = db.tasks.filter(function (t) { return t.id !== id; });
+      save();
+      if (editingId === id) resetForm();
+      renderTasks();
+      renderRecords();
+    }
+
+    /* ---------------- 平台记录 ---------------- */
+    function renderRecords() {
+      var box = $('pubRecords');
+      var rows = [];
+      db.tasks.forEach(function (t) {
+        if (!t.platforms.length) return;
+        rows.push('<div class="pub-card">' +
+          '<div class="pub-card-head"><span class="pub-card-title">' + esc(t.ep || '未命名剧集') + ' · ' + esc(t.title || '未命名任务') + '</span>' +
+          '<span class="pub-meta">计划 ' + esc(fmtPlan(t.planAt)) + '</span></div>' +
+          platformRows(t) + '</div>');
+      });
+      box.innerHTML = rows.length ? rows.join('') : '<div class="pub-empty">还没有平台记录，先到「发布任务」新建任务并选择平台</div>';
+    }
+
+    function copyText(text) {
+      if (!text) { toast('链接为空'); return; }
+      var done = function () { toast('已复制'); };
+      var fallback = function () {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (err) {}
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else {
+        fallback();
+      }
+    }
+
+    function markDone(taskId, pid) {
+      var t = taskOf(taskId);
+      if (!t) return;
+      t.pstatus[pid] = 'done';
+      t.publishedAt[pid] = new Date().toISOString();
+      var allDone = t.platforms.every(function (p) { return t.pstatus[p] === 'done'; });
+      if (allDone) t.status = 'done';
+      save();
+      renderTasks();
+      renderRecords();
+      toast('已标记为已发布');
+    }
+
+    /* ---------------- 数据看板 ---------------- */
+    function fillSelect(sel, items, allLabel, keepValue) {
+      var cur = keepValue ? sel.value : '';
+      var html = allLabel ? '<option value="">' + allLabel + '</option>' : '';
+      html += items.map(function (it) {
+        return '<option value="' + esc(it.value) + '">' + esc(it.label) + '</option>';
+      }).join('');
+      sel.innerHTML = html;
+      if (cur) sel.value = cur;
+    }
+
+    function distinctEps() {
+      var seen = {}, out = [];
+      db.metrics.forEach(function (m) {
+        if (m.ep && !seen[m.ep]) { seen[m.ep] = 1; out.push({ value: m.ep, label: m.ep }); }
+      });
+      db.tasks.forEach(function (t) {
+        if (t.ep && !seen[t.ep]) { seen[t.ep] = 1; out.push({ value: t.ep, label: t.ep }); }
+      });
+      return out;
+    }
+
+    function filteredMetrics() {
+      var ep = $('pubFEp').value;
+      var pf = $('pubFPlatform').value;
+      var range = $('pubFRange').value;
+      var now = Date.now();
+      return db.metrics.filter(function (m) {
+        if (ep && m.ep !== ep) return false;
+        if (pf && m.platform !== pf) return false;
+        if (range !== 'all') {
+          var t = m.date ? new Date(m.date + 'T00:00:00').getTime() : 0;
+          if (!t || t < now - Number(range) * 86400000) return false;
+        }
+        return true;
+      }).sort(function (a, b) { return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); });
+    }
+
+    function zeroSum() { return { views: 0, likes: 0, comments: 0, favs: 0, shares: 0, last: '' }; }
+    function addTo(sum, m) {
+      sum.views += Number(m.views) || 0;
+      sum.likes += Number(m.likes) || 0;
+      sum.comments += Number(m.comments) || 0;
+      sum.favs += Number(m.favs) || 0;
+      sum.shares += Number(m.shares) || 0;
+      if (m.date && m.date > sum.last) sum.last = m.date;
+      return sum;
+    }
+    function sumAll(list) {
+      return list.reduce(function (s, m) { return addTo(s, m); }, zeroSum());
+    }
+    function groupBy(list, keyFn) {
+      var order = [], map = {};
+      list.forEach(function (m) {
+        var k = keyFn(m);
+        if (!map[k]) { map[k] = zeroSum(); order.push(k); }
+        addTo(map[k], m);
+      });
+      return { order: order, map: map };
+    }
+    function sumTable(group, label) {
+      if (!group.order.length) return '<div class="pub-empty">暂无数据</div>';
+      var rows = group.order.map(function (k) {
+        var s = group.map[k];
+        return '<tr><td>' + esc(k) + '</td><td>' + s.views.toLocaleString() + '</td><td>' + s.likes.toLocaleString() + '</td>' +
+          '<td>' + s.comments.toLocaleString() + '</td><td>' + s.favs.toLocaleString() + '</td><td>' + s.shares.toLocaleString() + '</td>' +
+          '<td>' + esc(s.last || '-') + '</td></tr>';
+      }).join('');
+      return '<table class="pub-table"><thead><tr><th>' + esc(label) + '</th><th>播放量</th><th>点赞</th><th>评论</th><th>收藏</th><th>分享</th><th>最近更新</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    function renderBoard() {
+      fillSelect($('pubFEp'), distinctEps(), '全部剧集', true);
+      fillSelect($('pubFPlatform'), PLATFORMS.map(function (p) { return { value: p.id, label: p.name }; }), '全部平台', true);
+
+      var list = filteredMetrics();
+      var total = sumAll(list);
+      $('pubSum').innerHTML = '<table class="pub-table"><thead><tr><th>范围</th><th>播放量</th><th>点赞</th><th>评论</th><th>收藏</th><th>分享</th><th>最近更新</th></tr></thead><tbody>' +
+        '<tr><td>总计</td><td>' + total.views.toLocaleString() + '</td><td>' + total.likes.toLocaleString() + '</td><td>' + total.comments.toLocaleString() + '</td>' +
+        '<td>' + total.favs.toLocaleString() + '</td><td>' + total.shares.toLocaleString() + '</td><td>' + esc(total.last || '-') + '</td></tr>' +
+        '</tbody></table>';
+
+      $('pubByPlatform').innerHTML = sumTable(groupBy(list, function (m) { return platName(m.platform); }), '平台');
+      $('pubByEp').innerHTML = sumTable(groupBy(list, function (m) { return m.ep || '未标注'; }), '剧集');
+
+      $('pubMetrics').innerHTML = list.length ? ('<table class="pub-table"><thead><tr><th>日期</th><th>平台</th><th>剧集</th><th>播放量</th><th>点赞</th><th>评论</th><th>收藏</th><th>分享</th></tr></thead><tbody>' +
+        list.map(function (m) {
+          return '<tr><td>' + esc(m.date || '-') + '</td><td>' + esc(platName(m.platform)) + '</td><td>' + esc(m.ep || '-') + '</td>' +
+            '<td>' + (Number(m.views) || 0).toLocaleString() + '</td><td>' + (Number(m.likes) || 0).toLocaleString() + '</td>' +
+            '<td>' + (Number(m.comments) || 0).toLocaleString() + '</td><td>' + (Number(m.favs) || 0).toLocaleString() + '</td>' +
+            '<td>' + (Number(m.shares) || 0).toLocaleString() + '</td></tr>';
+        }).join('') + '</tbody></table>') : '<div class="pub-empty">暂无录入数据</div>';
+    }
+
+    function addMetric() {
+      var m = {
+        id: uid('m'), platform: $('pubMPlatform').value, ep: $('pubMEp').value.trim(),
+        date: $('pubMDate').value, views: num('pubMViews'), likes: num('pubMLikes'),
+        comments: num('pubMComments'), favs: num('pubMFavs'), shares: num('pubMShares')
+      };
+      if (!m.platform || !m.date) { toast('请选择平台与日期'); return; }
+      db.metrics.unshift(m);
+      save();
+      $('pubMEp').value = '';
+      $('pubMViews').value = ''; $('pubMLikes').value = ''; $('pubMComments').value = '';
+      $('pubMFavs').value = ''; $('pubMShares').value = '';
+      renderBoard();
+      toast('已录入');
+    }
+
+    /* ---------------- 交互 ---------------- */
+    function switchTab(name) {
+      view.querySelectorAll('[data-pub-tab]').forEach(function (el) {
+        el.classList.toggle('hm-pill-primary', el.getAttribute('data-pub-tab') === name);
+      });
+      view.querySelectorAll('[data-pub-panel]').forEach(function (el) {
+        el.hidden = el.getAttribute('data-pub-panel') !== name;
+      });
+      if (name === 'board') renderBoard();
+      if (name === 'records') renderRecords();
+    }
+
+    function onClick(event) {
+      var tab = event.target.closest('[data-pub-tab]');
+      if (tab) { switchTab(tab.getAttribute('data-pub-tab')); return; }
+      if (event.target.closest('#pubFileBtn')) { $('pubFile').click(); return; }
+      if (event.target.closest('#pubSave')) { saveTask(); return; }
+      if (event.target.closest('#pubCancel')) { resetForm(); return; }
+      if (event.target.closest('#pubMAdd')) { addMetric(); return; }
+
+      var edit = event.target.closest('[data-pub-edit]');
+      if (edit) { editTask(edit.getAttribute('data-task')); return; }
+      var del = event.target.closest('[data-pub-del]');
+      if (del) { delTask(del.getAttribute('data-task')); return; }
+      var copy = event.target.closest('[data-pub-copy]');
+      if (copy) {
+        var t1 = taskOf(copy.getAttribute('data-task'));
+        if (t1) copyText(t1.links[copy.getAttribute('data-plat')] || '');
+        return;
+      }
+      var done = event.target.closest('[data-pub-done]');
+      if (done) { markDone(done.getAttribute('data-task'), done.getAttribute('data-plat')); return; }
+    }
+
+    function onChange(event) {
+      var el = event.target;
+      if (el.id === 'pubFile') {
+        var f = el.files && el.files[0];
+        pendingFile = f ? { name: f.name, size: f.size } : null;
+        $('pubFileName').value = f ? f.name + ' · ' + fmtSize(f.size) : '';
+        return;
+      }
+      var st = el.closest('[data-pub-status]');
+      if (st) {
+        var t = taskOf(st.getAttribute('data-task'));
+        if (t) { t.status = st.value; save(); renderTasks(); renderRecords(); }
+        return;
+      }
+      var link = el.closest('[data-pub-link]');
+      if (link) {
+        var task = taskOf(link.getAttribute('data-task'));
+        if (task) { task.links[link.getAttribute('data-plat')] = link.value.trim(); save(); }
+        return;
+      }
+      if (el.id === 'pubFEp' || el.id === 'pubFPlatform' || el.id === 'pubFRange') {
+        renderBoard();
+      }
+    }
+
+    function init() {
+      $('pubPlatforms').innerHTML = PLATFORMS.map(function (p) {
+        return '<label><input type="checkbox" value="' + p.id + '">' + p.name + '</label>';
+      }).join('');
+      fillSelect($('pubMPlatform'), PLATFORMS.map(function (p) { return { value: p.id, label: p.name }; }));
+      $('pubMDate').value = new Date().toISOString().slice(0, 10);
+      view.addEventListener('click', onClick);
+      view.addEventListener('change', onChange);
+      renderTasks();
+      renderRecords();
+      renderBoard();
+      new MutationObserver(function () {
+        if (document.body.getAttribute('data-view') === 'publish') renderBoard();
+      }).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
+    }
+
+    init();
+  })();
 </script>
 
 </body>
