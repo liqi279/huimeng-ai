@@ -23143,33 +23143,48 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   async function refreshUserWorks() {
     if (!api || !api.online) return;
+    var A = window.HMApp;
+    if (!A || !A.state) return;
+    /* 手动登录时 state.works 已被登出清空；本地作品必须取「所有候选键的并集」
+       （用户键 / .bak / .snap.* / 历史键名），不能只读一个 key 后当成全部 */
+    var mergeAll = (window.HMSync && window.HMSync.mergeLists)
+      ? window.HMSync.mergeLists
+      : function () { return [].slice.call(arguments).reduce(function (a, b) { return a.concat(Array.isArray(b) ? b : []); }, []); };
+    var localAll = (window.HMSync && window.HMSync.collectLocalWorks)
+      ? window.HMSync.collectLocalWorks()
+      : [];
+    var localWorks = mergeAll(localAll, Array.isArray(A.state.works) ? A.state.works : []);
+
+    var serverItems = null;
     try {
       var data = await api.listWorks();
-      if (data && Array.isArray(data.items) && window.HMApp && window.HMApp.state) {
-        var A = window.HMApp;
-        /* 手动登录时 state.works 已被登出清空，需先从该用户专属 key 加载本地作品，
-           再与服务端合并（Render 重启会清空 data/，作品可能只存在本地） */
-        var localFromKey = [];
-        try {
-          var key = A.worksLsKey ? A.worksLsKey() : 'anidream.works.v1';
-          var raw = localStorage.getItem(key);
-          if (raw) {
-            var parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) localFromKey = parsed;
-          }
-        } catch (e) {}
-        var memWorks = Array.isArray(A.state.works) ? A.state.works : [];
-        var localWorks = localFromKey.length ? localFromKey : memWorks;
-        A.state.works = (A.mergeWorks
-          ? A.mergeWorks(data.items, localWorks)
-          : data.items.concat(localWorks));
-        /* 从 IndexedDB 补回原图（本地缓存里 url 被清空、blob 标记存在） */
+      if (data && Array.isArray(data.items)) serverItems = data.items;
+    } catch (e) { serverItems = null; }
+
+    /* 云端失败 / 结构异常 / 列表为空：只用本地，绝不清空、绝不写空 */
+    if (!serverItems || !serverItems.length) {
+      if (localWorks.length) {
+        A.state.works = localWorks;
         if (A.hydrateWorks) { try { await A.hydrateWorks(); } catch (e) {} }
-        /* 走 saveWorks：备份 + 写 IndexedDB + 同步服务端，不直接写 localStorage */
-        if (A.saveWorks) A.saveWorks();
-        if (A.renderWorks) A.renderWorks();
+        if (window.HMSync && window.HMSync.runSyncWrite) {
+          window.HMSync.runSyncWrite(function () {
+            if (A.saveWorks) A.saveWorks();
+            if (A.renderWorks) A.renderWorks();
+          });
+        } else {
+          if (A.saveWorks) A.saveWorks();
+          if (A.renderWorks) A.renderWorks();
+        }
       }
-    } catch (e) {}
+      return;
+    }
+
+    A.state.works = (A.mergeWorks
+      ? A.mergeWorks(serverItems, localWorks)
+      : serverItems.concat(localWorks));
+    if (A.hydrateWorks) { try { await A.hydrateWorks(); } catch (e) {} }
+    if (A.saveWorks) A.saveWorks();
+    if (A.renderWorks) A.renderWorks();
   }
 
   /* ---------- 用户头像 UI ---------- */
@@ -27473,6 +27488,9 @@ async function compressDataUrl(dataUrl, maxW, quality) {
 function saveWorks() {
   var key = worksLsKey();
   var bakKey = worksBakLsKey();
+  /* 写入前先做带时间戳快照（.snap.<ts>，保留 3 份）；
+     若是同步流程写入空列表，beforePersist 会直接从快照回滚，绝不落盘空数组 */
+  if (window.HMSync && window.HMSync.beforePersist) window.HMSync.beforePersist(state.works);
   /* 覆盖前先备份一份，便于误清后恢复 */
   try {
     var prev = localStorage.getItem(key);
@@ -28886,6 +28904,7 @@ function bindEvents() {
       if (action === 'download') downloadImage(work.url || work.thumb, fileNameFor(work));
       else if (action === 'view') openLightbox(work);
       else if (action === 'delete') {
+        if (window.HMSync && window.HMSync.snapshotWorks) window.HMSync.snapshotWorks('delete-one');
         state.works = state.works.filter(function (w) { return w.id !== work.id; });
         idbDelBlob(work.id);
         saveWorks();
@@ -28900,7 +28919,8 @@ function bindEvents() {
 
   els.clearWorks.addEventListener('click', function () {
     if (!state.works.length) return;
-    if (!window.confirm('确定清空全部作品吗？此操作不可撤销。')) return;
+    if (!window.confirm('确定清空全部作品吗？可从「设置 → 云同步 → 恢复本地备份」找回最近 3 次快照。')) return;
+    if (window.HMSync && window.HMSync.snapshotWorks) window.HMSync.snapshotWorks('clear-all');
     state.works = [];
     saveWorks();
     renderWorks();
@@ -29055,21 +29075,24 @@ async function authBoot() {
     var confirmedKey = worksLsKey(me.user.id);
     var confirmedBakKey = worksBakLsKey(me.user.id);
     if (!cachedUser || cachedUser.id !== me.user.id) {
-      var userWorks = loadJSON(confirmedKey, null);
-      if (!userWorks || !userWorks.length) {
-        var userBak = loadJSON(confirmedBakKey, null);
-        if (userBak && userBak.length) userWorks = userBak;
+      /* 事故修复：不再「某个 key 为空就赋 []」。
+         取本地全部候选来源（用户键 / 备份 / 时间戳快照 / 历史键名）与内存的并集；
+         取不到时保持 state.works 原样，交给后面的云端结果合并，绝不主动清空。 */
+      var localAll = (window.HMSync && window.HMSync.collectLocalWorks)
+        ? window.HMSync.collectLocalWorks(me.user.id)
+        : mergeWorks([], [loadJSON(confirmedKey, null), loadJSON(confirmedBakKey, null), loadJSON(LS_WORKS, null)]);
+      var memWorks = Array.isArray(state.works) ? state.works : [];
+      var userWorks = mergeWorks(localAll, memWorks);
+      if (userWorks.length) {
+        state.works = userWorks.slice(0, MAX_WORKS);
+        saveJSON(confirmedKey, state.works.map(function (w) {
+          if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
+          return w;
+        }));
+        console.log('[authBoot] 本地作品并集加载完成', state.works.length, '张');
+      } else if (memWorks.length) {
+        state.works = memWorks.slice(0, MAX_WORKS);
       }
-      /* 旧版迁移：用户专属 key 为空但访客共享 key 有数据 → 迁移过来 */
-      if ((!userWorks || !userWorks.length)) {
-        var guestWorks = loadJSON(LS_WORKS, null);
-        if (guestWorks && guestWorks.length) {
-          userWorks = guestWorks;
-          saveJSON(confirmedKey, guestWorks);
-          console.log('[authBoot] 已将访客数据迁移到用户', me.user.username, '共', guestWorks.length, '张');
-        }
-      }
-      state.works = (userWorks && userWorks.length ? userWorks : []).slice(0, MAX_WORKS);
     }
 
     /* 从后端拉最新作品（不能覆盖本地：服务端可能因重启丢数据） */
@@ -29088,10 +29111,14 @@ async function authBoot() {
        Render 重启清空 data/ 后自动恢复，换设备也能看到 */
     syncAllWorksToServer(serverItems);
 
-    saveJSON(confirmedKey, state.works.map(function (w) {
-      if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
-      return w;
-    }));
+    if (state.works.length || !localStorage.getItem(confirmedKey) || localStorage.getItem(confirmedKey) === '[]') {
+      saveJSON(confirmedKey, state.works.map(function (w) {
+        if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
+        return w;
+      }));
+    } else {
+      console.warn('[authBoot] 本次结果为空但本地已有作品，跳过回写，避免清空');
+    }
 
     hideLogin();
     updateUserUI();
@@ -55854,7 +55881,8 @@ window.HMChat = (function () {
   }
 
   function cleanLocal() {
-    if (!window.confirm('清理本地作品与写作草稿？此操作不可撤销。')) return;
+    if (!window.confirm('清理本地作品与写作草稿？可从「设置 → 云同步 → 恢复本地备份」找回最近 3 次快照。')) return;
+    if (window.HMSync && window.HMSync.snapshotWorks) window.HMSync.snapshotWorks('clean-local');
     A.state.works = [];
     A.saveWorks();
     A.renderWorks();
@@ -65776,6 +65804,174 @@ window.HMChat = (function () {
   var panelEl = null;
   var lastPullAt = 0;
 
+  /* ============================================================
+   * 数据安全层（事故修复）：
+   *   1. 本地作品来源永远是「所有候选键的并集」，不依赖单一 key
+   *   2. 任何覆盖写之前先做带时间戳快照（保留最近 3 份）
+   *   3. 同步流程试图把作品列表写空 → 拦回快照内容，绝不落盘空数组
+   * ============================================================ */
+  var LS_WORK_PREFIX = 'anidream.works';
+  var LEGACY_WORK_KEYS = ['anidream.works', 'hm.works', 'works', 'anidream.works.v1.bak'];
+  var MAX_SNAPSHOTS = 3;
+  var syncDepth = 0;
+
+  function toast(msg, type) {
+    try { if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type || 'info'); } catch (e) {}
+  }
+
+  function itemId(w) {
+    if (w && w.id) return String(w.id);
+    return 'fp_' + fingerprint(w || {});
+  }
+
+  /* 并集合并：按 id 去重，时间新的字段优先，任何一条都不丢 */
+  function mergeLists() {
+    var map = Object.create(null);
+    var order = [];
+    Array.prototype.forEach.call(arguments, function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (w) {
+        if (!w || typeof w !== 'object') return;
+        var id = itemId(w);
+        if (!map[id]) {
+          map[id] = Object.assign({}, w, { id: id });
+          order.push(id);
+          return;
+        }
+        var cur = map[id];
+        if (workTime(w) >= workTime(cur)) map[id] = Object.assign({}, cur, w, { id: id });
+        else map[id] = Object.assign({}, w, cur, { id: id });
+      });
+    });
+    return order.map(function (id) { return map[id]; }).sort(function (a, b) {
+      return workTime(b) - workTime(a);
+    });
+  }
+
+  /* 扫描本地所有可能存过作品的键（当前用户键 / .bak / .snap.* / 历史键名）
+     注意：只取「当前用户 + 无后缀的访客键」，不读其它用户的键，避免串号。 */
+  function collectLocalWorks(userId) {
+    var u = userId || uid();
+    var prefix = u ? 'anidream.works.v1.' + u : '';
+    var keys = [];
+    try {
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var k = localStorage.key(i);
+        if (!k) continue;
+        if (LEGACY_WORK_KEYS.indexOf(k) >= 0) { keys.push(k); continue; }
+        if (k === 'anidream.works.v1' || k === 'anidream.works.v1.bak') { keys.push(k); continue; }
+        if (prefix && (k === prefix || k.indexOf(prefix + '.') === 0)) keys.push(k);
+      }
+    } catch (e) {}
+    var lists = [];
+    keys.forEach(function (k) {
+      try {
+        var raw = localStorage.getItem(k);
+        if (!raw || raw.length < 3) return;
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) lists.push(arr);
+      } catch (e) {}
+    });
+    return mergeLists.apply(null, lists);
+  }
+
+  function userWorkKey(u) { return 'anidream.works.v1.' + u; }
+
+  function snapshotKeys(u) {
+    var out = [];
+    try {
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(userWorkKey(u) + '.snap.') === 0) out.push(k);
+      }
+    } catch (e) {}
+    out.sort();
+    return out;
+  }
+
+  function pruneSnapshots(u) {
+    var keys = snapshotKeys(u);
+    while (keys.length > MAX_SNAPSHOTS) {
+      try { localStorage.removeItem(keys.shift()); } catch (e) {}
+    }
+  }
+
+  /* 覆盖写之前调用：把「磁盘上现有的」作品列表备份成 .snap.<时间戳> */
+  function snapshotWorks(reason) {
+    var u = uid();
+    if (!u) return null;
+    var key = userWorkKey(u);
+    var raw = null;
+    try { raw = localStorage.getItem(key); } catch (e) {}
+    if (!raw || raw.length < 3 || raw === '[]') return null;
+    var snapKey = key + '.snap.' + Date.now();
+    try { localStorage.setItem(snapKey, raw); } catch (e) { return null; }
+    pruneSnapshots(u);
+    if (reason === 'recover') console.log('[HMSync] 恢复前已快照', snapKey);
+    return snapKey;
+  }
+
+  function latestSnapshot(u) {
+    var keys = snapshotKeys(u);
+    if (!keys.length) return [];
+    try {
+      var arr = JSON.parse(localStorage.getItem(keys[keys.length - 1]) || '[]');
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  /* 由 saveWorks 在写入前调用 */
+  function beforePersist(list) {
+    snapshotWorks('saveWorks');
+    if (syncDepth) {
+      if (Array.isArray(list) && list.length) return;
+      var prev = latestSnapshot(uid());
+      if (!prev.length) return;
+      if (window.HMApp && window.HMApp.state) window.HMApp.state.works = prev;
+      sync.lastError = '同步返回空列表，已阻止清空本地作品，并从快照恢复 ' + prev.length + ' 条';
+      saveSync();
+      toast('已阻止一次空列表覆盖，本地作品已从快照恢复', 'warn');
+      return;
+    }
+    /* 用户主动把列表删空（单条删完/多选删除/清空）：记标记，避免下次进页面被自动恢复"复活" */
+    if (Array.isArray(list) && !list.length && uid()) {
+      try { localStorage.setItem('hmsync.clearedAt.' + uid(), String(Date.now())); } catch (e) {}
+    }
+  }
+
+  function runSyncWrite(fn) {
+    syncDepth += 1;
+    try { return fn(); } finally { syncDepth -= 1; }
+  }
+
+  /* 读取 IndexedDB 里所有 blob（作品 id → data URL），用于恢复入口 */
+  function idbAll() {
+    return new Promise(function (resolve) {
+      try {
+        var req = indexedDB.open('anidream', 1);
+        req.onupgradeneeded = function () {
+          var db = req.result;
+          if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+        };
+        req.onerror = function () { resolve({}); };
+        req.onsuccess = function () {
+          var db = req.result;
+          var out = {};
+          try {
+            var cur = db.transaction('blobs', 'readonly').objectStore('blobs').openCursor();
+            cur.onerror = function () { resolve(out); };
+            cur.onsuccess = function (e) {
+              var c = e.target.result;
+              if (!c) { resolve(out); return; }
+              out[String(c.key)] = c.value;
+              c.continue();
+            };
+          } catch (e) { resolve({}); }
+        };
+      } catch (e) { resolve({}); }
+    });
+  }
+
   function read(key, fallback) {
     try {
       var v = JSON.parse(localStorage.getItem(key) || 'null');
@@ -65864,6 +66060,8 @@ window.HMChat = (function () {
   /* ---------------- 作品推送 ---------------- */
   function onWorksChanged() {
     if (!uid()) return;
+    /* 恢复入口刚把本地作品挂回列表时，先不要立刻回传云端（避免用恢复结果覆盖云端） */
+    if (sync.pausedUntil && Date.now() < sync.pausedUntil) return;
     if (pushTimer) return;
     pushTimer = setTimeout(function () {
       pushTimer = null;
@@ -65905,10 +66103,10 @@ window.HMChat = (function () {
     work._assetId = res.asset.assetId;
     work._assetBytes = res.asset.bytes;
     work._updatedAt = Date.now();
-    try {
-      if (window.HMApp && window.HMApp.idbDelBlob) window.HMApp.idbDelBlob(work.id);
-    } catch (e) {}
-    work.blob = false;
+    /* 关键：不删除 IndexedDB 里的原图。对象存储未配置时图片落在 Render 本地盘，
+       重新部署/重启后 URL 会 404，本地 blob 是唯一还能救回来的来源。 */
+    work.blob = true;
+    work._localBlobKept = true;
     usage = res.usage || usage;
     return work;
   }
@@ -66087,7 +66285,8 @@ window.HMChat = (function () {
     }
   }
 
-  /* ---------------- 登录后：拉取 + 迁移 ---------------- */
+  /* ---------------- 登录后：拉取 + 迁移 ----------------
+   * 铁律：拉取失败 / 401 / 403 / 超时 / 结构异常 / 云端为空，都不允许改动本地作品。 */
   async function afterLogin(force) {
     if (!uid() || busy || !window.HMApp) return;
     if (!force && Date.now() - lastPullAt < 20000) return;
@@ -66095,12 +66294,26 @@ window.HMChat = (function () {
     busy = true;
     try {
       await window.HMApp.hydrateWorks();
-      var boot = await request('GET', '/user-data/bootstrap', null, 30000);
+      var boot;
+      try {
+        boot = await request('GET', '/user-data/bootstrap', null, 30000);
+      } catch (err) {
+        sync.lastError = '云端拉取失败（' + ((err && err.message) || '网络异常') + '），本机作品保持不变';
+        saveSync();
+        renderPanel();
+        return;
+      }
+      if (!boot || typeof boot !== 'object') {
+        sync.lastError = '云端返回结构异常，已忽略本次同步，本机作品保持不变';
+        saveSync();
+        renderPanel();
+        return;
+      }
       applyBootstrap(boot);
       await migrateLocal();
       await flushQueue();
       sync.lastSync = Date.now();
-      sync.lastError = '';
+      if (!sync.lastError) sync.lastError = '';
       saveSync();
     } catch (err) {
       sync.lastError = (err && err.message) || '拉取失败';
@@ -66111,41 +66324,74 @@ window.HMChat = (function () {
     }
   }
 
+  function validWork(w) {
+    return !!(w && typeof w === 'object' && (w.id || w.url || w.thumb || w.failed || w.ok === false));
+  }
+
   function applyBootstrap(boot) {
-    if (!boot) return;
+    if (!boot || typeof boot !== 'object') return;
     storage = boot.storage || storage;
     usage = boot.usage || usage;
-    var serverWorks = Array.isArray(boot.works) ? boot.works : [];
+
+    /* 结构异常（字段名变动 / 被网关改写）：不动本地，不保存 */
+    if (!Array.isArray(boot.works)) {
+      sync.lastError = '云端作品字段缺失（works 不是数组），已忽略，本机作品保持不变';
+      saveSync();
+      return;
+    }
+
+    var serverWorks = boot.works.filter(validWork);
     var deleted = Array.isArray(boot.deleted) ? boot.deleted : [];
     var deletedMap = {};
-    deleted.forEach(function (d) { deletedMap[d.id] = Number(d.updatedAt) || 0; });
+    deleted.forEach(function (d) { if (d && d.id) deletedMap[String(d.id)] = Number(d.updatedAt) || 0; });
 
-    var local = (window.HMApp.state.works || []).filter(function (w) { return w && w.id; });
+    /* 本地作品 = 所有本地候选键 ∪ 当前内存列表 */
+    var local = mergeLists(collectLocalWorks(uid()), (window.HMApp.state && window.HMApp.state.works) || []);
     var localMap = {};
-    local.forEach(function (w) { localMap[w.id] = w; });
+    local.forEach(function (w) { localMap[itemId(w)] = w; });
+
+    /* 云端为空：保留本地全部作品并标记待上传，绝不写空 */
+    if (!serverWorks.length) {
+      if (!local.length) return;
+      local.forEach(function (w) { w._pendingUpload = true; });
+      runSyncWrite(function () {
+        window.HMApp.state.works = local;
+        if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+        if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+      });
+      toast('云端暂无作品，已保留本机 ' + local.length + ' 条', 'info');
+      return;
+    }
 
     var merged = [];
     serverWorks.forEach(function (sw) {
-      var lw = localMap[sw.id];
+      var sid = itemId(sw);
+      var lw = localMap[sid];
+      var tomb = deletedMap[sid];
       var serverTs = Number(sw._updatedAt) || 0;
-      if (lw && workTime(lw) > serverTs) {
-        merged.push(lw); /* 本地更新（例如离线期间生成）：保留并稍后补传 */
+      if (lw && (workTime(lw) > serverTs || (tomb && workTime(lw) > tomb))) {
+        /* 本地更新（例如离线期间生成）：保留并标记待上传 */
+        merged.push(Object.assign({}, lw, { _pendingUpload: true }));
       } else {
         merged.push(sw);
-        revs.works[sw.id] = sw._rev;
-        revs.fp[uid() + ':' + sw.id] = fingerprint(sw);
+        revs.works[sid] = sw._rev;
+        revs.fp[uid() + ':' + sid] = fingerprint(sw);
       }
-      delete localMap[sw.id];
+      delete localMap[sid];
     });
     Object.keys(localMap).forEach(function (id) {
-      if (deletedMap[id]) return; /* 其它设备已删除且本地没有更新 */
-      merged.push(localMap[id]);
+      var lw = localMap[id];
+      var tomb = deletedMap[id];
+      if (tomb && workTime(lw) <= tomb) return; /* 其它设备已删除且本地没有更新 */
+      merged.push(Object.assign({}, lw, { _pendingUpload: true }));
     });
 
     merged.sort(function (a, b) { return workTime(b) - workTime(a); });
-    window.HMApp.state.works = merged;
-    if (window.HMApp.saveWorks) window.HMApp.saveWorks();
-    if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+    runSyncWrite(function () {
+      window.HMApp.state.works = merged;
+      if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+      if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+    });
 
     var docs = boot.docs || {};
     Object.keys(DOC_KINDS).forEach(function (kind) {
@@ -66187,6 +66433,71 @@ window.HMChat = (function () {
     sync.migrated[uid()] = Date.now();
     saveSync();
     if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+  }
+
+  /* ---------------- 恢复本地备份（一次性、可重复、不重复插入、不回写云端） ---------------- */
+  async function recoverLocal() {
+    if (!window.HMApp || !window.HMApp.state) return { restored: 0 };
+    var local = mergeLists(collectLocalWorks(uid()), window.HMApp.state.works || []);
+    var blobs = await idbAll();
+    var known = {};
+    local.forEach(function (w) { known[itemId(w)] = 1; });
+
+    /* 列表里已经没有、但 IndexedDB 还留着图的孤儿 blob → 也挂回列表 */
+    var orphans = 0;
+    Object.keys(blobs).forEach(function (id) {
+      if (known[id]) return;
+      local.push({
+        id: id,
+        type: 'image',
+        url: blobs[id],
+        ok: true,
+        blob: true,
+        prompt: '',
+        createdAt: Date.now(),
+        _recoveredLocal: true
+      });
+      known[id] = 1;
+      orphans += 1;
+    });
+
+    var withImage = 0;
+    var missing = 0;
+    var remoteOnly = 0;
+    local.forEach(function (w) {
+      if (blobs[w.id]) {
+        /* 本地原图优先：远端签名 URL 可能因为 Render 重启/重新部署已经 404 */
+        if (w.url && String(w.url).indexOf('data:') !== 0) w._remoteUrl = w.url;
+        w.url = blobs[w.id];
+        w.blob = true;
+      }
+      if (w.url || (w.thumb && String(w.thumb).indexOf('data:') === 0)) {
+        withImage += 1;
+        if (!blobs[w.id] && !w.thumb && /^https?:/.test(String(w.url || ''))) remoteOnly += 1;
+      } else missing += 1;
+      w._recoveredLocal = true;
+      w._pendingUpload = true; /* 只标待上传，不立刻回写云端 */
+    });
+    local.sort(function (a, b) { return workTime(b) - workTime(a); });
+
+    if (!local.length) {
+      toast('本机没有找到可恢复的作品数据（localStorage 与 IndexedDB 都是空的）', 'warn', 7000);
+      return { restored: 0, withImage: 0, missing: 0, orphans: 0, remoteOnly: 0 };
+    }
+
+    snapshotWorks('recover');
+    sync.pausedUntil = Date.now() + 120000; /* 2 分钟内不自动回传，避免恢复结果覆盖云端 */
+    try { localStorage.removeItem('hmsync.clearedAt.' + uid()); } catch (e) {}
+    window.HMApp.state.works = local;
+    if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+    if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+    sync.lastError = '';
+    saveSync();
+    renderPanel();
+    toast('已从本机恢复 ' + local.length + ' 条（本地图 ' + withImage + ' 条，缺图 ' + missing +
+      ' 条，孤儿图 ' + orphans + ' 条' + (remoteOnly ? '，仅剩远端链接 ' + remoteOnly + ' 条可能已失效' : '') +
+      '），未回写云端', 'success', 9000);
+    return { restored: local.length, withImage: withImage, missing: missing, orphans: orphans, remoteOnly: remoteOnly };
   }
 
   /* ---------------- 离线队列 ---------------- */
@@ -66250,6 +66561,7 @@ window.HMChat = (function () {
           '<button type="button" id="hmSyncNow" class="hm-pill">立即同步</button>' +
           '<button type="button" id="hmSyncExport" class="hm-pill">导出备份</button>' +
           '<button type="button" id="hmSyncMigrate" class="hm-pill">重新上传本机数据</button>' +
+          '<button type="button" id="hmSyncRecover" class="hm-pill">恢复本地备份</button>' +
         '</div>' +
       '</div>' +
       '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:12.5px">' +
@@ -66277,6 +66589,12 @@ window.HMChat = (function () {
       saveRevs();
       btnMigrate.disabled = true;
       migrateLocal().finally(function () { btnMigrate.disabled = false; renderPanel(); });
+    };
+    var btnRecover = el.querySelector('#hmSyncRecover');
+    if (btnRecover) btnRecover.onclick = function () {
+      if (!window.confirm('从本机 localStorage 快照与 IndexedDB 图片恢复作品？\n不会覆盖云端，恢复后只标记「待同步」。')) return;
+      btnRecover.disabled = true;
+      recoverLocal().finally(function () { btnRecover.disabled = false; });
     };
   }
 
@@ -66327,7 +66645,41 @@ window.HMChat = (function () {
     if (uid()) { refreshStatus(); }
   }, 2500);
 
+  /* 进页面自愈：本地列表为空但检测到历史作品/快照/blob → 自动从本机恢复一次（不依赖云端）。
+     用户主动清空过的账号（clearedAt 标记）不会被"复活"。 */
+  var autoRecovered = false;
+  function maybeAutoRecover() {
+    try {
+      if (autoRecovered || !uid() || !window.HMApp || !window.HMApp.state) return;
+      var list = window.HMApp.state.works || [];
+      if (list.length) return;
+      if (localStorage.getItem('hmsync.clearedAt.' + uid())) return;
+      var cand = collectLocalWorks(uid());
+      if (!cand.length) return;
+      autoRecovered = true;
+      console.warn('[HMSync] 本地列表为空但存在历史作品，自动恢复', cand.length, '条');
+      recoverLocal();
+    } catch (e) {}
+  }
+  setTimeout(maybeAutoRecover, 3000);
+  setTimeout(maybeAutoRecover, 9000);
+
   window.addEventListener('beforeunload', function () { saveRevs(); saveSync(); saveQueue(); });
+
+  /* ---------------- 防回归断言（运行期自检，控制台可复跑） ---------------- */
+  function assertNoDataLoss() {
+    var cases = [];
+    var one = [{ id: 'w1', url: 'data:x', createdAt: 1 }];
+    cases.push(['服务端空 + 本地非空 → 保留本地', mergeLists([], one).length === 1]);
+    cases.push(['并集去重不产生重复', mergeLists(one, one).length === 1]);
+    cases.push(['本地独有作品必须保留', mergeLists(one, [{ id: 'w2', createdAt: 2 }]).length === 2]);
+    cases.push(['【事故回归】空 + 空 = 空，且不得触发写入', mergeLists([], []).length === 0]);
+    cases.push(['非数组输入不抛错', Array.isArray(mergeLists(null, undefined, one))]);
+    var failed = cases.filter(function (c) { return !c[1]; });
+    if (failed.length) console.error('[HMSync] 防回归断言失败：', failed.map(function (c) { return c[0]; }));
+    else console.log('[HMSync] 防回归断言通过（' + cases.length + ' 项）');
+    return { ok: failed.length === 0, total: cases.length, failed: failed.map(function (c) { return c[0]; }) };
+  }
 
   window.HMSync = {
     afterLogin: afterLogin,
@@ -66336,6 +66688,15 @@ window.HMChat = (function () {
     clearAll: clearAll,
     pushDoc: pushDoc,
     pushPrefs: pushPrefs,
+    /* 数据安全层（供页面内其它模块与排障使用） */
+    collectLocalWorks: collectLocalWorks,
+    mergeLists: mergeLists,
+    snapshotWorks: snapshotWorks,
+    beforePersist: beforePersist,
+    runSyncWrite: runSyncWrite,
+    recoverLocal: recoverLocal,
+    autoRecover: maybeAutoRecover,
+    assertNoDataLoss: assertNoDataLoss,
     pullDocs: async function () {
       var boot = await request('GET', '/user-data/bootstrap', null, 30000);
       applyBootstrap(boot);
@@ -66343,6 +66704,8 @@ window.HMChat = (function () {
     status: function () { return { storage: storage, usage: usage, sync: sync, queue: queue.length }; },
     refreshPanel: renderPanel
   };
+
+  setTimeout(function () { assertNoDataLoss(); }, 4000);
 
   /* 若用户已经登录（脚本晚于 authBoot），主动拉一次 */
   setTimeout(function () {
