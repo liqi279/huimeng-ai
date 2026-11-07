@@ -74,6 +74,37 @@ module.exports = {
   MYSQL_DATABASE: env('MYSQL_DATABASE', 'huimeng_library'),
   /* 表空间上限参考值（仅用于向接口/管理页展示，实际由 my.cnf 控制） */
   LIBRARY_STORAGE_LIMIT: env('LIBRARY_STORAGE_LIMIT', '500G'),
+
+  /* ---------- 用户作品/项目数据（跨设备同步） ---------- */
+  /* 结构化数据（作品元数据、项目文件夹树、编集、宣发、偏好）落 MySQL；
+     MySQL 不可用时回落文件存储（USER_STORE=auto），并明确告警。
+     二进制（作品图片/视频）走 S3 兼容对象存储，绝不入库、不把本地盘当唯一存储。 */
+  USER_DATA_STORE: env('USER_DATA_STORE', 'auto'), // auto | mysql | file
+  /* 对象存储（S3 协议）：Cloudflare R2 / MinIO / AWS S3 均可。
+     OBJECT_STORE=auto 时只要 S3_ENDPOINT + S3_BUCKET + 密钥齐全就走 S3，
+     否则回落本地盘（data/runtime/userdata），仅用于开发调试，Render 重启会丢。 */
+  OBJECT_STORE: env('OBJECT_STORE', 'auto'), // auto | s3 | local
+  S3_ENDPOINT: env('S3_ENDPOINT', ''),
+  S3_REGION: env('S3_REGION', 'auto'),
+  S3_BUCKET: env('S3_BUCKET', ''),
+  S3_ACCESS_KEY_ID: env('S3_ACCESS_KEY_ID', ''),
+  S3_SECRET_ACCESS_KEY: env('S3_SECRET_ACCESS_KEY', ''),
+  S3_FORCE_PATH_STYLE: env('S3_FORCE_PATH_STYLE', '1') !== '0',
+  /* 可选 CDN/公开域名（私有桶留空，走服务端签名跳转） */
+  S3_PUBLIC_BASE: env('S3_PUBLIC_BASE', ''),
+  /* S3 预签名跳转有效期（秒），最大 7 天 */
+  S3_URL_TTL: Number(env('S3_URL_TTL', '3600')),
+  /* 后端对外基地址（可选）。用于拼接图片 URL，例如
+     https://huimeng-ai-backend.onrender.com/api；留空则按请求头自动推导。 */
+  PUBLIC_BASE_URL: env('PUBLIC_BASE_URL', ''),
+
+  /* 单用户容量与清理策略 */
+  USER_WORK_CAP: Number(env('USER_WORK_CAP', '500')),
+  USER_ASSET_MAX_BYTES: Number(env('USER_ASSET_MAX_BYTES', String(10 * 1024 * 1024))),
+  USER_STORAGE_MAX_BYTES: Number(env('USER_STORAGE_MAX_BYTES', String(2 * 1024 * 1024 * 1024))),
+  USER_DOC_MAX_BYTES: Number(env('USER_DOC_MAX_BYTES', String(5 * 1024 * 1024))),
+  /* 删除墓碑保留天数（便于其他设备同步到删除） */
+  USER_TOMBSTONE_DAYS: Number(env('USER_TOMBSTONE_DAYS', '30')),
   FRONTEND_DIR: process.env.FRONTEND_DIR
     ? path.resolve(env('FRONTEND_DIR', ''))
     : path.resolve(serverRoot, '..', 'frontend'),
