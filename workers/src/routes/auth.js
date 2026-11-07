@@ -1,6 +1,6 @@
 // 用户认证与管理（/auth/*）
 import { Hono } from 'hono';
-import { authRequired, adminOnly, currentUserId } from '../auth.js';
+import { authRequired, authOptional, adminOnly, currentUserId } from '../auth.js';
 import { assert, readJsonBody } from '../util.js';
 import {
   authenticateUser,
@@ -16,22 +16,25 @@ const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; /* 30 天 */
 
 const routes = new Hono();
 
-routes.post('/auth/register', async (c) => {
+/* 注册：仅超管可用，创建即可直接登录 */
+routes.post('/auth/register', authOptional, async (c) => {
+  /* 未登录 / 非超管一律 403，与 Express 版保持一致 */
+  const me = c.get('user');
+  if (!me || me.role !== 'admin') {
+    return c.json({
+      error: { message: '公开注册已关闭，仅超级管理员可在「账号管理 → 新增人员」创建账号', code: 'ADMIN_ONLY' },
+    }, 403);
+  }
   const body = await readJsonBody(c);
-  const { username, password } = body;
+  const { username, password, role, note } = body;
   assert(username && typeof username === 'string', 400, '缺少用户名');
   assert(password && typeof password === 'string', 400, '缺少密码');
   assert(username.length >= 3, 400, '用户名至少 3 个字符');
   assert(password.length >= 6, 400, '密码至少 6 个字符');
 
-  const result = await createUser(c.env.DB, { username, password, role: 'user' });
-  if (!result.ok) return c.json({ error: { message: result.error } }, 409);
-  const token = await signToken(c.env, {
-    uid: result.user.id,
-    username: result.user.username,
-    role: result.user.role,
-  });
-  return c.json({ user: result.user, token, expiresAt: Date.now() + TOKEN_TTL_MS });
+  const result = await createUser(c.env.DB, { username, password, role, note });
+  if (!result.ok) return c.json({ error: { message: result.error, code: 'USERNAME_TAKEN' } }, 409);
+  return c.json({ ok: true, approved: true, message: '账号已创建，可直接登录', user: result.user });
 });
 
 routes.post('/auth/login', async (c) => {
@@ -55,13 +58,13 @@ routes.get('/auth/users', authRequired, adminOnly, async (c) => {
 
 routes.post('/auth/users', authRequired, adminOnly, async (c) => {
   const body = await readJsonBody(c);
-  const { username, password, role } = body;
+  const { username, password, role, note } = body;
   assert(username && password, 400, '缺少用户名或密码');
   assert(username.length >= 3, 400, '用户名至少 3 个字符');
   assert(password.length >= 6, 400, '密码至少 6 个字符');
-  const result = await createUser(c.env.DB, { username, password, role });
-  if (!result.ok) return c.json({ error: { message: result.error } }, 409);
-  return c.json({ user: result.user });
+  const result = await createUser(c.env.DB, { username, password, role, note });
+  if (!result.ok) return c.json({ error: { message: result.error, code: 'USERNAME_TAKEN' } }, 409);
+  return c.json({ ok: true, user: result.user });
 });
 
 routes.patch('/auth/users/:id/role', authRequired, adminOnly, async (c) => {
