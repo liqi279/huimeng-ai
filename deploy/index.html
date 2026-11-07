@@ -25999,6 +25999,10 @@ async function runBackendImage(job, prompt) {
     prompt: prompt,
     ratio: job.ratioId,
     scale: job.scaleId,
+    /* 显式像素尺寸：避免后端按自有比例表把新比例回落到默认尺寸 */
+    width: job.width,
+    height: job.height,
+    size: job.width + 'x' + job.height,
     count: 1,
     steps: job.steps || 8,
     seed: job.seed,
@@ -26021,6 +26025,7 @@ async function runBackendImage(job, prompt) {
   const data = await window.HM.api.generate(payload, 180000);
   const item = data && data.items && data.items[0];
   if (!item || !item.url) throw new Error('后端未返回图片');
+  if (item.width && item.height) applyActualSize(job, item.width, item.height);
   return {
     url: window.HM.api.mediaUrl ? window.HM.api.mediaUrl(item.url) : item.url,
     seed: item.seed || job.seed
@@ -26244,14 +26249,36 @@ function pickImage(data) {
 }
 
 /* GPT-image 接口 size 仅接受固定枚举白名单，不能自定义像素；
- * 2K / 4K 档位通过 quality 参数（medium=1K, high=2K, ultra=4K）让 RayinAPI 内部放大 */
+ * 2K / 4K 档位通过 quality 参数（medium=1K, high=2K, ultra=4K）让 RayinAPI 内部放大；
+ * 其余比例按「宽高比最接近且方向一致」的白名单尺寸发送，并在界面提示实际出图尺寸 */
+const GPT_SIZES = [
+  { w: 1024, h: 1024, size: '1024x1024' },
+  { w: 1536, h: 1024, size: '1536x1024' },
+  { w: 1024, h: 1536, size: '1024x1536' }
+];
+
 function gptSizeFor(job) {
-  const ratio = job.ratioId || '1:1';
-  if (ratio === '1:1') return '1024x1024';
-  if (ratio === '3:4' || ratio === '9:16') return '1024x1536';
-  return '1536x1024';
+  const want = (Number(job.width) || 1024) / (Number(job.height) || 1024);
+  let best = GPT_SIZES[0];
+  let bestDiff = Infinity;
+  GPT_SIZES.forEach(function (item) {
+    const diff = Math.abs(Math.log((item.w / item.h) / want));
+    if (diff < bestDiff) { bestDiff = diff; best = item; }
+  });
+  return best.size;
 }
 
+/* 实际出图尺寸与所选比例不一致时：回写卡片尺寸并提示用户 */
+function applyActualSize(job, w, h) {
+  w = Math.round(Number(w) || 0);
+  h = Math.round(Number(h) || 0);
+  if (!w || !h || (w === job.width && h === job.height)) return;
+  job.width = w;
+  job.height = h;
+  if (typeof toast === 'function') {
+    toast('接口仅支持固定尺寸，实际出图 ' + w + '×' + h + '（所选比例 ' + (job.ratioId || '') + '）', 'info');
+  }
+}
 function gptQualityFor(job) {
   if (job.scaleId === '4k') return 'ultra';
   if (job.scaleId === '2k') return 'high';
@@ -26286,7 +26313,7 @@ async function runRayinImage(job, prompt) {
         const url = pickImage(data);
         if (!url) throw new Error('接口未返回图片');
         const first = data && Array.isArray(data.data) ? data.data[0] : null;
-        if (first && first.width && first.height) { job.width = first.width; job.height = first.height; }
+        if (first && first.width && first.height) { applyActualSize(job, first.width, first.height); } else { applyActualSize(job, Number(String(size).split('x')[0]), Number(String(size).split('x')[1])); }
         if (i > 0) toast('当前模型 ID 不可用，已自动切换到 ' + model, 'info');
         return { url: url, seed: job.seed };
       } else {
@@ -26302,7 +26329,7 @@ async function runRayinImage(job, prompt) {
         const url = pickImage(data);
         if (!url) throw new Error('接口未返回图片');
         const first = data && Array.isArray(data.data) ? data.data[0] : null;
-        if (first && first.width && first.height) { job.width = first.width; job.height = first.height; }
+        if (first && first.width && first.height) { applyActualSize(job, first.width, first.height); } else { applyActualSize(job, Number(String(size).split('x')[0]), Number(String(size).split('x')[1])); }
         if (i > 0) toast('当前模型 ID 不可用，已自动切换到 ' + model, 'info');
         return { url: url, seed: job.seed };
       }
