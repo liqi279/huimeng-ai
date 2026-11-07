@@ -3232,6 +3232,36 @@ body {
   height: 15px;
 }
 
+/* 顶栏「虚拟形象」入口：与图标按钮同高同圆角，描边+浅底保证在深色顶栏上清晰可见 */
+#avatarToggle.hm-avatar-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: auto;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(124, 196, 255, 0.42);
+  background: rgba(96, 165, 250, 0.14);
+  color: #cfe4ff;
+  font-size: 11.5px;
+  line-height: 1;
+  cursor: pointer;
+}
+#avatarToggle.hm-avatar-toggle svg { width: 14px; height: 14px; opacity: 1; }
+#avatarToggle.hm-avatar-toggle span { white-space: nowrap; }
+#avatarToggle.hm-avatar-toggle:hover {
+  color: #fff;
+  background: rgba(96, 165, 250, 0.26);
+  border-color: rgba(147, 197, 253, 0.72);
+}
+#avatarToggle.hm-avatar-toggle.is-on {
+  color: #fff;
+  background: rgba(96, 165, 250, 0.34);
+  border-color: rgba(147, 197, 253, 0.9);
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.35);
+}
+
 .hm-personal {
   height: 30px;
   padding: 0 6px 0 9px;
@@ -17612,6 +17642,7 @@ body.dv-open .hm-page {
     </div>
 
     <div class="hm-top-right">
+      <button class="hm-icon-btn hm-avatar-toggle" id="avatarToggle" aria-label="虚拟形象" title="虚拟形象" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.8 20c.4-3.6 3.4-6 7.2-6s6.8 2.4 7.2 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>虚拟形象</span></button>
       <div class="hm-user-wrap" id="hmUserWrap" hidden>
         <button class="hm-user-pill" id="hmUserPill" title="账号">
           <span class="hm-user-avatar" id="hmUserAvatar">我</span>
@@ -53926,13 +53957,8 @@ window.HMChat = (function () {
       try { window.HMChat.init(); } catch (e) { console.error('[Chat] init failed', e); }
     }
 
-    /* 初音未来 · 胶片悬浮音乐播放器插件 */
-    if (window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
-      try {
-        window.MikuPlayer.init();
-        window.__HM_MIKU_MOUNTED = true;
-      } catch (e) { console.error('[MikuPlayer] init failed', e); }
-    }
+    /* 初音未来 · 胶片悬浮音乐播放器插件：默认不自动挂载，
+     * 由顶栏「虚拟形象」按钮按需创建 / 收起（见 bindAvatarToggle） */
   }
 
   window.HMUI = {
@@ -62482,6 +62508,40 @@ window.HMChat = (function () {
   window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin };
 })();
 
+
+(function bindAvatarToggle() {
+  var btn = document.getElementById('avatarToggle');
+  if (!btn) return;
+  /* 页面加载时不自动挂载形象 / AI 语音浮层，统一由顶栏「虚拟形象」按钮按需创建 */
+  window.MIKU_CHAT_NO_AUTO = true;
+  function widgetEl() { return document.getElementById('vinyl-widget'); }
+  function sync() {
+    var el = widgetEl();
+    var on = !!(el && el.style.display !== 'none' && el.offsetParent !== null);
+    btn.classList.toggle('is-on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function ensure() {
+    if (!widgetEl() && window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
+      try { window.MikuPlayer.init(); window.__HM_MIKU_MOUNTED = true; } catch (e) {}
+    }
+    if (window.MikuChat && !window.__HM_MIKU_CHAT) {
+      try { window.MikuChat.init({ anchor: '#vinyl-widget' }); window.__HM_MIKU_CHAT = true; } catch (e) {}
+    }
+  }
+  btn.addEventListener('click', function () {
+    ensure();
+    var el = widgetEl();
+    if (!el) { setTimeout(sync, 80); return; }
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    if (el.style.display === 'block') {
+      var ball = document.getElementById('mini-ball');
+      if (ball) ball.style.display = 'none';
+    }
+    sync();
+  });
+  window.addEventListener('load', function () { setTimeout(sync, 400); });
+})();
 </script>
 
 </body>
