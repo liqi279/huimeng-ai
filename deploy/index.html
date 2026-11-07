@@ -52319,13 +52319,9 @@ window.HMChat = (function () {
       var item = event.target.closest('[data-rail]');
       if (!item) return;
       if (item.id === 'railHomeBtn') {
-        /* 桌面/画布双模式按钮：不在桌面布局时直接切回桌面，已在桌面时才弹出模式菜单 */
+        /* 桌面/画布双模式按钮：点击同时切回桌面布局并弹出模式菜单 */
         event.preventDefault();
-        var curHome = document.body.getAttribute('data-view') || homeMode;
-        if (curHome !== 'create') {
-          setHomeMode('create');
-          return;
-        }
+        setHomeMode('create');
         toggleHomeMenu();
         return;
       }
