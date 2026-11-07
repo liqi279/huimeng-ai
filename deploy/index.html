@@ -29107,6 +29107,7 @@ window.HMApp = {
   toast: toast,
   renderWorks: renderWorks,
   saveWorks: saveWorks,
+  idbDelBlob: idbDelBlob,
   mergeWorks: mergeWorks,
   hydrateWorks: hydrateWorks,
   worksLsKey: worksLsKey,
@@ -61519,19 +61520,58 @@ window.HMChat = (function () {
   }
 
   /* ---------------- 作品操作 ---------------- */
-  function deleteWork(work) {
-    if (!work) return;
-    if (!window.confirm('删除「' + workName(work) + '」？此操作不可撤销。')) return;
-    state.works = state.works.filter(function (w) { return w.id !== work.id; });
-    delete desk.positions[work.id];
-    delete desk.assigns[work.id];
-    delete desk.names[work.id];
-    if (view.cut === work.id) view.cut = null;
-    delete view.selected[work.id];
+  /* 批量删除：选中几张删几张，确认只弹一次。
+     注意：不能逐条调用带 confirm 的删除 —— 连续弹窗会被浏览器拦截（后续 confirm 直接返回 false），
+     结果只有第一张真正被删掉。 */
+  function deleteWorks(list, silent) {
+    var works = (list || []).filter(Boolean);
+    if (!works.length) return 0;
+    if (!silent) {
+      var label = works.length === 1 ? (workName(works[0]) || '该项') : works.length + ' 项';
+      if (!window.confirm('删除「' + label + '」？此操作不可撤销。')) return 0;
+    }
+    var ids = {};
+    works.forEach(function (w) { ids[w.id] = true; });
+    state.works = state.works.filter(function (w) { return !ids[w.id]; });
+    var gridEl = (A.els && A.els.resultGrid) || document;
+    works.forEach(function (w) {
+      if (typeof A.idbDelBlob === 'function') {
+        try { A.idbDelBlob(w.id); } catch (e) {}
+      }
+      delete desk.positions[w.id];
+      delete desk.assigns[w.id];
+      delete desk.names[w.id];
+      if (view.cut === w.id) view.cut = null;
+      delete view.selected[w.id];
+      delete view.selected['job:' + w.id];
+      /* 作品与任务同 id：清掉任务记录，避免结果区/桌面残留失败或加载卡 */
+      if (A.state && A.state.jobs && typeof A.state.jobs.delete === 'function') {
+        A.state.jobs.delete(w.id);
+      }
+      Array.prototype.forEach.call(gridEl.querySelectorAll('[data-job="' + w.id + '"]'), function (node) {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      });
+    });
     persistNow();
     A.saveWorks();
     A.renderWorks();
-    A.toast('已删除', 'info');
+    /* 删除后清理选中状态并刷新批量操作条的隐藏/计数 */
+    if (!selectedIds().length) view.selected = {};
+    syncSelection();
+    if (!silent) A.toast(works.length > 1 ? '已删除 ' + works.length + ' 项' : '已删除', 'info');
+    /* 文件夹预览打开时同步刷新，避免残留已删除的卡片 */
+    var prevModal = byId('folderPreviewModal');
+    if (prevModal && !prevModal.hidden && view.prevFolder) {
+      var prevFolder = desk.folders.find(function (f) { return f.id === view.prevFolder; });
+      if (prevFolder) openFolderPreview(prevFolder);
+      else closeFolderPreview();
+    }
+    return works.length;
+  }
+
+  function deleteWork(work) {
+    if (!work) return;
+    deleteWorks([work], false);
   }
 
   function duplicateWork(work) {
@@ -61766,6 +61806,7 @@ window.HMChat = (function () {
     }
 
     modal.hidden = false;
+    view.prevFolder = folder.id;
 
     /* 点击弹窗内的缩略图 → 打开原图 lightbox */
     body.onclick = function (ev) {
@@ -62510,7 +62551,16 @@ window.HMChat = (function () {
           case 'retry': if (A.retryWork) A.retryWork(work); break;
           case 'download': A.downloadImage(work.url, A.fileNameFor(work)); break;
           case 'canvas': sendToCanvas(work); break;
-          case 'delete': deleteWork(work); break;
+          case 'delete':
+            /* 右键的那张属于当前多选集合 → 删除整批；否则维持单张删除 */
+            var selIds = selectedIds().filter(function (k) { return findWork(k); });
+            if (selIds.indexOf(work.id) >= 0 && selIds.length > 1) {
+              var selWorks = selIds.map(function (k) { return findWork(k); }).filter(Boolean);
+              if (deleteWorks(selWorks, false)) clearSelection();
+            } else {
+              deleteWork(work);
+            }
+            break;
           default: break;
         }
       });
@@ -62768,20 +62818,21 @@ window.HMChat = (function () {
         var folderIds = keys.filter(function (k) { return desk.folders.some(function (f) { return f.id === k; }); });
         if (folderIds.length) {
           event.preventDefault();
-          folderIds.forEach(function (fid) { deleteFolder(fid); });
+          if (folderIds.length > 1) {
+            /* 多选文件夹：确认一次后静默批量删除，避免连续 confirm 被浏览器拦截 */
+            if (!window.confirm('删除选中的 ' + folderIds.length + ' 个文件夹？其中作品将回到个人空间。')) return;
+            folderIds.forEach(function (fid) { deleteFolder(fid, true); });
+          } else {
+            folderIds.forEach(function (fid) { deleteFolder(fid); });
+          }
         } else {
-          var workIds = keys.filter(function (k) { return !k.indexOf('job:'); });
+          /* 排除 'job:' 前缀（生成中/失败的任务卡），只保留作品 id */
+          var workIds = keys.filter(function (k) { return k.indexOf('job:') !== 0; });
           if (workIds.length) {
             event.preventDefault();
-            var names = workIds.map(function (k) {
-              var w = findWork(k);
-              return w ? workName(w) : '';
-            }).filter(Boolean);
-            var label = workIds.length === 1 ? (names[0] || '该项') : workIds.length + ' 项';
-            if (window.confirm('删除「' + label + '」？此操作不可撤销。')) {
-              workIds.forEach(function (k) { deleteWork(findWork(k)); });
-              clearSelection();
-            }
+            /* 多选：一次性删除整个选中集合（deleteWorks 只确认一次） */
+            var works = workIds.map(function (k) { return findWork(k); }).filter(Boolean);
+            if (works.length && deleteWorks(works, false)) clearSelection();
           }
         }
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
