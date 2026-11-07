@@ -1154,6 +1154,103 @@ img {
   display: none;
 }
 
+/* 失败任务的结果卡片 / 作品卡 / 灯箱占位 */
+.result-media.is-failed-media {
+  background: linear-gradient(160deg, rgba(148, 163, 184, 0.16), rgba(30, 41, 59, 0.9));
+}
+.result-media.is-failed-media .error-box strong { color: #cbd5e1; }
+.work-failed {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  text-align: center;
+  background: linear-gradient(160deg, rgba(148, 163, 184, 0.16), rgba(17, 24, 39, 0.92));
+  color: #cbd5e1;
+}
+.work-failed svg { width: 22px; height: 22px; color: #94a3b8; }
+.work-failed strong { font-size: 11px; color: #e2e8f0; }
+.work-failed span {
+  max-width: 100%;
+  font-size: 9.5px;
+  line-height: 1.45;
+  color: #94a3b8;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.work-card.is-failed .work-overlay [data-waction="download"] {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.06);
+}
+.desk-media-inner.is-failed,
+.hm-history-media.is-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: linear-gradient(160deg, rgba(148, 163, 184, 0.18), rgba(17, 24, 39, 0.92));
+  color: #94a3b8;
+}
+.desk-media-inner.is-failed b,
+.hm-history-media.is-failed b { font-size: 16px; line-height: 1; }
+.desk-media-inner.is-failed small,
+.hm-history-media.is-failed small { font-size: 9px; }
+.desk-card.is-failed .desk-badge,
+.hm-history-card.is-failed .hm-history-badge {
+  background: rgba(148, 163, 184, 0.22);
+  color: #cbd5e1;
+}
+.lb-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(420px, 80vw);
+  padding: 30px 24px;
+  border-radius: 14px;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 0.55);
+  text-align: center;
+  color: #cbd5e1;
+}
+.lb-failed-ico {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  font-size: 16px;
+  color: #94a3b8;
+}
+.lb-failed strong { font-size: 13px; color: #e2e8f0; }
+.lb-failed p { margin: 0; font-size: 11px; line-height: 1.6; color: #cbd5e1; }
+.lb-failed .lb-failed-hint { color: #94a3b8; font-size: 10px; }
+.folder-prev-media .folder-prev-failed {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(30, 41, 59, 0.85);
+  color: #94a3b8;
+  font-size: 14px;
+}
+.folder-prev-media .folder-prev-failed small { font-size: 9px; }
+#lbDownload:disabled, .lb-bar .primary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.hm-ctx button:disabled { opacity: 0.32; cursor: not-allowed; }
+.hm-ctx button[hidden] { display: none; }
 .error-box {
   position: relative;
   z-index: 1;
@@ -21940,6 +22037,7 @@ body.dv-open .hm-page {
   <div class="hm-ctx" id="hmCtx" hidden>
     <button data-cmd="preview"><span class="hm-ctx-ico">◉</span>预览</button>
     <button data-cmd="restore"><span class="hm-ctx-ico">↻</span>恢复生成参数</button>
+    <button data-cmd="retry" hidden><span class="hm-ctx-ico">↻</span>重试</button>
     <button data-cmd="ref"><span class="hm-ctx-ico">▣</span>仅增加参考素材</button>
     <button data-cmd="prompt"><span class="hm-ctx-ico">文</span>仅增加提示词</button>
     <button data-cmd="params"><span class="hm-ctx-ico">☰</span>参数查看</button>
@@ -24298,6 +24396,10 @@ tmLoad();
 
 /* 作品卡片按类型渲染图片 / 视频 / 音频 */
 function workMediaHtml(work) {
+  if (work.failed || work.ok === false) {
+    return '<div class="work-failed">' + ICONS.alert + '<strong>生成失败</strong><span>' + esc(work.error || '本次生成未成功') + '</span></div>';
+  }
+
   var url = esc(work.url || work.thumb || '');
   if (work.type === 'video') {
     return '<video class="work-video" src="' + url + '" muted playsinline preload="metadata"></video>';
@@ -24325,10 +24427,12 @@ function renderWorks() {
   } else {
     els.worksEmpty.style.display = 'none';
     els.worksGrid.innerHTML = list.map(function (work) {
-      return '<article class="work-card" data-work="' + work.id + '">' +
+      var isFailed = !!(work.failed || work.ok === false);
+      return '<article class="work-card' + (isFailed ? ' is-failed' : '') + '" data-work="' + work.id + '">' +
+
         workMediaHtml(work) +
         '<div class="work-overlay">' +
-          '<button data-waction="download" title="下载原图">' + ICONS.download + '</button>' +
+          '<button data-waction="download" title="' + (isFailed ? '无可下载的图片' : '下载原图') + '"' + (isFailed ? ' disabled' : '') + '>' + ICONS.download + '</button>' +
           '<button data-waction="view" title="查看大图">' + ICONS.eye + '</button>' +
           '<button data-waction="delete" title="删除">' + ICONS.trash + '</button>' +
         '</div>' +
@@ -26628,6 +26732,7 @@ function createLoadingCard(job) {
 }
 
 function markJobError(job, err) {
+  saveFailedWork(job, err);
   job.status = 'error';
   try {
     apiLogPush({
@@ -26651,6 +26756,7 @@ function markJobError(job, err) {
     var mainText = esc(errorText(err) || '生成失败');
     var hintText = errorHint(err);
     var hintHtml = hintText ? '<div class="error-hint">' + esc(hintText) + '</div>' : '';
+    media.classList.add('is-failed-media');
     media.classList.add('media-loading');
     media.innerHTML = '<div class="error-box">' +
       ICONS.alert +
@@ -26660,6 +26766,85 @@ function markJobError(job, err) {
       '<button data-action="retry">重试</button>' +
     '</div>';
   }
+}
+
+/* ---------------- 失败任务的结果保存 ---------------- */
+function failureTextOf(err) {
+  var text = '';
+  try { text = errorText(err) || ''; } catch (e) { text = ''; }
+  return String(text || '生成失败').slice(0, 240);
+}
+
+function failureHintOf(err) {
+  var hint = '';
+  try { hint = errorHint(err) || ''; } catch (e) { hint = ''; }
+  return String(hint || '').slice(0, 240);
+}
+
+/* 失败也留一条结果：卡片留在结果区，同时写入 state.works 并持久化，刷新后仍在 */
+function saveFailedWork(job, err) {
+  if (!job || !job.id) return null;
+  var text = failureTextOf(err);
+  var hint = failureHintOf(err);
+  job.status = 'error';
+  job.ok = false;
+  job.failed = true;
+  job.error = text;
+  job.errorHint = hint;
+  job.url = job.url || '';
+  job.thumb = null;
+
+  var record = null;
+  for (var i = 0; i < state.works.length; i += 1) {
+    if (state.works[i] && state.works[i].id === job.id) { record = state.works[i]; break; }
+  }
+  if (record) {
+    /* 同一条记录再次失败：原地更新，不重复插入 */
+    record.ok = false;
+    record.failed = true;
+    record.status = 'error';
+    record.error = text;
+    record.errorHint = hint;
+    record.url = '';
+    record.thumb = null;
+    record.calibrated = false;
+    record.elapsed = Number(job.elapsed) || 0;
+  } else {
+    record = {
+      id: job.id,
+      type: job.type || 'image',
+      url: '',
+      rawUrl: '',
+      thumb: null,
+      ok: false,
+      failed: true,
+      status: 'error',
+      error: text,
+      errorHint: hint,
+      prompt: job.prompt || '',
+      enPrompt: job.promptEn || '',
+      modelId: job.modelId || '',
+      modelName: job.modelName || '',
+      channelModel: job.channelModel || '',
+      engine: job.engine || state.engine || 'flux',
+      seed: job.seed || 0,
+      width: job.width || 0,
+      height: job.height || 0,
+      ratioId: job.ratioId || '',
+      scaleId: job.scaleId || '',
+      steps: job.steps || 0,
+      duration: job.duration || 0,
+      elapsed: Number(job.elapsed) || 0,
+      refImages: Array.isArray(job.refImages) ? job.refImages : null,
+      createdAt: Date.now()
+    };
+    state.works.unshift(record);
+    state.works = state.works.slice(0, MAX_WORKS);
+    if (window.HMDesk && window.HMDesk.onWorkCreated) window.HMDesk.onWorkCreated(record);
+  }
+  saveWorks();
+  renderWorks();
+  return record;
 }
 
 function markJobDone(job, url, seed, elapsed) {
@@ -26900,7 +27085,7 @@ function mergeWorks(serverItems, localItems) {
   var out = [];
   function add(list) {
     (list || []).forEach(function (w) {
-      if (!w || (!w.url && !w.blob)) return;
+      if (!w || (!w.url && !w.blob && !w.failed && w.ok !== false)) return;
       var id = w.id || ('w_' + workTime(w) + '_' + out.length);
       var hit = map[id];
       if (hit) {
@@ -26928,6 +27113,7 @@ function saveWork(job) {
     id: job.id,
     type: type,
     url: job.url,
+    ok: true,
     rawUrl: job.rawUrl || '',
     thumb: null,
     prompt: job.prompt,
@@ -26951,8 +27137,17 @@ function saveWork(job) {
     createdAt: Date.now()
   };
 
-  state.works.unshift(work);
-  state.works = state.works.slice(0, MAX_WORKS);
+  var existingIndex = -1;
+  for (var wi = 0; wi < state.works.length; wi += 1) {
+    if (state.works[wi] && state.works[wi].id === work.id) { existingIndex = wi; break; }
+  }
+  if (existingIndex >= 0) {
+    work.createdAt = state.works[existingIndex].createdAt || Date.now();
+    state.works[existingIndex] = work;
+  } else {
+    state.works.unshift(work);
+    state.works = state.works.slice(0, MAX_WORKS);
+  }
   /* 若当前在某个文件夹桌面内生成，自动把作品归到该文件夹 */
   if (window.HMDesk && window.HMDesk.onWorkCreated) window.HMDesk.onWorkCreated(work);
   saveWorks();
@@ -27294,7 +27489,8 @@ function openLightbox(item) {
   els.lbStage.querySelectorAll('.lb-media-el').forEach(function (node) { node.remove(); });
 
   var bar = els.lbZoomBar;
-  lbState.isImage = (type === 'image');
+  var isFailed = !!(item && (item.failed || item.ok === false));
+  lbState.isImage = (type === 'image') && !isFailed;
   if (bar) bar.hidden = !lbState.isImage;
 
   // 重置变换
@@ -27308,7 +27504,17 @@ function openLightbox(item) {
     els.lbImage.draggable = false;
   }
 
-  if (type === 'image') {
+  if (isFailed) {
+    els.lbImage.style.display = 'none';
+    els.lbImage.removeAttribute('src');
+    var failBox = document.createElement('div');
+    failBox.className = 'lb-media-el lb-failed';
+    failBox.innerHTML = '<div class="lb-failed-ico">!</div>' +
+      '<strong>生成失败</strong>' +
+      '<p>' + esc(item.error || '本次生成未成功') + '</p>' +
+      (item.errorHint ? '<p class="lb-failed-hint">' + esc(item.errorHint) + '</p>' : '');
+    els.lbStage.appendChild(failBox);
+  } else if (type === 'image') {
     els.lbImage.style.display = '';
     els.lbImage.src = item.url || item.thumb || '';
     els.lbImage.onerror = function () {
@@ -27340,6 +27546,7 @@ function openLightbox(item) {
     item.steps ? item.steps + ' 步' : ''
   ].filter(Boolean).join(' · ');
 
+    if (els.lbDownload) els.lbDownload.disabled = isFailed;
   els.lightbox.classList.add('is-open');
   els.lightbox.setAttribute('aria-hidden', 'false');
   document.body.classList.add('no-scroll');
@@ -27535,6 +27742,41 @@ async function handleGenerate() {
     updateQueue(successCount > 0 ? '已完成' : '空闲');
     renderWorks();
   }
+}
+
+/* 失败记录 → 生成任务：重试时复用同一条记录，成功后原地更新 */
+function workToJob(work) {
+  return {
+    id: work.id,
+    type: work.type || 'image',
+    status: 'error',
+    ok: false,
+    failed: true,
+    error: work.error || '',
+    prompt: work.prompt || '',
+    promptEn: work.enPrompt || '',
+    engine: work.engine || state.engine,
+    modelId: work.modelId || '',
+    modelName: work.modelName || '',
+    channelModel: work.channelModel || '',
+    seed: work.seed || 0,
+    width: work.width || 0,
+    height: work.height || 0,
+    ratioId: work.ratioId || state.ratio,
+    scaleId: work.scaleId || state.scale,
+    steps: work.steps || state.steps,
+    refImages: Array.isArray(work.refImages) ? work.refImages : null
+  };
+}
+
+function retryWork(work) {
+  if (!work) return;
+  if (!(work.failed || work.ok === false)) return;
+  var job = workToJob(work);
+  if (!state.jobs) state.jobs = new Map();
+  state.jobs.set(job.id, job);
+  if (!document.querySelector('[data-job="' + job.id + '"]')) createLoadingCard(job);
+  retryJob(job);
 }
 
 async function retryJob(job) {
@@ -28349,7 +28591,7 @@ function bindEvents() {
       return;
     }
 
-    if (job.status === 'done' && event.target.closest('.result-media')) openLightbox(job);
+    if ((job.status === 'done' || job.status === 'error') && event.target.closest('.result-media')) openLightbox(job);
   });
 
   els.worksGrid.addEventListener('click', function (event) {
@@ -28878,6 +29120,7 @@ window.HMApp = {
   currentModelLabel: currentModelLabel,
   getModel: getModel,
   reuseJob: reuseJob,
+  retryWork: retryWork,
   hasRayinKey: hasRayinKey,
   openApiModal: openApiModal,
   closeApiModal: closeApiModal,
@@ -60074,6 +60317,9 @@ window.HMChat = (function () {
   function mediaHtml(work, mode) {
     var url = esc(work.thumb || work.url || '');
     var cls = mode === 'history' ? 'hm-history-media' : 'desk-media-inner';
+    if (work.failed || work.ok === false) {
+      return '<div class="' + cls + ' is-failed"><b>!</b><small>生成失败</small></div>';
+    }
     if (work.type === 'video') {
       return '<div class="' + cls + ' is-video"><video src="' + url + '" muted playsinline preload="metadata"></video><span class="media-play">▶</span></div>';
     }
@@ -60609,15 +60855,16 @@ window.HMChat = (function () {
 
   function deskCardHtmlInner(work) {
     var name = workName(work);
+    var isFailed = !!(work.failed || work.ok === false);
     var meta = [work.modelName || 'AI', (work.width && work.height) ? work.width + '×' + work.height : ''];
     if (work.type === 'video' && work.duration) meta.push(work.duration + 's');
     if (work.elapsed && work.elapsed > 0) meta.push('耗时 ' + work.elapsed.toFixed(1) + 's');
     return '<div class="desk-thumb">' + mediaHtml(work, 'desk') +
-      '<span class="desk-badge">已完成</span></div>' +
+            '<span class="desk-badge">' + (isFailed ? '生成失败' : '已完成') + '</span></div>' +
       '<div class="desk-info"><strong>' + esc(name) + '</strong><small>' + esc(meta.filter(Boolean).join(' · ')) + '</small></div>' +
       '<div class="desk-acts">' +
       '<button data-dact="preview" title="预览">◉</button>' +
-      '<button data-dact="download" title="下载">↓</button>' +
+      '<button data-dact="download" title="' + (isFailed ? '无可下载的图片' : '下载') + '"' + (isFailed ? ' disabled' : '') + '>↓</button>' +
       '<button data-dact="delete" title="删除">✕</button>' +
       '</div>' +
       '<span class="desk-check" aria-hidden="true"></span>';
@@ -60712,6 +60959,7 @@ window.HMChat = (function () {
         grid.appendChild(existing);
       }
       existing.innerHTML = deskCardHtmlInner(w);
+      existing.classList.toggle('is-failed', !!(w.failed || w.ok === false));
       placeCard(existing, w.id, idx, grid, occupied);
       idx += 1;
     });
@@ -61474,6 +61722,16 @@ window.HMChat = (function () {
 
   function openWorkMenu(work, x, y) {
     view.menuWork = work;
+    var ctx = byId('hmCtx');
+    var failed = !!(work && (work.failed || work.ok === false));
+    if (ctx) {
+      var blocked = ['download', 'canvas', 'ref', 'copy', 'cut'];
+      Array.prototype.forEach.call(ctx.querySelectorAll('[data-cmd]'), function (btn) {
+        var cmd = btn.dataset.cmd;
+        if (cmd === 'retry') { btn.hidden = !failed; return; }
+        btn.disabled = failed && blocked.indexOf(cmd) >= 0;
+      });
+    }
     showContext('hmCtx', x, y);
   }
 
@@ -61498,6 +61756,7 @@ window.HMChat = (function () {
         var inner;
         if (w.type === 'video') inner = '<video src="' + url + '" muted playsinline preload="metadata"></video><span class="media-play">▶</span>';
         else if (w.type === 'audio') inner = '<span>♪</span><small>音频</small>';
+        else if (w.failed || w.ok === false) inner = '<div class="folder-prev-failed">!<small>生成失败</small></div>';
         else inner = '<img src="' + url + '" alt="' + esc(w.prompt) + '" loading="lazy" draggable="false">';
         return '<div class="folder-prev-cell" data-fp="' + esc(w.id) + '">' +
           '<div class="folder-prev-media ' + cls + '">' + inner + '</div>' +
@@ -61691,9 +61950,10 @@ window.HMChat = (function () {
 
   function historyCardHtml(work) {
     var meta = work.type === 'audio' ? '音频 · 语音合成' : (work.type === 'video' ? '视频 · ' + (work.duration || 5) + '秒' : (work.width || 0) + '×' + (work.height || 0));
-    return '<article class="hm-history-card" data-work="' + esc(work.id) + '" data-type="' + esc(work.type || 'image') + '">' +
+    var isFailed = !!(work.failed || work.ok === false);
+    return '<article class="hm-history-card' + (isFailed ? ' is-failed' : '') + '" data-work="' + esc(work.id) + '" data-type="' + esc(work.type || 'image') + '">' +
       '<div class="hm-history-thumb">' + mediaHtml(work, 'history') +
-      '<span class="hm-history-badge">已完成</span></div>' +
+      '<span class="hm-history-badge">' + (isFailed ? '生成失败' : '已完成') + '</span></div>' +
       '<div class="hm-history-info">' +
       '<strong>' + esc(workName(work)) + '</strong>' +
       '<small>' + esc((work.modelName || 'AI') + ' · ' + meta) + '</small>' +
@@ -61703,7 +61963,7 @@ window.HMChat = (function () {
       '<span class="hm-history-acts">' +
       '<button data-hact="preview" title="预览">◎</button>' +
       '<button data-hact="id" title="任务 ID">ID</button>' +
-      '<button data-hact="download" title="下载">↓</button>' +
+      '<button data-hact="download" title="' + (isFailed ? '无可下载的图片' : '下载') + '"' + (isFailed ? ' disabled' : '') + '>↓</button>' +
       '</span>' +
       '</div>' +
       '</article>';
@@ -62121,6 +62381,15 @@ window.HMChat = (function () {
       grid.addEventListener('pointerdown', onPointerDown);
       grid.addEventListener('contextmenu', function (event) {
         event.preventDefault();
+        /* 右键失败结果卡片 → 与作品卡一致的菜单（下载等置灰、重试可用） */
+        var jobCard = event.target.closest('.result-card.is-error[data-job]');
+        if (jobCard) {
+          var failedWork = findWork(jobCard.dataset.job);
+          if (failedWork) {
+            openWorkMenu(failedWork, event.clientX, event.clientY);
+            return;
+          }
+        }
         /* 右键 folder-card → folderCtx */
         var folderCard = event.target.closest('.folder-card[data-folder]');
         if (folderCard) {
@@ -62238,6 +62507,7 @@ window.HMChat = (function () {
               A.toast('已重命名', 'success');
             });
             break;
+          case 'retry': if (A.retryWork) A.retryWork(work); break;
           case 'download': A.downloadImage(work.url, A.fileNameFor(work)); break;
           case 'canvas': sendToCanvas(work); break;
           case 'delete': deleteWork(work); break;
