@@ -29,8 +29,18 @@ function tokenOnly(req, res, next) {
     id: payload.uid,
     username: payload.username || ('guest_' + payload.uid.slice(-6)),
     role: payload.role || 'user',
+    status: payload.status || 'approved',
   };
   next();
+}
+
+/* 未通过审批的账号不允许继续访问业务接口（已有 token 也会被拦下） */
+function blockedMessage(user) {
+  if (!user || user.status === 'approved') return '';
+  if (user.status === 'rejected') {
+    return '你的注册申请已被拒绝' + (user.note ? '（原因：' + user.note + '）' : '') + '，如有疑问请联系超级管理员';
+  }
+  return '账号正在等待超级管理员审批，审批通过后即可登录';
 }
 
 /* 从请求头 Authorization: Bearer <token> 里解析用户，挂到 req.user */
@@ -43,26 +53,35 @@ function authRequired(req, res, next) {
   }
   cachedFindUser(payload.uid).then((user) => {
     if (!user) {
-      /* ========== Render 免费层重启 → data/users.json 被清空 ==========
-         Token 签名仍有效（secret 固定），但 DB 用户记录丢了。
-         尝试用 token payload 里的 username 自动重建用户，
-         或退而求其次，trust token payload 直接放行，不让前端误以为 token 过期。 */
+      /* ========== Render 免费层重启 → 账号记录丢失 ==========
+         Token 签名仍有效（secret 固定），尝试用 token payload 里的 username 自动重建用户。 */
       if (payload.username) {
         /* 有足够信息 → 自动重建用户（无密码，走内部重建） */
         return store.reviveUser(payload.uid, payload.username, payload.role || 'user')
           .then((revived) => {
-            req.user = { id: revived.id, username: revived.username, role: revived.role };
+            req.user = { id: revived.id, username: revived.username, role: revived.role, status: revived.status || 'approved' };
             next();
           });
       }
       /* 旧 token 只有 uid → trust token payload 直接放行，避免前端强制登出 */
-      req.user = { id: payload.uid, username: 'guest_' + payload.uid.slice(-6), role: 'user' };
+      req.user = { id: payload.uid, username: 'guest_' + payload.uid.slice(-6), role: 'user', status: 'approved' };
       next();
       return;
     }
-    req.user = { id: user.id, username: user.username, role: user.role };
+    const blocked = blockedMessage(user);
+    if (blocked) return res.status(403).json({ error: { message: blocked, code: 'ACCOUNT_' + String(user.status).toUpperCase() } });
+    req.user = { id: user.id, username: user.username, role: user.role, status: user.status || 'approved' };
     next();
-  }).catch(() => res.status(500).json({ error: { message: '认证失败' } }));
+  }).catch((err) => {
+    const status = Number(err && err.status) || 500;
+    res.status(status).json({ error: { message: (err && err.expose && err.message) ? err.message : '认证失败' } });
+  });
+}
+
+/* 角色变更/审批后立刻失效缓存，避免最长 60 秒的延迟 */
+function invalidateUserCache(id) {
+  if (id) userCache.delete(id);
+  else userCache.clear();
 }
 
 /* 仅超级管理员 */
@@ -100,4 +119,4 @@ function authOptional(req, res, next) {
   }
 }
 
-module.exports = { authRequired, adminOnly, authOptional, tokenOnly };
+module.exports = { authRequired, adminOnly, authOptional, tokenOnly, invalidateUserCache };
