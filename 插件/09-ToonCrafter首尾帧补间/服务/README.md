@@ -79,6 +79,7 @@ python server.py --port 7861 --warmup 320_512
 |---|---|
 | `checkpoint Not Found` | 权重没下完，重跑启动或手动 `huggingface-cli download` |
 | CUDA out of memory | 换 `256_256`，或降低 steps |
+| `Cannot connect to proxy` / `ProxyError` | 系统代理未启动或已失效。`启动服务.bat` 安装依赖时会自动忽略代理并改用清华 PyPI / 阿里云 PyTorch 镜像；如你的网络必须走代理，请先启动代理软件再运行 |
 | 5090/新卡不支持 | 需更新 torch 至该卡支持版本，再重装官方依赖 |
 | 生成 1–3 分钟 | 正常，512 / 50 步在 4090 约 25–40s，首次含模型加载更慢 |
 
