@@ -25744,6 +25744,7 @@ function persistPrefs() {
     audioModel: state.audioModel,
     providerId: state.providerId
   });
+  if (window.HMSync && window.HMSync.pushPrefs) window.HMSync.pushPrefs();
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
@@ -27510,6 +27511,7 @@ function saveWorks() {
    Render 免费层重启会清空 data/，下次用户打开时本地存的图自动补回去。 */
 var _syncingAll = false;
 async function syncAllWorksToServer(serverItems) {
+  if (window.HMSync && window.HMSync.afterLogin) { window.HMSync.afterLogin(); return; }
   if (_syncingAll) return;
   if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
   _syncingAll = true;
@@ -27539,7 +27541,8 @@ async function syncAllWorksToServer(serverItems) {
 
 function syncWorksToServer() {
   if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
-  /* 这里也传 base64 —— Render 磁盘够放，base64 随作品 JSON 一起存 */
+  /* 统一交给云同步层：图片先上传对象存储，元数据带 rev 写入数据库 */
+  if (window.HMSync && window.HMSync.onWorksChanged) { window.HMSync.onWorksChanged(); return; }
   state.works.forEach(function (w) { api.saveWork(w).catch(function () {}); });
 }
 
@@ -28902,6 +28905,7 @@ function bindEvents() {
     saveWorks();
     renderWorks();
     toast('已清空作品', 'info');
+    if (window.HMSync && window.HMSync.clearAll) window.HMSync.clearAll();
   });
 
   /* 顶栏时间筛选面板：事件全部绑定在面板/按钮内部，不新增全局监听 */
@@ -61936,6 +61940,10 @@ window.HMChat = (function () {
     persistNow();
     A.saveWorks();
     A.renderWorks();
+    /* 删除同步到后端（写墓碑，其它设备增量拉取时能感知删除） */
+    if (window.HMSync && window.HMSync.deleteWorks) {
+      window.HMSync.deleteWorks(works.map(function (w) { return w.id; }));
+    }
     /* 删除后清理选中状态并刷新批量操作条的隐藏/计数 */
     if (!selectedIds().length) view.selected = {};
     syncSelection();
@@ -64882,10 +64890,13 @@ window.HMChat = (function () {
   }
   var data = load();
   var pending = {};
+  window.HMCloudReload = window.HMCloudReload || {};
+  window.HMCloudReload.compile = function () { data = load(); try { render(); } catch (e) {} };
 
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(data)); }
     catch (e) { alert('保存失败：本机存储空间不足（文件过大时请改用下载链接）'); }
+    if (window.HMSync && window.HMSync.pushDoc) window.HMSync.pushDoc('compile', data);
   }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function esc(v) {
@@ -65046,6 +65057,12 @@ window.HMChat = (function () {
     var db = load();
     var editingId = null;
     var pendingFile = null;
+    window.HMCloudReload = window.HMCloudReload || {};
+    window.HMCloudReload.publish = function () {
+      db = load();
+      try { renderTasks(); } catch (e) {}
+      try { renderBoard(); } catch (e) {}
+    };
 
     function $(id) { return document.getElementById(id); }
 
@@ -65060,6 +65077,7 @@ window.HMChat = (function () {
     }
     function save() {
       try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (err) {}
+      if (window.HMSync && window.HMSync.pushDoc) window.HMSync.pushDoc('publish', db);
     }
     function uid(prefix) {
       return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -65722,5 +65740,616 @@ window.HMChat = (function () {
 })();
 </script>
 
+<script>
+/* ============================================================
+ * 绘梦 · 跨设备云同步层（HMSync）
+ * ------------------------------------------------------------
+ * 职责：
+ *   1. 作品元数据 → /api/works（带 _rev 乐观锁，删除写墓碑）
+ *   2. 作品图片 → POST /api/works/:id/asset（服务端存对象存储，库里只留 url）
+ *   3. 桌面/项目文件夹树 → /api/desk
+ *   4. 编集/宣发/偏好 → /api/docs/:kind
+ *   5. 登录后一次性迁移本地旧数据（按 id 去重，可重试）
+ *   6. 离线队列：断网时进队列，恢复网络/下次启动重放
+ * localStorage / IndexedDB 降级为本地缓存。
+ * ============================================================ */
+(function () {
+  'use strict';
+
+  if (window.HMSync) return;
+  var api = window.HM && window.HM.api;
+  if (!api) return;
+
+  var LS_REV = 'anidream.rev.v1';
+  var LS_SYNC = 'anidream.sync.v1';
+  var LS_QUEUE = 'anidream.queue.v1';
+  var DOC_KINDS = { desk: 1, compile: 1, publish: 1, prefs: 1 };
+
+  var revs = read(LS_REV, { works: {}, docs: {}, fp: {}, docfp: {} });
+  if (!revs.docfp) revs.docfp = {};
+  var sync = read(LS_SYNC, { lastSync: 0, migrated: {}, conflicts: 0, lastError: '' });
+  var queue = read(LS_QUEUE, []);
+  var storage = null;
+  var usage = null;
+  var busy = false;
+  var pushTimer = null;
+  var panelEl = null;
+  var lastPullAt = 0;
+
+  function read(key, fallback) {
+    try {
+      var v = JSON.parse(localStorage.getItem(key) || 'null');
+      return v && typeof v === 'object' ? v : fallback;
+    } catch (e) { return fallback; }
+  }
+  function write(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
+  }
+  function saveRevs() { write(LS_REV, revs); }
+  function saveSync() { write(LS_SYNC, sync); }
+  function saveQueue() { write(LS_QUEUE, queue); }
+  function user() { return (window.HMApp && window.HMApp.user) || null; }
+  function uid() { var u = user(); return u && u.id ? u.id : ''; }
+
+  function urlOf(path) {
+    var base = String(api.base || '').replace(/\/+$/, '');
+    return base + path;
+  }
+
+  function request(method, path, body, timeoutMs) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, timeoutMs || 45000);
+    var token = '';
+    try { token = localStorage.getItem('hm.token') || ''; } catch (e) {}
+    var init = {
+      method: method,
+      headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
+      signal: controller.signal
+    };
+    if (body !== undefined) {
+      init.headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(body);
+    }
+    return fetch(urlOf(path), init).then(function (res) {
+      return res.text().then(function (raw) {
+        var data = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch (e) { data = raw; }
+        if (!res.ok) {
+          var err = new Error((data && data.error && data.error.message) || ('请求失败 HTTP ' + res.status));
+          err.status = res.status;
+          err.hint = data && data.error && data.error.hint;
+          err.data = data;
+          throw err;
+        }
+        return data;
+      });
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') {
+        err = new Error('请求超时');
+        err.offline = true;
+      } else if (err && !err.status) {
+        err.offline = true;
+      }
+      throw err;
+    }).finally(function () { clearTimeout(timer); });
+  }
+
+  function hash(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i += 1) {
+      h ^= str.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h.toString(36) + ':' + str.length;
+  }
+  function fingerprint(work) {
+    return hash(JSON.stringify({
+      p: work.prompt || '',
+      u: (work.url || '').slice(0, 160),
+      t: work.thumb ? work.thumb.length : 0,
+      n: work.name || '',
+      c: work.createdAt || 0,
+      r: work.ratioId || '',
+      s: work.scaleId || '',
+      m: work.modelId || ''
+    }));
+  }
+  function workTime(work) {
+    var v = work && (work._updatedAt || work.updatedAt || work.createdAt);
+    if (typeof v === 'number') return v;
+    var t = Date.parse(v);
+    return isNaN(t) ? 0 : t;
+  }
+
+  /* ---------------- 作品推送 ---------------- */
+  function onWorksChanged() {
+    if (!uid()) return;
+    if (pushTimer) return;
+    pushTimer = setTimeout(function () {
+      pushTimer = null;
+      pushDirtyWorks();
+    }, 900);
+  }
+
+  async function pushDirtyWorks() {
+    if (!uid() || busy) return;
+    if (!window.HMApp || !Array.isArray(window.HMApp.state && window.HMApp.state.works)) return;
+    busy = true;
+    try {
+      await window.HMApp.hydrateWorks();
+      var works = window.HMApp.state.works.filter(function (w) { return w && w.id; });
+      for (var i = 0; i < works.length; i += 1) {
+        var w = works[i];
+        var key = uid() + ':' + w.id;
+        if (revs.fp[key] && revs.fp[key] === fingerprint(w)) continue;
+        await pushOne(w);
+      }
+      if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+      sync.lastSync = Date.now();
+      sync.lastError = '';
+      saveSync();
+    } catch (err) {
+      sync.lastError = (err && err.message) || '同步失败';
+      saveSync();
+    } finally {
+      busy = false;
+      renderPanel();
+    }
+  }
+
+  async function uploadAsset(work) {
+    if (!work || typeof work.url !== 'string' || work.url.indexOf('data:') !== 0) return work;
+    var res = await request('POST', '/works/' + encodeURIComponent(work.id) + '/asset', { dataUrl: work.url }, 120000);
+    if (!res || !res.asset) return work;
+    work.url = res.asset.url;
+    work._assetId = res.asset.assetId;
+    work._assetBytes = res.asset.bytes;
+    work._updatedAt = Date.now();
+    try {
+      if (window.HMApp && window.HMApp.idbDelBlob) window.HMApp.idbDelBlob(work.id);
+    } catch (e) {}
+    work.blob = false;
+    usage = res.usage || usage;
+    return work;
+  }
+
+  async function pushOne(work) {
+    if (!work || !work.id) return null;
+    if (work.url && work.url.indexOf('data:') === 0) {
+      await uploadAsset(work);
+    }
+    var key = uid() + ':' + work.id;
+    var payload = Object.assign({}, work);
+    delete payload._rev;
+    var body = { work: payload };
+    if (revs.works[work.id] != null) body.rev = revs.works[work.id];
+    try {
+      var res = await request('POST', '/works', body, 45000);
+      if (res && res.rev != null) {
+        revs.works[work.id] = res.rev;
+        revs.fp[key] = fingerprint(work);
+        saveRevs();
+      }
+      return res;
+    } catch (err) {
+      if (err.status === 409) {
+        sync.conflicts += 1;
+        var cur = err.data && err.data.current;
+        if (!cur) {
+          var list = await request('GET', '/works?since=0&limit=500', null, 20000);
+          (list && list.items || []).forEach(function (w) { if (w.id === work.id) cur = w; });
+        }
+        if (cur && Number(cur._updatedAt) > workTime(work)) {
+          applyServerWork(cur);
+          saveRevs(); saveSync();
+          return null;
+        }
+        var rev = cur && cur._rev != null ? cur._rev : null;
+        var force = { work: payload };
+        if (rev != null) force.rev = rev;
+        var retry = await request('POST', '/works', force, 45000);
+        if (retry && retry.rev != null) {
+          revs.works[work.id] = retry.rev;
+          revs.fp[key] = fingerprint(work);
+          saveRevs();
+        }
+        return retry;
+      }
+      throw err;
+    }
+  }
+
+  function applyServerWork(serverWork) {
+    if (!window.HMApp || !window.HMApp.state || !Array.isArray(window.HMApp.state.works)) return;
+    var list = window.HMApp.state.works;
+    for (var i = 0; i < list.length; i += 1) {
+      if (list[i] && list[i].id === serverWork.id) {
+        var keepLocalImage = list[i].url && list[i].url.indexOf('data:') === 0 && !serverWork.url;
+        list[i] = Object.assign({}, serverWork, keepLocalImage ? { url: list[i].url } : {});
+        return;
+      }
+    }
+    list.unshift(serverWork);
+  }
+
+  /* ---------------- 删除同步 ---------------- */
+  async function deleteWorks(ids) {
+    if (!uid() || !Array.isArray(ids)) return;
+    for (var i = 0; i < ids.length; i += 1) {
+      var id = ids[i];
+      var rev = revs.works[id];
+      var path = '/works/' + encodeURIComponent(id) + (rev != null ? '?rev=' + rev : '');
+      try {
+        await request('DELETE', path, null, 20000);
+        delete revs.works[id];
+        delete revs.fp[uid() + ':' + id];
+        saveRevs();
+      } catch (err) {
+        if (err.status === 404) continue;
+        queue.push({ op: 'delete', id: id, ts: Date.now() });
+        saveQueue();
+      }
+    }
+    sync.lastSync = Date.now();
+    saveSync();
+    renderPanel();
+  }
+
+  /* ---------------- 清空全部作品 ---------------- */
+  async function clearAll() {
+    if (!uid()) return;
+    try {
+      await request('DELETE', '/works', null, 30000);
+      revs.works = {};
+      revs.fp = {};
+      saveRevs();
+    } catch (err) {
+      if (err.offline || !err.status) {
+        queue.push({ op: 'clear', ts: Date.now() });
+        saveQueue();
+      }
+    }
+    sync.lastSync = Date.now();
+    saveSync();
+  }
+
+  /* ---------------- 文档（desk/compile/publish/prefs） ---------------- */
+  function docKey(kind) {
+    var u = uid();
+    if (kind === 'desk') return 'anidream.desk.v1' + (u ? '.' + u : '');
+    if (kind === 'compile') return 'anidream.compile.v1';
+    if (kind === 'publish') return 'anidream.publish.v1';
+    if (kind === 'prefs') return 'anidream.prefs.v1';
+    return '';
+  }
+
+  async function pushDoc(kind, data) {
+    if (!uid() || !DOC_KINDS[kind]) return null;
+    var body = { data: data };
+    if (revs.docs[kind] != null) body.rev = revs.docs[kind];
+    try {
+      var res = await request('PUT', '/docs/' + kind, body, 30000);
+      if (res && res.doc) revs.docs[kind] = res.doc.rev;
+      revs.docfp[kind] = hash(JSON.stringify(data));
+      saveRevs();
+      return res;
+    } catch (err) {
+      if (err.status === 409) {
+        sync.conflicts += 1;
+        var cur = (err.data && err.data.doc) || null;
+        if (!cur) {
+          var got = await request('GET', '/docs/' + kind, null, 15000);
+          cur = got && got.doc;
+        }
+        var localTs = Number(data && data.updatedAt) || Date.now();
+        var remoteTs = Number(cur && cur.updatedAt) || 0;
+        if (remoteTs > localTs && cur && cur.data) {
+          applyDoc(kind, cur.data, cur.rev);
+          saveSync();
+          return null;
+        }
+        var force = { data: data, rev: cur ? cur.rev : undefined };
+        var retry = await request('PUT', '/docs/' + kind, force, 30000);
+        if (retry && retry.doc) revs.docs[kind] = retry.doc.rev;
+        saveRevs();
+        saveSync();
+        return retry;
+      }
+      if (err.offline) {
+        queue.push({ op: 'doc', kind: kind, data: data, ts: Date.now() });
+        saveQueue();
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  function pushPrefs() {
+    var prefs = read('anidream.prefs.v1', null);
+    if (prefs) pushDoc('prefs', prefs);
+  }
+
+  function applyDoc(kind, data, rev) {
+    var key = docKey(kind);
+    if (!key || data == null) return;
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+    if (rev != null) { revs.docs[kind] = rev; saveRevs(); }
+    revs.docfp[kind] = hash(JSON.stringify(data));
+    if (kind === 'desk' && window.HMDesk && window.HMDesk.reloadForUser) {
+      window.HMDesk.reloadForUser();
+    } else if (window.HMCloudReload && window.HMCloudReload[kind]) {
+      try { window.HMCloudReload[kind](); } catch (e) {}
+    } else if (kind === 'prefs' && window.HMApp && window.HMApp.state) {
+      try {
+        Object.assign(window.HMApp.state, data);
+        if (window.HMApp.syncSettingsUI) window.HMApp.syncSettingsUI();
+      } catch (e) {}
+    }
+  }
+
+  /* ---------------- 登录后：拉取 + 迁移 ---------------- */
+  async function afterLogin(force) {
+    if (!uid() || busy || !window.HMApp) return;
+    if (!force && Date.now() - lastPullAt < 20000) return;
+    lastPullAt = Date.now();
+    busy = true;
+    try {
+      await window.HMApp.hydrateWorks();
+      var boot = await request('GET', '/user-data/bootstrap', null, 30000);
+      applyBootstrap(boot);
+      await migrateLocal();
+      await flushQueue();
+      sync.lastSync = Date.now();
+      sync.lastError = '';
+      saveSync();
+    } catch (err) {
+      sync.lastError = (err && err.message) || '拉取失败';
+      saveSync();
+    } finally {
+      busy = false;
+      renderPanel();
+    }
+  }
+
+  function applyBootstrap(boot) {
+    if (!boot) return;
+    storage = boot.storage || storage;
+    usage = boot.usage || usage;
+    var serverWorks = Array.isArray(boot.works) ? boot.works : [];
+    var deleted = Array.isArray(boot.deleted) ? boot.deleted : [];
+    var deletedMap = {};
+    deleted.forEach(function (d) { deletedMap[d.id] = Number(d.updatedAt) || 0; });
+
+    var local = (window.HMApp.state.works || []).filter(function (w) { return w && w.id; });
+    var localMap = {};
+    local.forEach(function (w) { localMap[w.id] = w; });
+
+    var merged = [];
+    serverWorks.forEach(function (sw) {
+      var lw = localMap[sw.id];
+      var serverTs = Number(sw._updatedAt) || 0;
+      if (lw && workTime(lw) > serverTs) {
+        merged.push(lw); /* 本地更新（例如离线期间生成）：保留并稍后补传 */
+      } else {
+        merged.push(sw);
+        revs.works[sw.id] = sw._rev;
+        revs.fp[uid() + ':' + sw.id] = fingerprint(sw);
+      }
+      delete localMap[sw.id];
+    });
+    Object.keys(localMap).forEach(function (id) {
+      if (deletedMap[id]) return; /* 其它设备已删除且本地没有更新 */
+      merged.push(localMap[id]);
+    });
+
+    merged.sort(function (a, b) { return workTime(b) - workTime(a); });
+    window.HMApp.state.works = merged;
+    if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+    if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+
+    var docs = boot.docs || {};
+    Object.keys(DOC_KINDS).forEach(function (kind) {
+      var d = docs[kind];
+      if (!d || d.data == null) return;
+      var localRev = Number(revs.docs[kind]) || 0;
+      if (!localRev || Number(d.rev) > localRev) applyDoc(kind, d.data, d.rev);
+      else revs.docs[kind] = Number(d.rev);
+    });
+    saveRevs();
+  }
+
+  async function migrateLocal() {
+    if (!uid()) return;
+    var state = (window.HMApp && window.HMApp.state) || {};
+    var works = (state.works || []).filter(function (w) { return w && w.id; });
+    for (var i = 0; i < works.length; i += 1) {
+      var w = works[i];
+      var key = uid() + ':' + w.id;
+      if (revs.fp[key] && revs.fp[key] === fingerprint(w)) continue;
+      await pushOne(w);
+    }
+
+    /* 文档：本地有内容且比服务端新才写（后端同样按 updatedAt 兜底） */
+    var docs = {
+      desk: read(docKey('desk'), null),
+      compile: read(docKey('compile'), null),
+      publish: read(docKey('publish'), null),
+      prefs: read(docKey('prefs'), null)
+    };
+    var kinds = Object.keys(docs);
+    for (var k = 0; k < kinds.length; k += 1) {
+      var kind = kinds[k];
+      if (docs[kind] == null) continue;
+      if (revs.docfp[kind] && revs.docfp[kind] === hash(JSON.stringify(docs[kind]))) continue;
+      await pushDoc(kind, docs[kind]);
+    }
+
+    sync.migrated[uid()] = Date.now();
+    saveSync();
+    if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+  }
+
+  /* ---------------- 离线队列 ---------------- */
+  async function flushQueue() {
+    if (!queue.length || !uid()) return;
+    var pending = queue.slice();
+    queue = [];
+    saveQueue();
+    for (var i = 0; i < pending.length; i += 1) {
+      var item = pending[i];
+      try {
+        if (item.op === 'delete') await deleteWorks([item.id]);
+        else if (item.op === 'doc') await pushDoc(item.kind, item.data);
+        else if (item.op === 'clear') await clearAll();
+      } catch (e) {
+        queue.push(item);
+        saveQueue();
+      }
+    }
+  }
+
+  window.addEventListener('online', function () {
+    setTimeout(function () { flushQueue().then(function () { pushDirtyWorks(); }); }, 1500);
+  });
+
+  /* ---------------- 设置页「云同步」面板 ---------------- */
+  function ensurePanel() {
+    var host = document.getElementById('view-admin');
+    if (!host) return null;
+    if (panelEl && panelEl.parentNode === host) return panelEl;
+    panelEl = document.createElement('section');
+    panelEl.className = 'hm-cloud-card';
+    panelEl.style.cssText = 'margin:0 0 18px;padding:16px 18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.04)';
+    host.insertBefore(panelEl, host.firstChild);
+    return panelEl;
+  }
+
+  function fmtBytes(n) {
+    n = Number(n) || 0;
+    if (n >= 1073741824) return (n / 1073741824).toFixed(2) + ' GB';
+    if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB';
+    if (n >= 1024) return (n / 1024).toFixed(0) + ' KB';
+    return n + ' B';
+  }
+
+  function renderPanel() {
+    var host = document.getElementById('view-admin');
+    if (!host || host.hidden) return;
+    var el = ensurePanel();
+    if (!el) return;
+    var st = storage || { dataLabel: '检测中…', objectLabel: '检测中…', warnings: [] };
+    var u = usage || {};
+    var warn = (st.warnings || []).map(function (w) {
+      return '<div style="color:#fca5a5;font-size:12px;margin-top:4px">⚠ ' + w + '</div>';
+    }).join('');
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">' +
+        '<div><b style="font-size:15px">云同步 · 跨设备数据</b>' +
+        '<div style="color:#a5a0c0;font-size:12px;margin-top:4px">账号数据按 user_id 存后端；本机 localStorage/IndexedDB 仅作缓存。</div></div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button type="button" id="hmSyncNow" class="hm-pill">立即同步</button>' +
+          '<button type="button" id="hmSyncExport" class="hm-pill">导出备份</button>' +
+          '<button type="button" id="hmSyncMigrate" class="hm-pill">重新上传本机数据</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:12.5px">' +
+        '<div>结构数据：<b>' + st.dataLabel + '</b></div>' +
+        '<div>图片存储：<b>' + st.objectLabel + '</b></div>' +
+        '<div>作品：<b>' + (u.works != null ? u.works : '-') + ' / ' + (u.workCap || '-') + '</b></div>' +
+        '<div>图片占用：<b>' + fmtBytes(u.bytes) + '</b></div>' +
+        '<div>最近同步：<b>' + (sync.lastSync ? new Date(sync.lastSync).toLocaleString() : '尚未同步') + '</b></div>' +
+        '<div>待重试：<b>' + queue.length + '</b> 条 · 冲突：<b>' + (sync.conflicts || 0) + '</b></div>' +
+      '</div>' + warn +
+      (sync.lastError ? '<div style="color:#fbbf24;font-size:12px;margin-top:6px">最近错误：' + String(sync.lastError).slice(0, 160) + '</div>' : '');
+
+    var btnNow = el.querySelector('#hmSyncNow');
+    if (btnNow) btnNow.onclick = function () {
+      btnNow.disabled = true;
+      refreshStatus().then(function () { return afterLogin(true); }).finally(function () { btnNow.disabled = false; });
+    };
+    var btnExport = el.querySelector('#hmSyncExport');
+    if (btnExport) btnExport.onclick = exportBackup;
+    var btnMigrate = el.querySelector('#hmSyncMigrate');
+    if (btnMigrate) btnMigrate.onclick = function () {
+      revs.fp = {};
+      revs.works = {};
+      revs.docs = {};
+      saveRevs();
+      btnMigrate.disabled = true;
+      migrateLocal().finally(function () { btnMigrate.disabled = false; renderPanel(); });
+    };
+  }
+
+  async function refreshStatus() {
+    if (!uid()) return;
+    try {
+      var res = await request('GET', '/user-data/status', null, 15000);
+      if (res) { storage = res.storage; usage = res.usage; renderPanel(); }
+    } catch (e) {}
+  }
+
+  async function exportBackup() {
+    if (!uid()) return;
+    try {
+      var controller = new AbortController();
+      var token = '';
+      try { token = localStorage.getItem('hm.token') || ''; } catch (e) {}
+      var res = await fetch(urlOf('/user-data/export'), {
+        headers: token ? { Authorization: 'Bearer ' + token } : {},
+        signal: controller.signal
+      });
+      if (!res.ok) throw new Error('导出失败 HTTP ' + res.status);
+      var blob = await res.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'huimeng-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
+    } catch (err) {
+      if (window.HMApp && window.HMApp.toast) window.HMApp.toast((err && err.message) || '导出失败', 'error');
+    }
+  }
+
+  /* 设置页显示时刷新面板（switchView 会改 body[data-view]） */
+  try {
+    var mo = new MutationObserver(function () {
+      if (document.body.getAttribute('data-view') === 'admin') {
+        renderPanel();
+        refreshStatus();
+      }
+    });
+    mo.observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
+  } catch (e) {}
+
+  /* 启动：等 authBoot 把 user 写好后拉起同步（authBoot 会调 syncAllWorksToServer → afterLogin） */
+  setTimeout(function () {
+    if (uid()) { refreshStatus(); }
+  }, 2500);
+
+  window.addEventListener('beforeunload', function () { saveRevs(); saveSync(); saveQueue(); });
+
+  window.HMSync = {
+    afterLogin: afterLogin,
+    onWorksChanged: onWorksChanged,
+    deleteWorks: deleteWorks,
+    clearAll: clearAll,
+    pushDoc: pushDoc,
+    pushPrefs: pushPrefs,
+    pullDocs: async function () {
+      var boot = await request('GET', '/user-data/bootstrap', null, 30000);
+      applyBootstrap(boot);
+    },
+    status: function () { return { storage: storage, usage: usage, sync: sync, queue: queue.length }; },
+    refreshPanel: renderPanel
+  };
+
+  /* 若用户已经登录（脚本晚于 authBoot），主动拉一次 */
+  setTimeout(function () {
+    if (uid()) afterLogin();
+  }, 3500);
+})();
+
+</script>
 </body>
 </html>
