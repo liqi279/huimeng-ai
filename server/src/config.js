@@ -55,6 +55,15 @@ module.exports = {
   DATA_DIR: process.env.DATA_DIR
     ? path.resolve(env('DATA_DIR', ''))
     : path.resolve(serverRoot, '..', 'data', 'runtime'),
+  /* ---------- 账号 / 用户数据 MySQL ---------- */
+  /* auto  = 先试 MySQL，失败自动回落文件存储（默认，保证登录注册可用）
+     mysql = 强制 MySQL，连不上则认证接口 503（明确报错）
+     file  = 强制本地 JSON（过渡用，Render 重启会丢） */
+  USER_STORE: env('USER_STORE', 'auto'),
+  /* 单条连接串优先，格式：mysql://user:pass@host:3306/huimeng_users */
+  MYSQL_URL: env('MYSQL_URL', ''),
+  /* 账号库名（与图书馆库分开，避免混用） */
+  USERS_MYSQL_DATABASE: env('USERS_MYSQL_DATABASE', 'huimeng_users'),
   /* ---------- 图书馆 MySQL ---------- */
   /* LIBRARY_STORE=mysql 时启用 MySQL；未配置或连接失败自动回退 JSON 文件存储 */
   LIBRARY_STORE: env('LIBRARY_STORE', 'auto'), // auto | mysql | file
