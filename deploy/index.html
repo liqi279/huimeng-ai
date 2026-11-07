@@ -8704,16 +8704,27 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 /* ========== 版本更新通知（右下角浮动卡片，非全屏遮罩） ========== */
 .hm-update-modal {
   position: fixed;
-  bottom: 28px;
+  /* 浮在输入 dock 之上，避免遮挡底栏与侧栏按钮 */
+  bottom: calc(var(--hm-dock-h, 250px) + 16px);
   right: 28px;
-  z-index: 9999;
+  z-index: 2147483000;
   /* 没有背景遮罩！不阻塞页面操作 */
-  animation: hmUpdateSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: hmUpdateSlideIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes hmUpdateSlideIn {
-  from { transform: translateX(40px); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  from { transform: translateY(18px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes hmUpdateSlideOut {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(22px); opacity: 0; }
+}
+
+.hm-update-modal.is-hiding {
+  animation: hmUpdateSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
 }
 
 .hm-update-modal[hidden] { display: none; }
@@ -8834,7 +8845,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 /* 响应式：小屏幕贴底 */
 @media (max-width: 640px) {
   .hm-update-modal {
-    bottom: 16px;
+    bottom: calc(var(--hm-dock-h, 220px) + 12px);
     right: 16px;
     left: 16px;
   }
@@ -18207,17 +18218,21 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg>
         <span>建模</span>
       </button>
-      <button class="hm-rail-item" data-rail="director" title="合成（视频剪辑与多轨道合成）">
+      <button class="hm-rail-item" data-rail="director" title="摄影（视频剪辑与多轨道合成）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9l5 3-5 3V9Z" fill="currentColor" opacity=".8"/><path d="M3 9h2M3 15h2M19 9h2M19 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/></svg>
-        <span>合成</span>
+        <span>摄影</span>
+      </button>
+      <button class="hm-rail-item" data-rail="edit" title="剪辑（时间线剪辑 · 片段与字幕 · 功能预留）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9.5h18" stroke="currentColor" stroke-width="1.2" opacity=".55"/><path d="M8 5V9.5M12 5V9.5M16 5V9.5" stroke="currentColor" stroke-width="1.2" opacity=".55"/><path d="M10.2 12.6l4.6 2.6-4.6 2.6v-5.2Z" fill="currentColor" opacity=".85"/></svg>
+        <span>剪辑</span>
       </button>
       <button class="hm-rail-item" data-rail="director3d" title="导演台（3D 无限画布 · 白模摆位 · 打光与取景）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7l1.5 2h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M18.5 11.2h.01" fill="currentColor" stroke="currentColor" stroke-width="1.2"/></svg>
         <span>导演台</span>
       </button>
-      <button class="hm-rail-item" data-rail="storyboard" title="故事版（分镜创作）">
+      <button class="hm-rail-item" data-rail="storyboard" title="分镜（分镜创作）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
-        <span>故事版</span>
+        <span>分镜</span>
       </button>
       <button class="hm-rail-item" data-rail="oua" title="原画（本番原画 / 動画 · 中割り）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
@@ -18227,9 +18242,9 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M3 15h18" stroke="currentColor" stroke-width="1.1" opacity=".55"/><path d="M10.5 9.5l4 2.5-4 2.5v-5Z" fill="currentColor" opacity=".85"/></svg>
         <span>动画</span>
       </button>
-      <button class="hm-rail-item" data-rail="paint" title="着色（赛璐璐上色 · PaintMan 工作流）">
+      <button class="hm-rail-item" data-rail="paint" title="上色（赛璐璐 · PaintMan 工作流）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.6 12.4l5.3-5.3a1.7 1.7 0 0 1 2.4 0l3.6 3.6a1.7 1.7 0 0 1 0 2.4l-5.3 5.3a1.7 1.7 0 0 1-2.4 0l-3.6-3.6a1.7 1.7 0 0 1 0-2.4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 7.5L15 13" stroke="currentColor" stroke-width="1.3" opacity=".65"/><path d="M19.4 15.2c.9 1.2 1.4 2 1.4 2.6a1.4 1.4 0 1 1-2.8 0c0-.6.5-1.4 1.4-2.6Z" fill="currentColor" opacity=".85"/></svg>
-        <span>着色</span>
+        <span>上色</span>
       </button>
       <button class="hm-rail-item" data-rail="compile" title="编集（各集最终导出版本管理 · 采用标记）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 8.5h18" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M7 12h4M7 15.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 11.5l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -19715,7 +19730,7 @@ body.dv-open .hm-page {
       <div class="hm-dir-title">
         <span class="hm-dir-logo">▶</span>
         <h2>导演台</h2>
-        <span class="hm-dir-sub">多轨道视频剪辑与合成</span>
+        <span class="hm-dir-sub">多轨道视频剪辑与摄影</span>
       </div>
       <div class="hm-dir-tools">
         <button class="hm-dir-btn" id="dirImportBtn">
@@ -20077,7 +20092,7 @@ body.dv-open .hm-page {
     <div class="hm-sb-top">
       <div class="hm-sb-title">
         <span class="hm-sb-logo">▤</span>
-        <h2>故事版</h2>
+        <h2>分镜</h2>
         <input id="sbProjectName" class="hm-sb-name" value="未命名分镜" maxlength="40" title="项目名称">
         <span class="hm-sb-sub" id="sbMeta">0 个场次 · 0 个镜头</span>
       </div>
@@ -20222,8 +20237,8 @@ body.dv-open .hm-page {
     <div class="hm-pt-top">
       <div class="hm-pt-title">
         <span class="hm-pt-logo">◐</span>
-        <h2>着色</h2>
-        <input id="ptName" class="hm-pt-name" value="未命名着色" maxlength="40" title="项目名称">
+        <h2>上色</h2>
+        <input id="ptName" class="hm-pt-name" value="未命名上色" maxlength="40" title="项目名称">
         <span class="hm-pt-sub" id="ptMeta">1280×720 · 14 色</span>
       </div>
       <div class="hm-pt-actions">
@@ -21169,6 +21184,21 @@ body.dv-open .hm-page {
       <div class="hm-page-empty-icon">▦</div>
       <h3>功能预留</h3>
       <p>Layout 模块尚未开放，后续会在这里提供版面设计与镜头构图工具。</p>
+    </div>
+  </main>
+
+  <!-- ============ 剪辑（功能预留，仅占位） ============ -->
+  <main class="hm-page" id="view-edit" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>剪辑</h2>
+        <p>时间线剪辑与成片输出</p>
+      </div>
+    </div>
+    <div class="hm-page-empty">
+      <div class="hm-page-empty-icon">✂</div>
+      <h3>功能预留</h3>
+      <p>剪辑模块尚未开放，后续会在这里提供时间线剪辑、片段与字幕工具。</p>
     </div>
   </main>
 
@@ -25489,7 +25519,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'layout', 'oua', 'animation', 'history', 'admin', 'compile', 'publish'];
+var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'edit', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'layout', 'oua', 'animation', 'history', 'admin', 'compile', 'publish'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -28910,68 +28940,152 @@ async function authBoot() {
   }
 }
 
-function showUpdateModal() {
-  var modal = document.getElementById('updateModal');
-  var close = document.getElementById('updateClose');
-  var confirmBtn = document.getElementById('updateConfirm');
-  if (!modal) return;
+/* ===================== 版本更新提示（轻量轮询） ===================== */
+/* 用 HEAD 比对 ETag / Last-Modified / Content-Length，不下载 5MB 整页；
+   服务器不支持 HEAD 时退回 Range: bytes=0-0，只读响应头。 */
+var UPDATE_POLL_MS = 2000;     /* 前台轮询间隔（2 秒） */
+var UPDATE_IDLE_MS = 10000;    /* 10 秒无操作自动消失 */
+var updateState = {
+  baselineFp: '',   /* 首次探测到的指纹，作为「已加载版本」基准 */
+  pendingFp: '',    /* 疑似新版本的指纹（待二次确认） */
+  remoteFp: '',     /* 已确认的新版本指纹 */
+  dismissedFp: '',  /* 已关闭/刷新过的指纹，同一版本不再反复弹 */
+  timer: null,
+  idleTimer: null,
+  wired: false,
+  bound: false
+};
 
-  modal.hidden = false;
-  /* 不冻结页面滚动！这是右下角通知卡片，不是全屏模态 */
-
-  function cleanup() {
-    if (close) close.removeEventListener('click', onClose);
-    if (confirmBtn) confirmBtn.removeEventListener('click', onConfirm);
-  }
-  function onClose() {
-    /* 关闭 = 24h 内不再弹（同之前的"稍后再说"） */
-    localStorage.setItem('hm.build.remindAt', String(Date.now() + 24 * 60 * 60 * 1000));
-    modal.hidden = true;
-    cleanup();
-  }
-  function onConfirm() {
-    localStorage.setItem('hm.build', window.HM_BUILD || '');
-    localStorage.removeItem('hm.build.remindAt');
-    modal.hidden = true;
-    cleanup();
-    toast('正在更新页面…', 'success');
-    setTimeout(function () { location.reload(); }, 500);
-  }
-  if (close) close.addEventListener('click', onClose);
-  if (confirmBtn) confirmBtn.addEventListener('click', onConfirm);
+function updateProbeUrl(tag) {
+  var u = location.origin + location.pathname;
+  return u + (u.indexOf('?') < 0 ? '?' : '&') + 'hm_poll=' + Date.now() + (tag || '');
 }
 
-/* 远端 fetch 最新 HM_BUILD，和当前页面比 */
-function pollRemoteBuild() {
-  var currentBuild = window.HM_BUILD || '';
-  if (!currentBuild) return;
-  /* 检查是否点过"稍后再说"（24 小时内不重复弹） */
-  var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
-  if (remindAt && Date.now() < remindAt) return;
+function updateFpOf(res) {
+  if (!res || !res.headers) return '';
+  var etag = res.headers.get('ETag') || '';
+  var lm = res.headers.get('Last-Modified') || '';
+  var len = res.headers.get('Content-Length') || '';
+  return (etag || lm || len) ? (etag + '|' + lm + '|' + len) : '';
+}
 
-  var url = location.origin + location.pathname + '?hm_poll=' + Date.now();
-  fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } })
-    .then(function (r) { return r.text(); })
-    .then(function (html) {
-      var m = html.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
-      if (!m) {
-        /* 可能拿到旧版本，重试一次 */
-        setTimeout(function () {
-          fetch(url + '&retry=1', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store' } })
-            .then(function (r2) { return r2.text(); })
-            .then(function (html2) {
-              var m2 = html2.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
-              if (m2 && m2[1] && m2[1] !== currentBuild) showUpdateModal();
-            }).catch(function () {});
-        }, 1500);
-        return;
-      }
-      var remoteBuild = m[1];
-      if (remoteBuild && remoteBuild !== currentBuild) {
-        showUpdateModal();
-      }
-    })
-    .catch(function () { /* 静默忽略（网络问题等） */ });
+function probeUpdate() {
+  fetch(updateProbeUrl(), {
+    method: 'HEAD',
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+  }).then(function (res) {
+    var fp = updateFpOf(res);
+    if (fp) return fp;
+    throw new Error('no-validators');
+  }).catch(function () {
+    /* HEAD 被拒或没有校验头：改用 Range 只取首字节 */
+    return fetch(updateProbeUrl('&r=1'), {
+      cache: 'no-store',
+      headers: { 'Range': 'bytes=0-0', 'Cache-Control': 'no-cache, no-store' }
+    }).then(function (res) { return updateFpOf(res); }).catch(function () { return ''; });
+  }).then(function (fp) {
+    if (fp && !document.hidden) handleFp(fp);
+  });
+}
+
+function handleFp(fp) {
+  if (!updateState.baselineFp) {
+    updateState.baselineFp = fp;
+    return;
+  }
+  if (fp === updateState.baselineFp) {
+    updateState.pendingFp = '';
+    return;
+  }
+  if (fp === updateState.dismissedFp) return;
+  if (fp === updateState.pendingFp) {
+    /* 连续两次探测一致才认定有新版本 */
+    updateState.remoteFp = fp;
+    updateState.dismissedFp = fp;   /* 同一版本不再反复弹（关闭后也生效） */
+    updateState.pendingFp = '';
+    showUpdateModal();
+    return;
+  }
+  updateState.pendingFp = fp;
+  /* 400ms 后快速复检，避免 CDN 节点抖动误报 */
+  setTimeout(function () { if (!document.hidden) probeUpdate(); }, 400);
+}
+
+/* 10 秒无操作自动淡出：鼠标移动/点击/滚轮/键盘/touch 都算操作并重置计时 */
+var UPDATE_ACTIVITY_EVENTS = ['mousemove', 'pointerdown', 'click', 'wheel', 'keydown', 'touchstart', 'scroll'];
+
+function updateActivity() {
+  if (updateState.idleTimer) clearTimeout(updateState.idleTimer);
+  updateState.idleTimer = setTimeout(function () { hideUpdateModal(false); }, UPDATE_IDLE_MS);
+}
+
+function bindUpdateAutoHide() {
+  if (updateState.bound) { updateActivity(); return; }
+  updateState.bound = true;
+  UPDATE_ACTIVITY_EVENTS.forEach(function (name) {
+    window.addEventListener(name, updateActivity, { passive: true });
+  });
+  updateActivity();
+}
+
+function unbindUpdateAutoHide() {
+  if (!updateState.bound) return;
+  updateState.bound = false;
+  UPDATE_ACTIVITY_EVENTS.forEach(function (name) {
+    window.removeEventListener(name, updateActivity, { passive: true });
+  });
+  if (updateState.idleTimer) { clearTimeout(updateState.idleTimer); updateState.idleTimer = null; }
+}
+
+function wireUpdateModal() {
+  if (updateState.wired) return;
+  updateState.wired = true;
+  var close = document.getElementById('updateClose');
+  var confirmBtn = document.getElementById('updateConfirm');
+  if (close) close.addEventListener('click', function () { hideUpdateModal(true); });
+  if (confirmBtn) confirmBtn.addEventListener('click', function () {
+    try {
+      localStorage.setItem('hm.build', window.HM_BUILD || '');
+      localStorage.removeItem('hm.build.remindAt');
+    } catch (e) {}
+    hideUpdateModal(true);
+    toast('正在更新页面…', 'success');
+    /* 带版本参数跳转，强制绕过缓存取新文件 */
+    var u = new URL(location.href);
+    u.searchParams.set('hm_v', String(Date.now()));
+    setTimeout(function () { location.replace(u.toString()); }, 300);
+  });
+}
+
+function showUpdateModal() {
+  var modal = document.getElementById('updateModal');
+  if (!modal || !modal.hidden) return;
+  wireUpdateModal();
+  modal.classList.remove('is-hiding');
+  modal.hidden = false;
+  /* 不冻结页面滚动！这是右下角通知卡片，不是全屏模态 */
+  bindUpdateAutoHide();
+}
+
+function hideUpdateModal(fast) {
+  var modal = document.getElementById('updateModal');
+  if (!modal || modal.hidden) return;
+  /* 同一版本不再反复弹：记住当前远端指纹 */
+  updateState.dismissedFp = updateState.remoteFp || updateState.pendingFp || updateState.baselineFp;
+  unbindUpdateAutoHide();
+  modal.classList.add('is-hiding');
+  setTimeout(function () {
+    modal.hidden = true;
+    modal.classList.remove('is-hiding');
+  }, fast ? 180 : 320);
+}
+
+function startUpdatePolling() {
+  if (updateState.timer) clearInterval(updateState.timer);
+  updateState.timer = null;
+  if (document.hidden) return;
+  updateState.timer = setInterval(probeUpdate, UPDATE_POLL_MS);
 }
 
 function checkUpdate() {
@@ -28985,16 +29099,20 @@ function checkUpdate() {
       localStorage.setItem('hm.build', currentBuild);
     } else if (lastBuild !== currentBuild) {
       /* 本地记录的 build 和当前页面的不一样 → 有更新 */
-      var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
-      if (!remindAt || Date.now() >= remindAt) {
-        showUpdateModal();
-      }
+      showUpdateModal();
     }
 
-    /* 无论如何，再 fetch 一次远端最新 index.html 确认（处理首次访问 + 长时间挂着的情况） */
-    pollRemoteBuild();
-    /* 每 30 秒轮询一次（更快发现更新） */
-    setInterval(pollRemoteBuild, 30 * 1000);
+    /* 先探一次建立基线，再按 2 秒轮询；后台暂停，回到前台立即检测 */
+    probeUpdate();
+    startUpdatePolling();
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        if (updateState.timer) { clearInterval(updateState.timer); updateState.timer = null; }
+      } else {
+        probeUpdate();
+        startUpdatePolling();
+      }
+    });
   } catch (e) { /* localStorage 不可用时静默忽略 */ }
 }
 
@@ -40571,7 +40689,7 @@ window.HMStoryboard = (function () {
         el.nameInput.value = project.name;
         saveNow();
         renderBoard();
-        toast('已导入故事版', 'success');
+        toast('已导入分镜', 'success');
       } catch (e) {
         toast('导入失败：文件不是有效的分镜 JSON', 'error');
       }
@@ -40581,7 +40699,7 @@ window.HMStoryboard = (function () {
   }
 
   function printBoard() {
-    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(project.name) + ' · 故事版</title>' +
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(project.name) + ' · 分镜</title>' +
       '<style>' +
       'body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#111;margin:24px;background:#fff}' +
       'h1{font-size:22px;margin:0 0 4px}.meta{color:#666;font-size:12px;margin-bottom:20px}' +
@@ -41919,7 +42037,7 @@ window.HMPaint = (function () {
 
   function defaults() {
     return {
-      name: '未命名着色',
+      name: '未命名上色',
       w: 1280, h: 720,
       layers: [
         makeLayer('line', '线稿', { opacity: 1 }),
@@ -42104,7 +42222,7 @@ window.HMPaint = (function () {
   function bindTop() {
     el.name.addEventListener('input', function () {
       if (!state) return;
-      state.name = el.name.value.trim() || '未命名着色';
+      state.name = el.name.value.trim() || '未命名上色';
       scheduleSave();
     });
     el.importBtn.addEventListener('click', function () { el.importInput.click(); });
@@ -42955,7 +43073,7 @@ window.HMPaint = (function () {
     try {
       var url = out.toDataURL('image/png');
       var a = document.createElement('a');
-      var safe = (state.name || '着色').replace(/[\\/:*?"<>|]/g, '_');
+      var safe = (state.name || '上色').replace(/[\\/:*?"<>|]/g, '_');
       a.href = url;
       a.download = safe + '.png';
       document.body.appendChild(a);
@@ -53863,6 +53981,10 @@ window.HMChat = (function () {
         /* 旧顺序里没有 layout 时，默认排在「美术设定」之后 */
         if (map.layout && order.indexOf('layout') < 0 && map.art && map.art.parentNode === railTop) {
           railTop.insertBefore(map.layout, map.art.nextSibling);
+        }
+        /* 旧顺序里没有 edit 时，默认排在「摄影」之后 */
+        if (map.edit && order.indexOf('edit') < 0 && map.director && map.director.parentNode === railTop) {
+          railTop.insertBefore(map.edit, map.director.nextSibling);
         }
       }
     } catch (e) { /* ignore */ }
@@ -65049,6 +65171,14 @@ window.HMChat = (function () {
       var artEl = byKey('art');
       if (layoutEl && artEl && artEl.parentNode === railTop) {
         railTop.insertBefore(layoutEl, artEl.nextSibling);
+      }
+    }
+    /* 旧顺序里没有 edit：默认排到「摄影」之后 */
+    if (store.order.length && store.order.indexOf('edit') < 0) {
+      var editEl = byKey('edit');
+      var directorEl = byKey('director');
+      if (editEl && directorEl && directorEl.parentNode === railTop) {
+        railTop.insertBefore(editEl, directorEl.nextSibling);
       }
     }
     for (i = 0; i < store.fixed.length; i++) {
