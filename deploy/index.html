@@ -17261,6 +17261,7 @@ body.dv-open .hm-page {
     </div>
 
     <div class="hm-top-right">
+      <span class="hm-ver-pill" id="hmVerBadge" title="当前版本">v —</span>
       <div class="hm-user-wrap" id="hmUserWrap" hidden>
         <button class="hm-user-pill" id="hmUserPill" title="账号">
           <span class="hm-user-avatar" id="hmUserAvatar">我</span>
@@ -17280,6 +17281,9 @@ body.dv-open .hm-page {
         <span>虚拟形象</span>
       </button>
 <style>
+.hm-ver-pill{display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:999px;border:1px solid rgba(148,163,184,.22);background:rgba(255,255,255,.04);color:#8fa1b8;font-size:11px;line-height:1;white-space:nowrap;cursor:pointer;user-select:none;}
+.hm-ver-pill:hover{color:#c7d3e2;border-color:rgba(148,163,184,.4);}
+.hm-ver-pill.is-new{color:#7dd3fc;border-color:rgba(125,211,252,.55);background:rgba(125,211,252,.1);font-weight:600;}
 #avatarToggleBtn.on{background:rgba(56,189,248,.22);border-color:rgba(56,189,248,.55);color:#dff3ff;}
 #avatarToggleBtn.waiting{opacity:.6;}
 #avatarToggleBtn{transition:box-shadow .15s ease,background .15s ease,border-color .15s ease;}
@@ -27135,93 +27139,170 @@ async function authBoot() {
   }
 }
 
-function showUpdateModal() {
-  var modal = document.getElementById('updateModal');
-  var close = document.getElementById('updateClose');
-  var confirmBtn = document.getElementById('updateConfirm');
-  if (!modal) return;
+/* ========== 版本检测：轻量 HEAD 指纹（ETag / Last-Modified），15s 轮询 → 30s 内发现 ========== */
+var HM_UPDATE = (function () {
+  var POLL_MS = 15000;
+  var started = false;
+  var checking = false;
+  var currentFp = '';       /* 当前页面所对应部署的指纹 */
+  var currentLabel = '';
+  var pendingFp = '';       /* 疑似新版本，等第二次确认，避免 CDN 抖动误报 */
 
-  modal.hidden = false;
-  /* 不冻结页面滚动！这是右下角通知卡片，不是全屏模态 */
+  function badgeEl() { return document.getElementById('hmVerBadge'); }
 
-  function cleanup() {
-    if (close) close.removeEventListener('click', onClose);
-    if (confirmBtn) confirmBtn.removeEventListener('click', onConfirm);
-  }
-  function onClose() {
-    /* 关闭 = 24h 内不再弹（同之前的"稍后再说"） */
-    localStorage.setItem('hm.build.remindAt', String(Date.now() + 24 * 60 * 60 * 1000));
-    modal.hidden = true;
-    cleanup();
-  }
-  function onConfirm() {
-    localStorage.setItem('hm.build', window.HM_BUILD || '');
-    localStorage.removeItem('hm.build.remindAt');
-    modal.hidden = true;
-    cleanup();
-    toast('正在更新页面…', 'success');
-    setTimeout(function () { location.reload(); }, 500);
-  }
-  if (close) close.addEventListener('click', onClose);
-  if (confirmBtn) confirmBtn.addEventListener('click', onConfirm);
-}
-
-/* 远端 fetch 最新 HM_BUILD，和当前页面比 */
-function pollRemoteBuild() {
-  var currentBuild = window.HM_BUILD || '';
-  if (!currentBuild) return;
-  /* 检查是否点过"稍后再说"（24 小时内不重复弹） */
-  var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
-  if (remindAt && Date.now() < remindAt) return;
-
-  var url = location.origin + location.pathname + '?hm_poll=' + Date.now();
-  fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } })
-    .then(function (r) { return r.text(); })
-    .then(function (html) {
-      var m = html.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
-      if (!m) {
-        /* 可能拿到旧版本，重试一次 */
-        setTimeout(function () {
-          fetch(url + '&retry=1', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store' } })
-            .then(function (r2) { return r2.text(); })
-            .then(function (html2) {
-              var m2 = html2.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
-              if (m2 && m2[1] && m2[1] !== currentBuild) showUpdateModal();
-            }).catch(function () {});
-        }, 1500);
-        return;
-      }
-      var remoteBuild = m[1];
-      if (remoteBuild && remoteBuild !== currentBuild) {
-        showUpdateModal();
-      }
-    })
-    .catch(function () { /* 静默忽略（网络问题等） */ });
-}
-
-function checkUpdate() {
-  try {
-    var currentBuild = window.HM_BUILD || '';
-    if (!currentBuild) return;
-
-    var lastBuild = localStorage.getItem('hm.build') || '';
-    if (!lastBuild) {
-      /* 首次访问，记录当前 build，不弹（因为没对比基线） */
-      localStorage.setItem('hm.build', currentBuild);
-    } else if (lastBuild !== currentBuild) {
-      /* 本地记录的 build 和当前页面的不一样 → 有更新 */
-      var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
-      if (!remindAt || Date.now() >= remindAt) {
-        showUpdateModal();
-      }
+  function shortLabel(fp) {
+    if (!fp) return '';
+    if (fp.indexOf('e:') === 0) {
+      var h = fp.slice(2).replace(/[^a-z0-9]/gi, '');
+      return h.slice(-7) || '当前';
     }
+    var m = fp.match(/(\d{1,2})\s+(\w{3})\s+(\d{4})\s+(\d{2}):(\d{2})/);
+    if (m) return m[1] + m[2] + ' ' + m[4] + ':' + m[5];
+    return fp.slice(-8);
+  }
 
-    /* 无论如何，再 fetch 一次远端最新 index.html 确认（处理首次访问 + 长时间挂着的情况） */
-    pollRemoteBuild();
-    /* 每 30 秒轮询一次（更快发现更新） */
-    setInterval(pollRemoteBuild, 30 * 1000);
-  } catch (e) { /* localStorage 不可用时静默忽略 */ }
+  function renderBadge(text, isNew) {
+    var el = badgeEl();
+    if (!el) return;
+    el.textContent = text;
+    el.classList.toggle('is-new', !!isNew);
+    el.title = isNew ? '有新版本，点击立即刷新' : ('当前版本 ' + (currentLabel || '未知') + ' · 点击检查更新');
+  }
+
+  function headFingerprint() {
+    var url = location.pathname + location.search + (location.search ? '&' : '?') + '_hmv=' + Date.now();
+    return fetch(url, { method: 'HEAD', cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) {
+        var etag = r.headers.get('ETag') || r.headers.get('etag') || '';
+        var lm = r.headers.get('Last-Modified') || '';
+        var len = r.headers.get('Content-Length') || '';
+        if (etag) return 'e:' + etag;
+        if (lm) return 'm:' + lm + '|' + len;
+        return '';
+      })
+      .catch(function () { return ''; });
+  }
+
+  /* 兜底：服务器不返回任何缓存校验头时，退回读页面里的 HM_BUILD（低频，60s） */
+  var lastBuildCheck = 0;
+  function buildFallback() {
+    var now = Date.now();
+    if (now - lastBuildCheck < 60000) return Promise.resolve('');
+    lastBuildCheck = now;
+    var url = location.pathname + location.search + (location.search ? '&' : '?') + '_hmb=' + now;
+    return fetch(url, { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (html) {
+      var m = html.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
+      return m && m[1] ? 'b:' + m[1] : '';
+    }).catch(function () { return ''; });
+  }
+
+  function hardReload() {
+    var url = location.pathname + location.search + (location.search ? '&' : '?') + '_hmr=' + Date.now();
+    var go = function () { location.replace(url); };
+    var tasks = [];
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        tasks.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+          rs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+        }).catch(function () {}));
+      }
+    } catch (e) {}
+    try {
+      if (window.caches && caches.keys) {
+        tasks.push(caches.keys().then(function (ks) {
+          return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+        }).catch(function () {}));
+      }
+    } catch (e) {}
+    if (!tasks.length) { go(); return; }
+    Promise.all(tasks).then(go, go);
+    setTimeout(go, 1200);   /* 兜底：清理逻辑卡住也照常刷新 */
+  }
+
+  function showUpdate(remoteFp) {
+    renderBadge('有新版本 · 点此刷新', true);
+    var notified = '';
+    try { notified = localStorage.getItem('hm.update.notified') || ''; } catch (e) {}
+    if (notified === remoteFp) return;   /* 同一版本只弹一次 */
+    try { localStorage.setItem('hm.update.notified', remoteFp); } catch (e) {}
+    var modal = document.getElementById('updateModal');
+    if (!modal) return;
+    modal.hidden = false;
+    var close = document.getElementById('updateClose');
+    var confirmBtn = document.getElementById('updateConfirm');
+    function cleanup() {
+      if (close) close.removeEventListener('click', onClose);
+      if (confirmBtn) confirmBtn.removeEventListener('click', onConfirm);
+    }
+    function onClose() { modal.hidden = true; cleanup(); }
+    function onConfirm() {
+      modal.hidden = true;
+      cleanup();
+      try { localStorage.removeItem('hm.update.notified'); } catch (e) {}
+      if (window.toast) toast('正在更新页面…', 'success');
+      hardReload();
+    }
+    if (close) close.addEventListener('click', onClose);
+    if (confirmBtn) confirmBtn.addEventListener('click', onConfirm);
+  }
+
+  function apply(fp) {
+    if (!fp) {
+      buildFallback().then(function (b) {
+        if (!b) return;
+        if (!currentFp) { currentFp = b; currentLabel = b.slice(2); renderBadge('v ' + currentLabel, false); }
+        else if (b !== currentFp) showUpdate(b);
+      });
+      return;
+    }
+    if (!currentFp) {
+      currentFp = fp;
+      currentLabel = shortLabel(fp);
+      renderBadge('v ' + currentLabel, false);
+      return;
+    }
+    if (fp === currentFp) { pendingFp = ''; return; }
+    if (pendingFp === fp) { showUpdate(fp); return; }
+    pendingFp = fp;   /* 首次发现不同：下一次轮询再确认，防止 CDN 抖动 */
+  }
+
+  function check() {
+    if (checking || document.hidden) return;
+    checking = true;
+    headFingerprint().then(function (fp) {
+      checking = false;
+      apply(fp);
+    });
+  }
+
+  function start() {
+    if (started) return;
+    started = true;
+    var el = badgeEl();
+    if (el) {
+      el.addEventListener('click', function () {
+        if (el.classList.contains('is-new')) hardReload();
+        else check();
+      });
+    }
+    renderBadge('v 检查中', false);
+    check();
+    setInterval(check, POLL_MS);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+    window.addEventListener('online', check);
+    window.addEventListener('focus', check);
+  }
+
+  return { start: start, check: check, hardReload: hardReload, _state: function () { return { fp: currentFp, label: currentLabel, pending: pendingFp }; } };
+})();
+
+function showUpdateModal() { showUpdateFromAnywhere(); }
+function showUpdateFromAnywhere() {
+  /* 兼容旧调用：直接标记有新版本并弹出 */
+  HM_UPDATE.check();
 }
+function pollRemoteBuild() { HM_UPDATE.check(); }
+function checkUpdate() { HM_UPDATE.start(); }
 
 /* ========== 输入区高度拖动 ========== */
 /* 默认 dock 高度 250px，范围 150~520px */
