@@ -5174,7 +5174,94 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 }
 
 .hm-scale-menu {
-  width: 128px;
+  width: 176px;
+  padding: 6px;
+}
+.hm-scale-menu > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border-radius: 8px;
+  color: #b9c9db;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+.hm-scale-menu > button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e6f2ff;
+}
+.hm-scale-menu > button.is-active {
+  background: rgba(56, 189, 248, 0.18);
+  color: #7dd3fc;
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.22);
+}
+.hm-scale-menu > button.hm-scale-custom-btn {
+  margin-top: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding-top: 9px;
+}
+.hm-scale-ic,
+.hm-chip-ic {
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.hm-chip-ic {
+  width: 14px;
+  height: 14px;
+}
+.hm-scale-ic svg,
+.hm-chip-ic svg {
+  width: 100%;
+  height: 100%;
+}
+.hm-scale-tx {
+  font-size: 11.5px;
+}
+.hm-scale-custom {
+  display: grid;
+  gap: 5px;
+  padding: 4px 8px 2px;
+}
+.hm-scale-custom[hidden] {
+  display: none;
+}
+.hm-scale-custom label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 10px;
+  color: #8fa4bb;
+}
+.hm-scale-custom input {
+  width: 88px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(120, 170, 210, 0.22);
+  background: rgba(255, 255, 255, 0.05);
+  color: #cfe3f5;
+  font-size: 11px;
+}
+.hm-scale-custom input:focus {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.5);
+}
+.hm-scale-hint {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.4;
+  color: #6f859b;
+}
+.hm-scale-size {
+  margin-top: 5px;
+  padding: 6px 9px 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 10px;
+  color: #7dd3fc;
+  font-variant-numeric: tabular-nums;
 }
 
 .hm-seed-menu {
@@ -21504,14 +21591,21 @@ body.dv-open .hm-page {
 
           <div class="hm-menu-wrap hm-av-only">
             <button class="hm-chip" id="scaleBtn" aria-haspopup="true" aria-expanded="false">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-              <span id="scaleChipText">2K</span>
+              <span class="hm-chip-ic" id="scaleChipIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>
+              <span id="scaleChipText">1K</span>
               <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="hm-menu hm-menu-up hm-scale-menu" id="scalePicker" aria-hidden="true">
-              <button data-scale="1k" class="is-active">标清 1K</button>
-              <button data-scale="2k">高清 2K</button>
-              <button data-scale="4k">超清 4K</button>
+              <button data-scale="1k" class="is-active"><span class="hm-scale-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span class="hm-scale-tx">标清 1K</span></button>
+              <button data-scale="2k"><span class="hm-scale-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span class="hm-scale-tx">高清 2K</span></button>
+              <button data-scale="4k"><span class="hm-scale-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="9" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 13.5h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".65"/></svg></span><span class="hm-scale-tx">超清 4K</span></button>
+              <button data-scale="custom" class="hm-scale-custom-btn"><span class="hm-scale-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="9" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 13.5h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".65"/></svg></span><span class="hm-scale-tx">自定义</span></button>
+              <div class="hm-scale-custom" id="scaleCustomRow" hidden>
+                <label>长度 <input id="customWInput" type="number" min="64" max="8192" step="1" inputmode="numeric"></label>
+                <label>宽度 <input id="customHInput" type="number" min="64" max="8192" step="1" inputmode="numeric"></label>
+                <p class="hm-scale-hint">长度=宽、宽度=高，另一边按当前比例换算（以长度为准）</p>
+              </div>
+              <div class="hm-scale-size" id="scaleSizeText">1024×1024</div>
             </div>
           </div>
 
@@ -23272,7 +23366,8 @@ const RATIOS = [
 const SCALES = [
   { id: '1k', label: '标清 1K', mult: 1 },
   { id: '2k', label: '高清 2K', mult: 2 },
-  { id: '4k', label: '超清 4K', mult: 4 }
+  { id: '4k', label: '超清 4K', mult: 4 },
+  { id: 'custom', label: '自定义', mult: 1 }
 ];
 
 /* ---------------- 灵感 ---------------- */
@@ -23378,10 +23473,48 @@ function currentScale() {
   return SCALES.find(function (s) { return s.id === state.scale; }) || SCALES[0];
 }
 
+/* 像素统一取 8 的倍数，保持比例且避免后端整除裁剪 */
+function round8(value) {
+  const n = Math.max(64, Math.min(8192, Math.round(Number(value) || 0)));
+  return Math.max(64, Math.round(n / 8) * 8);
+}
+
+/* 自定义档：以长度（宽）为准，高度按当前比例换算（自动侧对齐 8 的倍数） */
+function customPixels(ratio) {
+  const ar = ratio.w / ratio.h;
+  const w = Math.max(64, Math.min(8192, Math.round(Number(state.customW) || ratio.w)));
+  return { w: w, h: round8(w / ar) };
+}
+
+/* 实际像素 = 比例基准像素 × 档位倍率（1K×1 / 2K×2 / 4K×4；自定义用宽高） */
 function currentSize() {
   const ratio = currentRatio();
   const scale = currentScale();
-  return { ratio: ratio, scale: scale, w: ratio.w * scale.mult, h: ratio.h * scale.mult };
+  if (scale.id === 'custom') {
+    const px = customPixels(ratio);
+    return { ratio: ratio, scale: scale, w: px.w, h: px.h };
+  }
+  return { ratio: ratio, scale: scale, w: round8(ratio.w * scale.mult), h: round8(ratio.h * scale.mult) };
+}
+
+/* 比例按钮上显示当前档位对应的像素 */
+function ratioPixelsFor(r) {
+  if (state.scale === 'custom') {
+    const ar = r.w / r.h;
+    const w = Math.max(64, Math.min(8192, Math.round(Number(state.customW) || r.w)));
+    return { w: w, h: round8(w / ar) };
+  }
+  const mult = currentScale().mult;
+  return { w: round8(r.w * mult), h: round8(r.h * mult) };
+}
+
+/* 请求里的 scale 字段：自定义档按最长边归到 1k/2k/4k（后端白名单兼容） */
+function effectiveScaleId(size) {
+  if (size.scale.id !== 'custom') return size.scale.id;
+  const longEdge = Math.max(size.w, size.h);
+  if (longEdge > 2800) return '4k';
+  if (longEdge > 1400) return '2k';
+  return '1k';
 }
 
 function fileNameFor(item) {
@@ -23416,6 +23549,8 @@ const state = {
   modelId: MODEL_INDEX.some(function (m) { return m.id === storedPrefs.modelId; }) ? storedPrefs.modelId : MODEL_INDEX[0].id,
   ratio: RATIOS.some(function (r) { return r.id === storedPrefs.ratio; }) ? storedPrefs.ratio : '1:1',
   scale: SCALES.some(function (s) { return s.id === storedPrefs.scale; }) ? storedPrefs.scale : '1k',
+  customW: Number(storedPrefs.customW) || 0,
+  customH: Number(storedPrefs.customH) || 0,
   count: [1, 2, 4].indexOf(Number(storedPrefs.count)) >= 0 ? Number(storedPrefs.count) : 1,
   steps: clamp(Number(storedPrefs.steps) || 8, 4, 12),
   seed: Number(storedPrefs.seed) || randomSeed(),
@@ -23769,7 +23904,8 @@ function renderRatios() {
     const scale = 21 / Math.max(r.w, r.h);
     const bw = Math.max(9, Math.round(r.w * scale));
     const bh = Math.max(9, Math.round(r.h * scale));
-    return '<button class="ratio-btn' + (r.id === state.ratio ? ' is-active' : '') + '" data-ratio="' + r.id + '" title="' + r.w + '×' + r.h + '">' +
+    const px = ratioPixelsFor(r);
+    return '<button class="ratio-btn' + (r.id === state.ratio ? ' is-active' : '') + '" data-ratio="' + r.id + '" title="' + px.w + '×' + px.h + '">' +
       '<span class="ratio-shape" style="width:' + bw + 'px;height:' + bh + 'px"></span>' +
       '<span class="ratio-name">' + r.id + '</span>' +
     '</button>';
@@ -23783,6 +23919,14 @@ function updateRatioLabel() {
   const detail = size.scale.label + ' · ' + size.w + '×' + size.h;
   els.ratioLabel.textContent = size.ratio.id;
   if (els.ratioBtn) els.ratioBtn.title = '画面比例 ' + size.ratio.id + ' · ' + detail;
+  const readout = document.getElementById('scaleSizeText');
+  if (readout) readout.textContent = '当前 ' + size.w + '×' + size.h + ' · ' + size.scale.label;
+  if (state.scale === 'custom') {
+    const cw = document.getElementById('customWInput');
+    const ch = document.getElementById('customHInput');
+    if (cw && document.activeElement !== cw) cw.value = String(size.w);
+    if (ch && document.activeElement !== ch) ch.value = String(size.h);
+  }
 }
 
 function filteredWorks() {
@@ -24248,6 +24392,25 @@ function addPromptTab() {
   els.promptInput.focus();
 }
 
+/* 档位图标：1K/2K 柱状，4K 与自定义用板状 */
+const SCALE_ICONS = {
+  bars: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>',
+  slab: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="9" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 13.5h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".65"/></svg>'
+};
+
+function syncScaleChip() {
+  if (els.scaleChipText) {
+    els.scaleChipText.textContent = state.scale === 'custom' ? '自定义' : String(state.scale).toUpperCase();
+  }
+  const icon = document.getElementById('scaleChipIcon');
+  if (icon) icon.innerHTML = (state.scale === '4k' || state.scale === 'custom') ? SCALE_ICONS.slab : SCALE_ICONS.bars;
+}
+
+function toggleCustomRow() {
+  const row = document.getElementById('scaleCustomRow');
+  if (row) row.hidden = state.scale !== 'custom';
+}
+
 function syncSettingsUI() {
   els.seedInput.value = String(state.seed);
   els.stepsRange.value = String(state.steps);
@@ -24261,7 +24424,8 @@ function syncSettingsUI() {
   els.scalePicker.querySelectorAll('button').forEach(function (btn) {
     btn.classList.toggle('is-active', btn.dataset.scale === state.scale);
   });
-  if (els.scaleChipText) els.scaleChipText.textContent = state.scale.toUpperCase();
+  syncScaleChip();
+  toggleCustomRow();
   if (els.seedBtn) els.seedBtn.title = '当前种子 #' + state.seed + '，点击手动指定';
   els.translateToggle.classList.toggle('is-on', state.translate);
   els.translateToggle.setAttribute('aria-checked', state.translate ? 'true' : 'false');
@@ -25175,6 +25339,8 @@ function persistPrefs() {
     modelId: state.modelId,
     ratio: state.ratio,
     scale: state.scale,
+    customW: state.customW,
+    customH: state.customH,
     count: state.count,
     steps: state.steps,
     seed: state.seed,
@@ -27160,7 +27326,7 @@ async function handleGenerate() {
       width: size.w,
       height: size.h,
       ratioId: size.ratio.id,
-      scaleId: size.scale.id,
+      scaleId: effectiveScaleId(size),
       steps: state.engine === 'flux' ? state.steps : 0,
       seed: baseSeed + i,
       status: 'loading',
@@ -27921,15 +28087,74 @@ function bindEvents() {
   els.scalePicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-scale]');
     if (!btn) return;
+    if (btn.dataset.scale === 'custom') {
+      /* 切到自定义：用当前比例 + 当前档位像素预填 */
+      const prev = currentSize();
+      state.customW = prev.w;
+      state.customH = prev.h;
+    }
     state.scale = btn.dataset.scale;
     els.scalePicker.querySelectorAll('button').forEach(function (el) {
       el.classList.toggle('is-active', el.dataset.scale === state.scale);
     });
+    syncScaleChip();
+    toggleCustomRow();
     updateRatioLabel();
     persistPrefs();
-    syncSettingsUI();
-    closeAllMenus();
+    renderRatios();
+    /* 自定义档留在菜单里填宽高，其余档位点击即收起 */
+    if (state.scale !== 'custom') closeAllMenus();
   });
+
+  const customWInput = document.getElementById('customWInput');
+  const customHInput = document.getElementById('customHInput');
+
+  function clampSide(value) {
+    return Math.max(64, Math.min(8192, Math.round(Number(value) || 0)));
+  }
+
+  function applyCustomPixels(from) {
+    const ratio = currentRatio();
+    const ar = ratio.w / ratio.h;
+    let w;
+    let h;
+    if (from === 'h') {
+      h = clampSide(customHInput.value);
+      w = round8(h * ar);
+      if (Math.abs(w / ar - h) > 8 && typeof toast === 'function') {
+        toast('两者与当前比例冲突，已按长度为准换算为 ' + w + '×' + round8(w / ar), 'info');
+      }
+      h = round8(w / ar);
+    } else {
+      w = clampSide(customWInput.value);
+      h = round8(w / ar);
+    }
+    if (w % 8 !== 0 && typeof toast === 'function') {
+      toast('提示：长度 ' + w + ' 不是 8 的倍数，部分接口可能自动裁剪，建议使用 8 的倍数', 'info');
+    }
+    state.customW = w;
+    state.customH = h;
+    state.scale = 'custom';
+    if (customWInput) customWInput.value = String(w);
+    if (customHInput) customHInput.value = String(h);
+    persistPrefs();
+    renderRatios();
+    els.scalePicker.querySelectorAll('button').forEach(function (el) {
+      el.classList.toggle('is-active', el.dataset.scale === state.scale);
+    });
+    syncScaleChip();
+    toggleCustomRow();
+    updateRatioLabel();
+  }
+
+  if (customWInput) {
+    customWInput.addEventListener('change', function () { applyCustomPixels('w'); });
+    customWInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') customWInput.blur(); });
+  }
+  if (customHInput) {
+    customHInput.addEventListener('change', function () { applyCustomPixels('h'); });
+    customHInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') customHInput.blur(); });
+  }
 
   els.countPicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-step]');
