@@ -95,6 +95,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
         <span>美术设定</span>
       </button>
+      <button class="hm-rail-item" data-rail="voice" title="配音（台词配音台 · 角色音色 · 语音合成）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>配音</span>
+      </button>
     </div>
 
     <!-- 隐藏线：位于左下角「主题」图标正上方；线上方放不下的图标收进隐藏区 -->
@@ -2383,6 +2387,66 @@
     </section>
   </main>
 
+  <!-- ===================== 配音（台词配音台 · 角色音色 · 语音合成） ===================== -->
+  <main class="hm-page hm-voice-page" id="view-voice" hidden>
+    <header class="vc-head">
+      <div class="vc-head-left">
+        <h2 class="vc-title">🎙️ 台词配音台</h2>
+        <p class="vc-sub">为剧本/分镜角色配音 · 浏览器语音合成实时试听 · 支持连续整段配音</p>
+      </div>
+      <div class="vc-head-actions">
+        <button class="vc-btn vc-btn-ghost" id="vcClearBtn" type="button">清空</button>
+        <button class="vc-btn vc-btn-ghost" id="vcImportBtn" type="button">从剧本导入</button>
+        <button class="vc-btn vc-btn-primary" id="vcPlayAllBtn" type="button">▶ 连续配音</button>
+      </div>
+    </header>
+
+    <div class="vc-body">
+      <aside class="vc-side">
+        <div class="vc-side-sec">
+          <div class="vc-side-h">角色音色预设</div>
+          <div class="vc-cast" id="vcCast"></div>
+          <button class="vc-btn vc-btn-line" id="vcAddCastBtn" type="button">＋ 添加角色</button>
+        </div>
+        <div class="vc-side-sec">
+          <div class="vc-side-h">全局参数</div>
+          <label class="vc-field">
+            <span>语速 <b id="vcRateVal">1.0</b></span>
+            <input type="range" id="vcRate" min="0.5" max="2" step="0.1" value="1">
+          </label>
+          <label class="vc-field">
+            <span>音调 <b id="vcPitchVal">1.0</b></span>
+            <input type="range" id="vcPitch" min="0.5" max="2" step="0.1" value="1">
+          </label>
+          <label class="vc-field">
+            <span>句间停顿 <b id="vcGapVal">0.4s</b></span>
+            <input type="range" id="vcGap" min="0" max="2" step="0.1" value="0.4">
+          </label>
+        </div>
+        <div class="vc-side-sec">
+          <div class="vc-side-h">统计</div>
+          <div class="vc-stats" id="vcStats">0 条台词 · 0 字 · 预计 0 秒</div>
+        </div>
+      </aside>
+
+      <section class="vc-main">
+        <div class="vc-lines-head">
+          <span class="vc-col-idx">#</span>
+          <span class="vc-col-cast">角色</span>
+          <span class="vc-col-text">台词内容</span>
+          <span class="vc-col-time">时长</span>
+          <span class="vc-col-ops">操作</span>
+        </div>
+        <div class="vc-lines" id="vcLines"></div>
+        <div class="vc-add-line">
+          <select id="vcNewCast" class="vc-select"></select>
+          <input id="vcNewText" class="vc-input" type="text" placeholder="输入台词，回车添加（例：我们不能就这样放弃！）">
+          <button class="vc-btn vc-btn-primary" id="vcAddLineBtn" type="button">＋ 添加台词</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
   <main class="hm-page hm-art-page" id="view-art" hidden>
     <!-- 顶部工具条 -->
     <div class="hm-art-top">
@@ -3767,6 +3831,7 @@
   <script src="chat.js"></script>
   <script src="canvas.js"></script>
   <script src="library.js"></script>
+  <script src="voice.js"></script>
   <script src="ui.js"></script>
   <script src="dimverse.js"></script>
   <script src="desk.js"></script>

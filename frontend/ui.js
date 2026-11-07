@@ -981,6 +981,9 @@
     if (prevView === 'library' && view !== 'library' && window.HMLibrary) {
       try { window.HMLibrary.leave(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'voice' && view !== 'voice' && window.HMVoice) {
+      try { window.HMVoice.leave(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas' && window.HMCanvas) {
