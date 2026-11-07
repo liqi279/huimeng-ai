@@ -160,6 +160,7 @@
     </div>
 
     <div class="hm-top-right">
+      <button class="hm-icon-btn hm-avatar-toggle" id="avatarToggle" aria-label="虚拟形象" title="虚拟形象" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.8 20c.4-3.6 3.4-6 7.2-6s6.8 2.4 7.2 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>虚拟形象</span></button>
       <div class="hm-user-wrap" id="hmUserWrap" hidden>
         <button class="hm-user-pill" id="hmUserPill" title="账号">
           <span class="hm-user-avatar" id="hmUserAvatar">我</span>
@@ -562,7 +563,11 @@
             <button class="tc-btn tc-btn-line" id="tcApiTest" type="button">连接测试</button>
             <span class="tc-api-state" id="tcApiState">未连接</span>
           </div>
-          <p class="tc-hint">启动方式见插件目录 <b>服务/README.md</b>：先装权重，再运行 <code>python server.py</code>。页面通过该服务做<b>真实推理</b>。</p>
+          <div class="tc-dl">
+            <a class="tc-btn tc-btn-line" href="https://raw.githubusercontent.com/liqi279/huimeng-ai/main/%E6%8F%92%E4%BB%B6/09-ToonCrafter%E9%A6%96%E5%B0%BE%E5%B8%A7%E8%A1%A5%E9%97%B4/%E6%9C%8D%E5%8A%A1/%E5%90%AF%E5%8A%A8%E6%9C%8D%E5%8A%A1.bat" download>下载 启动服务.bat</a>
+            <a class="tc-btn tc-btn-line" href="https://raw.githubusercontent.com/liqi279/huimeng-ai/main/%E6%89%93%E5%BC%80%E6%9C%AC%E5%9C%B0%E7%89%88.bat" download>下载 打开本地版.bat</a>
+          </div>
+          <p class="tc-hint">下载后的脚本要放回仓库对应位置：<b>启动服务.bat</b> 放 <code>插件/09-ToonCrafter首尾帧补间/服务/</code>（同目录需有 server.py 与 源码/），<b>打开本地版.bat</b> 放仓库根目录。脚本为 GBK 编码，请勿另存为 UTF-8。</p>
         </div>
       </aside>
 

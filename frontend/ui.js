@@ -2586,14 +2586,51 @@
       try { window.HMChat.init(); } catch (e) { console.error('[Chat] init failed', e); }
     }
 
-    /* 初音未来 · 胶片悬浮音乐播放器插件 */
-    if (window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
-      try {
-        window.MikuPlayer.init();
-        window.__HM_MIKU_MOUNTED = true;
-      } catch (e) { console.error('[MikuPlayer] init failed', e); }
-    }
+    /* 初音未来 · 胶片悬浮音乐播放器插件：默认不自动挂载，
+     * 由顶栏「虚拟形象」按钮按需创建 / 收起（见 bindAvatarToggle） */
   }
+
+  (function bindAvatarToggle() {
+    var btn = document.getElementById('avatarToggle');
+    if (!btn) return;
+    /* 页面加载时不自动挂载形象 / AI 语音浮层，统一由顶栏「虚拟形象」按钮按需创建 */
+    window.MIKU_CHAT_NO_AUTO = true;
+    function widgetEl() { return document.getElementById('vinyl-widget'); }
+    function sync() {
+      var el = widgetEl();
+      var r = el ? el.getBoundingClientRect() : null;
+      var on = !!(el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none' && r && r.width > 0 && r.height > 0);
+      btn.classList.toggle('is-on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    function ensure() {
+      if (!widgetEl() && window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
+        try { window.MikuPlayer.init(); window.__HM_MIKU_MOUNTED = true; } catch (e) {}
+      }
+      if (window.MikuChat && !window.__HM_MIKU_CHAT) {
+        try { window.MikuChat.init({ anchor: '#vinyl-widget' }); window.__HM_MIKU_CHAT = true; } catch (e) {}
+      }
+    }
+    btn.addEventListener('click', function () {
+      var before = widgetEl();
+      if (!before) {
+        /* 首次点击：按需挂载并直接显示 */
+        ensure();
+        var fresh = widgetEl();
+        if (fresh) fresh.style.display = 'block';
+        setTimeout(sync, 60);
+        return;
+      }
+      var hidden = before.style.display === 'none' || getComputedStyle(before).display === 'none';
+      before.style.display = hidden ? 'block' : 'none';
+      if (hidden) {
+        var ball = document.getElementById('mini-ball');
+        if (ball) ball.style.display = 'none';
+      }
+      sync();
+    });
+    window.addEventListener('load', function () { setTimeout(sync, 400); });
+  })();
 
   window.HMUI = {
     init: init,
