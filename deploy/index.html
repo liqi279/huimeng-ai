@@ -62517,7 +62517,8 @@ window.HMChat = (function () {
   function widgetEl() { return document.getElementById('vinyl-widget'); }
   function sync() {
     var el = widgetEl();
-    var on = !!(el && el.style.display !== 'none' && el.offsetParent !== null);
+    var r = el ? el.getBoundingClientRect() : null;
+    var on = !!(el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none' && r && r.width > 0 && r.height > 0);
     btn.classList.toggle('is-on', on);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
@@ -62530,11 +62531,18 @@ window.HMChat = (function () {
     }
   }
   btn.addEventListener('click', function () {
-    ensure();
-    var el = widgetEl();
-    if (!el) { setTimeout(sync, 80); return; }
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
-    if (el.style.display === 'block') {
+    var before = widgetEl();
+    if (!before) {
+      /* 首次点击：按需挂载并直接显示 */
+      ensure();
+      var fresh = widgetEl();
+      if (fresh) fresh.style.display = 'block';
+      setTimeout(sync, 60);
+      return;
+    }
+    var hidden = before.style.display === 'none' || getComputedStyle(before).display === 'none';
+    before.style.display = hidden ? 'block' : 'none';
+    if (hidden) {
       var ball = document.getElementById('mini-ball');
       if (ball) ball.style.display = 'none';
     }
