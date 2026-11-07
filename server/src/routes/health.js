@@ -3,11 +3,18 @@
 const express = require('express');
 const config = require('../config');
 const store = require('../store');
+const userData = require('../user-data');
 const { PRESETS } = require('./presets');
 
 const router = express.Router();
 
 router.get('/health', (req, res) => {
+  let userDataStatus = null;
+  try {
+    userDataStatus = userData.status();
+  } catch (err) {
+    userDataStatus = { error: err && err.message };
+  }
   res.json({
     ok: true,
     version: '1.1.0',
@@ -20,6 +27,8 @@ router.get('/health', (req, res) => {
     storage: store.storage,
     storageReady: store.storageReady(),
     persistent: store.storage === 'postgres' && store.storageReady(),
+    /* 用户数据（作品/项目/编集/宣发/偏好）与图片的实际存储类型 */
+    userData: userDataStatus,
   });
 });
 
