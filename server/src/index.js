@@ -112,16 +112,27 @@ app.use((err, req, res, next) => {
 
 store.ensureDirs()
   .then(async () => {
-    /* 首次启动若无用户，创建默认超级管理员 */
-    const users = await store.listUsers();
-    if (!users.length) {
-      const adminUser = process.env.ADMIN_USER || 'admin';
-      const adminPass = process.env.ADMIN_PASS || 'admin123';
-      const result = await store.createUser({ username: adminUser, password: adminPass, role: 'admin' });
-      if (result.ok) {
-        console.log(`[init] 默认超级管理员已创建：${adminUser} / ${adminPass}（请尽快修改密码）`);
+    /* 账号库初始化：auto 先试 MySQL，失败回落文件；mysql 强制 MySQL，失败则认证接口 503 */
+    const userState = await store.initUserStore();
+    if (userState && userState.mode !== 'error') {
+      try {
+        const users = await store.listUsers();
+        if (!users.length) {
+          const adminUser = process.env.ADMIN_USER || 'admin';
+          const adminPass = process.env.ADMIN_PASS || 'admin123';
+          const result = await store.createUser({ username: adminUser, password: adminPass, role: 'admin', status: 'approved', note: '初始超管' });
+          if (result.ok) {
+            console.log(`[init] 默认超级管理员已创建：${adminUser} / ${adminPass}（请尽快修改密码）`);
+          }
+        }
+      } catch (err) {
+        console.error('[init] 账号初始化失败（服务继续启动，认证接口会返回错误）：', err && err.message);
       }
+    } else {
+      console.error('[init] 账号数据库不可用：' + ((userState && userState.error) || '未知原因') +
+        ' → /api/auth/* 将返回 503。请配置 MySQL，或设置 USER_STORE=auto/file。');
     }
+
     app.listen(config.PORT, () => {
       console.log(`绘梦 server listening on http://localhost:${config.PORT}`);
     });
