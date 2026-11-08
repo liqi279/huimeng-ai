@@ -134,12 +134,17 @@ async function proxyFile(req, res, key, ext, filename) {
   res.status(up.status === 206 ? 206 : 200);
   res.setHeader('Content-Type', up.headers.get('content-type') || MIME_BY_EXT[ext] || 'application/octet-stream');
   res.setHeader('Content-Disposition', 'inline; filename="' + filename + '"');
-  res.setHeader('Cache-Control', 'private, max-age=600');
+  res.setHeader('Cache-Control', 'private, max-age=300');
   res.setHeader('Accept-Ranges', 'bytes');
+  /* 跨域直出（?stream=1 给 pdf.js 的兜底通道）：分段读取必须能看到这几个头 */
+  res.setHeader('Access-Control-Expose-Headers',
+    'Content-Length, Content-Range, Accept-Ranges, Content-Type, ETag');
   const len = up.headers.get('content-length');
   if (len) res.setHeader('Content-Length', len);
   const range = up.headers.get('content-range');
   if (range) res.setHeader('Content-Range', range);
+  const etag = up.headers.get('etag');
+  if (etag) res.setHeader('ETag', etag);
 
   if (req.method === 'HEAD' || !up.body) {
     if (up.body) await up.body.cancel().catch(() => {});
@@ -161,11 +166,14 @@ router.get('/library/file/*', wrap(async (req, res) => {
 
   const ext = path.extname(key).toLowerCase();
   const filename = path.basename(key).replace(/["\\\r\n]/g, '') || 'file';
+  /* ?stream=1：不跳转，服务端带 Range 回源并流式直出（pdf.js 的兜底通道，
+     避免「跨域 + 302 跳转 + Range」在某些浏览器组合下被拦）。 */
+  const useStream = String(req.query.stream || '') === '1';
 
   /* PDF 正文：302 到预签名直链，浏览器直连 OSS 流式拉取（支持 Range），
      83MB 不再全部经 Render 中转。签名里带 inline，保证是内嵌预览而不是下载。
      HEAD 仍走回源，保持原有 200/206 语义。 */
-  if (ext === '.pdf' && req.method !== 'HEAD') {
+  if (ext === '.pdf' && req.method !== 'HEAD' && !useStream) {
     /* 只覆盖 Content-Disposition：OSS 会拒绝 response-content-type 覆盖
        （400 InvalidRequest: Can not override response header on content-type），
        而对象本身存的就是 application/pdf，不需要再覆盖类型。 */
