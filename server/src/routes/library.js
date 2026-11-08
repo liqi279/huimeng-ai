@@ -96,8 +96,8 @@ router.post('/library/uploads/presign', wrap(async (req, res) => {
 }));
 
 router.get('/library/file/*', wrap(async (req, res) => {
-  const rest = String(req.params[0] || '').replace(/^\/+/, '');
-  const key = 'library/' + rest;
+  /* 路径即对象 key（必须以 library/ 开头，避免越权读其它前缀的对象） */
+  const key = String(req.params[0] || '').replace(/^\/+/, '');
   assert(/^library\/[A-Za-z0-9._\/-]+$/.test(key) && key.indexOf('..') < 0, 400, '非法文件路径');
 
   const url = objectStore.presignGet(key, 600);
