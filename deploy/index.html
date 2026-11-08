@@ -52248,7 +52248,7 @@ window.HMChat = (function () {
         emptyRows += '<section class="lib-shelf-row">'
           + '<div class="lib-shelf-books"></div>'
           + '<div class="lib-shelf-plank">'
-          + '<span class="lib-shelf-label">第 ' + (r + 1) + ' 架 · 藏书</span>'
+          + '<span class="lib-shelf-label">第 ' + (r + 1) + ' 架</span>'
           + '<span class="lib-shelf-count">0 册</span>'
           + '</div></section>';
       }
@@ -52267,14 +52267,13 @@ window.HMChat = (function () {
     var html = '';
     for (var rowIndex = 0; rowIndex < 3; rowIndex++) {
       var group = list.slice(rowIndex * SHELF_PER_ROW, (rowIndex + 1) * SHELF_PER_ROW);
-      var label = group[0] && group[0].category ? group[0].category : '藏书';
       var booksHtml = group.map(function (b, idx) {
         return bookCardHtml(b, start + rowIndex * SHELF_PER_ROW + idx);
       }).join('');
       html += '<section class="lib-shelf-row">'
         + '<div class="lib-shelf-books">' + booksHtml + '</div>'
         + '<div class="lib-shelf-plank">'
-        + '<span class="lib-shelf-label">第 ' + (rowIndex + 1) + ' 架 · ' + esc(label) + '</span>'
+        + '<span class="lib-shelf-label">第 ' + (rowIndex + 1) + ' 架</span>'
         + '<span class="lib-shelf-count">' + group.length + ' 册</span>'
         + '</div></section>';
     }
