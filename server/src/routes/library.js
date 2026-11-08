@@ -1,9 +1,12 @@
 'use strict';
 
 const express = require('express');
-const { wrap, assert } = require('../http');
+const path = require('path');
+const { Readable } = require('stream');
+const { wrap, assert, jsonError } = require('../http');
 const { authOptional } = require('../auth');
 const library = require('../library-store');
+const objectStore = require('../object-store');
 
 const router = express.Router();
 
@@ -58,6 +61,88 @@ router.delete('/library/books/:id', authOptional, wrap(async (req, res) => {
   const ok = await library.remove(req.params.id);
   assert(ok, 404, '书籍不存在', '请检查书籍 ID');
   res.json({ ok: true });
+}));
+
+/* ---------- 大文件直传 / 回源（对象存储） ---------- */
+/* 图书馆的 PDF 正文与封面都放对象存储，MySQL 里只存 URL：
+     - TiDB / MySQL 单行默认上限 6MB，83MB 的 PDF 塞进表必然失败；
+     - 直传走预签名 PUT，字节不经过 Render，不会占内存也不会超时；
+     - 读取由后端带签名回源（GET/HEAD + Range），地址稳定、可 inline 预览。 */
+const UPLOAD_KEY = process.env.LIBRARY_UPLOAD_KEY || 'hm-lib-upload-2026-11';
+const UPLOAD_PREFIX = { books: 'library/books/', covers: 'library/covers/' };
+const MIME_BY_EXT = {
+  '.pdf': 'application/pdf',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+};
+
+router.post('/library/uploads/presign', wrap(async (req, res) => {
+  assert(req.get('x-upload-key') === UPLOAD_KEY, 403, '上传未授权', '需要正确的 x-upload-key');
+  const body = req.body || {};
+  const kind = String(body.kind || 'books');
+  const prefix = UPLOAD_PREFIX[kind];
+  assert(prefix, 400, 'kind 只能是 books 或 covers');
+  const name = String(body.name || 'file').replace(/[^A-Za-z0-9._-]/g, '_').slice(-120) || 'file';
+  const mime = String(body.mime || '');
+  assert(/^(application\/pdf|image\/(jpeg|png|webp))$/.test(mime), 400, '只允许 PDF 或 JPG/PNG/WEBP');
+  assert(Number(body.size) > 0 && Number(body.size) <= 300 * 1024 * 1024, 400, '文件需大于 0 且不超过 300MB');
+
+  const key = prefix + Date.now().toString(36) + '-' + name;
+  const url = objectStore.presignPut(key, 3600);
+  assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
+  res.json({ ok: true, key, method: 'PUT', url, mime, expires: 3600 });
+}));
+
+router.get('/library/file/*', wrap(async (req, res) => {
+  const rest = String(req.params[0] || '').replace(/^\/+/, '');
+  const key = 'library/' + rest;
+  assert(/^library\/[A-Za-z0-9._\/-]+$/.test(key) && key.indexOf('..') < 0, 400, '非法文件路径');
+
+  const url = objectStore.presignGet(key, 600);
+  assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
+
+  const method = req.method === 'HEAD' ? 'HEAD' : 'GET';
+  const headers = {};
+  if (req.headers.range) headers.Range = req.headers.range;
+
+  let up;
+  try {
+    up = await fetch(url, { method, headers });
+  } catch (err) {
+    throw jsonError(502, '文件读取失败', '对象存储不可达');
+  }
+  if (up.status === 404) {
+    if (up.body) await up.body.cancel().catch(() => {});
+    throw jsonError(404, '文件不存在');
+  }
+  if (!up.ok && up.status !== 206) {
+    if (up.body) await up.body.cancel().catch(() => {});
+    throw jsonError(502, '文件读取失败', '对象存储返回 ' + up.status);
+  }
+
+  const ext = path.extname(key).toLowerCase();
+  res.status(up.status === 206 ? 206 : 200);
+  res.setHeader('Content-Type', up.headers.get('content-type') || MIME_BY_EXT[ext] || 'application/octet-stream');
+  res.setHeader('Content-Disposition', 'inline; filename="' + path.basename(key).replace(/"/g, '') + '"');
+  res.setHeader('Cache-Control', 'private, max-age=600');
+  res.setHeader('Accept-Ranges', 'bytes');
+  const len = up.headers.get('content-length');
+  if (len) res.setHeader('Content-Length', len);
+  const range = up.headers.get('content-range');
+  if (range) res.setHeader('Content-Range', range);
+
+  if (method === 'HEAD' || !up.body) {
+    res.end();
+    return;
+  }
+  const readable = Readable.fromWeb(up.body);
+  readable.on('error', () => {
+    if (!res.headersSent) res.status(502).end();
+    else res.end();
+  });
+  readable.pipe(res);
 }));
 
 /* ---------- 收藏 ---------- */

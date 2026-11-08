@@ -65,6 +65,10 @@ function normalizeBook(row, pages) {
     intro: String(row.intro || ''),
     accent: String(row.accent || '#7d5a3c'),
     coverUrl: String(row.cover_url || row.coverUrl || ''),
+    /* 区域：ref/psd/anim/paint/concept；老数据没有该字段时为空字符串 */
+    area: String(row.area || ''),
+    /* PDF 只存地址，正文放对象存储；TiDB 单行默认 6MB，绝不能把 PDF 塞进表 */
+    pdfUrl: String(row.pdf_url || row.pdfUrl || ''),
     sortNo: Number(row.sort_no == null ? row.sortNo || 0 : row.sort_no),
     createdAt: Number(row.created_at == null ? row.createdAt || 0 : row.created_at),
     updatedAt: Number(row.updated_at == null ? row.updatedAt || 0 : row.updated_at),
@@ -75,6 +79,9 @@ function normalizeBook(row, pages) {
     })),
   };
 }
+
+/* 图书馆五区：ref 参考 / psd 源文件 / anim 动画 / paint 绘画教程 / concept 概念设定 */
+const AREAS = ['ref', 'psd', 'anim', 'paint', 'concept'];
 
 function validateBookInput(body) {
   const data = body && typeof body === 'object' ? body : {};
@@ -103,6 +110,10 @@ function validateBookInput(body) {
     intro: String(data.intro || '').slice(0, 2000),
     accent: /^#[0-9a-fA-F]{6}$/.test(String(data.accent || '')) ? data.accent : '#7d5a3c',
     coverUrl: String(data.coverUrl || '').slice(0, 500),
+    area: AREAS.includes(String(data.area || '')) ? String(data.area) : '',
+    pdfUrl: String(data.pdfUrl || '').slice(0, 500),
+    /* 书架排序：越小越靠前，默认 0；用于把新书固定在该区第一架 */
+    sortNo: Number.isFinite(Number(data.sortNo)) ? Number(data.sortNo) : 0,
     pages: pages.slice(0, 400).map((p, i) => ({
       pageNo: i + 1,
       title: String((p && p.title) || '第 ' + (i + 1) + ' 页').slice(0, 120),
@@ -118,6 +129,53 @@ function makeId() {
 /* =============================================================
  * MySQL 实现
  * ============================================================= */
+/* 连接参数：MYSQL_URL 优先（云上只有这一条连接串），否则用 MYSQL_* 单字段。
+   TiDB Cloud / 托管 MySQL 通常要求 TLS，连接串里带 ssl=true 时按需开启。 */
+function mysqlBaseOptions() {
+  if (config.MYSQL_URL) {
+    const u = new URL(config.MYSQL_URL);
+    const opts = {
+      host: u.hostname,
+      port: Number(u.port) || 3306,
+      user: decodeURIComponent(u.username || ''),
+      password: decodeURIComponent(u.password || ''),
+      charset: 'utf8mb4',
+      multipleStatements: true,
+    };
+    const ssl = u.searchParams.get('ssl') || u.searchParams.get('sslmode');
+    if (ssl && ssl !== 'disable' && ssl !== 'false') opts.ssl = { rejectUnauthorized: false };
+    return opts;
+  }
+  return {
+    host: config.MYSQL_HOST,
+    port: config.MYSQL_PORT,
+    user: config.MYSQL_USER,
+    password: config.MYSQL_PASSWORD,
+    charset: 'utf8mb4',
+    multipleStatements: true,
+  };
+}
+
+/* 早期 books 表没有 area / pdf_url，启动时做一次幂等补列（TiDB 与 MySQL 通用） */
+const EXTRA_BOOK_COLUMNS = [
+  ['area', "ADD COLUMN area VARCHAR(16) NOT NULL DEFAULT '' COMMENT '区域：ref/psd/anim/paint/concept'"],
+  ['pdf_url', "ADD COLUMN pdf_url VARCHAR(500) NOT NULL DEFAULT '' COMMENT 'PDF 地址（正文放大文件存储，不入库）'"],
+];
+
+async function ensureColumns(conn, dbName) {
+  const [cols] = await conn.query(
+    'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=?',
+    [dbName, 'books']
+  );
+  const have = new Set(cols.map((c) => c.COLUMN_NAME));
+  for (const [name, ddl] of EXTRA_BOOK_COLUMNS) {
+    if (!have.has(name)) {
+      await conn.query('ALTER TABLE `' + dbName + '`.books ' + ddl);
+      console.log('[library] books 表补列：' + name);
+    }
+  }
+}
+
 async function ensureMysql() {
   if (config.LIBRARY_STORE === 'file') throw new Error('LIBRARY_STORE=file');
   try {
@@ -126,31 +184,47 @@ async function ensureMysql() {
     throw new Error('未安装 mysql2（在 server/ 执行 npm install mysql2）');
   }
 
-  const base = {
-    host: config.MYSQL_HOST,
-    port: config.MYSQL_PORT,
-    user: config.MYSQL_USER,
-    password: config.MYSQL_PASSWORD,
-    charset: 'utf8mb4',
-    multipleStatements: true,
-  };
+  const base = mysqlBaseOptions();
+  let dbName = String(config.MYSQL_DATABASE || 'huimeng_library').replace(/[^A-Za-z0-9_]/g, '');
+  if (!dbName) dbName = 'huimeng_library';
 
-  /* 先无库连接，执行 schema.sql（含 CREATE DATABASE + 建表） */
+  /* 先无库连接：建库 → 建表 → 补列 */
   const boot = await mysql2.createConnection(base);
   try {
-    await boot.query(fs.readFileSync(SCHEMA_FILE, 'utf8'));
+    try {
+      await boot.query(
+        'CREATE DATABASE IF NOT EXISTS `' + dbName + '` ' +
+        'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
+      );
+    } catch (err) {
+      /* 托管库常不授予 CREATE DATABASE：退回连接串里的已有库 */
+      if (!config.MYSQL_URL) throw err;
+      const fromUrl = decodeURIComponent(new URL(config.MYSQL_URL).pathname.replace(/^\//, ''));
+      if (!fromUrl) throw err;
+      dbName = fromUrl.replace(/[^A-Za-z0-9_]/g, '');
+      console.warn('[library] 无建库权限，books 表建到已有库：' + dbName);
+    }
+    await boot.query('USE `' + dbName + '`');
+    /* schema.sql 自带的 CREATE DATABASE / USE 去掉，统一在选定库里执行 */
+    const schema = fs.readFileSync(SCHEMA_FILE, 'utf8')
+      .replace(/^\s*CREATE\s+DATABASE[\s\S]*?;/gim, '')
+      .replace(/^\s*USE\s+`?[A-Za-z0-9_]+`?\s*;/gim, '');
+    await boot.query(schema);
+    await ensureColumns(boot, dbName);
   } finally {
-    await boot.end();
+    await boot.end().catch(() => {});
   }
 
   pool = mysql2.createPool(Object.assign({}, base, {
-    database: config.MYSQL_DATABASE,
+    database: dbName,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
     multipleStatements: false,
+    /* multipleStatements:true 只在建表连接上用 */
   }));
   await pool.query('SELECT 1');
+  info.database = dbName;
   info.mode = 'mysql';
 }
 
@@ -196,6 +270,8 @@ function normalizeSeed(b, i) {
     intro: String(b.intro || ''),
     accent: String(b.accent || '#7d5a3c'),
     coverUrl: '',
+    area: AREAS.includes(String(b.area || '')) ? String(b.area) : '',
+    pdfUrl: String(b.pdfUrl || ''),
     sortNo: i,
     createdAt: t,
     updatedAt: t,
@@ -255,10 +331,10 @@ async function mysqlCreate(data) {
   try {
     await conn.beginTransaction();
     await conn.query(
-      `INSERT INTO books (id,title,author,category,tags,intro,accent,cover_url,sort_no,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO books (id,title,author,category,tags,intro,accent,cover_url,area,pdf_url,sort_no,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [id, data.title, data.author, data.category, data.tags.join(','), data.intro, data.accent,
-        data.coverUrl, Number(t), t, t]
+        data.coverUrl, data.area, data.pdfUrl, data.sortNo, t, t]
     );
     if (data.pages.length) {
       const rows = data.pages.map((p) => [id, p.pageNo, p.title, p.content]);
@@ -285,15 +361,17 @@ async function mysqlUpdate(id, data) {
     intro: data.intro == null ? existing.intro : data.intro,
     accent: data.accent == null ? existing.accent : data.accent,
     coverUrl: data.coverUrl == null ? existing.coverUrl : data.coverUrl,
+    area: data.area == null ? existing.area : data.area,
+    pdfUrl: data.pdfUrl == null ? existing.pdfUrl : data.pdfUrl,
     pages: data.pages == null ? existing.pages : data.pages,
   };
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     await conn.query(
-      `UPDATE books SET title=?,author=?,category=?,tags=?,intro=?,accent=?,cover_url=?,updated_at=? WHERE id=?`,
+      `UPDATE books SET title=?,author=?,category=?,tags=?,intro=?,accent=?,cover_url=?,area=?,pdf_url=?,updated_at=? WHERE id=?`,
       [merged.title, merged.author, merged.category, merged.tags.join(','), merged.intro,
-        merged.accent, merged.coverUrl, now(), id]
+        merged.accent, merged.coverUrl, merged.area, merged.pdfUrl, now(), id]
     );
     if (data.pages != null) {
       await conn.query('DELETE FROM book_pages WHERE book_id=?', [id]);
@@ -347,7 +425,9 @@ async function fileCreate(data) {
     intro: data.intro,
     accent: data.accent,
     coverUrl: data.coverUrl,
-    sortNo: books.length,
+    area: data.area,
+    pdfUrl: data.pdfUrl,
+    sortNo: data.sortNo,
     createdAt: t,
     updatedAt: t,
     pages: data.pages,
@@ -369,6 +449,9 @@ async function fileUpdate(id, data) {
   if (data.intro != null) b.intro = data.intro;
   if (data.accent != null) b.accent = data.accent;
   if (data.coverUrl != null) b.coverUrl = data.coverUrl;
+  if (data.area != null) b.area = data.area;
+  if (data.pdfUrl != null) b.pdfUrl = data.pdfUrl;
+  if (data.sortNo != null) b.sortNo = data.sortNo;
   if (data.pages != null) b.pages = data.pages;
   b.updatedAt = now();
   await writeJSON(BOOKS_FILE, books);
@@ -604,6 +687,8 @@ function lite(b) {
     intro: b.intro,
     accent: b.accent,
     coverUrl: b.coverUrl,
+    area: b.area || '',
+    pdfUrl: b.pdfUrl || '',
     pages: (b.pages || []).length,
   };
 }

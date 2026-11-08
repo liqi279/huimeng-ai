@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS books (
   intro       TEXT          NULL COMMENT '简介',
   accent      VARCHAR(20)   NOT NULL DEFAULT '#7d5a3c' COMMENT '封面色调',
   cover_url   VARCHAR(500)  NOT NULL DEFAULT '' COMMENT '封面图地址（留空用统一模板）',
+  area        VARCHAR(16)   NOT NULL DEFAULT '' COMMENT '区域：ref/psd/anim/paint/concept',
+  pdf_url     VARCHAR(500)  NOT NULL DEFAULT '' COMMENT 'PDF 地址（正文放对象存储，不入库）',
   sort_no     INT           NOT NULL DEFAULT 0 COMMENT '书架排序',
   created_at  BIGINT        NOT NULL DEFAULT 0 COMMENT '创建时间（毫秒）',
   updated_at  BIGINT        NOT NULL DEFAULT 0 COMMENT '更新时间（毫秒）',
@@ -28,6 +30,7 @@ CREATE TABLE IF NOT EXISTS books (
   KEY idx_books_title (title),
   KEY idx_books_author (author),
   KEY idx_books_category (category),
+  KEY idx_books_area (area),
   KEY idx_books_sort (sort_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='图书馆书籍主表';

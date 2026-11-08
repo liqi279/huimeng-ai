@@ -204,6 +204,40 @@ function presignGet(objectKey, ttlSec) {
     '?' + canonicalQuery + '&X-Amz-Signature=' + signature;
 }
 
+/* 预签名 PUT URL：用于浏览器/本机把大文件（83MB PDF）直传对象存储，
+   字节不经过 Render，避免请求体过大和超时。只签 host，Content-Type 不受限。 */
+function presignPut(objectKey, ttlSec) {
+  if (state.mode !== 's3') return null;
+  const host = endpointHost();
+  const date = amzDate();
+  const day = date.slice(0, 8);
+  const scope = day + '/' + config.S3_REGION + '/s3/aws4_request';
+  const expires = Math.max(60, Math.min(Number(ttlSec) || config.S3_URL_TTL, 604800));
+
+  const params = {
+    'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
+    'X-Amz-Credential': config.S3_ACCESS_KEY_ID + '/' + scope,
+    'X-Amz-Date': date,
+    'X-Amz-Expires': String(expires),
+    'X-Amz-SignedHeaders': 'host',
+  };
+  const canonicalQuery = Object.keys(params).sort()
+    .map((k) => uriEncode(k) + '=' + uriEncode(params[k])).join('&');
+  const canonicalRequest = [
+    'PUT',
+    keyPath(objectKey),
+    canonicalQuery,
+    'host:' + host + '\n',
+    'host',
+    'UNSIGNED-PAYLOAD',
+  ].join('\n');
+  const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
+  const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
+
+  return config.S3_ENDPOINT.replace(/\/+$/, '') + keyPath(objectKey) +
+    '?' + canonicalQuery + '&X-Amz-Signature=' + signature;
+}
+
 /* ---------------- 读写 ---------------- */
 function localPath(objectKey) {
   const safe = String(objectKey).split('/').filter((s) => s && s !== '.' && s !== '..').join(path.sep);
@@ -256,5 +290,6 @@ module.exports = {
   readObject,
   deleteObject,
   presignGet,
+  presignPut,
   LOCAL_ROOT,
 };
