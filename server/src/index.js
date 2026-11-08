@@ -7,6 +7,7 @@ const cors = require('cors');
 const config = require('./config');
 const store = require('./store');
 const userData = require('./user-data');
+const mediaStore = require('./media-store');
 const certUtil = require('./cert');
 
 const healthRoutes = require('./routes/health');
@@ -78,6 +79,31 @@ app.use('/api', (req, res) => {
 
 app.use('/uploads/assets', express.static(store.dirs.assets, { index: false, maxAge: '1h' }));
 app.use('/uploads/media', express.static(store.dirs.media, { index: false, maxAge: '1h' }));
+
+/* 新文件的兜底读取：本地盘静态未命中时，按同名 object key 回对象存储取。
+   这样 /uploads/... 这套历史 URL 同时兼容旧数据（本地盘，静态直接命中）
+   与新数据（对象存储），前端与历史记录里的链接都不需要改。
+   s3 模式 302 到预签名直链；本地模式（OBJECT_STORE=local）直接回读内容。 */
+app.get(/^\/uploads\/(assets|media)\/([^/]+)$/, async (req, res) => {
+  const kind = req.params[0];
+  const name = path.basename(req.params[1]);
+  if (!name) {
+    res.status(404).json({ error: { message: '文件不存在' } });
+    return;
+  }
+  try {
+    const out = await mediaStore.send(kind, name);
+    if (out.mode === 's3') {
+      res.redirect(302, out.url);
+      return;
+    }
+    res.setHeader('Content-Type', out.mime);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(out.buffer);
+  } catch (err) {
+    res.status(404).json({ error: { message: '文件不存在', hint: `${kind}/${name}` } });
+  }
+});
 
 app.use(express.static(config.FRONTEND_DIR, { index: 'index.html', extensions: ['html'] }));
 
