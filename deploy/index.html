@@ -61552,16 +61552,16 @@ window.HMChat = (function () {
       });
     });
     if (!silent) {
-      var msg = '删除「' + folder.name + '」？';
-      if (descendantIds.length > 1) msg += '（包含 ' + (descendantIds.length - 1) + ' 个子文件夹）';
-      msg += '\n其中 ' + totalWorks + ' 项作品将回到个人空间。';
+      var msg = '删除文件夹「' + folder.name + '」？';
+      if (descendantIds.length > 1) msg += '（包含 ' + (descendantIds.length - 1) + ' 个子文件夹，会一并删除）';
+      msg += '\n只删除文件夹本身：其中 ' + totalWorks + ' 张图片会回到桌面（原位置附近），图片不会被删除。';
       if (!window.confirm(msg)) return;
     }
     desk.folders = desk.folders.filter(function (f) { return descendantIds.indexOf(f.id) < 0; });
     if (view.activeFolder && descendantIds.indexOf(view.activeFolder) >= 0) view.activeFolder = folder.parentId || null;
     persistNow();
     renderAll();
-    if (!silent) A.toast('已删除 ' + descendantIds.length + ' 个文件夹，' + totalWorks + ' 项作品回到个人空间', 'info');
+    if (!silent) A.toast('已删除 ' + descendantIds.length + ' 个文件夹，' + totalWorks + ' 张图片回到桌面（图片未删除）', 'info');
   }
 
   /* ---------------- 桌面 ---------------- */
@@ -63518,7 +63518,7 @@ window.HMChat = (function () {
         } else if (cmd === 'delete') {
           /* 删除所有选中的文件夹 */
           if (allTargetIds.length > 1) {
-            if (!window.confirm('删除 ' + allTargetIds.length + ' 个文件夹？所有作品会回到个人空间。')) return;
+            if (!window.confirm('删除 ' + allTargetIds.length + ' 个文件夹？图片会回到桌面，图片本身不会被删除。')) return;
             allTargetIds.forEach(function (fid) { deleteFolder(fid, true); });
             view.selectedFolders = {};
           } else {
@@ -63727,7 +63727,7 @@ window.HMChat = (function () {
           event.preventDefault();
           if (folderIds.length > 1) {
             /* 多选文件夹：确认一次后静默批量删除，避免连续 confirm 被浏览器拦截 */
-            if (!window.confirm('删除选中的 ' + folderIds.length + ' 个文件夹？其中作品将回到个人空间。')) return;
+            if (!window.confirm('删除选中的 ' + folderIds.length + ' 个文件夹？图片会回到桌面，图片本身不会被删除。')) return;
             folderIds.forEach(function (fid) { deleteFolder(fid, true); });
           } else {
             folderIds.forEach(function (fid) { deleteFolder(fid); });
