@@ -53868,7 +53868,10 @@ window.HMChat = (function () {
       if (els.reader && !els.reader.hidden) {
         if (event.key === 'ArrowLeft') flipTo(state.page - 1);
         else if (event.key === 'ArrowRight') flipTo(state.page + 1);
-        else if (event.key === 'Escape') exitReader();
+        else if (event.key === 'Escape') {
+          if (document.fullscreenElement) return; /* 交给浏览器退全屏，按钮由 fullscreenchange 复位 */
+          exitReader();
+        }
         return;
       }
       if (els.detail && !els.detail.hidden) {
