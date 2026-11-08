@@ -15620,8 +15620,7 @@ body.rail-collapsed .hm-page {
 .lib-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   position: relative;
   z-index: 1;
 }
@@ -15700,10 +15699,13 @@ body.rail-collapsed .hm-page {
 }
 
 .lib-shelf-wrap {
-  padding: 30px 34px 52px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 14px 26px 10px; /* 3 层 × 单层高度 + 层间距，固定柜体高度 */
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 14px;
+  overflow: hidden;
   position: relative;
   animation: libFadeUp 0.42s ease both;
 }
@@ -15729,6 +15731,10 @@ body.rail-collapsed .hm-page {
 
 .lib-shelf-row {
   position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 书架背板 */
@@ -15750,15 +15756,18 @@ body.rail-collapsed .hm-page {
 .lib-shelf-books {
   position: relative;
   display: flex;
+  flex: 1 1 auto;
   align-items: flex-end;
   gap: 12px;
-  min-height: 218px;
-  padding: 16px 26px 8px;
-  flex-wrap: wrap;
+  min-height: 0;
+  padding: 10px 26px 6px;
+  flex-wrap: nowrap; /* 每层最多 8 本，从左往右排，不满留空 */
+  overflow: hidden;
 }
 
 .lib-shelf-plank {
   position: relative;
+  flex: none;
   height: 24px;
   margin: 0 2px;
   border-radius: 3px;
@@ -15808,8 +15817,10 @@ body.rail-collapsed .hm-page {
 .lib-book {
   position: relative;
   width: var(--w, 92px);
-  height: 200px;
-  flex: none;
+  height: 100%;
+  max-height: 200px;
+  flex: 0 1 auto;
+  min-width: 0;
   padding: 0;
   background: none;
   border: 0;
@@ -17101,8 +17112,8 @@ body.rail-collapsed .hm-page {
   }
 
   .lib-shelf-wrap {
-    padding: 20px 14px 40px;
-    gap: 30px;
+    padding: 10px 12px 8px;
+    gap: 10px;
   }
 
   .lib-shelf-books {
@@ -17111,7 +17122,7 @@ body.rail-collapsed .hm-page {
   }
 
   .lib-book {
-    height: 160px;
+    max-height: 160px;
   }
 
   .lib-book-cover-title {
@@ -52219,8 +52230,8 @@ window.HMChat = (function () {
     els.body.innerHTML = '<div class="lib-loading">正在整理书架…</div>';
   }
 
-  var SHELF_PER_ROW = 6;
-  var SHELF_PAGE_SIZE = 18;   /* 每页 3 架 × 6 本 */
+  var SHELF_PER_ROW = 8;
+  var SHELF_PAGE_SIZE = 24;   /* 每页 3 架 × 8 本 */
 
   function renderShelf() {
     if (!els.body) return;
@@ -52252,23 +52263,21 @@ window.HMChat = (function () {
       return;
     }
 
-    var rows = [];
-    for (var i = 0; i < list.length; i += SHELF_PER_ROW) {
-      rows.push(list.slice(i, i + SHELF_PER_ROW));
-    }
-
-    var html = rows.map(function (group, rowIndex) {
+    /* 每页固定 3 层：不足的书位留空，不塌陷 */
+    var html = '';
+    for (var rowIndex = 0; rowIndex < 3; rowIndex++) {
+      var group = list.slice(rowIndex * SHELF_PER_ROW, (rowIndex + 1) * SHELF_PER_ROW);
       var label = group[0] && group[0].category ? group[0].category : '藏书';
       var booksHtml = group.map(function (b, idx) {
         return bookCardHtml(b, start + rowIndex * SHELF_PER_ROW + idx);
       }).join('');
-      return '<section class="lib-shelf-row">'
+      html += '<section class="lib-shelf-row">'
         + '<div class="lib-shelf-books">' + booksHtml + '</div>'
         + '<div class="lib-shelf-plank">'
         + '<span class="lib-shelf-label">第 ' + (rowIndex + 1) + ' 架 · ' + esc(label) + '</span>'
         + '<span class="lib-shelf-count">' + group.length + ' 册</span>'
         + '</div></section>';
-    }).join('');
+    }
 
     els.body.innerHTML = '<div class="lib-shelf-wrap">' + html + '</div>';
     renderPager(total);
