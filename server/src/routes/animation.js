@@ -9,6 +9,7 @@ const { Router } = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const { readJson, writeJson, enqueue, uid, httpError, mediaUrlFor, extFromMime, dataUrlToBuffer } = require('../http');
+const mediaStore = require('../media-store');
 
 const router = Router();
 const ANIM_DIR = path.join(__dirname, '..', '..', 'data');
@@ -323,8 +324,6 @@ router.post('/:id/tween-bulk-status', async (req, res, next) => {
 });
 
 /* ============ 图片上传（复用 art.js 的上传目录） ============ */
-const http = require('../http');
-const UPLOAD_DIR = http.uploadDir;
 const MAX_BYTES = 50 * 1024 * 1024;
 
 router.post('/upload', (req, res, next) => {
@@ -336,13 +335,13 @@ router.post('/upload', (req, res, next) => {
       const m = dataUrl.match(/^data:([a-zA-Z0-9/+.-]+);base64,(.+)$/);
       if (!m) throw httpError(400, 'dataUrl 格式错误');
       const mime = m[1];
-      const buf = dataUrlToBuffer(dataUrl);
+      const buf = dataUrlToBuffer(dataUrl).buffer;
       if (!mime.startsWith('image/')) throw httpError(400, '仅支持图片 MIME');
       const ext = extFromMime(mime);
       const name = 'anim-' + Date.now() + '-' + crypto.randomBytes(4).toString('hex') + '.' + ext;
-      const fs = require('fs/promises');
-      return fs.writeFile(path.join(UPLOAD_DIR, name), buf).then(() => ({
-        url: '/uploads/assets/' + name, mime, size: buf.length, ext,
+      /* 统一写对象存储（未配置时由 objectStore 回落本地盘），URL 形状不变 */
+      return mediaStore.put('assets', name, buf, mime).then((saved) => ({
+        url: saved.url, mime, size: buf.length, ext,
       }));
     })
     .then(r => res.json(r))
