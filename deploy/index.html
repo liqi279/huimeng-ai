@@ -15956,6 +15956,11 @@ body.rail-collapsed .hm-page {
   border-radius: 3px;
 }
 
+/* 有真实封面：按图片真实比例设卡，cover 正好铺满，无黑边/无裁切 */
+.lib-book.has-cover .lib-book-cover-img {
+  object-fit: cover;
+}
+
 .lib-book.has-cover .lib-book-spine,
 .lib-book.has-cover .lib-book-edge,
 .lib-book.has-cover .lib-book-cover-frame {
@@ -16069,15 +16074,19 @@ body.rail-collapsed .hm-page {
 
 .lib-book-pages {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 5px; /* 收进书卡内，避免被层板/容器裁切 */
+  left: 50%;
+  bottom: 6px; /* 收进书卡内，避免被层板/容器裁切 */
+  transform: translateX(-50%);
   z-index: 3;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(10, 7, 4, 0.62); /* 深色底保证任意封面下都可读 */
+  white-space: nowrap;
   text-align: center;
   font-size: 8.5px;
   letter-spacing: 0.08em;
-  color: rgba(255, 242, 214, 0.92);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  color: rgba(255, 242, 214, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   opacity: 0;
   transition: opacity 0.2s ease;
   font-family: "Inter", system-ui, sans-serif;
@@ -16715,6 +16724,158 @@ a.lib-btn {
 .lib-pdf-open:hover {
   background: rgba(201, 162, 39, 0.22);
   color: #fff4d6;
+}
+
+/* PDF 目录栏 */
+.lib-pdf-toc {
+  flex: 0 0 190px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-right: 10px;
+  border-radius: 8px;
+  background: rgba(24, 16, 10, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.16);
+  overflow: hidden;
+}
+
+.lib-pdf-toc-head {
+  padding: 10px 12px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: #c9a227;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.16);
+}
+
+.lib-pdf-toc-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.lib-pdf-toc-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: rgba(240, 222, 188, 0.82);
+  font-family: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lib-pdf-toc-item:hover {
+  background: rgba(201, 162, 39, 0.14);
+  color: #ffe9b5;
+}
+
+.lib-pdf-toc-item.is-disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.lib-pdf-toc-page {
+  flex: none;
+  font-size: 10px;
+  color: rgba(201, 162, 39, 0.8);
+}
+
+.lib-pdf-toc-jump {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid rgba(201, 162, 39, 0.16);
+}
+
+.lib-pdf-toc-jump input {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 162, 39, 0.24);
+  background: rgba(0, 0, 0, 0.3);
+  color: #f0debc;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.lib-toc-go {
+  flex: none;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(201, 162, 39, 0.14);
+  color: #ffe9b5;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.lib-toc-note {
+  padding: 10px 8px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: rgba(235, 215, 176, 0.55);
+}
+
+/* PDF 加载中 / 重试 */
+.lib-pdf-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px;
+  background: rgba(9, 6, 4, 0.9);
+  color: rgba(240, 222, 188, 0.85);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.lib-pdf-loading.is-hidden {
+  display: none;
+}
+
+.lib-pdf-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(201, 162, 39, 0.28);
+  border-top-color: #c9a227;
+  border-radius: 50%;
+  animation: libPdfSpin 0.8s linear infinite;
+}
+
+@keyframes libPdfSpin {
+  to { transform: rotate(360deg); }
+}
+
+.lib-pdf-retry {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 7px;
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  background: rgba(201, 162, 39, 0.14);
+  color: #ffe9b5;
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .lib-pdf-toc { flex-basis: 140px; }
 }
 
 .lib-flip-zone {
@@ -52215,6 +52376,7 @@ window.HMChat = (function () {
       area: String(b.area || ''),
       pdfUrl: String(b.pdfUrl || ''),
       pageCount: Number(b.pageCount) || 0,
+      toc: Array.isArray(b.toc) ? b.toc : [],
       sortNo: Number(b.sortNo == null ? i : b.sortNo),
       createdAt: Number(b.createdAt || t),
       updatedAt: Number(b.updatedAt || t),
@@ -52849,6 +53011,143 @@ window.HMChat = (function () {
     return (book && book.pages ? book.pages.length : 0);
   }
 
+  /* -------- PDF 目录：优先接口 toc，其次 pdf.js 书签，最后页码跳转 -------- */
+  function setupPdfToc(book) {
+    var listEl = els.reader.querySelector('[data-toc-list]');
+    if (!listEl) return;
+    var toc = book.toc || [];
+    if (toc.length) { renderPdfTocItems(listEl, toc); return; }
+    var timer = setTimeout(function () {
+      if (!listEl.dataset.done) listEl.innerHTML = '<div class="lib-toc-note">该 PDF 无内置目录<br>可在下方输入页码跳转</div>';
+    }, 12000);
+    loadPdfJs().then(function (pdfjs) {
+      return pdfjs.getDocument({ url: book.pdfUrl }).promise;
+    }).then(function (doc) {
+      return doc.getOutline().then(function (outline) {
+        if (!outline || !outline.length) throw new Error('empty-outline');
+        return resolvePdfOutline(doc, outline);
+      });
+    }).then(function (items) {
+      clearTimeout(timer);
+      if (!items.length) throw new Error('empty-outline');
+      renderPdfTocItems(listEl, items);
+    }).catch(function () {
+      clearTimeout(timer);
+      listEl.dataset.done = '1';
+      listEl.innerHTML = '<div class="lib-toc-note">该 PDF 无内置目录<br>可在下方输入页码跳转</div>';
+    });
+  }
+
+  function normalizeTocPage(item) {
+    var page = Number(item.page || item.p || 0);
+    if (!page && item.href) {
+      var m = /#page=(\d+)/i.exec(String(item.href));
+      if (m) page = parseInt(m[1], 10);
+    }
+    return page;
+  }
+
+  function renderPdfTocItems(listEl, items) {
+    listEl.dataset.done = '1';
+    var html = items.map(function (it) {
+      var page = normalizeTocPage(it);
+      var depth = Math.min(Number(it.depth) || 0, 2);
+      var title = it.title || it.name || it.label || '未命名';
+      return '<button type="button" class="lib-pdf-toc-item' + (page ? '' : ' is-disabled') + '" data-toc-page="' + (page || '') + '" style="padding-left:' + (8 + depth * 12) + 'px">'
+        + esc(title) + (page ? '<span class="lib-pdf-toc-page">' + page + '</span>' : '') + '</button>';
+    }).join('');
+    listEl.innerHTML = html || '<div class="lib-toc-note">该 PDF 无内置目录</div>';
+    listEl.querySelectorAll('[data-toc-page]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var page = parseInt(btn.getAttribute('data-toc-page'), 10);
+        if (page) flipTo(page);
+      });
+    });
+  }
+
+  var pdfJsPromise = null;
+  function loadPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfJsPromise) return pdfJsPromise;
+    pdfJsPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+      s.onload = function () {
+        try {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+        } catch (e) {}
+        resolve(window.pdfjsLib);
+      };
+      s.onerror = function () { reject(new Error('pdfjs-load-failed')); };
+      document.head.appendChild(s);
+    });
+    return pdfJsPromise;
+  }
+
+  function resolvePdfOutline(doc, outline) {
+    var out = [];
+    function walk(items, depth) {
+      return items.reduce(function (p, it) {
+        return p.then(function () {
+          var destPromise = it.dest
+            ? doc.getDestination(it.dest).catch(function () { return null; })
+            : Promise.resolve(null);
+          return destPromise.then(function (dest) {
+            var pagePromise = (dest && dest[0])
+              ? doc.getPageIndex(dest[0]).then(function (idx) { return idx + 1; }).catch(function () { return 0; })
+              : Promise.resolve(0);
+            return pagePromise.then(function (page) {
+              out.push({ title: it.title || '未命名', page: page, depth: depth });
+              return (it.items && it.items.length) ? walk(it.items, depth + 1) : null;
+            });
+          });
+        }, function () { return null; });
+      }, Promise.resolve());
+    }
+    return walk(outline, 0).then(function () { return out; });
+  }
+
+  /* PDF 加载提示与重试；先渲染框架，再加载 PDF */
+  function setupPdfReader(book) {
+    var frame = els.reader.querySelector('[data-pdf-frame]');
+    var overlay = els.reader.querySelector('[data-pdf-loading]');
+    var txt = overlay && overlay.querySelector('[data-loading-text]');
+    var retry = overlay && overlay.querySelector('[data-pdf-retry]');
+    var slow = null;
+    function hideLoading() {
+      if (slow) clearTimeout(slow);
+      if (overlay) overlay.classList.add('is-hidden');
+    }
+    function showSlow() {
+      if (txt) txt.textContent = '仍在加载 PDF … 也可点右上角「打开 PDF」';
+      if (retry) retry.hidden = false;
+    }
+    slow = setTimeout(showSlow, 12000);
+    if (frame) frame.addEventListener('load', function () { setTimeout(hideLoading, 200); });
+    if (retry) {
+      retry.addEventListener('click', function () {
+        if (!frame) return;
+        overlay.classList.remove('is-hidden');
+        if (txt) txt.textContent = '正在重新加载 PDF …';
+        retry.hidden = true;
+        if (slow) clearTimeout(slow);
+        slow = setTimeout(showSlow, 12000);
+        frame.src = 'about:blank';
+        setTimeout(function () { paintPdfPage(); }, 120);
+      });
+    }
+    var jump = els.reader.querySelector('[data-toc-jump]');
+    var go = els.reader.querySelector('[data-toc-go]');
+    function doJump() {
+      var n = parseInt(jump && jump.value, 10);
+      if (!n || n < 1) return;
+      flipTo(Math.min(n, Math.max(1, bookTotalPages(book))));
+    }
+    if (go) go.addEventListener('click', doJump);
+    if (jump) jump.addEventListener('keydown', function (e) { if (e.key === 'Enter') doJump(); });
+    setupPdfToc(book);
+  }
+
   function enterReader(book, page) {
     if (!book) return;
     state.current = book;
@@ -52872,8 +53171,17 @@ window.HMChat = (function () {
     var book = state.current;
     var isPdf = !!book.pdfUrl;
     var stageHtml = isPdf
-      ? '<div class="lib-pdf-view">'
+      ? '<aside class="lib-pdf-toc">'
+        + '<div class="lib-pdf-toc-head">目录</div>'
+        + '<div class="lib-pdf-toc-list" data-toc-list><div class="lib-toc-note">正在解析目录…</div></div>'
+        + '<div class="lib-pdf-toc-jump"><input type="number" min="1" step="1" data-toc-jump placeholder="页码"><button type="button" class="lib-toc-go" data-toc-go>跳转</button></div>'
+        + '</aside>'
+        + '<div class="lib-pdf-view">'
         + '<iframe class="lib-pdf-frame" data-pdf-frame title="PDF 阅读"></iframe>'
+        + '<div class="lib-pdf-loading" data-pdf-loading>'
+        + '<span class="lib-pdf-spinner"></span><span data-loading-text>正在加载 PDF …</span>'
+        + '<button type="button" class="lib-pdf-retry" data-pdf-retry hidden>重试</button>'
+        + '</div>'
         + '<a class="lib-pdf-open" href="' + esc(book.pdfUrl) + '" target="_blank" rel="noopener">打开 PDF ↗</a>'
         + '</div>'
       : '<div class="lib-book-frame">'
@@ -52904,6 +53212,7 @@ window.HMChat = (function () {
     els.reader.querySelector('[data-next]').addEventListener('click', function () { flipTo(state.page + 1); });
     els.reader.querySelector('[data-fs]').addEventListener('click', toggleReaderFullscreen);
     syncFsButton();
+    if (isPdf) setupPdfReader(book);
     var topEl = els.reader.querySelector('[data-top]');
     if (topEl) topEl.addEventListener('click', function (event) {
       var toc = event.target.closest('[data-toc-page]');
@@ -53429,16 +53738,30 @@ window.HMChat = (function () {
     if (histBtn) histBtn.addEventListener('click', function () { showPanel('hist'); });
 
     if (els.body) {
-      /* 真实封面按图片比例调整书卡宽度，完整显示不裁切 */
+      /* 真实封面：书卡按图片比例定宽高，图片正好铺满（无黑边、无裁切） */
+      function fitBookCover(img) {
+        var card = img.closest('.lib-book');
+        if (!card || !img.naturalWidth || !img.naturalHeight) return;
+        var books = card.parentElement;
+        if (!books) return;
+        var availH = (books.clientHeight || 184) - 24;
+        var slotW = ((books.clientWidth || 960) - 40 - 70) / 8;
+        var ratio = img.naturalWidth / img.naturalHeight;
+        var w = Math.min(120, slotW);
+        if (w / ratio > availH) w = availH * ratio;
+        w = Math.max(56, Math.round(w));
+        card.style.width = w + 'px';
+        card.style.height = Math.round(w / ratio) + 'px';
+      }
       els.body.addEventListener('load', function (event) {
         var img = event.target;
         if (!img || !img.classList || !img.classList.contains('lib-book-cover-img')) return;
-        var card = img.closest('.lib-book');
-        if (!card || !img.naturalWidth || !img.naturalHeight) return;
-        var h = card.clientHeight || 180;
-        var w = Math.round(h * img.naturalWidth / img.naturalHeight);
-        card.style.setProperty('--w', Math.max(80, Math.min(260, w)) + 'px');
+        fitBookCover(img);
       }, true);
+      window.addEventListener('resize', function () {
+        if (!els.body) return;
+        els.body.querySelectorAll('.lib-book-cover-img').forEach(fitBookCover);
+      });
       els.body.addEventListener('click', function (event) {
         var card = event.target.closest('.lib-book');
         if (!card) return;
