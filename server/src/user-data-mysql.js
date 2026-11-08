@@ -113,18 +113,36 @@ function rowToWork(row) {
 async function listChanges(userId, since, limit) {
   const sinceTs = Number(since) || 0;
   const max = Math.max(1, Math.min(Number(limit) || 200, 500));
+  /* 未删除作品与墓碑分开取，各自 LIMIT：墓碑不再占用 items 的额度。
+     src 用于区分来源行，便于分别判断某一类是否被截断。 */
   const [rows] = await q(
-    `SELECT work_id, data, asset_key, asset_mime, asset_bytes, rev, deleted, created_at, updated_at
-       FROM user_works WHERE user_id = ? AND updated_at > ?
-      ORDER BY updated_at ASC LIMIT ?`,
-    [userId, sinceTs, max]
+    `SELECT * FROM (
+       (SELECT 'live' AS src, work_id, data, asset_key, asset_mime, asset_bytes, rev, deleted, created_at, updated_at
+          FROM user_works WHERE user_id = ? AND updated_at > ? AND deleted = 0
+         ORDER BY updated_at ASC LIMIT ?)
+       UNION ALL
+       (SELECT 'tomb' AS src, work_id, data, asset_key, asset_mime, asset_bytes, rev, deleted, created_at, updated_at
+          FROM user_works WHERE user_id = ? AND updated_at > ? AND deleted = 1
+         ORDER BY updated_at ASC LIMIT ?)
+     ) t ORDER BY updated_at ASC`,
+    [userId, sinceTs, max, userId, sinceTs, max]
   );
-  const items = rows.map(rowToWork);
+  const live = rows.filter((r) => r.src === 'live');
+  const tomb = rows.filter((r) => r.src === 'tomb');
+  /* 某类被 limit 截断时，游标取「各自最后一条」中较小的那个，
+     保证下一次增量不会跳过另一类还没发出去的记录（墓碑重复下发无害）。 */
+  const caps = [];
+  if (live.length >= max) caps.push(Number(live[live.length - 1].updated_at) || sinceTs);
+  if (tomb.length >= max) caps.push(Number(tomb[tomb.length - 1].updated_at) || sinceTs);
   return {
-    items: items.filter((w) => !w.deleted),
-    deleted: items.filter((w) => w.deleted).map((w) => ({ id: w.id, rev: w.rev, updatedAt: w.updatedAt })),
-    cursor: items.length ? items[items.length - 1].updatedAt : sinceTs,
-    hasMore: rows.length >= max,
+    items: live.map(rowToWork),
+    deleted: tomb.map((row) => ({
+      id: row.work_id, rev: Number(row.rev) || 1, updatedAt: Number(row.updated_at) || 0,
+    })),
+    cursor: caps.length
+      ? Math.min.apply(null, caps)
+      : (rows.length ? Number(rows[rows.length - 1].updated_at) || sinceTs : sinceTs),
+    hasMore: caps.length > 0,
   };
 }
 
