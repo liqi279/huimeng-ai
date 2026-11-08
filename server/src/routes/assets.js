@@ -20,11 +20,11 @@
  */
 
 const path = require('path');
-const fsp = require('fs').promises;
 const crypto = require('crypto');
 const express = require('express');
 const { wrap, assert, dataUrlToBuffer, extFromMime, randomToken } = require('../http');
 const store = require('../store');
+const mediaStore = require('../media-store');
 
 const MAX_ASSET_BYTES = 50 * 1024 * 1024; // 提到 50MB 支持视频
 const router = express.Router();
@@ -59,13 +59,15 @@ router.post('/assets', wrap(async (req, res) => {
     : (['image', 'video', 'audio'].includes(body.kind) ? body.kind : 'image');
   const ext = extFromMime(mime) || (kind === 'image' ? 'png' : kind === 'video' ? 'mp4' : 'mp3');
   const fileName = `${Date.now()}-${randomToken()}.${ext}`;
-  await fsp.writeFile(path.join(store.dirs.assets, fileName), decoded.buffer);
+  /* 统一写对象存储（未配置时 media-store 内部走 objectStore 的本地盘回落）；
+     返回的 url 仍是 /uploads/assets/<name>，前端无需改动。 */
+  const saved = await mediaStore.put('assets', fileName, decoded.buffer, mime);
 
   const asset = {
     id: crypto.randomUUID(),
     name: (typeof body.name === 'string' && body.name.trim()) || `${kind}-${Date.now()}.${ext}`,
     kind,
-    url: `/uploads/assets/${fileName}`,
+    url: saved.url,
     size: decoded.buffer.length,
     createdAt: new Date().toISOString(),
     // 新字段
@@ -97,7 +99,8 @@ router.delete('/assets/:id', wrap(async (req, res) => {
   const found = await store.removeAsset(req.params.id);
   if (found) {
     const fileName = path.basename(String(found.url || ''));
-    if (fileName) await fsp.unlink(path.join(store.dirs.assets, fileName)).catch(() => {});
+    /* 对象存储与历史本地盘都尝试删除，均容错 */
+    if (fileName) await mediaStore.remove('assets', fileName);
   }
   res.json({ ok: true, deleted: Boolean(found) });
 }));
