@@ -180,8 +180,10 @@ router.get('/library/file/*', wrap(async (req, res) => {
     if (probe && probe.body) await probe.body.cancel().catch(() => {});
     if (probeStatus === 404) throw jsonError(404, '文件不存在');
     if (probeStatus === 200 || probeStatus === 206) {
-      /* 直链 1 小时过期，重定向本身不能缓存，否则过期后浏览器还在用旧签名 */
-      res.setHeader('Cache-Control', 'no-store');
+      /* 重定向给浏览器缓存 5 分钟：pdf.js 分段取同一 URL 时不必每次都回接口换链接。
+         安全边界：签名有效期 1 小时，缓存 300 秒内复用一定还在有效期内；
+         也不能用 no-store，否则每个 Range 请求都要多一次 API 往返。 */
+      res.setHeader('Cache-Control', 'private, max-age=300');
       res.redirect(302, direct);
       return;
     }
