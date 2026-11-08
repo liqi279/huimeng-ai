@@ -53201,7 +53201,15 @@ window.HMChat = (function () {
       var task = page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
       state.pdfTask = task;
       return task.promise.then(function () {
-        if (token === state.pdfToken) hidePdfLoading();
+        if (token !== state.pdfToken) return;
+        hidePdfLoading();
+        /* 只预取下一页，不预取全书 */
+        state.pdfPrefetched = state.pdfPrefetched || {};
+        var next = pageNo + 1;
+        if (next <= doc.numPages && !state.pdfPrefetched[next]) {
+          state.pdfPrefetched[next] = true;
+          doc.getPage(next).catch(function () {});
+        }
       });
     }).catch(function (err) {
       if (err && err.name === 'RenderingCancelledException') return;
@@ -53223,7 +53231,7 @@ window.HMChat = (function () {
     if (spinner) spinner.hidden = true;
     var detail = '';
     if (err) {
-      detail = (err.name || 'Error') + (err.message ? '：' + String(err.message).slice(0, 140) : '');
+      detail = (err.name || 'Error') + (err.message ? '：' + String(err.message).slice(0, 400) : '');
     }
     pdfLoadingText(detail ? 'PDF 加载失败（' + detail + '），请点击「重试」' : 'PDF 加载失败，请点击「重试」');
     var retry = els.reader && els.reader.querySelector('[data-pdf-retry]');
@@ -53234,21 +53242,36 @@ window.HMChat = (function () {
   function ensurePdfDoc(book) {
     if (state.pdfDoc) return Promise.resolve(state.pdfDoc);
     if (state.pdfDocPromise) return state.pdfDocPromise;
+
+    function streamUrl(url) {
+      var s = String(url || '');
+      var hashAt = s.indexOf('#');
+      var hash = hashAt >= 0 ? s.slice(hashAt) : '';
+      var base = hashAt >= 0 ? s.slice(0, hashAt) : s;
+      return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'stream=1' + hash;
+    }
+
     state.pdfDocPromise = loadPdfJs()
       .then(function (pdfjs) {
-        /* 优先 Range/Stream 分段读取，只取需要的字节 */
-        return pdfjs.getDocument({
-          url: book.pdfUrl,
-          disableRange: false,
-          disableStream: false
-        }).promise.catch(function (err) {
-          console.warn('[library] Range 加载失败，改用整卷加载：', err && err.name, err && err.message);
-          pdfLoadingText('正在整卷加载 PDF …');
-          return fetch(book.pdfUrl).then(function (res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.arrayBuffer();
-          }).then(function (buf) {
-            return pdfjs.getDocument({ data: buf }).promise;
+        function open(url) {
+          /* 分段读取：只取当前页需要的字节 */
+          return pdfjs.getDocument({
+            url: url,
+            disableRange: false,
+            disableStream: false
+          }).promise;
+        }
+        return open(book.pdfUrl).catch(function (err) {
+          var directMsg = (err && err.name) + ' / ' + (err && err.message);
+          console.warn('[library] 直链加载失败，切换流式接口：', directMsg);
+          pdfLoadingText('直链加载失败，已切换流式加载 …');
+          return open(streamUrl(book.pdfUrl)).catch(function (err2) {
+            var e = new Error(
+              '直链 ' + book.pdfUrl + '：' + directMsg +
+              '；流式 ' + streamUrl(book.pdfUrl) + '：' + (err2 && err2.name) + ' / ' + (err2 && err2.message)
+            );
+            e.name = (err2 && err2.name) || (err && err.name) || 'Error';
+            throw e;
           });
         });
       })
@@ -53262,6 +53285,7 @@ window.HMChat = (function () {
     state.pdfDocPromise = null;
     state.pdfTotal = 0;
     state.pdfZoom = 'fit';
+    state.pdfPrefetched = {};
     state.pdfToken = (state.pdfToken || 0) + 1;
 
     var overlay = pdfOverlay();
@@ -53635,6 +53659,7 @@ window.HMChat = (function () {
     state.pdfDoc = null;
     state.pdfDocPromise = null;
     state.pdfTotal = 0;
+    state.pdfPrefetched = {};
     state.pdfToken = (state.pdfToken || 0) + 1;
     els.reader.classList.remove('is-open', 'is-entering');
     els.reader.hidden = true;
