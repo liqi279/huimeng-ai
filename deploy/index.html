@@ -15704,7 +15704,22 @@ body.rail-collapsed .hm-page {
   display: flex;
   flex-direction: column;
   gap: 40px;
+  position: relative;
   animation: libFadeUp 0.42s ease both;
+}
+
+/* 0 本书时的空态：叠在柜子内部，不替换柜体 */
+.lib-shelf-empty {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  min-height: 0;
+  padding: 12px 24px;
+  pointer-events: none;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
 }
 
 @keyframes libFadeUp {
@@ -52216,11 +52231,22 @@ window.HMChat = (function () {
     var start = (state.page - 1) * SHELF_PAGE_SIZE;
     var list = state.shelfBooks.slice(start, start + SHELF_PAGE_SIZE);
     if (!list.length) {
-      els.body.innerHTML = '<div class="lib-empty">'
+      /* 0 本书也渲染三层空柜子，空态提示叠在柜体内部 */
+      var emptyRows = '';
+      for (var r = 0; r < 3; r++) {
+        emptyRows += '<section class="lib-shelf-row">'
+          + '<div class="lib-shelf-books"></div>'
+          + '<div class="lib-shelf-plank">'
+          + '<span class="lib-shelf-label">第 ' + (r + 1) + ' 架 · 藏书</span>'
+          + '<span class="lib-shelf-count">0 册</span>'
+          + '</div></section>';
+      }
+      els.body.innerHTML = '<div class="lib-shelf-wrap">' + emptyRows
+        + '<div class="lib-empty lib-shelf-empty">'
         + '<div class="lib-empty-icon">📖</div>'
         + '<h3>' + (state.query ? '没有找到相关书籍' : '书架还是空的') + '</h3>'
         + '<p>' + (state.query ? '换个关键词试试，或清空搜索查看全部藏书。' : '点击右上角「新增书籍」，把第一本书放上书架。') + '</p>'
-        + '</div>';
+        + '</div></div>';
       renderPager(0);
       renderStatus();
       return;
