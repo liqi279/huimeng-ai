@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS books (
   cover_url   VARCHAR(500)  NOT NULL DEFAULT '' COMMENT '封面图地址（留空用统一模板）',
   area        VARCHAR(16)   NOT NULL DEFAULT '' COMMENT '区域：ref/psd/anim/paint/concept',
   pdf_url     VARCHAR(500)  NOT NULL DEFAULT '' COMMENT 'PDF 地址（正文放对象存储，不入库）',
+  page_count  INT           NOT NULL DEFAULT 0  COMMENT 'PDF 真实页数，0 表示未知',
   sort_no     INT           NOT NULL DEFAULT 0 COMMENT '书架排序',
   created_at  BIGINT        NOT NULL DEFAULT 0 COMMENT '创建时间（毫秒）',
   updated_at  BIGINT        NOT NULL DEFAULT 0 COMMENT '更新时间（毫秒）',
