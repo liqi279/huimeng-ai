@@ -22322,7 +22322,7 @@ body.dv-open .hm-page {
     <button data-fcmd="download"><span class="hm-ctx-ico">📥</span>批量下载</button>
     <button data-fcmd="rename"><span class="hm-ctx-ico">✏️</span>重命名</button>
     <button data-fcmd="copy"><span class="hm-ctx-ico">📋</span>复制</button>
-    <button data-fcmd="delete"><span class="hm-ctx-ico">🗑️</span>删除项目</button>
+    <button data-fcmd="delete"><span class="hm-ctx-ico">🗑️</span>删除文件夹（图片保留）</button>
   </div>
 
   <div class="modal" id="paramModal" aria-hidden="true">
@@ -24876,6 +24876,7 @@ function renderWorks() {
         '<div class="work-overlay">' +
           '<button data-waction="download" title="' + (isFailed ? '无可下载的图片' : '下载原图') + '"' + (isFailed ? ' disabled' : '') + '>' + ICONS.download + '</button>' +
           '<button data-waction="view" title="查看大图">' + ICONS.eye + '</button>' +
+          '<button data-waction="ref" title="设为参考主体"' + (isFailed ? ' disabled' : '') + '>' + ICONS.reuse + '</button>' +
           '<button data-waction="delete" title="删除">' + ICONS.trash + '</button>' +
         '</div>' +
         '<div class="work-meta"><span>' + esc(work.modelName || 'AI') + '</span><span>' + esc(work.seed || '') + '</span></div>' +
@@ -28774,8 +28775,9 @@ function bindEvents() {
     /* 更新 refDrop is-over 视觉 */
     if (!els.refDrop) return;
     var rect = els.refDrop.getBoundingClientRect();
-    var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
-                 ev.clientY >= rect.top  && ev.clientY <= rect.bottom;
+    /* 与桌面卡片拖拽保持同一 12px 容差 */
+    var inside = ev.clientX >= rect.left - 12 && ev.clientX <= rect.right + 12 &&
+                 ev.clientY >= rect.top - 12 && ev.clientY <= rect.bottom + 12;
     if (inside && !_lastDragOverRef) {
       els.refDrop.classList.add('is-over');
       _lastDragOverRef = true;
@@ -28800,8 +28802,19 @@ function bindEvents() {
     var files = Array.from(ev.dataTransfer.files || []);
     if (!els.refDrop) return;
     var rect = els.refDrop.getBoundingClientRect();
-    var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
-                 ev.clientY >= rect.top  && ev.clientY <= rect.bottom;
+    /* 放置区不在当前视图时（如「我的作品」页 #hmDock 是 display:none），rect 全为 0，
+       以前会静默丢弃；这里明确提示，避免用户以为拖拽彻底坏了 */
+    if (!rect.width || !rect.height) {
+      var hasPayload = files.length > 0;
+      try { hasPayload = hasPayload || !!ev.dataTransfer.getData('application/x-hm-work'); } catch (e) {}
+      if (hasPayload) toast('参考主体只在创作台可用，请先回到创作台', 'info');
+      els.refDrop.classList.remove('is-over');
+      _lastDragOverRef = false;
+      return;
+    }
+    /* 与桌面卡片拖拽保持同一 12px 容差 */
+    var inside = ev.clientX >= rect.left - 12 && ev.clientX <= rect.right + 12 &&
+                 ev.clientY >= rect.top - 12 && ev.clientY <= rect.bottom + 12;
     if (!inside) {
       els.refDrop.classList.remove('is-over');
       _lastDragOverRef = false;
@@ -29160,6 +29173,10 @@ function bindEvents() {
       const action = actionEl.dataset.waction;
       if (action === 'download') downloadImage(work.url || work.thumb, fileNameFor(work));
       else if (action === 'view') openLightbox(work);
+      else if (action === 'ref') {
+        /* 复用 HMDesk 已导出的 useAsRef（上方 64102 已挂到 window.HMDesk） */
+        if (window.HMDesk && typeof window.HMDesk.useAsRef === 'function') window.HMDesk.useAsRef(work);
+      }
       else if (action === 'delete') {
         if (window.HMSync && window.HMSync.snapshotWorks) window.HMSync.snapshotWorks('delete-one');
         state.works = state.works.filter(function (w) { return w.id !== work.id; });
@@ -62086,6 +62103,8 @@ window.HMChat = (function () {
   var marquee = null; /* 框选模式 */
 
   function onPointerDown(event) {
+    lastPointerType = event.pointerType || 'mouse';
+    suppressClick = false; /* 新手势开始，清掉上一次拖拽留下的吞点击标记 */
     if (event.button !== 0) return;
     var grid = byId('resultGrid');
     if (!grid || !grid.contains(event.target)) return;
@@ -62172,6 +62191,12 @@ window.HMChat = (function () {
      因此把阈值提高到 8px（常规桌面端 5-10px 区间）。 */
   var DRAG_THRESHOLD = 8;
 
+  /* 桌面卡片点击语义（单击选中 / 双击看大图）所需的两个模块级状态：
+     lastPointerType —— 记录最后一次按下的输入类型，触屏保留「单击即看大图」；
+     suppressClick  —— 拖动结束后置 true，吞掉松手时补发的那次 click。 */
+  var lastPointerType = 'mouse';
+  var suppressClick = false;
+
   function onPointerMove(event) {
     if (!drag) return;
     var dx = event.clientX - drag.startX;
@@ -62201,8 +62226,9 @@ window.HMChat = (function () {
     var refHoverEl = byId('refDrop');
     if (refHoverEl && !refHoverEl.hidden) {
       var rr = refHoverEl.getBoundingClientRect();
-      var overRef = event.clientX >= rr.left && event.clientX <= rr.right &&
-                    event.clientY >= rr.top && event.clientY <= rr.bottom;
+      /* 与 pointerup 保持同一 12px 容差，避免「高亮了却放不进去」 */
+      var overRef = event.clientX >= rr.left - 12 && event.clientX <= rr.right + 12 &&
+                    event.clientY >= rr.top - 12 && event.clientY <= rr.bottom + 12;
       refHoverEl.classList.toggle('is-over', overRef);
     }
     /* 拖动时让 grid 自动跟随滚动
@@ -62275,6 +62301,8 @@ window.HMChat = (function () {
     var current = drag;
     drag = null;
     var merged = false;
+    /* 真正拖动过：松手后浏览器可能补发一次 click（选中/看大图），这里标记吞掉 */
+    if (current.moved) suppressClick = true;
 
     /* 桌面图片拖到「参考主体」区域松手：作为参考主体填入（与手动上传同一条通路），
        并把卡片位置还原，避免顺手改掉桌面布局 */
@@ -62282,8 +62310,9 @@ window.HMChat = (function () {
       var refDropEl = byId('refDrop');
       if (refDropEl && !refDropEl.hidden) {
         var refRect = refDropEl.getBoundingClientRect();
-        var overRef = event.clientX >= refRect.left && event.clientX <= refRect.right &&
-                      event.clientY >= refRect.top && event.clientY <= refRect.bottom;
+        /* 12px 容差：松手时手指/光标常常差几个像素，严格边界会让用户以为「拖不进去」 */
+        var overRef = event.clientX >= refRect.left - 12 && event.clientX <= refRect.right + 12 &&
+                      event.clientY >= refRect.top - 12 && event.clientY <= refRect.bottom + 12;
         if (overRef) {
           refDropEl.classList.remove('is-over');
           var dropWorkId = '';
@@ -62315,47 +62344,20 @@ window.HMChat = (function () {
     }
 
     /* 需求2：先查 elementFromPoint —— 保持 .is-dragging 让 pointer-events:none 穿透到目标卡片
-       （如果先 removeClass('is-dragging')，被拖的卡片自身会重新遮挡 elementFromPoint 的命中） */
+       （如果先 removeClass('is-dragging')，被拖的卡片自身会重新遮挡 elementFromPoint 的命中）
+       只认「已有文件夹」：拖到普通作品卡只移动位置，不再隐式新建文件夹/合并 */
     if (event && typeof document.elementFromPoint === 'function') {
       var targetEl = document.elementFromPoint(event.clientX, event.clientY);
-      var dropCard = targetEl ? targetEl.closest('.desk-card[data-work], .result-card.is-desk-job[data-job], .folder-card[data-folder]') : null;
+      var dropCard = targetEl ? targetEl.closest('.folder-card[data-folder]') : null;
       if (dropCard) {
-        var dropIsJob = dropCard.hasAttribute('data-job');
-        var dropIsFolder = dropCard.classList.contains('folder-card');
-        var dropId, workId, targetFolderId;
-        if (dropIsFolder) {
-          dropId = dropCard.dataset.folder;
-          targetFolderId = dropId;
-        } else if (dropIsJob) {
-          dropId = 'job:' + dropCard.dataset.job;
-          workId = dropCard.dataset.job;
-          targetFolderId = desk.assigns[workId];
-        } else {
-          dropId = dropCard.dataset.work;
-          workId = dropCard.dataset.work;
-          targetFolderId = desk.assigns[workId];
-        }
+        var dropId = dropCard.dataset.folder;
+        var targetFolderId = dropId;
         var draggedIds = current.items.map(function (i) { return i.id; });
         /* 不能拖到自己身上（folder 被拖也不能拖进自己） */
         if (draggedIds.indexOf(dropId) < 0 && !draggedIds.some(function (d) { return d === targetFolderId; })) {
-          /* 记住 dropCard 的原始位置——新建 folder 要放在这里 */
-          var inheritedPos = null;
-          if (!dropIsFolder) {
-            inheritedPos = desk.positions[workId] || null;
-          }
-          var folder = mergeItemsIntoFolder(draggedIds.concat([dropIsFolder ? [] : [dropId]]), targetFolderId, !dropIsFolder);
+          /* create=false：拖拽路径永不新建文件夹；目标文件夹不存在时返回 null，merged 保持 false */
+          var folder = mergeItemsIntoFolder(draggedIds, targetFolderId, false);
           if (folder) {
-            /* 新建文件夹 → 放在 dropCard 原位置 */
-            if (!dropIsFolder && inheritedPos) {
-              desk.positions[folder.id] = {
-                pxLeft: inheritedPos.pxLeft || PAD,
-                pxTop: inheritedPos.pxTop || PAD,
-                z: (inheritedPos.z || view.z + 1),
-                _userSet: true
-              };
-            } else if (!dropIsFolder && !inheritedPos) {
-              desk.positions[folder.id] = compactSlot(0, grid);
-            }
             persistNow();
             clearSelection();
             renderDesktop(); /* renderDesktop 会重建 DOM，连带清掉残留的 is-dragging */
@@ -63344,6 +63346,7 @@ window.HMChat = (function () {
         }
       });
       var clickTimer = null;
+      var clickSeq = 0;
       grid.addEventListener('click', function (event) {
         /* 1. folder-card 里的叠放小图 (.folder-t img) → 打开 lightbox 预览 */
         var fp = event.target.closest('.folder-t[data-fp]');
@@ -63364,19 +63367,29 @@ window.HMChat = (function () {
           }
           return;
         }
-        /* 3. desk-card 本体 → 延迟 openLightbox */
+        /* 3. desk-card 本体：单击 = 选中，双击 = 看大图（见下一个 dblclick 监听） */
         var card = event.target.closest('.desk-card[data-work]');
-        if (!card) return;
+        if (!card) { clearSelection(); return; }   /* 桌面空白单击 → 清空选中 */
         if (event.target.closest('button, [data-dact]')) return; /* 操作按钮由各自按钮处理 */
+        if (suppressClick) { suppressClick = false; return; } /* 刚拖完的松手 click 不算点击 */
         var work = findWork(card.dataset.work);
         if (!work) return;
+        /* 触屏双击不可靠：手机端保留「单击直接看大图」 */
+        if (lastPointerType === 'touch') { A.openLightbox(work); return; }
+        var seq = ++clickSeq;
         clearTimeout(clickTimer);
-        clickTimer = setTimeout(function () { A.openLightbox(work); }, 240);
+        clickTimer = setTimeout(function () {
+          if (seq !== clickSeq) return;      /* 已被双击或后续点击取消 */
+          /* 已选中（含多选中的某一张）→ 保持原样，不塌缩成单选 */
+          if (!view.selected[work.id]) selectOnly(work.id);
+        }, 320);
       });
       grid.addEventListener('dblclick', function (event) {
-        clearTimeout(clickTimer); /* 防止 double-click 触发两次 open */
         var card = event.target.closest('.desk-card[data-work]');
         if (!card) return;
+        /* 让待执行的单击定时器失效，避免弹图前先选中两次 */
+        clickSeq += 1;
+        clearTimeout(clickTimer);
         var work = findWork(card.dataset.work);
         if (work) A.openLightbox(work);
       });
@@ -64084,6 +64097,7 @@ window.HMChat = (function () {
     openHistory: openHistory,
     openParam: openParam,
     deleteWork: deleteWork,
+    useAsRef: useAsRef,
     sync: syncServer,
     pullNow: pullNow,
     claimLegacy: claimLegacy,
