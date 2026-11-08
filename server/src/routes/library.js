@@ -103,13 +103,15 @@ router.get('/library/file/*', wrap(async (req, res) => {
   const url = objectStore.presignGet(key, 600);
   assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
 
-  const method = req.method === 'HEAD' ? 'HEAD' : 'GET';
+  /* presignGet 是按 GET 签名的，OSS 会拒绝拿它发 HEAD（502）。
+     所以 HEAD 也向上游发 GET，只取响应头后丢弃 body。 */
+  const isHead = req.method === 'HEAD';
   const headers = {};
   if (req.headers.range) headers.Range = req.headers.range;
 
   let up;
   try {
-    up = await fetch(url, { method, headers });
+    up = await fetch(url, { method: 'GET', headers });
   } catch (err) {
     throw jsonError(502, '文件读取失败', '对象存储不可达');
   }
@@ -133,7 +135,8 @@ router.get('/library/file/*', wrap(async (req, res) => {
   const range = up.headers.get('content-range');
   if (range) res.setHeader('Content-Range', range);
 
-  if (method === 'HEAD' || !up.body) {
+  if (isHead || !up.body) {
+    if (up.body) await up.body.cancel().catch(() => {});
     res.end();
     return;
   }
