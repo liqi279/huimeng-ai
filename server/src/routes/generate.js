@@ -1,11 +1,9 @@
 'use strict';
 
-const path = require('path');
-const fsp = require('fs').promises;
 const express = require('express');
 const config = require('../config');
-const store = require('../store');
 const catalog = require('../catalog');
+const mediaStore = require('../media-store');
 const {
   jsonError,
   assert,
@@ -826,17 +824,15 @@ async function generateVideo(body) {
 
   if (!url) throw jsonError(502, '视频生成超时', '请稍后重试或更换视频模型');
 
-  /* ==== 第四步：把则灵成品下载到本地 uploads ==== */
+  /* ==== 第四步：把则灵成品转存到对象存储（未配置时回落本地盘） ==== */
   let localUrl;
   try {
     const r = await fetchWithTimeout(url, { method: 'GET', headers: {} }, 60000);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const buf = Buffer.from(await r.arrayBuffer());
     const fname = `${Date.now()}-${randomToken(6)}.mp4`;
-    const dest = path.join(config.DATA_DIR, 'media', fname);
-    await fsp.mkdir(path.dirname(dest), { recursive: true });
-    await fsp.writeFile(dest, buf);
-    localUrl = '/uploads/media/' + fname;
+    const saved = await mediaStore.put('media', fname, buf, 'video/mp4');
+    localUrl = saved.url;
   } catch (err) {
     /* 下载失败直接透传则灵直链 — 前端可直接播放（则灵直链约 24h 有效） */
     localUrl = url;
@@ -893,13 +889,13 @@ async function generateAudio(body) {
       }
     }
 
-    /* 保存到本地文件 */
+    /* 保存到对象存储（未配置时由 objectStore 回落本地盘） */
     const ext = edFormat.includes('pcm') || edFormat.includes('wav') ? 'wav' : 'mp3';
     const fileName = `${Date.now()}-${randomToken()}.${ext}`;
-    await fsp.writeFile(path.join(store.dirs.media, fileName), audioBuffer);
+    const saved = await mediaStore.put('media', fileName, audioBuffer, ext === 'wav' ? 'audio/wav' : 'audio/mpeg');
     const duration = Math.max(1, Math.round(text.length / 4 / 3)); /* 粗估：中文每秒 ~3 字，英文 ~4 */
 
-    return { items: [{ type: 'audio', url: `/uploads/media/${fileName}`, duration }] };
+    return { items: [{ type: 'audio', url: saved.url, duration }] };
   }
 
   /* === 付费引擎：RayinAPI === */
@@ -919,10 +915,10 @@ async function generateAudio(body) {
 
   const ext = format === 'wav' ? 'wav' : 'mp3';
   const fileName = `${Date.now()}-${randomToken()}.${ext}`;
-  await fsp.writeFile(path.join(store.dirs.media, fileName), audioBuffer);
+  const saved = await mediaStore.put('media', fileName, audioBuffer, format === 'wav' ? 'audio/wav' : 'audio/mpeg');
   const duration = Math.max(1, Math.round(text.length / 4 / 3));
 
-  return { items: [{ type: 'audio', url: `/uploads/media/${fileName}`, duration }] };
+  return { items: [{ type: 'audio', url: saved.url, duration }] };
 }
 
 /* 从 RayinAPI 获取音频二进制并保存 */
