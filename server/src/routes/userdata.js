@@ -8,7 +8,7 @@
  * GET    /api/user-data/bootstrap        登录后全量拉取（作品 + 文档 + 用量）
  * POST   /api/user-data/migrate          本地旧数据一次性迁移（按 id 去重，可重试）
  * GET    /api/user-data/export           导出备份 JSON
- * GET    /api/user-data/assets/:id       读取图片（短时效 token，S3 走 302 签名 URL）
+ * GET    /api/user-data/assets/:id       读取图片（短时效 token；S3 走服务端代理回源，inline 返回）
  * GET    /api/docs/:kind                 读取 desk/compile/publish/prefs
  * PUT    /api/docs/:kind                 写入（baseRev 冲突返回 409）
  * POST   /api/works/:id/asset            上传作品图片（dataUrl）
@@ -18,7 +18,8 @@
 
 const express = require('express');
 const crypto = require('crypto');
-const { wrap, assert, jsonError } = require('../http');
+const { Readable } = require('stream');
+const { wrap, assert, jsonError, extFromMime } = require('../http');
 const { authRequired } = require('../auth');
 const userData = require('../user-data');
 
@@ -187,6 +188,68 @@ router.get('/user-data/export', authRequired, wrap(async (req, res) => {
 }));
 
 /* ---------------- 图片读取（签名 URL，无 Authorization） ---------------- */
+
+/* inline 返回时用的文件名：保留对象 key 里的原扩展名；
+   key 没有扩展名时按 mime 补一个，避免浏览器拿到没有类型的裸名。 */
+function inlineFilename(asset) {
+  const base = String(asset.objectKey || '').split('/').pop() || '';
+  const safe = base.replace(/[^A-Za-z0-9._-]/g, '_');
+  if (safe && /\.[A-Za-z0-9]{1,8}$/.test(safe)) return safe;
+  const ext = extFromMime(asset.mime) || 'bin';
+  return (safe || 'asset') + '.' + ext;
+}
+
+/* s3 模式：服务端代理回源，把对象字节原样转给浏览器，并显式声明 inline。
+   背景：阿里云 OSS 对该桶的默认域名强制加 Content-Disposition: attachment，
+   这是账户级策略，桶配置和 OpenAPI 都没有开关；只要浏览器 302 落到 OSS
+   默认域名，就一定会变成下载。所以这里不再跳转，由后端带签名请求取回字节，
+   再以相同 Content-Type + inline 返回。
+   代价：图片/音频流量经过 Render，带宽与延迟都会增加，也无法利用 OSS 边缘缓存。
+   若以后绑定了已备案的自定义域名、且该域名不再被强制下载，可把这里切回
+   302 预签名直链（省带宽、首字节更快）；local 分支保持原样，不做跳转。 */
+async function proxyAssetFromObjectStore(req, res, asset) {
+  const url = userData.objectStore.presignGet(asset.objectKey);
+  if (!url) throw jsonError(502, '图片读取失败', '对象存储未启用');
+
+  const method = req.method === 'HEAD' ? 'HEAD' : 'GET';
+  let upstream;
+  try {
+    upstream = await fetch(url, { method });
+  } catch (err) {
+    throw jsonError(502, '图片读取失败', '对象存储不可达');
+  }
+
+  /* 上游错误不透传（OSS 会返回 XML），统一换成本服务的 JSON 错误 */
+  if (upstream.status === 404) {
+    if (upstream.body) await upstream.body.cancel().catch(() => {});
+    throw jsonError(404, '图片不存在或已删除');
+  }
+  if (!upstream.ok) {
+    if (upstream.body) await upstream.body.cancel().catch(() => {});
+    throw jsonError(502, '图片读取失败', '对象存储返回 ' + upstream.status);
+  }
+
+  res.status(upstream.status === 206 ? 206 : 200);
+  res.setHeader('Content-Type', upstream.headers.get('content-type') || asset.mime || 'application/octet-stream');
+  res.setHeader('Content-Disposition', 'inline; filename="' + inlineFilename(asset) + '"');
+  res.setHeader('Cache-Control', 'private, max-age=600');
+  const len = upstream.headers.get('content-length');
+  if (len) res.setHeader('Content-Length', len);
+  const etag = upstream.headers.get('etag');
+  if (etag) res.setHeader('ETag', etag);
+
+  if (method === 'HEAD' || !upstream.body) {
+    res.end();
+    return;
+  }
+  const readable = Readable.fromWeb(upstream.body);
+  readable.on('error', () => {
+    if (!res.headersSent) res.status(502).end();
+    else res.end();
+  });
+  readable.pipe(res);
+}
+
 router.get('/user-data/assets/:id', wrap(async (req, res) => {
   const assetId = String(req.params.id || '');
   assert(assetId, 400, '缺少资产 id');
@@ -198,8 +261,8 @@ router.get('/user-data/assets/:id', wrap(async (req, res) => {
 
   const st = userData.objectStore.status();
   if (st.mode === 's3') {
-    const url = userData.objectStore.presignGet(asset.objectKey);
-    res.redirect(302, url);
+    /* 不再 302 到 OSS（默认域名会强制下载），改由后端代理回源、以 inline 返回 */
+    await proxyAssetFromObjectStore(req, res, asset);
     return;
   }
   const buffer = await userData.objectStore.readObject(asset.objectKey);
