@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2",
+    "express": "4.22.3",
     "mysql2": "^3.24.6",
     "node-edge-tts": "^1.2.12",
     "pg": "^8.23.1",
