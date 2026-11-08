@@ -24849,7 +24849,7 @@ function workMediaHtml(work) {
   if (work.type === 'audio') {
     return '<div class="work-audio">♪</div>';
   }
-  return '<img src="' + esc(work.thumb || work.url) + '" alt="' + esc(work.prompt) + '" loading="lazy">';
+  return '<img src="' + esc(work.thumb || work.url) + '" alt="' + esc(work.prompt) + '" loading="lazy" draggable="true">';
 }
 
 function renderWorks() {
@@ -25875,6 +25875,69 @@ async function pickRefFile(file) {
     toast('参考图读取失败，请换一张图片', 'error');
   }
 }
+
+/* === 「桌面/作品图片 → 参考主体」统一入口 ===
+ * 原生 HTML5 拖放（作品卡）与桌面卡片的指针拖拽都调用这里，
+ * 最终一律走 pickRefFile()，与手动选择文件落在同一处状态（currentRefs()）。
+ * dataTransfer 里只放作品 id，不放 base64。 */
+window.HMRefDrop = {
+  acceptWorkId: async function (workId) {
+    var wid = String(workId || '');
+    if (!wid) return false;
+    var work = null;
+    for (var i = 0; i < state.works.length; i++) {
+      if (String(state.works[i].id) === wid) { work = state.works[i]; break; }
+    }
+    if (!work) { toast('找不到这张作品', 'error'); return false; }
+    if (work.failed || work.ok === false) { toast('生成失败的图片不能作为参考主体', 'error'); return false; }
+    if (work.type && work.type !== 'image') { toast('只能拖图片作为参考主体', 'error'); return false; }
+    if (currentRefs().length >= REF_MAX_COUNT) {
+      toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+      return false;
+    }
+    var src = work.url || work.thumb || '';
+    if (!src) { toast('这张作品没有可用的图片', 'error'); return false; }
+    try {
+      var res = await fetch(src, { mode: 'cors' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var blob = await res.blob();
+      var type = blob.type || 'image/jpeg';
+      if (!/^image\//i.test(type)) type = 'image/jpeg';
+      var ext = type.indexOf('png') >= 0 ? 'png' : type.indexOf('webp') >= 0 ? 'webp' : 'jpg';
+      var file;
+      try {
+        file = new File([blob], 'work_' + wid + '.' + ext, { type: type });
+      } catch (e) {
+        file = blob;
+        try { file.name = 'work_' + wid + '.' + ext; } catch (e2) {}
+      }
+      await pickRefFile(file);   /* 与手动上传同一条通路：校验/缩放/缩略图/写 currentRefs/renderRef */
+      return true;
+    } catch (err) {
+      toast('这张图有跨域限制，请先下载再手动上传为参考主体', 'error');
+      return false;
+    }
+  }
+};
+
+/* 作品卡（我的作品）作为原生拖拽源：拖拽标识只放作品 id */
+document.addEventListener('dragstart', function (ev) {
+  var card = ev.target && ev.target.closest ? ev.target.closest('.work-card[data-work]') : null;
+  if (!card) return;
+  var work = null;
+  for (var i = 0; i < state.works.length; i++) {
+    if (String(state.works[i].id) === String(card.dataset.work)) { work = state.works[i]; break; }
+  }
+  if (!work || work.failed || work.ok === false || (work.type && work.type !== 'image')) {
+    ev.preventDefault();
+    return;
+  }
+  try {
+    ev.dataTransfer.setData('application/x-hm-work', String(work.id));
+    ev.dataTransfer.setData('text/plain', 'work:' + work.id);
+    ev.dataTransfer.effectAllowed = 'copy';
+  } catch (e) {}
+});
 
 function updateStepsUI() {
   const value = state.steps;
@@ -28707,7 +28770,6 @@ function bindEvents() {
     if (!ev.dataTransfer) return;
     ev.preventDefault();
     var files = Array.from(ev.dataTransfer.files || []);
-    if (!files.length) return; /* 非文件拖拽（HTML5 元素拖放）忽略 */
     if (!els.refDrop) return;
     var rect = els.refDrop.getBoundingClientRect();
     var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
@@ -28719,6 +28781,23 @@ function bindEvents() {
     }
     els.refDrop.classList.remove('is-over');
     _lastDragOverRef = false;
+    /* 桌面/作品图片拖入（HTML5 元素拖拽，dataTransfer 里没有 files）：
+       取出作品 id → 走与手动上传同一条参考主体通路；其它元素拖拽直接忽略，不报错 */
+    if (!files.length) {
+      var raw = '';
+      try {
+        raw = ev.dataTransfer.getData('application/x-hm-work') || '';
+        if (!raw) {
+          var plain = ev.dataTransfer.getData('text/plain') || '';
+          if (plain.indexOf('work:') === 0) raw = plain.slice(5);
+        }
+      } catch (e) {}
+      if (!raw) return;
+      if (window.HMRefDrop && typeof window.HMRefDrop.acceptWorkId === 'function') {
+        await window.HMRefDrop.acceptWorkId(raw);
+      }
+      return;
+    }
     /* 只保留图片 */
     var imgs = files.filter(function (f) {
       return /^image\/(png|jpe?g|webp)$/i.test(f.type || '');
@@ -62061,6 +62140,14 @@ window.HMChat = (function () {
       item.nextLeft = left;
       item.nextTop = top;
     });
+    /* 拖到「参考主体」区域上方时高亮（桌面卡片走指针拖拽，没有原生 dragover 事件） */
+    var refHoverEl = byId('refDrop');
+    if (refHoverEl && !refHoverEl.hidden) {
+      var rr = refHoverEl.getBoundingClientRect();
+      var overRef = event.clientX >= rr.left && event.clientX <= rr.right &&
+                    event.clientY >= rr.top && event.clientY <= rr.bottom;
+      refHoverEl.classList.toggle('is-over', overRef);
+    }
     /* 拖动时让 grid 自动跟随滚动
        注意：只能在卡片贴近可见区域边缘时才滚动，否则会出现「点一下上面的图，
        滚动条却往下跑」的问题。之前用 visibleBottom - CARD_H - 40 做阈值，
@@ -62131,6 +62218,44 @@ window.HMChat = (function () {
     var current = drag;
     drag = null;
     var merged = false;
+
+    /* 桌面图片拖到「参考主体」区域松手：作为参考主体填入（与手动上传同一条通路），
+       并把卡片位置还原，避免顺手改掉桌面布局 */
+    if (current.moved && event) {
+      var refDropEl = byId('refDrop');
+      if (refDropEl && !refDropEl.hidden) {
+        var refRect = refDropEl.getBoundingClientRect();
+        var overRef = event.clientX >= refRect.left && event.clientX <= refRect.right &&
+                      event.clientY >= refRect.top && event.clientY <= refRect.bottom;
+        if (overRef) {
+          refDropEl.classList.remove('is-over');
+          var dropWorkId = '';
+          for (var di = 0; di < current.items.length; di += 1) {
+            var did = String((current.items[di] && current.items[di].id) || '');
+            if (!did) continue;
+            if (did.indexOf('job:') === 0) did = did.slice(4);
+            var isFolderItem = desk.folders.some(function (f) { return f.id === did; });
+            if (!isFolderItem) { dropWorkId = did; break; }
+          }
+          current.items.forEach(function (item) {
+            if (!item || !item.el) return;
+            item.el.classList.remove('is-dragging');
+            if (item.left != null) {
+              item.el.style.left = item.left + 'px';
+              item.el.style.top = item.top + 'px';
+            }
+          });
+          if (dropWorkId && window.HMRefDrop && typeof window.HMRefDrop.acceptWorkId === 'function') {
+            window.HMRefDrop.acceptWorkId(dropWorkId);
+          } else if (dropWorkId) {
+            A.toast('参考主体功能暂不可用，请手动上传', 'error');
+          } else {
+            A.toast('只能拖图片作为参考主体', 'error');
+          }
+          return;
+        }
+      }
+    }
 
     /* 需求2：先查 elementFromPoint —— 保持 .is-dragging 让 pointer-events:none 穿透到目标卡片
        （如果先 removeClass('is-dragging')，被拖的卡片自身会重新遮挡 elementFromPoint 的命中） */
