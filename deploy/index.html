@@ -15535,6 +15535,40 @@ body.rail-collapsed .hm-page {
   transform: translateY(1px);
 }
 
+/* 图书馆区域切换按钮（唯一入口） */
+.lib-area-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 190px;
+}
+
+.lib-area-icon {
+  font-size: 12px;
+  color: #c9a227;
+}
+
+.lib-area-name {
+  max-width: 148px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.lib-area-caret {
+  font-size: 9px;
+  opacity: 0.65;
+}
+
+.lib-area-item .lib-panel-go {
+  color: #c9a227;
+}
+
+.lib-area-item.is-current {
+  background: rgba(201, 162, 39, 0.14);
+}
+
 .lib-btn-gold {
   background: linear-gradient(180deg, #c9a227, #9a7814);
   border-color: rgba(255, 222, 140, 0.5);
@@ -18815,6 +18849,11 @@ body.dv-open .hm-page {
       </div>
 
       <div class="lib-top-actions">
+        <button type="button" class="lib-btn lib-area-btn" id="libAreaBtn" aria-haspopup="dialog" title="切换图书馆区域">
+          <span class="lib-area-icon" aria-hidden="true">▤</span>
+          <span class="lib-area-name" id="libAreaName">参考素材</span>
+          <span class="lib-area-caret" aria-hidden="true">▾</span>
+        </button>
         <button type="button" class="lib-btn lib-btn-gold" id="libAddBtn">＋ 新增书籍</button>
         <button type="button" class="lib-btn" id="libFavBtn">★ 我的收藏</button>
         <button type="button" class="lib-btn" id="libHistoryBtn">↺ 阅读历史</button>
@@ -51764,13 +51803,24 @@ window.HMChat = (function () {
     books: 'anidream.library.books.v2',
     fav: 'anidream.library.fav.v2',
     hist: 'anidream.library.history.v2',
-    user: 'anidream.library.user.v1'
+    user: 'anidream.library.user.v1',
+    area: 'anidream.library.area.v1'
   };
 
   var SEED = (window.HM_LIBRARY_SEED && window.HM_LIBRARY_SEED.books) || [];
 
+  /* 图书馆区域：单按钮切换，五区目前均为空 */
+  var LIB_AREAS = [
+    { id: 'ref', name: '参考素材' },
+    { id: 'psd', name: '插画作画过程PSD源文件' },
+    { id: 'anim', name: '动画教程' },
+    { id: 'paint', name: '绘画教程' },
+    { id: 'concept', name: '原画资料' }
+  ];
+
   var state = {
     mode: 'local',        /* local | remote */
+    area: 'ref',          /* 当前图书馆区域 id */
     books: [],
     shelfBooks: [],
     fav: {},
@@ -52076,12 +52126,13 @@ window.HMChat = (function () {
 
   function renderShelf() {
     if (!els.body) return;
-    var list = state.shelfBooks;
+    var area = currentArea();
+    var list = state.shelfBooks.filter(function (b) { return b.area === area.id; });
     if (!list.length) {
       els.body.innerHTML = '<div class="lib-empty">'
         + '<div class="lib-empty-icon">📖</div>'
-        + '<h3>' + (state.query ? '没有找到相关书籍' : '书架还是空的') + '</h3>'
-        + '<p>' + (state.query ? '换个关键词试试，或清空搜索查看全部藏书。' : '点击右上角「新增书籍」，把第一本书放上书架。') + '</p>'
+        + '<h3>' + (state.query ? '「' + esc(area.name) + '」没有找到相关内容' : '「' + esc(area.name) + '」区域还没有内容') + '</h3>'
+        + '<p>' + (state.query ? '换个关键词试试，或清空搜索查看该区域全部内容。' : '五个区域刚刚建好，内容稍后补充。点击右上角区域按钮可切换。') + '</p>'
         + '</div>';
       renderStatus();
       return;
@@ -52880,6 +52931,57 @@ window.HMChat = (function () {
     });
   }
 
+  /* ---------------- 区域切换（单按钮 + 弹窗） ---------------- */
+  function areaById(id) {
+    for (var i = 0; i < LIB_AREAS.length; i++) {
+      if (LIB_AREAS[i].id === id) return LIB_AREAS[i];
+    }
+    return LIB_AREAS[0];
+  }
+
+  function currentArea() { return areaById(state.area); }
+
+  function syncAreaBtn() {
+    var nameEl = $('libAreaName');
+    if (nameEl) nameEl.textContent = currentArea().name;
+    var btn = $('libAreaBtn');
+    if (btn) btn.title = '切换图书馆区域 · 当前：' + currentArea().name;
+  }
+
+  function setArea(id) {
+    state.area = areaById(id).id;
+    writeJSON(LS.area, state.area);
+    syncAreaBtn();
+    markShelf();
+    renderShelf();
+  }
+
+  function openAreaPicker() {
+    if (!els.modal) return;
+    els.modal.hidden = false;
+    els.modal.innerHTML = '<div class="lib-modal-mask" data-mask></div>'
+      + '<div class="lib-modal-card lib-panel" role="dialog" aria-label="选择图书馆区域">'
+      + '<div class="lib-modal-head"><h3>选择区域</h3>'
+      + '<button type="button" class="lib-modal-close" data-close>×</button></div>'
+      + '<div class="lib-panel-list">' + LIB_AREAS.map(function (a) {
+        var on = a.id === state.area;
+        return '<button type="button" class="lib-panel-item lib-area-item' + (on ? ' is-current' : '') + '" data-area="' + a.id + '">'
+          + '<span class="lib-panel-cover" style="--accent:#c9a227"><span>' + esc(a.name.slice(0, 2)) + '</span></span>'
+          + '<span class="lib-panel-text"><b>' + esc(a.name) + '</b><small>该区域内容</small></span>'
+          + '<span class="lib-panel-go">' + (on ? '✓ 当前' : '选择 →') + '</span></button>';
+      }).join('') + '</div></div>';
+    els.modal.querySelectorAll('[data-close], [data-mask]').forEach(function (el) {
+      el.addEventListener('click', closeModal);
+    });
+    els.modal.querySelectorAll('[data-area]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setArea(btn.getAttribute('data-area'));
+        closeModal();
+        toast('已切换到「' + currentArea().name + '」', 'info');
+      });
+    });
+  }
+
   /* ---------------- 入口 ---------------- */
   function bindOnce() {
     if (bound) return;
@@ -52895,6 +52997,12 @@ window.HMChat = (function () {
     els.reader = $('libReader');
     els.modal = $('libModal');
     els.view = $('view-library');
+
+    var savedArea = readJSON(LS.area, LIB_AREAS[0].id);
+    state.area = areaById(savedArea).id;
+    syncAreaBtn();
+    var areaBtn = $('libAreaBtn');
+    if (areaBtn) areaBtn.addEventListener('click', openAreaPicker);
 
     bindSearch();
     bindKeys();
