@@ -15758,12 +15758,17 @@ body.rail-collapsed .hm-page {
   display: flex;
   flex: 1 1 auto;
   align-items: flex-end;
-  justify-content: space-between; /* 八本等距排开，不挤在左边 */
-  gap: 10px;
+  justify-content: flex-start; /* 不满 8 本：从左往右紧邻排布，间距均匀 */
+  gap: 18px;
   min-height: 0;
   padding: 18px 20px 6px;
   flex-wrap: nowrap; /* 每层最多 8 本，从左往右排，不满留空 */
   overflow: hidden;
+}
+
+/* 满 8 本：等距铺满整行 */
+.lib-shelf-books.is-full {
+  justify-content: space-between;
 }
 
 .lib-shelf-plank {
@@ -15927,6 +15932,17 @@ body.rail-collapsed .hm-page {
   border-radius: 2px;
   box-shadow: inset 0 0 0 3px rgba(35, 22, 12, 0.1);
   pointer-events: none;
+}
+
+/* 生成式封面（真实封面加载失败时兜底显示，不出现破图标） */
+.lib-book-cover-gen {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.lib-book.has-cover .lib-book-cover-gen {
+  display: none;
 }
 
 /* 真实封面图（有 coverUrl 时替代生成式封面） */
@@ -52406,6 +52422,14 @@ window.HMChat = (function () {
     });
   }
 
+  function timeValue(v, fallback) {
+    if (typeof v === 'number' && isFinite(v)) return v;
+    var n = Number(v);
+    if (isFinite(n) && n > 0) return n;
+    var p = Date.parse(v);
+    return isFinite(p) ? p : fallback;
+  }
+
   function normalize(b, i) {
     var t = nowMs();
     return {
@@ -52422,8 +52446,8 @@ window.HMChat = (function () {
       pageCount: Number(b.pageCount) || 0,
       toc: Array.isArray(b.toc) ? b.toc : [],
       sortNo: Number(b.sortNo == null ? i : b.sortNo),
-      createdAt: Number(b.createdAt || t),
-      updatedAt: Number(b.updatedAt || t),
+      createdAt: timeValue(b.createdAt, t),
+      updatedAt: timeValue(b.updatedAt, t),
       pages: (b.pages || []).map(function (p, idx) {
         return {
           pageNo: idx + 1,
@@ -52471,6 +52495,14 @@ window.HMChat = (function () {
 
   function markShelf() {
     var areaBooks = state.books.filter(function (b) { return b.area === state.area; });
+    /* 排序：sortNo 升序（001=0、002=1）；同 sortNo 按 createdAt 升序，新书排后面 */
+    areaBooks.sort(function (a, b) {
+      var sa = Number(a.sortNo), sb = Number(b.sortNo);
+      if (!isFinite(sa)) sa = 1e15;
+      if (!isFinite(sb)) sb = 1e15;
+      if (sa !== sb) return sa - sb;
+      return (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0);
+    });
     state.shelfBooks = applyQuery(areaBooks);
   }
 
@@ -52517,7 +52549,7 @@ window.HMChat = (function () {
       return Promise.resolve();
     }
     return request('/library/books', {}, 10000).then(function (data) {
-      state.books = data.items || [];
+      state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
     }).catch(function () {
       state.mode = 'local';
@@ -52641,7 +52673,7 @@ window.HMChat = (function () {
         return bookCardHtml(b, start + rowIndex * SHELF_PER_ROW + idx);
       }).join('');
       html += '<section class="lib-shelf-row">'
-        + '<div class="lib-shelf-books">' + booksHtml + '</div>'
+        + '<div class="lib-shelf-books' + (group.length >= SHELF_PER_ROW ? ' is-full' : '') + '">' + booksHtml + '</div>'
         + '<div class="lib-shelf-plank">'
         + '<span class="lib-shelf-label">第 ' + (rowIndex + 1) + ' 架</span>'
         + '<span class="lib-shelf-count">' + group.length + ' 册</span>'
@@ -52683,13 +52715,16 @@ window.HMChat = (function () {
       + '<span class="lib-book-spine"><span class="lib-book-spine-title">' + esc(b.title) + '</span></span>'
       + '<span class="lib-book-cover">'
       + '<span class="lib-book-cover-frame"></span>'
+      + '<span class="lib-book-cover-gen">'
+      + '<span class="lib-book-cover-title">' + esc(b.title) + '</span>'
+      + '<span class="lib-book-cover-rule"></span>'
+      + '<span class="lib-book-cover-author">' + esc(b.author) + '</span>'
+      + '<span class="lib-book-cover-seal">藏</span>'
+      + '<span class="lib-book-cover-brand">绘梦藏书</span>'
+      + '</span>'
       + (b.coverUrl
         ? '<img class="lib-book-cover-img" src="' + esc(b.coverUrl) + '" alt="' + esc(b.title) + '" loading="lazy">'
-        : '<span class="lib-book-cover-title">' + esc(b.title) + '</span>'
-          + '<span class="lib-book-cover-rule"></span>'
-          + '<span class="lib-book-cover-author">' + esc(b.author) + '</span>'
-          + '<span class="lib-book-cover-seal">藏</span>'
-          + '<span class="lib-book-cover-brand">绘梦藏书</span>')
+        : '')
       + '</span>'
       + '<span class="lib-book-edge"></span>'
       + '</span>'
@@ -52961,7 +52996,7 @@ window.HMChat = (function () {
       + '<button type="button" class="lib-back-btn" data-back>← 返回书架</button>'
       + '<div class="lib-detail-grid">'
       + '<div class="lib-detail-cover-col">'
-      + '<div class="lib-detail-cover" style="--accent:' + esc(book.accent) + '">'
+      + '<div class="lib-detail-cover" style="--accent:' + esc(book.accent) + '" data-author="' + esc(book.author) + '">'
       + (book.coverUrl
         ? '<img class="lib-detail-cover-img" src="' + esc(book.coverUrl) + '" alt="' + esc(book.title) + '">'
         : '<span class="lib-detail-cover-frame"></span>'
@@ -53005,6 +53040,22 @@ window.HMChat = (function () {
 
     els.detail.hidden = false;
     requestAnimationFrame(function () { els.detail.classList.add('is-open'); });
+
+    /* 详情页封面坏图：退化成文字封面 */
+    var detailCoverImg = els.detail.querySelector('.lib-detail-cover-img');
+    if (detailCoverImg) detailCoverImg.addEventListener('error', function () {
+      var box = detailCoverImg.closest('.lib-detail-cover');
+      if (!box) return;
+      var title = detailCoverImg.getAttribute('alt') || '';
+      var author = box.getAttribute('data-author') || '';
+      if (detailCoverImg.parentNode) detailCoverImg.parentNode.removeChild(detailCoverImg);
+      box.insertAdjacentHTML('afterbegin',
+        '<span class="lib-detail-cover-frame"></span>'
+        + '<span class="lib-detail-cover-title">' + esc(title) + '</span>'
+        + '<span class="lib-detail-cover-rule"></span>'
+        + '<span class="lib-detail-cover-author">' + esc(author) + '</span>'
+        + '<span class="lib-detail-cover-brand">绘梦藏书 · 统一模板</span>');
+    });
 
     els.detail.querySelector('[data-back]').addEventListener('click', function () { closeDetail(); });
     els.detail.querySelector('[data-read]').addEventListener('click', function () {
@@ -53992,14 +54043,26 @@ window.HMChat = (function () {
     if (histBtn) histBtn.addEventListener('click', function () { showPanel('hist'); });
 
     if (els.body) {
+      /* 封面坏图/0 字节：退化成书名文字卡，不显示破图标 */
+      function degradeBookCover(img) {
+        var card = img && img.closest ? img.closest('.lib-book') : null;
+        if (!card || !card.classList.contains('has-cover')) return;
+        card.classList.remove('has-cover');
+        card.style.width = '';
+        card.style.height = '';
+        if (img.parentNode) img.parentNode.removeChild(img);
+      }
       /* 真实封面：书卡按图片比例定宽高，图片正好铺满（无黑边、无裁切） */
       function fitBookCover(img) {
         var card = img.closest('.lib-book');
-        if (!card || !img.naturalWidth || !img.naturalHeight) return;
+        if (!card) return;
+        if (!img.naturalWidth || !img.naturalHeight) { degradeBookCover(img); return; }
         var books = card.parentElement;
         if (!books) return;
+        var count = books.querySelectorAll('.lib-book').length || 1;
+        var gap = 18;
         var availH = (books.clientHeight || 184) - 24;
-        var slotW = ((books.clientWidth || 960) - 40 - 70) / 8;
+        var slotW = ((books.clientWidth || 960) - 40 - gap * Math.max(0, count - 1)) / count;
         var ratio = img.naturalWidth / img.naturalHeight;
         var w = Math.min(120, slotW);
         if (w / ratio > availH) w = availH * ratio;
@@ -54011,6 +54074,11 @@ window.HMChat = (function () {
         var img = event.target;
         if (!img || !img.classList || !img.classList.contains('lib-book-cover-img')) return;
         fitBookCover(img);
+      }, true);
+      els.body.addEventListener('error', function (event) {
+        var img = event.target;
+        if (!img || !img.classList || !img.classList.contains('lib-book-cover-img')) return;
+        degradeBookCover(img);
       }, true);
       window.addEventListener('resize', function () {
         if (!els.body) return;
