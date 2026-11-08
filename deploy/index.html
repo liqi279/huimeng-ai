@@ -23229,6 +23229,28 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       var me = (res && res.user) ? { user: res.user } : await api.me();
       window.HMApp = window.HMApp || {};
       window.HMApp.user = me.user;
+      /* 登录痕迹（供「登录后认领本 origin 旧数据」判定是否同一人）：
+         先把上一个登录者与本次登录者都记进 hm.userHistory.v1，再写 hm.user */
+      try {
+        var prevUser = null;
+        try { prevUser = JSON.parse(localStorage.getItem('hm.user') || 'null'); } catch (e2) {}
+        var histArr = [];
+        try { histArr = JSON.parse(localStorage.getItem('hm.userHistory.v1') || '[]'); } catch (e3) { histArr = []; }
+        if (!Array.isArray(histArr)) histArr = [];
+        [prevUser, me.user].forEach(function (u) {
+          if (!u || !u.id) return;
+          var replaced = false;
+          for (var hi = 0; hi < histArr.length; hi += 1) {
+            if (histArr[hi] && histArr[hi].id === u.id) {
+              histArr[hi] = { id: u.id, username: u.username, at: Date.now() };
+              replaced = true;
+              break;
+            }
+          }
+          if (!replaced) histArr.push({ id: u.id, username: u.username, at: Date.now() });
+        });
+        localStorage.setItem('hm.userHistory.v1', JSON.stringify(histArr.slice(-20)));
+      } catch (e4) {}
       try { localStorage.setItem('hm.user', JSON.stringify(me.user)); } catch (e) {}
 
       /* 认证已完成：立即关闭登录框并刷新用户区，
@@ -23257,21 +23279,26 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }
   }
 
-  /* 登录后：并行拉取作品与桌面布局（两者互不依赖，省一个往返） */
+  /* 登录后：顺序固定 = 云端桌面快照 → 云端作品快照 → 历史键认领 → 合并推回 */
   function loadUserData() {
-    var tasks = [refreshUserWorks()];
-    if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') {
-      tasks.push(Promise.resolve().then(function () { window.HMDesk.reloadForUser(); }));
-    } else if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
-      tasks.push(Promise.resolve().then(function () { window.HMDesk.sync(); }));
-    }
-    Promise.all(tasks).catch(function () {});
+    Promise.resolve()
+      .then(function () {
+        if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') return window.HMDesk.reloadForUser();
+        if (window.HMDesk && typeof window.HMDesk.sync === 'function') return window.HMDesk.sync();
+      })
+      .then(function () { return refreshUserWorks(); })
+      .catch(function (e) { console.warn('[loadUserData] 加载失败（不影响登录）:', e && e.message); });
   }
 
   async function refreshUserWorks() {
     if (!api || !api.online) return;
     var A = window.HMApp;
     if (!A || !A.state) return;
+    /* 先认领本 origin 的历史键（旧 uid 键 / 固定键 / guest 键），
+       再读「所有候选键的并集」，保证认领结果进入本轮云端合并。失败不影响登录。 */
+    try {
+      if (window.HMClaim && typeof window.HMClaim.run === 'function') await window.HMClaim.run();
+    } catch (e) { console.warn('[refreshUserWorks] 历史键认领失败（忽略）:', e && e.message); }
     /* 手动登录时 state.works 已被登出清空；本地作品必须取「所有候选键的并集」
        （用户键 / .bak / .snap.* / 历史键名），不能只读一个 key 后当成全部 */
     var mergeAll = (window.HMSync && window.HMSync.mergeLists)
@@ -23340,6 +23367,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
 
   async function handleLogout() {
+    /* 记录登录痕迹：供下次登录时判定「本 origin 的旧键是不是同一个人」（用户名可核对） */
+    try {
+      var lastU = window.HMApp && window.HMApp.user;
+      if (lastU && lastU.id) {
+        localStorage.setItem('hm.lastUser.v1', JSON.stringify({ id: lastU.id, username: lastU.username, at: Date.now() }));
+      }
+    } catch (e) {}
     if (api && api.logout) api.logout();
     window.HMApp = window.HMApp || {};
     /* 清空内存中的作品与桌面，避免下个账号看到上个账号的数据。
@@ -29169,10 +29203,16 @@ async function authBoot() {
     state.works = (cachedWorks && cachedWorks.length ? cachedWorks : state.works || []).slice(0, MAX_WORKS);
     hideLogin();
     updateUserUI();
-    renderWorks();
-    console.log('[authBoot] 已用缓存渲染桌面');
-    /* 本地 JSON 里的原图存在 IndexedDB，异步补回后再渲染一次 */
-    hydrateWorks().then(function (changed) { if (changed) renderWorks(); });
+    /* 登录即见：本地有缓存才先渲染；本地为空时不渲染空列表，
+       等云端快照 + 历史键认领合并完再统一渲染，避免"先空列表再刷出来"的闪跳 */
+    if (state.works.length) {
+      renderWorks();
+      console.log('[authBoot] 已用缓存渲染桌面');
+      /* 本地 JSON 里的原图存在 IndexedDB，异步补回后再渲染一次 */
+      hydrateWorks().then(function (changed) { if (changed) renderWorks(); });
+    } else {
+      console.log('[authBoot] 本地无缓存，等云端快照就绪后再渲染');
+    }
   } else {
     hideLogin(); /* 至少先隐藏登录弹窗，等 me() 返回再决定 */
   }
@@ -29226,6 +29266,26 @@ async function authBoot() {
     } catch (e) { /* listWorks 失败不影响登录态 */ }
 
     await hydrateWorks();
+
+    /* ===== 登录即见（顺序固定，不能颠倒）=====
+       1) 云端作品快照已合并进 state.works（上面 listWorks）
+       2) 云端桌面布局快照拉回（pullNow，先于认领，避免旧键把云端布局挤掉）
+       3) 本 origin 历史键认领（hm.claim，只补不覆盖）
+       4) 合并结果推回云端（syncAllWorksToServer）
+       认领/拉取任何一步失败都只打日志，不影响登录态。 */
+    try {
+      if (window.HMDesk && typeof window.HMDesk.pullNow === 'function') await window.HMDesk.pullNow();
+    } catch (e) { console.warn('[authBoot] 云端桌面拉取失败（忽略）:', e && e.message); }
+
+    try {
+      if (window.HMClaim && typeof window.HMClaim.run === 'function') {
+        var claimRes = await window.HMClaim.run();
+        if (claimRes && (claimRes.works || claimRes.desk || claimRes.keys)) {
+          console.log('[authBoot] 历史键认领结果:', claimRes);
+          await hydrateWorks(); /* 认领进来的 base64 原图补回 */
+        }
+      }
+    } catch (e) { console.warn('[authBoot] 历史键认领失败（不影响登录）:', e && e.message); }
 
     /* 启动时把本地缺失的作品（含 base64）上传到服务端，
        Render 重启清空 data/ 后自动恢复，换设备也能看到 */
@@ -60703,6 +60763,8 @@ window.HMChat = (function () {
     names: {},
     updatedAt: 0
   };
+  /* 当前内存里的 desk 属于哪个 uid（换账号时防止把上个账号的布局写进新账号的键） */
+  var deskUid = '';
 
   var view = {
     activeFolder: null,
@@ -60757,6 +60819,7 @@ window.HMChat = (function () {
   };
 
   function load() {
+    deskUid = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
     var stored = null;
     try {
       stored = JSON.parse(localStorage.getItem(getDeskLsKey()) || 'null');
@@ -60833,6 +60896,92 @@ window.HMChat = (function () {
         persistNow();
       }
     }).catch(function () {});
+  }
+
+  /* 登录即见：登录后直接返回「拉回云端桌面布局」的 Promise，
+     云端比本地新、或本地桌面是空的而云端有内容时采用云端（避免空桌面盖掉旧数据）。 */
+  function pullNow() {
+    if (!api || !api.online || !api.getDesk) return Promise.resolve(false);
+    /* 换账号时内存里的布局可能还属于上一个 uid：先跳过，等 reloadForUser 按新 uid 重载后再拉，
+       避免把别人的布局写进当前账号的键 */
+    var uidNow = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+    if (String(deskUid) !== String(uidNow)) return Promise.resolve(false);
+    return api.getDesk().then(function (d) {
+      if (!d || typeof d !== 'object') return false;
+      var remote = d.desk || d;
+      if (!remote || !Array.isArray(remote.folders)) return false;
+      var remoteTime = Number(remote.updatedAt) || 0;
+      var remoteHasData = remote.folders.length || Object.keys(remote.positions || {}).length ||
+        Object.keys(remote.assigns || {}).length || Object.keys(remote.names || {}).length;
+      var localEmpty = !desk.folders.length && !Object.keys(desk.positions || {}).length;
+      if (remoteTime > desk.updatedAt || (localEmpty && remoteHasData)) {
+        desk.folders = remote.folders.filter(function (f) { return f && f.id && f.name; }).map(function (f) {
+          f.parentId = f.parentId || null;
+          f.createdAt = Number(f.createdAt) || 0;
+          return f;
+        });
+        desk.positions = remote.positions || {};
+        desk.assigns = remote.assigns || {};
+        desk.names = remote.names || {};
+        desk.updatedAt = Math.max(remoteTime, Number(desk.updatedAt) || 0);
+        try { localStorage.setItem(getDeskLsKey(), JSON.stringify(payload())); } catch (err) {}
+        renderAll();
+        console.log('[HMDesk] 已从云端载入桌面布局', desk.folders.length, '个文件夹');
+        return true;
+      }
+      return false;
+    }).catch(function () { return false; });
+  }
+
+  /* 认领历史桌面（旧 uid 键 / guest 键）：只补当前缺失的文件夹与位置，
+     绝不覆盖现有布局；空桌面不会被空数据盖掉。返回新增条目数。 */
+  function claimLegacy(item) {
+    if (!item || typeof item !== 'object') return 0;
+    /* 内存布局不属于当前账号时不合并，避免串号 */
+    var uidNow = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+    if (String(deskUid) !== String(uidNow)) return 0;
+    var added = 0;
+    var haveId = Object.create(null);
+    var haveName = Object.create(null);
+    desk.folders.forEach(function (f) {
+      haveId[f.id] = 1;
+      haveName[String(f.parentId || '') + '|' + String(f.name || '')] = 1;
+    });
+    (Array.isArray(item.folders) ? item.folders : []).forEach(function (f) {
+      if (!f || !f.id || !f.name) return;
+      var sig = String(f.parentId || '') + '|' + String(f.name || '');
+      if (haveId[f.id] || haveName[sig]) return;
+      desk.folders.push({
+        id: f.id,
+        name: f.name,
+        parentId: f.parentId || null,
+        createdAt: Number(f.createdAt) || 0
+      });
+      haveId[f.id] = 1;
+      haveName[sig] = 1;
+      added += 1;
+    });
+    ['positions', 'assigns', 'names'].forEach(function (k) {
+      var src = item[k];
+      if (!src || typeof src !== 'object') return;
+      if (!desk[k] || typeof desk[k] !== 'object') desk[k] = {};
+      Object.keys(src).forEach(function (key) {
+        var cur = desk[k][key];
+        if (cur === undefined || cur === null || cur === '') {
+          desk[k][key] = src[key];
+          added += 1;
+        }
+      });
+    });
+    if (added) {
+      desk.updatedAt = Math.max(Number(desk.updatedAt) || 0, Number(item.updatedAt) || 0, Date.now());
+      try { localStorage.setItem(getDeskLsKey(), JSON.stringify(payload())); } catch (err) {}
+      renderAll();
+      /* 标记待同步：直接推回云端，让其它设备也能看到 */
+      if (api && api.online && api.saveDesk) { api.saveDesk(payload()).catch(function () {}); }
+      console.log('[HMDesk] 已认领历史桌面条目', added, '项');
+    }
+    return added;
   }
 
   /* ---------------- 工具 ---------------- */
@@ -61698,7 +61847,8 @@ window.HMChat = (function () {
     view.selected = {};
     load();
     renderAll();
-    setTimeout(syncServer, 800);
+    /* 登录即见：立即拉云端桌面（返回 Promise，供登录流程 await），不再延迟 800ms */
+    return pullNow();
   }
 
   /* 登出时：清空桌面内存数据，避免下个账号看到上个账号的文件夹布局 */
@@ -61708,6 +61858,7 @@ window.HMChat = (function () {
     desk.assigns = {};
     desk.names = {};
     desk.updatedAt = 0;
+    deskUid = '';
     view.activeFolder = null;
     view.selected = {};
     renderAll();
@@ -63752,6 +63903,8 @@ window.HMChat = (function () {
     openParam: openParam,
     deleteWork: deleteWork,
     sync: syncServer,
+    pullNow: pullNow,
+    claimLegacy: claimLegacy,
     reloadForUser: reloadForUser,
     resetForLogout: resetForLogout,
     getActiveFolder: function () { return view.activeFolder; },
@@ -67063,6 +67216,7 @@ window.HMChat = (function () {
         '<div style="color:#a5a0c0;font-size:12px;margin-top:4px">账号数据按 user_id 存后端；本机 localStorage/IndexedDB 仅作缓存。</div></div>' +
         '<div style="display:flex;gap:8px">' +
           '<button type="button" id="hmSyncNow" class="hm-pill">立即同步</button>' +
+          '<button type="button" id="hmClaimLegacy" class="hm-pill">认领历史数据</button>' +
           '<button type="button" id="hmSyncExport" class="hm-pill">导出备份</button>' +
           '<button type="button" id="hmSyncMigrate" class="hm-pill">重新上传本机数据</button>' +
           '<button type="button" id="hmSyncRecover" class="hm-pill">恢复本地备份</button>' +
@@ -67085,6 +67239,18 @@ window.HMChat = (function () {
     };
     var btnExport = el.querySelector('#hmSyncExport');
     if (btnExport) btnExport.onclick = exportBackup;
+    var btnClaim = el.querySelector('#hmClaimLegacy');
+    if (btnClaim) btnClaim.onclick = function () {
+      if (!window.HMClaim || typeof window.HMClaim.run !== 'function') return;
+      btnClaim.disabled = true;
+      window.HMClaim.run({ force: true }).then(function (res) {
+        var msg = (res && res.ok === false)
+          ? ('认领失败：' + (res.error || '未知错误'))
+          : ('认领完成：作品 ' + ((res && res.works) || 0) + ' 条、桌面 ' + ((res && res.desk) || 0) + ' 项');
+        toast(msg, res && res.ok === false ? 'error' : 'success');
+        renderPanel();
+      }).finally(function () { btnClaim.disabled = false; });
+    };
     var btnMigrate = el.querySelector('#hmSyncMigrate');
     if (btnMigrate) btnMigrate.onclick = function () {
       revs.fp = {};
@@ -67215,6 +67381,243 @@ window.HMChat = (function () {
   setTimeout(function () {
     if (uid()) afterLogin();
   }, 3500);
+})();
+
+</script>
+<script>
+/* ============================================================
+ * 历史数据认领（方案 1）：登录拿到 user.id 之后，把本 origin 下
+ * 可能属于同一个人的旧键合并进当前账号。
+ *
+ * 判定证据链（可靠度从高到低）：
+ *   ① 键名里带 uid 且等于当前 uid            → 同一个人
+ *   ② 键名里带 uid ≠ 当前 uid，但历史登录痕迹（hm.userHistory.v1 /
+ *      hm.lastUser.v1）里该 uid 的用户名与当前用户名一致 → 同一个人
+ *   ③ 固定键 / guest 键（不带 uid）：只有「本 origin 没有其它账号的数据」才合并
+ *   ④ 以上都判不了 → 不动该键，只在控制台留一行可读日志
+ *
+ * 合并规则：
+ *   - 作品按 work.id 去重；当前账号已有数据永远优先（旧数据只补缺，不覆盖）
+ *   - 桌面 folders/positions/assigns/names 只补当前缺失项，updatedAt 取较大值
+ *   - 旧键一律保留不删除（留作回退），合并结果写入当前 uid 键并标记待同步
+ *   - 整个认领每个账号只跑一次（hm.claim.v1.<uid>），可手动重跑：
+ *       HMClaim.run({force:true})  或  设置 → 云同步 → 「认领历史数据」
+ *
+ * 失败兜底：任何异常都只 console.warn，绝不影响正常登录。
+ * ============================================================ */
+(function () {
+  'use strict';
+  var FLAG_PREFIX = 'hm.claim.v1.';
+  var HIST_KEY = 'hm.userHistory.v1';
+  var LAST_KEY = 'hm.lastUser.v1';
+  var FIXED_WORK_KEYS = ['anidream.works', 'hm.works', 'works', 'anidream.works.v1', 'anidream.works.v1.bak'];
+  var GUEST_DESK_KEY = 'anidream.desk.v1';
+
+  function curUser() { return (window.HMApp && window.HMApp.user) || null; }
+  function norm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
+  function arrOf(v) { return Array.isArray(v) ? v : []; }
+
+  function readRaw(k) {
+    var raw;
+    try { raw = localStorage.getItem(k); } catch (e) { return null; }
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) {
+      console.warn('[HMClaim] 跳过损坏的键（JSON 解析失败，保持原样）：' + k);
+      return null;
+    }
+  }
+
+  /* 历史登录痕迹：uid -> 用户名（含当前账号） */
+  function historyMap() {
+    var map = Object.create(null);
+    arrOf(readRaw(HIST_KEY)).forEach(function (u) { if (u && u.id) map[String(u.id)] = norm(u.username); });
+    var last = readRaw(LAST_KEY);
+    if (last && last.id) map[String(last.id)] = norm(last.username);
+    var me = curUser();
+    if (me && me.id) map[String(me.id)] = norm(me.username);
+    return map;
+  }
+
+  /* 扫描本 origin 的作品键：按 uid 分组 + 固定键/guest 键 */
+  function scanWorkKeys() {
+    var byUid = Object.create(null);
+    var fixed = [];
+    for (var i = 0; i < localStorage.length; i += 1) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('anidream.works') !== 0) continue;
+      if (FIXED_WORK_KEYS.indexOf(k) >= 0) { fixed.push(k); continue; }
+      var m = /^anidream\.works\.v1\.([^.]+)(?:\..+)?$/.exec(k);
+      if (!m || m[1] === 'bak') { fixed.push(k); continue; }
+      (byUid[m[1]] = byUid[m[1]] || []).push(k);   /* 含 .bak / .snap.<ts> */
+    }
+    return { byUid: byUid, fixed: fixed };
+  }
+
+  function scanDeskKeys() {
+    var byUid = Object.create(null);
+    var guest = [];
+    for (var i = 0; i < localStorage.length; i += 1) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('anidream.desk') !== 0) continue;
+      if (k === GUEST_DESK_KEY) { guest.push(k); continue; }
+      var m = /^anidream\.desk\.v1\.([^.]+)$/.exec(k);
+      if (m) (byUid[m[1]] = byUid[m[1]] || []).push(k);
+    }
+    return { byUid: byUid, guest: guest };
+  }
+
+  function readWorkList(keys) {
+    var out = [];
+    (keys || []).forEach(function (k) {
+      var v = readRaw(k);
+      if (Array.isArray(v)) out = out.concat(v);
+      else if (v) console.warn('[HMClaim] 键内容不是作品数组，已跳过：' + k);
+    });
+    return out;
+  }
+
+  /* uid 归属判定：返回 {ok, why} */
+  function classify(ownerUid, hist) {
+    var me = curUser();
+    if (!me || !me.id) return { ok: false, why: '未登录' };
+    if (String(ownerUid) === String(me.id)) return { ok: true, why: 'uid 与当前账号一致' };
+    var name = hist[String(ownerUid)];
+    if (name && norm(me.username) && name === norm(me.username)) {
+      return { ok: true, why: '历史登录痕迹显示同一用户名（' + me.username + '）' };
+    }
+    return { ok: false, why: 'uid 不同且无法证明是同一人' };
+  }
+
+  /* 当前账号的数据 = 内存列表 ∪ 当前 uid 键 ∪ .bak（内存优先，绝不丢磁盘已有数据） */
+  function currentWorks(me) {
+    var A = window.HMApp;
+    var cur = (A && A.state && Array.isArray(A.state.works)) ? A.state.works.slice() : [];
+    var key = 'anidream.works.v1.' + me.id;
+    var stored = readRaw(key);
+    var bak = readRaw(key + '.bak');
+    var lists = [arrOf(stored), arrOf(bak), cur];
+    var merged = (window.HMSync && window.HMSync.mergeLists)
+      ? window.HMSync.mergeLists.apply(null, lists)
+      : lists.reduce(function (a, b) { return a.concat(b); }, []);
+    /* mergeLists 按时间取新；这里再用「内存/磁盘当前值」兜底一次，保证当前数据优先 */
+    var map = Object.create(null);
+    merged.forEach(function (w) { if (w && w.id) map[String(w.id)] = w; });
+    cur.forEach(function (w) { if (w && w.id) map[String(w.id)] = Object.assign({}, map[String(w.id)] || {}, w); });
+    return Object.keys(map).map(function (id) { return map[id]; });
+  }
+
+  function mergeWorksIntoAccount(list, me) {
+    var A = window.HMApp;
+    if (!A || !A.state || !list.length) return 0;
+    var cur = currentWorks(me);
+    var before = cur.length;
+    /* mergeWorks(旧数据, 当前数据)：同 id 时第二个参数（当前）优先 → 旧数据不覆盖当前 */
+    var merged = A.mergeWorks ? A.mergeWorks(list, cur) : cur.concat(list);
+    if (merged.length <= before) return 0;
+    var have = Object.create(null);
+    cur.forEach(function (w) { if (w && w.id) have[String(w.id)] = 1; });
+    merged.forEach(function (w) { if (w && w.id && !have[String(w.id)]) w._pendingUpload = true; });
+    A.state.works = merged;
+    if (A.saveWorks) A.saveWorks();       /* 写当前 uid 键 + 触发 HMSync 标记待同步 */
+    if (A.renderWorks) A.renderWorks();
+    return merged.length - before;
+  }
+
+  async function run(opts) {
+    opts = opts || {};
+    var summary = { ok: true, skipped: false, works: 0, desk: 0, keys: 0, reasons: [] };
+    try {
+      var me = curUser();
+      if (!me || !me.id) { summary.ok = false; summary.error = '未登录，跳过认领'; return summary; }
+      var flag = FLAG_PREFIX + me.id;
+      if (!opts.force && localStorage.getItem(flag)) {
+        summary.skipped = true;
+        summary.reason = '本账号已认领过（重跑：HMClaim.run({force:true})）';
+        return summary;
+      }
+
+      var hist = historyMap();
+      var wk = scanWorkKeys();
+      var dk = scanDeskKeys();
+
+      /* 其它账号留下的数据 → 决定「固定键 / guest 键」能否判定归属 */
+      var otherOwners = [];
+      Object.keys(wk.byUid).forEach(function (o) {
+        if (String(o) === String(me.id)) return;
+        if (readWorkList(wk.byUid[o]).length) otherOwners.push('works:' + o);
+      });
+      Object.keys(dk.byUid).forEach(function (o) {
+        if (String(o) === String(me.id)) return;
+        var raw = readRaw(dk.byUid[o][0]);
+        if (raw && (arrOf(raw.folders).length || Object.keys(raw.positions || {}).length)) otherOwners.push('desk:' + o);
+      });
+      var sharedOk = otherOwners.length === 0;
+
+      /* ---- 作品 ---- */
+      var claimLists = [];
+      Object.keys(wk.byUid).forEach(function (owner) {
+        if (String(owner) === String(me.id)) return;
+        var verdict = classify(owner, hist);
+        if (verdict.ok) {
+          claimLists.push(readWorkList(wk.byUid[owner]));
+          summary.reasons.push('作品 ' + owner + '：' + verdict.why + ' → 合并');
+        } else {
+          console.info('[HMClaim] 跳过作品键 anidream.works.v1.' + owner + '：' + verdict.why + '（保持原样）');
+        }
+      });
+      if (wk.fixed.length) {
+        if (sharedOk) {
+          claimLists.push(readWorkList(wk.fixed));
+          summary.reasons.push('固定键/guest 作品键：本 origin 无其它账号数据 → 合并');
+        } else {
+          console.info('[HMClaim] 跳过固定键/guest 作品键：本 origin 检测到其它账号数据（' + otherOwners.join(', ') + '），无法判定归属');
+        }
+      }
+      var claimList = (window.HMSync && window.HMSync.mergeLists)
+        ? window.HMSync.mergeLists.apply(null, claimLists)
+        : claimLists.reduce(function (a, b) { return a.concat(b); }, []);
+      if (claimList.length) summary.works = mergeWorksIntoAccount(claimList, me);
+
+      /* ---- 桌面 / 项目文件夹 ---- */
+      var deskItems = [];
+      Object.keys(dk.byUid).forEach(function (owner) {
+        if (String(owner) === String(me.id)) return;
+        var verdict = classify(owner, hist);
+        if (verdict.ok) {
+          dk.byUid[owner].forEach(function (k) { var v = readRaw(k); if (v) deskItems.push(v); });
+          summary.reasons.push('桌面 ' + owner + '：' + verdict.why + ' → 合并');
+        } else {
+          console.info('[HMClaim] 跳过桌面键 anidream.desk.v1.' + owner + '：' + verdict.why + '（保持原样）');
+        }
+      });
+      if (sharedOk && dk.guest.length) {
+        var beforeLen = deskItems.length;
+        dk.guest.forEach(function (k) { var v = readRaw(k); if (v) deskItems.push(v); });
+        if (deskItems.length > beforeLen) summary.reasons.push('guest 桌面键：本 origin 无其它账号数据 → 合并');
+      } else if (!sharedOk && dk.guest.length) {
+        console.info('[HMClaim] 跳过 guest 桌面键：本 origin 检测到其它账号数据，无法判定归属');
+      }
+      if (window.HMDesk && typeof window.HMDesk.claimLegacy === 'function') {
+        deskItems.forEach(function (item) {
+          try { summary.desk += (window.HMDesk.claimLegacy(item) || 0); }
+          catch (e) { console.warn('[HMClaim] 桌面认领失败（忽略）:', e && e.message); }
+        });
+      }
+
+      summary.keys = claimLists.length + deskItems.length;
+      try { localStorage.setItem(flag, String(Date.now())); } catch (e) {}
+      console.log('[HMClaim] 认领完成：作品 +' + summary.works + ' 条，桌面 +' + summary.desk + ' 项，来源键 ' + summary.keys + ' 个');
+      return summary;
+    } catch (err) {
+      /* 失败兜底：认领出错绝不影响正常登录 */
+      console.warn('[HMClaim] 认领过程出错（已忽略，不影响登录）:', (err && err.message) || err);
+      summary.ok = false;
+      summary.error = (err && err.message) || String(err);
+      return summary;
+    }
+  }
+
+  window.HMClaim = { run: run, reset: function (uid) { try { localStorage.removeItem(FLAG_PREFIX + uid); } catch (e) {} } };
 })();
 
 </script>
