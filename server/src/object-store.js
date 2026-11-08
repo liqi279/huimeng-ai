@@ -234,7 +234,9 @@ function presignPut(objectKey, ttlSec) {
   const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
   const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
 
-  return config.S3_ENDPOINT.replace(/\/+$/, '') + keyPath(objectKey) +
+  /* 必须与 presignGet 用同一套 URL 拼法（virtual-hosted 时桶名在 Host 里），
+     否则签名里的 host 与实际请求 host 不一致，OSS 会直接 AccessDenied。 */
+  return requestUrl(objectKey) +
     '?' + canonicalQuery + '&X-Amz-Signature=' + signature;
 }
 
