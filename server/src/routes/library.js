@@ -38,23 +38,6 @@ router.post('/library/admin/bucket-security', authRequired, adminOnly, wrap(asyn
   res.json(await objectStore.ensureBucketSecurity());
 }));
 
-/* 修正对象元信息：把书目里引用的 coverUrl / pdfUrl 对应对象按扩展名重新自复制，
-   Content-Type 改成 application/pdf / image/jpeg、Content-Disposition 改成 inline。
-   用于修历史对象被直传成 octet-stream 的问题；幂等，可重复调用。 */
-router.post('/library/admin/fix-object-types', authRequired, adminOnly, wrap(async (req, res) => {
-  const items = await library.list('', '');
-  const keys = [];
-  for (const book of items) {
-    for (const url of [book.coverUrl, book.pdfUrl]) {
-      const matched = /\/api\/library\/file\/(library\/[^\s?#]+)/.exec(String(url || ''));
-      if (matched) keys.push(decodeURIComponent(matched[1]));
-    }
-  }
-  const unique = Array.from(new Set(keys));
-  const results = [];
-  for (const key of unique) results.push(await objectStore.fixObjectType(key));
-  res.json({ ok: results.every((r) => r.ok), total: unique.length, results });
-}));
 
 router.get('/library/books/:id', authOptional, wrap(async (req, res) => {
   const book = await library.get(req.params.id);
@@ -117,6 +100,12 @@ router.post('/library/uploads/presign', authOptional, wrap(async (req, res) => {
   const body = req.body || {};
   const kind = String(body.kind || 'books');
   const prefix = UPLOAD_PREFIX[kind];
+  /* 管理员可显式指定已存在的对象 key（用于覆盖修复历史对象，普通调用只能新建 key） */
+  const explicitKey = String(body.key || '').trim();
+  if (explicitKey) {
+    assert(isAdmin, 403, '只有管理员可以覆盖已有文件', '普通上传请省略 key');
+    assert(/^library\/[A-Za-z0-9._\/-]+$/.test(explicitKey) && explicitKey.indexOf('..') < 0, 400, '非法文件路径');
+  }
   assert(prefix, 400, 'kind 只能是 books 或 covers');
   const name = String(body.name || 'file').replace(/[^A-Za-z0-9._-]/g, '_').slice(-120) || 'file';
   /* 类型以扩展名为准（也接受 body.mime / body.contentType 显式指定），
@@ -126,7 +115,7 @@ router.post('/library/uploads/presign', authOptional, wrap(async (req, res) => {
   assert(/^(application\/pdf|image\/(jpeg|png|webp))$/.test(mime), 400, '只允许 PDF 或 JPG/PNG/WEBP');
   assert(Number(body.size) > 0 && Number(body.size) <= 300 * 1024 * 1024, 400, '文件需大于 0 且不超过 300MB');
 
-  const key = prefix + Date.now().toString(36) + '-' + name;
+  const key = explicitKey || prefix + Date.now().toString(36) + '-' + name;
   const url = objectStore.presignPut(key, 3600, mime);
   assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
   res.json({ ok: true, key, method: 'PUT', url, mime, contentType: mime, expires: 3600 });

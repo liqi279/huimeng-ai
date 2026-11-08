@@ -257,7 +257,7 @@ function presignPut(objectKey, ttlSec, contentType) {
 }
 
 /* 通用签名：headersMap 里的每个头都参与签名（键统一小写），
-   用于 copy-object 这类带 x-oss-* 头的请求。 */
+   用于带 x-amz-* / x-oss-* 头的请求。 */
 function signedWithHeaders(method, objectKey, headersMap, payload) {
   const host = endpointHost();
   const date = amzDate();
@@ -284,54 +284,6 @@ function signedWithHeaders(method, objectKey, headersMap, payload) {
   headers.Authorization = authorization;
   Object.assign(headers, extraCompatHeaders());
   return { url: requestUrl(objectKey), headers };
-}
-
-/* 按扩展名推断对象类型：直传与元信息修正共用，避免对象被存成 octet-stream */
-const PRESIGN_MIME = {
-  '.pdf': 'application/pdf',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp',
-};
-
-/* 同 key 自复制并替换元信息：修正历史对象被存成 application/octet-stream 的问题。
-   走 OSS copyObject + x-oss-metadata-directive: REPLACE，Content-Type / Content-Disposition
-   由本次请求头决定；不用重传文件本体。 */
-async function fixObjectType(objectKey, contentType, contentDisposition) {
-  if (state.mode !== 's3') return { ok: false, key: objectKey, skipped: '对象存储未启用' };
-  const ext = path.extname(String(objectKey)).toLowerCase();
-  const type = contentType || PRESIGN_MIME[ext] || 'application/octet-stream';
-  const disposition = contentDisposition || 'inline';
-
-  const attempts = [
-    { copy: 'x-oss-copy-source', directive: 'x-oss-metadata-directive' },
-    { copy: 'x-amz-copy-source', directive: 'x-amz-metadata-directive' },
-  ];
-  let last = null;
-  for (const mode of attempts) {
-    const map = {
-      'content-type': type,
-      'content-disposition': disposition,
-      [mode.copy]: '/' + config.S3_BUCKET + '/' + String(objectKey).split('/').map(uriEncode).join('/'),
-      [mode.directive]: 'REPLACE',
-    };
-    const req = signedWithHeaders('PUT', objectKey, map, null);
-    let res;
-    try {
-      res = await fetch(req.url, { method: 'PUT', headers: req.headers });
-    } catch (err) {
-      last = { ok: false, key: objectKey, status: 0, error: err.message };
-      continue;
-    }
-    const text = res.ok ? '' : await res.text().catch(() => '');
-    if (res.body) await res.body.cancel().catch(() => {});
-    if (res.ok) return { ok: true, key: objectKey, contentType: type };
-    last = { ok: false, key: objectKey, status: res.status, ...ossErrorSummary(res.status, text) };
-    /* 只有当头部别名不对时才换下一组，其余错误（鉴权/不存在）直接返回 */
-    if (!/InvalidArgument|InvalidRequest|SignatureDoesNotMatch|NotImplemented/i.test(last.code || '')) break;
-  }
-  return last;
 }
 
 /* ---------------- 读写 ---------------- */
@@ -520,7 +472,6 @@ module.exports = {
   deleteObject,
   presignGet,
   presignPut,
-  fixObjectType,
   putBucketCors,
   ensureBucketReferer,
   ensureBucketSecurity,
