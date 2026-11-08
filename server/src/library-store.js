@@ -69,6 +69,8 @@ function normalizeBook(row, pages) {
     area: String(row.area || ''),
     /* PDF 只存地址，正文放对象存储；TiDB 单行默认 6MB，绝不能把 PDF 塞进表 */
     pdfUrl: String(row.pdf_url || row.pdfUrl || ''),
+    /* PDF 真实页数（阅读器底部「第 X / Y 页」用），未知时为 0 */
+    pageCount: Number(row.page_count == null ? row.pageCount || 0 : row.page_count),
     sortNo: Number(row.sort_no == null ? row.sortNo || 0 : row.sort_no),
     createdAt: Number(row.created_at == null ? row.createdAt || 0 : row.created_at),
     updatedAt: Number(row.updated_at == null ? row.updatedAt || 0 : row.updated_at),
@@ -112,6 +114,8 @@ function validateBookInput(body) {
     coverUrl: String(data.coverUrl || '').slice(0, 500),
     area: AREAS.includes(String(data.area || '')) ? String(data.area) : '',
     pdfUrl: String(data.pdfUrl || '').slice(0, 500),
+    /* 真实页数：PDF 页数，0 表示未知；正文仍只放对象存储 */
+    pageCount: Math.max(0, Math.min(100000, Math.floor(Number(data.pageCount) || 0))),
     /* 书架排序：越小越靠前，默认 0；用于把新书固定在该区第一架 */
     sortNo: Number.isFinite(Number(data.sortNo)) ? Number(data.sortNo) : 0,
     pages: pages.slice(0, 400).map((p, i) => ({
@@ -160,6 +164,7 @@ function mysqlBaseOptions() {
 const EXTRA_BOOK_COLUMNS = [
   ['area', "ADD COLUMN area VARCHAR(16) NOT NULL DEFAULT '' COMMENT '区域：ref/psd/anim/paint/concept'"],
   ['pdf_url', "ADD COLUMN pdf_url VARCHAR(500) NOT NULL DEFAULT '' COMMENT 'PDF 地址（正文放大文件存储，不入库）'"],
+  ['page_count', "ADD COLUMN page_count INT NOT NULL DEFAULT 0 COMMENT 'PDF 真实页数，0 表示未知'"],
 ];
 
 async function ensureColumns(conn, dbName) {
@@ -331,10 +336,10 @@ async function mysqlCreate(data) {
   try {
     await conn.beginTransaction();
     await conn.query(
-      `INSERT INTO books (id,title,author,category,tags,intro,accent,cover_url,area,pdf_url,sort_no,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO books (id,title,author,category,tags,intro,accent,cover_url,area,pdf_url,page_count,sort_no,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [id, data.title, data.author, data.category, data.tags.join(','), data.intro, data.accent,
-        data.coverUrl, data.area, data.pdfUrl, data.sortNo, t, t]
+        data.coverUrl, data.area, data.pdfUrl, data.pageCount, data.sortNo, t, t]
     );
     if (data.pages.length) {
       const rows = data.pages.map((p) => [id, p.pageNo, p.title, p.content]);
@@ -363,15 +368,16 @@ async function mysqlUpdate(id, data) {
     coverUrl: data.coverUrl == null ? existing.coverUrl : data.coverUrl,
     area: data.area == null ? existing.area : data.area,
     pdfUrl: data.pdfUrl == null ? existing.pdfUrl : data.pdfUrl,
+    pageCount: data.pageCount == null ? existing.pageCount : data.pageCount,
     pages: data.pages == null ? existing.pages : data.pages,
   };
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     await conn.query(
-      `UPDATE books SET title=?,author=?,category=?,tags=?,intro=?,accent=?,cover_url=?,area=?,pdf_url=?,updated_at=? WHERE id=?`,
+      `UPDATE books SET title=?,author=?,category=?,tags=?,intro=?,accent=?,cover_url=?,area=?,pdf_url=?,page_count=?,updated_at=? WHERE id=?`,
       [merged.title, merged.author, merged.category, merged.tags.join(','), merged.intro,
-        merged.accent, merged.coverUrl, merged.area, merged.pdfUrl, now(), id]
+        merged.accent, merged.coverUrl, merged.area, merged.pdfUrl, merged.pageCount, now(), id]
     );
     if (data.pages != null) {
       await conn.query('DELETE FROM book_pages WHERE book_id=?', [id]);
@@ -427,6 +433,7 @@ async function fileCreate(data) {
     coverUrl: data.coverUrl,
     area: data.area,
     pdfUrl: data.pdfUrl,
+    pageCount: data.pageCount,
     sortNo: data.sortNo,
     createdAt: t,
     updatedAt: t,
@@ -451,6 +458,7 @@ async function fileUpdate(id, data) {
   if (data.coverUrl != null) b.coverUrl = data.coverUrl;
   if (data.area != null) b.area = data.area;
   if (data.pdfUrl != null) b.pdfUrl = data.pdfUrl;
+  if (data.pageCount != null) b.pageCount = data.pageCount;
   if (data.sortNo != null) b.sortNo = data.sortNo;
   if (data.pages != null) b.pages = data.pages;
   b.updatedAt = now();
@@ -689,6 +697,7 @@ function lite(b) {
     coverUrl: b.coverUrl,
     area: b.area || '',
     pdfUrl: b.pdfUrl || '',
+    pageCount: b.pageCount || 0,
     pages: (b.pages || []).length,
   };
 }
