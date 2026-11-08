@@ -4,13 +4,18 @@
  * 绘梦 · 对象存储适配层（S3 协议）
  * -------------------------------------------------------------
  * 作品图片/视频等二进制只放对象存储，数据库只存 object key。
- * 兼容：Cloudflare R2（阶段0）、MinIO（阶段1 内网）、AWS S3。
+ * 兼容：Cloudflare R2（阶段0）、MinIO（阶段1 内网）、AWS S3、阿里云 OSS。
  *
  * 环境变量：
  *   OBJECT_STORE=auto|s3|local
  *   S3_ENDPOINT / S3_REGION / S3_BUCKET
  *   S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY
- *   S3_FORCE_PATH_STYLE=1（MinIO 默认需要，R2 也支持）
+ *   S3_FORCE_PATH_STYLE=1（默认为 1；MinIO 需要）
+ *     置 0/false 时改用 virtual-hosted：Host 变成 <bucket>.<endpoint host>，
+ *     URL 路径不再带桶名。阿里云 OSS 只支持这种风格，必须置 0。
+ *   S3_EXTRA_HEADER_OSS_COMPAT=1（可选，默认关闭）
+ *     仅阿里云 OSS 需要时开启：给签名请求额外加 x-oss-s3-compat: true。
+ *     走 s3.oss-*.aliyuncs.com 专属 endpoint 时一般不需要。
  *   S3_PUBLIC_BASE（可选 CDN）
  *
  * local 模式只用于开发调试：写 data/runtime/userdata，Render 重启会丢，
@@ -82,13 +87,36 @@ function uriEncode(value) {
 function amzDate() {
   return new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
 }
+/* S3_FORCE_PATH_STYLE 语义：0/false 关闭 path-style（改用 virtual-hosted）。
+   config 里已转成 boolean，这里同时兼容字符串写法。 */
+function forcePathStyle() {
+  const v = config.S3_FORCE_PATH_STYLE;
+  if (typeof v === 'boolean') return v;
+  return !(v === 0 || String(v).toLowerCase() === '0' || String(v).toLowerCase() === 'false');
+}
+/* canonical URI 与实际请求路径必须完全一致，两处都用这个函数。 */
 function keyPath(objectKey) {
-  const bucket = uriEncode(config.S3_BUCKET);
   const key = String(objectKey).split('/').map(uriEncode).join('/');
-  return '/' + bucket + '/' + key;
+  if (!forcePathStyle()) return '/' + key; // virtual-hosted：桶名在 Host 里
+  return '/' + uriEncode(config.S3_BUCKET) + '/' + key;
 }
 function endpointHost() {
-  return new URL(config.S3_ENDPOINT).host;
+  const host = new URL(config.S3_ENDPOINT).host;
+  if (forcePathStyle()) return host;
+  const bucket = String(config.S3_BUCKET);
+  // endpoint 已经写成桶域名时不再重复加前缀
+  if (host.indexOf(bucket + '.') === 0) return host;
+  return bucket + '.' + host;
+}
+/* 仅 OSS 需要时的兼容头；默认不加，避免影响 MinIO / R2 / AWS。 */
+function extraCompatHeaders() {
+  return config.S3_EXTRA_HEADER_OSS_COMPAT ? { 'x-oss-s3-compat': 'true' } : {};
+}
+/* 实际请求 URL：协议 + Host（virtual-hosted 时已含桶前缀）+ 路径。
+   必须与 canonical URI 用同一套拼法，否则签名对不上。 */
+function requestUrl(objectKey) {
+  const u = new URL(config.S3_ENDPOINT);
+  return u.protocol + '//' + endpointHost() + keyPath(objectKey);
 }
 function signingKey(day) {
   const kDate = hmac('AWS4' + config.S3_SECRET_ACCESS_KEY, day);
@@ -127,7 +155,7 @@ function signedRequest(method, objectKey, payload, extra) {
   const authorization = 'AWS4-HMAC-SHA256 Credential=' + config.S3_ACCESS_KEY_ID + '/' + scope +
     ', SignedHeaders=' + signedHeaders + ', Signature=' + signature;
 
-  const url = config.S3_ENDPOINT.replace(/\/+$/, '') + keyPath(objectKey);
+  const url = requestUrl(objectKey);
   return {
     url,
     headers: {
@@ -135,6 +163,7 @@ function signedRequest(method, objectKey, payload, extra) {
       'x-amz-content-sha256': payloadHash,
       'x-amz-date': date,
       Authorization: authorization,
+      ...extraCompatHeaders(),
     },
   };
 }
@@ -171,7 +200,7 @@ function presignGet(objectKey, ttlSec) {
   const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
   const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
 
-  return config.S3_ENDPOINT.replace(/\/+$/, '') + keyPath(objectKey) +
+  return requestUrl(objectKey) +
     '?' + canonicalQuery + '&X-Amz-Signature=' + signature;
 }
 
