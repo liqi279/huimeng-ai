@@ -7,11 +7,9 @@
  * 返回 { url: '/uploads/media/xxx.mp3', duration }
  * ============================================================= */
 
-const path = require('path');
-const fsp = require('fs').promises;
 const express = require('express');
 const edgetts = require('../edgetts');
-const store = require('../store');
+const mediaStore = require('../media-store');
 const {
   jsonError,
   assert,
@@ -98,10 +96,11 @@ router.post('/design', wrap(async (req, res) => {
   }
 
   const fileName = `${Date.now()}-${randomToken()}.mp3`;
-  await fsp.writeFile(path.join(store.dirs.media, fileName), result.audio);
+  /* 写对象存储（未配置时回落本地盘），URL 仍是 /uploads/media/<name> */
+  const saved = await mediaStore.put('media', fileName, result.audio, 'audio/mpeg');
   const duration = Math.max(1, Math.round(text.length / 4 / 3));
 
-  res.json({ url: `/uploads/media/${fileName}`, duration, voice, engine: 'edgetts' });
+  res.json({ url: saved.url, duration, voice, engine: 'edgetts' });
 }));
 
 /* ---------- 语音克隆：Fish Audio v1 voice-clone-tts ---------- */
@@ -154,11 +153,12 @@ router.post('/clone', wrap(async (req, res) => {
   const decoded = dataUrlToBuffer(refAudio);
   assert(decoded.buffer.length <= MAX_REF_BYTES, 413, '参考音频过大', '单音频不能超过 10MB');
 
-  /* 1. 把参考音频写到 media 目录，拿到公网 URL（Fish Audio 需要下载它） */
+  /* 1. 把参考音频写入对象存储，拿到可被 Fish Audio 下载的绝对 URL
+        （S3 模式给预签名直链，本地模式给 /uploads 静态代理地址） */
   const refExt = extFromMime(decoded.mime) || 'mp3';
   const refName = `ref-${Date.now()}-${randomToken()}.${refExt}`;
-  await fsp.writeFile(path.join(store.dirs.media, refName), decoded.buffer);
-  const refUrl = `${publicOrigin(req)}/uploads/media/${refName}`;
+  await mediaStore.put('media', refName, decoded.buffer, decoded.mime || 'audio/mpeg');
+  const refUrl = mediaStore.absoluteUrl('media', refName, publicOrigin(req));
 
   const speed = Number(body.speed);
   const rate = Number.isFinite(speed) ? Math.max(0.5, Math.min(2, speed)) : 1;
@@ -218,13 +218,13 @@ router.post('/clone', wrap(async (req, res) => {
   assert(audioBuffer.length > 0, 502, 'Fish Audio 返回空音频', '请检查 API Key 额度或参考音频质量');
 
   /* 清理参考音频（可选，保留也无妨） */
-  fsp.unlink(path.join(store.dirs.media, refName)).catch(() => {});
+  mediaStore.remove('media', refName).catch(() => {});
 
   const fileName = `${Date.now()}-${randomToken()}.mp3`;
-  await fsp.writeFile(path.join(store.dirs.media, fileName), audioBuffer);
+  const saved = await mediaStore.put('media', fileName, audioBuffer, 'audio/mpeg');
   const duration = Math.max(1, Math.round(text.length / 4 / 3));
 
-  res.json({ url: `/uploads/media/${fileName}`, duration, engine: 'fish-audio' });
+  res.json({ url: saved.url, duration, engine: 'fish-audio' });
 }));
 
 /* ---------- 声音列表（给前端下拉用） ---------- */
