@@ -25413,7 +25413,7 @@ function renderRef() {
         '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
       addCell.addEventListener('click', function (ev) {
         ev.stopPropagation();
-        els.refInput.click();
+        openRefPicker();
       });
       els.refGrid.appendChild(addCell);
     }
@@ -28479,6 +28479,22 @@ async function fetchRayinModels() {
 /* ---------------- 事件绑定 ---------------- */
 var DISABLED_VIEWS = {};
 
+/* 参考主体：统一打开文件选择框。
+ * 必须在用户手势里同步调用，中间不能有 await / 定时器 / 重渲染。
+ * 优先 showPicker()（浏览器原生、响应更快），不支持或被拒再回退 click()。 */
+var _refPickerAt = 0;
+function openRefPicker() {
+  if (!els.refInput) return;
+  var now = Date.now();
+  if (now - _refPickerAt < 700) return; /* 同一次手势里 pointerdown 与 click 都会到，只弹一次 */
+  _refPickerAt = now;
+  try { els.refInput.value = ''; } catch (e) {} /* 允许重复选择同一张图 */
+  if (typeof els.refInput.showPicker === 'function') {
+    try { els.refInput.showPicker(); return; } catch (e) { /* 手势失效/被策略拒绝 → 回退 */ }
+  }
+  try { els.refInput.click(); } catch (e) {}
+}
+
 function bindEvents() {
   document.addEventListener('click', function (event) {
     const viewBtn = event.target.closest('[data-view]');
@@ -28508,7 +28524,7 @@ function bindEvents() {
   if (els.sidebarClose) els.sidebarClose.addEventListener('click', closeSidebar);
 
   if (els.refPickBtn) {
-    els.refPickBtn.addEventListener('click', function () { els.refInput.click(); });
+    els.refPickBtn.addEventListener('click', function () { openRefPicker(); });
   }
 
   if (els.promptTabs) {
@@ -28702,12 +28718,24 @@ function bindEvents() {
     scheduleComposerSave(); /* 提示词按桌面持久化 */
   });
 
-  /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 === */
+  /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 ===
+     pointerdown 阶段就打开（早于 click，避免后续 document 级 click 处理把弹窗拖慢），
+     click 只做兜底（键盘/触屏等不走 pointerdown 的场景），openRefPicker 内部有 700ms 去重。 */
+  if (els.refDrop) {
+    els.refDrop.addEventListener('pointerdown', function (event) {
+      if (event.button !== 0 || event.isPrimary === false) return;
+      var target = event.target;
+      if (!target || !target.closest) return;
+      if (!target.closest('#refEmpty') && !target.closest('.hm-ref-add')) return;
+      event.preventDefault(); /* 同一次手势不再走 click，避免二次触发/手势被吃掉 */
+      openRefPicker();
+    }, true);
+  }
   if (els.refEmpty) {
-    els.refEmpty.addEventListener('click', function () { els.refInput.click(); });
+    els.refEmpty.addEventListener('click', function () { openRefPicker(); });
     els.refEmpty.addEventListener('keydown', function (event) {
       if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
-        event.preventDefault(); els.refInput.click();
+        event.preventDefault(); openRefPicker();
       }
     });
   }
