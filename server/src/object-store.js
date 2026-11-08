@@ -295,6 +295,139 @@ async function deleteObject(objectKey) {
   return true;
 }
 
+/* ---------------- 桶级配置（CORS / 防盗链） ---------------- */
+/* 前端（GitHub Pages）用 pdf.js 直连 OSS 分段读取 PDF，浏览器必须先过 CORS 预检；
+   桶上没有匹配规则时 OPTIONS 直接 403（x-oss-ec 0003-00000601）。
+   规则固定在这里，PUT 是幂等的：启动跑一次，也可由管理员接口手动重跑。 */
+const CORS_ORIGINS = [
+  'https://liqi279.github.io',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+const CORS_EXPOSE_HEADERS = [
+  'Content-Length', 'Content-Range', 'Accept-Ranges',
+  'Content-Type', 'ETag', 'Content-Disposition',
+];
+/* 防盗链白名单里要放行的自有前端 */
+const SITE_REFERERS = ['https://liqi279.github.io/*'];
+
+function xmlEscape(value) {
+  return String(value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function corsXml() {
+  const origins = CORS_ORIGINS.map((o) => '<AllowedOrigin>' + xmlEscape(o) + '</AllowedOrigin>').join('');
+  const expose = CORS_EXPOSE_HEADERS.map((h) => '<ExposeHeader>' + xmlEscape(h) + '</ExposeHeader>').join('');
+  return '<CORSConfiguration><CORSRule>' + origins +
+    '<AllowedMethod>GET</AllowedMethod><AllowedMethod>HEAD</AllowedMethod>' +
+    '<AllowedHeader>*</AllowedHeader>' + expose +
+    '<MaxAgeSeconds>3600</MaxAgeSeconds></CORSRule></CORSConfiguration>';
+}
+
+/* 桶级签名请求：canonical URI 是 '/'，子资源（cors / referer）放 canonical query。
+   virtual-hosted 下 endpointHost() 已经是 <bucket>.<endpoint>，Host 不用改。
+   只签 content-type/host/x-amz-content-sha256/x-amz-date 四个头，与现有请求一致。 */
+function signedBucketRequest(method, subresource, payload, contentType) {
+  const host = endpointHost();
+  const date = amzDate();
+  const day = date.slice(0, 8);
+  const scope = day + '/' + config.S3_REGION + '/s3/aws4_request';
+  const body = payload || Buffer.alloc(0);
+  const payloadHash = sha256hex(body);
+  const type = contentType || 'application/xml';
+  const canonicalQuery = uriEncode(subresource) + '=';
+  const canonicalHeaders =
+    'content-type:' + type + '\n' +
+    'host:' + host + '\n' +
+    'x-amz-content-sha256:' + payloadHash + '\n' +
+    'x-amz-date:' + date + '\n';
+  const signedHeaders = 'content-type;host;x-amz-content-sha256;x-amz-date';
+  const canonicalRequest = [method, '/', canonicalQuery, canonicalHeaders, signedHeaders, payloadHash].join('\n');
+  const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
+  const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
+  const authorization = 'AWS4-HMAC-SHA256 Credential=' + config.S3_ACCESS_KEY_ID + '/' + scope +
+    ', SignedHeaders=' + signedHeaders + ', Signature=' + signature;
+
+  const u = new URL(config.S3_ENDPOINT);
+  return {
+    url: u.protocol + '//' + host + '/?' + canonicalQuery,
+    headers: {
+      'Content-Type': type,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': date,
+      Authorization: authorization,
+      ...extraCompatHeaders(),
+    },
+  };
+}
+
+/* 只保留 OSS 错误里的 Code/RequestId，绝不会带上任何凭据 */
+function ossErrorSummary(status, text) {
+  const code = (String(text).match(/<Code>([^<]+)<\/Code>/) || [])[1] || '';
+  const requestId = (String(text).match(/<RequestId>([^<]+)<\/RequestId>/) || [])[1] || '';
+  return { status, code, requestId };
+}
+
+async function putBucketCors() {
+  if (state.mode !== 's3') return { ok: false, action: 'put-bucket-cors', skipped: '对象存储未启用' };
+  const body = Buffer.from(corsXml(), 'utf8');
+  const req = signedBucketRequest('PUT', 'cors', body, 'application/xml');
+  const res = await fetch(req.url, { method: 'PUT', headers: req.headers, body });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    return { ok: false, action: 'put-bucket-cors', ...ossErrorSummary(res.status, text) };
+  }
+  if (res.body) await res.body.cancel().catch(() => {});
+  return { ok: true, action: 'put-bucket-cors', origins: CORS_ORIGINS, methods: ['GET', 'HEAD'] };
+}
+
+/* 防盗链：只在「已开启（白名单非空）」且不含自有前端时追加，不动其它条目 */
+async function ensureBucketReferer() {
+  if (state.mode !== 's3') return { ok: false, action: 'put-bucket-referer', skipped: '对象存储未启用' };
+  const getReq = signedBucketRequest('GET', 'referer', null, 'application/xml');
+  const res = await fetch(getReq.url, { method: 'GET', headers: getReq.headers });
+  const text = await res.text().catch(() => '');
+  if (!res.ok) return { ok: false, action: 'put-bucket-referer', ...ossErrorSummary(res.status, text) };
+
+  const list = [];
+  const matches = text.matchAll(/<Referer>([^<]*)<\/Referer>/g);
+  for (const m of matches) list.push(m[1]);
+  if (!list.length) return { ok: true, action: 'put-bucket-referer', skipped: '防盗链未开启（白名单为空）' };
+
+  const allowEmpty = !/<AllowEmptyReferer>false<\/AllowEmptyReferer>/i.test(text);
+  const missing = SITE_REFERERS.filter((r) => list.indexOf(r) < 0);
+  if (!missing.length) return { ok: true, action: 'put-bucket-referer', skipped: '已包含自有前端' };
+
+  const next = list.concat(missing);
+  const xml = '<RefererConfiguration>' +
+    '<AllowEmptyReferer>' + (allowEmpty ? 'true' : 'false') + '</AllowEmptyReferer>' +
+    '<RefererList>' + next.map((r) => '<Referer>' + xmlEscape(r) + '</Referer>').join('') + '</RefererList>' +
+    '</RefererConfiguration>';
+  const body = Buffer.from(xml, 'utf8');
+  const putReq = signedBucketRequest('PUT', 'referer', body, 'application/xml');
+  const putRes = await fetch(putReq.url, { method: 'PUT', headers: putReq.headers, body });
+  if (!putRes.ok) {
+    const errText = await putRes.text().catch(() => '');
+    return { ok: false, action: 'put-bucket-referer', ...ossErrorSummary(putRes.status, errText) };
+  }
+  if (putRes.body) await putRes.body.cancel().catch(() => {});
+  return { ok: true, action: 'put-bucket-referer', added: missing, allowEmptyReferer: allowEmpty };
+}
+
+/* 幂等的桶安全配置：启动时跑一次；失败只记录，绝不影响服务启动 */
+async function ensureBucketSecurity() {
+  if (state.mode !== 's3') {
+    return { ok: false, skipped: '对象存储未启用（本地盘模式无需桶配置）' };
+  }
+  const cors = await putBucketCors().catch((err) => ({ ok: false, action: 'put-bucket-cors', error: err.message }));
+  const referer = await ensureBucketReferer().catch((err) => ({ ok: false, action: 'put-bucket-referer', error: err.message }));
+  const ok = cors.ok !== false && referer.ok !== false;
+  console.log('[object-store] 桶配置：CORS=' + JSON.stringify(cors) + ' 防盗链=' + JSON.stringify(referer));
+  return { ok, cors, referer };
+}
+
 module.exports = {
   init,
   status,
@@ -303,5 +436,8 @@ module.exports = {
   deleteObject,
   presignGet,
   presignPut,
+  putBucketCors,
+  ensureBucketReferer,
+  ensureBucketSecurity,
   LOCAL_ROOT,
 };

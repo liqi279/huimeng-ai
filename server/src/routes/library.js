@@ -4,7 +4,7 @@ const express = require('express');
 const path = require('path');
 const { Readable } = require('stream');
 const { wrap, assert, jsonError } = require('../http');
-const { authOptional } = require('../auth');
+const { authOptional, authRequired, adminOnly } = require('../auth');
 const library = require('../library-store');
 const objectStore = require('../object-store');
 
@@ -30,6 +30,12 @@ router.get('/library/suggest', authOptional, wrap(async (req, res) => {
 
 router.get('/library/stats', wrap(async (req, res) => {
   res.json(await library.stats());
+}));
+
+/* 手动重跑对象存储桶配置（CORS / 防盗链），仅管理员：
+   改规则后无需重启服务，直接 POST 一次即可。 */
+router.post('/library/admin/bucket-security', authRequired, adminOnly, wrap(async (req, res) => {
+  res.json(await objectStore.ensureBucketSecurity());
 }));
 
 router.get('/library/books/:id', authOptional, wrap(async (req, res) => {

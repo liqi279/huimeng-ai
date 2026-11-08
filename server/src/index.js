@@ -32,6 +32,7 @@ const ouaRoutes = require('./routes/oua');
 const animationRoutes = require('./routes/animation');
 const ollamaRoutes = require('./routes/ollama');
 const libraryRoutes = require('./routes/library');
+const objectStore = require('./object-store');
 
 const app = express();
 
@@ -183,6 +184,20 @@ store.ensureDirs()
     app.listen(config.PORT, () => {
       console.log(`绘梦 server listening on http://localhost:${config.PORT}`);
     });
+
+    /* 对象存储桶级配置（CORS / 防盗链）幂等初始化：
+       pdf.js 从 GitHub Pages 直连 OSS 分段读 PDF 需要 CORS，失败只记日志，绝不影响启动。
+       手动重跑入口：POST /api/library/admin/bucket-security（管理员）。 */
+    try {
+      objectStore.init();
+      objectStore.ensureBucketSecurity()
+        .then((result) => {
+          if (!result.ok) console.warn('[init] 桶配置未完全生效：' + JSON.stringify(result));
+        })
+        .catch((err) => console.error('[init] 桶配置初始化异常：' + (err && err.message)));
+    } catch (err) {
+      console.error('[init] 桶配置初始化异常：' + (err && err.message));
+    }
 
     /* 启动 HTTPS 服务器（用于 GitHub Pages 等 HTTPS 前端跨域访问本地后端） */
     const httpsMode = String(config.HTTPS).toLowerCase();
