@@ -9,6 +9,20 @@ function env(name, fallback) {
   return value == null || String(value).trim() === '' ? fallback : String(value).trim();
 }
 
+/* CORS 默认白名单：线上静态站 + 本地调试端口（含本项目自带的 HTTPS 开发服务器 8443）。
+   需要临时放开时，把 CORS_ORIGINS 设为 *（仅本地调试，切勿用于生产）。 */
+const DEFAULT_CORS_ORIGINS = [
+  'https://liqi279.github.io',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8443',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:8443',
+  'https://localhost:8443',
+  'https://127.0.0.1:8443',
+].join(',');
+
 module.exports = {
   PORT: Number(env('PORT', '8787')),
   HTTPS_PORT: Number(env('HTTPS_PORT', '8443')),
@@ -19,16 +33,17 @@ module.exports = {
   /* Key 1: OpenAI 图像模型 —— 走 /images/generations
      用户账号下可用图像模型:
      gpt-image-2 / gpt-image-2.5-flare / gpt-image-2.5-sunburst
-     这 3 个模型不支持 chat/completions，只走 /images/generations */
-  OPENAI_KEY: env('OPENAI_KEY', 'sk-9205aabaca73ce33821e254186977ac65181acee9d322042d595c696e6400747'),
+     这 3 个模型不支持 chat/completions，只走 /images/generations
+     只从环境变量读取，不在仓库里保留任何密钥明文；缺失时对应通道不可用。 */
+  OPENAI_KEY: env('OPENAI_KEY', ''),
 
   /* Key 2: Gemini 图像模型 —— 走 /chat/completions
      用户账号下可用图像模型:
      gemini-3-pro-image / gemini-3.1-flash-image / gemini-3.1-flash-lite-image */
-  GEMINI_KEY: env('GEMINI_KEY', 'sk-e77e0766df2fe8a27a5eb19b0f4e4c97c604334e1ffeafc72bb55da70f14eb38'),
+  GEMINI_KEY: env('GEMINI_KEY', ''),
 
-  /* 向后兼容别名 */
-  RAYIN_KEY: env('RAYIN_KEY', 'sk-e77e0766df2fe8a27a5eb19b0f4e4c97c604334e1ffeafc72bb55da70f14eb38'),
+  /* 向后兼容别名（未单独配置时沿用 GEMINI_KEY，避免两处不一致） */
+  RAYIN_KEY: env('RAYIN_KEY', env('GEMINI_KEY', '')),
 
   /* 默认模型（可被前端 payload.model 覆盖） */
   GPT_MODEL: env('GPT_MODEL', 'gpt-image-2.5-flare'),
@@ -37,11 +52,15 @@ module.exports = {
   AUDIO_MODEL: env('AUDIO_MODEL', 'tts-1'),
   RAYIN_VIDEO_PATH: env('RAYIN_VIDEO_PATH', '/videos/generations'),
   RAYIN_VIDEO_STATUS_PATH: env('RAYIN_VIDEO_STATUS_PATH', '/videos/generations'),
-  CORS_ORIGIN: env('CORS_ORIGIN', '*'),
-  /* 固定 token secret —— Render 免费层每次重启清空 data/ 目录，
-     所以 secret 不能只存在文件里；优先读环境变量，没有就用内置固定值
-     （任何环境下只要不手动改 env，token 永远有效） */
-  TOKEN_SECRET: env('TOKEN_SECRET', 'huimeng-ai-v1-permanent-secret-change-me-if-you-want-2026'),
+  /* CORS 来源白名单（逗号分隔）。
+     默认只允许线上静态站 + 本地调试端口；CORS_ORIGINS 可整体覆盖，
+     旧变量 CORS_ORIGIN 仍兼容（CORS_ORIGINS 优先）。设为 * 表示放开全部来源。 */
+  CORS_ORIGINS: env('CORS_ORIGINS', env('CORS_ORIGIN', DEFAULT_CORS_ORIGINS)),
+  CORS_ORIGIN: env('CORS_ORIGINS', env('CORS_ORIGIN', DEFAULT_CORS_ORIGINS)),
+  /* token secret：只从环境变量读取，不再内置默认值。
+     未配置时服务会拒绝启动（见文件末尾的校验），避免用公开的默认密钥签 token。
+     注意：线上必须沿用当前已生效的 TOKEN_SECRET，否则所有人登录态失效。 */
+  TOKEN_SECRET: env('TOKEN_SECRET', ''),
   /* 外部 PostgreSQL 连接串（Neon / Supabase / Render Postgres 等）。
      设置后作品/用户/桌面/资产全部存入外部数据库，Render 重启不再丢数据。
      不设置则回退到本地 JSON 文件（data/ 目录，重启会清空）。 */
@@ -112,3 +131,23 @@ module.exports = {
     ? path.resolve(env('FRONTEND_DIR', ''))
     : path.resolve(serverRoot, '..', 'frontend'),
 };
+
+/* ---------- 启动期校验（加载本文件即执行） ---------- */
+/* 图像 API Key 缺失只告警、不阻断启动：对应通道会因未配置而不可用。 */
+if (!module.exports.OPENAI_KEY) {
+  console.warn('[config] 未配置 OPENAI_KEY：OpenAI 图像通道不可用（/images/generations 将失败）。');
+}
+if (!module.exports.GEMINI_KEY) {
+  console.warn('[config] 未配置 GEMINI_KEY：Gemini 图像通道不可用（/chat/completions 将失败）。');
+}
+if (!module.exports.RAYIN_KEY) {
+  console.warn('[config] 未配置 RAYIN_KEY：RayinAI 代理通道不可用（可用 GEMINI_KEY 作为别名）。');
+}
+/* TOKEN_SECRET 缺失直接拒绝启动：没有它无法签发/校验登录 token，
+   继续启动只会让所有人登录后立刻掉线，不如启动即失败、暴露问题。 */
+if (!module.exports.TOKEN_SECRET) {
+  console.error('[config] 未配置 TOKEN_SECRET，服务拒绝启动。');
+  console.error('[config] 请设置环境变量 TOKEN_SECRET（Render → Environment），且必须沿用线上现值，否则全员掉登录。');
+  throw new Error('TOKEN_SECRET 未配置：请在环境变量中设置后再启动。');
+}
+
