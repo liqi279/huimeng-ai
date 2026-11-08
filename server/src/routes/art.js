@@ -58,12 +58,12 @@
  *   POST   /art/checklist                          → 保存会审检查表状态
  */
 
-const fsp = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const { wrap, assert, dataUrlToBuffer, extFromMime, randomToken } = require('../http');
 const store = require('../store');
+const mediaStore = require('../media-store');
 
 const MAX_ART_MEDIA_BYTES = 50 * 1024 * 1024; // 50MB
 
@@ -268,10 +268,11 @@ router.post('/art/upload', wrap(async (req, res) => {
   assert(mime.startsWith('image/'), 400, '仅支持图片', `收到 MIME: ${mime}`);
   const ext = extFromMime(mime) || 'png';
   const fileName = `art-${Date.now()}-${randomToken()}.${ext}`;
-  // 存到 assets 目录（已挂载 /uploads/assets 静态代理）
-  await fsp.writeFile(path.join(store.dirs.assets, fileName), decoded.buffer);
+  /* 统一写对象存储（未配置时由 objectStore 回落本地盘），
+     URL 仍是 /uploads/assets/<name>，历史与前端均不受影响 */
+  const saved = await mediaStore.put('assets', fileName, decoded.buffer, mime);
   res.json({
-    url: `/uploads/assets/${fileName}`,
+    url: saved.url,
     mime,
     size: decoded.buffer.length,
     ext,
