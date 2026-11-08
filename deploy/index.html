@@ -15758,9 +15758,10 @@ body.rail-collapsed .hm-page {
   display: flex;
   flex: 1 1 auto;
   align-items: flex-end;
-  gap: 12px;
+  justify-content: space-between; /* 八本等距排开，不挤在左边 */
+  gap: 10px;
   min-height: 0;
-  padding: 10px 26px 6px;
+  padding: 18px 20px 6px;
   flex-wrap: nowrap; /* 每层最多 8 本，从左往右排，不满留空 */
   overflow: hidden;
 }
@@ -15832,8 +15833,23 @@ body.rail-collapsed .hm-page {
 }
 
 .lib-book:hover {
-  transform: translateY(-16px) rotate(0deg) scale(1.015);
+  transform: translateY(-12px) rotate(0deg) scale(1.015);
   filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.55));
+  z-index: 2;
+}
+
+/* 触屏不保留悬停抬起状态 */
+@media (hover: none) {
+  .lib-book:hover {
+    transform: rotate(var(--tilt, 0deg));
+    filter: none;
+  }
+}
+
+/* 键盘焦点可见状态 */
+.lib-book:focus-visible {
+  outline: 2px solid rgba(201, 162, 39, 0.85);
+  outline-offset: 3px;
 }
 
 .lib-book.is-opening {
@@ -15920,8 +15936,21 @@ body.rail-collapsed .hm-page {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* 完整展示封面，不裁切 */
+  background: #140d08;
   border-radius: inherit;
+}
+
+/* 有真实封面：铺满整张书卡，去掉书脊/边条/装饰框遮挡 */
+.lib-book.has-cover .lib-book-cover {
+  left: 0;
+  right: 0;
+}
+
+.lib-book.has-cover .lib-book-spine,
+.lib-book.has-cover .lib-book-edge,
+.lib-book.has-cover .lib-book-cover-frame {
+  display: none;
 }
 
 .lib-book-cover-title {
@@ -52065,6 +52094,7 @@ window.HMChat = (function () {
       coverUrl: String(b.coverUrl || ''),
       area: String(b.area || ''),
       pdfUrl: String(b.pdfUrl || ''),
+      pageCount: Number(b.pageCount) || 0,
       sortNo: Number(b.sortNo == null ? i : b.sortNo),
       createdAt: Number(b.createdAt || t),
       updatedAt: Number(b.updatedAt || t),
@@ -52317,10 +52347,10 @@ window.HMChat = (function () {
 
   function bookCardHtml(b, index) {
     var tilt = ((index % 5) - 2) * 1.1;
-    var width = 88 + (index % 3) * 7;
+    var width = 120; /* 八本等宽，层内等距排开 */
     var pageCount = (b.pages && b.pages.length) || Number(b.pageCount) || 0;
     var hasProgress = progressOf(b.id) > 0;
-    return '<button type="button" class="lib-book" data-id="' + esc(b.id) + '"'
+    return '<button type="button" class="lib-book' + (b.coverUrl ? ' has-cover' : '') + '" data-id="' + esc(b.id) + '"'
       + ' style="--accent:' + esc(b.accent) + ';--tilt:' + tilt + 'deg;--w:' + width + 'px"'
       + ' title="' + esc(b.title) + ' · ' + esc(b.author) + '">'
       + '<span class="lib-book-body">'
@@ -52688,6 +52718,13 @@ window.HMChat = (function () {
 
   /* ---------------- 阅读器 ---------------- */
   function pageCount(book) { return (book.pages || []).length + 1; }
+
+  /* 真实总页数：优先书目接口的 pageCount，退回正文页数 */
+  function bookTotalPages(book) {
+    var n = Number(book && book.pageCount);
+    if (n > 0) return n;
+    return (book && book.pages ? book.pages.length : 0);
+  }
 
   function enterReader(book, page) {
     if (!book) return;
@@ -53203,7 +53240,7 @@ window.HMChat = (function () {
         if (!card) return;
         var book = byId(card.getAttribute('data-id'));
         if (book && book.pdfUrl) {
-          /* PDF 书：新标签直接打开，不进文字阅读器 */
+          /* PDF 书：直接新标签打开 PDF */
           window.open(book.pdfUrl, '_blank', 'noopener');
           return;
         }
