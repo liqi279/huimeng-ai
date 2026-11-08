@@ -68,7 +68,8 @@ router.delete('/library/books/:id', authOptional, wrap(async (req, res) => {
      - TiDB / MySQL 单行默认上限 6MB，83MB 的 PDF 塞进表必然失败；
      - 直传走预签名 PUT，字节不经过 Render，不会占内存也不会超时；
      - 读取由后端带签名回源（GET/HEAD + Range），地址稳定、可 inline 预览。 */
-const UPLOAD_KEY = process.env.LIBRARY_UPLOAD_KEY || 'hm-lib-upload-2026-11';
+/* 上传口令只认环境变量：没配置就整体禁用上传，绝不回落到代码里的默认值 */
+const UPLOAD_KEY = String(process.env.LIBRARY_UPLOAD_KEY || '');
 const UPLOAD_PREFIX = { books: 'library/books/', covers: 'library/covers/' };
 const MIME_BY_EXT = {
   '.pdf': 'application/pdf',
@@ -79,6 +80,7 @@ const MIME_BY_EXT = {
 };
 
 router.post('/library/uploads/presign', wrap(async (req, res) => {
+  assert(UPLOAD_KEY, 503, '上传未启用', '请在环境变量配置 LIBRARY_UPLOAD_KEY');
   assert(req.get('x-upload-key') === UPLOAD_KEY, 403, '上传未授权', '需要正确的 x-upload-key');
   const body = req.body || {};
   const kind = String(body.kind || 'books');
