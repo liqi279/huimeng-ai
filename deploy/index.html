@@ -16695,34 +16695,25 @@ a.lib-btn {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(201, 162, 39, 0.18);
 }
 
-.lib-pdf-frame {
-  flex: 1 1 auto;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #fff;
-}
-
 .lib-pdf-open {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 3;
-  height: 32px;
-  padding: 0 14px;
+  margin-left: auto;
+  height: 24px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
-  border-radius: 8px;
-  border: 1px solid rgba(201, 162, 39, 0.5);
-  background: rgba(32, 21, 13, 0.9);
+  border-radius: 6px;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(201, 162, 39, 0.12);
   color: #ffe9b5;
-  font-size: 11.5px;
-  letter-spacing: 0.06em;
-  text-decoration: none;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
 }
 
-.lib-pdf-open:hover {
-  background: rgba(201, 162, 39, 0.22);
+.lib-pdf-open:hover,
+.lib-pdf-open.is-on {
+  background: rgba(201, 162, 39, 0.26);
   color: #fff4d6;
 }
 
@@ -16761,12 +16752,6 @@ a.lib-btn {
   font-size: 11px;
   letter-spacing: 0.04em;
   color: rgba(240, 222, 188, 0.75);
-}
-
-.lib-pdf-mode {
-  margin-left: auto;
-  font-size: 10.5px;
-  color: #e8c97a;
 }
 
 .lib-pdf-scroll {
@@ -53001,7 +52986,6 @@ window.HMChat = (function () {
       + '</div>'
       + '<div class="lib-detail-actions">'
       + '<button type="button" class="lib-btn-primary" data-read>' + (progressOf(book.id) ? '继续阅读 · 第 ' + Math.max(progressOf(book.id), 1) + ' 页' : '开 始 阅 读') + '</button>'
-      + (book.pdfUrl ? '<a class="lib-btn lib-btn-gold lib-pdf-link" href="' + esc(book.pdfUrl) + '" target="_blank" rel="noopener">打开 PDF ↗</a>' : '')
       + '<button type="button" class="lib-btn lib-fav-btn' + (fav ? ' is-on' : '') + '" data-fav>' + (fav ? '★ 已收藏' : '☆ 收藏') + '</button>'
       + '<button type="button" class="lib-btn" data-edit>✎ 编辑</button>'
       + '<button type="button" class="lib-btn lib-btn-danger" data-del>删除</button>'
@@ -53120,20 +53104,24 @@ window.HMChat = (function () {
     });
   }
 
+  var PDFJS_BASE = 'vendor/pdfjs/';
   var pdfJsPromise = null;
   function loadPdfJs() {
     if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
     if (pdfJsPromise) return pdfJsPromise;
     pdfJsPromise = new Promise(function (resolve, reject) {
       var s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+      s.src = PDFJS_BASE + 'pdf.min.js';
       s.onload = function () {
         try {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js';
         } catch (e) {}
         resolve(window.pdfjsLib);
       };
-      s.onerror = function () { reject(new Error('pdfjs-load-failed')); };
+      s.onerror = function () {
+        pdfJsPromise = null;
+        reject(new Error('pdfjs-load-failed：' + s.src));
+      };
       document.head.appendChild(s);
     });
     return pdfJsPromise;
@@ -53162,7 +53150,7 @@ window.HMChat = (function () {
     return walk(outline, 0).then(function () { return out; });
   }
 
-  /* -------- PDF 阅读：pdf.js canvas 自绘，失败回退 iframe 兼容模式 -------- */
+  /* -------- PDF 阅读：pdf.js canvas 自绘；任何失败都只在站内提示，绝不导航直链 -------- */
   function pdfOverlay() {
     return els.reader && els.reader.querySelector('[data-pdf-loading]');
   }
@@ -53218,36 +53206,52 @@ window.HMChat = (function () {
     }).catch(function (err) {
       if (err && err.name === 'RenderingCancelledException') return;
       console.warn('[library] PDF 渲染失败：', err && err.name, err && err.message);
-      fallbackPdfIframe(err);
+      showPdfError(err);
     });
     scroll.scrollTop = 0;
   }
 
-  function fallbackPdfIframe(err) {
-    state.pdfMode = 'iframe';
+  /* 失败时只在站内提示 + 重试；不创建 iframe、不打开直链 */
+  function showPdfError(err) {
     var scroll = els.reader && els.reader.querySelector('[data-pdf-scroll]');
-    var frame = els.reader && els.reader.querySelector('[data-pdf-frame]');
-    var mode = els.reader && els.reader.querySelector('[data-pdf-mode]');
-    var bar = els.reader && els.reader.querySelector('.lib-pdf-toolbar');
     if (scroll) scroll.hidden = true;
+    var bar = els.reader && els.reader.querySelector('.lib-pdf-toolbar');
     if (bar) bar.hidden = true;
-    if (mode) mode.hidden = false;
-    if (frame) {
-      frame.hidden = false;
-      frame.addEventListener('load', function () { setTimeout(hidePdfLoading, 300); });
-      frame.src = state.current.pdfUrl + '#page=' + state.page + '&zoom=page-width';
+    var overlay = pdfOverlay();
+    if (overlay) overlay.classList.remove('is-hidden');
+    var spinner = els.reader && els.reader.querySelector('[data-pdf-spinner]');
+    if (spinner) spinner.hidden = true;
+    var detail = '';
+    if (err) {
+      detail = (err.name || 'Error') + (err.message ? '：' + String(err.message).slice(0, 140) : '');
     }
-    pdfLoadingText('pdf.js 加载失败，已切换兼容模式…');
+    pdfLoadingText(detail ? 'PDF 加载失败（' + detail + '），请点击「重试」' : 'PDF 加载失败，请点击「重试」');
     var retry = els.reader && els.reader.querySelector('[data-pdf-retry]');
-    if (retry) retry.hidden = true;
-    if (err) console.warn('[library] PDF 兼容模式原因：', err.name || '', err.message || '');
+    if (retry) retry.hidden = false;
+    if (err) console.warn('[library] PDF 加载失败：', err.name || '', err.message || '');
   }
 
   function ensurePdfDoc(book) {
     if (state.pdfDoc) return Promise.resolve(state.pdfDoc);
     if (state.pdfDocPromise) return state.pdfDocPromise;
     state.pdfDocPromise = loadPdfJs()
-      .then(function (pdfjs) { return pdfjs.getDocument({ url: book.pdfUrl }).promise; })
+      .then(function (pdfjs) {
+        /* 优先 Range/Stream 分段读取，只取需要的字节 */
+        return pdfjs.getDocument({
+          url: book.pdfUrl,
+          disableRange: false,
+          disableStream: false
+        }).promise.catch(function (err) {
+          console.warn('[library] Range 加载失败，改用整卷加载：', err && err.name, err && err.message);
+          pdfLoadingText('正在整卷加载 PDF …');
+          return fetch(book.pdfUrl).then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.arrayBuffer();
+          }).then(function (buf) {
+            return pdfjs.getDocument({ data: buf }).promise;
+          });
+        });
+      })
       .then(function (doc) { state.pdfDoc = doc; return doc; });
     return state.pdfDocPromise;
   }
@@ -53258,7 +53262,6 @@ window.HMChat = (function () {
     state.pdfDocPromise = null;
     state.pdfTotal = 0;
     state.pdfZoom = 'fit';
-    state.pdfMode = 'canvas';
     state.pdfToken = (state.pdfToken || 0) + 1;
 
     var overlay = pdfOverlay();
@@ -53267,12 +53270,18 @@ window.HMChat = (function () {
     var slow = null;
 
     function resetLoading(text) {
+      var sc = els.reader && els.reader.querySelector('[data-pdf-scroll]');
+      var bar = els.reader && els.reader.querySelector('.lib-pdf-toolbar');
+      var spinner = els.reader && els.reader.querySelector('[data-pdf-spinner]');
       if (overlay) overlay.classList.remove('is-hidden');
+      if (sc) sc.hidden = false;
+      if (bar) bar.hidden = false;
+      if (spinner) spinner.hidden = false;
       pdfLoadingText(text || '正在加载 PDF …');
       if (retry) retry.hidden = true;
       if (slow) clearTimeout(slow);
       slow = setTimeout(function () {
-        pdfLoadingText('仍在加载 PDF … 也可点右上角「打开 PDF」');
+        pdfLoadingText('仍在加载 PDF … 请稍候，或点击重试');
         if (retry) retry.hidden = false;
       }, 12000);
     }
@@ -53280,7 +53289,8 @@ window.HMChat = (function () {
     resetLoading();
 
     var scroll = els.reader.querySelector('[data-pdf-scroll]');
-    if (scroll) {
+    if (scroll && !scroll.dataset.pdfWheel) {
+      scroll.dataset.pdfWheel = '1';
       scroll.addEventListener('wheel', function (e) {
         if (!e.ctrlKey) return;
         e.preventDefault();
@@ -53293,31 +53303,31 @@ window.HMChat = (function () {
     var zoomOut = els.reader.querySelector('[data-zoom-out]');
     var zoomIn = els.reader.querySelector('[data-zoom-in]');
     var zoomSteps = ['fit', 1, 1.5, 2, 3];
-    if (zoomOut) zoomOut.addEventListener('click', function () {
-      var i = zoomSteps.indexOf(state.pdfZoom);
-      setPdfZoom(zoomSteps[Math.max(0, (i < 0 ? 0 : i) - 1)]);
-    });
-    if (zoomIn) zoomIn.addEventListener('click', function () {
-      var i = zoomSteps.indexOf(state.pdfZoom);
-      setPdfZoom(zoomSteps[Math.min(zoomSteps.length - 1, (i < 0 ? 0 : i) + 1)]);
-    });
+    if (zoomOut && !zoomOut.dataset.pdfZoom) zoomOut.dataset.pdfZoom = '1';
+    if (zoomIn && !zoomIn.dataset.pdfZoom) zoomIn.dataset.pdfZoom = '1';
+    if (zoomOut && !zoomOut.dataset.pdfZoomBound) {
+      zoomOut.dataset.pdfZoomBound = '1';
+      zoomOut.addEventListener('click', function () {
+        var i = zoomSteps.indexOf(state.pdfZoom);
+        setPdfZoom(zoomSteps[Math.max(0, (i < 0 ? 0 : i) - 1)]);
+      });
+    }
+    if (zoomIn && !zoomIn.dataset.pdfZoomBound) {
+      zoomIn.dataset.pdfZoomBound = '1';
+      zoomIn.addEventListener('click', function () {
+        var i = zoomSteps.indexOf(state.pdfZoom);
+        setPdfZoom(zoomSteps[Math.min(zoomSteps.length - 1, (i < 0 ? 0 : i) + 1)]);
+      });
+    }
 
     if (retry) {
-      retry.addEventListener('click', function () {
+      retry.dataset.pdfRetry = '1';
+      retry.onclick = function () {
         state.pdfDoc = null;
         state.pdfDocPromise = null;
-        state.pdfMode = 'canvas';
-        var frame = els.reader.querySelector('[data-pdf-frame]');
-        var sc = els.reader.querySelector('[data-pdf-scroll]');
-        var mode = els.reader.querySelector('[data-pdf-mode]');
-        if (frame) { frame.hidden = true; frame.src = 'about:blank'; }
-        if (sc) sc.hidden = false;
-        if (mode) mode.hidden = true;
-        var bar = els.reader.querySelector('.lib-pdf-toolbar');
-        if (bar) bar.hidden = false;
         setupPdfReader(book);
         paintPdfPage();
-      });
+      };
     }
 
     var jump = els.reader.querySelector('[data-toc-jump]');
@@ -53327,18 +53337,23 @@ window.HMChat = (function () {
       if (!n || n < 1) return;
       flipTo(Math.min(n, Math.max(1, state.pdfTotal || bookTotalPages(book))));
     }
-    if (go) go.addEventListener('click', doJump);
-    if (jump) jump.addEventListener('keydown', function (e) { if (e.key === 'Enter') doJump(); });
+    if (go && !go.dataset.pdfBound) {
+      go.dataset.pdfBound = '1';
+      go.addEventListener('click', doJump);
+    }
+    if (jump && !jump.dataset.pdfBound) {
+      jump.dataset.pdfBound = '1';
+      jump.addEventListener('keydown', function (e) { if (e.key === 'Enter') doJump(); });
+    }
 
     ensurePdfDoc(book).then(function (doc) {
       state.pdfTotal = doc.numPages;
-      state.pdfMode = 'canvas';
       updatePdfZoomLabel();
       paintPdfPage();
       setupPdfToc(book, doc);
     }).catch(function (err) {
       console.warn('[library] pdf.js 加载失败：', err && err.name, err && err.message);
-      fallbackPdfIframe(err);
+      showPdfError(err);
       setupPdfToc(book, null);
     });
   }
@@ -53376,15 +53391,13 @@ window.HMChat = (function () {
         + '<button type="button" class="lib-pdf-zoom" data-zoom-out aria-label="缩小">−</button>'
         + '<span class="lib-pdf-zoom-label" data-zoom-label>适合宽度</span>'
         + '<button type="button" class="lib-pdf-zoom" data-zoom-in aria-label="放大">+</button>'
-        + '<span class="lib-pdf-mode" data-pdf-mode hidden>已切换兼容模式</span>'
+        + '<button type="button" class="lib-pdf-open" data-pdf-full>⛶ 全屏阅读</button>'
         + '</div>'
         + '<div class="lib-pdf-scroll" data-pdf-scroll><canvas class="lib-pdf-canvas" data-pdf-canvas></canvas></div>'
-        + '<iframe class="lib-pdf-frame" data-pdf-frame title="PDF 兼容模式" hidden></iframe>'
         + '<div class="lib-pdf-loading" data-pdf-loading>'
-        + '<span class="lib-pdf-spinner"></span><span data-loading-text>正在加载 PDF …</span>'
+        + '<span class="lib-pdf-spinner" data-pdf-spinner></span><span data-loading-text>正在加载 PDF …</span>'
         + '<button type="button" class="lib-pdf-retry" data-pdf-retry hidden>重试</button>'
         + '</div>'
-        + '<a class="lib-pdf-open" href="' + esc(book.pdfUrl) + '" target="_blank" rel="noopener">打开 PDF ↗</a>'
         + '</div>'
       : '<div class="lib-book-frame">'
         + '<div class="lib-page-under" data-under></div>'
@@ -53413,6 +53426,8 @@ window.HMChat = (function () {
     els.reader.querySelector('[data-prev]').addEventListener('click', function () { flipTo(state.page - 1); });
     els.reader.querySelector('[data-next]').addEventListener('click', function () { flipTo(state.page + 1); });
     els.reader.querySelector('[data-fs]').addEventListener('click', toggleReaderFullscreen);
+    var fullBtn = els.reader.querySelector('[data-pdf-full]');
+    if (fullBtn) fullBtn.addEventListener('click', toggleReaderFullscreen);
     syncFsButton();
     if (isPdf) setupPdfReader(book);
     var topEl = els.reader.querySelector('[data-top]');
@@ -53455,17 +53470,12 @@ window.HMChat = (function () {
     updateFlipZones();
   }
 
-  /* PDF 阅读：pdf.js canvas 自绘；兼容模式才用 iframe #page */
+  /* PDF 阅读：只走 pdf.js canvas 自绘 */
   function paintPdfPage() {
     var book = state.current;
     var total = state.pdfTotal || Math.max(1, bookTotalPages(book));
     if (state.page > total) state.page = total;
-    if (state.pdfMode === 'iframe') {
-      var frame = els.reader.querySelector('[data-pdf-frame]');
-      if (frame) frame.src = book.pdfUrl + '#page=' + state.page + '&zoom=page-width';
-    } else if (state.pdfDoc) {
-      renderPdfCanvas();
-    }
+    if (state.pdfDoc) renderPdfCanvas();
     var label = els.reader.querySelector('[data-page-label]');
     if (label) label.textContent = '第 ' + state.page + ' / ' + total + ' 页';
     var fill = els.reader.querySelector('[data-fill]');
@@ -53599,6 +53609,11 @@ window.HMChat = (function () {
     var on = !!document.fullscreenElement && els.reader.contains(document.fullscreenElement);
     btn.textContent = on ? '⤢ 退出全屏' : '⛶ 全屏';
     btn.classList.toggle('is-on', on);
+    var full = els.reader.querySelector('[data-pdf-full]');
+    if (full) {
+      full.textContent = on ? '⤢ 退出全屏' : '⛶ 全屏阅读';
+      full.classList.toggle('is-on', on);
+    }
   }
 
   function toggleReaderFullscreen() {
@@ -53620,7 +53635,6 @@ window.HMChat = (function () {
     state.pdfDoc = null;
     state.pdfDocPromise = null;
     state.pdfTotal = 0;
-    state.pdfMode = 'canvas';
     state.pdfToken = (state.pdfToken || 0) + 1;
     els.reader.classList.remove('is-open', 'is-entering');
     els.reader.hidden = true;
