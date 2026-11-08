@@ -29327,8 +29327,15 @@ async function authBoot() {
   /* ========== Step 2: 异步验证 token（只调 me()，不调 ping()） ==========
      直接试 /auth/me，更精准：只有 401/403 才是真的 token 失效
      网络问题（Render 休眠 / 断网）不影响缓存桌面 */
+  /* 网络请求并发起步（启动提速）：
+     - api.me() 与 api.listWorks() 互不依赖（服务端都从 token 解析 uid）→ 同时发；
+     - HMDesk.pullNow() 依赖 me 的 uid（desk 键按 uid 取，内部还有 deskUid 守卫）→ 必须等 me。 */
+  var meP = (api && typeof api.me === 'function') ? api.me() : Promise.reject(new Error('api 未就绪'));
+  var worksP = (api && typeof api.listWorks === 'function')
+    ? api.listWorks().catch(function () { return null; })
+    : Promise.resolve(null);
   try {
-    var me = await api.me();
+    var me = await meP;
     console.log('[authBoot] me() 成功:', me.user.username);
     window.HMApp.user = me.user;
     try { saveJSON('hm.user', me.user); } catch (e) {}
@@ -29365,7 +29372,8 @@ async function authBoot() {
     /* 从后端拉最新作品（不能覆盖本地：服务端可能因重启丢数据） */
     var serverItems = [];
     try {
-      var data = await api.listWorks();
+      /* 该请求已在上面与 me() 并发发出，这里通常已就绪，只需取结果 */
+      var data = await worksP;
       if (data && Array.isArray(data.items)) {
         serverItems = data.items;
         state.works = mergeWorks(data.items, state.works);
@@ -29376,23 +29384,13 @@ async function authBoot() {
 
     /* ===== 登录即见（顺序固定，不能颠倒）=====
        1) 云端作品快照已合并进 state.works（上面 listWorks）
-       2) 云端桌面布局快照拉回（pullNow，先于认领，避免旧键把云端布局挤掉）
-       3) 本 origin 历史键认领（hm.claim，只补不覆盖）
+       2) 云端桌面布局快照拉回（pullNow，必须在 me 之后、渲染之前）
+       3) 本 origin 历史键认领（HMClaim）挪到首屏渲染后的空闲回调里执行
        4) 合并结果推回云端（syncAllWorksToServer）
-       认领/拉取任何一步失败都只打日志，不影响登录态。 */
+       拉取失败只打日志，不影响登录态。 */
     try {
       if (window.HMDesk && typeof window.HMDesk.pullNow === 'function') await window.HMDesk.pullNow();
     } catch (e) { console.warn('[authBoot] 云端桌面拉取失败（忽略）:', e && e.message); }
-
-    try {
-      if (window.HMClaim && typeof window.HMClaim.run === 'function') {
-        var claimRes = await window.HMClaim.run();
-        if (claimRes && (claimRes.works || claimRes.desk || claimRes.keys)) {
-          console.log('[authBoot] 历史键认领结果:', claimRes);
-          await hydrateWorks(); /* 认领进来的 base64 原图补回 */
-        }
-      }
-    } catch (e) { console.warn('[authBoot] 历史键认领失败（不影响登录）:', e && e.message); }
 
     /* 启动时把本地缺失的作品（含 base64）上传到服务端，
        Render 重启清空 data/ 后自动恢复，换设备也能看到 */
@@ -29415,6 +29413,30 @@ async function authBoot() {
     if (window.HMDesk) {
       if (typeof window.HMDesk.reloadForUser === 'function') window.HMDesk.reloadForUser();
       else if (typeof window.HMDesk.sync === 'function') window.HMDesk.sync();
+    }
+
+    /* ===== 历史键认领：首屏渲染之后再跑 =====
+       HMClaim 是纯本地逻辑，但要同步 JSON.parse 本机全部作品（含 base64），
+       放首屏之后用空闲回调执行，避免阻塞首屏；失败只打日志，不影响登录。 */
+    var runClaim = function () {
+      try {
+        if (!window.HMClaim || typeof window.HMClaim.run !== 'function') return;
+        window.HMClaim.run().then(function (claimRes) {
+          if (claimRes && (claimRes.works || claimRes.desk || claimRes.keys)) {
+            console.log('[authBoot] 历史键认领结果:', claimRes);
+            return hydrateWorks().then(function (changed) { if (changed) renderWorks(); });
+          }
+        }).catch(function (e) {
+          console.warn('[authBoot] 历史键认领失败（不影响登录）:', e && e.message);
+        });
+      } catch (e) {
+        console.warn('[authBoot] 历史键认领失败（不影响登录）:', e && e.message);
+      }
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(runClaim, { timeout: 2500 });
+    } else {
+      setTimeout(runClaim, 800);
     }
   } catch (err) {
     console.warn('[authBoot] me() 失败:', err && err.message, 'status:', err && err.status);
@@ -29521,7 +29543,7 @@ async function authBoot() {
 /* ===================== 版本更新提示（轻量轮询） ===================== */
 /* 用 HEAD 比对 ETag / Last-Modified / Content-Length，不下载 5MB 整页；
    服务器不支持 HEAD 时退回 Range: bytes=0-0，只读响应头。 */
-var UPDATE_POLL_MS = 2000;     /* 前台轮询间隔（2 秒） */
+var UPDATE_POLL_MS = 60000;    /* 前台轮询间隔（60 秒；原来 2 秒会持续占用带宽/主线程） */
 var UPDATE_IDLE_MS = 10000;    /* 10 秒无操作自动消失 */
 var updateState = {
   baselineFp: '',   /* 首次探测到的指纹，作为「已加载版本」基准 */
@@ -29629,10 +29651,9 @@ function wireUpdateModal() {
     } catch (e) {}
     hideUpdateModal(true);
     toast('正在更新页面…', 'success');
-    /* 带版本参数跳转，强制绕过缓存取新文件 */
-    var u = new URL(location.href);
-    u.searchParams.set('hm_v', String(Date.now()));
-    setTimeout(function () { location.replace(u.toString()); }, 300);
+    /* 普通刷新：不再拼 ?hm_v= 随机参数强制整包重下 5MB；
+       新版本已由轮询确认，走正常缓存校验即可 */
+    setTimeout(function () { location.reload(); }, 300);
   });
 }
 
@@ -29680,9 +29701,17 @@ function checkUpdate() {
       showUpdateModal();
     }
 
-    /* 先探一次建立基线，再按 2 秒轮询；后台暂停，回到前台立即检测 */
-    probeUpdate();
-    startUpdatePolling();
+    /* 首次探测延后到 window load 之后：启动阶段带宽要留给 5MB 主包，
+       不要在解析/首屏时发 HEAD；之后再按 60 秒轮询。后台暂停，回到前台立即检测。 */
+    var kickUpdate = function () {
+      setTimeout(function () {
+        if (document.hidden) return;
+        probeUpdate();
+        startUpdatePolling();
+      }, 800);
+    };
+    if (document.readyState === 'complete') kickUpdate();
+    else window.addEventListener('load', kickUpdate, { once: true });
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) {
         if (updateState.timer) { clearInterval(updateState.timer); updateState.timer = null; }
