@@ -89,7 +89,10 @@ module.exports = {
   S3_BUCKET: env('S3_BUCKET', ''),
   S3_ACCESS_KEY_ID: env('S3_ACCESS_KEY_ID', ''),
   S3_SECRET_ACCESS_KEY: env('S3_SECRET_ACCESS_KEY', ''),
-  S3_FORCE_PATH_STYLE: env('S3_FORCE_PATH_STYLE', '1') !== '0',
+  /* 1=path-style（默认，MinIO）；0/false=virtual-hosted（阿里云 OSS 必须） */
+  S3_FORCE_PATH_STYLE: !/^(0|false)$/i.test(env('S3_FORCE_PATH_STYLE', '1')),
+  /* 仅 OSS 需要时开启：签名请求加 x-oss-s3-compat: true（默认关闭） */
+  S3_EXTRA_HEADER_OSS_COMPAT: /^(1|true)$/i.test(env('S3_EXTRA_HEADER_OSS_COMPAT', '0')),
   /* 可选 CDN/公开域名（私有桶留空，走服务端签名跳转） */
   S3_PUBLIC_BASE: env('S3_PUBLIC_BASE', ''),
   /* S3 预签名跳转有效期（秒），最大 7 天 */
