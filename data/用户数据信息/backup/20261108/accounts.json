@@ -1,0 +1,28 @@
+{
+    "users":  [
+                  {
+                      "id":  "u_init_admin0001",
+                      "username":  "admin",
+                      "email":  null,
+                      "role":  "admin",
+                      "status":  "approved",
+                      "note":  "初始化超管",
+                      "createdAt":  1794090627923,
+                      "approvedAt":  null
+                  },
+                  {
+                      "id":  "u_4757414c7d276242",
+                      "username":  "111111",
+                      "email":  null,
+                      "role":  "user",
+                      "status":  "approved",
+                      "note":  "由超管 admin 创建",
+                      "createdAt":  1794096983315,
+                      "approvedAt":  1794096983315
+                  }
+              ],
+    "pendingCount":  0,
+    "storage":  "mysql",
+    "storageLabel":  "MySQL",
+    "storageWarning":  ""
+}
