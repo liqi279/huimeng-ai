@@ -89,17 +89,17 @@ CREATE TABLE IF NOT EXISTS `user_quota_ledger` (
 
 -- -------------------------------------------------------------
 -- 5. 初始超级管理员
---    用户名: admin      密码: 不在本文件保留明文（见部署说明）
---    哈希算法: pbkdf2-sha256, 100000 轮, 32 字节（与后端 store.js 一致）
---    ⚠ 首次登录后请立刻在「设置 → 账号管理 → 重置密码」修改
+--    本脚本不写入任何账号凭据（salt / password_hash 均不落在仓库里）。
+--    admin 账号由后端首次启动时自动创建：
+--      * server/src/index.js 在 users 表为空时，读取环境变量
+--        ADMIN_USER（默认 admin）与 ADMIN_PASS 创建初始超管；
+--      * 因此部署环境必须先配置 ADMIN_PASS（切勿使用弱口令），
+--        否则不会生成可用的管理员账号；
+--      * 首次登录后请立刻在「设置 → 账号管理 → 重置密码」修改。
+--    如需手工建号：后端启动后走注册/管理接口，或在本地用后端的
+--    pbkdf2-sha256（100000 轮、32 字节，与 store.js 一致）生成
+--    salt + password_hash 后自行 INSERT，不要把结果提交回仓库。
 -- -------------------------------------------------------------
-INSERT IGNORE INTO `users`
-  (`id`, `username`, `email`, `salt`, `password_hash`, `role`, `status`, `created_at`, `updated_at`)
-VALUES
-  ('u_init_admin0001', 'admin', NULL,
-   '030e3d7bd88f81f9fd18f6244e08f541',
-   'a6aead2cc3d4999ff8f15dd2a9ab2276ed8eb4489ee0ea9c8a648f906e045dca',
-   'admin', 'approved', UNIX_TIMESTAMP(NOW(3)) * 1000, UNIX_TIMESTAMP(NOW(3)) * 1000);
 
 -- -------------------------------------------------------------
 -- 扩展说明（后续用户数据统一走这套库，不再各存一份）
