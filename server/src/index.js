@@ -41,6 +41,15 @@ const corsOrigin = config.CORS_ORIGIN === '*'
 
 app.use(cors({ origin: corsOrigin }));
 
+/* 允许自有前端用 iframe 内嵌 PDF / 页面：只放 frame-ancestors，
+   绝不设 X-Frame-Options（DENY/SAMEORIGIN 会直接阻断嵌入）。
+   需要新增来源时只改这一行。 */
+const FRAME_ANCESTORS = "frame-ancestors 'self' https://liqi279.github.io";
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', FRAME_ANCESTORS);
+  next();
+});
+
 /* Ollama 代理必须放在 express.json 之前，才能原样转发请求体（含流式 / 大体积）。
  * 前端请求 /api/ollama/* ，后端转发到本机 http://127.0.0.1:11434/* ，
  * 这样 HTTPS 页面也能通过同源代理访问本地 Ollama，避免混合内容拦截。 */

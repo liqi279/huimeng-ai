@@ -70,6 +70,8 @@ router.delete('/library/books/:id', authOptional, wrap(async (req, res) => {
      - 读取由后端带签名回源（GET/HEAD + Range），地址稳定、可 inline 预览。 */
 /* 上传口令只认环境变量：没配置就整体禁用上传，绝不回落到代码里的默认值 */
 const UPLOAD_KEY = String(process.env.LIBRARY_UPLOAD_KEY || '');
+/* PDF 直链有效期 1 小时：过期后前端重新请求 /library/file/* 换新链接 */
+const PDF_DIRECT_TTL = 3600;
 const UPLOAD_PREFIX = { books: 'library/books/', covers: 'library/covers/' };
 const MIME_BY_EXT = {
   '.pdf': 'application/pdf',
@@ -97,17 +99,13 @@ router.post('/library/uploads/presign', wrap(async (req, res) => {
   res.json({ ok: true, key, method: 'PUT', url, mime, expires: 3600 });
 }));
 
-router.get('/library/file/*', wrap(async (req, res) => {
-  /* 路径即对象 key（必须以 library/ 开头，避免越权读其它前缀的对象） */
-  const key = String(req.params[0] || '').replace(/^\/+/, '');
-  assert(/^library\/[A-Za-z0-9._\/-]+$/.test(key) && key.indexOf('..') < 0, 400, '非法文件路径');
-
+/* 回源代理：小图（封面）与所有 HEAD 走这里。体积小、地址稳定，前端无需处理跳转。
+   presignGet 是按 GET 签名的，OSS 会拒绝拿它发 HEAD（502），
+   所以 HEAD 也向上游发 GET，只取响应头后丢弃 body。 */
+async function proxyFile(req, res, key, ext, filename) {
   const url = objectStore.presignGet(key, 600);
   assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
 
-  /* presignGet 是按 GET 签名的，OSS 会拒绝拿它发 HEAD（502）。
-     所以 HEAD 也向上游发 GET，只取响应头后丢弃 body。 */
-  const isHead = req.method === 'HEAD';
   const headers = {};
   if (req.headers.range) headers.Range = req.headers.range;
 
@@ -126,10 +124,9 @@ router.get('/library/file/*', wrap(async (req, res) => {
     throw jsonError(502, '文件读取失败', '对象存储返回 ' + up.status);
   }
 
-  const ext = path.extname(key).toLowerCase();
   res.status(up.status === 206 ? 206 : 200);
   res.setHeader('Content-Type', up.headers.get('content-type') || MIME_BY_EXT[ext] || 'application/octet-stream');
-  res.setHeader('Content-Disposition', 'inline; filename="' + path.basename(key).replace(/"/g, '') + '"');
+  res.setHeader('Content-Disposition', 'inline; filename="' + filename + '"');
   res.setHeader('Cache-Control', 'private, max-age=600');
   res.setHeader('Accept-Ranges', 'bytes');
   const len = up.headers.get('content-length');
@@ -137,7 +134,7 @@ router.get('/library/file/*', wrap(async (req, res) => {
   const range = up.headers.get('content-range');
   if (range) res.setHeader('Content-Range', range);
 
-  if (isHead || !up.body) {
+  if (req.method === 'HEAD' || !up.body) {
     if (up.body) await up.body.cancel().catch(() => {});
     res.end();
     return;
@@ -148,6 +145,48 @@ router.get('/library/file/*', wrap(async (req, res) => {
     else res.end();
   });
   readable.pipe(res);
+}
+
+router.get('/library/file/*', wrap(async (req, res) => {
+  /* 路径即对象 key（必须以 library/ 开头，避免越权读其它前缀的对象） */
+  const key = String(req.params[0] || '').replace(/^\/+/, '');
+  assert(/^library\/[A-Za-z0-9._\/-]+$/.test(key) && key.indexOf('..') < 0, 400, '非法文件路径');
+
+  const ext = path.extname(key).toLowerCase();
+  const filename = path.basename(key).replace(/["\\\r\n]/g, '') || 'file';
+
+  /* PDF 正文：302 到预签名直链，浏览器直连 OSS 流式拉取（支持 Range），
+     83MB 不再全部经 Render 中转。签名里带 inline + application/pdf，
+     保证是内嵌预览而不是下载。HEAD 仍走回源，保持原有 200/206 语义。 */
+  if (ext === '.pdf' && req.method !== 'HEAD') {
+    const direct = objectStore.presignGet(key, PDF_DIRECT_TTL, {
+      responseContentDisposition: 'inline; filename="' + filename + '"',
+      responseContentType: 'application/pdf',
+    });
+    assert(direct, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
+
+    /* 先探一次存在性：对象不存在时浏览器只会看到 OSS 的 XML 错误页，
+       这里按 Range 0-0 取一次，保留原来的 404/502 JSON 映射。 */
+    let probe = null;
+    try {
+      probe = await fetch(direct, { method: 'GET', headers: { Range: 'bytes=0-0' } });
+    } catch (err) {
+      probe = null;
+    }
+    const probeStatus = probe ? probe.status : 0;
+    if (probe && probe.body) await probe.body.cancel().catch(() => {});
+    if (probeStatus === 404) throw jsonError(404, '文件不存在');
+    if (probeStatus === 200 || probeStatus === 206) {
+      /* 直链 1 小时过期，重定向本身不能缓存，否则过期后浏览器还在用旧签名 */
+      res.setHeader('Cache-Control', 'no-store');
+      res.redirect(302, direct);
+      return;
+    }
+    /* 直链探测失败（签名异常 / 网络）：退回回源代理，保证阅读不中断 */
+    console.warn('[library] PDF 直链探测失败 status=' + probeStatus + '，退回回源代理');
+  }
+
+  await proxyFile(req, res, key, ext, filename);
 }));
 
 /* ---------- 收藏 ---------- */

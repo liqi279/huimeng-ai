@@ -55,6 +55,20 @@ function splitTags(tags) {
   return String(tags || '').split(/[,，、|]/).map((t) => t.trim()).filter(Boolean);
 }
 
+/* 目录（toc）：PDF 书签解析出来的章节 [{ title, page }]，page 从 1 开始。
+   存 MySQL 时是一段 JSON 文本；没有目录的书返回空数组，前端按「无目录」处理。 */
+function normalizeToc(raw) {
+  let v = raw;
+  if (typeof v === 'string') {
+    try { v = JSON.parse(v); } catch (err) { return []; }
+  }
+  if (!Array.isArray(v)) return [];
+  return v.map((it) => ({
+    title: String((it && it.title) || '').trim().slice(0, 200),
+    page: Math.max(1, Math.floor(Number(it && it.page) || 1)),
+  })).filter((it) => it.title).slice(0, 500);
+}
+
 function normalizeBook(row, pages) {
   return {
     id: String(row.id),
@@ -71,6 +85,8 @@ function normalizeBook(row, pages) {
     pdfUrl: String(row.pdf_url || row.pdfUrl || ''),
     /* PDF 真实页数（阅读器底部「第 X / Y 页」用），未知时为 0 */
     pageCount: Number(row.page_count == null ? row.pageCount || 0 : row.page_count),
+    /* 章节目录：PDF 书签解析结果，没有就是空数组 */
+    toc: normalizeToc(row.toc == null ? row.tocList : row.toc),
     sortNo: Number(row.sort_no == null ? row.sortNo || 0 : row.sort_no),
     createdAt: Number(row.created_at == null ? row.createdAt || 0 : row.created_at),
     updatedAt: Number(row.updated_at == null ? row.updatedAt || 0 : row.updated_at),
@@ -116,6 +132,8 @@ function validateBookInput(body) {
     pdfUrl: String(data.pdfUrl || '').slice(0, 500),
     /* 真实页数：PDF 页数，0 表示未知；正文仍只放对象存储 */
     pageCount: Math.max(0, Math.min(100000, Math.floor(Number(data.pageCount) || 0))),
+    /* 章节目录：只接受 [{ title, page }]，非法结构按空目录处理 */
+    toc: normalizeToc(data.toc),
     /* 书架排序：越小越靠前，默认 0；用于把新书固定在该区第一架 */
     sortNo: Number.isFinite(Number(data.sortNo)) ? Number(data.sortNo) : 0,
     pages: pages.slice(0, 400).map((p, i) => ({
@@ -165,6 +183,7 @@ const EXTRA_BOOK_COLUMNS = [
   ['area', "ADD COLUMN area VARCHAR(16) NOT NULL DEFAULT '' COMMENT '区域：ref/psd/anim/paint/concept'"],
   ['pdf_url', "ADD COLUMN pdf_url VARCHAR(500) NOT NULL DEFAULT '' COMMENT 'PDF 地址（正文放大文件存储，不入库）'"],
   ['page_count', "ADD COLUMN page_count INT NOT NULL DEFAULT 0 COMMENT 'PDF 真实页数，0 表示未知'"],
+  ['toc', "ADD COLUMN toc LONGTEXT NULL COMMENT '章节目录 JSON：[{title,page}]'"],
 ];
 
 async function ensureColumns(conn, dbName) {
@@ -277,6 +296,8 @@ function normalizeSeed(b, i) {
     coverUrl: '',
     area: AREAS.includes(String(b.area || '')) ? String(b.area) : '',
     pdfUrl: String(b.pdfUrl || ''),
+    pageCount: Math.max(0, Math.floor(Number(b.pageCount) || 0)),
+    toc: normalizeToc(b.toc),
     sortNo: i,
     createdAt: t,
     updatedAt: t,
@@ -336,10 +357,10 @@ async function mysqlCreate(data) {
   try {
     await conn.beginTransaction();
     await conn.query(
-      `INSERT INTO books (id,title,author,category,tags,intro,accent,cover_url,area,pdf_url,page_count,sort_no,created_at,updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO books (id,title,author,category,tags,intro,accent,cover_url,area,pdf_url,page_count,toc,sort_no,created_at,updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [id, data.title, data.author, data.category, data.tags.join(','), data.intro, data.accent,
-        data.coverUrl, data.area, data.pdfUrl, data.pageCount, data.sortNo, t, t]
+        data.coverUrl, data.area, data.pdfUrl, data.pageCount, JSON.stringify(data.toc || []), data.sortNo, t, t]
     );
     if (data.pages.length) {
       const rows = data.pages.map((p) => [id, p.pageNo, p.title, p.content]);
@@ -369,15 +390,17 @@ async function mysqlUpdate(id, data) {
     area: data.area == null ? existing.area : data.area,
     pdfUrl: data.pdfUrl == null ? existing.pdfUrl : data.pdfUrl,
     pageCount: data.pageCount == null ? existing.pageCount : data.pageCount,
+    toc: data.toc == null ? existing.toc : normalizeToc(data.toc),
     pages: data.pages == null ? existing.pages : data.pages,
   };
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     await conn.query(
-      `UPDATE books SET title=?,author=?,category=?,tags=?,intro=?,accent=?,cover_url=?,area=?,pdf_url=?,page_count=?,updated_at=? WHERE id=?`,
+      `UPDATE books SET title=?,author=?,category=?,tags=?,intro=?,accent=?,cover_url=?,area=?,pdf_url=?,page_count=?,toc=?,updated_at=? WHERE id=?`,
       [merged.title, merged.author, merged.category, merged.tags.join(','), merged.intro,
-        merged.accent, merged.coverUrl, merged.area, merged.pdfUrl, merged.pageCount, now(), id]
+        merged.accent, merged.coverUrl, merged.area, merged.pdfUrl, merged.pageCount,
+        JSON.stringify(merged.toc || []), now(), id]
     );
     if (data.pages != null) {
       await conn.query('DELETE FROM book_pages WHERE book_id=?', [id]);
@@ -434,6 +457,7 @@ async function fileCreate(data) {
     area: data.area,
     pdfUrl: data.pdfUrl,
     pageCount: data.pageCount,
+    toc: data.toc,
     sortNo: data.sortNo,
     createdAt: t,
     updatedAt: t,
@@ -459,6 +483,7 @@ async function fileUpdate(id, data) {
   if (data.area != null) b.area = data.area;
   if (data.pdfUrl != null) b.pdfUrl = data.pdfUrl;
   if (data.pageCount != null) b.pageCount = data.pageCount;
+  if (data.toc != null) b.toc = normalizeToc(data.toc);
   if (data.sortNo != null) b.sortNo = data.sortNo;
   if (data.pages != null) b.pages = data.pages;
   b.updatedAt = now();
