@@ -88,9 +88,14 @@ const MIME_BY_EXT = {
   '.webp': 'image/webp',
 };
 
-router.post('/library/uploads/presign', wrap(async (req, res) => {
-  assert(UPLOAD_KEY, 503, '上传未启用', '请在环境变量配置 LIBRARY_UPLOAD_KEY');
-  assert(req.get('x-upload-key') === UPLOAD_KEY, 403, '上传未授权', '需要正确的 x-upload-key');
+router.post('/library/uploads/presign', authOptional, wrap(async (req, res) => {
+  /* 管理员优先：带有效登录 token 且 role=admin 时免上传口令；
+     其余情况仍只认环境变量 LIBRARY_UPLOAD_KEY（不回落到代码里的默认值）。 */
+  const isAdmin = Boolean(req.user && req.user.role === 'admin');
+  if (!isAdmin) {
+    assert(UPLOAD_KEY, 503, '上传未启用', '请在环境变量配置 LIBRARY_UPLOAD_KEY');
+    assert(req.get('x-upload-key') === UPLOAD_KEY, 403, '上传未授权', '需要正确的 x-upload-key 或管理员登录');
+  }
   const body = req.body || {};
   const kind = String(body.kind || 'books');
   const prefix = UPLOAD_PREFIX[kind];
