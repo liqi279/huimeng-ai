@@ -126,7 +126,7 @@ store.ensureDirs()
           const adminPass = process.env.ADMIN_PASS || 'admin123';
           const result = await store.createUser({ username: adminUser, password: adminPass, role: 'admin', status: 'approved', note: '初始超管' });
           if (result.ok) {
-            console.log(`[init] 默认超级管理员已创建：${adminUser} / ${adminPass}（请尽快修改密码）`);
+            console.log(`[init] 默认超级管理员已创建：${adminUser}（密码取自 ADMIN_PASS 环境变量，请尽快修改）`);
           }
         }
       } catch (err) {
