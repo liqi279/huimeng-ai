@@ -38,6 +38,24 @@ router.post('/library/admin/bucket-security', authRequired, adminOnly, wrap(asyn
   res.json(await objectStore.ensureBucketSecurity());
 }));
 
+/* 修正对象元信息：把书目里引用的 coverUrl / pdfUrl 对应对象按扩展名重新自复制，
+   Content-Type 改成 application/pdf / image/jpeg、Content-Disposition 改成 inline。
+   用于修历史对象被直传成 octet-stream 的问题；幂等，可重复调用。 */
+router.post('/library/admin/fix-object-types', authRequired, adminOnly, wrap(async (req, res) => {
+  const items = await library.list('', '');
+  const keys = [];
+  for (const book of items) {
+    for (const url of [book.coverUrl, book.pdfUrl]) {
+      const matched = /\/api\/library\/file\/(library\/[^\s?#]+)/.exec(String(url || ''));
+      if (matched) keys.push(decodeURIComponent(matched[1]));
+    }
+  }
+  const unique = Array.from(new Set(keys));
+  const results = [];
+  for (const key of unique) results.push(await objectStore.fixObjectType(key));
+  res.json({ ok: results.every((r) => r.ok), total: unique.length, results });
+}));
+
 router.get('/library/books/:id', authOptional, wrap(async (req, res) => {
   const book = await library.get(req.params.id);
   assert(book, 404, '书籍不存在', '请检查书籍 ID');
@@ -101,14 +119,17 @@ router.post('/library/uploads/presign', authOptional, wrap(async (req, res) => {
   const prefix = UPLOAD_PREFIX[kind];
   assert(prefix, 400, 'kind 只能是 books 或 covers');
   const name = String(body.name || 'file').replace(/[^A-Za-z0-9._-]/g, '_').slice(-120) || 'file';
-  const mime = String(body.mime || '');
+  /* 类型以扩展名为准（也接受 body.mime / body.contentType 显式指定），
+     并把它签进 PUT URL：前端必须带同一个 Content-Type，对象元信息才不会变成 octet-stream */
+  const mime = String(body.mime || body.contentType || '').trim() ||
+    MIME_BY_EXT[path.extname(name).toLowerCase()] || '';
   assert(/^(application\/pdf|image\/(jpeg|png|webp))$/.test(mime), 400, '只允许 PDF 或 JPG/PNG/WEBP');
   assert(Number(body.size) > 0 && Number(body.size) <= 300 * 1024 * 1024, 400, '文件需大于 0 且不超过 300MB');
 
   const key = prefix + Date.now().toString(36) + '-' + name;
-  const url = objectStore.presignPut(key, 3600);
+  const url = objectStore.presignPut(key, 3600, mime);
   assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
-  res.json({ ok: true, key, method: 'PUT', url, mime, expires: 3600 });
+  res.json({ ok: true, key, method: 'PUT', url, mime, contentType: mime, expires: 3600 });
 }));
 
 /* 回源代理：小图（封面）与所有 HEAD 走这里。体积小、地址稳定，前端无需处理跳转。

@@ -215,30 +215,36 @@ function presignGet(objectKey, ttlSec, opts) {
 }
 
 /* 预签名 PUT URL：用于浏览器/本机把大文件（83MB PDF）直传对象存储，
-   字节不经过 Render，避免请求体过大和超时。只签 host，Content-Type 不受限。 */
-function presignPut(objectKey, ttlSec) {
+   字节不经过 Render，避免请求体过大和超时。
+   传了 contentType 就把它签进去：PUT 时必须带同一个 Content-Type，
+   否则 OSS 会拒绝（403 SignatureDoesNotMatch）；这样对象元信息不会变成 octet-stream。 */
+function presignPut(objectKey, ttlSec, contentType) {
   if (state.mode !== 's3') return null;
   const host = endpointHost();
   const date = amzDate();
   const day = date.slice(0, 8);
   const scope = day + '/' + config.S3_REGION + '/s3/aws4_request';
   const expires = Math.max(60, Math.min(Number(ttlSec) || config.S3_URL_TTL, 604800));
+  const type = String(contentType || '').trim();
 
   const params = {
     'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
     'X-Amz-Credential': config.S3_ACCESS_KEY_ID + '/' + scope,
     'X-Amz-Date': date,
     'X-Amz-Expires': String(expires),
-    'X-Amz-SignedHeaders': 'host',
+    'X-Amz-SignedHeaders': type ? 'content-type;host' : 'host',
   };
   const canonicalQuery = Object.keys(params).sort()
     .map((k) => uriEncode(k) + '=' + uriEncode(params[k])).join('&');
+  const canonicalHeaders = type
+    ? 'content-type:' + type + '\n' + 'host:' + host + '\n'
+    : 'host:' + host + '\n';
   const canonicalRequest = [
     'PUT',
     keyPath(objectKey),
     canonicalQuery,
-    'host:' + host + '\n',
-    'host',
+    canonicalHeaders,
+    params['X-Amz-SignedHeaders'],
     'UNSIGNED-PAYLOAD',
   ].join('\n');
   const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
@@ -248,6 +254,84 @@ function presignPut(objectKey, ttlSec) {
      否则签名里的 host 与实际请求 host 不一致，OSS 会直接 AccessDenied。 */
   return requestUrl(objectKey) +
     '?' + canonicalQuery + '&X-Amz-Signature=' + signature;
+}
+
+/* 通用签名：headersMap 里的每个头都参与签名（键统一小写），
+   用于 copy-object 这类带 x-oss-* 头的请求。 */
+function signedWithHeaders(method, objectKey, headersMap, payload) {
+  const host = endpointHost();
+  const date = amzDate();
+  const day = date.slice(0, 8);
+  const scope = day + '/' + config.S3_REGION + '/s3/aws4_request';
+  const payloadHash = sha256hex(payload || Buffer.alloc(0));
+  const all = {};
+  Object.keys(headersMap || {}).forEach((k) => { all[k.toLowerCase()] = String(headersMap[k]); });
+  all.host = host;
+  all['x-amz-content-sha256'] = payloadHash;
+  all['x-amz-date'] = date;
+
+  const names = Object.keys(all).sort();
+  const canonicalHeaders = names.map((n) => n + ':' + all[n].trim() + '\n').join('');
+  const signedHeaders = names.join(';');
+  const canonicalRequest = [method, keyPath(objectKey), '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
+  const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
+  const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
+  const authorization = 'AWS4-HMAC-SHA256 Credential=' + config.S3_ACCESS_KEY_ID + '/' + scope +
+    ', SignedHeaders=' + signedHeaders + ', Signature=' + signature;
+
+  const headers = {};
+  names.forEach((n) => { headers[n] = all[n]; });
+  headers.Authorization = authorization;
+  Object.assign(headers, extraCompatHeaders());
+  return { url: requestUrl(objectKey), headers };
+}
+
+/* 按扩展名推断对象类型：直传与元信息修正共用，避免对象被存成 octet-stream */
+const PRESIGN_MIME = {
+  '.pdf': 'application/pdf',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+};
+
+/* 同 key 自复制并替换元信息：修正历史对象被存成 application/octet-stream 的问题。
+   走 OSS copyObject + x-oss-metadata-directive: REPLACE，Content-Type / Content-Disposition
+   由本次请求头决定；不用重传文件本体。 */
+async function fixObjectType(objectKey, contentType, contentDisposition) {
+  if (state.mode !== 's3') return { ok: false, key: objectKey, skipped: '对象存储未启用' };
+  const ext = path.extname(String(objectKey)).toLowerCase();
+  const type = contentType || PRESIGN_MIME[ext] || 'application/octet-stream';
+  const disposition = contentDisposition || 'inline';
+
+  const attempts = [
+    { copy: 'x-oss-copy-source', directive: 'x-oss-metadata-directive' },
+    { copy: 'x-amz-copy-source', directive: 'x-amz-metadata-directive' },
+  ];
+  let last = null;
+  for (const mode of attempts) {
+    const map = {
+      'content-type': type,
+      'content-disposition': disposition,
+      [mode.copy]: '/' + config.S3_BUCKET + '/' + String(objectKey).split('/').map(uriEncode).join('/'),
+      [mode.directive]: 'REPLACE',
+    };
+    const req = signedWithHeaders('PUT', objectKey, map, null);
+    let res;
+    try {
+      res = await fetch(req.url, { method: 'PUT', headers: req.headers });
+    } catch (err) {
+      last = { ok: false, key: objectKey, status: 0, error: err.message };
+      continue;
+    }
+    const text = res.ok ? '' : await res.text().catch(() => '');
+    if (res.body) await res.body.cancel().catch(() => {});
+    if (res.ok) return { ok: true, key: objectKey, contentType: type };
+    last = { ok: false, key: objectKey, status: res.status, ...ossErrorSummary(res.status, text) };
+    /* 只有当头部别名不对时才换下一组，其余错误（鉴权/不存在）直接返回 */
+    if (!/InvalidArgument|InvalidRequest|SignatureDoesNotMatch|NotImplemented/i.test(last.code || '')) break;
+  }
+  return last;
 }
 
 /* ---------------- 读写 ---------------- */
@@ -436,6 +520,7 @@ module.exports = {
   deleteObject,
   presignGet,
   presignPut,
+  fixObjectType,
   putBucketCors,
   ensureBucketReferer,
   ensureBucketSecurity,
