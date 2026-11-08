@@ -156,12 +156,14 @@ router.get('/library/file/*', wrap(async (req, res) => {
   const filename = path.basename(key).replace(/["\\\r\n]/g, '') || 'file';
 
   /* PDF 正文：302 到预签名直链，浏览器直连 OSS 流式拉取（支持 Range），
-     83MB 不再全部经 Render 中转。签名里带 inline + application/pdf，
-     保证是内嵌预览而不是下载。HEAD 仍走回源，保持原有 200/206 语义。 */
+     83MB 不再全部经 Render 中转。签名里带 inline，保证是内嵌预览而不是下载。
+     HEAD 仍走回源，保持原有 200/206 语义。 */
   if (ext === '.pdf' && req.method !== 'HEAD') {
+    /* 只覆盖 Content-Disposition：OSS 会拒绝 response-content-type 覆盖
+       （400 InvalidRequest: Can not override response header on content-type），
+       而对象本身存的就是 application/pdf，不需要再覆盖类型。 */
     const direct = objectStore.presignGet(key, PDF_DIRECT_TTL, {
       responseContentDisposition: 'inline; filename="' + filename + '"',
-      responseContentType: 'application/pdf',
     });
     assert(direct, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
 
