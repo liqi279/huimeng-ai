@@ -15906,10 +15906,22 @@ body.rail-collapsed .hm-page {
 .lib-book-cover-frame {
   position: absolute;
   inset: 7px;
+  z-index: 1;
   border: 1px solid rgba(255, 243, 214, 0.42);
   border-radius: 2px;
   box-shadow: inset 0 0 0 3px rgba(35, 22, 12, 0.1);
   pointer-events: none;
+}
+
+/* 真实封面图（有 coverUrl 时替代生成式封面） */
+.lib-book-cover-img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 .lib-book-cover-title {
@@ -52051,6 +52063,8 @@ window.HMChat = (function () {
       intro: String(b.intro || ''),
       accent: /^#[0-9a-f]{6}$/i.test(String(b.accent || '')) ? b.accent : '#8a6a4f',
       coverUrl: String(b.coverUrl || ''),
+      area: String(b.area || ''),
+      pdfUrl: String(b.pdfUrl || ''),
       sortNo: Number(b.sortNo == null ? i : b.sortNo),
       createdAt: Number(b.createdAt || t),
       updatedAt: Number(b.updatedAt || t),
@@ -52313,11 +52327,13 @@ window.HMChat = (function () {
       + '<span class="lib-book-spine"><span class="lib-book-spine-title">' + esc(b.title) + '</span></span>'
       + '<span class="lib-book-cover">'
       + '<span class="lib-book-cover-frame"></span>'
-      + '<span class="lib-book-cover-title">' + esc(b.title) + '</span>'
-      + '<span class="lib-book-cover-rule"></span>'
-      + '<span class="lib-book-cover-author">' + esc(b.author) + '</span>'
-      + '<span class="lib-book-cover-seal">藏</span>'
-      + '<span class="lib-book-cover-brand">绘梦藏书</span>'
+      + (b.coverUrl
+        ? '<img class="lib-book-cover-img" src="' + esc(b.coverUrl) + '" alt="' + esc(b.title) + '" loading="lazy">'
+        : '<span class="lib-book-cover-title">' + esc(b.title) + '</span>'
+          + '<span class="lib-book-cover-rule"></span>'
+          + '<span class="lib-book-cover-author">' + esc(b.author) + '</span>'
+          + '<span class="lib-book-cover-seal">藏</span>'
+          + '<span class="lib-book-cover-brand">绘梦藏书</span>')
       + '</span>'
       + '<span class="lib-book-edge"></span>'
       + '</span>'
@@ -53185,6 +53201,12 @@ window.HMChat = (function () {
       els.body.addEventListener('click', function (event) {
         var card = event.target.closest('.lib-book');
         if (!card) return;
+        var book = byId(card.getAttribute('data-id'));
+        if (book && book.pdfUrl) {
+          /* PDF 书：新标签直接打开，不进文字阅读器 */
+          window.open(book.pdfUrl, '_blank', 'noopener');
+          return;
+        }
         openBook(card.getAttribute('data-id'));
       });
     }
