@@ -174,7 +174,12 @@ router.get('/library/file/*', wrap(async (req, res) => {
       probe = null;
     }
     const probeStatus = probe ? probe.status : 0;
-    if (probe && probe.body) await probe.body.cancel().catch(() => {});
+    let probeErr = '';
+    if (probe && probeStatus >= 400) {
+      probeErr = await probe.text().then((t) => String(t).replace(/\s+/g, ' ').slice(0, 160)).catch(() => '');
+    } else if (probe && probe.body) {
+      await probe.body.cancel().catch(() => {});
+    }
     if (probeStatus === 404) throw jsonError(404, '文件不存在');
     if (probeStatus === 200 || probeStatus === 206) {
       /* 直链 1 小时过期，重定向本身不能缓存，否则过期后浏览器还在用旧签名 */
@@ -183,7 +188,8 @@ router.get('/library/file/*', wrap(async (req, res) => {
       return;
     }
     /* 直链探测失败（签名异常 / 网络）：退回回源代理，保证阅读不中断 */
-    console.warn('[library] PDF 直链探测失败 status=' + probeStatus + '，退回回源代理');
+    console.warn('[library] PDF 直链探测失败 status=' + probeStatus + ' ' + probeErr);
+    res.setHeader('X-Library-Pdf-Probe', String(probeStatus) + (probeErr ? ' ' + probeErr : ''));
   }
 
   await proxyFile(req, res, key, ext, filename);
