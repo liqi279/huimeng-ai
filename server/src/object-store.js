@@ -169,11 +169,12 @@ function signedRequest(method, objectKey, payload, extra) {
 }
 
 /* 预签名 GET URL（私有桶 + 时效）
-   opts.responseContentDisposition / opts.responseContentType：
-     写进签名查询串，OSS 会按它覆盖响应头。PDF 阅读必须带 inline，
-     否则 OSS 默认域名会把 application/pdf 当附件下载。
-   注意：这些参数必须参与签名（本函数统一由 canonicalQuery 生成），
-   外部再拼到 URL 上会直接 403 SignatureDoesNotMatch。 */
+   opts.responseContentDisposition：写进签名查询串，OSS 会按它覆盖 Content-Disposition。
+   注意：
+     - 这些参数必须参与签名（本函数统一由 canonicalQuery 生成），
+       外部再拼到 URL 上会直接 403 SignatureDoesNotMatch；
+     - OSS 不接受 response-content-type 覆盖（400 InvalidRequest:
+       Can not override response header on content-type），不要加。 */
 function presignGet(objectKey, ttlSec, opts) {
   if (state.mode !== 's3') return null;
   if (config.S3_PUBLIC_BASE) {
@@ -195,9 +196,6 @@ function presignGet(objectKey, ttlSec, opts) {
   };
   if (extra.responseContentDisposition) {
     params['response-content-disposition'] = String(extra.responseContentDisposition);
-  }
-  if (extra.responseContentType) {
-    params['response-content-type'] = String(extra.responseContentType);
   }
   const canonicalQuery = Object.keys(params).sort()
     .map((k) => uriEncode(k) + '=' + uriEncode(params[k])).join('&');

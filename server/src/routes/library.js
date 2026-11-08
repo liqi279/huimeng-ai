@@ -67,7 +67,8 @@ router.delete('/library/books/:id', authOptional, wrap(async (req, res) => {
 /* 图书馆的 PDF 正文与封面都放对象存储，MySQL 里只存 URL：
      - TiDB / MySQL 单行默认上限 6MB，83MB 的 PDF 塞进表必然失败；
      - 直传走预签名 PUT，字节不经过 Render，不会占内存也不会超时；
-     - 读取由后端带签名回源（GET/HEAD + Range），地址稳定、可 inline 预览。 */
+     - PDF 读取 302 到预签名直链，浏览器直连 OSS（支持 Range），不再经 Render 中转；
+     - 封面等小图仍由后端回源代理，地址稳定。 */
 /* 上传口令只认环境变量：没配置就整体禁用上传，绝不回落到代码里的默认值 */
 const UPLOAD_KEY = String(process.env.LIBRARY_UPLOAD_KEY || '');
 /* PDF 直链有效期 1 小时：过期后前端重新请求 /library/file/* 换新链接 */
@@ -176,12 +177,7 @@ router.get('/library/file/*', wrap(async (req, res) => {
       probe = null;
     }
     const probeStatus = probe ? probe.status : 0;
-    let probeErr = '';
-    if (probe && probeStatus >= 400) {
-      probeErr = await probe.text().then((t) => String(t).replace(/\s+/g, ' ').slice(0, 160)).catch(() => '');
-    } else if (probe && probe.body) {
-      await probe.body.cancel().catch(() => {});
-    }
+    if (probe && probe.body) await probe.body.cancel().catch(() => {});
     if (probeStatus === 404) throw jsonError(404, '文件不存在');
     if (probeStatus === 200 || probeStatus === 206) {
       /* 直链 1 小时过期，重定向本身不能缓存，否则过期后浏览器还在用旧签名 */
@@ -190,8 +186,7 @@ router.get('/library/file/*', wrap(async (req, res) => {
       return;
     }
     /* 直链探测失败（签名异常 / 网络）：退回回源代理，保证阅读不中断 */
-    console.warn('[library] PDF 直链探测失败 status=' + probeStatus + ' ' + probeErr);
-    res.setHeader('X-Library-Pdf-Probe', String(probeStatus) + (probeErr ? ' ' + probeErr : ''));
+    console.warn('[library] PDF 直链探测失败 status=' + probeStatus + '，退回回源代理');
   }
 
   await proxyFile(req, res, key, ext, filename);
