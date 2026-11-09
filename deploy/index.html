@@ -15758,15 +15758,15 @@ body.rail-collapsed .hm-page {
   display: flex;
   flex: 1 1 auto;
   align-items: flex-end;
-  justify-content: flex-start; /* 不满 8 本：从左往右紧邻排布，间距均匀 */
+  justify-content: flex-start; /* 不满一层：从左往右紧邻排布，间距均匀 */
   gap: 18px;
   min-height: 0;
   padding: 18px 20px 6px;
-  flex-wrap: nowrap; /* 每层最多 8 本，从左往右排，不满留空 */
+  flex-wrap: nowrap; /* 每层容量按柜内宽度现场测量，排满即换层 */
   overflow: hidden;
 }
 
-/* 满 8 本：等距铺满整行 */
+/* 一层排满：等距铺满整行 */
 .lib-shelf-books.is-full {
   justify-content: space-between;
 }
@@ -52311,7 +52311,7 @@ window.HMChat = (function () {
   var state = {
     mode: 'local',        /* local | remote */
     area: 'ref',          /* 当前图书馆区域 id */
-    page: 1,              /* 当前书架页码（区域过滤后分页） */
+    shelfPage: 1,         /* 当前书架页码（区域过滤后分页，与阅读器页码解耦） */
     books: [],
     shelfBooks: [],
     fav: {},
@@ -52638,21 +52638,45 @@ window.HMChat = (function () {
     els.body.innerHTML = '<div class="lib-loading">正在整理书架…</div>';
   }
 
-  var SHELF_PER_ROW = 8;
-  var SHELF_PAGE_SIZE = 24;   /* 每页 3 架 × 8 本 */
+  var SHELF_BOOK_WIDTH = 120;   /* 单本书标称宽度（与 bookCardHtml 的 --w 一致） */
+  var SHELF_ROWS_PER_PAGE = 3;  /* 一页固定 3 层 */
+  var shelfPerRowCache = 0;
+
+  /* 现场测量柜内可用宽度与书间距，算出每层能放几本：perRow = floor(内宽 / (书宽 + 间距)) */
+  function measureShelfPerRow() {
+    if (!els.body || !els.body.clientWidth) return shelfPerRowCache || 1;
+    var probe = document.createElement('div');
+    probe.className = 'lib-shelf-books';
+    probe.style.cssText = 'position:absolute;left:-10000px;top:0;width:100%;height:1px;visibility:hidden;pointer-events:none;';
+    els.body.appendChild(probe);
+    var cs = window.getComputedStyle(probe);
+    var padL = parseFloat(cs.paddingLeft) || 0;
+    var padR = parseFloat(cs.paddingRight) || 0;
+    var gap = parseFloat(cs.columnGap || cs.gap) || 0;
+    var inner = probe.clientWidth - padL - padR;
+    els.body.removeChild(probe);
+    if (!(inner > 0)) return shelfPerRowCache || 1;
+    shelfPerRowCache = Math.max(1, Math.floor((inner + gap) / (SHELF_BOOK_WIDTH + gap)));
+    return shelfPerRowCache;
+  }
+
+  function shelfPageSize() { return measureShelfPerRow() * SHELF_ROWS_PER_PAGE; }
 
   function renderShelf() {
     if (!els.body) return;
+    var perRow = measureShelfPerRow();
+    var pageSize = perRow * SHELF_ROWS_PER_PAGE;
     var total = state.shelfBooks.length;
-    var pages = Math.max(1, Math.ceil(total / SHELF_PAGE_SIZE));
-    if (state.page > pages) state.page = pages;
-    if (state.page < 1) state.page = 1;
-    var start = (state.page - 1) * SHELF_PAGE_SIZE;
-    var list = state.shelfBooks.slice(start, start + SHELF_PAGE_SIZE);
+    /* 逐格填满：每层 perRow 本，每页 3 层；第 1 页取 1–pageSize，第 2 页取 pageSize+1 起 */
+    var pages = Math.max(1, Math.ceil(total / pageSize));
+    if (state.shelfPage > pages) state.shelfPage = pages;
+    if (state.shelfPage < 1) state.shelfPage = 1;
+    var start = (state.shelfPage - 1) * pageSize;
+    var list = state.shelfBooks.slice(start, start + pageSize);
     if (!list.length) {
       /* 0 本书也渲染三层空柜子，空态提示叠在柜体内部 */
       var emptyRows = '';
-      for (var r = 0; r < 3; r++) {
+      for (var r = 0; r < SHELF_ROWS_PER_PAGE; r++) {
         emptyRows += '<section class="lib-shelf-row">'
           + '<div class="lib-shelf-books"></div>'
           + '<div class="lib-shelf-plank">'
@@ -52673,13 +52697,13 @@ window.HMChat = (function () {
 
     /* 每页固定 3 层：不足的书位留空，不塌陷 */
     var html = '';
-    for (var rowIndex = 0; rowIndex < 3; rowIndex++) {
-      var group = list.slice(rowIndex * SHELF_PER_ROW, (rowIndex + 1) * SHELF_PER_ROW);
+    for (var rowIndex = 0; rowIndex < SHELF_ROWS_PER_PAGE; rowIndex++) {
+      var group = list.slice(rowIndex * perRow, (rowIndex + 1) * perRow);
       var booksHtml = group.map(function (b, idx) {
-        return bookCardHtml(b, start + rowIndex * SHELF_PER_ROW + idx);
+        return bookCardHtml(b, start + rowIndex * perRow + idx);
       }).join('');
       html += '<section class="lib-shelf-row">'
-        + '<div class="lib-shelf-books' + (group.length >= SHELF_PER_ROW ? ' is-full' : '') + '">' + booksHtml + '</div>'
+        + '<div class="lib-shelf-books' + (group.length >= perRow ? ' is-full' : '') + '">' + booksHtml + '</div>'
         + '<div class="lib-shelf-plank">'
         + '<span class="lib-shelf-label">第 ' + (rowIndex + 1) + ' 架</span>'
         + '<span class="lib-shelf-count">' + group.length + ' 册</span>'
@@ -52691,27 +52715,28 @@ window.HMChat = (function () {
     renderStatus();
   }
 
-  /* 底部页码控件：总数不足一页时隐藏 */
+  /* 底部页码控件：始终显示；只有 1 页时翻页按钮禁用，页码照常显示「第 1 / 1 页」 */
   function renderPager(total) {
     if (!els.pager) return;
-    var pages = Math.max(1, Math.ceil(total / SHELF_PAGE_SIZE));
-    if (pages <= 1) {
-      els.pager.hidden = true;
-      return;
-    }
+    var pages = Math.max(1, Math.ceil(total / shelfPageSize()));
     els.pager.hidden = false;
-    if (els.pagerInfo) els.pagerInfo.textContent = '第 ' + state.page + ' / ' + pages + ' 页';
+    if (els.pagerInfo) els.pagerInfo.textContent = '第 ' + state.shelfPage + ' / ' + pages + ' 页';
     if (els.pagerInput) {
-      els.pagerInput.value = state.page;
+      els.pagerInput.value = state.shelfPage;
       els.pagerInput.max = pages;
     }
-    if (els.pagerPrev) els.pagerPrev.disabled = state.page <= 1;
-    if (els.pagerNext) els.pagerNext.disabled = state.page >= pages;
+    if (els.pagerPrev) els.pagerPrev.disabled = state.shelfPage <= 1;
+    if (els.pagerNext) els.pagerNext.disabled = state.shelfPage >= pages;
+  }
+
+  /* 新增书籍后定位到最后一页，让新书落在最后一页的最后一个格位 */
+  function jumpToLastShelfPage() {
+    state.shelfPage = Math.max(1, Math.ceil(state.shelfBooks.length / shelfPageSize()));
   }
 
   function bookCardHtml(b, index) {
     var tilt = ((index % 5) - 2) * 1.1;
-    var width = 120; /* 八本等宽，层内等距排开 */
+    var width = 120; /* 单本标称宽度，每层容量按柜内宽度现场测量 */
     var pageCount = (b.pages && b.pages.length) || Number(b.pageCount) || 0;
     var hasProgress = progressOf(b.id) > 0;
     return '<button type="button" class="lib-book' + (b.coverUrl ? ' has-cover' : '') + '" data-id="' + esc(b.id) + '"'
@@ -52762,7 +52787,7 @@ window.HMChat = (function () {
       clearTimeout(searchTimer);
       var value = input.value;
       state.query = value;
-      state.page = 1;
+      state.shelfPage = 1;
       markShelf();
       renderShelf();
       if (els.clearBtn) els.clearBtn.hidden = !value;
@@ -52787,6 +52812,7 @@ window.HMChat = (function () {
           if (target.kind === 'term') {
             input.value = target.text;
             state.query = target.text;
+            state.shelfPage = 1;
             markShelf(); renderShelf(); hideSuggest();
           } else {
             openBook(target.id);
@@ -52812,6 +52838,7 @@ window.HMChat = (function () {
       els.clearBtn.addEventListener('click', function () {
         input.value = '';
         state.query = '';
+        state.shelfPage = 1;
         markShelf(); renderShelf();
         els.clearBtn.hidden = true;
         hideSuggest();
@@ -52892,6 +52919,7 @@ window.HMChat = (function () {
       if (item.kind === 'term') {
         els.search.value = item.text;
         state.query = item.text;
+        state.shelfPage = 1;
         markShelf(); renderShelf(); hideSuggest();
       } else {
         openBook(item.id);
@@ -53927,10 +53955,15 @@ window.HMChat = (function () {
           state.books = state.books.map(function (b) { if (b.id === norm.id) { found = true; return norm; } return b; });
           if (!found) state.books.push(norm);
         } else {
-          return refreshRemote();
+          return refreshRemote().then(function () {
+            if (!editing) jumpToLastShelfPage();
+            renderShelf();
+          });
         }
       }
-      markShelf(); renderShelf(); renderStatus();
+      markShelf();
+      if (!editing) jumpToLastShelfPage();
+      renderShelf(); renderStatus();
       closeModal();
       toast(editing ? '书籍已更新' : '已放上书架', 'success');
     }).catch(function (err) {
@@ -54015,7 +54048,7 @@ window.HMChat = (function () {
 
   function setArea(id) {
     state.area = areaById(id).id;
-    state.page = 1;
+    state.shelfPage = 1;
     writeJSON(LS.area, state.area);
     syncAreaBtn();
     markShelf();
@@ -54080,16 +54113,16 @@ window.HMChat = (function () {
     els.pagerInfo = $('libPagerInfo');
 
     function goPage(n) {
-      var pages = Math.max(1, Math.ceil(state.shelfBooks.length / SHELF_PAGE_SIZE));
-      state.page = Math.min(pages, Math.max(1, Number(n) || 1));
+      var pages = Math.max(1, Math.ceil(state.shelfBooks.length / shelfPageSize()));
+      state.shelfPage = Math.min(pages, Math.max(1, Number(n) || 1));
       renderShelf();
     }
-    if (els.pagerPrev) els.pagerPrev.addEventListener('click', function () { goPage(state.page - 1); });
-    if (els.pagerNext) els.pagerNext.addEventListener('click', function () { goPage(state.page + 1); });
+    if (els.pagerPrev) els.pagerPrev.addEventListener('click', function () { goPage(state.shelfPage - 1); });
+    if (els.pagerNext) els.pagerNext.addEventListener('click', function () { goPage(state.shelfPage + 1); });
     if (els.pagerInput) {
       var applyJump = function () {
         var v = parseInt(els.pagerInput.value, 10);
-        goPage(isNaN(v) ? state.page : v);
+        goPage(isNaN(v) ? state.shelfPage : v);
       };
       els.pagerInput.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') { event.preventDefault(); applyJump(); els.pagerInput.blur(); }
@@ -54148,6 +54181,15 @@ window.HMChat = (function () {
       window.addEventListener('resize', function () {
         if (!els.body) return;
         els.body.querySelectorAll('.lib-book-cover-img').forEach(fitBookCover);
+      });
+      /* 窗口尺寸变化：重算每层容量并重排，页码自动夹紧（防抖 150ms） */
+      var relayoutTimer = null;
+      window.addEventListener('resize', function () {
+        clearTimeout(relayoutTimer);
+        relayoutTimer = setTimeout(function () {
+          if (!els.body) return;
+          renderShelf();
+        }, 150);
       });
       els.body.addEventListener('click', function (event) {
         var card = event.target.closest('.lib-book');
