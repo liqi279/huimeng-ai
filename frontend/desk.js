@@ -29,6 +29,8 @@
     names: {},
     updatedAt: 0
   };
+  /* 当前内存里的 desk 属于哪个 uid（换账号时防止把上个账号的布局写进新账号的键） */
+  var deskUid = '';
 
   var view = {
     activeFolder: null,
@@ -83,6 +85,7 @@
   };
 
   function load() {
+    deskUid = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
     var stored = null;
     try {
       stored = JSON.parse(localStorage.getItem(getDeskLsKey()) || 'null');
@@ -161,6 +164,92 @@
     }).catch(function () {});
   }
 
+  /* 登录即见：登录后直接返回「拉回云端桌面布局」的 Promise，
+     云端比本地新、或本地桌面是空的而云端有内容时采用云端（避免空桌面盖掉旧数据）。 */
+  function pullNow() {
+    if (!api || !api.online || !api.getDesk) return Promise.resolve(false);
+    /* 换账号时内存里的布局可能还属于上一个 uid：先跳过，等 reloadForUser 按新 uid 重载后再拉，
+       避免把别人的布局写进当前账号的键 */
+    var uidNow = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+    if (String(deskUid) !== String(uidNow)) return Promise.resolve(false);
+    return api.getDesk().then(function (d) {
+      if (!d || typeof d !== 'object') return false;
+      var remote = d.desk || d;
+      if (!remote || !Array.isArray(remote.folders)) return false;
+      var remoteTime = Number(remote.updatedAt) || 0;
+      var remoteHasData = remote.folders.length || Object.keys(remote.positions || {}).length ||
+        Object.keys(remote.assigns || {}).length || Object.keys(remote.names || {}).length;
+      var localEmpty = !desk.folders.length && !Object.keys(desk.positions || {}).length;
+      if (remoteTime > desk.updatedAt || (localEmpty && remoteHasData)) {
+        desk.folders = remote.folders.filter(function (f) { return f && f.id && f.name; }).map(function (f) {
+          f.parentId = f.parentId || null;
+          f.createdAt = Number(f.createdAt) || 0;
+          return f;
+        });
+        desk.positions = remote.positions || {};
+        desk.assigns = remote.assigns || {};
+        desk.names = remote.names || {};
+        desk.updatedAt = Math.max(remoteTime, Number(desk.updatedAt) || 0);
+        try { localStorage.setItem(getDeskLsKey(), JSON.stringify(payload())); } catch (err) {}
+        renderAll();
+        console.log('[HMDesk] 已从云端载入桌面布局', desk.folders.length, '个文件夹');
+        return true;
+      }
+      return false;
+    }).catch(function () { return false; });
+  }
+
+  /* 认领历史桌面（旧 uid 键 / guest 键）：只补当前缺失的文件夹与位置，
+     绝不覆盖现有布局；空桌面不会被空数据盖掉。返回新增条目数。 */
+  function claimLegacy(item) {
+    if (!item || typeof item !== 'object') return 0;
+    /* 内存布局不属于当前账号时不合并，避免串号 */
+    var uidNow = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
+    if (String(deskUid) !== String(uidNow)) return 0;
+    var added = 0;
+    var haveId = Object.create(null);
+    var haveName = Object.create(null);
+    desk.folders.forEach(function (f) {
+      haveId[f.id] = 1;
+      haveName[String(f.parentId || '') + '|' + String(f.name || '')] = 1;
+    });
+    (Array.isArray(item.folders) ? item.folders : []).forEach(function (f) {
+      if (!f || !f.id || !f.name) return;
+      var sig = String(f.parentId || '') + '|' + String(f.name || '');
+      if (haveId[f.id] || haveName[sig]) return;
+      desk.folders.push({
+        id: f.id,
+        name: f.name,
+        parentId: f.parentId || null,
+        createdAt: Number(f.createdAt) || 0
+      });
+      haveId[f.id] = 1;
+      haveName[sig] = 1;
+      added += 1;
+    });
+    ['positions', 'assigns', 'names'].forEach(function (k) {
+      var src = item[k];
+      if (!src || typeof src !== 'object') return;
+      if (!desk[k] || typeof desk[k] !== 'object') desk[k] = {};
+      Object.keys(src).forEach(function (key) {
+        var cur = desk[k][key];
+        if (cur === undefined || cur === null || cur === '') {
+          desk[k][key] = src[key];
+          added += 1;
+        }
+      });
+    });
+    if (added) {
+      desk.updatedAt = Math.max(Number(desk.updatedAt) || 0, Number(item.updatedAt) || 0, Date.now());
+      try { localStorage.setItem(getDeskLsKey(), JSON.stringify(payload())); } catch (err) {}
+      renderAll();
+      /* 标记待同步：直接推回云端，让其它设备也能看到 */
+      if (api && api.online && api.saveDesk) { api.saveDesk(payload()).catch(function () {}); }
+      console.log('[HMDesk] 已认领历史桌面条目', added, '项');
+    }
+    return added;
+  }
+
   /* ---------------- 工具 ---------------- */
   function $(sel) {
     return document.querySelector(sel);
@@ -201,6 +290,9 @@
   function mediaHtml(work, mode) {
     var url = esc(work.thumb || work.url || '');
     var cls = mode === 'history' ? 'hm-history-media' : 'desk-media-inner';
+    if (work.failed || work.ok === false) {
+      return '<div class="' + cls + ' is-failed"><b>!</b><small>生成失败</small></div>';
+    }
     if (work.type === 'video') {
       return '<div class="' + cls + ' is-video"><video src="' + url + '" muted playsinline preload="metadata"></video><span class="media-play">▶</span></div>';
     }
@@ -573,16 +665,16 @@
       });
     });
     if (!silent) {
-      var msg = '删除「' + folder.name + '」？';
-      if (descendantIds.length > 1) msg += '（包含 ' + (descendantIds.length - 1) + ' 个子文件夹）';
-      msg += '\n其中 ' + totalWorks + ' 项作品将回到个人空间。';
+      var msg = '删除文件夹「' + folder.name + '」？';
+      if (descendantIds.length > 1) msg += '（包含 ' + (descendantIds.length - 1) + ' 个子文件夹，会一并删除）';
+      msg += '\n只删除文件夹本身：其中 ' + totalWorks + ' 张图片会回到桌面（原位置附近），图片不会被删除。';
       if (!window.confirm(msg)) return;
     }
     desk.folders = desk.folders.filter(function (f) { return descendantIds.indexOf(f.id) < 0; });
     if (view.activeFolder && descendantIds.indexOf(view.activeFolder) >= 0) view.activeFolder = folder.parentId || null;
     persistNow();
     renderAll();
-    if (!silent) A.toast('已删除 ' + descendantIds.length + ' 个文件夹，' + totalWorks + ' 项作品回到个人空间', 'info');
+    if (!silent) A.toast('已删除 ' + descendantIds.length + ' 个文件夹，' + totalWorks + ' 张图片回到桌面（图片未删除）', 'info');
   }
 
   /* ---------------- 桌面 ---------------- */
@@ -736,15 +828,16 @@
 
   function deskCardHtmlInner(work) {
     var name = workName(work);
+    var isFailed = !!(work.failed || work.ok === false);
     var meta = [work.modelName || 'AI', (work.width && work.height) ? work.width + '×' + work.height : ''];
     if (work.type === 'video' && work.duration) meta.push(work.duration + 's');
     if (work.elapsed && work.elapsed > 0) meta.push('耗时 ' + work.elapsed.toFixed(1) + 's');
     return '<div class="desk-thumb">' + mediaHtml(work, 'desk') +
-      '<span class="desk-badge">已完成</span></div>' +
+            '<span class="desk-badge">' + (isFailed ? '生成失败' : '已完成') + '</span></div>' +
       '<div class="desk-info"><strong>' + esc(name) + '</strong><small>' + esc(meta.filter(Boolean).join(' · ')) + '</small></div>' +
       '<div class="desk-acts">' +
       '<button data-dact="preview" title="预览">◉</button>' +
-      '<button data-dact="download" title="下载">↓</button>' +
+      '<button data-dact="download" title="' + (isFailed ? '无可下载的图片' : '下载') + '"' + (isFailed ? ' disabled' : '') + '>↓</button>' +
       '<button data-dact="delete" title="删除">✕</button>' +
       '</div>' +
       '<span class="desk-check" aria-hidden="true"></span>';
@@ -839,6 +932,7 @@
         grid.appendChild(existing);
       }
       existing.innerHTML = deskCardHtmlInner(w);
+      existing.classList.toggle('is-failed', !!(w.failed || w.ok === false));
       placeCard(existing, w.id, idx, grid, occupied);
       idx += 1;
     });
@@ -1019,7 +1113,8 @@
     view.selected = {};
     load();
     renderAll();
-    setTimeout(syncServer, 800);
+    /* 登录即见：立即拉云端桌面（返回 Promise，供登录流程 await），不再延迟 800ms */
+    return pullNow();
   }
 
   /* 登出时：清空桌面内存数据，避免下个账号看到上个账号的文件夹布局 */
@@ -1029,6 +1124,7 @@
     desk.assigns = {};
     desk.names = {};
     desk.updatedAt = 0;
+    deskUid = '';
     view.activeFolder = null;
     view.selected = {};
     renderAll();
@@ -1120,6 +1216,8 @@
   var marquee = null; /* 框选模式 */
 
   function onPointerDown(event) {
+    lastPointerType = event.pointerType || 'mouse';
+    suppressClick = false; /* 新手势开始，清掉上一次拖拽留下的吞点击标记 */
     if (event.button !== 0) return;
     var grid = byId('resultGrid');
     if (!grid || !grid.contains(event.target)) return;
@@ -1206,6 +1304,12 @@
      因此把阈值提高到 8px（常规桌面端 5-10px 区间）。 */
   var DRAG_THRESHOLD = 8;
 
+  /* 桌面卡片点击语义（单击选中 / 双击看大图）所需的两个模块级状态：
+     lastPointerType —— 记录最后一次按下的输入类型，触屏保留「单击即看大图」；
+     suppressClick  —— 拖动结束后置 true，吞掉松手时补发的那次 click。 */
+  var lastPointerType = 'mouse';
+  var suppressClick = false;
+
   function onPointerMove(event) {
     if (!drag) return;
     var dx = event.clientX - drag.startX;
@@ -1231,6 +1335,15 @@
       item.nextLeft = left;
       item.nextTop = top;
     });
+    /* 拖到「参考主体」区域上方时高亮（桌面卡片走指针拖拽，没有原生 dragover 事件） */
+    var refHoverEl = byId('refDrop');
+    if (refHoverEl && !refHoverEl.hidden) {
+      var rr = refHoverEl.getBoundingClientRect();
+      /* 与 pointerup 保持同一 12px 容差，避免「高亮了却放不进去」 */
+      var overRef = event.clientX >= rr.left - 12 && event.clientX <= rr.right + 12 &&
+                    event.clientY >= rr.top - 12 && event.clientY <= rr.bottom + 12;
+      refHoverEl.classList.toggle('is-over', overRef);
+    }
     /* 拖动时让 grid 自动跟随滚动
        注意：只能在卡片贴近可见区域边缘时才滚动，否则会出现「点一下上面的图，
        滚动条却往下跑」的问题。之前用 visibleBottom - CARD_H - 40 做阈值，
@@ -1301,49 +1414,63 @@
     var current = drag;
     drag = null;
     var merged = false;
+    /* 真正拖动过：松手后浏览器可能补发一次 click（选中/看大图），这里标记吞掉 */
+    if (current.moved) suppressClick = true;
+
+    /* 桌面图片拖到「参考主体」区域松手：作为参考主体填入（与手动上传同一条通路），
+       并把卡片位置还原，避免顺手改掉桌面布局 */
+    if (current.moved && event) {
+      var refDropEl = byId('refDrop');
+      if (refDropEl && !refDropEl.hidden) {
+        var refRect = refDropEl.getBoundingClientRect();
+        /* 12px 容差：松手时手指/光标常常差几个像素，严格边界会让用户以为「拖不进去」 */
+        var overRef = event.clientX >= refRect.left - 12 && event.clientX <= refRect.right + 12 &&
+                      event.clientY >= refRect.top - 12 && event.clientY <= refRect.bottom + 12;
+        if (overRef) {
+          refDropEl.classList.remove('is-over');
+          var dropWorkId = '';
+          for (var di = 0; di < current.items.length; di += 1) {
+            var did = String((current.items[di] && current.items[di].id) || '');
+            if (!did) continue;
+            if (did.indexOf('job:') === 0) did = did.slice(4);
+            var isFolderItem = desk.folders.some(function (f) { return f.id === did; });
+            if (!isFolderItem) { dropWorkId = did; break; }
+          }
+          current.items.forEach(function (item) {
+            if (!item || !item.el) return;
+            item.el.classList.remove('is-dragging');
+            if (item.left != null) {
+              item.el.style.left = item.left + 'px';
+              item.el.style.top = item.top + 'px';
+            }
+          });
+          if (dropWorkId && window.HMRefDrop && typeof window.HMRefDrop.acceptWorkId === 'function') {
+            window.HMRefDrop.acceptWorkId(dropWorkId);
+          } else if (dropWorkId) {
+            A.toast('参考主体功能暂不可用，请手动上传', 'error');
+          } else {
+            A.toast('只能拖图片作为参考主体', 'error');
+          }
+          return;
+        }
+      }
+    }
 
     /* 需求2：先查 elementFromPoint —— 保持 .is-dragging 让 pointer-events:none 穿透到目标卡片
-       （如果先 removeClass('is-dragging')，被拖的卡片自身会重新遮挡 elementFromPoint 的命中） */
+       （如果先 removeClass('is-dragging')，被拖的卡片自身会重新遮挡 elementFromPoint 的命中）
+       只认「已有文件夹」：拖到普通作品卡只移动位置，不再隐式新建文件夹/合并 */
     if (event && typeof document.elementFromPoint === 'function') {
       var targetEl = document.elementFromPoint(event.clientX, event.clientY);
-      var dropCard = targetEl ? targetEl.closest('.desk-card[data-work], .result-card.is-desk-job[data-job], .folder-card[data-folder]') : null;
+      var dropCard = targetEl ? targetEl.closest('.folder-card[data-folder]') : null;
       if (dropCard) {
-        var dropIsJob = dropCard.hasAttribute('data-job');
-        var dropIsFolder = dropCard.classList.contains('folder-card');
-        var dropId, workId, targetFolderId;
-        if (dropIsFolder) {
-          dropId = dropCard.dataset.folder;
-          targetFolderId = dropId;
-        } else if (dropIsJob) {
-          dropId = 'job:' + dropCard.dataset.job;
-          workId = dropCard.dataset.job;
-          targetFolderId = desk.assigns[workId];
-        } else {
-          dropId = dropCard.dataset.work;
-          workId = dropCard.dataset.work;
-          targetFolderId = desk.assigns[workId];
-        }
+        var dropId = dropCard.dataset.folder;
+        var targetFolderId = dropId;
         var draggedIds = current.items.map(function (i) { return i.id; });
         /* 不能拖到自己身上（folder 被拖也不能拖进自己） */
         if (draggedIds.indexOf(dropId) < 0 && !draggedIds.some(function (d) { return d === targetFolderId; })) {
-          /* 记住 dropCard 的原始位置——新建 folder 要放在这里 */
-          var inheritedPos = null;
-          if (!dropIsFolder) {
-            inheritedPos = desk.positions[workId] || null;
-          }
-          var folder = mergeItemsIntoFolder(draggedIds.concat([dropIsFolder ? [] : [dropId]]), targetFolderId, !dropIsFolder);
+          /* create=false：拖拽路径永不新建文件夹；目标文件夹不存在时返回 null，merged 保持 false */
+          var folder = mergeItemsIntoFolder(draggedIds, targetFolderId, false);
           if (folder) {
-            /* 新建文件夹 → 放在 dropCard 原位置 */
-            if (!dropIsFolder && inheritedPos) {
-              desk.positions[folder.id] = {
-                pxLeft: inheritedPos.pxLeft || PAD,
-                pxTop: inheritedPos.pxTop || PAD,
-                z: (inheritedPos.z || view.z + 1),
-                _userSet: true
-              };
-            } else if (!dropIsFolder && !inheritedPos) {
-              desk.positions[folder.id] = compactSlot(0, grid);
-            }
             persistNow();
             clearSelection();
             renderDesktop(); /* renderDesktop 会重建 DOM，连带清掉残留的 is-dragging */
@@ -1398,19 +1525,62 @@
   }
 
   /* ---------------- 作品操作 ---------------- */
-  function deleteWork(work) {
-    if (!work) return;
-    if (!window.confirm('删除「' + workName(work) + '」？此操作不可撤销。')) return;
-    state.works = state.works.filter(function (w) { return w.id !== work.id; });
-    delete desk.positions[work.id];
-    delete desk.assigns[work.id];
-    delete desk.names[work.id];
-    if (view.cut === work.id) view.cut = null;
-    delete view.selected[work.id];
+  /* 批量删除：选中几张删几张，确认只弹一次。
+     注意：不能逐条调用带 confirm 的删除 —— 连续弹窗会被浏览器拦截（后续 confirm 直接返回 false），
+     结果只有第一张真正被删掉。 */
+  function deleteWorks(list, silent) {
+    var works = (list || []).filter(Boolean);
+    if (!works.length) return 0;
+    if (!silent) {
+      var label = works.length === 1 ? (workName(works[0]) || '该项') : works.length + ' 项';
+      if (!window.confirm('删除「' + label + '」？此操作不可撤销。')) return 0;
+    }
+    var ids = {};
+    works.forEach(function (w) { ids[w.id] = true; });
+    state.works = state.works.filter(function (w) { return !ids[w.id]; });
+    var gridEl = (A.els && A.els.resultGrid) || document;
+    works.forEach(function (w) {
+      if (typeof A.idbDelBlob === 'function') {
+        try { A.idbDelBlob(w.id); } catch (e) {}
+      }
+      delete desk.positions[w.id];
+      delete desk.assigns[w.id];
+      delete desk.names[w.id];
+      if (view.cut === w.id) view.cut = null;
+      delete view.selected[w.id];
+      delete view.selected['job:' + w.id];
+      /* 作品与任务同 id：清掉任务记录，避免结果区/桌面残留失败或加载卡 */
+      if (A.state && A.state.jobs && typeof A.state.jobs.delete === 'function') {
+        A.state.jobs.delete(w.id);
+      }
+      Array.prototype.forEach.call(gridEl.querySelectorAll('[data-job="' + w.id + '"]'), function (node) {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      });
+    });
     persistNow();
     A.saveWorks();
     A.renderWorks();
-    A.toast('已删除', 'info');
+    /* 删除同步到后端（写墓碑，其它设备增量拉取时能感知删除） */
+    if (window.HMSync && window.HMSync.deleteWorks) {
+      window.HMSync.deleteWorks(works.map(function (w) { return w.id; }));
+    }
+    /* 删除后清理选中状态并刷新批量操作条的隐藏/计数 */
+    if (!selectedIds().length) view.selected = {};
+    syncSelection();
+    if (!silent) A.toast(works.length > 1 ? '已删除 ' + works.length + ' 项' : '已删除', 'info');
+    /* 文件夹预览打开时同步刷新，避免残留已删除的卡片 */
+    var prevModal = byId('folderPreviewModal');
+    if (prevModal && !prevModal.hidden && view.prevFolder) {
+      var prevFolder = desk.folders.find(function (f) { return f.id === view.prevFolder; });
+      if (prevFolder) openFolderPreview(prevFolder);
+      else closeFolderPreview();
+    }
+    return works.length;
+  }
+
+  function deleteWork(work) {
+    if (!work) return;
+    deleteWorks([work], false);
   }
 
   function duplicateWork(work) {
@@ -1601,6 +1771,16 @@
 
   function openWorkMenu(work, x, y) {
     view.menuWork = work;
+    var ctx = byId('hmCtx');
+    var failed = !!(work && (work.failed || work.ok === false));
+    if (ctx) {
+      var blocked = ['download', 'canvas', 'ref', 'copy', 'cut'];
+      Array.prototype.forEach.call(ctx.querySelectorAll('[data-cmd]'), function (btn) {
+        var cmd = btn.dataset.cmd;
+        if (cmd === 'retry') { btn.hidden = !failed; return; }
+        btn.disabled = failed && blocked.indexOf(cmd) >= 0;
+      });
+    }
     showContext('hmCtx', x, y);
   }
 
@@ -1625,6 +1805,7 @@
         var inner;
         if (w.type === 'video') inner = '<video src="' + url + '" muted playsinline preload="metadata"></video><span class="media-play">▶</span>';
         else if (w.type === 'audio') inner = '<span>♪</span><small>音频</small>';
+        else if (w.failed || w.ok === false) inner = '<div class="folder-prev-failed">!<small>生成失败</small></div>';
         else inner = '<img src="' + url + '" alt="' + esc(w.prompt) + '" loading="lazy" draggable="false">';
         return '<div class="folder-prev-cell" data-fp="' + esc(w.id) + '">' +
           '<div class="folder-prev-media ' + cls + '">' + inner + '</div>' +
@@ -1634,6 +1815,7 @@
     }
 
     modal.hidden = false;
+    view.prevFolder = folder.id;
 
     /* 点击弹窗内的缩略图 → 打开原图 lightbox */
     body.onclick = function (ev) {
@@ -1818,9 +2000,10 @@
 
   function historyCardHtml(work) {
     var meta = work.type === 'audio' ? '音频 · 语音合成' : (work.type === 'video' ? '视频 · ' + (work.duration || 5) + '秒' : (work.width || 0) + '×' + (work.height || 0));
-    return '<article class="hm-history-card" data-work="' + esc(work.id) + '" data-type="' + esc(work.type || 'image') + '">' +
+    var isFailed = !!(work.failed || work.ok === false);
+    return '<article class="hm-history-card' + (isFailed ? ' is-failed' : '') + '" data-work="' + esc(work.id) + '" data-type="' + esc(work.type || 'image') + '">' +
       '<div class="hm-history-thumb">' + mediaHtml(work, 'history') +
-      '<span class="hm-history-badge">已完成</span></div>' +
+      '<span class="hm-history-badge">' + (isFailed ? '生成失败' : '已完成') + '</span></div>' +
       '<div class="hm-history-info">' +
       '<strong>' + esc(workName(work)) + '</strong>' +
       '<small>' + esc((work.modelName || 'AI') + ' · ' + meta) + '</small>' +
@@ -1830,7 +2013,7 @@
       '<span class="hm-history-acts">' +
       '<button data-hact="preview" title="预览">◎</button>' +
       '<button data-hact="id" title="任务 ID">ID</button>' +
-      '<button data-hact="download" title="下载">↓</button>' +
+      '<button data-hact="download" title="' + (isFailed ? '无可下载的图片' : '下载') + '"' + (isFailed ? ' disabled' : '') + '>↓</button>' +
       '</span>' +
       '</div>' +
       '</article>';
@@ -2248,6 +2431,15 @@
       grid.addEventListener('pointerdown', onPointerDown);
       grid.addEventListener('contextmenu', function (event) {
         event.preventDefault();
+        /* 右键失败结果卡片 → 与作品卡一致的菜单（下载等置灰、重试可用） */
+        var jobCard = event.target.closest('.result-card.is-error[data-job]');
+        if (jobCard) {
+          var failedWork = findWork(jobCard.dataset.job);
+          if (failedWork) {
+            openWorkMenu(failedWork, event.clientX, event.clientY);
+            return;
+          }
+        }
         /* 右键 folder-card → folderCtx */
         var folderCard = event.target.closest('.folder-card[data-folder]');
         if (folderCard) {
@@ -2267,6 +2459,7 @@
         }
       });
       var clickTimer = null;
+      var clickSeq = 0;
       grid.addEventListener('click', function (event) {
         /* 1. folder-card 里的叠放小图 (.folder-t img) → 打开 lightbox 预览 */
         var fp = event.target.closest('.folder-t[data-fp]');
@@ -2287,19 +2480,29 @@
           }
           return;
         }
-        /* 3. desk-card 本体 → 延迟 openLightbox */
+        /* 3. desk-card 本体：单击 = 选中，双击 = 看大图（见下一个 dblclick 监听） */
         var card = event.target.closest('.desk-card[data-work]');
-        if (!card) return;
+        if (!card) { clearSelection(); return; }   /* 桌面空白单击 → 清空选中 */
         if (event.target.closest('button, [data-dact]')) return; /* 操作按钮由各自按钮处理 */
+        if (suppressClick) { suppressClick = false; return; } /* 刚拖完的松手 click 不算点击 */
         var work = findWork(card.dataset.work);
         if (!work) return;
+        /* 触屏双击不可靠：手机端保留「单击直接看大图」 */
+        if (lastPointerType === 'touch') { A.openLightbox(work); return; }
+        var seq = ++clickSeq;
         clearTimeout(clickTimer);
-        clickTimer = setTimeout(function () { A.openLightbox(work); }, 240);
+        clickTimer = setTimeout(function () {
+          if (seq !== clickSeq) return;      /* 已被双击或后续点击取消 */
+          /* 已选中（含多选中的某一张）→ 保持原样，不塌缩成单选 */
+          if (!view.selected[work.id]) selectOnly(work.id);
+        }, 320);
       });
       grid.addEventListener('dblclick', function (event) {
-        clearTimeout(clickTimer); /* 防止 double-click 触发两次 open */
         var card = event.target.closest('.desk-card[data-work]');
         if (!card) return;
+        /* 让待执行的单击定时器失效，避免弹图前先选中两次 */
+        clickSeq += 1;
+        clearTimeout(clickTimer);
         var work = findWork(card.dataset.work);
         if (work) A.openLightbox(work);
       });
@@ -2365,9 +2568,19 @@
               A.toast('已重命名', 'success');
             });
             break;
+          case 'retry': if (A.retryWork) A.retryWork(work); break;
           case 'download': A.downloadImage(work.url, A.fileNameFor(work)); break;
           case 'canvas': sendToCanvas(work); break;
-          case 'delete': deleteWork(work); break;
+          case 'delete':
+            /* 右键的那张属于当前多选集合 → 删除整批；否则维持单张删除 */
+            var selIds = selectedIds().filter(function (k) { return findWork(k); });
+            if (selIds.indexOf(work.id) >= 0 && selIds.length > 1) {
+              var selWorks = selIds.map(function (k) { return findWork(k); }).filter(Boolean);
+              if (deleteWorks(selWorks, false)) clearSelection();
+            } else {
+              deleteWork(work);
+            }
+            break;
           default: break;
         }
       });
@@ -2418,7 +2631,7 @@
         } else if (cmd === 'delete') {
           /* 删除所有选中的文件夹 */
           if (allTargetIds.length > 1) {
-            if (!window.confirm('删除 ' + allTargetIds.length + ' 个文件夹？所有作品会回到个人空间。')) return;
+            if (!window.confirm('删除 ' + allTargetIds.length + ' 个文件夹？图片会回到桌面，图片本身不会被删除。')) return;
             allTargetIds.forEach(function (fid) { deleteFolder(fid, true); });
             view.selectedFolders = {};
           } else {
@@ -2625,20 +2838,21 @@
         var folderIds = keys.filter(function (k) { return desk.folders.some(function (f) { return f.id === k; }); });
         if (folderIds.length) {
           event.preventDefault();
-          folderIds.forEach(function (fid) { deleteFolder(fid); });
+          if (folderIds.length > 1) {
+            /* 多选文件夹：确认一次后静默批量删除，避免连续 confirm 被浏览器拦截 */
+            if (!window.confirm('删除选中的 ' + folderIds.length + ' 个文件夹？图片会回到桌面，图片本身不会被删除。')) return;
+            folderIds.forEach(function (fid) { deleteFolder(fid, true); });
+          } else {
+            folderIds.forEach(function (fid) { deleteFolder(fid); });
+          }
         } else {
-          var workIds = keys.filter(function (k) { return !k.indexOf('job:'); });
+          /* 排除 'job:' 前缀（生成中/失败的任务卡），只保留作品 id */
+          var workIds = keys.filter(function (k) { return k.indexOf('job:') !== 0; });
           if (workIds.length) {
             event.preventDefault();
-            var names = workIds.map(function (k) {
-              var w = findWork(k);
-              return w ? workName(w) : '';
-            }).filter(Boolean);
-            var label = workIds.length === 1 ? (names[0] || '该项') : workIds.length + ' 项';
-            if (window.confirm('删除「' + label + '」？此操作不可撤销。')) {
-              workIds.forEach(function (k) { deleteWork(findWork(k)); });
-              clearSelection();
-            }
+            /* 多选：一次性删除整个选中集合（deleteWorks 只确认一次） */
+            var works = workIds.map(function (k) { return findWork(k); }).filter(Boolean);
+            if (works.length && deleteWorks(works, false)) clearSelection();
           }
         }
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
@@ -2996,7 +3210,10 @@
     openHistory: openHistory,
     openParam: openParam,
     deleteWork: deleteWork,
+    useAsRef: useAsRef,
     sync: syncServer,
+    pullNow: pullNow,
+    claimLegacy: claimLegacy,
     reloadForUser: reloadForUser,
     resetForLogout: resetForLogout,
     getActiveFolder: function () { return view.activeFolder; },

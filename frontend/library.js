@@ -16,13 +16,25 @@
     books: 'anidream.library.books.v2',
     fav: 'anidream.library.fav.v2',
     hist: 'anidream.library.history.v2',
-    user: 'anidream.library.user.v1'
+    user: 'anidream.library.user.v1',
+    area: 'anidream.library.area.v1'
   };
 
   var SEED = (window.HM_LIBRARY_SEED && window.HM_LIBRARY_SEED.books) || [];
 
+  /* 图书馆区域：单按钮切换，五区目前均为空 */
+  var LIB_AREAS = [
+    { id: 'ref', name: '参考素材' },
+    { id: 'psd', name: '插画作画过程PSD源文件' },
+    { id: 'anim', name: '动画教程' },
+    { id: 'paint', name: '绘画教程' },
+    { id: 'concept', name: '原画资料' }
+  ];
+
   var state = {
     mode: 'local',        /* local | remote */
+    area: 'ref',          /* 当前图书馆区域 id */
+    page: 1,              /* 当前书架页码（区域过滤后分页） */
     books: [],
     shelfBooks: [],
     fav: {},
@@ -135,6 +147,14 @@
     });
   }
 
+  function timeValue(v, fallback) {
+    if (typeof v === 'number' && isFinite(v)) return v;
+    var n = Number(v);
+    if (isFinite(n) && n > 0) return n;
+    var p = Date.parse(v);
+    return isFinite(p) ? p : fallback;
+  }
+
   function normalize(b, i) {
     var t = nowMs();
     return {
@@ -146,9 +166,13 @@
       intro: String(b.intro || ''),
       accent: /^#[0-9a-f]{6}$/i.test(String(b.accent || '')) ? b.accent : '#8a6a4f',
       coverUrl: String(b.coverUrl || ''),
+      area: String(b.area || ''),
+      pdfUrl: String(b.pdfUrl || ''),
+      pageCount: Number(b.pageCount) || 0,
+      toc: Array.isArray(b.toc) ? b.toc : [],
       sortNo: Number(b.sortNo == null ? i : b.sortNo),
-      createdAt: Number(b.createdAt || t),
-      updatedAt: Number(b.updatedAt || t),
+      createdAt: timeValue(b.createdAt, t),
+      updatedAt: timeValue(b.updatedAt, t),
       pages: (b.pages || []).map(function (p, idx) {
         return {
           pageNo: idx + 1,
@@ -195,7 +219,16 @@
   }
 
   function markShelf() {
-    state.shelfBooks = applyQuery(state.books);
+    var areaBooks = state.books.filter(function (b) { return b.area === state.area; });
+    /* 排序：sortNo 升序（001=0、002=1）；同 sortNo 按 createdAt 升序，新书排后面 */
+    areaBooks.sort(function (a, b) {
+      var sa = Number(a.sortNo), sb = Number(b.sortNo);
+      if (!isFinite(sa)) sa = 1e15;
+      if (!isFinite(sb)) sb = 1e15;
+      if (sa !== sb) return sa - sb;
+      return (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0);
+    });
+    state.shelfBooks = applyQuery(areaBooks);
   }
 
   function boot() {
@@ -241,7 +274,7 @@
       return Promise.resolve();
     }
     return request('/library/books', {}, 10000).then(function (data) {
-      state.books = data.items || [];
+      state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
     }).catch(function () {
       state.mode = 'local';
@@ -324,60 +357,99 @@
     els.body.innerHTML = '<div class="lib-loading">正在整理书架…</div>';
   }
 
-  var SHELF_PER_ROW = 6;
+  var SHELF_PER_ROW = 8;
+  var SHELF_PAGE_SIZE = 24;   /* 每页 3 架 × 8 本 */
 
   function renderShelf() {
     if (!els.body) return;
-    var list = state.shelfBooks;
+    var total = state.shelfBooks.length;
+    var pages = Math.max(1, Math.ceil(total / SHELF_PAGE_SIZE));
+    if (state.page > pages) state.page = pages;
+    if (state.page < 1) state.page = 1;
+    var start = (state.page - 1) * SHELF_PAGE_SIZE;
+    var list = state.shelfBooks.slice(start, start + SHELF_PAGE_SIZE);
     if (!list.length) {
-      els.body.innerHTML = '<div class="lib-empty">'
+      /* 0 本书也渲染三层空柜子，空态提示叠在柜体内部 */
+      var emptyRows = '';
+      for (var r = 0; r < 3; r++) {
+        emptyRows += '<section class="lib-shelf-row">'
+          + '<div class="lib-shelf-books"></div>'
+          + '<div class="lib-shelf-plank">'
+          + '<span class="lib-shelf-label">第 ' + (r + 1) + ' 架</span>'
+          + '<span class="lib-shelf-count">0 册</span>'
+          + '</div></section>';
+      }
+      els.body.innerHTML = '<div class="lib-shelf-wrap">' + emptyRows
+        + '<div class="lib-empty lib-shelf-empty">'
         + '<div class="lib-empty-icon">📖</div>'
         + '<h3>' + (state.query ? '没有找到相关书籍' : '书架还是空的') + '</h3>'
         + '<p>' + (state.query ? '换个关键词试试，或清空搜索查看全部藏书。' : '点击右上角「新增书籍」，把第一本书放上书架。') + '</p>'
-        + '</div>';
+        + '</div></div>';
+      renderPager(0);
       renderStatus();
       return;
     }
 
-    var rows = [];
-    for (var i = 0; i < list.length; i += SHELF_PER_ROW) {
-      rows.push(list.slice(i, i + SHELF_PER_ROW));
-    }
-
-    var html = rows.map(function (group, rowIndex) {
-      var label = group[0] && group[0].category ? group[0].category : '藏书';
+    /* 每页固定 3 层：不足的书位留空，不塌陷 */
+    var html = '';
+    for (var rowIndex = 0; rowIndex < 3; rowIndex++) {
+      var group = list.slice(rowIndex * SHELF_PER_ROW, (rowIndex + 1) * SHELF_PER_ROW);
       var booksHtml = group.map(function (b, idx) {
-        return bookCardHtml(b, rowIndex * SHELF_PER_ROW + idx);
+        return bookCardHtml(b, start + rowIndex * SHELF_PER_ROW + idx);
       }).join('');
-      return '<section class="lib-shelf-row">'
-        + '<div class="lib-shelf-books">' + booksHtml + '</div>'
+      html += '<section class="lib-shelf-row">'
+        + '<div class="lib-shelf-books' + (group.length >= SHELF_PER_ROW ? ' is-full' : '') + '">' + booksHtml + '</div>'
         + '<div class="lib-shelf-plank">'
-        + '<span class="lib-shelf-label">第 ' + (rowIndex + 1) + ' 架 · ' + esc(label) + '</span>'
+        + '<span class="lib-shelf-label">第 ' + (rowIndex + 1) + ' 架</span>'
         + '<span class="lib-shelf-count">' + group.length + ' 册</span>'
         + '</div></section>';
-    }).join('');
+    }
 
     els.body.innerHTML = '<div class="lib-shelf-wrap">' + html + '</div>';
+    renderPager(total);
     renderStatus();
+  }
+
+  /* 底部页码控件：总数不足一页时隐藏 */
+  function renderPager(total) {
+    if (!els.pager) return;
+    var pages = Math.max(1, Math.ceil(total / SHELF_PAGE_SIZE));
+    if (pages <= 1) {
+      els.pager.hidden = true;
+      return;
+    }
+    els.pager.hidden = false;
+    if (els.pagerInfo) els.pagerInfo.textContent = '第 ' + state.page + ' / ' + pages + ' 页';
+    if (els.pagerInput) {
+      els.pagerInput.value = state.page;
+      els.pagerInput.max = pages;
+    }
+    if (els.pagerPrev) els.pagerPrev.disabled = state.page <= 1;
+    if (els.pagerNext) els.pagerNext.disabled = state.page >= pages;
   }
 
   function bookCardHtml(b, index) {
     var tilt = ((index % 5) - 2) * 1.1;
-    var width = 88 + (index % 3) * 7;
+    var width = 120; /* 八本等宽，层内等距排开 */
     var pageCount = (b.pages && b.pages.length) || Number(b.pageCount) || 0;
     var hasProgress = progressOf(b.id) > 0;
-    return '<button type="button" class="lib-book" data-id="' + esc(b.id) + '"'
+    return '<button type="button" class="lib-book' + (b.coverUrl ? ' has-cover' : '') + '" data-id="' + esc(b.id) + '"'
       + ' style="--accent:' + esc(b.accent) + ';--tilt:' + tilt + 'deg;--w:' + width + 'px"'
       + ' title="' + esc(b.title) + ' · ' + esc(b.author) + '">'
       + '<span class="lib-book-body">'
       + '<span class="lib-book-spine"><span class="lib-book-spine-title">' + esc(b.title) + '</span></span>'
       + '<span class="lib-book-cover">'
       + '<span class="lib-book-cover-frame"></span>'
+      + '<span class="lib-book-cover-gen">'
       + '<span class="lib-book-cover-title">' + esc(b.title) + '</span>'
       + '<span class="lib-book-cover-rule"></span>'
       + '<span class="lib-book-cover-author">' + esc(b.author) + '</span>'
       + '<span class="lib-book-cover-seal">藏</span>'
       + '<span class="lib-book-cover-brand">绘梦藏书</span>'
+      + '</span>'
+      + (b.coverUrl
+        ? '<img class="lib-book-cover-img" src="' + esc(b.coverUrl) + '" alt="' + esc(b.title) + '" loading="lazy">'
+        : '')
       + '</span>'
       + '<span class="lib-book-edge"></span>'
       + '</span>'
@@ -409,6 +481,7 @@
       clearTimeout(searchTimer);
       var value = input.value;
       state.query = value;
+      state.page = 1;
       markShelf();
       renderShelf();
       if (els.clearBtn) els.clearBtn.hidden = !value;
@@ -648,12 +721,14 @@
       + '<button type="button" class="lib-back-btn" data-back>← 返回书架</button>'
       + '<div class="lib-detail-grid">'
       + '<div class="lib-detail-cover-col">'
-      + '<div class="lib-detail-cover" style="--accent:' + esc(book.accent) + '">'
-      + '<span class="lib-detail-cover-frame"></span>'
-      + '<span class="lib-detail-cover-title">' + esc(book.title) + '</span>'
-      + '<span class="lib-detail-cover-rule"></span>'
-      + '<span class="lib-detail-cover-author">' + esc(book.author) + '</span>'
-      + '<span class="lib-detail-cover-brand">绘梦藏书 · 统一模板</span>'
+      + '<div class="lib-detail-cover" style="--accent:' + esc(book.accent) + '" data-author="' + esc(book.author) + '">'
+      + (book.coverUrl
+        ? '<img class="lib-detail-cover-img" src="' + esc(book.coverUrl) + '" alt="' + esc(book.title) + '">'
+        : '<span class="lib-detail-cover-frame"></span>'
+          + '<span class="lib-detail-cover-title">' + esc(book.title) + '</span>'
+          + '<span class="lib-detail-cover-rule"></span>'
+          + '<span class="lib-detail-cover-author">' + esc(book.author) + '</span>'
+          + '<span class="lib-detail-cover-brand">绘梦藏书 · 统一模板</span>')
       + '</div>'
       + '<div class="lib-detail-cover-shadow"></div>'
       + '</div>'
@@ -666,7 +741,7 @@
       }).join('') + '</div>'
       + '<p class="lib-detail-intro">' + esc(book.intro || '这本书还没有写下简介。') + '</p>'
       + '<div class="lib-detail-meta">'
-      + '<span>共 ' + pages + ' 页</span><span>' + esc(book.category) + '</span>'
+      + '<span>共 ' + bookTotalPages(book) + ' 页</span><span>' + esc(book.category) + '</span>'
       + '<span>更新于 ' + dateStr + '</span><span>' + detailProgressText(book) + '</span>'
       + '</div>'
       + '<div class="lib-detail-actions">'
@@ -690,6 +765,22 @@
 
     els.detail.hidden = false;
     requestAnimationFrame(function () { els.detail.classList.add('is-open'); });
+
+    /* 详情页封面坏图：退化成文字封面 */
+    var detailCoverImg = els.detail.querySelector('.lib-detail-cover-img');
+    if (detailCoverImg) detailCoverImg.addEventListener('error', function () {
+      var box = detailCoverImg.closest('.lib-detail-cover');
+      if (!box) return;
+      var title = detailCoverImg.getAttribute('alt') || '';
+      var author = box.getAttribute('data-author') || '';
+      if (detailCoverImg.parentNode) detailCoverImg.parentNode.removeChild(detailCoverImg);
+      box.insertAdjacentHTML('afterbegin',
+        '<span class="lib-detail-cover-frame"></span>'
+        + '<span class="lib-detail-cover-title">' + esc(title) + '</span>'
+        + '<span class="lib-detail-cover-rule"></span>'
+        + '<span class="lib-detail-cover-author">' + esc(author) + '</span>'
+        + '<span class="lib-detail-cover-brand">绘梦藏书 · 统一模板</span>');
+    });
 
     els.detail.querySelector('[data-back]').addEventListener('click', function () { closeDetail(); });
     els.detail.querySelector('[data-read]').addEventListener('click', function () {
@@ -732,10 +823,351 @@
   /* ---------------- 阅读器 ---------------- */
   function pageCount(book) { return (book.pages || []).length + 1; }
 
+  /* 真实总页数：优先书目接口的 pageCount，退回正文页数 */
+  function bookTotalPages(book) {
+    var n = Number(book && book.pageCount);
+    if (n > 0) return n;
+    return (book && book.pages ? book.pages.length : 0);
+  }
+
+  /* -------- PDF 目录：优先接口 toc，其次 pdf.js 书签，最后页码跳转 -------- */
+  function setupPdfToc(book, doc) {
+    var listEl = els.reader.querySelector('[data-toc-list]');
+    if (!listEl) return;
+    var toc = book.toc || [];
+    if (toc.length) { renderPdfTocItems(listEl, toc); return; }
+    if (!doc) {
+      listEl.dataset.done = '1';
+      listEl.innerHTML = '<div class="lib-toc-note">该 PDF 无内置目录<br>可在下方输入页码跳转</div>';
+      return;
+    }
+    doc.getOutline().then(function (outline) {
+      if (!outline || !outline.length) throw new Error('empty-outline');
+      return resolvePdfOutline(doc, outline);
+    }).then(function (items) {
+      if (!items.length) throw new Error('empty-outline');
+      renderPdfTocItems(listEl, items);
+    }).catch(function () {
+      listEl.dataset.done = '1';
+      listEl.innerHTML = '<div class="lib-toc-note">该 PDF 无内置目录<br>可在下方输入页码跳转</div>';
+    });
+  }
+
+  function normalizeTocPage(item) {
+    var page = Number(item.page || item.p || 0);
+    if (!page && item.href) {
+      var m = /#page=(\d+)/i.exec(String(item.href));
+      if (m) page = parseInt(m[1], 10);
+    }
+    return page;
+  }
+
+  function renderPdfTocItems(listEl, items) {
+    listEl.dataset.done = '1';
+    var html = items.map(function (it) {
+      var page = normalizeTocPage(it);
+      var depth = Math.min(Number(it.depth) || 0, 2);
+      var title = it.title || it.name || it.label || '未命名';
+      return '<button type="button" class="lib-pdf-toc-item' + (page ? '' : ' is-disabled') + '" data-toc-page="' + (page || '') + '" style="padding-left:' + (8 + depth * 12) + 'px">'
+        + esc(title) + (page ? '<span class="lib-pdf-toc-page">' + page + '</span>' : '') + '</button>';
+    }).join('');
+    listEl.innerHTML = html || '<div class="lib-toc-note">该 PDF 无内置目录</div>';
+    listEl.querySelectorAll('[data-toc-page]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var page = parseInt(btn.getAttribute('data-toc-page'), 10);
+        if (page) flipTo(page);
+      });
+    });
+  }
+
+  var PDFJS_BASE = 'vendor/pdfjs/';
+  var pdfJsPromise = null;
+  function loadPdfJs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfJsPromise) return pdfJsPromise;
+    pdfJsPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = PDFJS_BASE + 'pdf.min.js';
+      s.onload = function () {
+        try {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js';
+        } catch (e) {}
+        resolve(window.pdfjsLib);
+      };
+      s.onerror = function () {
+        pdfJsPromise = null;
+        reject(new Error('pdfjs-load-failed：' + s.src));
+      };
+      document.head.appendChild(s);
+    });
+    return pdfJsPromise;
+  }
+
+  function resolvePdfOutline(doc, outline) {
+    var out = [];
+    function walk(items, depth) {
+      return items.reduce(function (p, it) {
+        return p.then(function () {
+          var destPromise = it.dest
+            ? doc.getDestination(it.dest).catch(function () { return null; })
+            : Promise.resolve(null);
+          return destPromise.then(function (dest) {
+            var pagePromise = (dest && dest[0])
+              ? doc.getPageIndex(dest[0]).then(function (idx) { return idx + 1; }).catch(function () { return 0; })
+              : Promise.resolve(0);
+            return pagePromise.then(function (page) {
+              out.push({ title: it.title || '未命名', page: page, depth: depth });
+              return (it.items && it.items.length) ? walk(it.items, depth + 1) : null;
+            });
+          });
+        }, function () { return null; });
+      }, Promise.resolve());
+    }
+    return walk(outline, 0).then(function () { return out; });
+  }
+
+  /* -------- PDF 阅读：pdf.js canvas 自绘；任何失败都只在站内提示，绝不导航直链 -------- */
+  function pdfOverlay() {
+    return els.reader && els.reader.querySelector('[data-pdf-loading]');
+  }
+
+  function pdfLoadingText(text) {
+    var el = els.reader && els.reader.querySelector('[data-loading-text]');
+    if (el) el.textContent = text;
+  }
+
+  function hidePdfLoading() {
+    var overlay = pdfOverlay();
+    if (overlay) overlay.classList.add('is-hidden');
+  }
+
+  function updatePdfZoomLabel() {
+    var el = els.reader && els.reader.querySelector('[data-zoom-label]');
+    if (!el) return;
+    el.textContent = state.pdfZoom === 'fit' ? '适合宽度' : Math.round(Number(state.pdfZoom) * 100) + '%';
+  }
+
+  function setPdfZoom(next) {
+    state.pdfZoom = next;
+    updatePdfZoomLabel();
+    renderPdfCanvas();
+  }
+
+  function renderPdfCanvas() {
+    var doc = state.pdfDoc;
+    var canvas = els.reader && els.reader.querySelector('[data-pdf-canvas]');
+    var scroll = els.reader && els.reader.querySelector('[data-pdf-scroll]');
+    if (!doc || !canvas || !scroll) return;
+    var pageNo = Math.max(1, Math.min(state.page, doc.numPages));
+    var token = ++state.pdfToken;
+    if (state.pdfTask && state.pdfTask.cancel) {
+      try { state.pdfTask.cancel(); } catch (e) {}
+    }
+    doc.getPage(pageNo).then(function (page) {
+      if (token !== state.pdfToken) return null;
+      var base = page.getViewport({ scale: 1 });
+      var availW = Math.max(240, (scroll.clientWidth || 820) - 28);
+      var scale = state.pdfZoom === 'fit' ? availW / base.width : Number(state.pdfZoom);
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var vp = page.getViewport({ scale: scale * dpr });
+      canvas.width = Math.round(vp.width);
+      canvas.height = Math.round(vp.height);
+      canvas.style.width = Math.round(vp.width / dpr) + 'px';
+      canvas.style.height = Math.round(vp.height / dpr) + 'px';
+      var task = page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+      state.pdfTask = task;
+      return task.promise.then(function () {
+        if (token !== state.pdfToken) return;
+        hidePdfLoading();
+        /* 只预取下一页，不预取全书 */
+        state.pdfPrefetched = state.pdfPrefetched || {};
+        var next = pageNo + 1;
+        if (next <= doc.numPages && !state.pdfPrefetched[next]) {
+          state.pdfPrefetched[next] = true;
+          doc.getPage(next).catch(function () {});
+        }
+      });
+    }).catch(function (err) {
+      if (err && err.name === 'RenderingCancelledException') return;
+      console.warn('[library] PDF 渲染失败：', err && err.name, err && err.message);
+      showPdfError(err);
+    });
+    scroll.scrollTop = 0;
+  }
+
+  /* 失败时只在站内提示 + 重试；不创建 iframe、不打开直链 */
+  function showPdfError(err) {
+    var scroll = els.reader && els.reader.querySelector('[data-pdf-scroll]');
+    if (scroll) scroll.hidden = true;
+    var bar = els.reader && els.reader.querySelector('.lib-pdf-toolbar');
+    if (bar) bar.hidden = true;
+    var overlay = pdfOverlay();
+    if (overlay) overlay.classList.remove('is-hidden');
+    var spinner = els.reader && els.reader.querySelector('[data-pdf-spinner]');
+    if (spinner) spinner.hidden = true;
+    var detail = '';
+    if (err) {
+      detail = (err.name || 'Error') + (err.message ? '：' + String(err.message).slice(0, 400) : '');
+    }
+    pdfLoadingText(detail ? 'PDF 加载失败（' + detail + '），请点击「重试」' : 'PDF 加载失败，请点击「重试」');
+    var retry = els.reader && els.reader.querySelector('[data-pdf-retry]');
+    if (retry) retry.hidden = false;
+    if (err) console.warn('[library] PDF 加载失败：', err.name || '', err.message || '');
+  }
+
+  function ensurePdfDoc(book) {
+    if (state.pdfDoc) return Promise.resolve(state.pdfDoc);
+    if (state.pdfDocPromise) return state.pdfDocPromise;
+
+    function streamUrl(url) {
+      var s = String(url || '');
+      var hashAt = s.indexOf('#');
+      var hash = hashAt >= 0 ? s.slice(hashAt) : '';
+      var base = hashAt >= 0 ? s.slice(0, hashAt) : s;
+      return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'stream=1' + hash;
+    }
+
+    state.pdfDocPromise = loadPdfJs()
+      .then(function (pdfjs) {
+        function open(url) {
+          /* 分段读取：只取当前页需要的字节 */
+          return pdfjs.getDocument({
+            url: url,
+            disableRange: false,
+            disableStream: false
+          }).promise;
+        }
+        return open(book.pdfUrl).catch(function (err) {
+          var directMsg = (err && err.name) + ' / ' + (err && err.message);
+          console.warn('[library] 直链加载失败，切换流式接口：', directMsg);
+          pdfLoadingText('直链加载失败，已切换流式加载 …');
+          return open(streamUrl(book.pdfUrl)).catch(function (err2) {
+            var e = new Error(
+              '直链 ' + book.pdfUrl + '：' + directMsg +
+              '；流式 ' + streamUrl(book.pdfUrl) + '：' + (err2 && err2.name) + ' / ' + (err2 && err2.message)
+            );
+            e.name = (err2 && err2.name) || (err && err.name) || 'Error';
+            throw e;
+          });
+        });
+      })
+      .then(function (doc) { state.pdfDoc = doc; return doc; });
+    return state.pdfDocPromise;
+  }
+
+  /* PDF 加载提示与重试；先渲染框架，再加载 PDF */
+  function setupPdfReader(book) {
+    state.pdfDoc = null;
+    state.pdfDocPromise = null;
+    state.pdfTotal = 0;
+    state.pdfZoom = 'fit';
+    state.pdfPrefetched = {};
+    state.pdfToken = (state.pdfToken || 0) + 1;
+
+    var overlay = pdfOverlay();
+    var txt = overlay && overlay.querySelector('[data-loading-text]');
+    var retry = overlay && overlay.querySelector('[data-pdf-retry]');
+    var slow = null;
+
+    function resetLoading(text) {
+      var sc = els.reader && els.reader.querySelector('[data-pdf-scroll]');
+      var bar = els.reader && els.reader.querySelector('.lib-pdf-toolbar');
+      var spinner = els.reader && els.reader.querySelector('[data-pdf-spinner]');
+      if (overlay) overlay.classList.remove('is-hidden');
+      if (sc) sc.hidden = false;
+      if (bar) bar.hidden = false;
+      if (spinner) spinner.hidden = false;
+      pdfLoadingText(text || '正在加载 PDF …');
+      if (retry) retry.hidden = true;
+      if (slow) clearTimeout(slow);
+      slow = setTimeout(function () {
+        pdfLoadingText('仍在加载 PDF … 请稍候，或点击重试');
+        if (retry) retry.hidden = false;
+      }, 12000);
+    }
+
+    resetLoading();
+
+    var scroll = els.reader.querySelector('[data-pdf-scroll]');
+    if (scroll && !scroll.dataset.pdfWheel) {
+      scroll.dataset.pdfWheel = '1';
+      scroll.addEventListener('wheel', function (e) {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        var steps = ['fit', 1, 1.5, 2, 3];
+        var i = steps.indexOf(state.pdfZoom);
+        if (i < 0) i = 0;
+        setPdfZoom(steps[Math.max(0, Math.min(steps.length - 1, i + (e.deltaY < 0 ? 1 : -1)))]);
+      }, { passive: false });
+    }
+    var zoomOut = els.reader.querySelector('[data-zoom-out]');
+    var zoomIn = els.reader.querySelector('[data-zoom-in]');
+    var zoomSteps = ['fit', 1, 1.5, 2, 3];
+    if (zoomOut && !zoomOut.dataset.pdfZoom) zoomOut.dataset.pdfZoom = '1';
+    if (zoomIn && !zoomIn.dataset.pdfZoom) zoomIn.dataset.pdfZoom = '1';
+    if (zoomOut && !zoomOut.dataset.pdfZoomBound) {
+      zoomOut.dataset.pdfZoomBound = '1';
+      zoomOut.addEventListener('click', function () {
+        var i = zoomSteps.indexOf(state.pdfZoom);
+        setPdfZoom(zoomSteps[Math.max(0, (i < 0 ? 0 : i) - 1)]);
+      });
+    }
+    if (zoomIn && !zoomIn.dataset.pdfZoomBound) {
+      zoomIn.dataset.pdfZoomBound = '1';
+      zoomIn.addEventListener('click', function () {
+        var i = zoomSteps.indexOf(state.pdfZoom);
+        setPdfZoom(zoomSteps[Math.min(zoomSteps.length - 1, (i < 0 ? 0 : i) + 1)]);
+      });
+    }
+
+    if (retry) {
+      retry.dataset.pdfRetry = '1';
+      retry.onclick = function () {
+        state.pdfDoc = null;
+        state.pdfDocPromise = null;
+        setupPdfReader(book);
+        paintPdfPage();
+      };
+    }
+
+    var jump = els.reader.querySelector('[data-toc-jump]');
+    var go = els.reader.querySelector('[data-toc-go]');
+    function doJump() {
+      var n = parseInt(jump && jump.value, 10);
+      if (!n || n < 1) return;
+      flipTo(Math.min(n, Math.max(1, state.pdfTotal || bookTotalPages(book))));
+    }
+    if (go && !go.dataset.pdfBound) {
+      go.dataset.pdfBound = '1';
+      go.addEventListener('click', doJump);
+    }
+    if (jump && !jump.dataset.pdfBound) {
+      jump.dataset.pdfBound = '1';
+      jump.addEventListener('keydown', function (e) { if (e.key === 'Enter') doJump(); });
+    }
+
+    ensurePdfDoc(book).then(function (doc) {
+      state.pdfTotal = doc.numPages;
+      updatePdfZoomLabel();
+      paintPdfPage();
+      setupPdfToc(book, doc);
+    }).catch(function (err) {
+      console.warn('[library] pdf.js 加载失败：', err && err.name, err && err.message);
+      showPdfError(err);
+      setupPdfToc(book, null);
+    });
+  }
+
   function enterReader(book, page) {
     if (!book) return;
     state.current = book;
-    state.page = Math.max(0, Math.min(Number(page) || 0, pageCount(book) - 1));
+    if (book.pdfUrl) {
+      /* PDF 书：页号 1..真实总页数 */
+      var pdfMax = Math.max(1, bookTotalPages(book));
+      state.page = Math.max(1, Math.min(Number(page) || 1, pdfMax));
+    } else {
+      state.page = Math.max(0, Math.min(Number(page) || 0, pageCount(book) - 1));
+    }
     closeDetail(true);
     renderReader();
     els.reader.hidden = false;
@@ -746,31 +1178,60 @@
 
   function renderReader() {
     if (!els.reader) return;
+    var book = state.current;
+    var isPdf = !!book.pdfUrl;
+    var stageHtml = isPdf
+      ? '<aside class="lib-pdf-toc">'
+        + '<div class="lib-pdf-toc-head">目录</div>'
+        + '<div class="lib-pdf-toc-list" data-toc-list><div class="lib-toc-note">正在解析目录…</div></div>'
+        + '<div class="lib-pdf-toc-jump"><input type="number" min="1" step="1" data-toc-jump placeholder="页码"><button type="button" class="lib-toc-go" data-toc-go>跳转</button></div>'
+        + '</aside>'
+        + '<div class="lib-pdf-view">'
+        + '<div class="lib-pdf-toolbar">'
+        + '<button type="button" class="lib-pdf-zoom" data-zoom-out aria-label="缩小">−</button>'
+        + '<span class="lib-pdf-zoom-label" data-zoom-label>适合宽度</span>'
+        + '<button type="button" class="lib-pdf-zoom" data-zoom-in aria-label="放大">+</button>'
+        + '<button type="button" class="lib-pdf-open" data-pdf-full>⛶ 全屏阅读</button>'
+        + '</div>'
+        + '<div class="lib-pdf-scroll" data-pdf-scroll><canvas class="lib-pdf-canvas" data-pdf-canvas></canvas></div>'
+        + '<div class="lib-pdf-loading" data-pdf-loading>'
+        + '<span class="lib-pdf-spinner" data-pdf-spinner></span><span data-loading-text>正在加载 PDF …</span>'
+        + '<button type="button" class="lib-pdf-retry" data-pdf-retry hidden>重试</button>'
+        + '</div>'
+        + '</div>'
+      : '<div class="lib-book-frame">'
+        + '<div class="lib-page-under" data-under></div>'
+        + '<div class="lib-page-top" data-top></div>'
+        + '<div class="lib-page-gutter"></div>'
+        + '</div>';
     els.reader.innerHTML = '<div class="lib-reader-top">'
       + '<button type="button" class="lib-reader-back" data-exit>← 合上书</button>'
-      + '<div class="lib-reader-title">《' + esc(state.current.title) + '》</div>'
+      + '<div class="lib-reader-title">《' + esc(book.title) + '》</div>'
       + '<div class="lib-reader-page-label" data-page-label></div>'
+      + '<button type="button" class="lib-fs-btn" data-fs title="全屏阅读">⛶ 全屏</button>'
       + '</div>'
-      + '<div class="lib-reader-stage">'
+      + '<div class="lib-reader-stage' + (isPdf ? ' is-pdf' : '') + '">'
       + '<button type="button" class="lib-flip-zone lib-flip-left" data-prev aria-label="上一页">'
       + '<span class="lib-flip-arrow">‹</span></button>'
-      + '<div class="lib-book-frame">'
-      + '<div class="lib-page-under" data-under></div>'
-      + '<div class="lib-page-top" data-top></div>'
-      + '<div class="lib-page-gutter"></div>'
-      + '</div>'
+      + stageHtml
       + '<button type="button" class="lib-flip-zone lib-flip-right" data-next aria-label="下一页">'
       + '<span class="lib-flip-arrow">›</span></button>'
       + '</div>'
       + '<div class="lib-reader-bottom">'
       + '<div class="lib-reader-progress"><div class="lib-reader-progress-fill" data-fill></div></div>'
-      + '<div class="lib-reader-hint">点击左侧 / 右侧翻页 · 也可使用 ← → 键</div>'
+      + '<div class="lib-reader-hint">' + (isPdf ? '左右按钮翻 PDF 页 · 上下滑动浏览' : '点击左侧 / 右侧翻页 · 也可使用 ← → 键') + '</div>'
       + '</div>';
 
     els.reader.querySelector('[data-exit]').addEventListener('click', exitReader);
     els.reader.querySelector('[data-prev]').addEventListener('click', function () { flipTo(state.page - 1); });
     els.reader.querySelector('[data-next]').addEventListener('click', function () { flipTo(state.page + 1); });
-    els.reader.querySelector('[data-top]').addEventListener('click', function (event) {
+    els.reader.querySelector('[data-fs]').addEventListener('click', toggleReaderFullscreen);
+    var fullBtn = els.reader.querySelector('[data-pdf-full]');
+    if (fullBtn) fullBtn.addEventListener('click', toggleReaderFullscreen);
+    syncFsButton();
+    if (isPdf) setupPdfReader(book);
+    var topEl = els.reader.querySelector('[data-top]');
+    if (topEl) topEl.addEventListener('click', function (event) {
       var toc = event.target.closest('[data-toc-page]');
       if (toc) {
         var targetPage = Number(toc.getAttribute('data-toc-page'));
@@ -789,22 +1250,36 @@
 
   function paintPage() {
     if (!els.reader || !state.current) return;
+    if (state.current.pdfUrl) { paintPdfPage(); return; }
     var top = els.reader.querySelector('[data-top]');
     var under = els.reader.querySelector('[data-under]');
     if (top) top.innerHTML = pageHtml(state.current, state.page);
     if (under) under.innerHTML = '';
     var label = els.reader.querySelector('[data-page-label]');
+    var realTotal = bookTotalPages(state.current);
     if (label) {
-      var total = pageCount(state.current);
       label.textContent = state.page === 0
-        ? '目录 · 共 ' + (total - 1) + ' 页'
-        : '第 ' + state.page + ' / ' + (total - 1) + ' 页';
+        ? '目录 · 共 ' + realTotal + ' 页'
+        : '第 ' + state.page + ' / ' + Math.max(realTotal, state.page) + ' 页';
     }
     var fill = els.reader.querySelector('[data-fill]');
     if (fill) {
-      var pct = total <= 1 ? 100 : Math.round((state.page / (total - 1)) * 100);
-      fill.style.width = pct + '%';
+      var pct = realTotal <= 0 ? 100 : Math.round((state.page / realTotal) * 100);
+      fill.style.width = Math.min(100, pct) + '%';
     }
+    updateFlipZones();
+  }
+
+  /* PDF 阅读：只走 pdf.js canvas 自绘 */
+  function paintPdfPage() {
+    var book = state.current;
+    var total = state.pdfTotal || Math.max(1, bookTotalPages(book));
+    if (state.page > total) state.page = total;
+    if (state.pdfDoc) renderPdfCanvas();
+    var label = els.reader.querySelector('[data-page-label]');
+    if (label) label.textContent = '第 ' + state.page + ' / ' + total + ' 页';
+    var fill = els.reader.querySelector('[data-fill]');
+    if (fill) fill.style.width = Math.min(100, Math.round((state.page / total) * 100)) + '%';
     updateFlipZones();
   }
 
@@ -812,8 +1287,13 @@
     if (!els.reader) return;
     var prev = els.reader.querySelector('[data-prev]');
     var next = els.reader.querySelector('[data-next]');
-    if (prev) prev.classList.toggle('is-disabled', state.page <= 0);
-    if (next) next.classList.toggle('is-disabled', state.page >= pageCount(state.current) - 1);
+    var isPdf = !!(state.current && state.current.pdfUrl);
+    var max = isPdf
+      ? (state.pdfTotal || Math.max(1, bookTotalPages(state.current)))
+      : pageCount(state.current) - 1;
+    var min = isPdf ? 1 : 0;
+    if (prev) prev.classList.toggle('is-disabled', state.page <= min);
+    if (next) next.classList.toggle('is-disabled', state.page >= max);
   }
 
   function pageHtml(book, page) {
@@ -863,6 +1343,14 @@
   }
 
   function flipTo(target) {
+    if (state.current && state.current.pdfUrl) {
+      var pdfTotal = state.pdfTotal || Math.max(1, bookTotalPages(state.current));
+      if (target < 1 || target > pdfTotal || target === state.page) return;
+      state.page = target;
+      paintPage();
+      persistProgress(state.current.id, state.page);
+      return;
+    }
     var total = pageCount(state.current);
     if (state.flipBusy || target < 0 || target >= total) return;
     doFlip(target, target > state.page ? 'next' : 'prev');
@@ -914,8 +1402,41 @@
     setTimeout(finish, 760);
   }
 
+  /* 阅读界面全屏（Esc 退出时按钮状态由 fullscreenchange 复位） */
+  function syncFsButton() {
+    var btn = els.reader && els.reader.querySelector('[data-fs]');
+    if (!btn) return;
+    var on = !!document.fullscreenElement && els.reader.contains(document.fullscreenElement);
+    btn.textContent = on ? '⤢ 退出全屏' : '⛶ 全屏';
+    btn.classList.toggle('is-on', on);
+    var full = els.reader.querySelector('[data-pdf-full]');
+    if (full) {
+      full.textContent = on ? '⤢ 退出全屏' : '⛶ 全屏阅读';
+      full.classList.toggle('is-on', on);
+    }
+  }
+
+  function toggleReaderFullscreen() {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+      return;
+    }
+    if (els.reader && els.reader.requestFullscreen) {
+      var p = els.reader.requestFullscreen();
+      if (p && p.catch) p.catch(function () {});
+    }
+  }
+
   function exitReader() {
     if (!els.reader) return;
+    if (document.fullscreenElement && els.reader.contains(document.fullscreenElement) && document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+    state.pdfDoc = null;
+    state.pdfDocPromise = null;
+    state.pdfTotal = 0;
+    state.pdfPrefetched = {};
+    state.pdfToken = (state.pdfToken || 0) + 1;
     els.reader.classList.remove('is-open', 'is-entering');
     els.reader.hidden = true;
     els.reader.innerHTML = '';
@@ -1123,12 +1644,67 @@
       if (els.reader && !els.reader.hidden) {
         if (event.key === 'ArrowLeft') flipTo(state.page - 1);
         else if (event.key === 'ArrowRight') flipTo(state.page + 1);
-        else if (event.key === 'Escape') exitReader();
+        else if (event.key === 'Escape') {
+          if (document.fullscreenElement) return; /* 交给浏览器退全屏，按钮由 fullscreenchange 复位 */
+          exitReader();
+        }
         return;
       }
       if (els.detail && !els.detail.hidden) {
         if (event.key === 'Escape') closeDetail();
       }
+    });
+  }
+
+  /* ---------------- 区域切换（单按钮 + 弹窗） ---------------- */
+  function areaById(id) {
+    for (var i = 0; i < LIB_AREAS.length; i++) {
+      if (LIB_AREAS[i].id === id) return LIB_AREAS[i];
+    }
+    return LIB_AREAS[0];
+  }
+
+  function currentArea() { return areaById(state.area); }
+
+  function syncAreaBtn() {
+    var nameEl = $('libAreaName');
+    if (nameEl) nameEl.textContent = currentArea().name;
+    var btn = $('libAreaBtn');
+    if (btn) btn.title = '切换图书馆区域 · 当前：' + currentArea().name;
+  }
+
+  function setArea(id) {
+    state.area = areaById(id).id;
+    state.page = 1;
+    writeJSON(LS.area, state.area);
+    syncAreaBtn();
+    markShelf();
+    renderShelf();
+  }
+
+  function openAreaPicker() {
+    if (!els.modal) return;
+    els.modal.hidden = false;
+    els.modal.innerHTML = '<div class="lib-modal-mask" data-mask></div>'
+      + '<div class="lib-modal-card lib-panel" role="dialog" aria-label="选择图书馆区域">'
+      + '<div class="lib-modal-head"><h3>选择区域</h3>'
+      + '<button type="button" class="lib-modal-close" data-close>×</button></div>'
+      + '<div class="lib-panel-list">' + LIB_AREAS.map(function (a) {
+        var on = a.id === state.area;
+        return '<button type="button" class="lib-panel-item lib-area-item' + (on ? ' is-current' : '') + '" data-area="' + a.id + '">'
+          + '<span class="lib-panel-cover" style="--accent:#c9a227"><span>' + esc(a.name.slice(0, 2)) + '</span></span>'
+          + '<span class="lib-panel-text"><b>' + esc(a.name) + '</b><small>该区域内容</small></span>'
+          + '<span class="lib-panel-go">' + (on ? '✓ 当前' : '选择 →') + '</span></button>';
+      }).join('') + '</div></div>';
+    els.modal.querySelectorAll('[data-close], [data-mask]').forEach(function (el) {
+      el.addEventListener('click', closeModal);
+    });
+    els.modal.querySelectorAll('[data-area]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setArea(btn.getAttribute('data-area'));
+        closeModal();
+        toast('已切换到「' + currentArea().name + '」', 'info');
+      });
     });
   }
 
@@ -1148,6 +1724,39 @@
     els.modal = $('libModal');
     els.view = $('view-library');
 
+    /* 全屏状态变化（含 Esc 退出）时同步按钮 */
+    document.addEventListener('fullscreenchange', syncFsButton);
+
+    var savedArea = readJSON(LS.area, LIB_AREAS[0].id);
+    state.area = areaById(savedArea).id;
+    syncAreaBtn();
+    var areaBtn = $('libAreaBtn');
+    if (areaBtn) areaBtn.addEventListener('click', openAreaPicker);
+
+    els.pager = $('libPager');
+    els.pagerPrev = $('libPagerPrev');
+    els.pagerNext = $('libPagerNext');
+    els.pagerInput = $('libPagerInput');
+    els.pagerInfo = $('libPagerInfo');
+
+    function goPage(n) {
+      var pages = Math.max(1, Math.ceil(state.shelfBooks.length / SHELF_PAGE_SIZE));
+      state.page = Math.min(pages, Math.max(1, Number(n) || 1));
+      renderShelf();
+    }
+    if (els.pagerPrev) els.pagerPrev.addEventListener('click', function () { goPage(state.page - 1); });
+    if (els.pagerNext) els.pagerNext.addEventListener('click', function () { goPage(state.page + 1); });
+    if (els.pagerInput) {
+      var applyJump = function () {
+        var v = parseInt(els.pagerInput.value, 10);
+        goPage(isNaN(v) ? state.page : v);
+      };
+      els.pagerInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') { event.preventDefault(); applyJump(); els.pagerInput.blur(); }
+      });
+      els.pagerInput.addEventListener('blur', applyJump);
+    }
+
     bindSearch();
     bindKeys();
 
@@ -1159,9 +1768,51 @@
     if (histBtn) histBtn.addEventListener('click', function () { showPanel('hist'); });
 
     if (els.body) {
+      /* 封面坏图/0 字节：退化成书名文字卡，不显示破图标 */
+      function degradeBookCover(img) {
+        var card = img && img.closest ? img.closest('.lib-book') : null;
+        if (!card || !card.classList.contains('has-cover')) return;
+        card.classList.remove('has-cover');
+        card.style.width = '';
+        card.style.height = '';
+        if (img.parentNode) img.parentNode.removeChild(img);
+      }
+      /* 真实封面：书卡按图片比例定宽高，图片正好铺满（无黑边、无裁切） */
+      function fitBookCover(img) {
+        var card = img.closest('.lib-book');
+        if (!card) return;
+        if (!img.naturalWidth || !img.naturalHeight) { degradeBookCover(img); return; }
+        var books = card.parentElement;
+        if (!books) return;
+        var count = books.querySelectorAll('.lib-book').length || 1;
+        var gap = 18;
+        var availH = (books.clientHeight || 184) - 24;
+        var slotW = ((books.clientWidth || 960) - 40 - gap * Math.max(0, count - 1)) / count;
+        var ratio = img.naturalWidth / img.naturalHeight;
+        var w = Math.min(120, slotW);
+        if (w / ratio > availH) w = availH * ratio;
+        w = Math.max(56, Math.round(w));
+        card.style.width = w + 'px';
+        card.style.height = Math.round(w / ratio) + 'px';
+      }
+      els.body.addEventListener('load', function (event) {
+        var img = event.target;
+        if (!img || !img.classList || !img.classList.contains('lib-book-cover-img')) return;
+        fitBookCover(img);
+      }, true);
+      els.body.addEventListener('error', function (event) {
+        var img = event.target;
+        if (!img || !img.classList || !img.classList.contains('lib-book-cover-img')) return;
+        degradeBookCover(img);
+      }, true);
+      window.addEventListener('resize', function () {
+        if (!els.body) return;
+        els.body.querySelectorAll('.lib-book-cover-img').forEach(fitBookCover);
+      });
       els.body.addEventListener('click', function (event) {
         var card = event.target.closest('.lib-book');
         if (!card) return;
+        /* 统一走站内详情/阅读；PDF 入口在详情与阅读界面内 */
         openBook(card.getAttribute('data-id'));
       });
     }

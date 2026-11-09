@@ -9,6 +9,170 @@
   <link rel="stylesheet" href="styles-admin.css">
 </head>
 <body data-view="create">
+<script>
+/* ============================================================
+ * 绘梦 · 登录态持久化层（HMAuth）
+ * ------------------------------------------------------------
+ * 「刷新后保持登录」依赖三件事：
+ *   1) token 真正写进了本地存储（配额满时写入会静默失败）
+ *   2) 页面启动时不被 5xx / 超时 / 断网误判成「登录失效」
+ *   3) hm.user 缓存缺失时仍能从 token payload 还原登录态
+ * 这里把这三件事集中处理，页面只调 HMAuth.getToken / setToken / classify。
+ * ============================================================ */
+(function () {
+  'use strict';
+  if (window.HMAuth) return;
+
+  var TOKEN_KEY = 'hm.token';
+  var TOKEN_BAK = 'hm.token.bak';
+
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function ssGet(k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function ssSet(k, v) { try { sessionStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function ssDel(k) { try { sessionStorage.removeItem(k); } catch (e) {} }
+
+  /* 只清理「可重建」的缓存来腾配额：旧作品快照与离线队列。
+     绝不碰 hm.token / hm.user / anidream.works.v1 / anidream.rev.v1 */
+  function trimStorage() {
+    var removed = 0;
+    try {
+      var snaps = [];
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('.snap.') > 0) snaps.push(k);
+      }
+      snaps.sort();
+      /* 只留最新 1 份（正常上限是 3 份），配额紧张时优先回收 */
+      while (snaps.length > 1) { localStorage.removeItem(snaps.shift()); removed += 1; }
+      if (localStorage.getItem('anidream.queue.v1')) {
+        localStorage.removeItem('anidream.queue.v1');
+        removed += 1;
+      }
+    } catch (e) {}
+    if (removed) console.warn('[HMAuth] 配额紧张，已清理 ' + removed + ' 项可重建缓存');
+    return removed;
+  }
+
+  function readToken() {
+    var t = lsGet(TOKEN_KEY);
+    if (t) return t;
+    /* 主键丢了但本标签页还有 → 回填主键（刷新后仍然登录） */
+    t = ssGet(TOKEN_KEY);
+    if (t) { lsSet(TOKEN_KEY, t); return t; }
+    /* 主键被误删但备份还在 → 回填 */
+    t = lsGet(TOKEN_BAK);
+    if (t) { lsSet(TOKEN_KEY, t); ssSet(TOKEN_KEY, t); return t; }
+    return '';
+  }
+
+  function writeToken(token) {
+    token = token ? String(token) : '';
+    if (!token) {
+      lsDel(TOKEN_KEY); lsDel(TOKEN_BAK); ssDel(TOKEN_KEY);
+      return true;
+    }
+    var ok = lsSet(TOKEN_KEY, token);
+    if (!ok) {
+      /* 配额满：回收可重建缓存后重试一次 */
+      trimStorage();
+      ok = lsSet(TOKEN_KEY, token);
+    }
+    if (!ok) {
+      /* 仍然写不进：降级到 sessionStorage（同标签页刷新依旧保持登录） */
+      ssSet(TOKEN_KEY, token);
+      console.warn('[HMAuth] localStorage 写入失败（可能配额已满），token 已降级存到 sessionStorage；建议清理本地缓存');
+    } else {
+      /* 主键成功时同步留一份备份，主键被外部清理时可回填 */
+      if (!lsSet(TOKEN_BAK, token)) ssSet(TOKEN_KEY, token);
+    }
+    /* 回读校验：写进去读不出来等于没登录，必须显式告警而不是静默 */
+    var back = ok ? lsGet(TOKEN_KEY) : ssGet(TOKEN_KEY);
+    if (back !== token) {
+      console.warn('[HMAuth] token 回读校验失败，本次刷新可能需要重新登录');
+      return false;
+    }
+    return true;
+  }
+
+  function b64url(str) {
+    var s = String(str || '').replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return s;
+  }
+  function utf8(bin) {
+    try {
+      if (typeof TextDecoder !== 'undefined') {
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+    } catch (e) {}
+    try { return decodeURIComponent(escape(bin)); } catch (e) { return bin; }
+  }
+  /* 解析 token payload（无 exp，因此只用于「还原用户是谁」，是否失效只看服务端 401） */
+  function decodeToken(token) {
+    var parts = String(token || '').split('.');
+    if (parts.length !== 3) return null;
+    var json = '';
+    try { json = utf8(atob(b64url(parts[1]))); } catch (e) { return null; }
+    var p = null;
+    try { p = JSON.parse(json); } catch (e) { return null; }
+    if (!p || !p.uid) return null;
+    return {
+      id: String(p.uid),
+      username: p.username || ('guest_' + String(p.uid).slice(-6)),
+      role: p.role || 'user',
+      status: p.status || 'approved'
+    };
+  }
+
+  /* 'auth' = 服务端明确否定凭证（只有这种才允许清 token / 登出）
+     'network' = 5xx / 超时 / 断网，必须保留 token，稍后重试
+     'other' = 其余业务错误，同样不动登录态 */
+  function classify(err) {
+    if (!err) return 'other';
+    var status = Number(err.status || err.statusCode || 0);
+    var raw = String(err.message || err.code || '');
+    var msg = raw.toLowerCase();
+    if (status === 401 || status === 403) return 'auth';
+    if (status >= 500 || err.offline || err.timeout || err.name === 'AbortError') return 'network';
+    if (msg.indexOf('timeout') >= 0 || msg.indexOf('超时') >= 0 ||
+        msg.indexOf('failed to fetch') >= 0 || msg.indexOf('network') >= 0 ||
+        msg.indexOf('offline') >= 0 || msg.indexOf('网络') >= 0 ||
+        msg.indexOf('无法连接') >= 0 || msg.indexOf('abort') >= 0) return 'network';
+    /* 无状态码时只认「明确说凭证无效」的措辞；
+       不能宽泛匹配 'token'，否则 500 文案里带 token 会把用户踢下线 */
+    if (msg.indexOf('未登录') >= 0 || msg.indexOf('登录已过期') >= 0 ||
+        msg.indexOf('unauthorized') >= 0 ||
+        (msg.indexOf('token') >= 0 && (msg.indexOf('invalid') >= 0 || msg.indexOf('expired') >= 0))) {
+      return 'auth';
+    }
+    return 'other';
+  }
+
+  /* 只有「账号确实处于待审批 / 已拒绝」才算账号被拦。
+     ACCOUNT_UNDEFINED（账号记录缺 status）属于服务端数据问题，
+     不能当成登录失效，否则每次刷新都会被踢下线。 */
+  function isAccountBlocked(err) {
+    if (!err) return false;
+    var code = String(err.code || (err.data && err.data.error && err.data.error.code) || '');
+    if (code === 'ACCOUNT_PENDING' || code === 'ACCOUNT_REJECTED') return true;
+    var msg = String(err.message || '');
+    return msg.indexOf('等待超级管理员审批') >= 0 || msg.indexOf('注册申请已被拒绝') >= 0;
+  }
+
+  window.HMAuth = {
+    getToken: readToken,
+    setToken: writeToken,
+    decodeToken: decodeToken,
+    classify: classify,
+    isAccountBlocked: isAccountBlocked,
+    trimStorage: trimStorage
+  };
+})();
+</script>
   <script>
   /* 首帧前校准：在页面任何内容绘制前，把用户上次保存的视图与侧栏状态
      应用到 body，避免 JS 初始化后再切换造成的刷新闪帧 */
@@ -43,33 +207,25 @@
           <span class="hm-home-menu-check">✓</span>
         </button>
       </div>
-      <button class="hm-rail-item" data-rail="tools" title="工具（效率工具集）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5a4 4 0 0 0 5 5L10 19a2.5 2.5 0 0 1-3.5-3.5L16 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <span>工具</span>
-      </button>
-      <button class="hm-rail-item" data-rail="assets" title="资产（参考图、成片、音频素材统一管理）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 6.5v11c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
-        <span>资产</span>
-      </button>
-      <button class="hm-rail-item" data-rail="library" title="图书馆（复古书架 · 藏书阅读）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h4.5a2 2 0 0 1 2 2V20a2 2 0 0 0-2-2H4V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 4.5h-4.5a2 2 0 0 0-2 2V20a2 2 0 0 1 2-2H20V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.6 8.5h1.8M6.6 12h1.8M15.6 8.5h1.8M15.6 12h1.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".75"/></svg>
-        <span>图书馆</span>
-      </button>
       <button class="hm-rail-item" data-rail="modeling" title="3D建模（Blender 远程操作）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg>
         <span>建模</span>
       </button>
-      <button class="hm-rail-item" data-rail="director" title="合成（视频剪辑与多轨道合成）">
+      <button class="hm-rail-item" data-rail="director" title="摄影（视频剪辑与多轨道合成）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9l5 3-5 3V9Z" fill="currentColor" opacity=".8"/><path d="M3 9h2M3 15h2M19 9h2M19 15h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/></svg>
-        <span>合成</span>
+        <span>摄影</span>
+      </button>
+      <button class="hm-rail-item" data-rail="edit" title="剪辑（时间线剪辑 · 片段与字幕 · 功能预留）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9.5h18" stroke="currentColor" stroke-width="1.2" opacity=".55"/><path d="M8 5V9.5M12 5V9.5M16 5V9.5" stroke="currentColor" stroke-width="1.2" opacity=".55"/><path d="M10.2 12.6l4.6 2.6-4.6 2.6v-5.2Z" fill="currentColor" opacity=".85"/></svg>
+        <span>剪辑</span>
       </button>
       <button class="hm-rail-item" data-rail="director3d" title="导演台（3D 无限画布 · 白模摆位 · 打光与取景）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7l1.5 2h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M18.5 11.2h.01" fill="currentColor" stroke="currentColor" stroke-width="1.2"/></svg>
         <span>导演台</span>
       </button>
-      <button class="hm-rail-item" data-rail="storyboard" title="故事版（分镜创作）">
+      <button class="hm-rail-item" data-rail="storyboard" title="分镜（分镜创作）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
-        <span>故事版</span>
+        <span>分镜</span>
       </button>
       <button class="hm-rail-item" data-rail="oua" title="原画（本番原画 / 動画 · 中割り）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
@@ -79,9 +235,17 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M3 15h18" stroke="currentColor" stroke-width="1.1" opacity=".55"/><path d="M10.5 9.5l4 2.5-4 2.5v-5Z" fill="currentColor" opacity=".85"/></svg>
         <span>动画</span>
       </button>
-      <button class="hm-rail-item" data-rail="paint" title="着色（赛璐璐上色 · PaintMan 工作流）">
+      <button class="hm-rail-item" data-rail="paint" title="上色（赛璐璐 · PaintMan 工作流）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.6 12.4l5.3-5.3a1.7 1.7 0 0 1 2.4 0l3.6 3.6a1.7 1.7 0 0 1 0 2.4l-5.3 5.3a1.7 1.7 0 0 1-2.4 0l-3.6-3.6a1.7 1.7 0 0 1 0-2.4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 7.5L15 13" stroke="currentColor" stroke-width="1.3" opacity=".65"/><path d="M19.4 15.2c.9 1.2 1.4 2 1.4 2.6a1.4 1.4 0 1 1-2.8 0c0-.6.5-1.4 1.4-2.6Z" fill="currentColor" opacity=".85"/></svg>
-        <span>着色</span>
+        <span>上色</span>
+      </button>
+      <button class="hm-rail-item" data-rail="compile" title="编集（各集最终导出版本管理 · 采用标记）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 8.5h18" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M7 12h4M7 15.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 11.5l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>编集</span>
+      </button>
+      <button class="hm-rail-item" data-rail="publish" title="宣发（发布任务 · 平台记录 · 数据看板）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2l5 3.5v-13L7 9H5a1 1 0 0 0-1 1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>宣发</span>
       </button>
       <button class="hm-rail-item" data-rail="plan" title="企划（热榜、排行榜、日式动漫企划书）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5h10M7 12h7M7 15.5h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 3.5v3M8.5 3.5v3" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
@@ -94,6 +258,10 @@
       <button class="hm-rail-item" data-rail="art" title="美术设定设计（6 大分类 · 日本动画交付标准）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
         <span>美术设定</span>
+      </button>
+      <button class="hm-rail-item" data-rail="layout" title="layout（Layout 版面 · 场景构图 · 功能预留）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 8.5h18" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M9.5 8.5V20" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M13.5 12.5h4M13.5 16h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".85"/></svg>
+        <span>layout</span>
       </button>
       <button class="hm-rail-item" data-rail="voice" title="配音（台词配音台 · 角色音色 · 语音合成）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -108,12 +276,31 @@
     </button>
 
     <div class="hm-rail-bottom">
+      <button class="hm-rail-item" data-rail="assets" title="资产（参考图、成片、音频素材统一管理）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 6.5v11c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/></svg>
+        <span>资产</span>
+      </button>
+      <button class="hm-rail-item" data-rail="tools" title="工具（效率工具集）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5a4 4 0 0 0 5 5L10 19a2.5 2.5 0 0 1-3.5-3.5L16 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>工具</span>
+      </button>
+      <button class="hm-rail-item" data-rail="library" title="图书馆（复古书架 · 藏书阅读）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h4.5a2 2 0 0 1 2 2V20a2 2 0 0 0-2-2H4V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 4.5h-4.5a2 2 0 0 0-2 2V20a2 2 0 0 1 2-2H20V4.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.6 8.5h1.8M6.6 12h1.8M15.6 8.5h1.8M15.6 12h1.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".75"/></svg>
+        <span>图书馆</span>
+      </button>
       <button class="hm-rail-item hm-rail-mini" id="themeBtn" title="主题">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 4v16a8 8 0 0 0 0-16Z" fill="currentColor" opacity=".55"/></svg>
         <span>主题</span>
       </button>
     </div>
   </aside>
+
+  <!-- 侧栏中段 · 右键菜单（置顶 / 固定） -->
+  <div class="hm-rail-ctx" id="railCtxMenu" role="menu" hidden>
+    <div class="hm-rail-ctx-title" id="railCtxTitle">模块</div>
+    <button type="button" role="menuitem" data-rctx="pin"><span class="hm-rail-ctx-ico">↑</span><span id="railCtxPinText">置顶</span></button>
+    <button type="button" role="menuitem" data-rctx="fix"><span class="hm-rail-ctx-ico">◈</span><span id="railCtxFixText">固定</span></button>
+  </div>
 
   <!-- 侧边栏显示 / 隐藏：贴在侧栏右缘中间 -->
   <button type="button" class="hm-rail-toggle" id="railToggleBtn" title="隐藏侧边栏" aria-label="隐藏侧边栏" aria-expanded="true">
@@ -181,9 +368,60 @@
           <span id="worksSortText">时间筛选</span>
           <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <div class="hm-menu" id="worksSortMenu" aria-hidden="true">
-          <button data-sort="newest" class="is-active">最新优先</button>
-          <button data-sort="oldest">最早优先</button>
+        <div class="hm-menu hm-time-menu" id="worksSortMenu" aria-hidden="true">
+          <div class="hm-tm-sec">
+            <div class="hm-tm-sec-head"><span>时间范围</span><span class="hm-tm-hint">按作品创建时间筛选</span></div>
+            <div class="hm-tm-quick" id="tmQuick">
+              <button type="button" data-quick="all" class="is-active">全部</button>
+              <button type="button" data-quick="today">今日</button>
+              <button type="button" data-quick="yesterday">昨日</button>
+              <button type="button" data-quick="24h">近24H</button>
+              <button type="button" data-quick="7d">近 7 天</button>
+              <button type="button" data-quick="30d">近 30 天</button>
+              <button type="button" data-quick="month">本月</button>
+              <button type="button" data-quick="lastmonth">上月</button>
+              <button type="button" data-quick="quarter">本季</button>
+              <button type="button" data-quick="year">今年</button>
+              <button type="button" data-quick="custom">自定义</button>
+            </div>
+          </div>
+          <div class="hm-tm-range">
+            <div class="hm-tm-field is-active" data-field="start">
+              <span class="hm-tm-label">开始时间</span>
+              <span class="hm-tm-inputwrap">
+                <input type="datetime-local" id="tmStart" step="1" aria-label="开始时间">
+                <svg class="hm-tm-calico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+            </div>
+            <div class="hm-tm-field" data-field="end">
+              <span class="hm-tm-label">结束时间</span>
+              <span class="hm-tm-inputwrap">
+                <input type="datetime-local" id="tmEnd" step="1" aria-label="结束时间">
+                <svg class="hm-tm-calico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+            </div>
+          </div>
+          <p class="hm-tm-warn" id="tmWarn" hidden>起始时间不能晚于结束时间，本次筛选未应用</p>
+          <div class="hm-tm-cal">
+            <div class="hm-tm-cal-head">
+              <button type="button" id="tmPrev">上月</button>
+              <strong id="tmCalLabel">2026 年 11 月</strong>
+              <button type="button" id="tmNext">下月</button>
+            </div>
+            <div class="hm-tm-cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+            <div class="hm-tm-cal-grid" id="tmCalGrid"></div>
+          </div>
+          <div class="hm-tm-foot">
+            <div class="hm-tm-sort">
+              <span>排序</span>
+              <button type="button" data-sort="newest" class="is-active">最新优先</button>
+              <button type="button" data-sort="oldest">最早优先</button>
+            </div>
+            <div class="hm-tm-actions">
+              <button type="button" class="hm-tm-clear" id="tmClear">清除</button>
+              <button type="button" class="hm-tm-ok" id="tmApply">确定</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -406,6 +644,11 @@
       </div>
 
       <div class="lib-top-actions">
+        <button type="button" class="lib-btn lib-area-btn" id="libAreaBtn" aria-haspopup="dialog" title="切换图书馆区域">
+          <span class="lib-area-icon" aria-hidden="true">▤</span>
+          <span class="lib-area-name" id="libAreaName">参考素材</span>
+          <span class="lib-area-caret" aria-hidden="true">▾</span>
+        </button>
         <button type="button" class="lib-btn lib-btn-gold" id="libAddBtn">＋ 新增书籍</button>
         <button type="button" class="lib-btn" id="libFavBtn">★ 我的收藏</button>
         <button type="button" class="lib-btn" id="libHistoryBtn">↺ 阅读历史</button>
@@ -413,6 +656,13 @@
     </header>
 
     <section class="lib-body" id="libBody"></section>
+
+    <div class="lib-shelf-pager" id="libPager" hidden>
+      <button type="button" class="lib-pager-btn" id="libPagerPrev">‹ 上一页</button>
+      <span class="lib-pager-info" id="libPagerInfo">第 1 / 1 页</span>
+      <label class="lib-pager-jump" for="libPagerInput">跳到 <input type="number" id="libPagerInput" min="1" step="1" inputmode="numeric"> 页</label>
+      <button type="button" class="lib-pager-btn" id="libPagerNext">下一页 ›</button>
+    </div>
 
     <footer class="lib-status" id="libStatus"></footer>
 
@@ -563,11 +813,7 @@
             <button class="tc-btn tc-btn-line" id="tcApiTest" type="button">连接测试</button>
             <span class="tc-api-state" id="tcApiState">未连接</span>
           </div>
-          <div class="tc-dl">
-            <a class="tc-btn tc-btn-line" href="https://raw.githubusercontent.com/liqi279/huimeng-ai/main/%E6%8F%92%E4%BB%B6/09-ToonCrafter%E9%A6%96%E5%B0%BE%E5%B8%A7%E8%A1%A5%E9%97%B4/%E6%9C%8D%E5%8A%A1/%E5%90%AF%E5%8A%A8%E6%9C%8D%E5%8A%A1.bat" download>下载 启动服务.bat</a>
-            <a class="tc-btn tc-btn-line" href="https://raw.githubusercontent.com/liqi279/huimeng-ai/main/%E6%89%93%E5%BC%80%E6%9C%AC%E5%9C%B0%E7%89%88.bat" download>下载 打开本地版.bat</a>
-          </div>
-          <p class="tc-hint">下载后的脚本要放回仓库对应位置：<b>启动服务.bat</b> 放 <code>插件/09-ToonCrafter首尾帧补间/服务/</code>（同目录需有 server.py 与 源码/），<b>打开本地版.bat</b> 放仓库根目录。脚本为 GBK 编码，请勿另存为 UTF-8。</p>
+          <p class="tc-hint">启动方式见插件目录 <b>服务/README.md</b>：先装权重，再运行 <code>python server.py</code>。页面通过该服务做<b>真实推理</b>。</p>
         </div>
       </aside>
 
@@ -1489,7 +1735,7 @@
       <div class="hm-dir-title">
         <span class="hm-dir-logo">▶</span>
         <h2>导演台</h2>
-        <span class="hm-dir-sub">多轨道视频剪辑与合成</span>
+        <span class="hm-dir-sub">多轨道视频剪辑与摄影</span>
       </div>
       <div class="hm-dir-tools">
         <button class="hm-dir-btn" id="dirImportBtn">
@@ -1851,7 +2097,7 @@
     <div class="hm-sb-top">
       <div class="hm-sb-title">
         <span class="hm-sb-logo">▤</span>
-        <h2>故事版</h2>
+        <h2>分镜</h2>
         <input id="sbProjectName" class="hm-sb-name" value="未命名分镜" maxlength="40" title="项目名称">
         <span class="hm-sb-sub" id="sbMeta">0 个场次 · 0 个镜头</span>
       </div>
@@ -1996,8 +2242,8 @@
     <div class="hm-pt-top">
       <div class="hm-pt-title">
         <span class="hm-pt-logo">◐</span>
-        <h2>着色</h2>
-        <input id="ptName" class="hm-pt-name" value="未命名着色" maxlength="40" title="项目名称">
+        <h2>上色</h2>
+        <input id="ptName" class="hm-pt-name" value="未命名上色" maxlength="40" title="项目名称">
         <span class="hm-pt-sub" id="ptMeta">1280×720 · 14 色</span>
       </div>
       <div class="hm-pt-actions">
@@ -2481,6 +2727,127 @@
   </main>
 
   <!-- ===================== 配音（台词配音台 · 角色音色 · 语音合成） ===================== -->
+  <!-- ============ 编集（各集最终导出版本管理） ============ -->
+  <main class="hm-page" id="view-compile" hidden>
+    <div class="hm-art-top">
+      <div class="hm-art-top-left">
+        <h2>🎬 编集 · 导出版本</h2>
+        <span class="hm-art-top-sub">按集登记最终导出版本 · 标记采用 · 下载 / 删除 · 数据存本机</span>
+      </div>
+      <div class="hm-art-top-right">
+        <input class="cmp-input" id="cmpEpInput" placeholder="集名，如：第 1 集" style="width:170px">
+        <button class="hm-pill hm-pill-primary" data-cmp="add-ep">＋ 新建集</button>
+      </div>
+    </div>
+    <div class="cmp-list" id="cmpList"></div>
+  </main>
+
+  <!-- ============ 宣发（发布任务 · 平台记录 · 数据看板） ============ -->
+  <main class="hm-page" id="view-publish" hidden>
+    <style>
+      .pub-wrap{display:flex;flex-direction:column;gap:14px;padding:18px 22px 30px}
+      .pub-tabs{display:flex;gap:8px;flex-wrap:wrap}
+      .pub-panel{display:flex;flex-direction:column;gap:12px}
+      .pub-form,.pub-filter{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
+      .pub-form textarea{grid-column:1/-1;min-height:64px;padding:8px;resize:vertical;font-family:inherit}
+      .pub-file{display:flex;gap:6px;align-items:center;grid-column:span 2}
+      .pub-platforms{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#9fb3c8}
+      .pub-platforms label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+      .pub-list{display:flex;flex-direction:column;gap:10px}
+      .pub-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+      .pub-card-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .pub-card-title{font-size:14px;font-weight:600;color:#e6edf6}
+      .pub-meta{font-size:11.5px;color:#8b9bb0}
+      .pub-chip{font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(96,165,250,.14);color:#9fc6ff;border:1px solid rgba(96,165,250,.3)}
+      .pub-chip.is-done{background:rgba(52,211,153,.14);color:#7ee7bd;border-color:rgba(52,211,153,.3)}
+      .pub-chip.is-fail{background:rgba(248,113,113,.14);color:#ffa3a3;border-color:rgba(248,113,113,.3)}
+      .pub-plat{border-top:1px dashed rgba(255,255,255,.09);padding-top:8px;display:grid;grid-template-columns:80px 70px 128px minmax(120px,1fr) auto auto;gap:8px;align-items:center;font-size:12px;color:#c3d2e2}
+      .pub-plat input{min-width:0}
+      .pub-btn{height:26px;padding:0 10px;border-radius:7px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cfe0f0;font-size:11.5px;cursor:pointer}
+      .pub-btn:hover{background:rgba(96,165,250,.16);border-color:rgba(96,165,250,.4)}
+      .pub-btn.is-danger{color:#ffa3a3;border-color:rgba(248,113,113,.3)}
+      .pub-table{width:100%;border-collapse:collapse;font-size:12px;color:#c3d2e2}
+      .pub-table th,.pub-table td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.07);text-align:left;white-space:nowrap}
+      .pub-table th{color:#8b9bb0;font-weight:600;font-size:11px}
+      .pub-sec-title{font-size:13px;font-weight:600;color:#dbe7f3;margin:2px 0}
+      .pub-empty{font-size:12px;color:#7f8ea3;padding:14px;text-align:center;border:1px dashed rgba(255,255,255,.1);border-radius:10px}
+      .pub-num{min-width:0}
+      body.hm-light .pub-form,body.hm-light .pub-filter,body.hm-light .pub-card{background:rgba(15,23,42,.03);border-color:rgba(15,23,42,.1)}
+      body.hm-light .pub-card-title,body.hm-light .pub-sec-title{color:#1e293b}
+      body.hm-light .pub-meta,body.hm-light .pub-empty{color:#64748b}
+    </style>
+    <div class="pub-wrap">
+      <div class="hm-art-top">
+        <div class="hm-art-top-left">
+          <h2>📣 宣发 · 分发与数据</h2>
+          <span class="hm-art-top-sub">发布任务 · 平台记录 · 数据看板 · 数据存本机</span>
+        </div>
+        <div class="hm-art-top-right pub-tabs">
+          <button type="button" class="hm-pill hm-pill-primary" data-pub-tab="tasks">发布任务</button>
+          <button type="button" class="hm-pill" data-pub-tab="records">平台记录</button>
+          <button type="button" class="hm-pill" data-pub-tab="board">数据看板</button>
+        </div>
+      </div>
+
+      <section class="pub-panel" data-pub-panel="tasks">
+        <div class="pub-form">
+          <input class="cmp-input" id="pubEp" placeholder="剧集 / 集数，如 第 1 集">
+          <input class="cmp-input" id="pubTitle" placeholder="标题">
+          <input class="cmp-input" id="pubPlan" type="datetime-local" title="计划发布时间">
+          <div class="pub-file">
+            <input class="cmp-input" id="pubFileName" readonly placeholder="未选择成片文件" style="flex:1;min-width:0">
+            <button type="button" class="pub-btn" id="pubFileBtn">选择文件</button>
+            <input type="file" id="pubFile" hidden>
+          </div>
+          <textarea class="cmp-input" id="pubDesc" placeholder="简介"></textarea>
+          <div class="pub-platforms" id="pubPlatforms"></div>
+          <div style="grid-column:1/-1;display:flex;gap:8px">
+            <button type="button" class="hm-pill hm-pill-primary" id="pubSave">＋ 新建任务</button>
+            <button type="button" class="pub-btn" id="pubCancel" hidden>取消编辑</button>
+          </div>
+        </div>
+        <div class="pub-list" id="pubTasks"></div>
+      </section>
+
+      <section class="pub-panel" data-pub-panel="records" hidden>
+        <div class="pub-list" id="pubRecords"></div>
+      </section>
+
+      <section class="pub-panel" data-pub-panel="board" hidden>
+        <div class="pub-form">
+          <select class="cmp-input" id="pubMPlatform"></select>
+          <input class="cmp-input" id="pubMEp" placeholder="剧集，如 第 1 集">
+          <input class="cmp-input" id="pubMDate" type="date">
+          <input class="cmp-input pub-num" id="pubMViews" placeholder="播放量" type="number" min="0">
+          <input class="cmp-input pub-num" id="pubMLikes" placeholder="点赞" type="number" min="0">
+          <input class="cmp-input pub-num" id="pubMComments" placeholder="评论" type="number" min="0">
+          <input class="cmp-input pub-num" id="pubMFavs" placeholder="收藏" type="number" min="0">
+          <input class="cmp-input pub-num" id="pubMShares" placeholder="分享" type="number" min="0">
+          <div style="grid-column:1/-1;display:flex;gap:8px">
+            <button type="button" class="hm-pill hm-pill-primary" id="pubMAdd">＋ 录入数据</button>
+          </div>
+        </div>
+        <div class="pub-filter">
+          <select class="cmp-input" id="pubFEp"><option value="">全部剧集</option></select>
+          <select class="cmp-input" id="pubFPlatform"><option value="">全部平台</option></select>
+          <select class="cmp-input" id="pubFRange">
+            <option value="7">近 7 天</option>
+            <option value="30">近 30 天</option>
+            <option value="all">全部</option>
+          </select>
+        </div>
+        <div class="pub-sec-title">筛选结果</div>
+        <div id="pubSum"></div>
+        <div class="pub-sec-title">按平台汇总</div>
+        <div id="pubByPlatform"></div>
+        <div class="pub-sec-title">按剧集汇总</div>
+        <div id="pubByEp"></div>
+        <div class="pub-sec-title">录入明细</div>
+        <div id="pubMetrics"></div>
+      </section>
+    </div>
+  </main>
+
   <main class="hm-page hm-voice-page" id="view-voice" hidden>
     <header class="vc-head">
       <div class="vc-head-left">
@@ -2807,6 +3174,36 @@
         </div>
         <div class="hm-art-checklist-body" id="artChecklistBody"></div>
       </div>
+    </div>
+  </main>
+
+  <!-- ============ Layout 版面（功能预留，仅占位） ============ -->
+  <main class="hm-page" id="view-layout" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>Layout 版面</h2>
+        <p>场景版面与镜头构图设计</p>
+      </div>
+    </div>
+    <div class="hm-page-empty">
+      <div class="hm-page-empty-icon">▦</div>
+      <h3>功能预留</h3>
+      <p>Layout 模块尚未开放，后续会在这里提供版面设计与镜头构图工具。</p>
+    </div>
+  </main>
+
+  <!-- ============ 剪辑（功能预留，仅占位） ============ -->
+  <main class="hm-page" id="view-edit" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>剪辑</h2>
+        <p>时间线剪辑与成片输出</p>
+      </div>
+    </div>
+    <div class="hm-page-empty">
+      <div class="hm-page-empty-icon">✂</div>
+      <h3>功能预留</h3>
+      <p>剪辑模块尚未开放，后续会在这里提供时间线剪辑、片段与字幕工具。</p>
     </div>
   </main>
 
@@ -3153,6 +3550,50 @@
     </section>
   </main>
 
+  <style id="hmAccountAdminCss">
+  .hm-admin-tab .hm-admin-tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;line-height:1}
+  .hm-acc-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 14px}
+  .hm-acc-filter{padding:6px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.28);background:transparent;color:inherit;font-size:12.5px;cursor:pointer}
+  .hm-acc-filter.is-active{background:rgba(124,162,255,.18);border-color:rgba(124,162,255,.55);color:#cfe0ff}
+  .hm-acc-list{display:flex;flex-direction:column;gap:10px}
+  .hm-acc-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:rgba(15,23,42,.38);border:1px solid rgba(148,163,184,.16)}
+  .hm-acc-avatar{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#7ca2ff,#a78bfa);color:#fff;font-weight:700;font-size:16px;flex:0 0 auto}
+  .hm-acc-info{min-width:0;flex:1}
+  .hm-acc-name{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:inherit;flex-wrap:wrap}
+  .hm-acc-meta{margin-top:4px;font-size:12px;color:#8b94a6;display:flex;gap:12px;flex-wrap:wrap}
+  .hm-acc-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.7}
+  .hm-acc-pill.is-pending{background:rgba(245,158,11,.16);color:#fbbf24}
+  .hm-acc-pill.is-approved{background:rgba(16,185,129,.16);color:#34d399}
+  .hm-acc-pill.is-rejected{background:rgba(239,68,68,.16);color:#f87171}
+  .hm-acc-pill.is-admin{background:rgba(167,139,250,.18);color:#c4b5fd}
+  .hm-acc-pill.is-user{background:rgba(148,163,184,.16);color:#cbd5e1}
+  .hm-acc-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .hm-acc-actions button{padding:6px 10px;border-radius:9px;border:1px solid rgba(148,163,184,.28);background:transparent;color:inherit;font-size:12.5px;cursor:pointer}
+  .hm-acc-actions button:hover{border-color:rgba(124,162,255,.6)}
+  .hm-acc-actions button.is-primary{background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.5);color:#6ee7b7}
+  .hm-acc-actions button.is-danger{color:#f87171;border-color:rgba(239,68,68,.4)}
+  .hm-acc-actions button:disabled{opacity:.4;cursor:not-allowed}
+  .hm-acc-empty{padding:28px;text-align:center;color:#8b94a6;font-size:13px}
+  .hm-acc-storage{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:14px;border-radius:12px;font-size:12.5px;border:1px solid rgba(148,163,184,.22);background:rgba(148,163,184,.08)}
+  .hm-acc-storage.is-file{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.1);color:#fbbf24}
+  .hm-acc-storage.is-mysql{border-color:rgba(16,185,129,.45);background:rgba(16,185,129,.1);color:#34d399}
+  .hm-acc-storage b{font-weight:700}
+  .hm-acc-storage .hm-acc-storage-tip{color:#cbd5e1;font-size:12px}
+  .hm-acc-storage button{margin-left:8px;padding:5px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:transparent;color:inherit;font-size:12px;cursor:pointer}
+  .hm-acc-storage>b,.hm-acc-storage>span:first-child{margin-right:auto}
+  .hm-acc-create{padding:7px 14px;border-radius:999px;border:1px solid rgba(124,162,255,.45);background:rgba(124,162,255,.16);color:#cdd9ff;font-size:12.5px;font-family:inherit;cursor:pointer}
+  .hm-acc-create:hover{background:rgba(124,162,255,.28);border-color:rgba(124,162,255,.7)}
+  .hm-acc-pw-row{display:flex;gap:8px}
+  .hm-acc-pw-row input{flex:1;min-width:0}
+  .hm-acc-pw-row button{white-space:nowrap;padding:0 12px;border-radius:10px;border:1px solid rgba(148,163,184,.35);background:rgba(148,163,184,.12);color:inherit;font-size:12.5px;font-family:inherit;cursor:pointer}
+  .hm-acc-pw-row button:hover{border-color:rgba(124,162,255,.6)}
+  #hmApplyNoticeModal .modal-card,#hmProfileModal .modal-card,#hmAccountCreateModal .modal-card{max-width:460px}
+  .hm-profile-field{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+  .hm-profile-field label{font-size:12.5px;color:#8b94a6}
+  .hm-profile-field input,.hm-profile-field textarea,.hm-profile-field select{width:100%;padding:9px 11px;border-radius:10px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.5);color:inherit;font-size:13px;font-family:inherit}
+  .hm-profile-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+  </style>
+
   <main class="hm-page hm-admin-page" id="view-admin" hidden>
     <div class="hm-admin-topbar-wrap">
       <div class="hm-admin-brand">
@@ -3170,7 +3611,7 @@
       <button class="hm-admin-tab is-active" data-tab="overview"><span>概览</span></button>
       <button class="hm-admin-tab" data-tab="ranking"><span>消耗排行</span></button>
       <button class="hm-admin-tab" data-tab="logs"><span>调用日志</span></button>
-      <button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span></button>
+      <button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span><i class="hm-admin-tab-badge" id="accountsPendingBadge" hidden>0</i></button>
       <button class="hm-admin-tab" data-tab="projects"><span>项目管理</span></button>
     </div>
     <div class="hm-admin-body" id="adminBody"></div>
@@ -3356,14 +3797,20 @@
 
           <div class="hm-menu-wrap hm-av-only">
             <button class="hm-chip" id="scaleBtn" aria-haspopup="true" aria-expanded="false">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-              <span id="scaleChipText">2K</span>
+              <span class="hm-chip-ic" id="scaleChipIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>
+              <span id="scaleChipText">1K</span>
               <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="hm-menu hm-menu-up hm-scale-menu" id="scalePicker" aria-hidden="true">
-              <button data-scale="1k" class="is-active">标清 1K</button>
-              <button data-scale="2k">高清 2K</button>
-              <button data-scale="4k">超清 4K</button>
+              <button data-scale="1k" class="is-active"><span class="hm-scale-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span class="hm-scale-tx">标清 1K</span></button>
+              <button data-scale="2k"><span class="hm-scale-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span class="hm-scale-tx">高清 2K</span></button>
+              <button data-scale="4k"><span class="hm-scale-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="9" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 13.5h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".65"/></svg></span><span class="hm-scale-tx">超清 4K</span></button>
+              <div class="hm-scale-custom-btn" data-scale="custom" role="button" tabindex="0"><span class="hm-scale-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h9M17 8h3M4 16h3M11 16h9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="15" cy="8" r="2.1" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9" cy="16" r="2.1" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span><span class="hm-scale-tx">自定义</span></div>
+              <div class="hm-scale-custom" id="scaleCustomRow" hidden>
+                <label>长度 <input id="customWInput" type="number" min="64" max="8192" step="1" inputmode="numeric"></label>
+                <label>宽度 <input id="customHInput" type="number" min="64" max="8192" step="1" inputmode="numeric"></label>
+              </div>
+              <div class="hm-scale-size" id="scaleSizeText">1024×1024</div>
             </div>
           </div>
 
@@ -3688,6 +4135,7 @@
   <div class="hm-ctx" id="hmCtx" hidden>
     <button data-cmd="preview"><span class="hm-ctx-ico">◉</span>预览</button>
     <button data-cmd="restore"><span class="hm-ctx-ico">↻</span>恢复生成参数</button>
+    <button data-cmd="retry" hidden><span class="hm-ctx-ico">↻</span>重试</button>
     <button data-cmd="ref"><span class="hm-ctx-ico">▣</span>仅增加参考素材</button>
     <button data-cmd="prompt"><span class="hm-ctx-ico">文</span>仅增加提示词</button>
     <button data-cmd="params"><span class="hm-ctx-ico">☰</span>参数查看</button>
@@ -3715,7 +4163,7 @@
     <button data-fcmd="download"><span class="hm-ctx-ico">📥</span>批量下载</button>
     <button data-fcmd="rename"><span class="hm-ctx-ico">✏️</span>重命名</button>
     <button data-fcmd="copy"><span class="hm-ctx-ico">📋</span>复制</button>
-    <button data-fcmd="delete"><span class="hm-ctx-ico">🗑️</span>删除项目</button>
+    <button data-fcmd="delete"><span class="hm-ctx-ico">🗑️</span>删除文件夹（图片保留）</button>
   </div>
 
   <div class="modal" id="paramModal" aria-hidden="true">
@@ -3780,6 +4228,81 @@
     </div>
   </div>
 
+  <!-- 超管：新注册申请提醒 -->
+  <div class="modal" id="hmApplyNoticeModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="hmApplyNoticeClose" type="button" aria-label="关闭">✕</button>
+      <span class="modal-kicker">待审批</span>
+      <h2>有新的注册申请</h2>
+      <p class="api-desc" id="hmApplyNoticeText" style="margin-top:10px;line-height:1.8">有 1 个新账号正在等待审批。</p>
+      <div class="hm-profile-actions">
+        <button class="hm-pill hm-pill-ghost" id="hmApplyNoticeLater" type="button">稍后处理</button>
+        <button class="hm-pill hm-pill-primary" id="hmApplyNoticeGo" type="button">去审批</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 超管：新增人员（建号即 approved，可直接登录） -->
+  <div class="modal" id="hmAccountCreateModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="accCreateClose" type="button" aria-label="关闭">✕</button>
+      <span class="modal-kicker">新增人员</span>
+      <h2>新增人员</h2>
+      <div class="hm-profile-field">
+        <label for="accNewUser">用户名</label>
+        <input id="accNewUser" type="text" placeholder="至少 3 个字符" autocomplete="off">
+      </div>
+      <div class="hm-profile-field">
+        <label for="accNewPass">密码</label>
+        <div class="hm-acc-pw-row">
+          <input id="accNewPass" type="password" placeholder="至少 6 个字符" autocomplete="new-password">
+          <button type="button" id="accGenPass">随机生成</button>
+        </div>
+      </div>
+      <div class="hm-profile-field">
+        <label for="accNewRole">角色</label>
+        <select id="accNewRole">
+          <option value="user">普通用户</option>
+          <option value="admin">超级管理员</option>
+        </select>
+      </div>
+      <div class="hm-profile-field">
+        <label for="accNewNote">备注（选填）</label>
+        <input id="accNewNote" type="text" maxlength="64" placeholder="例如：摄影组成员" autocomplete="off">
+      </div>
+      <div class="hm-auth-error" id="accCreateError" hidden></div>
+      <div class="hm-profile-actions">
+        <button class="hm-pill" id="accCreateCancel" type="button">取消</button>
+        <button class="hm-pill hm-pill-primary" id="accCreateSubmit" type="button">创建账号</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 个人资料（数据存后端 MySQL，不只存 localStorage） -->
+  <div class="modal" id="hmProfileModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="hmProfileClose" type="button" aria-label="关闭">✕</button>
+      <span class="modal-kicker">个人资料</span>
+      <h2>编辑个人资料</h2>
+      <div class="hm-profile-field">
+        <label for="hmProfileName">显示名</label>
+        <input id="hmProfileName" type="text" maxlength="64" placeholder="例如：小明">
+      </div>
+      <div class="hm-profile-field">
+        <label for="hmProfileEmail">邮箱</label>
+        <input id="hmProfileEmail" type="email" maxlength="190" placeholder="you@example.com">
+      </div>
+      <div class="hm-profile-field">
+        <label for="hmProfileBio">简介</label>
+        <textarea id="hmProfileBio" rows="3" maxlength="500" placeholder="简单介绍一下自己"></textarea>
+      </div>
+      <div class="hm-profile-actions">
+        <button class="hm-pill hm-pill-ghost" id="hmProfileCancel" type="button">取消</button>
+        <button class="hm-pill hm-pill-primary" id="hmProfileSave" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
   <div class="hm-auth" id="hmAuth" hidden aria-hidden="true">
     <div class="hm-auth-bg" aria-hidden="true">
       <span class="hm-auth-blob b1"></span>
@@ -3793,11 +4316,6 @@
         </div>
         <h1>绘梦 · AI 动漫创作</h1>
         <p>登录后作品与桌面布局在所有设备同步</p>
-      </div>
-
-      <div class="hm-auth-tabs">
-        <button class="is-active" data-auth-tab="login" id="authTabLogin">登录</button>
-        <button data-auth-tab="register" id="authTabRegister">注册</button>
       </div>
 
       <form class="hm-auth-form" id="authForm" autocomplete="off">
@@ -3814,22 +4332,12 @@
           <input id="authPassword" type="password" placeholder="请输入密码" autocomplete="current-password">
         </label>
 
-        <label class="hm-auth-field" id="authConfirmWrap" hidden>
-          <span>确认密码</span>
-          <input id="authConfirm" type="password" placeholder="再次输入密码" autocomplete="new-password">
-        </label>
-
         <div class="hm-auth-error" id="authError" hidden></div>
 
         <button type="submit" class="hm-auth-submit" id="authSubmit">
           <span id="authSubmitText">登录</span>
           <span class="hm-auth-spin" hidden aria-hidden="true"></span>
         </button>
-
-        <p class="hm-auth-switch">
-          <span id="authSwitchHint">还没有账号？</span>
-          <button type="button" class="hm-auth-link" id="authSwitchBtn">立即注册</button>
-        </p>
       </form>
     </div>
   </div>
@@ -3931,5 +4439,1699 @@
   <script src="desk.js"></script>
   <script src="admin.js"></script>
 
+<script>
+/* =============================================================
+ * 侧栏中段 · 右键菜单（置顶 / 固定）
+ * 依赖：.hm-rail-top / [data-rail] / #railCtxMenu / is-pinned / is-fixed
+ * 存储：localStorage['anidream.rail.pins.v1']
+ * ============================================================= */
+(function () {
+  'use strict';
+  var PIN_KEY = 'anidream.rail.pins.v1';
+  var railTop = document.querySelector('.hm-rail-top');
+  var menu = document.getElementById('railCtxMenu');
+  if (!railTop || !menu) return;
+
+  var titleEl = document.getElementById('railCtxTitle');
+  var pinText = document.getElementById('railCtxPinText');
+  var fixText = document.getElementById('railCtxFixText');
+  var ctxItem = null;
+
+  function readStore() {
+    var fallback = { pins: [], order: [], fixed: [] };
+    try {
+      var raw = localStorage.getItem(PIN_KEY);
+      if (!raw) return fallback;
+      var obj = JSON.parse(raw);
+      if (!obj || typeof obj !== 'object') return fallback;
+      return {
+        pins: Array.isArray(obj.pins) ? obj.pins : [],
+        order: Array.isArray(obj.order) ? obj.order : [],
+        fixed: Array.isArray(obj.fixed) ? obj.fixed : []
+      };
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function railItems() {
+    return railTop.querySelectorAll('.hm-rail-item[data-rail]');
+  }
+
+  function orderList() {
+    var out = [];
+    railItems().forEach(function (el) {
+      var key = el.getAttribute('data-rail');
+      if (key) out.push(key);
+    });
+    return out;
+  }
+
+  function pinList() {
+    var out = [];
+    railItems().forEach(function (el) {
+      if (el.classList.contains('is-pinned')) out.push(el.getAttribute('data-rail'));
+    });
+    return out;
+  }
+
+  function fixedList() {
+    var out = [];
+    railItems().forEach(function (el) {
+      if (el.classList.contains('is-fixed')) out.push(el.getAttribute('data-rail'));
+    });
+    return out;
+  }
+
+  function byKey(key) {
+    if (!key) return null;
+    return railTop.querySelector('.hm-rail-item[data-rail="' + key + '"]');
+  }
+
+  function saveRailState() {
+    try {
+      localStorage.setItem(PIN_KEY, JSON.stringify({
+        pins: pinList(),
+        order: orderList(),
+        fixed: fixedList()
+      }));
+    } catch (e) { /* ignore */ }
+  }
+
+  function closeMenu() {
+    if (menu.hidden) return;
+    menu.hidden = true;
+  }
+
+  function placeMenu(x, y) {
+    menu.style.left = '0px';
+    menu.style.top = '0px';
+    menu.hidden = false;
+    var w = menu.offsetWidth || 168;
+    var h = menu.offsetHeight || 96;
+    var pad = 8;
+    var left = x;
+    var top = y;
+    if (left + w > window.innerWidth - pad) left = x - w;   /* 靠右时向内偏 */
+    if (left < pad) left = pad;
+    if (top + h > window.innerHeight - pad) top = y - h;    /* 靠下时向上偏 */
+    if (top < pad) top = pad;
+    menu.style.left = Math.round(left) + 'px';
+    menu.style.top = Math.round(top) + 'px';
+  }
+
+  function syncMenuText() {
+    var pinned = !!(ctxItem && ctxItem.classList.contains('is-pinned'));
+    var fixed = !!(ctxItem && ctxItem.classList.contains('is-fixed'));
+    if (pinText) pinText.textContent = pinned ? '取消置顶' : '置顶';
+    if (fixText) fixText.textContent = fixed ? '取消固定' : '固定';
+  }
+
+  function openMenu(el, x, y) {
+    ctxItem = el;
+    if (titleEl) {
+      var label = el.querySelector('span');
+      titleEl.textContent = ((label ? label.textContent : el.textContent) || '').trim() || '模块';
+    }
+    syncMenuText();
+    placeMenu(x, y);
+  }
+
+  function togglePin(el) {
+    if (el.classList.contains('is-pinned')) {
+      /* 取消置顶：按记录的原始位置插回 */
+      el.classList.remove('is-pinned');
+      el.removeAttribute('data-pinned');
+      var prevKey = el.getAttribute('data-pinprev') || '';
+      el.removeAttribute('data-pinprev');
+      var anchor = byKey(prevKey);
+      if (anchor && anchor !== el && anchor.parentNode === railTop) {
+        railTop.insertBefore(el, anchor.nextSibling);
+      } else {
+        var firstPlain = null;
+        var list = railItems();
+        for (var i = 0; i < list.length; i++) {
+          if (!list[i].classList.contains('is-pinned')) { firstPlain = list[i]; break; }
+        }
+        if (firstPlain && firstPlain !== el) railTop.insertBefore(el, firstPlain);
+        else if (!firstPlain) railTop.appendChild(el);
+      }
+    } else {
+      /* 置顶：插到最前，并记住原位置 */
+      var prev = el.previousElementSibling;
+      var prevRail = prev && prev.getAttribute ? (prev.getAttribute('data-rail') || '') : '';
+      el.setAttribute('data-pinprev', prevRail);
+      el.classList.add('is-pinned');
+      el.setAttribute('data-pinned', '1');
+      railTop.insertBefore(el, railTop.firstElementChild);
+    }
+    saveRailState();
+  }
+
+  function toggleFix(el) {
+    if (el.classList.contains('is-fixed')) {
+      el.classList.remove('is-fixed');
+      el.removeAttribute('data-fixed');
+      el.setAttribute('data-pinned', el.classList.contains('is-pinned') ? '1' : '0');
+    } else {
+      el.classList.add('is-fixed');
+      el.setAttribute('data-fixed', '1');
+      el.setAttribute('draggable', 'false');
+    }
+    saveRailState();
+  }
+
+  function applyStoredState() {
+    var store = readStore();
+    var i, el;
+    for (i = 0; i < store.order.length; i++) {
+      el = byKey(store.order[i]);
+      if (el) railTop.appendChild(el);
+    }
+    /* 旧顺序里没有 layout：默认排到「美术设定」之后，避免被顶到最前 */
+    if (store.order.length && store.order.indexOf('layout') < 0) {
+      var layoutEl = byKey('layout');
+      var artEl = byKey('art');
+      if (layoutEl && artEl && artEl.parentNode === railTop) {
+        railTop.insertBefore(layoutEl, artEl.nextSibling);
+      }
+    }
+    /* 旧顺序里没有 edit：默认排到「摄影」之后 */
+    if (store.order.length && store.order.indexOf('edit') < 0) {
+      var editEl = byKey('edit');
+      var directorEl = byKey('director');
+      if (editEl && directorEl && directorEl.parentNode === railTop) {
+        railTop.insertBefore(editEl, directorEl.nextSibling);
+      }
+    }
+    for (i = 0; i < store.fixed.length; i++) {
+      el = byKey(store.fixed[i]);
+      if (el) {
+        el.classList.add('is-fixed');
+        el.setAttribute('data-fixed', '1');
+        el.setAttribute('draggable', 'false');
+      }
+    }
+    for (i = store.pins.length - 1; i >= 0; i--) {
+      el = byKey(store.pins[i]);
+      if (el) {
+        el.classList.add('is-pinned');
+        el.setAttribute('data-pinned', '1');
+        railTop.insertBefore(el, railTop.firstElementChild);
+      }
+    }
+  }
+
+  /* 右键：只作用于 .hm-rail-top 内的模块按钮（底部四项在外层容器，不响应） */
+  railTop.addEventListener('contextmenu', function (e) {
+    var node = e.target;
+    var item = node && node.closest ? node.closest('[data-rail]') : null;
+    if (!item || !railTop.contains(item)) return;
+    e.preventDefault();
+    openMenu(item, e.clientX, e.clientY);
+  });
+
+  menu.addEventListener('click', function (e) {
+    var node = e.target;
+    var btn = node && node.closest ? node.closest('[data-rctx]') : null;
+    if (!btn || !ctxItem) return;
+    var act = btn.getAttribute('data-rctx');
+    if (act === 'pin') togglePin(ctxItem);
+    else if (act === 'fix') toggleFix(ctxItem);
+    syncMenuText();
+    closeMenu();
+  });
+
+  document.addEventListener('click', function (e) {
+    if (menu.hidden) return;
+    if (menu.contains(e.target)) return;
+    closeMenu();
+  }, true);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) closeMenu();
+  });
+
+  railTop.addEventListener('scroll', closeMenu, true);
+
+  /* 拖拽结束后同步存储（固定项不参与，已在 initRailDragSort 内跳过） */
+  railTop.addEventListener('dragend', function () {
+    saveRailState();
+  }, true);
+
+  /* 切换视图时收起菜单 */
+  new MutationObserver(function () {
+    closeMenu();
+  }).observe(document.body, { attributes: true, attributeFilter: ['data-view', 'class'] });
+
+  applyStoredState();
+})();
+</script>
+
+<script>
+/* ============================================================
+ * 绘梦 · 跨设备云同步层（HMSync）
+ * ------------------------------------------------------------
+ * 职责：
+ *   1. 作品元数据 → /api/works（带 _rev 乐观锁，删除写墓碑）
+ *   2. 作品图片 → POST /api/works/:id/asset（服务端存对象存储，库里只留 url）
+ *   3. 桌面/项目文件夹树 → /api/desk
+ *   4. 编集/宣发/偏好 → /api/docs/:kind
+ *   5. 登录后一次性迁移本地旧数据（按 id 去重，可重试）
+ *   6. 离线队列：断网时进队列，恢复网络/下次启动重放
+ * localStorage / IndexedDB 降级为本地缓存。
+ * ============================================================ */
+/* ============================================================
+ * 绘梦 · 登录态持久化层（HMAuth）
+ * ------------------------------------------------------------
+ * 「刷新后保持登录」依赖三件事：
+ *   1) token 真正写进了本地存储（配额满时写入会静默失败）
+ *   2) 页面启动时不被 5xx / 超时 / 断网误判成「登录失效」
+ *   3) hm.user 缓存缺失时仍能从 token payload 还原登录态
+ * 这里把这三件事集中处理，页面只调 HMAuth.getToken / setToken / classify。
+ * ============================================================ */
+(function () {
+  'use strict';
+  if (window.HMAuth) return;
+
+  var TOKEN_KEY = 'hm.token';
+  var TOKEN_BAK = 'hm.token.bak';
+
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function ssGet(k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function ssSet(k, v) { try { sessionStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function ssDel(k) { try { sessionStorage.removeItem(k); } catch (e) {} }
+
+  /* 只清理「可重建」的缓存来腾配额：旧作品快照与离线队列。
+     绝不碰 hm.token / hm.user / anidream.works.v1 / anidream.rev.v1 */
+  function trimStorage() {
+    var removed = 0;
+    try {
+      var snaps = [];
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('.snap.') > 0) snaps.push(k);
+      }
+      snaps.sort();
+      /* 只留最新 1 份（正常上限是 3 份），配额紧张时优先回收 */
+      while (snaps.length > 1) { localStorage.removeItem(snaps.shift()); removed += 1; }
+      if (localStorage.getItem('anidream.queue.v1')) {
+        localStorage.removeItem('anidream.queue.v1');
+        removed += 1;
+      }
+    } catch (e) {}
+    if (removed) console.warn('[HMAuth] 配额紧张，已清理 ' + removed + ' 项可重建缓存');
+    return removed;
+  }
+
+  function readToken() {
+    var t = lsGet(TOKEN_KEY);
+    if (t) return t;
+    /* 主键丢了但本标签页还有 → 回填主键（刷新后仍然登录） */
+    t = ssGet(TOKEN_KEY);
+    if (t) { lsSet(TOKEN_KEY, t); return t; }
+    /* 主键被误删但备份还在 → 回填 */
+    t = lsGet(TOKEN_BAK);
+    if (t) { lsSet(TOKEN_KEY, t); ssSet(TOKEN_KEY, t); return t; }
+    return '';
+  }
+
+  function writeToken(token) {
+    token = token ? String(token) : '';
+    if (!token) {
+      lsDel(TOKEN_KEY); lsDel(TOKEN_BAK); ssDel(TOKEN_KEY);
+      return true;
+    }
+    var ok = lsSet(TOKEN_KEY, token);
+    if (!ok) {
+      /* 配额满：回收可重建缓存后重试一次 */
+      trimStorage();
+      ok = lsSet(TOKEN_KEY, token);
+    }
+    if (!ok) {
+      /* 仍然写不进：降级到 sessionStorage（同标签页刷新依旧保持登录） */
+      ssSet(TOKEN_KEY, token);
+      console.warn('[HMAuth] localStorage 写入失败（可能配额已满），token 已降级存到 sessionStorage；建议清理本地缓存');
+    } else {
+      /* 主键成功时同步留一份备份，主键被外部清理时可回填 */
+      if (!lsSet(TOKEN_BAK, token)) ssSet(TOKEN_KEY, token);
+    }
+    /* 回读校验：写进去读不出来等于没登录，必须显式告警而不是静默 */
+    var back = ok ? lsGet(TOKEN_KEY) : ssGet(TOKEN_KEY);
+    if (back !== token) {
+      console.warn('[HMAuth] token 回读校验失败，本次刷新可能需要重新登录');
+      return false;
+    }
+    return true;
+  }
+
+  function b64url(str) {
+    var s = String(str || '').replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return s;
+  }
+  function utf8(bin) {
+    try {
+      if (typeof TextDecoder !== 'undefined') {
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+    } catch (e) {}
+    try { return decodeURIComponent(escape(bin)); } catch (e) { return bin; }
+  }
+  /* 解析 token payload（无 exp，因此只用于「还原用户是谁」，是否失效只看服务端 401） */
+  function decodeToken(token) {
+    var parts = String(token || '').split('.');
+    if (parts.length !== 3) return null;
+    var json = '';
+    try { json = utf8(atob(b64url(parts[1]))); } catch (e) { return null; }
+    var p = null;
+    try { p = JSON.parse(json); } catch (e) { return null; }
+    if (!p || !p.uid) return null;
+    return {
+      id: String(p.uid),
+      username: p.username || ('guest_' + String(p.uid).slice(-6)),
+      role: p.role || 'user',
+      status: p.status || 'approved'
+    };
+  }
+
+  /* 'auth' = 服务端明确否定凭证（只有这种才允许清 token / 登出）
+     'network' = 5xx / 超时 / 断网，必须保留 token，稍后重试
+     'other' = 其余业务错误，同样不动登录态 */
+  function classify(err) {
+    if (!err) return 'other';
+    var status = Number(err.status || err.statusCode || 0);
+    var raw = String(err.message || err.code || '');
+    var msg = raw.toLowerCase();
+    if (status === 401 || status === 403) return 'auth';
+    if (status >= 500 || err.offline || err.timeout || err.name === 'AbortError') return 'network';
+    if (msg.indexOf('timeout') >= 0 || msg.indexOf('超时') >= 0 ||
+        msg.indexOf('failed to fetch') >= 0 || msg.indexOf('network') >= 0 ||
+        msg.indexOf('offline') >= 0 || msg.indexOf('网络') >= 0 ||
+        msg.indexOf('无法连接') >= 0 || msg.indexOf('abort') >= 0) return 'network';
+    /* 无状态码时只认「明确说凭证无效」的措辞；
+       不能宽泛匹配 'token'，否则 500 文案里带 token 会把用户踢下线 */
+    if (msg.indexOf('未登录') >= 0 || msg.indexOf('登录已过期') >= 0 ||
+        msg.indexOf('unauthorized') >= 0 ||
+        (msg.indexOf('token') >= 0 && (msg.indexOf('invalid') >= 0 || msg.indexOf('expired') >= 0))) {
+      return 'auth';
+    }
+    return 'other';
+  }
+
+  /* 只有「账号确实处于待审批 / 已拒绝」才算账号被拦。
+     ACCOUNT_UNDEFINED（账号记录缺 status）属于服务端数据问题，
+     不能当成登录失效，否则每次刷新都会被踢下线。 */
+  function isAccountBlocked(err) {
+    if (!err) return false;
+    var code = String(err.code || (err.data && err.data.error && err.data.error.code) || '');
+    if (code === 'ACCOUNT_PENDING' || code === 'ACCOUNT_REJECTED') return true;
+    var msg = String(err.message || '');
+    return msg.indexOf('等待超级管理员审批') >= 0 || msg.indexOf('注册申请已被拒绝') >= 0;
+  }
+
+  window.HMAuth = {
+    getToken: readToken,
+    setToken: writeToken,
+    decodeToken: decodeToken,
+    classify: classify,
+    isAccountBlocked: isAccountBlocked,
+    trimStorage: trimStorage
+  };
+})();
+
+/* ============================================================
+ * 存储就绪提示：账号/作品/图片仍在临时存储时必须显式告警，
+ * 不能把「写进了本地文件 + 本地盘」显示成「已同步」。
+ * ============================================================ */
+(function () {
+  'use strict';
+  if (window.HMStorageNotice) return;
+  var el = null;
+
+  function hide() { if (el) el.style.display = 'none'; }
+
+  function show(text) {
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'hmStorageNotice';
+      el.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:2147483000;max-width:560px;' +
+        'padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.6;color:#fecaca;' +
+        'background:rgba(69,10,10,.95);border:1px solid rgba(248,113,113,.45);' +
+        'box-shadow:0 8px 28px rgba(0,0,0,.45);cursor:pointer';
+      el.title = '点击打开「设置 → 云同步」查看存储状态';
+      el.addEventListener('click', function () {
+        try {
+          if (window.HMApp && window.HMApp.openAdmin) window.HMApp.openAdmin('sync');
+          else if (window.HMApp && window.HMApp.openSettings) window.HMApp.openSettings();
+        } catch (e) {}
+      });
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    el.style.display = 'block';
+  }
+
+  function refresh() {
+    var api = window.HM && window.HM.api;
+    var base = (api && api.base) || '';
+    if (!base || (typeof location !== 'undefined' && location.protocol === 'file:')) return;
+    Promise.all([
+      fetch(base + '/health', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+      fetch(base + '/auth/store-status', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]).then(function (arr) {
+      var h = arr[0] || {};
+      var s = arr[1] || {};
+      var ud = h.userData || {};
+      var stores = h.stores || {};
+      var accounts = (stores.accounts && stores.accounts.mode) || s.storage || '';
+      var dataStore = ud.dataStore || (stores.userData && stores.userData.mode) || '';
+      var objectStore = ud.objectStore || (stores.assets && stores.assets.mode) || '';
+      var bad = [];
+      if (accounts && accounts !== 'mysql') bad.push('账号库=' + (s.label || accounts));
+      if (dataStore && dataStore !== 'mysql') bad.push('作品/项目=' + (ud.dataLabel || dataStore));
+      if (objectStore && objectStore !== 's3') bad.push('图片=' + (ud.objectLabel || objectStore));
+      if (!bad.length) { hide(); return; }
+      show('⚠ 当前为临时存储：' + bad.join('，') + '。服务重启/重新部署后数据可能丢失，尚不能视为已同步。');
+    });
+  }
+
+  window.HMStorageNotice = { refresh: refresh, hide: hide };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(refresh, 1200); });
+  } else {
+    setTimeout(refresh, 1200);
+  }
+  setTimeout(refresh, 8000);
+})();
+
+(function () {
+  'use strict';
+
+  if (window.HMSync) return;
+  var api = window.HM && window.HM.api;
+  if (!api) return;
+
+  var LS_REV = 'anidream.rev.v1';
+  var LS_SYNC = 'anidream.sync.v1';
+  var LS_QUEUE = 'anidream.queue.v1';
+  var DOC_KINDS = { desk: 1, compile: 1, publish: 1, prefs: 1 };
+
+  var revs = read(LS_REV, { works: {}, docs: {}, fp: {}, docfp: {} });
+  if (!revs.docfp) revs.docfp = {};
+  var sync = read(LS_SYNC, { lastSync: 0, migrated: {}, conflicts: 0, lastError: '' });
+  var queue = read(LS_QUEUE, []);
+  var storage = null;
+  var usage = null;
+  var busy = false;
+  var pushTimer = null;
+  var panelEl = null;
+  var lastPullAt = 0;
+
+  /* ============================================================
+   * 数据安全层（事故修复）：
+   *   1. 本地作品来源永远是「所有候选键的并集」，不依赖单一 key
+   *   2. 任何覆盖写之前先做带时间戳快照（保留最近 3 份）
+   *   3. 同步流程试图把作品列表写空 → 拦回快照内容，绝不落盘空数组
+   * ============================================================ */
+  var LS_WORK_PREFIX = 'anidream.works';
+  var LEGACY_WORK_KEYS = ['anidream.works', 'hm.works', 'works', 'anidream.works.v1.bak'];
+  var MAX_SNAPSHOTS = 3;
+  var syncDepth = 0;
+
+  function toast(msg, type) {
+    try { if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type || 'info'); } catch (e) {}
+  }
+
+  function itemId(w) {
+    if (w && w.id) return String(w.id);
+    return 'fp_' + fingerprint(w || {});
+  }
+
+  /* 并集合并：按 id 去重，时间新的字段优先，任何一条都不丢 */
+  function mergeLists() {
+    var map = Object.create(null);
+    var order = [];
+    Array.prototype.forEach.call(arguments, function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (w) {
+        if (!w || typeof w !== 'object') return;
+        var id = itemId(w);
+        if (!map[id]) {
+          map[id] = Object.assign({}, w, { id: id });
+          order.push(id);
+          return;
+        }
+        var cur = map[id];
+        if (workTime(w) >= workTime(cur)) map[id] = Object.assign({}, cur, w, { id: id });
+        else map[id] = Object.assign({}, w, cur, { id: id });
+      });
+    });
+    return order.map(function (id) { return map[id]; }).sort(function (a, b) {
+      return workTime(b) - workTime(a);
+    });
+  }
+
+  /* 扫描本地所有可能存过作品的键（当前用户键 / .bak / .snap.* / 历史键名）
+     注意：只取「当前用户 + 无后缀的访客键」，不读其它用户的键，避免串号。 */
+  function collectLocalWorks(userId) {
+    var u = userId || uid();
+    var prefix = u ? 'anidream.works.v1.' + u : '';
+    var keys = [];
+    try {
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var k = localStorage.key(i);
+        if (!k) continue;
+        if (LEGACY_WORK_KEYS.indexOf(k) >= 0) { keys.push(k); continue; }
+        if (k === 'anidream.works.v1' || k === 'anidream.works.v1.bak') { keys.push(k); continue; }
+        if (prefix && (k === prefix || k.indexOf(prefix + '.') === 0)) keys.push(k);
+      }
+    } catch (e) {}
+    var lists = [];
+    keys.forEach(function (k) {
+      try {
+        var raw = localStorage.getItem(k);
+        if (!raw || raw.length < 3) return;
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) lists.push(arr);
+      } catch (e) {}
+    });
+    return mergeLists.apply(null, lists);
+  }
+
+  function userWorkKey(u) { return 'anidream.works.v1.' + u; }
+
+  function snapshotKeys(u) {
+    var out = [];
+    try {
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(userWorkKey(u) + '.snap.') === 0) out.push(k);
+      }
+    } catch (e) {}
+    out.sort();
+    return out;
+  }
+
+  function pruneSnapshots(u) {
+    var keys = snapshotKeys(u);
+    while (keys.length > MAX_SNAPSHOTS) {
+      try { localStorage.removeItem(keys.shift()); } catch (e) {}
+    }
+  }
+
+  /* 覆盖写之前调用：把「磁盘上现有的」作品列表备份成 .snap.<时间戳>
+     注意：快照本身也占 localStorage 配额，写太勤会把 hm.token 挤掉，
+     导致「刷新后要重新登录」。因此自动快照必须节流 + 限体积。 */
+  var SNAP_MIN_INTERVAL = 60000;              /* 自动快照最快 1 分钟一次 */
+  var SNAP_MAX_BYTES = 512 * 1024;            /* 单份快照上限 512KB */
+  var lastSnapAt = 0;
+
+  function snapshotWorks(reason) {
+    var u = uid();
+    if (!u) return null;
+    var force = reason === 'recover';
+    if (!force && Date.now() - lastSnapAt < SNAP_MIN_INTERVAL) return null;
+    var key = userWorkKey(u);
+    var raw = null;
+    try { raw = localStorage.getItem(key); } catch (e) {}
+    if (!raw || raw.length < 3 || raw === '[]') return null;
+    if (!force && raw.length > SNAP_MAX_BYTES) {
+      console.warn('[HMSync] 作品列表过大（' + Math.round(raw.length / 1024) + 'KB），跳过自动快照以免挤占登录态');
+      return null;
+    }
+    var snapKey = key + '.snap.' + Date.now();
+    try { localStorage.setItem(snapKey, raw); }
+    catch (e) {
+      /* 配额满：先回收旧快照/离线队列再重试一次 */
+      if (window.HMAuth && window.HMAuth.trimStorage) window.HMAuth.trimStorage();
+      try { localStorage.setItem(snapKey, raw); } catch (e2) { return null; }
+    }
+    lastSnapAt = Date.now();
+    pruneSnapshots(u);
+    if (force) console.log('[HMSync] 恢复前已快照', snapKey);
+    return snapKey;
+  }
+
+  function latestSnapshot(u) {
+    var keys = snapshotKeys(u);
+    if (!keys.length) return [];
+    try {
+      var arr = JSON.parse(localStorage.getItem(keys[keys.length - 1]) || '[]');
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  /* 由 saveWorks 在写入前调用 */
+  function beforePersist(list) {
+    snapshotWorks('saveWorks');
+    if (syncDepth) {
+      if (Array.isArray(list) && list.length) return;
+      var prev = latestSnapshot(uid());
+      if (!prev.length) return;
+      if (window.HMApp && window.HMApp.state) window.HMApp.state.works = prev;
+      sync.lastError = '同步返回空列表，已阻止清空本地作品，并从快照恢复 ' + prev.length + ' 条';
+      saveSync();
+      toast('已阻止一次空列表覆盖，本地作品已从快照恢复', 'warn');
+      return;
+    }
+    /* 用户主动把列表删空（单条删完/多选删除/清空）：记标记，避免下次进页面被自动恢复"复活" */
+    if (Array.isArray(list) && !list.length && uid()) {
+      try { localStorage.setItem('hmsync.clearedAt.' + uid(), String(Date.now())); } catch (e) {}
+    }
+  }
+
+  function runSyncWrite(fn) {
+    syncDepth += 1;
+    try { return fn(); } finally { syncDepth -= 1; }
+  }
+
+  /* 读取 IndexedDB 里所有 blob（作品 id → data URL），用于恢复入口 */
+  function idbAll() {
+    return new Promise(function (resolve) {
+      try {
+        var req = indexedDB.open('anidream', 1);
+        req.onupgradeneeded = function () {
+          var db = req.result;
+          if (!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+        };
+        req.onerror = function () { resolve({}); };
+        req.onsuccess = function () {
+          var db = req.result;
+          var out = {};
+          try {
+            var cur = db.transaction('blobs', 'readonly').objectStore('blobs').openCursor();
+            cur.onerror = function () { resolve(out); };
+            cur.onsuccess = function (e) {
+              var c = e.target.result;
+              if (!c) { resolve(out); return; }
+              out[String(c.key)] = c.value;
+              c.continue();
+            };
+          } catch (e) { resolve({}); }
+        };
+      } catch (e) { resolve({}); }
+    });
+  }
+
+  function read(key, fallback) {
+    try {
+      var v = JSON.parse(localStorage.getItem(key) || 'null');
+      return v && typeof v === 'object' ? v : fallback;
+    } catch (e) { return fallback; }
+  }
+  function write(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
+  }
+  function saveRevs() { write(LS_REV, revs); }
+  function saveSync() { write(LS_SYNC, sync); }
+  function saveQueue() { write(LS_QUEUE, queue); }
+  function user() { return (window.HMApp && window.HMApp.user) || null; }
+  function uid() { var u = user(); return u && u.id ? u.id : ''; }
+
+  function urlOf(path) {
+    var base = String(api.base || '').replace(/\/+$/, '');
+    return base + path;
+  }
+
+  function request(method, path, body, timeoutMs) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, timeoutMs || 45000);
+    var token = '';
+    try { token = localStorage.getItem('hm.token') || ''; } catch (e) {}
+    var init = {
+      method: method,
+      headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
+      signal: controller.signal
+    };
+    if (body !== undefined) {
+      init.headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(body);
+    }
+    return fetch(urlOf(path), init).then(function (res) {
+      return res.text().then(function (raw) {
+        var data = null;
+        try { data = raw ? JSON.parse(raw) : null; } catch (e) { data = raw; }
+        if (!res.ok) {
+          var err = new Error((data && data.error && data.error.message) || ('请求失败 HTTP ' + res.status));
+          err.status = res.status;
+          err.code = data && data.error && data.error.code;
+          err.hint = data && data.error && data.error.hint;
+          err.data = data;
+          throw err;
+        }
+        return data;
+      });
+    }).catch(function (err) {
+      if (err && err.name === 'AbortError') {
+        err = new Error('请求超时');
+        err.offline = true;
+      } else if (err && !err.status) {
+        err.offline = true;
+      }
+      throw err;
+    }).finally(function () { clearTimeout(timer); });
+  }
+
+  function hash(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i += 1) {
+      h ^= str.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h.toString(36) + ':' + str.length;
+  }
+  function fingerprint(work) {
+    return hash(JSON.stringify({
+      p: work.prompt || '',
+      u: (work.url || '').slice(0, 160),
+      t: work.thumb ? work.thumb.length : 0,
+      n: work.name || '',
+      c: work.createdAt || 0,
+      r: work.ratioId || '',
+      s: work.scaleId || '',
+      m: work.modelId || ''
+    }));
+  }
+  function workTime(work) {
+    var v = work && (work._updatedAt || work.updatedAt || work.createdAt);
+    if (typeof v === 'number') return v;
+    var t = Date.parse(v);
+    return isNaN(t) ? 0 : t;
+  }
+
+  /* ---------------- 作品推送 ---------------- */
+  function onWorksChanged() {
+    if (!uid()) return;
+    /* 恢复入口刚把本地作品挂回列表时，先不要立刻回传云端（避免用恢复结果覆盖云端） */
+    if (sync.pausedUntil && Date.now() < sync.pausedUntil) return;
+    if (pushTimer) return;
+    pushTimer = setTimeout(function () {
+      pushTimer = null;
+      pushDirtyWorks();
+    }, 900);
+  }
+
+  async function pushDirtyWorks() {
+    if (!uid() || busy) return;
+    if (!window.HMApp || !Array.isArray(window.HMApp.state && window.HMApp.state.works)) return;
+    busy = true;
+    try {
+      await window.HMApp.hydrateWorks();
+      var works = window.HMApp.state.works.filter(function (w) { return w && w.id; });
+      for (var i = 0; i < works.length; i += 1) {
+        var w = works[i];
+        var key = uid() + ':' + w.id;
+        if (revs.fp[key] && revs.fp[key] === fingerprint(w)) continue;
+        await pushOne(w);
+      }
+      if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+      sync.lastSync = Date.now();
+      sync.lastError = '';
+      saveSync();
+    } catch (err) {
+      sync.lastError = (err && err.message) || '同步失败';
+      saveSync();
+    } finally {
+      busy = false;
+      renderPanel();
+    }
+  }
+
+  async function uploadAsset(work) {
+    if (!work || typeof work.url !== 'string' || work.url.indexOf('data:') !== 0) return work;
+    var res = await request('POST', '/works/' + encodeURIComponent(work.id) + '/asset', { dataUrl: work.url }, 120000);
+    if (!res || !res.asset) return work;
+    work.url = res.asset.url;
+    work._assetId = res.asset.assetId;
+    work._assetBytes = res.asset.bytes;
+    work._updatedAt = Date.now();
+    /* 关键：不删除 IndexedDB 里的原图。对象存储未配置时图片落在 Render 本地盘，
+       重新部署/重启后 URL 会 404，本地 blob 是唯一还能救回来的来源。 */
+    work.blob = true;
+    work._localBlobKept = true;
+    usage = res.usage || usage;
+    return work;
+  }
+
+  async function pushOne(work) {
+    if (!work || !work.id) return null;
+    if (work.url && work.url.indexOf('data:') === 0) {
+      await uploadAsset(work);
+    }
+    var key = uid() + ':' + work.id;
+    var payload = Object.assign({}, work);
+    delete payload._rev;
+    var body = { work: payload };
+    if (revs.works[work.id] != null) body.rev = revs.works[work.id];
+    try {
+      var res = await request('POST', '/works', body, 45000);
+      if (res && res.rev != null) {
+        revs.works[work.id] = res.rev;
+        revs.fp[key] = fingerprint(work);
+        saveRevs();
+      }
+      return res;
+    } catch (err) {
+      if (err.status === 409) {
+        sync.conflicts += 1;
+        var cur = err.data && err.data.current;
+        if (!cur) {
+          var list = await request('GET', '/works?since=0&limit=500', null, 20000);
+          (list && list.items || []).forEach(function (w) { if (w.id === work.id) cur = w; });
+        }
+        if (cur && Number(cur._updatedAt) > workTime(work)) {
+          applyServerWork(cur);
+          saveRevs(); saveSync();
+          return null;
+        }
+        var rev = cur && cur._rev != null ? cur._rev : null;
+        var force = { work: payload };
+        if (rev != null) force.rev = rev;
+        var retry = await request('POST', '/works', force, 45000);
+        if (retry && retry.rev != null) {
+          revs.works[work.id] = retry.rev;
+          revs.fp[key] = fingerprint(work);
+          saveRevs();
+        }
+        return retry;
+      }
+      throw err;
+    }
+  }
+
+  function applyServerWork(serverWork) {
+    if (!window.HMApp || !window.HMApp.state || !Array.isArray(window.HMApp.state.works)) return;
+    var list = window.HMApp.state.works;
+    for (var i = 0; i < list.length; i += 1) {
+      if (list[i] && list[i].id === serverWork.id) {
+        var keepLocalImage = list[i].url && list[i].url.indexOf('data:') === 0 && !serverWork.url;
+        list[i] = Object.assign({}, serverWork, keepLocalImage ? { url: list[i].url } : {});
+        return;
+      }
+    }
+    list.unshift(serverWork);
+  }
+
+  /* ---------------- 删除同步 ---------------- */
+  async function deleteWorks(ids) {
+    if (!uid() || !Array.isArray(ids)) return;
+    for (var i = 0; i < ids.length; i += 1) {
+      var id = ids[i];
+      var rev = revs.works[id];
+      var path = '/works/' + encodeURIComponent(id) + (rev != null ? '?rev=' + rev : '');
+      try {
+        await request('DELETE', path, null, 20000);
+        delete revs.works[id];
+        delete revs.fp[uid() + ':' + id];
+        saveRevs();
+      } catch (err) {
+        if (err.status === 404) continue;
+        queue.push({ op: 'delete', id: id, ts: Date.now() });
+        saveQueue();
+      }
+    }
+    sync.lastSync = Date.now();
+    saveSync();
+    renderPanel();
+  }
+
+  /* ---------------- 清空全部作品 ---------------- */
+  async function clearAll() {
+    if (!uid()) return;
+    try {
+      await request('DELETE', '/works', null, 30000);
+      revs.works = {};
+      revs.fp = {};
+      saveRevs();
+    } catch (err) {
+      if (err.offline || !err.status) {
+        queue.push({ op: 'clear', ts: Date.now() });
+        saveQueue();
+      }
+    }
+    sync.lastSync = Date.now();
+    saveSync();
+  }
+
+  /* ---------------- 文档（desk/compile/publish/prefs） ---------------- */
+  function docKey(kind) {
+    var u = uid();
+    if (kind === 'desk') return 'anidream.desk.v1' + (u ? '.' + u : '');
+    if (kind === 'compile') return 'anidream.compile.v1';
+    if (kind === 'publish') return 'anidream.publish.v1';
+    if (kind === 'prefs') return 'anidream.prefs.v1';
+    return '';
+  }
+
+  async function pushDoc(kind, data) {
+    if (!uid() || !DOC_KINDS[kind]) return null;
+    var body = { data: data };
+    if (revs.docs[kind] != null) body.rev = revs.docs[kind];
+    try {
+      var res = await request('PUT', '/docs/' + kind, body, 30000);
+      if (res && res.doc) revs.docs[kind] = res.doc.rev;
+      revs.docfp[kind] = hash(JSON.stringify(data));
+      saveRevs();
+      return res;
+    } catch (err) {
+      if (err.status === 409) {
+        sync.conflicts += 1;
+        var cur = (err.data && err.data.doc) || null;
+        if (!cur) {
+          var got = await request('GET', '/docs/' + kind, null, 15000);
+          cur = got && got.doc;
+        }
+        var localTs = Number(data && data.updatedAt) || Date.now();
+        var remoteTs = Number(cur && cur.updatedAt) || 0;
+        if (remoteTs > localTs && cur && cur.data) {
+          applyDoc(kind, cur.data, cur.rev);
+          saveSync();
+          return null;
+        }
+        var force = { data: data, rev: cur ? cur.rev : undefined };
+        var retry = await request('PUT', '/docs/' + kind, force, 30000);
+        if (retry && retry.doc) revs.docs[kind] = retry.doc.rev;
+        saveRevs();
+        saveSync();
+        return retry;
+      }
+      if (err.offline) {
+        queue.push({ op: 'doc', kind: kind, data: data, ts: Date.now() });
+        saveQueue();
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  function pushPrefs() {
+    var prefs = read('anidream.prefs.v1', null);
+    if (prefs) pushDoc('prefs', prefs);
+  }
+
+  function applyDoc(kind, data, rev) {
+    var key = docKey(kind);
+    if (!key || data == null) return;
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+    if (rev != null) { revs.docs[kind] = rev; saveRevs(); }
+    revs.docfp[kind] = hash(JSON.stringify(data));
+    if (kind === 'desk' && window.HMDesk && window.HMDesk.reloadForUser) {
+      window.HMDesk.reloadForUser();
+    } else if (window.HMCloudReload && window.HMCloudReload[kind]) {
+      try { window.HMCloudReload[kind](); } catch (e) {}
+    } else if (kind === 'prefs' && window.HMApp && window.HMApp.state) {
+      try {
+        Object.assign(window.HMApp.state, data);
+        if (window.HMApp.syncSettingsUI) window.HMApp.syncSettingsUI();
+      } catch (e) {}
+    }
+  }
+
+  /* ---------------- 登录后：拉取 + 迁移 ----------------
+   * 铁律：拉取失败 / 401 / 403 / 超时 / 结构异常 / 云端为空，都不允许改动本地作品。 */
+  async function afterLogin(force) {
+    if (!uid() || busy || !window.HMApp) return;
+    if (!force && Date.now() - lastPullAt < 20000) return;
+    lastPullAt = Date.now();
+    busy = true;
+    try {
+      await window.HMApp.hydrateWorks();
+      var boot;
+      try {
+        boot = await request('GET', '/user-data/bootstrap', null, 30000);
+      } catch (err) {
+        sync.lastError = '云端拉取失败（' + ((err && err.message) || '网络异常') + '），本机作品保持不变';
+        saveSync();
+        renderPanel();
+        return;
+      }
+      if (!boot || typeof boot !== 'object') {
+        sync.lastError = '云端返回结构异常，已忽略本次同步，本机作品保持不变';
+        saveSync();
+        renderPanel();
+        return;
+      }
+      applyBootstrap(boot);
+      await migrateLocal();
+      await flushQueue();
+      sync.lastSync = Date.now();
+      if (!sync.lastError) sync.lastError = '';
+      saveSync();
+    } catch (err) {
+      sync.lastError = (err && err.message) || '拉取失败';
+      saveSync();
+    } finally {
+      busy = false;
+      renderPanel();
+    }
+  }
+
+  function validWork(w) {
+    return !!(w && typeof w === 'object' && (w.id || w.url || w.thumb || w.failed || w.ok === false));
+  }
+
+  function applyBootstrap(boot) {
+    if (!boot || typeof boot !== 'object') return;
+    storage = boot.storage || storage;
+    usage = boot.usage || usage;
+
+    /* 结构异常（字段名变动 / 被网关改写）：不动本地，不保存 */
+    if (!Array.isArray(boot.works)) {
+      sync.lastError = '云端作品字段缺失（works 不是数组），已忽略，本机作品保持不变';
+      saveSync();
+      return;
+    }
+
+    var serverWorks = boot.works.filter(validWork);
+    var deleted = Array.isArray(boot.deleted) ? boot.deleted : [];
+    var deletedMap = {};
+    deleted.forEach(function (d) { if (d && d.id) deletedMap[String(d.id)] = Number(d.updatedAt) || 0; });
+
+    /* 本地作品 = 所有本地候选键 ∪ 当前内存列表 */
+    var local = mergeLists(collectLocalWorks(uid()), (window.HMApp.state && window.HMApp.state.works) || []);
+    var localMap = {};
+    local.forEach(function (w) { localMap[itemId(w)] = w; });
+
+    /* 云端为空：保留本地全部作品并标记待上传，绝不写空 */
+    if (!serverWorks.length) {
+      if (!local.length) return;
+      local.forEach(function (w) { w._pendingUpload = true; });
+      runSyncWrite(function () {
+        window.HMApp.state.works = local;
+        if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+        if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+      });
+      toast('云端暂无作品，已保留本机 ' + local.length + ' 条', 'info');
+      return;
+    }
+
+    var merged = [];
+    serverWorks.forEach(function (sw) {
+      var sid = itemId(sw);
+      var lw = localMap[sid];
+      var tomb = deletedMap[sid];
+      var serverTs = Number(sw._updatedAt) || 0;
+      if (lw && (workTime(lw) > serverTs || (tomb && workTime(lw) > tomb))) {
+        /* 本地更新（例如离线期间生成）：保留并标记待上传 */
+        merged.push(Object.assign({}, lw, { _pendingUpload: true }));
+      } else {
+        merged.push(sw);
+        revs.works[sid] = sw._rev;
+        revs.fp[uid() + ':' + sid] = fingerprint(sw);
+      }
+      delete localMap[sid];
+    });
+    Object.keys(localMap).forEach(function (id) {
+      var lw = localMap[id];
+      var tomb = deletedMap[id];
+      if (tomb && workTime(lw) <= tomb) return; /* 其它设备已删除且本地没有更新 */
+      merged.push(Object.assign({}, lw, { _pendingUpload: true }));
+    });
+
+    merged.sort(function (a, b) { return workTime(b) - workTime(a); });
+    runSyncWrite(function () {
+      window.HMApp.state.works = merged;
+      if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+      if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+    });
+
+    var docs = boot.docs || {};
+    Object.keys(DOC_KINDS).forEach(function (kind) {
+      var d = docs[kind];
+      if (!d || d.data == null) return;
+      var localRev = Number(revs.docs[kind]) || 0;
+      if (!localRev || Number(d.rev) > localRev) applyDoc(kind, d.data, d.rev);
+      else revs.docs[kind] = Number(d.rev);
+    });
+    saveRevs();
+  }
+
+  async function migrateLocal() {
+    if (!uid()) return;
+    var state = (window.HMApp && window.HMApp.state) || {};
+    var works = (state.works || []).filter(function (w) { return w && w.id; });
+    for (var i = 0; i < works.length; i += 1) {
+      var w = works[i];
+      var key = uid() + ':' + w.id;
+      if (revs.fp[key] && revs.fp[key] === fingerprint(w)) continue;
+      await pushOne(w);
+    }
+
+    /* 文档：本地有内容且比服务端新才写（后端同样按 updatedAt 兜底） */
+    var docs = {
+      desk: read(docKey('desk'), null),
+      compile: read(docKey('compile'), null),
+      publish: read(docKey('publish'), null),
+      prefs: read(docKey('prefs'), null)
+    };
+    var kinds = Object.keys(docs);
+    for (var k = 0; k < kinds.length; k += 1) {
+      var kind = kinds[k];
+      if (docs[kind] == null) continue;
+      if (revs.docfp[kind] && revs.docfp[kind] === hash(JSON.stringify(docs[kind]))) continue;
+      await pushDoc(kind, docs[kind]);
+    }
+
+    sync.migrated[uid()] = Date.now();
+    saveSync();
+    if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+  }
+
+  /* ---------------- 恢复本地备份（一次性、可重复、不重复插入、不回写云端） ---------------- */
+  async function recoverLocal() {
+    if (!window.HMApp || !window.HMApp.state) return { restored: 0 };
+    var local = mergeLists(collectLocalWorks(uid()), window.HMApp.state.works || []);
+    var blobs = await idbAll();
+    var known = {};
+    local.forEach(function (w) { known[itemId(w)] = 1; });
+
+    /* 列表里已经没有、但 IndexedDB 还留着图的孤儿 blob → 也挂回列表 */
+    var orphans = 0;
+    Object.keys(blobs).forEach(function (id) {
+      if (known[id]) return;
+      local.push({
+        id: id,
+        type: 'image',
+        url: blobs[id],
+        ok: true,
+        blob: true,
+        prompt: '',
+        createdAt: Date.now(),
+        _recoveredLocal: true
+      });
+      known[id] = 1;
+      orphans += 1;
+    });
+
+    var withImage = 0;
+    var missing = 0;
+    var remoteOnly = 0;
+    local.forEach(function (w) {
+      if (blobs[w.id]) {
+        /* 本地原图优先：远端签名 URL 可能因为 Render 重启/重新部署已经 404 */
+        if (w.url && String(w.url).indexOf('data:') !== 0) w._remoteUrl = w.url;
+        w.url = blobs[w.id];
+        w.blob = true;
+      }
+      if (w.url || (w.thumb && String(w.thumb).indexOf('data:') === 0)) {
+        withImage += 1;
+        if (!blobs[w.id] && !w.thumb && /^https?:/.test(String(w.url || ''))) remoteOnly += 1;
+      } else missing += 1;
+      w._recoveredLocal = true;
+      w._pendingUpload = true; /* 只标待上传，不立刻回写云端 */
+    });
+    local.sort(function (a, b) { return workTime(b) - workTime(a); });
+
+    if (!local.length) {
+      toast('本机没有找到可恢复的作品数据（localStorage 与 IndexedDB 都是空的）', 'warn', 7000);
+      return { restored: 0, withImage: 0, missing: 0, orphans: 0, remoteOnly: 0 };
+    }
+
+    snapshotWorks('recover');
+    sync.pausedUntil = Date.now() + 120000; /* 2 分钟内不自动回传，避免恢复结果覆盖云端 */
+    try { localStorage.removeItem('hmsync.clearedAt.' + uid()); } catch (e) {}
+    window.HMApp.state.works = local;
+    if (window.HMApp.saveWorks) window.HMApp.saveWorks();
+    if (window.HMApp.renderWorks) window.HMApp.renderWorks();
+    sync.lastError = '';
+    saveSync();
+    renderPanel();
+    toast('已从本机恢复 ' + local.length + ' 条（本地图 ' + withImage + ' 条，缺图 ' + missing +
+      ' 条，孤儿图 ' + orphans + ' 条' + (remoteOnly ? '，仅剩远端链接 ' + remoteOnly + ' 条可能已失效' : '') +
+      '），未回写云端', 'success', 9000);
+    return { restored: local.length, withImage: withImage, missing: missing, orphans: orphans, remoteOnly: remoteOnly };
+  }
+
+  /* ---------------- 离线队列 ---------------- */
+  async function flushQueue() {
+    if (!queue.length || !uid()) return;
+    var pending = queue.slice();
+    queue = [];
+    saveQueue();
+    for (var i = 0; i < pending.length; i += 1) {
+      var item = pending[i];
+      try {
+        if (item.op === 'delete') await deleteWorks([item.id]);
+        else if (item.op === 'doc') await pushDoc(item.kind, item.data);
+        else if (item.op === 'clear') await clearAll();
+      } catch (e) {
+        queue.push(item);
+        saveQueue();
+      }
+    }
+  }
+
+  window.addEventListener('online', function () {
+    setTimeout(function () { flushQueue().then(function () { pushDirtyWorks(); }); }, 1500);
+  });
+
+  /* ---------------- 设置页「云同步」面板 ---------------- */
+  function ensurePanel() {
+    var host = document.getElementById('view-admin');
+    if (!host) return null;
+    if (panelEl && panelEl.parentNode === host) return panelEl;
+    panelEl = document.createElement('section');
+    panelEl.className = 'hm-cloud-card';
+    panelEl.style.cssText = 'margin:0 0 18px;padding:16px 18px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.04)';
+    host.insertBefore(panelEl, host.firstChild);
+    return panelEl;
+  }
+
+  function fmtBytes(n) {
+    n = Number(n) || 0;
+    if (n >= 1073741824) return (n / 1073741824).toFixed(2) + ' GB';
+    if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB';
+    if (n >= 1024) return (n / 1024).toFixed(0) + ' KB';
+    return n + ' B';
+  }
+
+  function renderPanel() {
+    var host = document.getElementById('view-admin');
+    if (!host || host.hidden) return;
+    var el = ensurePanel();
+    if (!el) return;
+    var st = storage || { dataLabel: '检测中…', objectLabel: '检测中…', warnings: [] };
+    var u = usage || {};
+    var warn = (st.warnings || []).map(function (w) {
+      return '<div style="color:#fca5a5;font-size:12px;margin-top:4px">⚠ ' + w + '</div>';
+    }).join('');
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">' +
+        '<div><b style="font-size:15px">云同步 · 跨设备数据</b>' +
+        '<div style="color:#a5a0c0;font-size:12px;margin-top:4px">账号数据按 user_id 存后端；本机 localStorage/IndexedDB 仅作缓存。</div></div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button type="button" id="hmSyncNow" class="hm-pill">立即同步</button>' +
+          '<button type="button" id="hmClaimLegacy" class="hm-pill">认领历史数据</button>' +
+          '<button type="button" id="hmSyncExport" class="hm-pill">导出备份</button>' +
+          '<button type="button" id="hmSyncMigrate" class="hm-pill">重新上传本机数据</button>' +
+          '<button type="button" id="hmSyncRecover" class="hm-pill">恢复本地备份</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;font-size:12.5px">' +
+        '<div>结构数据：<b>' + st.dataLabel + '</b></div>' +
+        '<div>图片存储：<b>' + st.objectLabel + '</b></div>' +
+        '<div>作品：<b>' + (u.works != null ? u.works : '-') + ' / ' + (u.workCap || '-') + '</b></div>' +
+        '<div>图片占用：<b>' + fmtBytes(u.bytes) + '</b></div>' +
+        '<div>最近同步：<b>' + (sync.lastSync ? new Date(sync.lastSync).toLocaleString() : '尚未同步') + '</b></div>' +
+        '<div>待重试：<b>' + queue.length + '</b> 条 · 冲突：<b>' + (sync.conflicts || 0) + '</b></div>' +
+      '</div>' + warn +
+      (sync.lastError ? '<div style="color:#fbbf24;font-size:12px;margin-top:6px">最近错误：' + String(sync.lastError).slice(0, 160) + '</div>' : '');
+
+    var btnNow = el.querySelector('#hmSyncNow');
+    if (btnNow) btnNow.onclick = function () {
+      btnNow.disabled = true;
+      refreshStatus().then(function () { return afterLogin(true); }).finally(function () { btnNow.disabled = false; });
+    };
+    var btnExport = el.querySelector('#hmSyncExport');
+    if (btnExport) btnExport.onclick = exportBackup;
+    var btnClaim = el.querySelector('#hmClaimLegacy');
+    if (btnClaim) btnClaim.onclick = function () {
+      if (!window.HMClaim || typeof window.HMClaim.run !== 'function') return;
+      btnClaim.disabled = true;
+      window.HMClaim.run({ force: true }).then(function (res) {
+        var msg = (res && res.ok === false)
+          ? ('认领失败：' + (res.error || '未知错误'))
+          : ('认领完成：作品 ' + ((res && res.works) || 0) + ' 条、桌面 ' + ((res && res.desk) || 0) + ' 项');
+        toast(msg, res && res.ok === false ? 'error' : 'success');
+        renderPanel();
+      }).finally(function () { btnClaim.disabled = false; });
+    };
+    var btnMigrate = el.querySelector('#hmSyncMigrate');
+    if (btnMigrate) btnMigrate.onclick = function () {
+      revs.fp = {};
+      revs.works = {};
+      revs.docs = {};
+      saveRevs();
+      btnMigrate.disabled = true;
+      migrateLocal().finally(function () { btnMigrate.disabled = false; renderPanel(); });
+    };
+    var btnRecover = el.querySelector('#hmSyncRecover');
+    if (btnRecover) btnRecover.onclick = function () {
+      if (!window.confirm('从本机 localStorage 快照与 IndexedDB 图片恢复作品？\n不会覆盖云端，恢复后只标记「待同步」。')) return;
+      btnRecover.disabled = true;
+      recoverLocal().finally(function () { btnRecover.disabled = false; });
+    };
+  }
+
+  async function refreshStatus() {
+    if (!uid()) return;
+    try {
+      var res = await request('GET', '/user-data/status', null, 15000);
+      if (res) { storage = res.storage; usage = res.usage; renderPanel(); }
+    } catch (e) {}
+  }
+
+  async function exportBackup() {
+    if (!uid()) return;
+    try {
+      var controller = new AbortController();
+      var token = '';
+      try { token = localStorage.getItem('hm.token') || ''; } catch (e) {}
+      var res = await fetch(urlOf('/user-data/export'), {
+        headers: token ? { Authorization: 'Bearer ' + token } : {},
+        signal: controller.signal
+      });
+      if (!res.ok) throw new Error('导出失败 HTTP ' + res.status);
+      var blob = await res.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'huimeng-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
+    } catch (err) {
+      if (window.HMApp && window.HMApp.toast) window.HMApp.toast((err && err.message) || '导出失败', 'error');
+    }
+  }
+
+  /* 设置页显示时刷新面板（switchView 会改 body[data-view]） */
+  try {
+    var mo = new MutationObserver(function () {
+      if (document.body.getAttribute('data-view') === 'admin') {
+        renderPanel();
+        refreshStatus();
+      }
+    });
+    mo.observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
+  } catch (e) {}
+
+  /* 启动：等 authBoot 把 user 写好后拉起同步（authBoot 会调 syncAllWorksToServer → afterLogin） */
+  setTimeout(function () {
+    if (uid()) { refreshStatus(); }
+  }, 2500);
+
+  /* 进页面自愈：本地列表为空但检测到历史作品/快照/blob → 自动从本机恢复一次（不依赖云端）。
+     用户主动清空过的账号（clearedAt 标记）不会被"复活"。 */
+  var autoRecovered = false;
+  function maybeAutoRecover() {
+    try {
+      if (autoRecovered || !uid() || !window.HMApp || !window.HMApp.state) return;
+      var list = window.HMApp.state.works || [];
+      if (list.length) return;
+      if (localStorage.getItem('hmsync.clearedAt.' + uid())) return;
+      var cand = collectLocalWorks(uid());
+      if (!cand.length) return;
+      autoRecovered = true;
+      console.warn('[HMSync] 本地列表为空但存在历史作品，自动恢复', cand.length, '条');
+      recoverLocal();
+    } catch (e) {}
+  }
+  setTimeout(maybeAutoRecover, 3000);
+  setTimeout(maybeAutoRecover, 9000);
+
+  window.addEventListener('beforeunload', function () { saveRevs(); saveSync(); saveQueue(); });
+
+  /* ---------------- 防回归断言（运行期自检，控制台可复跑） ---------------- */
+  function assertNoDataLoss() {
+    var cases = [];
+    var one = [{ id: 'w1', url: 'data:x', createdAt: 1 }];
+    cases.push(['服务端空 + 本地非空 → 保留本地', mergeLists([], one).length === 1]);
+    cases.push(['并集去重不产生重复', mergeLists(one, one).length === 1]);
+    cases.push(['本地独有作品必须保留', mergeLists(one, [{ id: 'w2', createdAt: 2 }]).length === 2]);
+    cases.push(['【事故回归】空 + 空 = 空，且不得触发写入', mergeLists([], []).length === 0]);
+    cases.push(['非数组输入不抛错', Array.isArray(mergeLists(null, undefined, one))]);
+    var failed = cases.filter(function (c) { return !c[1]; });
+    if (failed.length) console.error('[HMSync] 防回归断言失败：', failed.map(function (c) { return c[0]; }));
+    else console.log('[HMSync] 防回归断言通过（' + cases.length + ' 项）');
+    return { ok: failed.length === 0, total: cases.length, failed: failed.map(function (c) { return c[0]; }) };
+  }
+
+  window.HMSync = {
+    afterLogin: afterLogin,
+    onWorksChanged: onWorksChanged,
+    deleteWorks: deleteWorks,
+    clearAll: clearAll,
+    pushDoc: pushDoc,
+    pushPrefs: pushPrefs,
+    /* 数据安全层（供页面内其它模块与排障使用） */
+    collectLocalWorks: collectLocalWorks,
+    mergeLists: mergeLists,
+    snapshotWorks: snapshotWorks,
+    beforePersist: beforePersist,
+    runSyncWrite: runSyncWrite,
+    recoverLocal: recoverLocal,
+    autoRecover: maybeAutoRecover,
+    assertNoDataLoss: assertNoDataLoss,
+    pullDocs: async function () {
+      var boot = await request('GET', '/user-data/bootstrap', null, 30000);
+      applyBootstrap(boot);
+    },
+    status: function () { return { storage: storage, usage: usage, sync: sync, queue: queue.length }; },
+    refreshPanel: renderPanel
+  };
+
+  setTimeout(function () { assertNoDataLoss(); }, 4000);
+
+  /* 若用户已经登录（脚本晚于 authBoot），主动拉一次 */
+  setTimeout(function () {
+    if (uid()) afterLogin();
+  }, 3500);
+})();
+
+</script>
+<script>
+/* ============================================================
+ * 历史数据认领（方案 1）：登录拿到 user.id 之后，把本 origin 下
+ * 可能属于同一个人的旧键合并进当前账号。
+ *
+ * 判定证据链（可靠度从高到低）：
+ *   ① 键名里带 uid 且等于当前 uid            → 同一个人
+ *   ② 键名里带 uid ≠ 当前 uid，但历史登录痕迹（hm.userHistory.v1 /
+ *      hm.lastUser.v1）里该 uid 的用户名与当前用户名一致 → 同一个人
+ *   ③ 固定键 / guest 键（不带 uid）：只有「本 origin 没有其它账号的数据」才合并
+ *   ④ 以上都判不了 → 不动该键，只在控制台留一行可读日志
+ *
+ * 合并规则：
+ *   - 作品按 work.id 去重；当前账号已有数据永远优先（旧数据只补缺，不覆盖）
+ *   - 桌面 folders/positions/assigns/names 只补当前缺失项，updatedAt 取较大值
+ *   - 旧键一律保留不删除（留作回退），合并结果写入当前 uid 键并标记待同步
+ *   - 整个认领每个账号只跑一次（hm.claim.v1.<uid>），可手动重跑：
+ *       HMClaim.run({force:true})  或  设置 → 云同步 → 「认领历史数据」
+ *
+ * 失败兜底：任何异常都只 console.warn，绝不影响正常登录。
+ * ============================================================ */
+(function () {
+  'use strict';
+  var FLAG_PREFIX = 'hm.claim.v1.';
+  var HIST_KEY = 'hm.userHistory.v1';
+  var LAST_KEY = 'hm.lastUser.v1';
+  var FIXED_WORK_KEYS = ['anidream.works', 'hm.works', 'works', 'anidream.works.v1', 'anidream.works.v1.bak'];
+  var GUEST_DESK_KEY = 'anidream.desk.v1';
+
+  function curUser() { return (window.HMApp && window.HMApp.user) || null; }
+  function norm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
+  function arrOf(v) { return Array.isArray(v) ? v : []; }
+
+  function readRaw(k) {
+    var raw;
+    try { raw = localStorage.getItem(k); } catch (e) { return null; }
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) {
+      console.warn('[HMClaim] 跳过损坏的键（JSON 解析失败，保持原样）：' + k);
+      return null;
+    }
+  }
+
+  /* 历史登录痕迹：uid -> 用户名（含当前账号） */
+  function historyMap() {
+    var map = Object.create(null);
+    arrOf(readRaw(HIST_KEY)).forEach(function (u) { if (u && u.id) map[String(u.id)] = norm(u.username); });
+    var last = readRaw(LAST_KEY);
+    if (last && last.id) map[String(last.id)] = norm(last.username);
+    var me = curUser();
+    if (me && me.id) map[String(me.id)] = norm(me.username);
+    return map;
+  }
+
+  /* 扫描本 origin 的作品键：按 uid 分组 + 固定键/guest 键 */
+  function scanWorkKeys() {
+    var byUid = Object.create(null);
+    var fixed = [];
+    for (var i = 0; i < localStorage.length; i += 1) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('anidream.works') !== 0) continue;
+      if (FIXED_WORK_KEYS.indexOf(k) >= 0) { fixed.push(k); continue; }
+      var m = /^anidream\.works\.v1\.([^.]+)(?:\..+)?$/.exec(k);
+      if (!m || m[1] === 'bak') { fixed.push(k); continue; }
+      (byUid[m[1]] = byUid[m[1]] || []).push(k);   /* 含 .bak / .snap.<ts> */
+    }
+    return { byUid: byUid, fixed: fixed };
+  }
+
+  function scanDeskKeys() {
+    var byUid = Object.create(null);
+    var guest = [];
+    for (var i = 0; i < localStorage.length; i += 1) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('anidream.desk') !== 0) continue;
+      if (k === GUEST_DESK_KEY) { guest.push(k); continue; }
+      var m = /^anidream\.desk\.v1\.([^.]+)$/.exec(k);
+      if (m) (byUid[m[1]] = byUid[m[1]] || []).push(k);
+    }
+    return { byUid: byUid, guest: guest };
+  }
+
+  function readWorkList(keys) {
+    var out = [];
+    (keys || []).forEach(function (k) {
+      var v = readRaw(k);
+      if (Array.isArray(v)) out = out.concat(v);
+      else if (v) console.warn('[HMClaim] 键内容不是作品数组，已跳过：' + k);
+    });
+    return out;
+  }
+
+  /* uid 归属判定：返回 {ok, why} */
+  function classify(ownerUid, hist) {
+    var me = curUser();
+    if (!me || !me.id) return { ok: false, why: '未登录' };
+    if (String(ownerUid) === String(me.id)) return { ok: true, why: 'uid 与当前账号一致' };
+    var name = hist[String(ownerUid)];
+    if (name && norm(me.username) && name === norm(me.username)) {
+      return { ok: true, why: '历史登录痕迹显示同一用户名（' + me.username + '）' };
+    }
+    return { ok: false, why: 'uid 不同且无法证明是同一人' };
+  }
+
+  /* 当前账号的数据 = 内存列表 ∪ 当前 uid 键 ∪ .bak（内存优先，绝不丢磁盘已有数据） */
+  function currentWorks(me) {
+    var A = window.HMApp;
+    var cur = (A && A.state && Array.isArray(A.state.works)) ? A.state.works.slice() : [];
+    var key = 'anidream.works.v1.' + me.id;
+    var stored = readRaw(key);
+    var bak = readRaw(key + '.bak');
+    var lists = [arrOf(stored), arrOf(bak), cur];
+    var merged = (window.HMSync && window.HMSync.mergeLists)
+      ? window.HMSync.mergeLists.apply(null, lists)
+      : lists.reduce(function (a, b) { return a.concat(b); }, []);
+    /* mergeLists 按时间取新；这里再用「内存/磁盘当前值」兜底一次，保证当前数据优先 */
+    var map = Object.create(null);
+    merged.forEach(function (w) { if (w && w.id) map[String(w.id)] = w; });
+    cur.forEach(function (w) { if (w && w.id) map[String(w.id)] = Object.assign({}, map[String(w.id)] || {}, w); });
+    return Object.keys(map).map(function (id) { return map[id]; });
+  }
+
+  function mergeWorksIntoAccount(list, me) {
+    var A = window.HMApp;
+    if (!A || !A.state || !list.length) return 0;
+    var cur = currentWorks(me);
+    var before = cur.length;
+    /* mergeWorks(旧数据, 当前数据)：同 id 时第二个参数（当前）优先 → 旧数据不覆盖当前 */
+    var merged = A.mergeWorks ? A.mergeWorks(list, cur) : cur.concat(list);
+    if (merged.length <= before) return 0;
+    var have = Object.create(null);
+    cur.forEach(function (w) { if (w && w.id) have[String(w.id)] = 1; });
+    merged.forEach(function (w) { if (w && w.id && !have[String(w.id)]) w._pendingUpload = true; });
+    A.state.works = merged;
+    if (A.saveWorks) A.saveWorks();       /* 写当前 uid 键 + 触发 HMSync 标记待同步 */
+    if (A.renderWorks) A.renderWorks();
+    return merged.length - before;
+  }
+
+  async function run(opts) {
+    opts = opts || {};
+    var summary = { ok: true, skipped: false, works: 0, desk: 0, keys: 0, reasons: [] };
+    try {
+      var me = curUser();
+      if (!me || !me.id) { summary.ok = false; summary.error = '未登录，跳过认领'; return summary; }
+      var flag = FLAG_PREFIX + me.id;
+      if (!opts.force && localStorage.getItem(flag)) {
+        summary.skipped = true;
+        summary.reason = '本账号已认领过（重跑：HMClaim.run({force:true})）';
+        return summary;
+      }
+
+      var hist = historyMap();
+      var wk = scanWorkKeys();
+      var dk = scanDeskKeys();
+
+      /* 其它账号留下的数据 → 决定「固定键 / guest 键」能否判定归属 */
+      var otherOwners = [];
+      Object.keys(wk.byUid).forEach(function (o) {
+        if (String(o) === String(me.id)) return;
+        if (readWorkList(wk.byUid[o]).length) otherOwners.push('works:' + o);
+      });
+      Object.keys(dk.byUid).forEach(function (o) {
+        if (String(o) === String(me.id)) return;
+        var raw = readRaw(dk.byUid[o][0]);
+        if (raw && (arrOf(raw.folders).length || Object.keys(raw.positions || {}).length)) otherOwners.push('desk:' + o);
+      });
+      var sharedOk = otherOwners.length === 0;
+
+      /* ---- 作品 ---- */
+      var claimLists = [];
+      Object.keys(wk.byUid).forEach(function (owner) {
+        if (String(owner) === String(me.id)) return;
+        var verdict = classify(owner, hist);
+        if (verdict.ok) {
+          claimLists.push(readWorkList(wk.byUid[owner]));
+          summary.reasons.push('作品 ' + owner + '：' + verdict.why + ' → 合并');
+        } else {
+          console.info('[HMClaim] 跳过作品键 anidream.works.v1.' + owner + '：' + verdict.why + '（保持原样）');
+        }
+      });
+      if (wk.fixed.length) {
+        if (sharedOk) {
+          claimLists.push(readWorkList(wk.fixed));
+          summary.reasons.push('固定键/guest 作品键：本 origin 无其它账号数据 → 合并');
+        } else {
+          console.info('[HMClaim] 跳过固定键/guest 作品键：本 origin 检测到其它账号数据（' + otherOwners.join(', ') + '），无法判定归属');
+        }
+      }
+      var claimList = (window.HMSync && window.HMSync.mergeLists)
+        ? window.HMSync.mergeLists.apply(null, claimLists)
+        : claimLists.reduce(function (a, b) { return a.concat(b); }, []);
+      if (claimList.length) summary.works = mergeWorksIntoAccount(claimList, me);
+
+      /* ---- 桌面 / 项目文件夹 ---- */
+      var deskItems = [];
+      Object.keys(dk.byUid).forEach(function (owner) {
+        if (String(owner) === String(me.id)) return;
+        var verdict = classify(owner, hist);
+        if (verdict.ok) {
+          dk.byUid[owner].forEach(function (k) { var v = readRaw(k); if (v) deskItems.push(v); });
+          summary.reasons.push('桌面 ' + owner + '：' + verdict.why + ' → 合并');
+        } else {
+          console.info('[HMClaim] 跳过桌面键 anidream.desk.v1.' + owner + '：' + verdict.why + '（保持原样）');
+        }
+      });
+      if (sharedOk && dk.guest.length) {
+        var beforeLen = deskItems.length;
+        dk.guest.forEach(function (k) { var v = readRaw(k); if (v) deskItems.push(v); });
+        if (deskItems.length > beforeLen) summary.reasons.push('guest 桌面键：本 origin 无其它账号数据 → 合并');
+      } else if (!sharedOk && dk.guest.length) {
+        console.info('[HMClaim] 跳过 guest 桌面键：本 origin 检测到其它账号数据，无法判定归属');
+      }
+      if (window.HMDesk && typeof window.HMDesk.claimLegacy === 'function') {
+        deskItems.forEach(function (item) {
+          try { summary.desk += (window.HMDesk.claimLegacy(item) || 0); }
+          catch (e) { console.warn('[HMClaim] 桌面认领失败（忽略）:', e && e.message); }
+        });
+      }
+
+      summary.keys = claimLists.length + deskItems.length;
+      try { localStorage.setItem(flag, String(Date.now())); } catch (e) {}
+      console.log('[HMClaim] 认领完成：作品 +' + summary.works + ' 条，桌面 +' + summary.desk + ' 项，来源键 ' + summary.keys + ' 个');
+      return summary;
+    } catch (err) {
+      /* 失败兜底：认领出错绝不影响正常登录 */
+      console.warn('[HMClaim] 认领过程出错（已忽略，不影响登录）:', (err && err.message) || err);
+      summary.ok = false;
+      summary.error = (err && err.message) || String(err);
+      return summary;
+    }
+  }
+
+  window.HMClaim = { run: run, reset: function (uid) { try { localStorage.removeItem(FLAG_PREFIX + uid); } catch (e) {} } };
+})();
+
+</script>
 </body>
 </html>

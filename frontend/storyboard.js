@@ -691,7 +691,7 @@ window.HMStoryboard = (function () {
         el.nameInput.value = project.name;
         saveNow();
         renderBoard();
-        toast('已导入故事版', 'success');
+        toast('已导入分镜', 'success');
       } catch (e) {
         toast('导入失败：文件不是有效的分镜 JSON', 'error');
       }
@@ -701,7 +701,7 @@ window.HMStoryboard = (function () {
   }
 
   function printBoard() {
-    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(project.name) + ' · 故事版</title>' +
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(project.name) + ' · 分镜</title>' +
       '<style>' +
       'body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#111;margin:24px;background:#fff}' +
       'h1{font-size:22px;margin:0 0 4px}.meta{color:#666;font-size:12px;margin-bottom:20px}' +

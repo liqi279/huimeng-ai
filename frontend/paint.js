@@ -71,7 +71,7 @@ window.HMPaint = (function () {
 
   function defaults() {
     return {
-      name: '未命名着色',
+      name: '未命名上色',
       w: 1280, h: 720,
       layers: [
         makeLayer('line', '线稿', { opacity: 1 }),
@@ -256,7 +256,7 @@ window.HMPaint = (function () {
   function bindTop() {
     el.name.addEventListener('input', function () {
       if (!state) return;
-      state.name = el.name.value.trim() || '未命名着色';
+      state.name = el.name.value.trim() || '未命名上色';
       scheduleSave();
     });
     el.importBtn.addEventListener('click', function () { el.importInput.click(); });
@@ -1107,7 +1107,7 @@ window.HMPaint = (function () {
     try {
       var url = out.toDataURL('image/png');
       var a = document.createElement('a');
-      var safe = (state.name || '着色').replace(/[\\/:*?"<>|]/g, '_');
+      var safe = (state.name || '上色').replace(/[\\/:*?"<>|]/g, '_');
       a.href = url;
       a.download = safe + '.png';
       document.body.appendChild(a);

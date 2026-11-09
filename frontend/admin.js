@@ -42,6 +42,17 @@
     if (HM.switchView) HM.switchView('create');
   }
 
+  /* 直达「设置 → 管理台 → 账号管理」 */
+  function openAccountAdmin() {
+    if (!isAdmin()) {
+      HM.toast && HM.toast('账号管理仅超级管理员可访问', 'info');
+      return;
+    }
+    window.HM_ADMIN_TARGET = 'admin';
+    window.HM_ADMIN_SUBTAB = 'accounts';
+    if (HM.switchView) HM.switchView('admin');
+  }
+
   /* ============ 一次性事件绑定（到 index.html 里已有的 #view-admin 元素） ============ */
   function bindAdminEvents() {
     if (eventsBound) return;
@@ -49,6 +60,10 @@
 
     var page = document.getElementById('view-admin');
     if (!page) return;
+
+    /* 新增人员弹窗 + 非超管隐藏「账号管理」入口 */
+    bindAccCreateModal();
+    syncAccountsVisibility();
 
     page.addEventListener('click', function (e) {
       /* 顶 Tab：管理台 / 创作统计 / 软件设置 */
@@ -95,6 +110,39 @@
       }
     });
 
+    /* 账号管理：新增人员 + 筛选 + 审批操作（事件委托，列表重绘后依然有效） */
+    page.addEventListener('click', function (e) {
+      var createBtn = e.target.closest('[data-accopen="create"]');
+      if (createBtn) { openAccCreateModal(); return; }
+      var filterBtn = e.target.closest('[data-accfilter]');
+      if (filterBtn) {
+        accountFilter = filterBtn.dataset.accfilter || 'all';
+        rerenderAccountRows();
+        return;
+      }
+      var actionBtn = e.target.closest('[data-accmd]');
+      if (actionBtn && !actionBtn.disabled) {
+        handleAccountAction(actionBtn.dataset.uid, actionBtn.dataset.accmd);
+      }
+    });
+
+    /* 新注册申请提醒弹框 */
+    var noticeModal = document.getElementById('hmApplyNoticeModal');
+    var noticeLater = document.getElementById('hmApplyNoticeLater');
+    var noticeClose = document.getElementById('hmApplyNoticeClose');
+    var noticeGo = document.getElementById('hmApplyNoticeGo');
+    if (noticeLater) noticeLater.addEventListener('click', dismissApplyNotice);
+    if (noticeClose) noticeClose.addEventListener('click', dismissApplyNotice);
+    if (noticeModal) noticeModal.addEventListener('click', function (e) { if (e.target === noticeModal) dismissApplyNotice(); });
+    if (noticeGo) noticeGo.addEventListener('click', function () {
+      dismissApplyNotice();
+      currentTopTab = 'admin';
+      window.HM_ADMIN_TARGET = null;
+      var tabsWrap = document.getElementById('adminSubTabs');
+      if (tabsWrap) tabsWrap.style.display = '';
+      switchSubTab('accounts');
+    });
+
     /* 页面内 Esc 不应该退出到桌面 —— 让 desk.js 等自己处理 */
   }
 
@@ -110,10 +158,18 @@
     if (_origOnView) _origOnView(view);
     if (view === 'admin') {
       if (!eventsBound) bindAdminEvents();
+      /* 非超管看不到「账号管理」入口；若残留指向该 Tab，回落到概览 */
+      syncAccountsVisibility();
+      if (!isAdmin() && currentSubTab === 'accounts') currentSubTab = 'overview';
       /* 重置 Tab 状态；顶栏「API接入管理」入口可通过 HM_ADMIN_TARGET 指定落地 Tab */
       var target = window.HM_ADMIN_TARGET || 'admin';
       window.HM_ADMIN_TARGET = null;
+      if (window.HM_ADMIN_SUBTAB) {
+        currentSubTab = window.HM_ADMIN_SUBTAB;
+        window.HM_ADMIN_SUBTAB = null;
+      }
       currentTopTab = target;
+      refreshPendingBadge();
       var page = document.getElementById('view-admin');
       if (page) {
         page.querySelectorAll('.hm-admin-top-tab').forEach(function (t) {
@@ -164,7 +220,7 @@
       overview: HM.api.admin.overview,
       ranking:  HM.api.admin.ranking,
       logs:     HM.api.admin.logs,
-      accounts: HM.api.admin.accounts,
+      accounts: function () { return HM.api.listUsers(); },
       projects: HM.api.admin.projects,
     };
     var fn = apiMap[tab];
@@ -423,50 +479,344 @@
     ].join('');
   }
 
-  /* ============ 账号管理 ============ */
+  /* ============ 账号管理（真实账号 + 注册审批） ============ */
+  var accountCache = { users: [], pendingCount: 0 };
+  var accountFilter = 'all';
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtDate(ms) {
+    if (!ms) return '—';
+    try {
+      var d = new Date(Number(ms));
+      var p = function (n) { return n < 10 ? '0' + n : String(n); };
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    } catch (e) { return '—'; }
+  }
+  function statusText(s) { return s === 'pending' ? '待审批' : (s === 'rejected' ? '已拒绝' : '已通过'); }
+  function currentUserId() {
+    var u = (window.HMApp && window.HMApp.user) || {};
+    return u.id || '';
+  }
+
+  function updatePendingBadge(count) {
+    var badge = document.getElementById('accountsPendingBadge');
+    if (!badge) return;
+    var n = Number(count) || 0;
+    if (n > 0) {
+      badge.hidden = false;
+      badge.textContent = n > 99 ? '99+' : String(n);
+    } else {
+      badge.hidden = true;
+      badge.textContent = '0';
+    }
+  }
+
+  function maybeShowApplyNotice(count) {
+    var n = Number(count) || 0;
+    if (!n) return;
+    var dismissed = 0;
+    try { dismissed = Number(sessionStorage.getItem('hm.applyNoticeDismissed') || 0); } catch (e) {}
+    if (n <= dismissed) return;
+    var modal = document.getElementById('hmApplyNoticeModal');
+    var text = document.getElementById('hmApplyNoticeText');
+    if (!modal) return;
+    if (text) text.textContent = '有 ' + n + ' 个新账号正在等待审批，请及时处理。';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function dismissApplyNotice() {
+    var modal = document.getElementById('hmApplyNoticeModal');
+    if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); }
+    try { sessionStorage.setItem('hm.applyNoticeDismissed', String(accountCache.pendingCount || 0)); } catch (e) {}
+  }
+
+  function refreshPendingBadge() {
+    if (!isAdmin() || !HM.api || typeof HM.api.pendingCount !== 'function') return;
+    HM.api.pendingCount().then(function (res) {
+      var count = (res && res.count) || 0;
+      accountCache.pendingCount = count;
+      updatePendingBadge(count);
+      maybeShowApplyNotice(count);
+    }).catch(function () {});
+  }
+
+  function accActions(u) {
+    var self = currentUserId() && currentUserId() === u.id;
+    var out = [];
+    if (u.status === 'pending') {
+      out.push('<button data-accmd="approve" data-uid="' + esc(u.id) + '" class="is-primary">通过</button>');
+      out.push('<button data-accmd="reject" data-uid="' + esc(u.id) + '" class="is-danger">拒绝</button>');
+    } else if (u.status === 'rejected') {
+      out.push('<button data-accmd="approve" data-uid="' + esc(u.id) + '" class="is-primary">通过</button>');
+    } else if (u.role === 'admin') {
+      out.push('<button data-accmd="demote" data-uid="' + esc(u.id) + '"' + (self ? ' disabled' : '') + '>降为用户</button>');
+    } else {
+      out.push('<button data-accmd="promote" data-uid="' + esc(u.id) + '">设为超管</button>');
+    }
+    if (u.status !== 'pending') {
+      out.push('<button data-accmd="reset" data-uid="' + esc(u.id) + '"' + (self ? ' disabled' : '') + '>重置密码</button>');
+    }
+    out.push('<button data-accmd="delete" data-uid="' + esc(u.id) + '" class="is-danger"' + (self ? ' disabled' : '') + '>删除</button>');
+    return out.join('');
+  }
+
+  function renderAccountRows() {
+    var users = accountCache.users || [];
+    var counts = {
+      all: users.length,
+      pending: users.filter(function (u) { return u.status === 'pending'; }).length,
+      approved: users.filter(function (u) { return u.status === 'approved'; }).length,
+      rejected: users.filter(function (u) { return u.status === 'rejected'; }).length,
+    };
+    var shown = accountFilter === 'all' ? users : users.filter(function (u) { return u.status === accountFilter; });
+
+    var filters = [
+      ['all', '全部'], ['pending', '待审批'], ['approved', '已通过'], ['rejected', '已拒绝']
+    ].map(function (f) {
+      return '<button class="hm-acc-filter' + (accountFilter === f[0] ? ' is-active' : '') +
+        '" data-accfilter="' + f[0] + '">' + f[1] + ' ' + counts[f[0]] + '</button>';
+    }).join('');
+
+    var rows = shown.map(function (u) {
+      var initial = (u.username || '?').slice(0, 1).toUpperCase();
+      var self = currentUserId() && currentUserId() === u.id;
+      return '<div class="hm-acc-row">' +
+        '<div class="hm-acc-avatar">' + esc(initial) + '</div>' +
+        '<div class="hm-acc-info">' +
+          '<div class="hm-acc-name">' + esc(u.username || '') +
+            (self ? '<span class="hm-acc-pill is-admin">我</span>' : '') +
+            '<span class="hm-acc-pill is-' + esc(u.status) + '">' + statusText(u.status) + '</span>' +
+            '<span class="hm-acc-pill ' + (u.role === 'admin' ? 'is-admin' : 'is-user') + '">' +
+              (u.role === 'admin' ? '超级管理员' : '普通用户') + '</span>' +
+          '</div>' +
+          '<div class="hm-acc-meta">' +
+            '<span>ID：' + esc(u.id) + '</span>' +
+            '<span>邮箱：' + esc(u.email || '—') + '</span>' +
+            '<span>注册：' + fmtDate(u.createdAt) + '</span>' +
+            (u.status === 'approved' && u.approvedAt ? '<span>通过：' + fmtDate(u.approvedAt) + '</span>' : '') +
+            (u.note ? '<span>备注：' + esc(u.note) + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="hm-acc-actions">' + accActions(u) + '</div>' +
+      '</div>';
+    }).join('');
+
+    return '<div class="hm-acc-toolbar">' + filters + '</div>' +
+      (rows ? '<div class="hm-acc-list">' + rows + '</div>' : '<div class="hm-acc-empty">暂无账号</div>');
+  }
+
   function renderAccounts(data, body) {
-    var accs = data.accounts || [];
+    accountCache = {
+      users: (data && data.users) || [],
+      pendingCount: (data && data.pendingCount) || 0,
+      storage: (data && data.storage) || '',
+      storageLabel: (data && data.storageLabel) || '',
+      storageWarning: (data && data.storageWarning) || '',
+    };
+    updatePendingBadge(accountCache.pendingCount);
+
+    var storage = accountCache.storage;
+    var isMysql = storage === 'mysql';
+    var storageHtml = '';
+    if (storage) {
+      storageHtml =
+        '<div class="hm-acc-storage ' + (isMysql ? 'is-mysql' : 'is-file') + '">' +
+          '<span>账号存储：<b>' + esc(accountCache.storageLabel || (isMysql ? 'MySQL' : '文件存储')) + '</b></span>' +
+          (isMysql ? '' : '<span class="hm-acc-storage-tip">' + esc(accountCache.storageWarning || '当前为文件存储，Render 重启可能丢失账号数据') + '</span>') +
+          (!isMysql ? '<button data-accmd="migrate">同步文件账号入库</button>' : '') +
+          '<button data-accmd="export"' + (!isMysql ? ' style="margin-left:8px"' : '') + '>导出 JSON 备份</button>' +
+        '</div>';
+    }
+
     body.innerHTML = [
       '<div class="hm-admin-panel hm-admin-panel-wide">',
         '<div class="hm-admin-panel-head"><h3>账号管理</h3>' +
-          '<div class="hm-admin-filter-tabs">' +
-            '<button class="hm-admin-filter-tab is-active">全部 ' + accs.length + '</button>' +
-            '<button class="hm-admin-filter-tab">会员用户</button>' +
-            '<button class="hm-admin-filter-tab">运营</button>' +
-            '<button class="hm-admin-filter-tab">设计师</button>' +
-          '</div>' +
+          '<span style="font-size:12px;color:#8b94a6;margin-right:auto">账号由超级管理员创建，创建后可直接登录</span>' +
+          '<button type="button" class="hm-acc-create" data-accopen="create">＋ 新增人员</button>' +
         '</div>',
-        '<div class="hm-admin-account-grid">',
-          accs.map(function (a) {
-            var statusClass = a.status === '在线' ? 'is-online' : 'is-offline';
-            return '<div class="hm-admin-account-card">' +
-              '<div class="hm-admin-account-head">' +
-                '<div class="hm-admin-account-avatar">' + a.avatar + '</div>' +
-                '<div class="hm-admin-account-info">' +
-                  '<strong>' + a.name + '</strong>' +
-                  '<span class="hm-pill is-member">' + a.role + '</span>' +
-                '</div>' +
-                '<div class="hm-admin-account-status ' + statusClass + '">' +
-                  '<i></i>' + a.status +
-                '</div>' +
-              '</div>' +
-              '<div class="hm-admin-account-bars">' +
-                '<div class="hm-admin-account-item">' +
-                  '<span>额度</span>' +
-                  '<div class="hm-admin-mini-bar"><i style="width:' + Math.min(100, a.used / (a.credits || 1) * 100) + '%"></i></div>' +
-                  '<b>' + fmt(a.used) + '/' + fmt(a.credits) + '</b>' +
-                '</div>' +
-              '</div>' +
-              '<div class="hm-admin-account-meta">' +
-                '<span>📂 ' + a.projects + ' 项目</span>' +
-                '<span>🎨 ' + fmt(a.works) + ' 作品</span>' +
-                '<span>📅 ' + a.joinDays + ' 天</span>' +
-              '</div>' +
-            '</div>';
-          }).join(''),
-        '</div>',
+        storageHtml,
+        renderAccountRows(),
       '</div>',
     ].join('');
+    maybeShowApplyNotice(accountCache.pendingCount);
+  }
+
+  function rerenderAccountRows() {
+    if (currentSubTab !== 'accounts' || currentTopTab !== 'admin') return;
+    var body = document.getElementById('adminBody');
+    if (!body) return;
+    renderAccounts(accountCache, body);
+  }
+
+  /* ---------- 新增人员：直接建号（approved，建完即可登录） ---------- */
+  function accCreateError(msg) {
+    var el = document.getElementById('accCreateError');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.hidden = !msg;
+  }
+
+  function openAccCreateModal() {
+    var modal = document.getElementById('hmAccountCreateModal');
+    if (!modal) return;
+    var u = document.getElementById('accNewUser');
+    var p = document.getElementById('accNewPass');
+    var r = document.getElementById('accNewRole');
+    var n = document.getElementById('accNewNote');
+    if (u) u.value = '';
+    if (p) { p.value = ''; p.type = 'password'; }
+    if (r) r.value = 'user';
+    if (n) n.value = '';
+    accCreateError('');
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(function () { if (u) u.focus(); }, 50);
+  }
+
+  function closeAccCreateModal() {
+    var modal = document.getElementById('hmAccountCreateModal');
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  function genAccPassword() {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    var buf = new Uint32Array(12);
+    var hasCrypto = !!(window.crypto && typeof window.crypto.getRandomValues === 'function');
+    if (hasCrypto) { try { window.crypto.getRandomValues(buf); } catch (e) { hasCrypto = false; } }
+    var out = '';
+    for (var i = 0; i < 12; i++) {
+      var n = hasCrypto ? buf[i] : Math.floor(Math.random() * 4294967296);
+      out += chars.charAt(n % chars.length);
+    }
+    /* 生成后切成明文，方便超管当场记下/复制给新同事 */
+    var p = document.getElementById('accNewPass');
+    if (p) { p.value = out; p.type = 'text'; }
+    accCreateError('');
+  }
+
+  async function submitAccCreate() {
+    var uEl = document.getElementById('accNewUser');
+    var pEl = document.getElementById('accNewPass');
+    var rEl = document.getElementById('accNewRole');
+    var nEl = document.getElementById('accNewNote');
+    var username = String((uEl && uEl.value) || '').trim();
+    var password = (pEl && pEl.value) || '';
+    var role = (rEl && rEl.value) === 'admin' ? 'admin' : 'user';
+    var note = String((nEl && nEl.value) || '').trim();
+    if (username.length < 3) { accCreateError('用户名至少 3 个字符'); return; }
+    if (password.length < 6) { accCreateError('密码至少 6 个字符'); return; }
+    if (!HM.api || typeof HM.api.createUser !== 'function') { accCreateError('接口未就绪，请刷新页面后重试'); return; }
+
+    var btn = document.getElementById('accCreateSubmit');
+    if (btn) { btn.disabled = true; btn.textContent = '创建中…'; }
+    accCreateError('');
+    try {
+      await HM.api.createUser(username, password, role, note);
+      closeAccCreateModal();
+      HM.toast && HM.toast('账号已创建，可直接登录', 'success');
+      /* 刷新账号列表（筛选状态保持不变） */
+      if (currentSubTab === 'accounts' && currentTopTab === 'admin') loadTab('accounts');
+    } catch (err) {
+      accCreateError((err && err.message) || '创建失败，请稍后重试');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '创建账号'; }
+    }
+  }
+
+  function bindAccCreateModal() {
+    if (bindAccCreateModal.bound) return;
+    bindAccCreateModal.bound = true;
+    var modal = document.getElementById('hmAccountCreateModal');
+    if (!modal) return;
+    var gen = document.getElementById('accGenPass');
+    if (gen) gen.addEventListener('click', genAccPassword);
+    var submit = document.getElementById('accCreateSubmit');
+    if (submit) submit.addEventListener('click', submitAccCreate);
+    ['accCreateClose', 'accCreateCancel'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', closeAccCreateModal);
+    });
+    modal.addEventListener('click', function (ev) { if (ev.target === modal) closeAccCreateModal(); });
+  }
+
+  /* 非超管：隐藏「账号管理」子 Tab 入口 */
+  function syncAccountsVisibility() {
+    var page = document.getElementById('view-admin');
+    if (!page) return;
+    var tab = page.querySelector('.hm-admin-tab[data-tab="accounts"]');
+    if (tab) tab.hidden = !isAdmin();
+  }
+
+  function downloadJson(obj, filename) {
+    try {
+      var blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    } catch (e) {
+      HM.toast && HM.toast('导出失败：' + e.message, 'error');
+    }
+  }
+
+  async function handleAccountAction(uid, cmd) {
+    var api = HM.api;
+    if (!api) return;
+    try {
+      if (cmd === 'export') {
+        var snapshot = await api.exportUsers();
+        downloadJson(snapshot, 'huimeng-users-' + Date.now() + '.json');
+        HM.toast && HM.toast('已导出账号备份 JSON', 'success');
+        return;
+      }
+      if (cmd === 'migrate') {
+        if (!window.confirm('把文件存储中的账号同步进 MySQL？已存在的账号不会被覆盖。')) return;
+        var migrated = await api.migrateFileUsers();
+        HM.toast && HM.toast('已同步 ' + ((migrated && migrated.migrated) || 0) + ' 个账号到 MySQL', 'success');
+        loadTab('accounts');
+        return;
+      }
+      if (cmd === 'approve') {
+        await api.setUserStatus(uid, 'approved', '');
+        HM.toast && HM.toast('已通过该注册申请', 'success');
+      } else if (cmd === 'reject') {
+        var note = window.prompt('拒绝原因（可选，可留空）：', '');
+        if (note === null) return;
+        await api.setUserStatus(uid, 'rejected', note || '');
+        HM.toast && HM.toast('已拒绝该注册申请', 'success');
+      } else if (cmd === 'promote') {
+        if (!window.confirm('确定将该账号设为超级管理员？')) return;
+        await api.setUserRole(uid, 'admin');
+        HM.toast && HM.toast('已设为超级管理员', 'success');
+      } else if (cmd === 'demote') {
+        if (!window.confirm('确定将该超管降为普通用户？')) return;
+        await api.setUserRole(uid, 'user');
+        HM.toast && HM.toast('已降为普通用户', 'success');
+      } else if (cmd === 'reset') {
+        var pwd = window.prompt('请输入新密码（至少 6 位）：', '');
+        if (!pwd) return;
+        if (pwd.length < 6) { HM.toast && HM.toast('密码至少 6 位', 'info'); return; }
+        await api.resetUserPassword(uid, pwd);
+        HM.toast && HM.toast('密码已重置', 'success');
+      } else if (cmd === 'delete') {
+        if (!window.confirm('删除后该账号将无法登录，确定删除？')) return;
+        await api.deleteUser(uid);
+        HM.toast && HM.toast('账号已删除', 'success');
+      }
+      loadTab('accounts');
+    } catch (err) {
+      HM.toast && HM.toast((err && err.message) || '操作失败', 'error');
+    }
   }
 
   /* ============ 项目管理 ============ */
@@ -517,6 +867,8 @@
   /* ============ 导出到 window.HMUI ============ */
   A.openAdmin = openAdmin;
   A.closeAdmin = closeAdmin;
+  A.openAccountAdmin = openAccountAdmin;
+  A.refreshPendingBadge = refreshPendingBadge;
   A.isAdmin = isAdmin;
   A.adminLoaded = true;
 
@@ -991,3 +1343,658 @@
   /* 全局暴露 */
   window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin };
 })();
+
+
+(function bindAvatarToggle() {
+  var btn = document.getElementById('avatarToggle');
+  if (!btn) return;
+  /* 页面加载时不自动挂载形象 / AI 语音浮层，统一由顶栏「虚拟形象」按钮按需创建 */
+  window.MIKU_CHAT_NO_AUTO = true;
+  function widgetEl() { return document.getElementById('vinyl-widget'); }
+  function sync() {
+    var el = widgetEl();
+    var r = el ? el.getBoundingClientRect() : null;
+    var on = !!(el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none' && r && r.width > 0 && r.height > 0);
+    btn.classList.toggle('is-on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function ensure() {
+    if (!widgetEl() && window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
+      try { window.MikuPlayer.init(); window.__HM_MIKU_MOUNTED = true; } catch (e) {}
+    }
+    if (window.MikuChat && !window.__HM_MIKU_CHAT) {
+      try { window.MikuChat.init({ anchor: '#vinyl-widget' }); window.__HM_MIKU_CHAT = true; } catch (e) {}
+    }
+  }
+  btn.addEventListener('click', function () {
+    var before = widgetEl();
+    if (!before) {
+      /* 首次点击：按需挂载并直接显示 */
+      ensure();
+      var fresh = widgetEl();
+      if (fresh) fresh.style.display = 'block';
+      setTimeout(sync, 60);
+      return;
+    }
+    var hidden = before.style.display === 'none' || getComputedStyle(before).display === 'none';
+    before.style.display = hidden ? 'block' : 'none';
+    if (hidden) {
+      var ball = document.getElementById('mini-ball');
+      if (ball) ball.style.display = 'none';
+    }
+    sync();
+  });
+  window.addEventListener('load', function () { setTimeout(sync, 400); });
+})();
+
+(function () {
+  var KEY = 'anidream.compile.v1';
+  var view = document.getElementById('view-compile');
+  if (!view) return;
+  var listEl = document.getElementById('cmpList');
+
+  function load() {
+    try { var d = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(d) ? d : []; }
+    catch (e) { return []; }
+  }
+  var data = load();
+  var pending = {};
+  window.HMCloudReload = window.HMCloudReload || {};
+  window.HMCloudReload.compile = function () { data = load(); try { render(); } catch (e) {} };
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); }
+    catch (e) { alert('保存失败：本机存储空间不足（文件过大时请改用下载链接）'); }
+    if (window.HMSync && window.HMSync.pushDoc) window.HMSync.pushDoc('compile', data);
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmt(ts) {
+    var d = new Date(ts || Date.now());
+    function p(n) { return n < 10 ? '0' + n : '' + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function findEp(id) {
+    for (var i = 0; i < data.length; i++) if (data[i].id === id) return data[i];
+    return null;
+  }
+
+  function verHtml(ep, v) {
+    var sub = [v.ver, v.desc, fmt(v.ts)].filter(Boolean).join(' · ');
+    var dl = v.url
+      ? '<a class="cmp-btn" href="' + esc(v.url) + '" download="' + esc(v.fileName || v.name) + '">下载</a>'
+      : '<span class="cmp-btn is-disabled">下载</span>';
+    return '<div class="cmp-ver' + (v.adopted ? ' is-adopted' : '') + '">' +
+      '<div class="cmp-ver-main"><div class="cmp-ver-name">' + esc(v.name) +
+        (v.adopted ? '<span class="cmp-tag">采用</span>' : '') + '</div>' +
+        '<div class="cmp-ver-sub">' + esc(sub) + '</div></div>' +
+      '<div class="cmp-ver-ops">' +
+        (v.adopted ? '<button class="cmp-btn" disabled>已采用</button>'
+                   : '<button class="cmp-btn is-primary" data-cmp="adopt" data-ver="' + v.id + '">设为采用</button>') +
+        dl +
+        '<button class="cmp-btn is-danger" data-cmp="del-ver" data-ver="' + v.id + '">删除</button>' +
+      '</div></div>';
+  }
+
+  function epHtml(ep) {
+    var adopted = null;
+    ep.versions.forEach(function (v) { if (v.adopted) adopted = v; });
+    var body = ep.versions.length
+      ? ep.versions.map(function (v) { return verHtml(ep, v); }).join('')
+      : '<div class="cmp-empty">本集还没有导出版本</div>';
+    return '<section class="cmp-ep" data-ep="' + ep.id + '">' +
+      '<header class="cmp-ep-head"><div><b>' + esc(ep.title) + '</b>' +
+        '<span class="cmp-ep-sub">' + ep.versions.length + ' 个版本 · ' +
+        (adopted ? '采用：' + esc(adopted.name) : '未标记采用') + '</span></div>' +
+        '<button class="cmp-btn is-danger" data-cmp="del-ep">删除本集</button></header>' +
+      '<div class="cmp-vers">' + body + '</div>' +
+      '<div class="cmp-add">' +
+        '<input class="cmp-input cmp-grow" data-f="name" placeholder="版本名称（必填，如：第 1 话 最终版）">' +
+        '<input class="cmp-input" data-f="ver" placeholder="版本号 / 时间" style="width:130px">' +
+        '<input class="cmp-input cmp-grow" data-f="url" placeholder="下载链接（可选，http/https）">' +
+        '<input class="cmp-input cmp-grow" data-f="desc" placeholder="说明（可选）">' +
+        '<label class="cmp-btn cmp-file"><span>选择文件</span><input type="file" data-f="file" hidden></label>' +
+        '<button class="cmp-btn is-primary" data-cmp="add-ver">＋ 添加版本</button>' +
+      '</div></section>';
+  }
+
+  function render() {
+    if (!listEl) return;
+    listEl.innerHTML = data.length
+      ? data.map(epHtml).join('')
+      : '<div class="cmp-empty">还没有「集」，先在右上角输入集名并点击「＋ 新建集」。</div>';
+  }
+
+  view.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-cmp]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-cmp');
+    var card = btn.closest('[data-ep]');
+    var ep = card ? findEp(card.getAttribute('data-ep')) : null;
+
+    if (act === 'add-ep') {
+      var inp = document.getElementById('cmpEpInput');
+      var title = (inp && inp.value || '').trim();
+      if (!title) { alert('请先填写集名'); if (inp) inp.focus(); return; }
+      data.push({ id: uid(), title: title, versions: [] });
+      save(); render();
+      if (inp) inp.value = '';
+      return;
+    }
+    if (!ep) return;
+    if (act === 'del-ep') {
+      if (!confirm('删除「' + ep.title + '」及其全部版本？')) return;
+      data = data.filter(function (x) { return x.id !== ep.id; });
+      save(); render(); return;
+    }
+    if (act === 'del-ver') {
+      var vid = btn.getAttribute('data-ver');
+      ep.versions = ep.versions.filter(function (v) { return v.id !== vid; });
+      save(); render(); return;
+    }
+    if (act === 'adopt') {
+      var aid = btn.getAttribute('data-ver');
+      ep.versions.forEach(function (v) { v.adopted = (v.id === aid); });
+      save(); render(); return;
+    }
+    if (act === 'add-ver') {
+      var get = function (k) {
+        var el = card.querySelector('[data-f="' + k + '"]');
+        return el ? String(el.value || '').trim() : '';
+      };
+      var name = get('name');
+      if (!name) { alert('请填写版本名称'); return; }
+      var p = pending[ep.id];
+      ep.versions.push({
+        id: uid(), name: name, ver: get('ver'), desc: get('desc'),
+        url: get('url') || (p ? p.data : ''), fileName: p ? p.name : '',
+        ts: Date.now(), adopted: ep.versions.length === 0
+      });
+      delete pending[ep.id];
+      save(); render();
+    }
+  });
+
+  view.addEventListener('change', function (e) {
+    var input = e.target;
+    if (!input || input.getAttribute('data-f') !== 'file') return;
+    var card = input.closest('[data-ep]');
+    if (!card) return;
+    var epId = card.getAttribute('data-ep');
+    var f = input.files && input.files[0];
+    if (!f) return;
+    if (f.size > 1.5 * 1024 * 1024) {
+      alert('文件超过 1.5MB，本机存储放不下，请改用下载链接');
+      input.value = '';
+      return;
+    }
+    var rd = new FileReader();
+    rd.onload = function () {
+      pending[epId] = { name: f.name, data: rd.result };
+      var label = input.closest('label');
+      var span = label && label.querySelector('span');
+      if (span) { span.textContent = '✓ ' + f.name; label.title = f.name; }
+    };
+    rd.readAsDataURL(f);
+  });
+
+  render();
+  new MutationObserver(function () {
+    if (document.body.getAttribute('data-view') === 'compile') render();
+  }).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
+})();
+
+
+  /* ===================== 宣发（发布任务 · 平台记录 · 数据看板） ===================== */
+  (function () {
+    var KEY = 'anidream.publish.v1';
+    var PLATFORMS = [
+      { id: 'bilibili', name: 'B站' },
+      { id: 'douyin', name: '抖音' },
+      { id: 'kuaishou', name: '快手' },
+      { id: 'xiaohongshu', name: '小红书' },
+      { id: 'youtube', name: 'YouTube' }
+    ];
+    var STATUS = { todo: '待发', done: '已发', fail: '失败' };
+    var view = document.getElementById('view-publish');
+    if (!view) return;
+
+    var db = load();
+    var editingId = null;
+    var pendingFile = null;
+    window.HMCloudReload = window.HMCloudReload || {};
+    window.HMCloudReload.publish = function () {
+      db = load();
+      try { renderTasks(); } catch (e) {}
+      try { renderBoard(); } catch (e) {}
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    function load() {
+      try {
+        var data = JSON.parse(localStorage.getItem(KEY) || '{}');
+        return {
+          tasks: (Array.isArray(data.tasks) ? data.tasks : []).map(normalize),
+          metrics: Array.isArray(data.metrics) ? data.metrics : []
+        };
+      } catch (err) { return { tasks: [], metrics: [] }; }
+    }
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (err) {}
+      if (window.HMSync && window.HMSync.pushDoc) window.HMSync.pushDoc('publish', db);
+    }
+    function uid(prefix) {
+      return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+    function esc(text) {
+      return String(text == null ? '' : text).replace(/[&<>"']/g, function (ch) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+      });
+    }
+    function platName(id) {
+      for (var i = 0; i < PLATFORMS.length; i++) if (PLATFORMS[i].id === id) return PLATFORMS[i].name;
+      return id;
+    }
+    function chipClass(st) {
+      return st === 'done' ? 'is-done' : (st === 'fail' ? 'is-fail' : '');
+    }
+    function fmtSize(n) {
+      n = Number(n) || 0;
+      if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB';
+      if (n >= 1024) return (n / 1024).toFixed(0) + ' KB';
+      return n + ' B';
+    }
+    function fmtPlan(v) { return v ? String(v).replace('T', ' ') : '未设置'; }
+    function fmtTime(v) {
+      if (!v) return '';
+      var d = new Date(v);
+      if (isNaN(d.getTime())) return String(v);
+      function p(n) { return (n < 10 ? '0' : '') + n; }
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function num(id) { return Math.max(0, Number($(id).value) || 0); }
+    function toast(msg) {
+      if (window.A && typeof window.A.toast === 'function') window.A.toast(msg, 'success');
+    }
+
+    /* ---------------- 发布任务 ---------------- */
+    function taskOf(id) {
+      for (var i = 0; i < db.tasks.length; i++) if (db.tasks[i].id === id) return db.tasks[i];
+      return null;
+    }
+    function normalize(t) {
+      t.platforms = Array.isArray(t.platforms) ? t.platforms : [];
+      t.links = t.links || {};
+      t.pstatus = t.pstatus || {};
+      t.publishedAt = t.publishedAt || {};
+      t.status = t.status || 'todo';
+      return t;
+    }
+
+    function platformRows(t) {
+      if (!t.platforms.length) return '<div class="pub-meta">未选择平台</div>';
+      return t.platforms.map(function (pid) {
+        var st = t.pstatus[pid] || t.status || 'todo';
+        var at = t.publishedAt[pid];
+        return '<div class="pub-plat">' +
+          '<span>' + esc(platName(pid)) + '</span>' +
+          '<span class="pub-chip ' + chipClass(st) + '">' + STATUS[st] + '</span>' +
+          '<span class="pub-meta">' + esc(at ? fmtTime(at) : '未发布') + '</span>' +
+          '<input class="cmp-input" data-pub-link="1" data-task="' + t.id + '" data-plat="' + pid + '" placeholder="发布链接" value="' + esc(t.links[pid] || '') + '">' +
+          '<button type="button" class="pub-btn" data-pub-copy="1" data-task="' + t.id + '" data-plat="' + pid + '">复制</button>' +
+          '<button type="button" class="pub-btn" data-pub-done="1" data-task="' + t.id + '" data-plat="' + pid + '">标记已发布</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    function taskMeta(t) {
+      var bits = ['计划 ' + esc(fmtPlan(t.planAt))];
+      if (t.file && t.file.name) bits.push('成片 ' + esc(t.file.name) + ' · ' + fmtSize(t.file.size));
+      if (t.desc) bits.push(esc(t.desc));
+      return bits.join(' ｜ ');
+    }
+
+    function renderTasks() {
+      var box = $('pubTasks');
+      if (!db.tasks.length) {
+        box.innerHTML = '<div class="pub-empty">暂无发布任务，先在上方新建一条</div>';
+        return;
+      }
+      box.innerHTML = db.tasks.map(function (t) {
+        var opts = ['todo', 'done', 'fail'].map(function (k) {
+          return '<option value="' + k + '"' + (t.status === k ? ' selected' : '') + '>' + STATUS[k] + '</option>';
+        }).join('');
+        return '<div class="pub-card">' +
+          '<div class="pub-card-head">' +
+            '<span class="pub-card-title">' + esc(t.ep || '未命名剧集') + ' · ' + esc(t.title || '未命名任务') + '</span>' +
+            '<select class="cmp-input" data-pub-status="1" data-task="' + t.id + '" style="width:82px;height:26px">' + opts + '</select>' +
+            '<button type="button" class="pub-btn" data-pub-edit="1" data-task="' + t.id + '">编辑</button>' +
+            '<button type="button" class="pub-btn is-danger" data-pub-del="1" data-task="' + t.id + '">删除</button>' +
+          '</div>' +
+          '<div class="pub-meta">' + taskMeta(t) + '</div>' +
+          platformRows(t) +
+          '</div>';
+      }).join('');
+    }
+
+    function resetForm() {
+      editingId = null;
+      pendingFile = null;
+      $('pubEp').value = '';
+      $('pubTitle').value = '';
+      $('pubPlan').value = '';
+      $('pubDesc').value = '';
+      $('pubFileName').value = '';
+      $('pubFile').value = '';
+      view.querySelectorAll('#pubPlatforms input[type="checkbox"]').forEach(function (el) { el.checked = false; });
+      $('pubSave').textContent = '＋ 新建任务';
+      $('pubCancel').hidden = true;
+    }
+
+    function saveTask() {
+      var ep = $('pubEp').value.trim();
+      var title = $('pubTitle').value.trim();
+      var platforms = [];
+      view.querySelectorAll('#pubPlatforms input[type="checkbox"]').forEach(function (el) {
+        if (el.checked) platforms.push(el.value);
+      });
+      if (!ep && !title) { toast('请填写剧集或标题'); return; }
+      if (!platforms.length) { toast('请至少选择一个平台'); return; }
+
+      if (editingId) {
+        var t = taskOf(editingId);
+        if (t) {
+          t.ep = ep; t.title = title;
+          t.planAt = $('pubPlan').value;
+          t.desc = $('pubDesc').value.trim();
+          t.platforms = platforms;
+          if (pendingFile) t.file = pendingFile;
+          save();
+        }
+      } else {
+        db.tasks.unshift(normalize({
+          id: uid('task'),
+          ep: ep,
+          title: title,
+          planAt: $('pubPlan').value,
+          desc: $('pubDesc').value.trim(),
+          platforms: platforms,
+          file: pendingFile || null,
+          status: 'todo',
+          createdAt: Date.now()
+        }));
+        save();
+      }
+      var wasEditing = !!editingId;
+      resetForm();
+      renderTasks();
+      renderRecords();
+      toast(wasEditing ? '已保存' : '已新建任务');
+    }
+
+    function editTask(id) {
+      var t = taskOf(id);
+      if (!t) return;
+      editingId = id;
+      pendingFile = null;
+      $('pubEp').value = t.ep || '';
+      $('pubTitle').value = t.title || '';
+      $('pubPlan').value = t.planAt || '';
+      $('pubDesc').value = t.desc || '';
+      $('pubFileName').value = t.file && t.file.name ? t.file.name + ' · ' + fmtSize(t.file.size) : '';
+      view.querySelectorAll('#pubPlatforms input[type="checkbox"]').forEach(function (el) {
+        el.checked = t.platforms.indexOf(el.value) >= 0;
+      });
+      $('pubSave').textContent = '保存修改';
+      $('pubCancel').hidden = false;
+      $('pubEp').focus();
+    }
+
+    function delTask(id) {
+      if (!window.confirm('删除这条发布任务及其平台记录？')) return;
+      db.tasks = db.tasks.filter(function (t) { return t.id !== id; });
+      save();
+      if (editingId === id) resetForm();
+      renderTasks();
+      renderRecords();
+    }
+
+    /* ---------------- 平台记录 ---------------- */
+    function renderRecords() {
+      var box = $('pubRecords');
+      var rows = [];
+      db.tasks.forEach(function (t) {
+        if (!t.platforms.length) return;
+        rows.push('<div class="pub-card">' +
+          '<div class="pub-card-head"><span class="pub-card-title">' + esc(t.ep || '未命名剧集') + ' · ' + esc(t.title || '未命名任务') + '</span>' +
+          '<span class="pub-meta">计划 ' + esc(fmtPlan(t.planAt)) + '</span></div>' +
+          platformRows(t) + '</div>');
+      });
+      box.innerHTML = rows.length ? rows.join('') : '<div class="pub-empty">还没有平台记录，先到「发布任务」新建任务并选择平台</div>';
+    }
+
+    function copyText(text) {
+      if (!text) { toast('链接为空'); return; }
+      var done = function () { toast('已复制'); };
+      var fallback = function () {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (err) {}
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, fallback);
+      } else {
+        fallback();
+      }
+    }
+
+    function markDone(taskId, pid) {
+      var t = taskOf(taskId);
+      if (!t) return;
+      t.pstatus[pid] = 'done';
+      t.publishedAt[pid] = new Date().toISOString();
+      var allDone = t.platforms.every(function (p) { return t.pstatus[p] === 'done'; });
+      if (allDone) t.status = 'done';
+      save();
+      renderTasks();
+      renderRecords();
+      toast('已标记为已发布');
+    }
+
+    /* ---------------- 数据看板 ---------------- */
+    function fillSelect(sel, items, allLabel, keepValue) {
+      var cur = keepValue ? sel.value : '';
+      var html = allLabel ? '<option value="">' + allLabel + '</option>' : '';
+      html += items.map(function (it) {
+        return '<option value="' + esc(it.value) + '">' + esc(it.label) + '</option>';
+      }).join('');
+      sel.innerHTML = html;
+      if (cur) sel.value = cur;
+    }
+
+    function distinctEps() {
+      var seen = {}, out = [];
+      db.metrics.forEach(function (m) {
+        if (m.ep && !seen[m.ep]) { seen[m.ep] = 1; out.push({ value: m.ep, label: m.ep }); }
+      });
+      db.tasks.forEach(function (t) {
+        if (t.ep && !seen[t.ep]) { seen[t.ep] = 1; out.push({ value: t.ep, label: t.ep }); }
+      });
+      return out;
+    }
+
+    function filteredMetrics() {
+      var ep = $('pubFEp').value;
+      var pf = $('pubFPlatform').value;
+      var range = $('pubFRange').value;
+      var now = Date.now();
+      return db.metrics.filter(function (m) {
+        if (ep && m.ep !== ep) return false;
+        if (pf && m.platform !== pf) return false;
+        if (range !== 'all') {
+          var t = m.date ? new Date(m.date + 'T00:00:00').getTime() : 0;
+          if (!t || t < now - Number(range) * 86400000) return false;
+        }
+        return true;
+      }).sort(function (a, b) { return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0); });
+    }
+
+    function zeroSum() { return { views: 0, likes: 0, comments: 0, favs: 0, shares: 0, last: '' }; }
+    function addTo(sum, m) {
+      sum.views += Number(m.views) || 0;
+      sum.likes += Number(m.likes) || 0;
+      sum.comments += Number(m.comments) || 0;
+      sum.favs += Number(m.favs) || 0;
+      sum.shares += Number(m.shares) || 0;
+      if (m.date && m.date > sum.last) sum.last = m.date;
+      return sum;
+    }
+    function sumAll(list) {
+      return list.reduce(function (s, m) { return addTo(s, m); }, zeroSum());
+    }
+    function groupBy(list, keyFn) {
+      var order = [], map = {};
+      list.forEach(function (m) {
+        var k = keyFn(m);
+        if (!map[k]) { map[k] = zeroSum(); order.push(k); }
+        addTo(map[k], m);
+      });
+      return { order: order, map: map };
+    }
+    function sumTable(group, label) {
+      if (!group.order.length) return '<div class="pub-empty">暂无数据</div>';
+      var rows = group.order.map(function (k) {
+        var s = group.map[k];
+        return '<tr><td>' + esc(k) + '</td><td>' + s.views.toLocaleString() + '</td><td>' + s.likes.toLocaleString() + '</td>' +
+          '<td>' + s.comments.toLocaleString() + '</td><td>' + s.favs.toLocaleString() + '</td><td>' + s.shares.toLocaleString() + '</td>' +
+          '<td>' + esc(s.last || '-') + '</td></tr>';
+      }).join('');
+      return '<table class="pub-table"><thead><tr><th>' + esc(label) + '</th><th>播放量</th><th>点赞</th><th>评论</th><th>收藏</th><th>分享</th><th>最近更新</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+
+    function renderBoard() {
+      fillSelect($('pubFEp'), distinctEps(), '全部剧集', true);
+      fillSelect($('pubFPlatform'), PLATFORMS.map(function (p) { return { value: p.id, label: p.name }; }), '全部平台', true);
+
+      var list = filteredMetrics();
+      var total = sumAll(list);
+      $('pubSum').innerHTML = '<table class="pub-table"><thead><tr><th>范围</th><th>播放量</th><th>点赞</th><th>评论</th><th>收藏</th><th>分享</th><th>最近更新</th></tr></thead><tbody>' +
+        '<tr><td>总计</td><td>' + total.views.toLocaleString() + '</td><td>' + total.likes.toLocaleString() + '</td><td>' + total.comments.toLocaleString() + '</td>' +
+        '<td>' + total.favs.toLocaleString() + '</td><td>' + total.shares.toLocaleString() + '</td><td>' + esc(total.last || '-') + '</td></tr>' +
+        '</tbody></table>';
+
+      $('pubByPlatform').innerHTML = sumTable(groupBy(list, function (m) { return platName(m.platform); }), '平台');
+      $('pubByEp').innerHTML = sumTable(groupBy(list, function (m) { return m.ep || '未标注'; }), '剧集');
+
+      $('pubMetrics').innerHTML = list.length ? ('<table class="pub-table"><thead><tr><th>日期</th><th>平台</th><th>剧集</th><th>播放量</th><th>点赞</th><th>评论</th><th>收藏</th><th>分享</th></tr></thead><tbody>' +
+        list.map(function (m) {
+          return '<tr><td>' + esc(m.date || '-') + '</td><td>' + esc(platName(m.platform)) + '</td><td>' + esc(m.ep || '-') + '</td>' +
+            '<td>' + (Number(m.views) || 0).toLocaleString() + '</td><td>' + (Number(m.likes) || 0).toLocaleString() + '</td>' +
+            '<td>' + (Number(m.comments) || 0).toLocaleString() + '</td><td>' + (Number(m.favs) || 0).toLocaleString() + '</td>' +
+            '<td>' + (Number(m.shares) || 0).toLocaleString() + '</td></tr>';
+        }).join('') + '</tbody></table>') : '<div class="pub-empty">暂无录入数据</div>';
+    }
+
+    function addMetric() {
+      var m = {
+        id: uid('m'), platform: $('pubMPlatform').value, ep: $('pubMEp').value.trim(),
+        date: $('pubMDate').value, views: num('pubMViews'), likes: num('pubMLikes'),
+        comments: num('pubMComments'), favs: num('pubMFavs'), shares: num('pubMShares')
+      };
+      if (!m.platform || !m.date) { toast('请选择平台与日期'); return; }
+      db.metrics.unshift(m);
+      save();
+      $('pubMEp').value = '';
+      $('pubMViews').value = ''; $('pubMLikes').value = ''; $('pubMComments').value = '';
+      $('pubMFavs').value = ''; $('pubMShares').value = '';
+      renderBoard();
+      toast('已录入');
+    }
+
+    /* ---------------- 交互 ---------------- */
+    function switchTab(name) {
+      view.querySelectorAll('[data-pub-tab]').forEach(function (el) {
+        el.classList.toggle('hm-pill-primary', el.getAttribute('data-pub-tab') === name);
+      });
+      view.querySelectorAll('[data-pub-panel]').forEach(function (el) {
+        el.hidden = el.getAttribute('data-pub-panel') !== name;
+      });
+      if (name === 'board') renderBoard();
+      if (name === 'records') renderRecords();
+    }
+
+    function onClick(event) {
+      var tab = event.target.closest('[data-pub-tab]');
+      if (tab) { switchTab(tab.getAttribute('data-pub-tab')); return; }
+      if (event.target.closest('#pubFileBtn')) { $('pubFile').click(); return; }
+      if (event.target.closest('#pubSave')) { saveTask(); return; }
+      if (event.target.closest('#pubCancel')) { resetForm(); return; }
+      if (event.target.closest('#pubMAdd')) { addMetric(); return; }
+
+      var edit = event.target.closest('[data-pub-edit]');
+      if (edit) { editTask(edit.getAttribute('data-task')); return; }
+      var del = event.target.closest('[data-pub-del]');
+      if (del) { delTask(del.getAttribute('data-task')); return; }
+      var copy = event.target.closest('[data-pub-copy]');
+      if (copy) {
+        var t1 = taskOf(copy.getAttribute('data-task'));
+        if (t1) copyText(t1.links[copy.getAttribute('data-plat')] || '');
+        return;
+      }
+      var done = event.target.closest('[data-pub-done]');
+      if (done) { markDone(done.getAttribute('data-task'), done.getAttribute('data-plat')); return; }
+    }
+
+    function onChange(event) {
+      var el = event.target;
+      if (el.id === 'pubFile') {
+        var f = el.files && el.files[0];
+        pendingFile = f ? { name: f.name, size: f.size } : null;
+        $('pubFileName').value = f ? f.name + ' · ' + fmtSize(f.size) : '';
+        return;
+      }
+      var st = el.closest('[data-pub-status]');
+      if (st) {
+        var t = taskOf(st.getAttribute('data-task'));
+        if (t) { t.status = st.value; save(); renderTasks(); renderRecords(); }
+        return;
+      }
+      var link = el.closest('[data-pub-link]');
+      if (link) {
+        var task = taskOf(link.getAttribute('data-task'));
+        if (task) { task.links[link.getAttribute('data-plat')] = link.value.trim(); save(); }
+        return;
+      }
+      if (el.id === 'pubFEp' || el.id === 'pubFPlatform' || el.id === 'pubFRange') {
+        renderBoard();
+      }
+    }
+
+    function init() {
+      $('pubPlatforms').innerHTML = PLATFORMS.map(function (p) {
+        return '<label><input type="checkbox" value="' + p.id + '">' + p.name + '</label>';
+      }).join('');
+      fillSelect($('pubMPlatform'), PLATFORMS.map(function (p) { return { value: p.id, label: p.name }; }));
+      $('pubMDate').value = new Date().toISOString().slice(0, 10);
+      view.addEventListener('click', onClick);
+      view.addEventListener('change', onChange);
+      renderTasks();
+      renderRecords();
+      renderBoard();
+      new MutationObserver(function () {
+        if (document.body.getAttribute('data-view') === 'publish') renderBoard();
+      }).observe(document.body, { attributes: true, attributeFilter: ['data-view'] });
+    }
+
+    init();
+  })();

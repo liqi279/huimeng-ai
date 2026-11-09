@@ -1,14 +1,13 @@
 'use strict';
 
 /* =============================================================
- * 绘梦 · 登录 / 注册 / 用户管理 UI
+ * 绘梦 · 登录 / 用户管理 UI
  * 依赖 api.js（window.HM.api）与 app.js（window.HMApp）
  * 暴露全局函数：showLogin / hideLogin / updateUserUI
  * ============================================================= */
 (function () {
   var api = (window.HM && window.HM.api) ? window.HM.api : null;
 
-  var mode = 'login'; /* 'login' | 'register' */
   var submitting = false;
 
   var els = {};
@@ -19,16 +18,10 @@
     els.sub = document.getElementById('authSub');
     els.username = document.getElementById('authUsername');
     els.password = document.getElementById('authPassword');
-    els.confirmWrap = document.getElementById('authConfirmWrap');
-    els.confirm = document.getElementById('authConfirm');
     els.error = document.getElementById('authError');
     els.submit = document.getElementById('authSubmit');
     els.submitText = document.getElementById('authSubmitText');
     els.spin = document.querySelector('#authSubmit .hm-auth-spin');
-    els.switchHint = document.getElementById('authSwitchHint');
-    els.switchBtn = document.getElementById('authSwitchBtn');
-    els.tabLogin = document.getElementById('authTabLogin');
-    els.tabRegister = document.getElementById('authTabRegister');
 
     els.userWrap = document.getElementById('hmUserWrap');
     els.userPill = document.getElementById('hmUserPill');
@@ -48,13 +41,11 @@
   }
 
   /* ---------- 认证页显隐 ---------- */
-  function showLogin(tab) {
+  function showLogin() {
     if (!els.auth) cache();
     if (!els.auth) return;
-    mode = tab === 'register' ? 'register' : 'login';
     els.auth.hidden = false;
     els.auth.setAttribute('aria-hidden', 'false');
-    applyMode();
     clearError();
     setTimeout(function () { els.username && els.username.focus(); }, 50);
     /* Render 免费层休眠后首个请求要 20~60 秒唤醒：
@@ -69,28 +60,6 @@
     els.auth.setAttribute('aria-hidden', 'true');
   }
 
-  function applyMode() {
-    var isReg = mode === 'register';
-    els.tabLogin.classList.toggle('is-active', !isReg);
-    els.tabRegister.classList.toggle('is-active', isReg);
-    els.confirmWrap.hidden = !isReg;
-    if (isReg) {
-      els.title.textContent = '创建账号';
-      els.sub.textContent = '注册后你的作品将云端同步';
-      els.submitText.textContent = '注册并登录';
-      els.switchHint.textContent = '已有账号？';
-      els.switchBtn.textContent = '去登录';
-      els.password.setAttribute('autocomplete', 'new-password');
-    } else {
-      els.title.textContent = '欢迎回来';
-      els.sub.textContent = '登录你的账号继续创作';
-      els.submitText.textContent = '登录';
-      els.switchHint.textContent = '还没有账号？';
-      els.switchBtn.textContent = '立即注册';
-      els.password.setAttribute('autocomplete', 'current-password');
-    }
-  }
-
   function setError(msg) {
     if (!msg) { clearError(); return; }
     els.error.textContent = msg;
@@ -98,11 +67,73 @@
   }
   function clearError() { els.error.hidden = true; els.error.textContent = ''; }
 
+  /* ---------- 通用小弹窗 ---------- */
+  function openModal(id) {
+    var m = document.getElementById(id);
+    if (!m) return;
+    m.classList.add('is-open');
+    m.setAttribute('aria-hidden', 'false');
+  }
+  function closeModal(id) {
+    var m = document.getElementById(id);
+    if (!m) return;
+    m.classList.remove('is-open');
+    m.setAttribute('aria-hidden', 'true');
+  }
+  /* ---------- 个人资料（后端 MySQL 为准） ---------- */
+  async function openProfileModal() {
+    var u = (window.HMApp && window.HMApp.user) || {};
+    var nameEl = document.getElementById('hmProfileName');
+    var emailEl = document.getElementById('hmProfileEmail');
+    var bioEl = document.getElementById('hmProfileBio');
+    if (nameEl) nameEl.value = u.displayName || u.username || '';
+    if (emailEl) emailEl.value = u.email || '';
+    if (bioEl) bioEl.value = '';
+    openModal('hmProfileModal');
+    try {
+      var res = await api.getProfile();
+      var p = (res && res.profile) || {};
+      if (nameEl) nameEl.value = p.displayName || u.username || '';
+      if (emailEl) emailEl.value = p.email || '';
+      if (bioEl) bioEl.value = p.bio || '';
+    } catch (e) {}
+  }
+
+  async function saveProfile() {
+    var btn = document.getElementById('hmProfileSave');
+    var nameEl = document.getElementById('hmProfileName');
+    var emailEl = document.getElementById('hmProfileEmail');
+    var bioEl = document.getElementById('hmProfileBio');
+    if (btn) { btn.disabled = true; btn.textContent = '保存中…'; }
+    try {
+      var res = await api.updateProfile({
+        displayName: (nameEl && nameEl.value || '').trim(),
+        email: (emailEl && emailEl.value || '').trim(),
+        bio: (bioEl && bioEl.value || '').trim()
+      });
+      var p = (res && res.profile) || {};
+      window.HMApp = window.HMApp || {};
+      window.HMApp.user = Object.assign({}, window.HMApp.user || {}, {
+        displayName: p.displayName || '',
+        email: p.email || ''
+      });
+      try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
+      closeModal('hmProfileModal');
+      if (window.HMApp.toast) window.HMApp.toast('资料已保存到服务器', 'success');
+    } catch (err) {
+      if (window.HMApp.toast) window.HMApp.toast((err && err.message) || '保存失败', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '保存'; }
+    }
+  }
+
   function setSubmitting(on) {
     submitting = on;
     els.submit.disabled = on;
     els.spin.hidden = !on;
     els.submitText.hidden = on;
+    /* 冷启动提示会临时改写按钮文案，结束后恢复为「登录」 */
+    if (!on) els.submitText.textContent = '登录';
   }
 
   /* 切换账号时清掉顶栏搜索框里浏览器残留/自动填充的文字（例如 admin），
@@ -122,12 +153,10 @@
     if (submitting) return;
     var username = (els.username.value || '').trim();
     var password = els.password.value || '';
-    var confirm = els.confirm.value || '';
 
     if (!username || !password) { setError('请输入用户名和密码'); return; }
     if (username.length < 3) { setError('用户名至少 3 个字符'); return; }
     if (password.length < 6) { setError('密码至少 6 个字符'); return; }
-    if (mode === 'register' && password !== confirm) { setError('两次输入的密码不一致'); return; }
 
     setSubmitting(true);
     clearError();
@@ -137,26 +166,51 @@
     }, 3000);
 
     try {
-      var res = mode === 'register'
-        ? await api.register(username, password)
-        : await api.login(username, password);
+      var res = await api.login(username, password);
+
       if (res && res.token) api.setToken(res.token);
       /* 登录成功即证明后端在线（预热前 ping 可能因冷启动超时，把在线标记纠正过来） */
       if (api) api.online = true;
-      /* 登录/注册接口已直接返回完整用户信息，不再额外请求 /auth/me，
+      /* 登录接口已直接返回完整用户信息，不再额外请求 /auth/me，
          少一个跨地域往返（用户点击到登录框关闭只保留 1 个请求） */
       var me = (res && res.user) ? { user: res.user } : await api.me();
       window.HMApp = window.HMApp || {};
       window.HMApp.user = me.user;
+      /* 登录痕迹（供「登录后认领本 origin 旧数据」判定是否同一人）：
+         先把上一个登录者与本次登录者都记进 hm.userHistory.v1，再写 hm.user */
+      try {
+        var prevUser = null;
+        try { prevUser = JSON.parse(localStorage.getItem('hm.user') || 'null'); } catch (e2) {}
+        var histArr = [];
+        try { histArr = JSON.parse(localStorage.getItem('hm.userHistory.v1') || '[]'); } catch (e3) { histArr = []; }
+        if (!Array.isArray(histArr)) histArr = [];
+        [prevUser, me.user].forEach(function (u) {
+          if (!u || !u.id) return;
+          var replaced = false;
+          for (var hi = 0; hi < histArr.length; hi += 1) {
+            if (histArr[hi] && histArr[hi].id === u.id) {
+              histArr[hi] = { id: u.id, username: u.username, at: Date.now() };
+              replaced = true;
+              break;
+            }
+          }
+          if (!replaced) histArr.push({ id: u.id, username: u.username, at: Date.now() });
+        });
+        localStorage.setItem('hm.userHistory.v1', JSON.stringify(histArr.slice(-20)));
+      } catch (e4) {}
       try { localStorage.setItem('hm.user', JSON.stringify(me.user)); } catch (e) {}
 
       /* 认证已完成：立即关闭登录框并刷新用户区，
          作品与桌面放到后台并行加载，不再让用户干等 */
       hideLogin();
       updateUserUI();
+      /* 超管登录后立刻检查是否有待审批注册申请（角标 + 弹框） */
+      if (window.HMUI && typeof window.HMUI.refreshPendingBadge === 'function') {
+        try { window.HMUI.refreshPendingBadge(); } catch (e) {}
+      }
       resetSearchBox();
       if (window.HMApp && window.HMApp.toast) {
-        window.HMApp.toast(mode === 'register' ? '注册成功，欢迎加入绘梦' : '登录成功', 'success');
+        window.HMApp.toast('登录成功', 'success');
       }
       loadUserData();
     } catch (err) {
@@ -169,50 +223,69 @@
     } finally {
       clearTimeout(slowTimer);
       setSubmitting(false);
-      applyMode();
     }
   }
 
-  /* 登录后：并行拉取作品与桌面布局（两者互不依赖，省一个往返） */
+  /* 登录后：顺序固定 = 云端桌面快照 → 云端作品快照 → 历史键认领 → 合并推回 */
   function loadUserData() {
-    var tasks = [refreshUserWorks()];
-    if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') {
-      tasks.push(Promise.resolve().then(function () { window.HMDesk.reloadForUser(); }));
-    } else if (window.HMDesk && typeof window.HMDesk.sync === 'function') {
-      tasks.push(Promise.resolve().then(function () { window.HMDesk.sync(); }));
-    }
-    Promise.all(tasks).catch(function () {});
+    Promise.resolve()
+      .then(function () {
+        if (window.HMDesk && typeof window.HMDesk.reloadForUser === 'function') return window.HMDesk.reloadForUser();
+        if (window.HMDesk && typeof window.HMDesk.sync === 'function') return window.HMDesk.sync();
+      })
+      .then(function () { return refreshUserWorks(); })
+      .catch(function (e) { console.warn('[loadUserData] 加载失败（不影响登录）:', e && e.message); });
   }
 
   async function refreshUserWorks() {
     if (!api || !api.online) return;
+    var A = window.HMApp;
+    if (!A || !A.state) return;
+    /* 先认领本 origin 的历史键（旧 uid 键 / 固定键 / guest 键），
+       再读「所有候选键的并集」，保证认领结果进入本轮云端合并。失败不影响登录。 */
+    try {
+      if (window.HMClaim && typeof window.HMClaim.run === 'function') await window.HMClaim.run();
+    } catch (e) { console.warn('[refreshUserWorks] 历史键认领失败（忽略）:', e && e.message); }
+    /* 手动登录时 state.works 已被登出清空；本地作品必须取「所有候选键的并集」
+       （用户键 / .bak / .snap.* / 历史键名），不能只读一个 key 后当成全部 */
+    var mergeAll = (window.HMSync && window.HMSync.mergeLists)
+      ? window.HMSync.mergeLists
+      : function () { return [].slice.call(arguments).reduce(function (a, b) { return a.concat(Array.isArray(b) ? b : []); }, []); };
+    var localAll = (window.HMSync && window.HMSync.collectLocalWorks)
+      ? window.HMSync.collectLocalWorks()
+      : [];
+    var localWorks = mergeAll(localAll, Array.isArray(A.state.works) ? A.state.works : []);
+
+    var serverItems = null;
     try {
       var data = await api.listWorks();
-      if (data && Array.isArray(data.items) && window.HMApp && window.HMApp.state) {
-        var A = window.HMApp;
-        /* 手动登录时 state.works 已被登出清空，需先从该用户专属 key 加载本地作品，
-           再与服务端合并（Render 重启会清空 data/，作品可能只存在本地） */
-        var localFromKey = [];
-        try {
-          var key = A.worksLsKey ? A.worksLsKey() : 'anidream.works.v1';
-          var raw = localStorage.getItem(key);
-          if (raw) {
-            var parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) localFromKey = parsed;
-          }
-        } catch (e) {}
-        var memWorks = Array.isArray(A.state.works) ? A.state.works : [];
-        var localWorks = localFromKey.length ? localFromKey : memWorks;
-        A.state.works = (A.mergeWorks
-          ? A.mergeWorks(data.items, localWorks)
-          : data.items.concat(localWorks));
-        /* 从 IndexedDB 补回原图（本地缓存里 url 被清空、blob 标记存在） */
+      if (data && Array.isArray(data.items)) serverItems = data.items;
+    } catch (e) { serverItems = null; }
+
+    /* 云端失败 / 结构异常 / 列表为空：只用本地，绝不清空、绝不写空 */
+    if (!serverItems || !serverItems.length) {
+      if (localWorks.length) {
+        A.state.works = localWorks;
         if (A.hydrateWorks) { try { await A.hydrateWorks(); } catch (e) {} }
-        /* 走 saveWorks：备份 + 写 IndexedDB + 同步服务端，不直接写 localStorage */
-        if (A.saveWorks) A.saveWorks();
-        if (A.renderWorks) A.renderWorks();
+        if (window.HMSync && window.HMSync.runSyncWrite) {
+          window.HMSync.runSyncWrite(function () {
+            if (A.saveWorks) A.saveWorks();
+            if (A.renderWorks) A.renderWorks();
+          });
+        } else {
+          if (A.saveWorks) A.saveWorks();
+          if (A.renderWorks) A.renderWorks();
+        }
       }
-    } catch (e) {}
+      return;
+    }
+
+    A.state.works = (A.mergeWorks
+      ? A.mergeWorks(serverItems, localWorks)
+      : serverItems.concat(localWorks));
+    if (A.hydrateWorks) { try { await A.hydrateWorks(); } catch (e) {} }
+    if (A.saveWorks) A.saveWorks();
+    if (A.renderWorks) A.renderWorks();
   }
 
   /* ---------- 用户头像 UI ---------- */
@@ -241,6 +314,13 @@
   }
 
   async function handleLogout() {
+    /* 记录登录痕迹：供下次登录时判定「本 origin 的旧键是不是同一个人」（用户名可核对） */
+    try {
+      var lastU = window.HMApp && window.HMApp.user;
+      if (lastU && lastU.id) {
+        localStorage.setItem('hm.lastUser.v1', JSON.stringify({ id: lastU.id, username: lastU.username, at: Date.now() }));
+      }
+    } catch (e) {}
     if (api && api.logout) api.logout();
     window.HMApp = window.HMApp || {};
     /* 清空内存中的作品与桌面，避免下个账号看到上个账号的数据。
@@ -257,7 +337,7 @@
     toggleUserMenu(false);
     updateUserUI();
     resetSearchBox();
-    showLogin('login');
+    showLogin();
   }
 
   /* ---------- 管理员 - 用户管理 ---------- */
@@ -375,13 +455,6 @@
     cache();
     if (!els.auth) return;
 
-    els.tabLogin.addEventListener('click', function () { mode = 'login'; applyMode(); clearError(); });
-    els.tabRegister.addEventListener('click', function () { mode = 'register'; applyMode(); clearError(); });
-    els.switchBtn.addEventListener('click', function () {
-      mode = mode === 'login' ? 'register' : 'login';
-      applyMode();
-      clearError();
-    });
     els.form.addEventListener('submit', handleSubmit);
 
     /* 用户菜单 */
@@ -399,12 +472,28 @@
       if (!btn) return;
       var cmd = btn.dataset.ucmd;
       if (cmd === 'logout') handleLogout();
-      else if (cmd === 'admin') { toggleUserMenu(false); openAdminModal(); }
+      else if (cmd === 'admin') {
+        toggleUserMenu(false);
+        /* 审批制账号管理已并入「设置 → 管理台 → 账号管理」 */
+        if (window.HMUI && typeof window.HMUI.openAccountAdmin === 'function') window.HMUI.openAccountAdmin();
+        else openAdminModal();
+      }
       else if (cmd === 'profile') {
         toggleUserMenu(false);
-        var u = (window.HMApp && window.HMApp.user) || {};
-        toast('当前账号：' + (u.username || '') + '（' + roleLabel(u.role) + '）', 'info');
+        openProfileModal();
       }
+    });
+
+    /* 新申请提醒 / 个人资料 弹窗 */
+    var profileSaveBtn = document.getElementById('hmProfileSave');
+    if (profileSaveBtn) profileSaveBtn.addEventListener('click', saveProfile);
+    ['hmProfileClose', 'hmProfileCancel'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', function () { closeModal('hmProfileModal'); });
+    });
+    ['hmProfileModal'].forEach(function (id) {
+      var m = document.getElementById(id);
+      if (m) m.addEventListener('click', function (ev) { if (ev.target === m) closeModal(id); });
     });
 
     /* 管理员弹窗 */

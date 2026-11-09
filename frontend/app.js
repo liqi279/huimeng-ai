@@ -318,18 +318,24 @@ const MODEL_INDEX = GROUPS.flatMap(function (group) {
 
 /* ---------------- 比例 ---------------- */
 const RATIOS = [
-  { id: '1:1', w: 1024, h: 1024 },
-  { id: '3:4', w: 768, h: 1024 },
-  { id: '4:3', w: 1024, h: 768 },
+  { id: '16:9', w: 1344, h: 768 },
   { id: '9:16', w: 768, h: 1344 },
-  { id: '16:9', w: 1344, h: 768 }
+  { id: '21:9', w: 1344, h: 576 },
+  { id: '1:1', w: 1024, h: 1024 },
+  { id: '4:3', w: 1024, h: 768 },
+  { id: '2:3', w: 672, h: 1008 },
+  { id: '3:2', w: 1008, h: 672 },
+  { id: '3:4', w: 768, h: 1024 },
+  { id: '4:5', w: 768, h: 960 },
+  { id: '5:4', w: 960, h: 768 }
 ];
 
 /* 清晰度档位：以 1024 基准为 1K，按倍率放大得到 2K / 4K */
 const SCALES = [
   { id: '1k', label: '标清 1K', mult: 1 },
   { id: '2k', label: '高清 2K', mult: 2 },
-  { id: '4k', label: '超清 4K', mult: 4 }
+  { id: '4k', label: '超清 4K', mult: 4 },
+  { id: 'custom', label: '自定义', mult: 1 }
 ];
 
 /* ---------------- 灵感 ---------------- */
@@ -435,10 +441,48 @@ function currentScale() {
   return SCALES.find(function (s) { return s.id === state.scale; }) || SCALES[0];
 }
 
+/* 像素统一取 8 的倍数，保持比例且避免后端整除裁剪 */
+function round8(value) {
+  const n = Math.max(64, Math.min(8192, Math.round(Number(value) || 0)));
+  return Math.max(64, Math.round(n / 8) * 8);
+}
+
+/* 自定义档：以长度（宽）为准，高度按当前比例换算（自动侧对齐 8 的倍数） */
+function customPixels(ratio) {
+  const ar = ratio.w / ratio.h;
+  const w = Math.max(64, Math.min(8192, Math.round(Number(state.customW) || ratio.w)));
+  return { w: w, h: round8(w / ar) };
+}
+
+/* 实际像素 = 比例基准像素 × 档位倍率（1K×1 / 2K×2 / 4K×4；自定义用宽高） */
 function currentSize() {
   const ratio = currentRatio();
   const scale = currentScale();
-  return { ratio: ratio, scale: scale, w: ratio.w * scale.mult, h: ratio.h * scale.mult };
+  if (scale.id === 'custom') {
+    const px = customPixels(ratio);
+    return { ratio: ratio, scale: scale, w: px.w, h: px.h };
+  }
+  return { ratio: ratio, scale: scale, w: round8(ratio.w * scale.mult), h: round8(ratio.h * scale.mult) };
+}
+
+/* 比例按钮上显示当前档位对应的像素 */
+function ratioPixelsFor(r) {
+  if (state.scale === 'custom') {
+    const ar = r.w / r.h;
+    const w = Math.max(64, Math.min(8192, Math.round(Number(state.customW) || r.w)));
+    return { w: w, h: round8(w / ar) };
+  }
+  const mult = currentScale().mult;
+  return { w: round8(r.w * mult), h: round8(r.h * mult) };
+}
+
+/* 请求里的 scale 字段：自定义档按最长边归到 1k/2k/4k（后端白名单兼容） */
+function effectiveScaleId(size) {
+  if (size.scale.id !== 'custom') return size.scale.id;
+  const longEdge = Math.max(size.w, size.h);
+  if (longEdge > 2800) return '4k';
+  if (longEdge > 1400) return '2k';
+  return '1k';
 }
 
 function fileNameFor(item) {
@@ -473,6 +517,8 @@ const state = {
   modelId: MODEL_INDEX.some(function (m) { return m.id === storedPrefs.modelId; }) ? storedPrefs.modelId : MODEL_INDEX[0].id,
   ratio: RATIOS.some(function (r) { return r.id === storedPrefs.ratio; }) ? storedPrefs.ratio : '1:1',
   scale: SCALES.some(function (s) { return s.id === storedPrefs.scale; }) ? storedPrefs.scale : '1k',
+  customW: Number(storedPrefs.customW) || 0,
+  customH: Number(storedPrefs.customH) || 0,
   count: [1, 2, 4].indexOf(Number(storedPrefs.count)) >= 0 ? Number(storedPrefs.count) : 1,
   steps: clamp(Number(storedPrefs.steps) || 8, 4, 12),
   seed: Number(storedPrefs.seed) || randomSeed(),
@@ -826,7 +872,8 @@ function renderRatios() {
     const scale = 21 / Math.max(r.w, r.h);
     const bw = Math.max(9, Math.round(r.w * scale));
     const bh = Math.max(9, Math.round(r.h * scale));
-    return '<button class="ratio-btn' + (r.id === state.ratio ? ' is-active' : '') + '" data-ratio="' + r.id + '" title="' + r.w + '×' + r.h + '">' +
+    const px = ratioPixelsFor(r);
+    return '<button class="ratio-btn' + (r.id === state.ratio ? ' is-active' : '') + '" data-ratio="' + r.id + '" title="' + px.w + '×' + px.h + '">' +
       '<span class="ratio-shape" style="width:' + bw + 'px;height:' + bh + 'px"></span>' +
       '<span class="ratio-name">' + r.id + '</span>' +
     '</button>';
@@ -840,6 +887,14 @@ function updateRatioLabel() {
   const detail = size.scale.label + ' · ' + size.w + '×' + size.h;
   els.ratioLabel.textContent = size.ratio.id;
   if (els.ratioBtn) els.ratioBtn.title = '画面比例 ' + size.ratio.id + ' · ' + detail;
+  const readout = document.getElementById('scaleSizeText');
+  if (readout) readout.textContent = '当前 ' + size.w + '×' + size.h + ' · ' + size.scale.label;
+  if (state.scale === 'custom') {
+    const cw = document.getElementById('customWInput');
+    const ch = document.getElementById('customHInput');
+    if (cw && document.activeElement !== cw) cw.value = String(size.w);
+    if (ch && document.activeElement !== ch) ch.value = String(size.h);
+  }
 }
 
 function filteredWorks() {
@@ -849,6 +904,16 @@ function filteredWorks() {
   } else if (state.worksFilter === 'paid') {
     list = list.filter(function (w) { return (w.engine || 'flux') !== 'flux'; });
   }
+  /* 时间筛选：与筛选/排序叠加，不改变原有排序能力 */
+  const tr = tm.applied;
+  if (tr && (tr.start || tr.end)) {
+    list = list.filter(function (w) {
+      const t = Number(w.createdAt) || 0;
+      if (tr.start && t < tr.start) return false;
+      if (tr.end && t > tr.end) return false;
+      return true;
+    });
+  }
   list.sort(function (a, b) {
     const da = a.createdAt || 0;
     const db = b.createdAt || 0;
@@ -857,8 +922,344 @@ function filteredWorks() {
   return list;
 }
 
+/* ================= 顶栏「时间筛选」面板 ================= */
+const TM_STORE_KEY = 'anidream.works.timerange.v1';
+const TM_QUICK_LABEL = {
+  all: '全部', today: '今日', yesterday: '昨日', '24h': '近24H',
+  '7d': '近 7 天', '30d': '近 30 天', month: '本月', lastmonth: '上月',
+  quarter: '本季', year: '今年', custom: '自定义'
+};
+
+const tm = {
+  applied: { quick: 'all', start: 0, end: 0 },
+  draft: { quick: 'all', start: 0, end: 0 },
+  month: new Date(),
+  field: 'start',
+  bound: false
+};
+
+function tmPad(n) { return (n < 10 ? '0' : '') + n; }
+
+function tmDayStart(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+}
+
+function tmDayEnd(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999).getTime();
+}
+
+function tmToInput(ms) {
+  if (!ms) return '';
+  const d = new Date(ms);
+  return d.getFullYear() + '-' + tmPad(d.getMonth() + 1) + '-' + tmPad(d.getDate()) +
+    'T' + tmPad(d.getHours()) + ':' + tmPad(d.getMinutes()) + ':' + tmPad(d.getSeconds());
+}
+
+function tmFromInput(value) {
+  const m = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return 0;
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)).getTime();
+}
+
+function tmQuickRange(key) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const mo = now.getMonth();
+  const d = now.getDate();
+  switch (key) {
+    case 'today':
+      return { start: tmDayStart(now), end: tmDayEnd(now) };
+    case 'yesterday': {
+      const t = new Date(y, mo, d - 1);
+      return { start: tmDayStart(t), end: tmDayEnd(t) };
+    }
+    case '24h':
+      return { start: now.getTime() - 24 * 3600 * 1000, end: now.getTime() };
+    case '7d':
+      return { start: now.getTime() - 7 * 24 * 3600 * 1000, end: now.getTime() };
+    case '30d':
+      return { start: now.getTime() - 30 * 24 * 3600 * 1000, end: now.getTime() };
+    case 'month':
+      return { start: tmDayStart(new Date(y, mo, 1)), end: tmDayEnd(new Date(y, mo + 1, 0)) };
+    case 'lastmonth':
+      return { start: tmDayStart(new Date(y, mo - 1, 1)), end: tmDayEnd(new Date(y, mo, 0)) };
+    case 'quarter': {
+      const q = Math.floor(mo / 3) * 3;
+      return { start: tmDayStart(new Date(y, q, 1)), end: tmDayEnd(new Date(y, q + 3, 0)) };
+    }
+    case 'year':
+      return { start: tmDayStart(new Date(y, 0, 1)), end: tmDayEnd(new Date(y, 11, 31)) };
+    default:
+      return { start: 0, end: 0 };
+  }
+}
+
+function tmText() {
+  const a = tm.applied;
+  if (!a.start && !a.end) return '时间筛选';
+  if (a.quick && a.quick !== 'custom' && TM_QUICK_LABEL[a.quick]) return TM_QUICK_LABEL[a.quick];
+  const year = new Date().getFullYear();
+  const fmt = function (ms) {
+    const d = new Date(ms);
+    return (d.getFullYear() === year ? '' : d.getFullYear() + '/') + (d.getMonth() + 1) + '/' + d.getDate();
+  };
+  if (a.start && a.end) return fmt(a.start) + ' - ' + fmt(a.end);
+  return fmt(a.start || a.end);
+}
+
+function tmSave() {
+  try { localStorage.setItem(TM_STORE_KEY, JSON.stringify(tm.applied)); } catch (e) {}
+}
+
+function tmLoad() {
+  try {
+    const raw = localStorage.getItem(TM_STORE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return;
+    tm.applied = {
+      quick: typeof data.quick === 'string' ? data.quick : 'custom',
+      start: Number(data.start) || 0,
+      end: Number(data.end) || 0
+    };
+    if (tm.applied.quick === 'all') { tm.applied.start = 0; tm.applied.end = 0; }
+    /* 相对区间（今日/近7天/本月…）在重新打开时按当前时间重新计算 */
+    if (tm.applied.quick && tm.applied.quick !== 'custom' && tm.applied.quick !== 'all') {
+      const r = tmQuickRange(tm.applied.quick);
+      tm.applied.start = r.start;
+      tm.applied.end = r.end;
+    }
+    tm.draft = { quick: tm.applied.quick, start: tm.applied.start, end: tm.applied.end };
+  } catch (e) {}
+}
+
+function tmSyncWarn() {
+  const bad = !!(tm.draft.start && tm.draft.end && tm.draft.start > tm.draft.end);
+  const warn = document.getElementById('tmWarn');
+  if (warn) warn.hidden = !bad;
+  const fStart = document.querySelector('.hm-tm-field[data-field="start"]');
+  const fEnd = document.querySelector('.hm-tm-field[data-field="end"]');
+  if (fStart) fStart.classList.toggle('is-invalid', bad);
+  if (fEnd) fEnd.classList.toggle('is-invalid', bad);
+  return !bad;
+}
+
+function tmSyncFieldState() {
+  document.querySelectorAll('.hm-tm-field').forEach(function (field) {
+    field.classList.toggle('is-active', field.dataset.field === tm.field);
+  });
+  tmRenderCal();
+}
+
+function tmRenderCal() {
+  const grid = document.getElementById('tmCalGrid');
+  const label = document.getElementById('tmCalLabel');
+  if (!grid) return;
+  const now = new Date();
+  const y = tm.month.getFullYear();
+  const m = tm.month.getMonth();
+  if (label) label.textContent = y + ' 年 ' + (m + 1) + ' 月';
+  const offset = new Date(y, m, 1).getDay();
+  const todayKey = tmDayStart(now);
+  const sKey = tmDayStart(new Date(tm.draft.start || tmDayStart(now)));
+  const eKey = tmDayStart(new Date(tm.draft.end || tmDayEnd(now)));
+  let html = '';
+  for (let i = 0; i < 42; i++) {
+    const dt = new Date(y, m, 1 - offset + i);
+    const key = tmDayStart(dt);
+    const cls = ['hm-tm-day'];
+    if (dt.getMonth() !== m) cls.push('is-out');
+    if (key === todayKey) cls.push('is-today');
+    if (sKey <= eKey && key >= sKey && key <= eKey) {
+      cls.push(key === sKey || key === eKey ? 'is-sel' : 'in-range');
+    }
+    html += '<button type="button" class="' + cls.join(' ') + '" data-ms="' + key + '">' + dt.getDate() + '</button>';
+  }
+  grid.innerHTML = html;
+}
+
+function tmSync() {
+  const now = new Date();
+  const showStart = tm.draft.start || tmDayStart(now);
+  const showEnd = tm.draft.end || tmDayEnd(now);
+  const inputStart = document.getElementById('tmStart');
+  const inputEnd = document.getElementById('tmEnd');
+  if (inputStart) inputStart.value = tmToInput(showStart);
+  if (inputEnd) inputEnd.value = tmToInput(showEnd);
+  document.querySelectorAll('#tmQuick [data-quick]').forEach(function (btn) {
+    btn.classList.toggle('is-active', btn.dataset.quick === tm.draft.quick);
+  });
+  document.querySelectorAll('#worksSortMenu [data-sort]').forEach(function (btn) {
+    btn.classList.toggle('is-active', btn.dataset.sort === state.worksSort);
+  });
+  document.querySelectorAll('.hm-tm-field').forEach(function (field) {
+    field.classList.toggle('is-active', field.dataset.field === tm.field);
+  });
+  if (els.worksSortText) els.worksSortText.textContent = tmText();
+  tmSyncWarn();
+  tmRenderCal();
+}
+
+function tmPickDay(ms) {
+  const day = new Date(ms);
+  const base = tm.field === 'end' ? tm.draft.end : tm.draft.start;
+  let h = 0, mi = 0, s = 0;
+  if (base) {
+    const b = new Date(base);
+    h = b.getHours(); mi = b.getMinutes(); s = b.getSeconds();
+  } else if (tm.field === 'end') {
+    h = 23; mi = 59; s = 59;
+  }
+  tm.draft[tm.field] = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, mi, s).getTime();
+  tm.draft.quick = 'custom';
+  tm.month = new Date(day.getFullYear(), day.getMonth(), 1);
+  if (tm.field === 'start') tm.field = 'end';
+  tmSync();
+}
+
+function tmApply() {
+  if (!tmSyncWarn()) return;   /* 起始晚于结束：红字提示，不应用 */
+  const d = tm.draft;
+  let start = d.start;
+  let end = d.end;
+  if (d.quick === 'all') { start = 0; end = 0; }
+  tm.applied = { quick: d.quick, start: start, end: end };
+  tmSave();
+  if (els.worksSortText) els.worksSortText.textContent = tmText();
+  renderWorks();
+  closeAllMenus();
+  switchView('works');
+  toast(start || end ? ('已筛选：' + tmText()) : '已显示全部时间', 'success');
+}
+
+function tmClear() {
+  tm.draft = { quick: 'all', start: 0, end: 0 };
+  tm.applied = { quick: 'all', start: 0, end: 0 };
+  tm.field = 'start';
+  tm.month = new Date();
+  tmSave();
+  if (els.worksSortText) els.worksSortText.textContent = '时间筛选';
+  renderWorks();
+  tmSync();
+  closeAllMenus();
+  toast('已清除时间筛选', 'info');
+}
+
+function tmBind() {
+  const menu = els.worksSortMenu;
+  if (!menu || tm.bound) return;
+  tm.bound = true;
+
+  const quick = document.getElementById('tmQuick');
+  if (quick) {
+    quick.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-quick]');
+      if (!btn) return;
+      const key = btn.dataset.quick;
+      tm.draft.quick = key;
+      if (key !== 'custom') {
+        const r = tmQuickRange(key);
+        tm.draft.start = r.start;
+        tm.draft.end = r.end;
+        const anchor = r.start || Date.now();
+        const ad = new Date(anchor);
+        tm.month = new Date(ad.getFullYear(), ad.getMonth(), 1);
+        tm.field = 'start';
+      }
+      tmSync();
+    });
+  }
+
+  const grid = document.getElementById('tmCalGrid');
+  if (grid) {
+    grid.addEventListener('click', function (event) {
+      const btn = event.target.closest('[data-ms]');
+      if (btn) tmPickDay(Number(btn.dataset.ms));
+    });
+  }
+
+  const prev = document.getElementById('tmPrev');
+  const next = document.getElementById('tmNext');
+  if (prev) prev.addEventListener('click', function () {
+    tm.month = new Date(tm.month.getFullYear(), tm.month.getMonth() - 1, 1);
+    tmRenderCal();
+  });
+  if (next) next.addEventListener('click', function () {
+    tm.month = new Date(tm.month.getFullYear(), tm.month.getMonth() + 1, 1);
+    tmRenderCal();
+  });
+
+  document.querySelectorAll('.hm-tm-field').forEach(function (field) {
+    field.addEventListener('click', function (event) {
+      tm.field = field.dataset.field;
+      tmSyncFieldState();
+      if (!event.target.closest('input')) {
+        const input = document.getElementById(tm.field === 'end' ? 'tmEnd' : 'tmStart');
+        if (input) { try { input.focus(); } catch (e) {} }
+      }
+    });
+  });
+
+  const bindInput = function (which, el) {
+    if (!el) return;
+    const handler = function () {
+      tm.draft[which] = tmFromInput(el.value);
+      tm.draft.quick = 'custom';
+      tm.field = which;
+      document.querySelectorAll('#tmQuick [data-quick]').forEach(function (btn) {
+        btn.classList.toggle('is-active', btn.dataset.quick === 'custom');
+      });
+      tmSyncFieldState();
+      tmSyncWarn();
+    };
+    el.addEventListener('change', handler);
+    el.addEventListener('blur', handler);
+  };
+  bindInput('start', document.getElementById('tmStart'));
+  bindInput('end', document.getElementById('tmEnd'));
+
+  const applyBtn = document.getElementById('tmApply');
+  const clearBtn = document.getElementById('tmClear');
+  if (applyBtn) applyBtn.addEventListener('click', tmApply);
+  if (clearBtn) clearBtn.addEventListener('click', tmClear);
+
+  /* 排序能力保留（原「最新优先 / 最早优先」） */
+  menu.addEventListener('click', function (event) {
+    const btn = event.target.closest('[data-sort]');
+    if (!btn) return;
+    state.worksSort = btn.dataset.sort;
+    menu.querySelectorAll('[data-sort]').forEach(function (el) {
+      el.classList.toggle('is-active', el.dataset.sort === state.worksSort);
+    });
+    renderWorks();
+    closeAllMenus();
+    switchView('works');
+  });
+
+  /* 打开面板时把「已应用」同步进草稿（非全局监听，仅本按钮） */
+  if (els.worksSortBtn) {
+    els.worksSortBtn.addEventListener('click', function () {
+      tm.draft = { quick: tm.applied.quick, start: tm.applied.start, end: tm.applied.end };
+      const anchor = tm.draft.start || Date.now();
+      const ad = new Date(anchor);
+      tm.month = new Date(ad.getFullYear(), ad.getMonth(), 1);
+      tm.field = 'start';
+      tmSync();
+    });
+  }
+
+  tmSync();
+}
+
+tmLoad();
+
+
 /* 作品卡片按类型渲染图片 / 视频 / 音频 */
 function workMediaHtml(work) {
+  if (work.failed || work.ok === false) {
+    return '<div class="work-failed">' + ICONS.alert + '<strong>生成失败</strong><span>' + esc(work.error || '本次生成未成功') + '</span></div>';
+  }
+
   var url = esc(work.url || work.thumb || '');
   if (work.type === 'video') {
     return '<video class="work-video" src="' + url + '" muted playsinline preload="metadata"></video>';
@@ -866,7 +1267,7 @@ function workMediaHtml(work) {
   if (work.type === 'audio') {
     return '<div class="work-audio">♪</div>';
   }
-  return '<img src="' + esc(work.thumb || work.url) + '" alt="' + esc(work.prompt) + '" loading="lazy">';
+  return '<img src="' + esc(work.thumb || work.url) + '" alt="' + esc(work.prompt) + '" loading="lazy" draggable="true">';
 }
 
 function renderWorks() {
@@ -886,11 +1287,14 @@ function renderWorks() {
   } else {
     els.worksEmpty.style.display = 'none';
     els.worksGrid.innerHTML = list.map(function (work) {
-      return '<article class="work-card" data-work="' + work.id + '">' +
+      var isFailed = !!(work.failed || work.ok === false);
+      return '<article class="work-card' + (isFailed ? ' is-failed' : '') + '" data-work="' + work.id + '">' +
+
         workMediaHtml(work) +
         '<div class="work-overlay">' +
-          '<button data-waction="download" title="下载原图">' + ICONS.download + '</button>' +
+          '<button data-waction="download" title="' + (isFailed ? '无可下载的图片' : '下载原图') + '"' + (isFailed ? ' disabled' : '') + '>' + ICONS.download + '</button>' +
           '<button data-waction="view" title="查看大图">' + ICONS.eye + '</button>' +
+          '<button data-waction="ref" title="设为参考主体"' + (isFailed ? ' disabled' : '') + '>' + ICONS.reuse + '</button>' +
           '<button data-waction="delete" title="删除">' + ICONS.trash + '</button>' +
         '</div>' +
         '<div class="work-meta"><span>' + esc(work.modelName || 'AI') + '</span><span>' + esc(work.seed || '') + '</span></div>' +
@@ -963,6 +1367,26 @@ function addPromptTab() {
   els.promptInput.focus();
 }
 
+/* 档位图标：1K/2K 柱状，4K 与自定义用板状 */
+const SCALE_ICONS = {
+  bars: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>',
+  slab: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="9" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 13.5h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".65"/></svg>',
+  tune: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h9M17 8h3M4 16h3M11 16h9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="15" cy="8" r="2.1" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9" cy="16" r="2.1" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'
+};
+
+function syncScaleChip() {
+  if (els.scaleChipText) {
+    els.scaleChipText.textContent = state.scale === 'custom' ? '自定义' : String(state.scale).toUpperCase();
+  }
+  const icon = document.getElementById('scaleChipIcon');
+  if (icon) icon.innerHTML = state.scale === 'custom' ? SCALE_ICONS.tune : state.scale === '4k' ? SCALE_ICONS.slab : SCALE_ICONS.bars;
+}
+
+function toggleCustomRow() {
+  const row = document.getElementById('scaleCustomRow');
+  if (row) row.hidden = state.scale !== 'custom';
+}
+
 function syncSettingsUI() {
   els.seedInput.value = String(state.seed);
   els.stepsRange.value = String(state.steps);
@@ -973,10 +1397,11 @@ function syncSettingsUI() {
     const step = Number(btn.dataset.step);
     btn.disabled = step < 0 ? countIndex <= 0 : countIndex >= COUNT_OPTIONS.length - 1;
   });
-  els.scalePicker.querySelectorAll('button').forEach(function (btn) {
+  els.scalePicker.querySelectorAll('[data-scale]').forEach(function (btn) {
     btn.classList.toggle('is-active', btn.dataset.scale === state.scale);
   });
-  if (els.scaleChipText) els.scaleChipText.textContent = state.scale.toUpperCase();
+  syncScaleChip();
+  toggleCustomRow();
   if (els.seedBtn) els.seedBtn.title = '当前种子 #' + state.seed + '，点击手动指定';
   els.translateToggle.classList.toggle('is-on', state.translate);
   els.translateToggle.setAttribute('aria-checked', state.translate ? 'true' : 'false');
@@ -1407,7 +1832,7 @@ function renderRef() {
         '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
       addCell.addEventListener('click', function (ev) {
         ev.stopPropagation();
-        els.refInput.click();
+        openRefPicker();
       });
       els.refGrid.appendChild(addCell);
     }
@@ -1870,6 +2295,69 @@ async function pickRefFile(file) {
   }
 }
 
+/* === 「桌面/作品图片 → 参考主体」统一入口 ===
+ * 原生 HTML5 拖放（作品卡）与桌面卡片的指针拖拽都调用这里，
+ * 最终一律走 pickRefFile()，与手动选择文件落在同一处状态（currentRefs()）。
+ * dataTransfer 里只放作品 id，不放 base64。 */
+window.HMRefDrop = {
+  acceptWorkId: async function (workId) {
+    var wid = String(workId || '');
+    if (!wid) return false;
+    var work = null;
+    for (var i = 0; i < state.works.length; i++) {
+      if (String(state.works[i].id) === wid) { work = state.works[i]; break; }
+    }
+    if (!work) { toast('找不到这张作品', 'error'); return false; }
+    if (work.failed || work.ok === false) { toast('生成失败的图片不能作为参考主体', 'error'); return false; }
+    if (work.type && work.type !== 'image') { toast('只能拖图片作为参考主体', 'error'); return false; }
+    if (currentRefs().length >= REF_MAX_COUNT) {
+      toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+      return false;
+    }
+    var src = work.url || work.thumb || '';
+    if (!src) { toast('这张作品没有可用的图片', 'error'); return false; }
+    try {
+      var res = await fetch(src, { mode: 'cors' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var blob = await res.blob();
+      var type = blob.type || 'image/jpeg';
+      if (!/^image\//i.test(type)) type = 'image/jpeg';
+      var ext = type.indexOf('png') >= 0 ? 'png' : type.indexOf('webp') >= 0 ? 'webp' : 'jpg';
+      var file;
+      try {
+        file = new File([blob], 'work_' + wid + '.' + ext, { type: type });
+      } catch (e) {
+        file = blob;
+        try { file.name = 'work_' + wid + '.' + ext; } catch (e2) {}
+      }
+      await pickRefFile(file);   /* 与手动上传同一条通路：校验/缩放/缩略图/写 currentRefs/renderRef */
+      return true;
+    } catch (err) {
+      toast('这张图有跨域限制，请先下载再手动上传为参考主体', 'error');
+      return false;
+    }
+  }
+};
+
+/* 作品卡（我的作品）作为原生拖拽源：拖拽标识只放作品 id */
+document.addEventListener('dragstart', function (ev) {
+  var card = ev.target && ev.target.closest ? ev.target.closest('.work-card[data-work]') : null;
+  if (!card) return;
+  var work = null;
+  for (var i = 0; i < state.works.length; i++) {
+    if (String(state.works[i].id) === String(card.dataset.work)) { work = state.works[i]; break; }
+  }
+  if (!work || work.failed || work.ok === false || (work.type && work.type !== 'image')) {
+    ev.preventDefault();
+    return;
+  }
+  try {
+    ev.dataTransfer.setData('application/x-hm-work', String(work.id));
+    ev.dataTransfer.setData('text/plain', 'work:' + work.id);
+    ev.dataTransfer.effectAllowed = 'copy';
+  } catch (e) {}
+});
+
 function updateStepsUI() {
   const value = state.steps;
   const label = value <= 5 ? '极速' : value <= 8 ? '标准' : '精细';
@@ -1890,6 +2378,8 @@ function persistPrefs() {
     modelId: state.modelId,
     ratio: state.ratio,
     scale: state.scale,
+    customW: state.customW,
+    customH: state.customH,
     count: state.count,
     steps: state.steps,
     seed: state.seed,
@@ -1901,10 +2391,11 @@ function persistPrefs() {
     audioModel: state.audioModel,
     providerId: state.providerId
   });
+  if (window.HMSync && window.HMSync.pushPrefs) window.HMSync.pushPrefs();
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'oua', 'animation', 'history', 'admin'];
+var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'edit', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'layout', 'oua', 'animation', 'history', 'admin', 'compile', 'publish'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -2713,7 +3204,15 @@ async function runBackendImage(job, prompt) {
     engine: job.engine,
     prompt: prompt,
     ratio: job.ratioId,
+    /* 数值比例（4 位小数），供只认 aspect 数值的接口计算尺寸：
+       21:9=2.3333、2:3=0.6667、3:2=1.5、4:5=0.8、5:4=1.25 */
+    aspect: aspectValue(job),
+    aspect_ratio: aspectValue(job),
     scale: job.scaleId,
+    /* 显式像素尺寸：避免后端按自有比例表把新比例回落到默认尺寸 */
+    width: job.width,
+    height: job.height,
+    size: job.width + 'x' + job.height,
     count: 1,
     steps: job.steps || 8,
     seed: job.seed,
@@ -2736,6 +3235,7 @@ async function runBackendImage(job, prompt) {
   const data = await window.HM.api.generate(payload, 180000);
   const item = data && data.items && data.items[0];
   if (!item || !item.url) throw new Error('后端未返回图片');
+  if (item.width && item.height) applyActualSize(job, item.width, item.height);
   return {
     url: window.HM.api.mediaUrl ? window.HM.api.mediaUrl(item.url) : item.url,
     seed: item.seed || job.seed
@@ -2959,14 +3459,45 @@ function pickImage(data) {
 }
 
 /* GPT-image 接口 size 仅接受固定枚举白名单，不能自定义像素；
- * 2K / 4K 档位通过 quality 参数（medium=1K, high=2K, ultra=4K）让 RayinAPI 内部放大 */
+ * 2K / 4K 档位通过 quality 参数（medium=1K, high=2K, ultra=4K）让 RayinAPI 内部放大；
+ * 其余比例按「宽高比最接近且方向一致」的白名单尺寸发送，并在界面提示实际出图尺寸 */
+const GPT_SIZES = [
+  { w: 1024, h: 1024, size: '1024x1024' },
+  { w: 1536, h: 1024, size: '1536x1024' },
+  { w: 1024, h: 1536, size: '1024x1536' }
+];
+
 function gptSizeFor(job) {
-  const ratio = job.ratioId || '1:1';
-  if (ratio === '1:1') return '1024x1024';
-  if (ratio === '3:4' || ratio === '9:16') return '1024x1536';
-  return '1536x1024';
+  const want = (Number(job.width) || 1024) / (Number(job.height) || 1024);
+  let best = GPT_SIZES[0];
+  let bestDiff = Infinity;
+  GPT_SIZES.forEach(function (item) {
+    const diff = Math.abs(Math.log((item.w / item.h) / want));
+    if (diff < bestDiff) { bestDiff = diff; best = item; }
+  });
+  return best.size;
 }
 
+/* 比例数值：取实际像素宽/高，保留 4 位小数 */
+function aspectValue(job) {
+  const w = Number(job.width) || 0;
+  const h = Number(job.height) || 0;
+  if (!w || !h) return 1;
+  return Number((w / h).toFixed(4));
+}
+/* 实际出图尺寸与所选比例不一致时：回写卡片尺寸并提示用户 */
+function applyActualSize(job, w, h) {
+  w = Math.round(Number(w) || 0);
+  h = Math.round(Number(h) || 0);
+  if (!w || !h || (w === job.width && h === job.height)) return;
+  if (!job.planWidth) job.planWidth = job.width;
+  if (!job.planHeight) job.planHeight = job.height;
+  job.width = w;
+  job.height = h;
+  if (typeof toast === 'function') {
+    toast('接口按固定尺寸返回 ' + w + '×' + h + '，将按所选尺寸校准', 'info');
+  }
+}
 function gptQualityFor(job) {
   if (job.scaleId === '4k') return 'ultra';
   if (job.scaleId === '2k') return 'high';
@@ -3001,7 +3532,7 @@ async function runRayinImage(job, prompt) {
         const url = pickImage(data);
         if (!url) throw new Error('接口未返回图片');
         const first = data && Array.isArray(data.data) ? data.data[0] : null;
-        if (first && first.width && first.height) { job.width = first.width; job.height = first.height; }
+        if (first && first.width && first.height) { applyActualSize(job, first.width, first.height); } else { applyActualSize(job, Number(String(size).split('x')[0]), Number(String(size).split('x')[1])); }
         if (i > 0) toast('当前模型 ID 不可用，已自动切换到 ' + model, 'info');
         return { url: url, seed: job.seed };
       } else {
@@ -3017,7 +3548,7 @@ async function runRayinImage(job, prompt) {
         const url = pickImage(data);
         if (!url) throw new Error('接口未返回图片');
         const first = data && Array.isArray(data.data) ? data.data[0] : null;
-        if (first && first.width && first.height) { job.width = first.width; job.height = first.height; }
+        if (first && first.width && first.height) { applyActualSize(job, first.width, first.height); } else { applyActualSize(job, Number(String(size).split('x')[0]), Number(String(size).split('x')[1])); }
         if (i > 0) toast('当前模型 ID 不可用，已自动切换到 ' + model, 'info');
         return { url: url, seed: job.seed };
       }
@@ -3126,6 +3657,7 @@ function createLoadingCard(job) {
 }
 
 function markJobError(job, err) {
+  saveFailedWork(job, err);
   job.status = 'error';
   try {
     apiLogPush({
@@ -3149,6 +3681,7 @@ function markJobError(job, err) {
     var mainText = esc(errorText(err) || '生成失败');
     var hintText = errorHint(err);
     var hintHtml = hintText ? '<div class="error-hint">' + esc(hintText) + '</div>' : '';
+    media.classList.add('is-failed-media');
     media.classList.add('media-loading');
     media.innerHTML = '<div class="error-box">' +
       ICONS.alert +
@@ -3158,6 +3691,85 @@ function markJobError(job, err) {
       '<button data-action="retry">重试</button>' +
     '</div>';
   }
+}
+
+/* ---------------- 失败任务的结果保存 ---------------- */
+function failureTextOf(err) {
+  var text = '';
+  try { text = errorText(err) || ''; } catch (e) { text = ''; }
+  return String(text || '生成失败').slice(0, 240);
+}
+
+function failureHintOf(err) {
+  var hint = '';
+  try { hint = errorHint(err) || ''; } catch (e) { hint = ''; }
+  return String(hint || '').slice(0, 240);
+}
+
+/* 失败也留一条结果：卡片留在结果区，同时写入 state.works 并持久化，刷新后仍在 */
+function saveFailedWork(job, err) {
+  if (!job || !job.id) return null;
+  var text = failureTextOf(err);
+  var hint = failureHintOf(err);
+  job.status = 'error';
+  job.ok = false;
+  job.failed = true;
+  job.error = text;
+  job.errorHint = hint;
+  job.url = job.url || '';
+  job.thumb = null;
+
+  var record = null;
+  for (var i = 0; i < state.works.length; i += 1) {
+    if (state.works[i] && state.works[i].id === job.id) { record = state.works[i]; break; }
+  }
+  if (record) {
+    /* 同一条记录再次失败：原地更新，不重复插入 */
+    record.ok = false;
+    record.failed = true;
+    record.status = 'error';
+    record.error = text;
+    record.errorHint = hint;
+    record.url = '';
+    record.thumb = null;
+    record.calibrated = false;
+    record.elapsed = Number(job.elapsed) || 0;
+  } else {
+    record = {
+      id: job.id,
+      type: job.type || 'image',
+      url: '',
+      rawUrl: '',
+      thumb: null,
+      ok: false,
+      failed: true,
+      status: 'error',
+      error: text,
+      errorHint: hint,
+      prompt: job.prompt || '',
+      enPrompt: job.promptEn || '',
+      modelId: job.modelId || '',
+      modelName: job.modelName || '',
+      channelModel: job.channelModel || '',
+      engine: job.engine || state.engine || 'flux',
+      seed: job.seed || 0,
+      width: job.width || 0,
+      height: job.height || 0,
+      ratioId: job.ratioId || '',
+      scaleId: job.scaleId || '',
+      steps: job.steps || 0,
+      duration: job.duration || 0,
+      elapsed: Number(job.elapsed) || 0,
+      refImages: Array.isArray(job.refImages) ? job.refImages : null,
+      createdAt: Date.now()
+    };
+    state.works.unshift(record);
+    state.works = state.works.slice(0, MAX_WORKS);
+    if (window.HMDesk && window.HMDesk.onWorkCreated) window.HMDesk.onWorkCreated(record);
+  }
+  saveWorks();
+  renderWorks();
+  return record;
 }
 
 function markJobDone(job, url, seed, elapsed) {
@@ -3212,7 +3824,114 @@ function markJobDone(job, url, seed, elapsed) {
       '<div class="result-meta"><span>' + esc(job.modelName) + '</span><span>' + job.width + '×' + job.height + '</span><span>#' + esc(seed) + '</span><span>' + elapsed.toFixed(1) + 's</span></div>' +
     '</div>';
 
+  job.rawUrl = job.rawUrl || url;
   saveWork(job);
+  /* 出图后按目标像素异步校准：先显示返回图，完成后无缝替换 */
+  calibrateJobImage(job);
+}
+
+/* ---------------- 生成结果尺寸校准 ----------------
+ * 出图服务可能只按旧比例表返回近似尺寸；这里按 job.width/height 做 cover + 居中裁切，
+ * 保证展示与下载的图都是用户所选像素。原图地址保留在 job.rawUrl，失败时回退原图。 */
+var SIZECAL_MAX_DIFF = 0.02;
+
+function loadCalibrationImage(url, cors) {
+  return new Promise(function (resolve, reject) {
+    var img = new Image();
+    if (cors) img.crossOrigin = 'anonymous';
+    img.onload = function () { resolve(img); };
+    img.onerror = function () { reject(new Error('calibrate-image-load-failed')); };
+    img.src = url;
+  });
+}
+
+/* cover 缩放后居中裁出目标像素；canvas 被跨域污染时 toDataURL 会抛错，由调用方回退 */
+function drawCalibratedImage(img, targetW, targetH) {
+  var nw = img.naturalWidth || img.width;
+  var nh = img.naturalHeight || img.height;
+  if (!nw || !nh) return null;
+  var canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  var ctx = canvas.getContext('2d');
+  var scale = Math.max(targetW / nw, targetH / nh);
+  var dw = nw * scale;
+  var dh = nh * scale;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, (targetW - dw) / 2, (targetH - dh) / 2, dw, dh);
+  return canvas.toDataURL('image/jpeg', 0.95);
+}
+
+function commitCalibratedImage(job, dataUrl) {
+  if (!job.rawUrl) job.rawUrl = job.url;
+  job.url = dataUrl;
+  job.calibrated = true;
+  if (job.planWidth && job.planHeight) { job.width = job.planWidth; job.height = job.planHeight; }
+
+  var cardImg = document.querySelector('[data-job="' + job.id + '"] .result-media img');
+  if (cardImg) cardImg.src = dataUrl;
+  var cardMeta = document.querySelector('[data-job="' + job.id + '"] .result-meta span:nth-child(2)');
+  if (cardMeta) cardMeta.textContent = job.width + '\u00d7' + job.height;
+  var active = state.activeItem;
+  if (active && active.id === job.id) {
+    active.rawUrl = active.rawUrl || job.rawUrl;
+    active.url = dataUrl;
+    if (els.lbImage) els.lbImage.src = dataUrl;
+  }
+
+  var work = null;
+  for (var i = 0; i < state.works.length; i++) {
+    if (state.works[i].id === job.id) { work = state.works[i]; break; }
+  }
+  if (!work) return;
+  work.rawUrl = job.rawUrl;
+  work.url = dataUrl;
+  work.width = job.width;
+  work.height = job.height;
+  work.calibrated = true;
+  saveWorks();
+  renderWorks();
+  makeThumb(dataUrl).then(function (thumb) {
+    if (!thumb) return;
+    work.thumb = thumb;
+    saveWorks();
+    renderWorks();
+  });
+}
+
+async function calibrateJobImage(job) {
+  if (!job || job.calibrated) return;
+  if ((job.type || 'image') !== 'image' || !job.url) return;
+  var targetW = Math.round(Number(job.planWidth || job.width) || 0);
+  var targetH = Math.round(Number(job.planHeight || job.height) || 0);
+  if (!targetW || !targetH) return;
+
+  var src = job.url;
+  var img = null;
+  try { img = await loadCalibrationImage(src, false); } catch (e) { return; }
+  var nw = img.naturalWidth || 0;
+  var nh = img.naturalHeight || 0;
+  if (!nw || !nh) return;
+
+  var diff = Math.abs(nw / nh - targetW / targetH) / (targetW / targetH);
+  if (diff <= SIZECAL_MAX_DIFF && nw === targetW && nh === targetH) return;
+
+  var out = null;
+  try { out = drawCalibratedImage(img, targetW, targetH); } catch (e) { out = null; }
+  if (!out) {
+    /* 跨域取不到像素：改用匿名跨域再试一次，仍失败则保留原图 */
+    try {
+      var img2 = await loadCalibrationImage(src, true);
+      out = drawCalibratedImage(img2, targetW, targetH);
+    } catch (e2) { out = null; }
+  }
+  if (!out) {
+    console.warn('[size-calibrate] 未能校准尺寸（跨域且无 CORS），已保留原图', src);
+    toast('未能校准尺寸，已保留原图', 'info');
+    return;
+  }
+  commitCalibratedImage(job, out);
 }
 
 /* ---------------- 本地大图仓库（IndexedDB） ----------------
@@ -3291,7 +4010,7 @@ function mergeWorks(serverItems, localItems) {
   var out = [];
   function add(list) {
     (list || []).forEach(function (w) {
-      if (!w || (!w.url && !w.blob)) return;
+      if (!w || (!w.url && !w.blob && !w.failed && w.ok !== false)) return;
       var id = w.id || ('w_' + workTime(w) + '_' + out.length);
       var hit = map[id];
       if (hit) {
@@ -3319,6 +4038,8 @@ function saveWork(job) {
     id: job.id,
     type: type,
     url: job.url,
+    ok: true,
+    rawUrl: job.rawUrl || '',
     thumb: null,
     prompt: job.prompt,
     enPrompt: job.promptEn || '',
@@ -3341,8 +4062,17 @@ function saveWork(job) {
     createdAt: Date.now()
   };
 
-  state.works.unshift(work);
-  state.works = state.works.slice(0, MAX_WORKS);
+  var existingIndex = -1;
+  for (var wi = 0; wi < state.works.length; wi += 1) {
+    if (state.works[wi] && state.works[wi].id === work.id) { existingIndex = wi; break; }
+  }
+  if (existingIndex >= 0) {
+    work.createdAt = state.works[existingIndex].createdAt || Date.now();
+    state.works[existingIndex] = work;
+  } else {
+    state.works.unshift(work);
+    state.works = state.works.slice(0, MAX_WORKS);
+  }
   /* 若当前在某个文件夹桌面内生成，自动把作品归到该文件夹 */
   if (window.HMDesk && window.HMDesk.onWorkCreated) window.HMDesk.onWorkCreated(work);
   saveWorks();
@@ -3353,7 +4083,7 @@ function saveWork(job) {
   // GPT-image 常返回 base64 内联图，直接存会超出 localStorage 容量，压缩后再落盘
   if (job.url.indexOf('data:') === 0) {
     compressDataUrl(job.url, 1280, 0.86).then(function (small) {
-      if (!small) return;
+      if (!small || work.calibrated) return;
       work.url = small;
       saveWorks();
       if (state.view === 'works') renderWorks();
@@ -3361,6 +4091,7 @@ function saveWork(job) {
   }
 
   makeThumb(job.url).then(function (thumb) {
+    if (work.calibrated) return;
     if (!thumb) return;
     work.thumb = thumb;
     saveWorks();
@@ -3389,6 +4120,9 @@ async function compressDataUrl(dataUrl, maxW, quality) {
 function saveWorks() {
   var key = worksLsKey();
   var bakKey = worksBakLsKey();
+  /* 写入前先做带时间戳快照（.snap.<ts>，保留 3 份）；
+     若是同步流程写入空列表，beforePersist 会直接从快照回滚，绝不落盘空数组 */
+  if (window.HMSync && window.HMSync.beforePersist) window.HMSync.beforePersist(state.works);
   /* 覆盖前先备份一份，便于误清后恢复 */
   try {
     var prev = localStorage.getItem(key);
@@ -3427,6 +4161,7 @@ function saveWorks() {
    Render 免费层重启会清空 data/，下次用户打开时本地存的图自动补回去。 */
 var _syncingAll = false;
 async function syncAllWorksToServer(serverItems) {
+  if (window.HMSync && window.HMSync.afterLogin) { window.HMSync.afterLogin(); return; }
   if (_syncingAll) return;
   if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
   _syncingAll = true;
@@ -3456,7 +4191,8 @@ async function syncAllWorksToServer(serverItems) {
 
 function syncWorksToServer() {
   if (!(window.HMApp && window.HMApp.user && api && api.online)) return;
-  /* 这里也传 base64 —— Render 磁盘够放，base64 随作品 JSON 一起存 */
+  /* 统一交给云同步层：图片先上传对象存储，元数据带 rev 写入数据库 */
+  if (window.HMSync && window.HMSync.onWorksChanged) { window.HMSync.onWorksChanged(); return; }
   state.works.forEach(function (w) { api.saveWork(w).catch(function () {}); });
 }
 
@@ -3683,7 +4419,8 @@ function openLightbox(item) {
   els.lbStage.querySelectorAll('.lb-media-el').forEach(function (node) { node.remove(); });
 
   var bar = els.lbZoomBar;
-  lbState.isImage = (type === 'image');
+  var isFailed = !!(item && (item.failed || item.ok === false));
+  lbState.isImage = (type === 'image') && !isFailed;
   if (bar) bar.hidden = !lbState.isImage;
 
   // 重置变换
@@ -3697,7 +4434,17 @@ function openLightbox(item) {
     els.lbImage.draggable = false;
   }
 
-  if (type === 'image') {
+  if (isFailed) {
+    els.lbImage.style.display = 'none';
+    els.lbImage.removeAttribute('src');
+    var failBox = document.createElement('div');
+    failBox.className = 'lb-media-el lb-failed';
+    failBox.innerHTML = '<div class="lb-failed-ico">!</div>' +
+      '<strong>生成失败</strong>' +
+      '<p>' + esc(item.error || '本次生成未成功') + '</p>' +
+      (item.errorHint ? '<p class="lb-failed-hint">' + esc(item.errorHint) + '</p>' : '');
+    els.lbStage.appendChild(failBox);
+  } else if (type === 'image') {
     els.lbImage.style.display = '';
     els.lbImage.src = item.url || item.thumb || '';
     els.lbImage.onerror = function () {
@@ -3729,6 +4476,7 @@ function openLightbox(item) {
     item.steps ? item.steps + ' 步' : ''
   ].filter(Boolean).join(' · ');
 
+    if (els.lbDownload) els.lbDownload.disabled = isFailed;
   els.lightbox.classList.add('is-open');
   els.lightbox.setAttribute('aria-hidden', 'false');
   document.body.classList.add('no-scroll');
@@ -3848,7 +4596,7 @@ async function handleGenerate() {
       width: size.w,
       height: size.h,
       ratioId: size.ratio.id,
-      scaleId: size.scale.id,
+      scaleId: effectiveScaleId(size),
       steps: state.engine === 'flux' ? state.steps : 0,
       seed: baseSeed + i,
       status: 'loading',
@@ -3924,6 +4672,41 @@ async function handleGenerate() {
     updateQueue(successCount > 0 ? '已完成' : '空闲');
     renderWorks();
   }
+}
+
+/* 失败记录 → 生成任务：重试时复用同一条记录，成功后原地更新 */
+function workToJob(work) {
+  return {
+    id: work.id,
+    type: work.type || 'image',
+    status: 'error',
+    ok: false,
+    failed: true,
+    error: work.error || '',
+    prompt: work.prompt || '',
+    promptEn: work.enPrompt || '',
+    engine: work.engine || state.engine,
+    modelId: work.modelId || '',
+    modelName: work.modelName || '',
+    channelModel: work.channelModel || '',
+    seed: work.seed || 0,
+    width: work.width || 0,
+    height: work.height || 0,
+    ratioId: work.ratioId || state.ratio,
+    scaleId: work.scaleId || state.scale,
+    steps: work.steps || state.steps,
+    refImages: Array.isArray(work.refImages) ? work.refImages : null
+  };
+}
+
+function retryWork(work) {
+  if (!work) return;
+  if (!(work.failed || work.ok === false)) return;
+  var job = workToJob(work);
+  if (!state.jobs) state.jobs = new Map();
+  state.jobs.set(job.id, job);
+  if (!document.querySelector('[data-job="' + job.id + '"]')) createLoadingCard(job);
+  retryJob(job);
 }
 
 async function retryJob(job) {
@@ -4115,6 +4898,22 @@ async function fetchRayinModels() {
 /* ---------------- 事件绑定 ---------------- */
 var DISABLED_VIEWS = {};
 
+/* 参考主体：统一打开文件选择框。
+ * 必须在用户手势里同步调用，中间不能有 await / 定时器 / 重渲染。
+ * 优先 showPicker()（浏览器原生、响应更快），不支持或被拒再回退 click()。 */
+var _refPickerAt = 0;
+function openRefPicker() {
+  if (!els.refInput) return;
+  var now = Date.now();
+  if (now - _refPickerAt < 700) return; /* 同一次手势里 pointerdown 与 click 都会到，只弹一次 */
+  _refPickerAt = now;
+  try { els.refInput.value = ''; } catch (e) {} /* 允许重复选择同一张图 */
+  if (typeof els.refInput.showPicker === 'function') {
+    try { els.refInput.showPicker(); return; } catch (e) { /* 手势失效/被策略拒绝 → 回退 */ }
+  }
+  try { els.refInput.click(); } catch (e) {}
+}
+
 function bindEvents() {
   document.addEventListener('click', function (event) {
     const viewBtn = event.target.closest('[data-view]');
@@ -4144,7 +4943,7 @@ function bindEvents() {
   if (els.sidebarClose) els.sidebarClose.addEventListener('click', closeSidebar);
 
   if (els.refPickBtn) {
-    els.refPickBtn.addEventListener('click', function () { els.refInput.click(); });
+    els.refPickBtn.addEventListener('click', function () { openRefPicker(); });
   }
 
   if (els.promptTabs) {
@@ -4338,12 +5137,24 @@ function bindEvents() {
     scheduleComposerSave(); /* 提示词按桌面持久化 */
   });
 
-  /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 === */
+  /* === refDrop 点击：只在空状态区域点击才打开文件选择；有素材后点击任何 cell 不会触发 ===
+     pointerdown 阶段就打开（早于 click，避免后续 document 级 click 处理把弹窗拖慢），
+     click 只做兜底（键盘/触屏等不走 pointerdown 的场景），openRefPicker 内部有 700ms 去重。 */
+  if (els.refDrop) {
+    els.refDrop.addEventListener('pointerdown', function (event) {
+      if (event.button !== 0 || event.isPrimary === false) return;
+      var target = event.target;
+      if (!target || !target.closest) return;
+      if (!target.closest('#refEmpty') && !target.closest('.hm-ref-add')) return;
+      event.preventDefault(); /* 同一次手势不再走 click，避免二次触发/手势被吃掉 */
+      openRefPicker();
+    }, true);
+  }
   if (els.refEmpty) {
-    els.refEmpty.addEventListener('click', function () { els.refInput.click(); });
+    els.refEmpty.addEventListener('click', function () { openRefPicker(); });
     els.refEmpty.addEventListener('keydown', function (event) {
       if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
-        event.preventDefault(); els.refInput.click();
+        event.preventDefault(); openRefPicker();
       }
     });
   }
@@ -4382,8 +5193,9 @@ function bindEvents() {
     /* 更新 refDrop is-over 视觉 */
     if (!els.refDrop) return;
     var rect = els.refDrop.getBoundingClientRect();
-    var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
-                 ev.clientY >= rect.top  && ev.clientY <= rect.bottom;
+    /* 与桌面卡片拖拽保持同一 12px 容差 */
+    var inside = ev.clientX >= rect.left - 12 && ev.clientX <= rect.right + 12 &&
+                 ev.clientY >= rect.top - 12 && ev.clientY <= rect.bottom + 12;
     if (inside && !_lastDragOverRef) {
       els.refDrop.classList.add('is-over');
       _lastDragOverRef = true;
@@ -4406,11 +5218,21 @@ function bindEvents() {
     if (!ev.dataTransfer) return;
     ev.preventDefault();
     var files = Array.from(ev.dataTransfer.files || []);
-    if (!files.length) return; /* 非文件拖拽（HTML5 元素拖放）忽略 */
     if (!els.refDrop) return;
     var rect = els.refDrop.getBoundingClientRect();
-    var inside = ev.clientX >= rect.left && ev.clientX <= rect.right &&
-                 ev.clientY >= rect.top  && ev.clientY <= rect.bottom;
+    /* 放置区不在当前视图时（如「我的作品」页 #hmDock 是 display:none），rect 全为 0，
+       以前会静默丢弃；这里明确提示，避免用户以为拖拽彻底坏了 */
+    if (!rect.width || !rect.height) {
+      var hasPayload = files.length > 0;
+      try { hasPayload = hasPayload || !!ev.dataTransfer.getData('application/x-hm-work'); } catch (e) {}
+      if (hasPayload) toast('参考主体只在创作台可用，请先回到创作台', 'info');
+      els.refDrop.classList.remove('is-over');
+      _lastDragOverRef = false;
+      return;
+    }
+    /* 与桌面卡片拖拽保持同一 12px 容差 */
+    var inside = ev.clientX >= rect.left - 12 && ev.clientX <= rect.right + 12 &&
+                 ev.clientY >= rect.top - 12 && ev.clientY <= rect.bottom + 12;
     if (!inside) {
       els.refDrop.classList.remove('is-over');
       _lastDragOverRef = false;
@@ -4418,6 +5240,23 @@ function bindEvents() {
     }
     els.refDrop.classList.remove('is-over');
     _lastDragOverRef = false;
+    /* 桌面/作品图片拖入（HTML5 元素拖拽，dataTransfer 里没有 files）：
+       取出作品 id → 走与手动上传同一条参考主体通路；其它元素拖拽直接忽略，不报错 */
+    if (!files.length) {
+      var raw = '';
+      try {
+        raw = ev.dataTransfer.getData('application/x-hm-work') || '';
+        if (!raw) {
+          var plain = ev.dataTransfer.getData('text/plain') || '';
+          if (plain.indexOf('work:') === 0) raw = plain.slice(5);
+        }
+      } catch (e) {}
+      if (!raw) return;
+      if (window.HMRefDrop && typeof window.HMRefDrop.acceptWorkId === 'function') {
+        await window.HMRefDrop.acceptWorkId(raw);
+      }
+      return;
+    }
     /* 只保留图片 */
     var imgs = files.filter(function (f) {
       return /^image\/(png|jpe?g|webp)$/i.test(f.type || '');
@@ -4609,15 +5448,74 @@ function bindEvents() {
   els.scalePicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-scale]');
     if (!btn) return;
+    if (btn.dataset.scale === 'custom') {
+      /* 切到自定义：用当前比例 + 当前档位像素预填 */
+      const prev = currentSize();
+      state.customW = prev.w;
+      state.customH = prev.h;
+    }
     state.scale = btn.dataset.scale;
-    els.scalePicker.querySelectorAll('button').forEach(function (el) {
+    els.scalePicker.querySelectorAll('[data-scale]').forEach(function (el) {
       el.classList.toggle('is-active', el.dataset.scale === state.scale);
     });
+    syncScaleChip();
+    toggleCustomRow();
     updateRatioLabel();
     persistPrefs();
-    syncSettingsUI();
-    closeAllMenus();
+    renderRatios();
+    /* 自定义档留在菜单里填宽高，其余档位点击即收起 */
+    if (state.scale !== 'custom') closeAllMenus();
   });
+
+  const customWInput = document.getElementById('customWInput');
+  const customHInput = document.getElementById('customHInput');
+
+  function clampSide(value) {
+    return Math.max(64, Math.min(8192, Math.round(Number(value) || 0)));
+  }
+
+  function applyCustomPixels(from) {
+    const ratio = currentRatio();
+    const ar = ratio.w / ratio.h;
+    let w;
+    let h;
+    if (from === 'h') {
+      h = clampSide(customHInput.value);
+      w = round8(h * ar);
+      if (Math.abs(w / ar - h) > 8 && typeof toast === 'function') {
+        toast('两者与当前比例冲突，已按长度为准换算为 ' + w + '×' + round8(w / ar), 'info');
+      }
+      h = round8(w / ar);
+    } else {
+      w = clampSide(customWInput.value);
+      h = round8(w / ar);
+    }
+    if (w % 8 !== 0 && typeof toast === 'function') {
+      toast('提示：长度 ' + w + ' 不是 8 的倍数，部分接口可能自动裁剪，建议使用 8 的倍数', 'info');
+    }
+    state.customW = w;
+    state.customH = h;
+    state.scale = 'custom';
+    if (customWInput) customWInput.value = String(w);
+    if (customHInput) customHInput.value = String(h);
+    persistPrefs();
+    renderRatios();
+    els.scalePicker.querySelectorAll('[data-scale]').forEach(function (el) {
+      el.classList.toggle('is-active', el.dataset.scale === state.scale);
+    });
+    syncScaleChip();
+    toggleCustomRow();
+    updateRatioLabel();
+  }
+
+  if (customWInput) {
+    customWInput.addEventListener('change', function () { applyCustomPixels('w'); });
+    customWInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') customWInput.blur(); });
+  }
+  if (customHInput) {
+    customHInput.addEventListener('change', function () { applyCustomPixels('h'); });
+    customHInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') customHInput.blur(); });
+  }
 
   els.countPicker.addEventListener('click', function (event) {
     const btn = event.target.closest('[data-step]');
@@ -4679,7 +5577,7 @@ function bindEvents() {
       return;
     }
 
-    if (job.status === 'done' && event.target.closest('.result-media')) openLightbox(job);
+    if ((job.status === 'done' || job.status === 'error') && event.target.closest('.result-media')) openLightbox(job);
   });
 
   els.worksGrid.addEventListener('click', function (event) {
@@ -4693,7 +5591,12 @@ function bindEvents() {
       const action = actionEl.dataset.waction;
       if (action === 'download') downloadImage(work.url || work.thumb, fileNameFor(work));
       else if (action === 'view') openLightbox(work);
+      else if (action === 'ref') {
+        /* 复用 HMDesk 已导出的 useAsRef（上方 64102 已挂到 window.HMDesk） */
+        if (window.HMDesk && typeof window.HMDesk.useAsRef === 'function') window.HMDesk.useAsRef(work);
+      }
       else if (action === 'delete') {
+        if (window.HMSync && window.HMSync.snapshotWorks) window.HMSync.snapshotWorks('delete-one');
         state.works = state.works.filter(function (w) { return w.id !== work.id; });
         idbDelBlob(work.id);
         saveWorks();
@@ -4708,26 +5611,17 @@ function bindEvents() {
 
   els.clearWorks.addEventListener('click', function () {
     if (!state.works.length) return;
-    if (!window.confirm('确定清空全部作品吗？此操作不可撤销。')) return;
+    if (!window.confirm('确定清空全部作品吗？可从「设置 → 云同步 → 恢复本地备份」找回最近 3 次快照。')) return;
+    if (window.HMSync && window.HMSync.snapshotWorks) window.HMSync.snapshotWorks('clear-all');
     state.works = [];
     saveWorks();
     renderWorks();
     toast('已清空作品', 'info');
+    if (window.HMSync && window.HMSync.clearAll) window.HMSync.clearAll();
   });
 
-  if (els.worksSortMenu) {
-    els.worksSortMenu.addEventListener('click', function (event) {
-      const btn = event.target.closest('[data-sort]');
-      if (!btn) return;
-      state.worksSort = btn.dataset.sort;
-      els.worksSortMenu.querySelectorAll('[data-sort]').forEach(function (el) {
-        el.classList.toggle('is-active', el.dataset.sort === state.worksSort);
-      });
-      renderWorks();
-      closeAllMenus();
-      switchView('works');
-    });
-  }
+  /* 顶栏时间筛选面板：事件全部绑定在面板/按钮内部，不新增全局监听 */
+  tmBind();
 
   if (els.worksFilterMenu) {
     els.worksFilterMenu.addEventListener('click', function (event) {
@@ -4795,29 +5689,29 @@ function bindEvents() {
 /* ---------------- 启动 ---------------- */
 /* ---------------- 认证引导 ---------------- */
 function classifyAuthErr(err) {
-  /* 返回 'auth' | 'network' | 'other' */
+  /* 返回 'auth' | 'network' | 'other'
+     只有服务端明确否定凭证（401/403）才是 'auth'；
+     5xx / 超时 / 断网 / 结构异常一律 'network'，保留 token 稍后重试。
+     旧实现用 msg.indexOf('token') 宽泛匹配，500 文案里带 token 就会把用户踢下线。 */
+  if (window.HMAuth && window.HMAuth.classify) return window.HMAuth.classify(err);
   if (!err) return 'other';
-  var msg = String(err.message || err || '').toLowerCase();
-  var status = err.status || err.statusCode;
-  if (status === 401 || status === 403 ||
-      msg.indexOf('unauthorized') >= 0 || msg.indexOf('forbidden') >= 0 ||
-      msg.indexOf('token') >= 0 || msg.indexOf('expired') >= 0) {
-    return 'auth';
-  }
-  if (msg.indexOf('fetch') >= 0 || msg.indexOf('network') >= 0 ||
-      msg.indexOf('abort') >= 0 || msg.indexOf('timeout') >= 0 ||
-      msg.indexOf('failed to fetch') >= 0 ||
-      status === 502 || status === 503 || status === 504) {
-    return 'network';
-  }
+  var status = Number(err.status || err.statusCode || 0);
+  if (status === 401 || status === 403) return 'auth';
+  if (status >= 500 || err.offline) return 'network';
   return 'other';
 }
 
 async function authBoot() {
   var token = (api && api.getToken) ? api.getToken() : '';
+  /* token payload 兜底：hm.user 因配额没写进去时，也能还原「我是谁」，
+     避免刷新后已登录却被当成未登录弹登录框。token 无 exp，失效与否只由服务端 401 判定。 */
+  var tokenUser = (token && window.HMAuth && window.HMAuth.decodeToken)
+    ? window.HMAuth.decodeToken(token)
+    : null;
   console.log('[authBoot] token:', token ? '存在 (' + token.length + ' chars)' : '不存在！');
 
-  if (!token) {
+  /* 只有「没有 token 且解析不出用户」才算未登录；否则先按已登录渲染 */
+  if (!token && !tokenUser) {
     window.HMApp = window.HMApp || {};
     window.HMApp.user = null;
     hideLogin();
@@ -4827,6 +5721,10 @@ async function authBoot() {
 
   /* ========== Step 1: 同步渲染缓存桌面（零闪烁） ========== */
   var cachedUser = loadJSON('hm.user', null);
+  if (!cachedUser && tokenUser) {
+    cachedUser = tokenUser;
+    try { saveJSON('hm.user', cachedUser); } catch (e) {}
+  }
   var cachedKey = cachedUser && cachedUser.id ? worksLsKey(cachedUser.id) : LS_WORKS;
   var cachedBakKey = cachedUser && cachedUser.id ? worksBakLsKey(cachedUser.id) : LS_WORKS_BAK;
   var cachedWorks = loadJSON(cachedKey, null);
@@ -4847,10 +5745,16 @@ async function authBoot() {
     state.works = (cachedWorks && cachedWorks.length ? cachedWorks : state.works || []).slice(0, MAX_WORKS);
     hideLogin();
     updateUserUI();
-    renderWorks();
-    console.log('[authBoot] 已用缓存渲染桌面');
-    /* 本地 JSON 里的原图存在 IndexedDB，异步补回后再渲染一次 */
-    hydrateWorks().then(function (changed) { if (changed) renderWorks(); });
+    /* 登录即见：本地有缓存才先渲染；本地为空时不渲染空列表，
+       等云端快照 + 历史键认领合并完再统一渲染，避免"先空列表再刷出来"的闪跳 */
+    if (state.works.length) {
+      renderWorks();
+      console.log('[authBoot] 已用缓存渲染桌面');
+      /* 本地 JSON 里的原图存在 IndexedDB，异步补回后再渲染一次 */
+      hydrateWorks().then(function (changed) { if (changed) renderWorks(); });
+    } else {
+      console.log('[authBoot] 本地无缓存，等云端快照就绪后再渲染');
+    }
   } else {
     hideLogin(); /* 至少先隐藏登录弹窗，等 me() 返回再决定 */
   }
@@ -4858,8 +5762,15 @@ async function authBoot() {
   /* ========== Step 2: 异步验证 token（只调 me()，不调 ping()） ==========
      直接试 /auth/me，更精准：只有 401/403 才是真的 token 失效
      网络问题（Render 休眠 / 断网）不影响缓存桌面 */
+  /* 网络请求并发起步（启动提速）：
+     - api.me() 与 api.listWorks() 互不依赖（服务端都从 token 解析 uid）→ 同时发；
+     - HMDesk.pullNow() 依赖 me 的 uid（desk 键按 uid 取，内部还有 deskUid 守卫）→ 必须等 me。 */
+  var meP = (api && typeof api.me === 'function') ? api.me() : Promise.reject(new Error('api 未就绪'));
+  var worksP = (api && typeof api.listWorks === 'function')
+    ? api.listWorks().catch(function () { return null; })
+    : Promise.resolve(null);
   try {
-    var me = await api.me();
+    var me = await meP;
     console.log('[authBoot] me() 成功:', me.user.username);
     window.HMApp.user = me.user;
     try { saveJSON('hm.user', me.user); } catch (e) {}
@@ -4873,27 +5784,31 @@ async function authBoot() {
     var confirmedKey = worksLsKey(me.user.id);
     var confirmedBakKey = worksBakLsKey(me.user.id);
     if (!cachedUser || cachedUser.id !== me.user.id) {
-      var userWorks = loadJSON(confirmedKey, null);
-      if (!userWorks || !userWorks.length) {
-        var userBak = loadJSON(confirmedBakKey, null);
-        if (userBak && userBak.length) userWorks = userBak;
+      /* 事故修复：不再「某个 key 为空就赋 []」。
+         取本地全部候选来源（用户键 / 备份 / 时间戳快照 / 历史键名）与内存的并集；
+         取不到时保持 state.works 原样，交给后面的云端结果合并，绝不主动清空。 */
+      var localAll = (window.HMSync && window.HMSync.collectLocalWorks)
+        ? window.HMSync.collectLocalWorks(me.user.id)
+        : mergeWorks([], [loadJSON(confirmedKey, null), loadJSON(confirmedBakKey, null), loadJSON(LS_WORKS, null)]);
+      var memWorks = Array.isArray(state.works) ? state.works : [];
+      var userWorks = mergeWorks(localAll, memWorks);
+      if (userWorks.length) {
+        state.works = userWorks.slice(0, MAX_WORKS);
+        saveJSON(confirmedKey, state.works.map(function (w) {
+          if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
+          return w;
+        }));
+        console.log('[authBoot] 本地作品并集加载完成', state.works.length, '张');
+      } else if (memWorks.length) {
+        state.works = memWorks.slice(0, MAX_WORKS);
       }
-      /* 旧版迁移：用户专属 key 为空但访客共享 key 有数据 → 迁移过来 */
-      if ((!userWorks || !userWorks.length)) {
-        var guestWorks = loadJSON(LS_WORKS, null);
-        if (guestWorks && guestWorks.length) {
-          userWorks = guestWorks;
-          saveJSON(confirmedKey, guestWorks);
-          console.log('[authBoot] 已将访客数据迁移到用户', me.user.username, '共', guestWorks.length, '张');
-        }
-      }
-      state.works = (userWorks && userWorks.length ? userWorks : []).slice(0, MAX_WORKS);
     }
 
     /* 从后端拉最新作品（不能覆盖本地：服务端可能因重启丢数据） */
     var serverItems = [];
     try {
-      var data = await api.listWorks();
+      /* 该请求已在上面与 me() 并发发出，这里通常已就绪，只需取结果 */
+      var data = await worksP;
       if (data && Array.isArray(data.items)) {
         serverItems = data.items;
         state.works = mergeWorks(data.items, state.works);
@@ -4902,14 +5817,28 @@ async function authBoot() {
 
     await hydrateWorks();
 
+    /* ===== 登录即见（顺序固定，不能颠倒）=====
+       1) 云端作品快照已合并进 state.works（上面 listWorks）
+       2) 云端桌面布局快照拉回（pullNow，必须在 me 之后、渲染之前）
+       3) 本 origin 历史键认领（HMClaim）挪到首屏渲染后的空闲回调里执行
+       4) 合并结果推回云端（syncAllWorksToServer）
+       拉取失败只打日志，不影响登录态。 */
+    try {
+      if (window.HMDesk && typeof window.HMDesk.pullNow === 'function') await window.HMDesk.pullNow();
+    } catch (e) { console.warn('[authBoot] 云端桌面拉取失败（忽略）:', e && e.message); }
+
     /* 启动时把本地缺失的作品（含 base64）上传到服务端，
        Render 重启清空 data/ 后自动恢复，换设备也能看到 */
     syncAllWorksToServer(serverItems);
 
-    saveJSON(confirmedKey, state.works.map(function (w) {
-      if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
-      return w;
-    }));
+    if (state.works.length || !localStorage.getItem(confirmedKey) || localStorage.getItem(confirmedKey) === '[]') {
+      saveJSON(confirmedKey, state.works.map(function (w) {
+        if (w.url && w.url.indexOf('data:') === 0) { idbPutBlob(w.id, w.url); return Object.assign({}, w, { url: '', blob: true }); }
+        return w;
+      }));
+    } else {
+      console.warn('[authBoot] 本次结果为空但本地已有作品，跳过回写，避免清空');
+    }
 
     hideLogin();
     updateUserUI();
@@ -4920,6 +5849,30 @@ async function authBoot() {
       if (typeof window.HMDesk.reloadForUser === 'function') window.HMDesk.reloadForUser();
       else if (typeof window.HMDesk.sync === 'function') window.HMDesk.sync();
     }
+
+    /* ===== 历史键认领：首屏渲染之后再跑 =====
+       HMClaim 是纯本地逻辑，但要同步 JSON.parse 本机全部作品（含 base64），
+       放首屏之后用空闲回调执行，避免阻塞首屏；失败只打日志，不影响登录。 */
+    var runClaim = function () {
+      try {
+        if (!window.HMClaim || typeof window.HMClaim.run !== 'function') return;
+        window.HMClaim.run().then(function (claimRes) {
+          if (claimRes && (claimRes.works || claimRes.desk || claimRes.keys)) {
+            console.log('[authBoot] 历史键认领结果:', claimRes);
+            return hydrateWorks().then(function (changed) { if (changed) renderWorks(); });
+          }
+        }).catch(function (e) {
+          console.warn('[authBoot] 历史键认领失败（不影响登录）:', e && e.message);
+        });
+      } catch (e) {
+        console.warn('[authBoot] 历史键认领失败（不影响登录）:', e && e.message);
+      }
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(runClaim, { timeout: 2500 });
+    } else {
+      setTimeout(runClaim, 800);
+    }
   } catch (err) {
     console.warn('[authBoot] me() 失败:', err && err.message, 'status:', err && err.status);
 
@@ -4927,10 +5880,42 @@ async function authBoot() {
     console.warn('[authBoot] 错误分类:', kind);
 
     if (kind === 'auth') {
-      /* ========== 401/403 ==========
-         即使后端返回 401（比如 Render 重启用户数据被清），
-         也不要自动 logout —— 保留缓存桌面，让用户手动重新登录。
-         这样刷新不会闪登录页，不会丢视觉状态。 */
+      /* 只有「账号确实处于待审批 / 已拒绝」才清 token 回登录页。
+         线上复现：账号记录缺 status 时服务端返回 403 ACCOUNT_UNDEFINED，
+         旧逻辑看到文案里有「审批」就登出 → 每次刷新都要重新登录。 */
+      var blocked = (window.HMAuth && window.HMAuth.isAccountBlocked)
+        ? window.HMAuth.isAccountBlocked(err)
+        : /等待超级管理员审批|注册申请已被拒绝/.test(err.message || '');
+      if (err && err.status === 403 && blocked) {
+        toast(err.message, 'warn', 8000);
+        window.HMApp.user = null;
+        try { api.logout(); } catch (e) {}
+        showLogin();
+        return;
+      }
+
+      /* 其它 403：账号数据异常（如 ACCOUNT_UNDEFINED、账号记录缺 status），
+         属于服务端问题，不能因此清空登录态；保留 token 与桌面并给出明确提示。 */
+      if (err && err.status === 403) {
+        console.error('[authBoot] 403 非审批拦截，保留登录态:', err.code || '(no code)', err.message);
+        toast('账号数据异常（' + (err.code || 'HTTP 403') + '）：服务端账号记录不完整。已保持登录，请联系管理员把账号库迁到 MySQL。', 'warn', 12000);
+        try { if (window.HMStorageNotice && window.HMStorageNotice.refresh) window.HMStorageNotice.refresh(); } catch (e) {}
+        return;
+      }
+      /* ========== 明确的 401：唯一的自动登出路径 ==========
+         401 只可能来自「签名不符 / token 缺失或无效」（token 无 exp，
+         Render 重启不会让签名失效）。此时清 token 并提示重新登录；
+         作品按 userId 存在本地，重新登录同一账号即可恢复，不会丢数据。 */
+      if (err && err.status === 401) {
+        console.warn('[authBoot] me() 返回 401，token 已失效，清理登录态（本地作品保留）');
+        toast('登录状态已失效，请重新登录（本地作品已保留）', 'warn', 8000);
+        window.HMApp.user = null;
+        try { api.logout(); } catch (e) {}
+        showLogin();
+        return;
+      }
+
+      /* 其余 403（非审批）：保留缓存桌面，让用户手动重新登录 */
       console.warn('[authBoot] me() 返回 auth 错误，但不清缓存，保持桌面');
       if (!cachedUser) {
         /* 真的没任何缓存 → 只能弹登录。
@@ -4990,68 +5975,151 @@ async function authBoot() {
   }
 }
 
-function showUpdateModal() {
-  var modal = document.getElementById('updateModal');
-  var close = document.getElementById('updateClose');
-  var confirmBtn = document.getElementById('updateConfirm');
-  if (!modal) return;
+/* ===================== 版本更新提示（轻量轮询） ===================== */
+/* 用 HEAD 比对 ETag / Last-Modified / Content-Length，不下载 5MB 整页；
+   服务器不支持 HEAD 时退回 Range: bytes=0-0，只读响应头。 */
+var UPDATE_POLL_MS = 60000;    /* 前台轮询间隔（60 秒；原来 2 秒会持续占用带宽/主线程） */
+var UPDATE_IDLE_MS = 10000;    /* 10 秒无操作自动消失 */
+var updateState = {
+  baselineFp: '',   /* 首次探测到的指纹，作为「已加载版本」基准 */
+  pendingFp: '',    /* 疑似新版本的指纹（待二次确认） */
+  remoteFp: '',     /* 已确认的新版本指纹 */
+  dismissedFp: '',  /* 已关闭/刷新过的指纹，同一版本不再反复弹 */
+  timer: null,
+  idleTimer: null,
+  wired: false,
+  bound: false
+};
 
-  modal.hidden = false;
-  /* 不冻结页面滚动！这是右下角通知卡片，不是全屏模态 */
-
-  function cleanup() {
-    if (close) close.removeEventListener('click', onClose);
-    if (confirmBtn) confirmBtn.removeEventListener('click', onConfirm);
-  }
-  function onClose() {
-    /* 关闭 = 24h 内不再弹（同之前的"稍后再说"） */
-    localStorage.setItem('hm.build.remindAt', String(Date.now() + 24 * 60 * 60 * 1000));
-    modal.hidden = true;
-    cleanup();
-  }
-  function onConfirm() {
-    localStorage.setItem('hm.build', window.HM_BUILD || '');
-    localStorage.removeItem('hm.build.remindAt');
-    modal.hidden = true;
-    cleanup();
-    toast('正在更新页面…', 'success');
-    setTimeout(function () { location.reload(); }, 500);
-  }
-  if (close) close.addEventListener('click', onClose);
-  if (confirmBtn) confirmBtn.addEventListener('click', onConfirm);
+function updateProbeUrl(tag) {
+  var u = location.origin + location.pathname;
+  return u + (u.indexOf('?') < 0 ? '?' : '&') + 'hm_poll=' + Date.now() + (tag || '');
 }
 
-/* 远端 fetch 最新 HM_BUILD，和当前页面比 */
-function pollRemoteBuild() {
-  var currentBuild = window.HM_BUILD || '';
-  if (!currentBuild) return;
-  /* 检查是否点过"稍后再说"（24 小时内不重复弹） */
-  var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
-  if (remindAt && Date.now() < remindAt) return;
+function updateFpOf(res) {
+  if (!res || !res.headers) return '';
+  var etag = res.headers.get('ETag') || '';
+  var lm = res.headers.get('Last-Modified') || '';
+  var len = res.headers.get('Content-Length') || '';
+  return (etag || lm || len) ? (etag + '|' + lm + '|' + len) : '';
+}
 
-  var url = location.origin + location.pathname + '?hm_poll=' + Date.now();
-  fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } })
-    .then(function (r) { return r.text(); })
-    .then(function (html) {
-      var m = html.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
-      if (!m) {
-        /* 可能拿到旧版本，重试一次 */
-        setTimeout(function () {
-          fetch(url + '&retry=1', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store' } })
-            .then(function (r2) { return r2.text(); })
-            .then(function (html2) {
-              var m2 = html2.match(/window\.HM_BUILD\s*=\s*["']([^"']+)["']/);
-              if (m2 && m2[1] && m2[1] !== currentBuild) showUpdateModal();
-            }).catch(function () {});
-        }, 1500);
-        return;
-      }
-      var remoteBuild = m[1];
-      if (remoteBuild && remoteBuild !== currentBuild) {
-        showUpdateModal();
-      }
-    })
-    .catch(function () { /* 静默忽略（网络问题等） */ });
+function probeUpdate() {
+  fetch(updateProbeUrl(), {
+    method: 'HEAD',
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+  }).then(function (res) {
+    var fp = updateFpOf(res);
+    if (fp) return fp;
+    throw new Error('no-validators');
+  }).catch(function () {
+    /* HEAD 被拒或没有校验头：改用 Range 只取首字节 */
+    return fetch(updateProbeUrl('&r=1'), {
+      cache: 'no-store',
+      headers: { 'Range': 'bytes=0-0', 'Cache-Control': 'no-cache, no-store' }
+    }).then(function (res) { return updateFpOf(res); }).catch(function () { return ''; });
+  }).then(function (fp) {
+    if (fp && !document.hidden) handleFp(fp);
+  });
+}
+
+function handleFp(fp) {
+  if (!updateState.baselineFp) {
+    updateState.baselineFp = fp;
+    return;
+  }
+  if (fp === updateState.baselineFp) {
+    updateState.pendingFp = '';
+    return;
+  }
+  if (fp === updateState.dismissedFp) return;
+  if (fp === updateState.pendingFp) {
+    /* 连续两次探测一致才认定有新版本 */
+    updateState.remoteFp = fp;
+    updateState.dismissedFp = fp;   /* 同一版本不再反复弹（关闭后也生效） */
+    updateState.pendingFp = '';
+    showUpdateModal();
+    return;
+  }
+  updateState.pendingFp = fp;
+  /* 400ms 后快速复检，避免 CDN 节点抖动误报 */
+  setTimeout(function () { if (!document.hidden) probeUpdate(); }, 400);
+}
+
+/* 10 秒无操作自动淡出：鼠标移动/点击/滚轮/键盘/touch 都算操作并重置计时 */
+var UPDATE_ACTIVITY_EVENTS = ['mousemove', 'pointerdown', 'click', 'wheel', 'keydown', 'touchstart', 'scroll'];
+
+function updateActivity() {
+  if (updateState.idleTimer) clearTimeout(updateState.idleTimer);
+  updateState.idleTimer = setTimeout(function () { hideUpdateModal(false); }, UPDATE_IDLE_MS);
+}
+
+function bindUpdateAutoHide() {
+  if (updateState.bound) { updateActivity(); return; }
+  updateState.bound = true;
+  UPDATE_ACTIVITY_EVENTS.forEach(function (name) {
+    window.addEventListener(name, updateActivity, { passive: true });
+  });
+  updateActivity();
+}
+
+function unbindUpdateAutoHide() {
+  if (!updateState.bound) return;
+  updateState.bound = false;
+  UPDATE_ACTIVITY_EVENTS.forEach(function (name) {
+    window.removeEventListener(name, updateActivity, { passive: true });
+  });
+  if (updateState.idleTimer) { clearTimeout(updateState.idleTimer); updateState.idleTimer = null; }
+}
+
+function wireUpdateModal() {
+  if (updateState.wired) return;
+  updateState.wired = true;
+  var close = document.getElementById('updateClose');
+  var confirmBtn = document.getElementById('updateConfirm');
+  if (close) close.addEventListener('click', function () { hideUpdateModal(true); });
+  if (confirmBtn) confirmBtn.addEventListener('click', function () {
+    try {
+      localStorage.setItem('hm.build', window.HM_BUILD || '');
+      localStorage.removeItem('hm.build.remindAt');
+    } catch (e) {}
+    hideUpdateModal(true);
+    toast('正在更新页面…', 'success');
+    /* 普通刷新：不再拼 ?hm_v= 随机参数强制整包重下 5MB；
+       新版本已由轮询确认，走正常缓存校验即可 */
+    setTimeout(function () { location.reload(); }, 300);
+  });
+}
+
+function showUpdateModal() {
+  var modal = document.getElementById('updateModal');
+  if (!modal || !modal.hidden) return;
+  wireUpdateModal();
+  modal.classList.remove('is-hiding');
+  modal.hidden = false;
+  /* 不冻结页面滚动！这是右下角通知卡片，不是全屏模态 */
+  bindUpdateAutoHide();
+}
+
+function hideUpdateModal(fast) {
+  var modal = document.getElementById('updateModal');
+  if (!modal || modal.hidden) return;
+  /* 同一版本不再反复弹：记住当前远端指纹 */
+  updateState.dismissedFp = updateState.remoteFp || updateState.pendingFp || updateState.baselineFp;
+  unbindUpdateAutoHide();
+  modal.classList.add('is-hiding');
+  setTimeout(function () {
+    modal.hidden = true;
+    modal.classList.remove('is-hiding');
+  }, fast ? 180 : 320);
+}
+
+function startUpdatePolling() {
+  if (updateState.timer) clearInterval(updateState.timer);
+  updateState.timer = null;
+  if (document.hidden) return;
+  updateState.timer = setInterval(probeUpdate, UPDATE_POLL_MS);
 }
 
 function checkUpdate() {
@@ -5065,16 +6133,28 @@ function checkUpdate() {
       localStorage.setItem('hm.build', currentBuild);
     } else if (lastBuild !== currentBuild) {
       /* 本地记录的 build 和当前页面的不一样 → 有更新 */
-      var remindAt = Number(localStorage.getItem('hm.build.remindAt') || 0);
-      if (!remindAt || Date.now() >= remindAt) {
-        showUpdateModal();
-      }
+      showUpdateModal();
     }
 
-    /* 无论如何，再 fetch 一次远端最新 index.html 确认（处理首次访问 + 长时间挂着的情况） */
-    pollRemoteBuild();
-    /* 每 30 秒轮询一次（更快发现更新） */
-    setInterval(pollRemoteBuild, 30 * 1000);
+    /* 首次探测延后到 window load 之后：启动阶段带宽要留给 5MB 主包，
+       不要在解析/首屏时发 HEAD；之后再按 60 秒轮询。后台暂停，回到前台立即检测。 */
+    var kickUpdate = function () {
+      setTimeout(function () {
+        if (document.hidden) return;
+        probeUpdate();
+        startUpdatePolling();
+      }, 800);
+    };
+    if (document.readyState === 'complete') kickUpdate();
+    else window.addEventListener('load', kickUpdate, { once: true });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        if (updateState.timer) { clearInterval(updateState.timer); updateState.timer = null; }
+      } else {
+        probeUpdate();
+        startUpdatePolling();
+      }
+    });
   } catch (e) { /* localStorage 不可用时静默忽略 */ }
 }
 
@@ -5206,6 +6286,7 @@ window.HMApp = {
   toast: toast,
   renderWorks: renderWorks,
   saveWorks: saveWorks,
+  idbDelBlob: idbDelBlob,
   mergeWorks: mergeWorks,
   hydrateWorks: hydrateWorks,
   worksLsKey: worksLsKey,
@@ -5219,6 +6300,7 @@ window.HMApp = {
   currentModelLabel: currentModelLabel,
   getModel: getModel,
   reuseJob: reuseJob,
+  retryWork: retryWork,
   hasRayinKey: hasRayinKey,
   openApiModal: openApiModal,
   closeApiModal: closeApiModal,

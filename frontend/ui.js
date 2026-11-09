@@ -211,30 +211,12 @@
     var railTop = rail ? rail.querySelector('.hm-rail-top') : null;
     if (!rail || !cut || !railTop) return;
 
-    var items = Array.prototype.slice.call(railTop.querySelectorAll('.hm-rail-item'));
-    if (!items.length) return;
-    items.forEach(function (el) { el.classList.remove('is-cut'); });
-
     if (rail.classList.contains('is-expanded')) {
       rail.classList.remove('has-cut');
       return;
     }
 
-    var available = cut.getBoundingClientRect().top - railTop.getBoundingClientRect().top;
-    if (available <= 0) return;
-
-    var gap = parseFloat(window.getComputedStyle(railTop).rowGap) || 0;
-    var used = 0;
-    var overflowed = false;
-    items.forEach(function (el, i) {
-      var h = el.getBoundingClientRect().height + (i ? gap : 0);
-      if (!overflowed && used + h <= available + 1) {
-        used += h;
-      } else {
-        overflowed = true;
-        el.classList.add('is-cut');
-      }
-    });
+    var overflowed = railTop.scrollHeight - railTop.clientHeight > 1;
     rail.classList.toggle('has-cut', overflowed);
     cut.setAttribute('aria-expanded', 'false');
   }
@@ -804,8 +786,9 @@
       var item = event.target.closest('[data-rail]');
       if (!item) return;
       if (item.id === 'railHomeBtn') {
-        /* 桌面/画布双模式按钮：点击弹出模式菜单而不是直接切视图 */
+        /* 桌面/画布双模式按钮：点击同时切回桌面布局并弹出模式菜单 */
         event.preventDefault();
+        setHomeMode('create');
         toggleHomeMenu();
         return;
       }
@@ -852,6 +835,14 @@
             railTop.insertBefore(map[key], anchor.nextSibling);
           }
         });
+        /* 旧顺序里没有 layout 时，默认排在「美术设定」之后 */
+        if (map.layout && order.indexOf('layout') < 0 && map.art && map.art.parentNode === railTop) {
+          railTop.insertBefore(map.layout, map.art.nextSibling);
+        }
+        /* 旧顺序里没有 edit 时，默认排在「摄影」之后 */
+        if (map.edit && order.indexOf('edit') < 0 && map.director && map.director.parentNode === railTop) {
+          railTop.insertBefore(map.edit, map.director.nextSibling);
+        }
       }
     } catch (e) { /* ignore */ }
 
@@ -867,6 +858,7 @@
       el.setAttribute('draggable', 'true');
 
       el.addEventListener('dragstart', function (e) {
+        if (el.classList.contains('is-fixed')) { e.preventDefault(); dragged = null; return; }
         dragged = el;
         el.classList.add('is-dragging');
         try {
@@ -877,6 +869,7 @@
 
       el.addEventListener('dragover', function (e) {
         e.preventDefault();
+        if (el.classList.contains('is-fixed') || (dragged && dragged.classList.contains('is-fixed'))) return;
         if (!dragged || dragged === el) return;
         try { e.dataTransfer.dropEffect = 'move'; } catch (err) { /* ignore */ }
         var rect = el.getBoundingClientRect();
@@ -2478,7 +2471,8 @@
   }
 
   function cleanLocal() {
-    if (!window.confirm('清理本地作品与写作草稿？此操作不可撤销。')) return;
+    if (!window.confirm('清理本地作品与写作草稿？可从「设置 → 云同步 → 恢复本地备份」找回最近 3 次快照。')) return;
+    if (window.HMSync && window.HMSync.snapshotWorks) window.HMSync.snapshotWorks('clean-local');
     A.state.works = [];
     A.saveWorks();
     A.renderWorks();
@@ -2589,48 +2583,6 @@
     /* 初音未来 · 胶片悬浮音乐播放器插件：默认不自动挂载，
      * 由顶栏「虚拟形象」按钮按需创建 / 收起（见 bindAvatarToggle） */
   }
-
-  (function bindAvatarToggle() {
-    var btn = document.getElementById('avatarToggle');
-    if (!btn) return;
-    /* 页面加载时不自动挂载形象 / AI 语音浮层，统一由顶栏「虚拟形象」按钮按需创建 */
-    window.MIKU_CHAT_NO_AUTO = true;
-    function widgetEl() { return document.getElementById('vinyl-widget'); }
-    function sync() {
-      var el = widgetEl();
-      var r = el ? el.getBoundingClientRect() : null;
-      var on = !!(el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none' && r && r.width > 0 && r.height > 0);
-      btn.classList.toggle('is-on', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
-    function ensure() {
-      if (!widgetEl() && window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
-        try { window.MikuPlayer.init(); window.__HM_MIKU_MOUNTED = true; } catch (e) {}
-      }
-      if (window.MikuChat && !window.__HM_MIKU_CHAT) {
-        try { window.MikuChat.init({ anchor: '#vinyl-widget' }); window.__HM_MIKU_CHAT = true; } catch (e) {}
-      }
-    }
-    btn.addEventListener('click', function () {
-      var before = widgetEl();
-      if (!before) {
-        /* 首次点击：按需挂载并直接显示 */
-        ensure();
-        var fresh = widgetEl();
-        if (fresh) fresh.style.display = 'block';
-        setTimeout(sync, 60);
-        return;
-      }
-      var hidden = before.style.display === 'none' || getComputedStyle(before).display === 'none';
-      before.style.display = hidden ? 'block' : 'none';
-      if (hidden) {
-        var ball = document.getElementById('mini-ball');
-        if (ball) ball.style.display = 'none';
-      }
-      sync();
-    });
-    window.addEventListener('load', function () { setTimeout(sync, 400); });
-  })();
 
   window.HMUI = {
     init: init,

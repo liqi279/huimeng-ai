@@ -67,13 +67,23 @@
     var error = new Error(message || ('后端请求失败（HTTP ' + status + '）'));
     if (hint) error.hint = hint;
     error.status = status;
+    /* 保留后端错误码：前端要区分 TOKEN_INVALID / ACCOUNT_PENDING / ACCOUNT_UNDEFINED，
+       不能只靠中文文案猜。 */
+    if (data && typeof data === 'object' && data.error && typeof data.error === 'object' && data.error.code) {
+      error.code = String(data.error.code);
+    }
     return error;
   }
 
   function authToken() {
+    /* 读取顺序 hm.token → sessionStorage → hm.token.bak（读到即回填主键）。
+       配额满导致主键没写进去时，刷新后仍能拿到 token，不会弹登录。 */
+    if (window.HMAuth && window.HMAuth.getToken) return window.HMAuth.getToken();
     try { return localStorage.getItem('hm.token') || ''; } catch (e) { return ''; }
   }
   function setAuthToken(token) {
+    /* 写入失败不再静默：先回收可重建缓存重试，再降级 sessionStorage，并回读校验。 */
+    if (window.HMAuth && window.HMAuth.setToken) { window.HMAuth.setToken(token); return; }
     try {
       if (token) localStorage.setItem('hm.token', token);
       else localStorage.removeItem('hm.token');
@@ -369,9 +379,6 @@
   api.setToken = setAuthToken;
   api.getToken = authToken;
 
-  api.register = function (username, password) {
-    return request('/auth/register', { method: 'POST', body: { username: username, password: password } }, 60000);
-  };
   api.login = function (username, password) {
     return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 60000);
   };
@@ -390,8 +397,8 @@
 
   /* 管理员：用户管理 */
   api.listUsers = function () { return request('/auth/users', {}, 15000); };
-  api.createUser = function (username, password, role) {
-    return request('/auth/users', { method: 'POST', body: { username: username, password: password, role: role } }, 15000);
+  api.createUser = function (username, password, role, note) {
+    return request('/auth/users', { method: 'POST', body: { username: username, password: password, role: role, note: note || '' } }, 20000);
   };
   api.setUserRole = function (id, role) {
     return request('/auth/users/' + encodeURIComponent(id) + '/role', { method: 'PATCH', body: { role: role } }, 15000);
@@ -401,6 +408,35 @@
   };
   api.deleteUser = function (id) {
     return request('/auth/users/' + encodeURIComponent(id), { method: 'DELETE' }, 15000);
+  };
+  /* 审批流 */
+  api.setUserStatus = function (id, status, note) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/status', { method: 'PATCH', body: { status: status, note: note || '' } }, 15000);
+  };
+  api.pendingCount = function () {
+    return request('/auth/users/pending-count', {}, 12000);
+  };
+  api.storeStatus = function () {
+    return request('/auth/store-status', {}, 12000);
+  };
+  api.migrateFileUsers = function () {
+    return request('/auth/users/migrate-file', { method: 'POST', body: {} }, 60000);
+  };
+  api.exportUsers = function () {
+    return request('/auth/users/export', {}, 20000);
+  };
+  /* 个人资料 / 偏好：全部走后端，localStorage 只做短期缓存 */
+  api.getProfile = function () {
+    return request('/auth/profile', {}, 15000);
+  };
+  api.updateProfile = function (patch) {
+    return request('/auth/profile', { method: 'PATCH', body: patch || {} }, 15000);
+  };
+  api.getPreferences = function () {
+    return request('/auth/preferences', {}, 15000);
+  };
+  api.updatePreferences = function (patch) {
+    return request('/auth/preferences', { method: 'PATCH', body: patch || {} }, 15000);
   };
 
   HM.api = api;
