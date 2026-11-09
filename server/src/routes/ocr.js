@@ -96,6 +96,63 @@ async function bingTranslate(q, from, to, timeoutMs) {
   return text;
 }
 
+/* ---------- Bing 网页版免费接口（免 token/免 key） ---------- */
+let bingWeb = { ig: '', iid: '', key: '', token: '', exp: 0 };
+
+async function bingWebPrepare(timeoutMs) {
+  if (bingWeb.token && Date.now() < bingWeb.exp) return;
+  const res = await fetchWithTimeout('https://www.bing.com/translator', {
+    headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml' },
+  }, timeoutMs);
+  if (!res.ok) throw new Error('页面 HTTP ' + res.status);
+  const html = await res.text();
+  const abuse = html.match(/params_AbusePreventionHelper\s*=\s*\[(\d+)\s*,\s*"([^"]+)"/);
+  const ig = html.match(/IG:"([0-9A-Fa-f]+)"/);
+  const iid = html.match(/data-iid="([^"]+)"/);
+  if (!abuse || !ig) throw new Error('页面缺少 token/IG');
+  bingWeb = {
+    key: abuse[1],
+    token: abuse[2],
+    ig: ig[1],
+    iid: iid ? iid[1] : 'translator.5028',
+    exp: Date.now() + 5 * 60 * 1000,
+  };
+}
+
+async function bingWebTranslate(q, from, to, timeoutMs) {
+  await bingWebPrepare(timeoutMs);
+  const params = new URLSearchParams({
+    fromLang: from === 'auto' ? 'auto-detect' : bingLang(from),
+    to: bingLang(to),
+    text: q,
+    token: bingWeb.token,
+    key: bingWeb.key,
+  });
+  const url = 'https://www.bing.com/ttranslatev3?isVertical=1&&IG=' + bingWeb.ig
+    + '&IID=' + encodeURIComponent(bingWeb.iid + '.1');
+  const res = await fetchWithTimeout(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': UA,
+      Referer: 'https://www.bing.com/translator',
+    },
+    body: params.toString(),
+  }, timeoutMs);
+  if (!res.ok) {
+    bingWeb.exp = 0;
+    throw new Error('HTTP ' + res.status);
+  }
+  const data = await res.json();
+  const t = Array.isArray(data) && data[0] && Array.isArray(data[0].translations)
+    ? String(data[0].translations[0].text || '').trim() : '';
+  if (!t) {
+    bingWeb.exp = 0;
+    throw new Error('返回内容为空');
+  }
+  return t;
+}
+
 /* ---------- Google ---------- */
 async function googleTranslate(q, from, to, host, timeoutMs) {
   const url = 'https://' + host + '/translate_a/single?client=gtx'
@@ -113,6 +170,37 @@ async function googleTranslate(q, from, to, host, timeoutMs) {
   const data = await res.json();
   const segs = Array.isArray(data) && Array.isArray(data[0]) ? data[0] : [];
   const text = segs.map((s) => (Array.isArray(s) && typeof s[0] === 'string' ? s[0] : '')).join('').trim();
+  if (!text) throw new Error('返回内容为空');
+  return text;
+}
+
+/* Google dict-chrome-ex 通道（clients5 独立域名，与 gtx 限流池不同） */
+function firstString(node) {
+  if (typeof node === 'string') return node;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = firstString(item);
+      if (found) return found;
+    }
+  }
+  return '';
+}
+
+async function googleClients5(q, from, to, timeoutMs) {
+  const url = 'https://clients5.google.com/translate_a/t?client=dict-chrome-ex'
+    + '&sl=' + encodeURIComponent(from) + '&tl=' + encodeURIComponent(to)
+    + '&q=' + encodeURIComponent(q);
+  const res = await fetchWithTimeout(url, {
+    headers: {
+      Accept: 'application/json,text/plain,*/*',
+      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      Referer: 'https://translate.google.com/',
+      'User-Agent': UA,
+    },
+  }, timeoutMs);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const text = firstString(data).trim();
   if (!text) throw new Error('返回内容为空');
   return text;
 }
@@ -135,43 +223,53 @@ async function yandexTranslate(q, from, to, timeoutMs) {
   return text;
 }
 
-/* ---------- DeepL web（无官方 key） ---------- */
+/* ---------- DeepL web（无官方 key，需 id/空格签名兼容） ---------- */
 async function deeplTranslate(q, from, to, timeoutMs) {
   const lang = to === 'zh-CN' || to === 'zh' ? 'ZH' : to === 'zh-TW' ? 'ZH-HANT' : to.toUpperCase();
-  const src = from === 'auto' ? (guessSource(q) || 'JA').toUpperCase() : from.toUpperCase();
+  const src = from === 'auto' ? (guessSource(q) || 'ja').toUpperCase() : from.toUpperCase();
   const id = Math.floor(Math.random() * 100000) + 8300000;
   const body = {
     jsonrpc: '2.0',
     method: 'LMT_handle_texts',
+    id,
     params: {
       texts: [{ text: q, requestAlternatives: 0 }],
       splitting: 'newlines',
       lang: { source_lang: src, target_lang: lang },
       timestamp: Date.now(),
+      commonJobParams: { wasSpoken: false, transcribeAS: '' },
+      id,
     },
-    id,
   };
+  let payload = JSON.stringify(body);
+  /* DeepL 服务端用 method 键的空格形态判定客户端版本，不满足会回「older version」提示 */
+  if ((id + 5) % 29 === 0 || (id + 3) % 13 === 0) {
+    payload = payload.replace('"method":"', '"method" : "');
+  }
   const res = await fetchWithTimeout('https://www2.deepl.com/jsonrpc', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'User-Agent': UA,
       Accept: '*/*',
-      'Accept-Language': 'zh-CN',
+      'Accept-Language': 'zh-CN,zh;q=0.9',
+      Referer: 'https://www.deepl.com/',
+      Origin: 'https://www.deepl.com',
     },
-    body: JSON.stringify(body),
+    body: payload,
   }, timeoutMs);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
   const t = data && data.result && data.result.texts && data.result.texts[0]
     ? String(data.result.texts[0].text || '').trim() : '';
-  if (!t) throw new Error('返回内容为空');
+  if (!t || /older version|旧版本/.test(t)) throw new Error('客户端版本校验未通过');
   return t;
 }
 
 /* ---------- 降级链 ---------- */
 const CHAIN = [
-  ['bing', (q, f, t, ms) => bingTranslate(q, f, t, ms)],
+  ['bing:web', (q, f, t, ms) => bingWebTranslate(q, f, t, ms)],
+  ['google:clients5', (q, f, t, ms) => googleClients5(q, f, t, ms)],
   ['google:gtx', (q, f, t, ms) => googleTranslate(q, f, t, 'translate.googleapis.com', ms)],
   ['google:translate', (q, f, t, ms) => googleTranslate(q, f, t, 'translate.google.com', ms)],
   ['yandex', (q, f, t, ms) => yandexTranslate(q, f, t, ms)],
