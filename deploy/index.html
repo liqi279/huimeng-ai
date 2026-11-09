@@ -16831,6 +16831,333 @@ a.lib-btn {
   color: rgba(214, 190, 148, 0.55);
 }
 
+/* ---------- OCR 识别翻译（藏书阁顶栏 · pot 风格停靠窗） ---------- */
+.lib-ocr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lib-ocr-btn.is-on {
+  color: #ffe6a8;
+  border-color: rgba(201, 162, 39, 0.55);
+  background: rgba(201, 162, 39, 0.16);
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.12), 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+.lib-ocr-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: rgba(201, 162, 39, 0.12);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.lib-ocr-dock {
+  --lib-ocr-w: 408px;
+  position: absolute;
+  top: 84px;
+  right: 10px;
+  bottom: 54px;
+  width: var(--lib-ocr-w);
+  z-index: 46;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(201, 162, 39, 0.24);
+  background:
+    radial-gradient(ellipse 90% 40% at 100% 0%, rgba(201, 162, 39, 0.1), transparent 62%),
+    linear-gradient(180deg, rgba(37, 25, 17, 0.985), rgba(22, 15, 10, 0.985));
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(255, 236, 196, 0.07);
+  overflow: hidden;
+  animation: libOcrIn 0.18s ease-out;
+}
+.lib-ocr-dock[hidden] { display: none !important; }
+@keyframes libOcrIn {
+  from { opacity: 0; transform: translateX(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+#view-library.is-ocr-open .lib-body,
+#view-library.is-ocr-open .lib-shelf-pager,
+#view-library.is-ocr-open .lib-status {
+  margin-right: 428px;
+}
+#view-library.is-ocr-open .lib-reader { right: 428px; }
+
+.lib-ocr-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+  padding: 11px 12px 10px 14px;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.16);
+  background: linear-gradient(180deg, rgba(255, 226, 168, 0.055), transparent);
+  cursor: default;
+}
+.lib-ocr-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  background: rgba(201, 162, 39, 0.14);
+  color: #f3d892;
+  font-size: 13px;
+  font-weight: 700;
+}
+.lib-ocr-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lib-ocr-title b { font-size: 13px; letter-spacing: 0.04em; color: #f4e6cd; }
+.lib-ocr-title small { font-size: 10px; letter-spacing: 0.06em; color: #a9906d; }
+.lib-ocr-x {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #bda88a;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lib-ocr-x:hover { color: #ffe6a8; border-color: rgba(201, 162, 39, 0.4); }
+
+.lib-ocr-langs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 0 12px;
+}
+.lib-ocr-lang {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.24);
+  font-size: 10px;
+  color: #9c8567;
+}
+.lib-ocr-lang select {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #f0e3cd;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+.lib-ocr-lang select option { background: #22170f; color: #f0e3cd; }
+.lib-ocr-swap {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  background: rgba(201, 162, 39, 0.1);
+  color: #e9cf95;
+  font-size: 13px;
+  cursor: pointer;
+}
+.lib-ocr-swap:hover { background: rgba(201, 162, 39, 0.2); }
+
+.lib-ocr-tabs {
+  display: flex;
+  gap: 6px;
+  flex: none;
+  padding: 0 12px;
+}
+.lib-ocr-tab {
+  flex: 1;
+  height: 29px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.025);
+  color: #b7a184;
+  font-size: 11px;
+  cursor: pointer;
+}
+.lib-ocr-tab.is-on {
+  color: #ffe6a8;
+  border-color: rgba(201, 162, 39, 0.45);
+  background: rgba(201, 162, 39, 0.14);
+}
+
+.lib-ocr-drop {
+  flex: none;
+  margin: 0 12px;
+  padding: 14px 10px;
+  border-radius: 10px;
+  border: 1px dashed rgba(201, 162, 39, 0.35);
+  background: rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+.lib-ocr-drop[hidden] { display: none !important; }
+.lib-ocr-drop-icon { font-size: 16px; color: #c9a227; }
+.lib-ocr-drop p { margin: 4px 0 8px; font-size: 11px; color: #b7a184; }
+.lib-ocr-drop kbd {
+  display: inline-block;
+  padding: 0 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 10px;
+  color: #eadcc4;
+}
+.lib-ocr-drop-actions { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.lib-ocr-btn-ghost {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  background: rgba(201, 162, 39, 0.1);
+  color: #f0dcae;
+  font-size: 11px;
+  cursor: pointer;
+}
+.lib-ocr-filename {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: #93805f;
+}
+
+.lib-ocr-runrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  padding: 0 12px;
+}
+.lib-ocr-run {
+  flex: none;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 9px;
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  background: linear-gradient(180deg, rgba(201, 162, 39, 0.3), rgba(201, 162, 39, 0.16));
+  color: #ffe9b6;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+.lib-ocr-run:disabled { opacity: 0.55; cursor: default; }
+.lib-ocr-hint { flex: 1; min-width: 0; font-size: 10px; line-height: 1.35; color: #8f7a5e; }
+
+.lib-ocr-status {
+  flex: none;
+  margin: 0 12px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.26);
+  font-size: 11px;
+  line-height: 1.45;
+  color: #c9b696;
+}
+.lib-ocr-status[hidden] { display: none !important; }
+.lib-ocr-status.is-busy { border-color: rgba(201, 162, 39, 0.32); color: #e9d3a3; }
+.lib-ocr-status.is-ok { border-color: rgba(106, 168, 106, 0.35); color: #bfe0bf; }
+.lib-ocr-status.is-err { border-color: rgba(196, 96, 82, 0.45); color: #f0b4a8; }
+
+.lib-ocr-results {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px;
+  overflow-y: auto;
+}
+.lib-ocr-card {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 96px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+.lib-ocr-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  height: 28px;
+  padding: 0 8px 0 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #9c8567;
+}
+.lib-ocr-copy {
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: #c9b696;
+  font-size: 10px;
+  cursor: pointer;
+}
+.lib-ocr-copy:hover:not(:disabled) { color: #ffe6a8; border-color: rgba(201, 162, 39, 0.45); }
+.lib-ocr-copy:disabled { opacity: 0.4; cursor: default; }
+.lib-ocr-text {
+  flex: 1;
+  margin: 0;
+  padding: 9px 10px;
+  max-height: 190px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Noto Serif SC", "Songti SC", serif;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #e7dac4;
+}
+.lib-ocr-text.is-dst { color: #f6e7c8; }
+.lib-ocr-foot {
+  flex: none;
+  padding: 0 14px;
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: #7f6c53;
+}
+
+@media (max-width: 1280px) {
+  .lib-ocr-dock { --lib-ocr-w: 372px; }
+  #view-library.is-ocr-open .lib-body,
+  #view-library.is-ocr-open .lib-shelf-pager,
+  #view-library.is-ocr-open .lib-status { margin-right: 392px; }
+  #view-library.is-ocr-open .lib-reader { right: 392px; }
+}
+@media (max-width: 980px) {
+  .lib-ocr-dock { left: 10px; width: auto; }
+  #view-library.is-ocr-open .lib-body,
+  #view-library.is-ocr-open .lib-shelf-pager,
+  #view-library.is-ocr-open .lib-status { margin-right: 0; }
+  #view-library.is-ocr-open .lib-reader { right: 0; }
+}
+
 /* ---------- 阅读器 ---------- */
 .lib-reader {
   position: absolute;
@@ -19662,6 +19989,9 @@ body.dv-open .hm-page {
         <button type="button" class="lib-btn lib-btn-gold" id="libAddBtn">＋ 新增书籍</button>
         <button type="button" class="lib-btn" id="libFavBtn">★ 我的收藏</button>
         <button type="button" class="lib-btn" id="libHistoryBtn">↺ 阅读历史</button>
+        <button type="button" class="lib-btn lib-ocr-btn" id="libOcrBtn" aria-expanded="false" aria-controls="libOcrDock" title="识别并翻译当前页 / 上传图片">
+          <span class="lib-ocr-glyph" aria-hidden="true">文</span>识别翻译
+        </button>
       </div>
     </header>
 
@@ -19678,6 +20008,78 @@ body.dv-open .hm-page {
 
     <div class="lib-open-layer" id="libOpenLayer" hidden></div>
     <section class="lib-detail" id="libDetail" hidden></section>
+    <aside class="lib-ocr-dock" id="libOcrDock" hidden aria-label="OCR 识别与翻译">
+      <div class="lib-ocr-head">
+        <span class="lib-ocr-badge" aria-hidden="true">文</span>
+        <div class="lib-ocr-title">
+          <b>识别翻译</b>
+          <small>OCR · 日本語 / English → 中文</small>
+        </div>
+        <button type="button" class="lib-ocr-x" id="libOcrClose" aria-label="关闭识别翻译">×</button>
+      </div>
+
+      <div class="lib-ocr-langs">
+        <label class="lib-ocr-lang">
+          <span>识别</span>
+          <select id="libOcrFrom">
+            <option value="jpn">日文</option>
+            <option value="eng">英文</option>
+            <option value="chi_sim">中文</option>
+          </select>
+        </label>
+        <button type="button" class="lib-ocr-swap" id="libOcrSwap" title="互换翻译方向" aria-label="互换翻译方向">⇄</button>
+        <label class="lib-ocr-lang">
+          <span>译为</span>
+          <select id="libOcrTo">
+            <option value="zh-CN">中文</option>
+            <option value="en">英文</option>
+            <option value="ja">日文</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="lib-ocr-tabs" role="tablist" aria-label="图片输入方式">
+        <button type="button" class="lib-ocr-tab is-on" id="libOcrTabPage" data-ocr-tab="page" role="tab" aria-selected="true">当前阅读页</button>
+        <button type="button" class="lib-ocr-tab" id="libOcrTabImage" data-ocr-tab="image" role="tab" aria-selected="false">上传 / 粘贴图片</button>
+        <input type="file" id="libOcrFile" accept="image/*" hidden>
+      </div>
+
+      <div class="lib-ocr-drop" id="libOcrDrop" hidden>
+        <span class="lib-ocr-drop-icon" aria-hidden="true">＋</span>
+        <p>拖入、选择图片，或直接 <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴截图</p>
+        <div class="lib-ocr-drop-actions">
+          <button type="button" class="lib-ocr-btn-ghost" id="libOcrPick">选择图片</button>
+          <span class="lib-ocr-filename" id="libOcrFilename"></span>
+        </div>
+      </div>
+
+      <div class="lib-ocr-runrow">
+        <button type="button" class="lib-ocr-run" id="libOcrRun">识别当前页</button>
+        <span class="lib-ocr-hint" id="libOcrHint">首次识别需下载约 2–3MB 模型</span>
+      </div>
+
+      <div class="lib-ocr-status" id="libOcrStatus" hidden></div>
+
+      <div class="lib-ocr-results" id="libOcrResults">
+        <section class="lib-ocr-card">
+          <div class="lib-ocr-card-head">
+            <span>原文</span>
+            <button type="button" class="lib-ocr-copy" data-ocr-copy="src" disabled>复制</button>
+          </div>
+          <pre class="lib-ocr-text" id="libOcrSrc">识别结果会显示在这里。</pre>
+        </section>
+        <section class="lib-ocr-card">
+          <div class="lib-ocr-card-head">
+            <span>中文译文</span>
+            <button type="button" class="lib-ocr-copy" data-ocr-copy="dst" disabled>复制</button>
+          </div>
+          <pre class="lib-ocr-text is-dst" id="libOcrDst">译文会显示在这里。</pre>
+        </section>
+      </div>
+
+      <footer class="lib-ocr-foot">tesseract.js（浏览器内识别） · 翻译：后端代理，失败时直连兜底</footer>
+    </aside>
+
     <section class="lib-reader" id="libReader" hidden></section>
     <div class="lib-modal" id="libModal" hidden></div>
   </main>
@@ -53950,6 +54352,7 @@ window.HMChat = (function () {
       + '<button type="button" class="lib-reader-back" data-exit>← 合上书</button>'
       + '<div class="lib-reader-title">《' + esc(book.title) + '》</div>'
       + '<div class="lib-reader-page-label" data-page-label></div>'
+      + '<button type="button" class="lib-fs-btn lib-reader-ocr" data-ocr-open aria-expanded="false" title="识别并翻译当前页">文 识别翻译</button>'
       + '<button type="button" class="lib-fs-btn" data-fs title="全屏阅读">⛶ 全屏</button>'
       + '</div>'
       + '<div class="lib-reader-stage' + (isPdf ? ' is-pdf' : '') + '">'
@@ -53968,6 +54371,11 @@ window.HMChat = (function () {
     els.reader.querySelector('[data-prev]').addEventListener('click', function () { flipTo(state.page - 1); });
     els.reader.querySelector('[data-next]').addEventListener('click', function () { flipTo(state.page + 1); });
     els.reader.querySelector('[data-fs]').addEventListener('click', toggleReaderFullscreen);
+    var readerOcr = els.reader.querySelector('[data-ocr-open]');
+    if (readerOcr) {
+      if (ocr.open) { readerOcr.classList.add('is-on'); readerOcr.setAttribute('aria-expanded', 'true'); }
+      readerOcr.addEventListener('click', function () { ocr.open ? closeOcrDock() : ocrOpen(); });
+    }
     var fullBtn = els.reader.querySelector('[data-pdf-full]');
     if (fullBtn) fullBtn.addEventListener('click', toggleReaderFullscreen);
     syncFsButton();
@@ -54528,6 +54936,7 @@ window.HMChat = (function () {
     if (favBtn) favBtn.addEventListener('click', function () { showPanel('fav'); });
     var histBtn = $('libHistoryBtn');
     if (histBtn) histBtn.addEventListener('click', function () { showPanel('hist'); });
+    bindOcr();
 
     if (els.body) {
       /* 封面坏图/0 字节：退化成书名文字卡，不显示破图标 */
@@ -54605,6 +55014,7 @@ window.HMChat = (function () {
   function leave() {
     hideSuggest();
     closeModal();
+    closeOcrDock();
     if (els.reader) { els.reader.classList.remove('is-open'); els.reader.hidden = true; els.reader.innerHTML = ''; }
     if (els.detail) { els.detail.classList.remove('is-open'); els.detail.hidden = true; els.detail.innerHTML = ''; }
     if (els.openLayer) { els.openLayer.hidden = true; els.openLayer.innerHTML = ''; }
@@ -54614,6 +55024,423 @@ window.HMChat = (function () {
     if (!bound) return enter();
     state.booted = false;
     return boot();
+  }
+
+  /* ---------------- OCR 识别 + 翻译（pot 风格停靠窗） ---------------- */
+  var OCR_TESS_URLS = [
+    'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',
+    'https://unpkg.com/tesseract.js@5/dist/tesseract.min.js'
+  ];
+  var OCR_LANGS = {
+    jpn: { tr: 'ja', label: '日文', size: '2.0MB' },
+    eng: { tr: 'en', label: '英文', size: '3.0MB' },
+    chi_sim: { tr: 'zh-CN', label: '中文', size: '2.4MB' }
+  };
+  var ocr = {
+    open: false,
+    tab: 'page',
+    busy: false,
+    worker: null,
+    workerLang: '',
+    file: null,
+    imageCanvas: null,
+    srcText: '',
+    dstText: '',
+    tessPromise: null
+  };
+
+  function ocrEl(id) { return document.getElementById(id); }
+
+  function ocrStatus(msg, type) {
+    var el = ocrEl('libOcrStatus');
+    if (!el) return;
+    if (!msg) { el.hidden = true; el.textContent = ''; el.className = 'lib-ocr-status'; return; }
+    el.hidden = false;
+    el.className = 'lib-ocr-status' + (type ? ' is-' + type : '');
+    el.textContent = msg;
+  }
+
+  function ocrSetBusy(busy) {
+    ocr.busy = busy;
+    var run = ocrEl('libOcrRun');
+    if (run) {
+      run.disabled = busy;
+      run.textContent = busy ? '处理中…' : (ocr.tab === 'image' ? '识别这张图' : '识别当前页');
+    }
+    var pick = ocrEl('libOcrPick');
+    if (pick) pick.disabled = busy;
+  }
+
+  function ocrSyncEntry(open) {
+    document.querySelectorAll('[data-ocr-open]').forEach(function (b) {
+      b.classList.toggle('is-on', open);
+      b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  function ocrOpen() {
+    var dock = ocrEl('libOcrDock');
+    var btn = ocrEl('libOcrBtn');
+    if (!dock) return;
+    dock.hidden = false;
+    ocr.open = true;
+    if (els.view) els.view.classList.add('is-ocr-open');
+    if (btn) { btn.classList.add('is-on'); btn.setAttribute('aria-expanded', 'true'); }
+    ocrSyncEntry(true);
+    var run = ocrEl('libOcrRun');
+    if (run) run.focus();
+    if (state.pdfDoc && els.reader && !els.reader.hidden) renderPdfCanvas();
+  }
+
+  function closeOcrDock() {
+    var dock = ocrEl('libOcrDock');
+    var btn = ocrEl('libOcrBtn');
+    if (!dock) return;
+    dock.hidden = true;
+    ocr.open = false;
+    if (els.view) els.view.classList.remove('is-ocr-open');
+    if (btn) { btn.classList.remove('is-on'); btn.setAttribute('aria-expanded', 'false'); }
+    ocrSyncEntry(false);
+    if (state.pdfDoc && els.reader && !els.reader.hidden) renderPdfCanvas();
+  }
+
+  function ocrSetTab(tab) {
+    ocr.tab = tab === 'image' ? 'image' : 'page';
+    var pageBtn = ocrEl('libOcrTabPage');
+    var imgBtn = ocrEl('libOcrTabImage');
+    var drop = ocrEl('libOcrDrop');
+    if (pageBtn) { pageBtn.classList.toggle('is-on', ocr.tab === 'page'); pageBtn.setAttribute('aria-selected', ocr.tab === 'page' ? 'true' : 'false'); }
+    if (imgBtn) { imgBtn.classList.toggle('is-on', ocr.tab === 'image'); imgBtn.setAttribute('aria-selected', ocr.tab === 'image' ? 'true' : 'false'); }
+    if (drop) drop.hidden = ocr.tab !== 'image';
+    var run = ocrEl('libOcrRun');
+    if (run && !ocr.busy) run.textContent = ocr.tab === 'image' ? '识别这张图' : '识别当前页';
+  }
+
+  function ocrCanvasFromImage(img) {
+    var w = img.naturalWidth || img.width;
+    var h = img.naturalHeight || img.height;
+    var scale = Math.min(2, Math.max(1, 1800 / Math.max(w, h)));
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.round(w * scale);
+    canvas.height = Math.round(h * scale);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  }
+
+  function ocrGrabPage() {
+    if (!(state.pdfDoc && state.page >= 1)) {
+      var img = els.reader && els.reader.querySelector('.lib-reader-scroll img, [data-pdf-scroll] img, img');
+      if (img && (img.naturalWidth || img.width) > 240) {
+        return Promise.resolve(ocrCanvasFromImage(img));
+      }
+      return Promise.reject(new Error('当前页不是 PDF 或图片，请翻到正文页，或用「上传 / 粘贴图片」。'));
+    }
+    var pageNo = Math.max(1, Math.min(state.page, state.pdfDoc.numPages));
+    return state.pdfDoc.getPage(pageNo).then(function (page) {
+      var vp = page.getViewport({ scale: 2 });
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.round(vp.width);
+      canvas.height = Math.round(vp.height);
+      return page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise.then(function () {
+        return canvas;
+      });
+    });
+  }
+
+  function ocrLoadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = function () { resolve(src); };
+      s.onerror = function () { reject(new Error('脚本加载失败：' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function ocrEnsureTesseract() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    if (ocr.tessPromise) return ocr.tessPromise;
+    ocr.tessPromise = OCR_TESS_URLS.reduce(function (p, url) {
+      return p.catch(function () { return ocrLoadScript(url); });
+    }, Promise.reject(new Error('init'))).then(function (url) {
+      if (!window.Tesseract) throw new Error('识别引擎加载失败');
+      ocr.tessBase = url.replace(/tesseract\.min\.js.*$/, '');
+      return window.Tesseract;
+    }).catch(function (err) {
+      ocr.tessPromise = null;
+      throw new Error('识别引擎加载失败（CDN 不可达），请检查网络后重试。');
+    });
+    return ocr.tessPromise;
+  }
+
+  function ocrWorker(lang) {
+    var key = lang;
+    if (ocr.worker && ocr.workerLang === key) return Promise.resolve(ocr.worker);
+    var chain = Promise.resolve();
+    if (ocr.worker) {
+      chain = ocr.worker.terminate().catch(function () {});
+      ocr.worker = null;
+      ocr.workerLang = '';
+    }
+    return chain.then(function () {
+      return ocrEnsureTesseract();
+    }).then(function (T) {
+      var base = ocr.tessBase || 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/';
+      var langPath = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/' + lang + '/4.0.0_best_int';
+      return T.createWorker(lang, 1, {
+        workerPath: base + 'worker.min.js',
+        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/',
+        langPath: langPath,
+        logger: function (m) {
+          if (!m) return;
+          if (m.status === 'recognizing text') {
+            ocrStatus('识别中 ' + Math.round((m.progress || 0) * 100) + '%', 'busy');
+          } else if (m.status && m.status.indexOf('loading') === 0) {
+            ocrStatus('正在加载识别模型（' + OCR_LANGS[lang].size + '，首次较慢）…', 'busy');
+          }
+        }
+      }).then(function (worker) {
+        ocr.worker = worker;
+        ocr.workerLang = key;
+        return worker;
+      });
+    });
+  }
+
+  function ocrRunText(canvas, lang) {
+    return ocrWorker(lang).then(function (worker) {
+      ocrStatus('正在识别' + OCR_LANGS[lang].label + '文字…', 'busy');
+      return worker.recognize(canvas);
+    }).then(function (res) {
+      var text = res && res.data && res.data.text ? String(res.data.text) : '';
+      /* 日文识别常在汉字/假名之间插空格，先去掉再保留正常西文空格 */
+      text = text.replace(/([\u3040-\u30ff\u3400-\u9fff])[ \t\u3000]+(?=[\u3040-\u30ff\u3400-\u9fff])/g, '$1');
+      return text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    });
+  }
+
+  function ocrChunks(text, size) {
+    var out = [];
+    var rest = text;
+    while (rest.length > size) {
+      var cut = rest.lastIndexOf('\n', size);
+      if (cut < size * 0.5) cut = size;
+      out.push(rest.slice(0, cut));
+      rest = rest.slice(cut);
+    }
+    if (rest.trim()) out.push(rest);
+    return out;
+  }
+
+  function ocrGoogle(text, from, to) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, 8000);
+    var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&dt=t'
+      + '&sl=' + encodeURIComponent(from) + '&tl=' + encodeURIComponent(to)
+      + '&q=' + encodeURIComponent(text);
+    return fetch(url, { signal: controller.signal }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).then(function (data) {
+      var segs = data && data[0];
+      if (!segs || !segs.length) throw new Error('空译文');
+      return segs.map(function (s) { return s && s[0] ? s[0] : ''; }).join('');
+    }).finally(function () { clearTimeout(timer); });
+  }
+
+  function ocrTranslate(text) {
+    var from = OCR_LANGS[ocrEl('libOcrFrom') ? ocrEl('libOcrFrom').value : 'jpn'].tr;
+    var to = ocrEl('libOcrTo') ? ocrEl('libOcrTo').value : 'zh-CN';
+    if (from === to) return Promise.resolve(text);
+    var parts = ocrChunks(text, 1600);
+    var done = [];
+    function step(i) {
+      if (i >= parts.length) return Promise.resolve(done.join('\n'));
+      var chunk = parts[i];
+      return request('/ocr/translate', { method: 'POST', body: { q: chunk, from: from, to: to } }, 8000)
+        .then(function (data) {
+          var t = data && (data.text || data.translation || data.result);
+          if (!t) throw new Error('翻译接口未返回文本');
+          return String(t);
+        })
+        .catch(function () { return ocrGoogle(chunk, from, to); })
+        .then(function (t) {
+          done.push(t);
+          return step(i + 1);
+        });
+    }
+    return step(0).catch(function () {
+      throw new Error('翻译服务不可用（后端接口未上线，直连翻译也失败），已保留原文。');
+    });
+  }
+
+  function ocrRender(text, dst) {
+    var srcEl = ocrEl('libOcrSrc');
+    var dstEl = ocrEl('libOcrDst');
+    if (srcEl) srcEl.textContent = text || '未识别到文字。';
+    if (dstEl) dstEl.textContent = dst || (text ? '等待翻译…' : '译文会显示在这里。');
+    document.querySelectorAll('[data-ocr-copy="src"]').forEach(function (b) { b.disabled = !text; });
+    document.querySelectorAll('[data-ocr-copy="dst"]').forEach(function (b) { b.disabled = !dst; });
+    ocr.srcText = text || '';
+    ocr.dstText = dst || '';
+  }
+
+  function ocrCopy(text, btn) {
+    if (!text) return;
+    function ok() {
+      if (!btn) return;
+      var old = btn.textContent;
+      btn.textContent = '已复制';
+      setTimeout(function () { btn.textContent = old; }, 1200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(function () {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); ok(); } catch (e) {}
+        document.body.removeChild(ta);
+      });
+      return;
+    }
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); ok(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  function ocrStart() {
+    if (ocr.busy) return;
+    var from = ocrEl('libOcrFrom') ? ocrEl('libOcrFrom').value : 'jpn';
+    if (!OCR_LANGS[from]) from = 'jpn';
+    var grab;
+    if (ocr.tab === 'image') {
+      if (!ocr.imageCanvas) {
+        ocrStatus('请先选择或粘贴一张图片。', 'err');
+        return;
+      }
+      grab = Promise.resolve(ocr.imageCanvas);
+    } else {
+      grab = ocrGrabPage();
+    }
+    ocrRender('', '');
+    ocrSetBusy(true);
+    ocrStatus('准备识别…', 'busy');
+    grab.then(function (canvas) {
+      return ocrRunText(canvas, from);
+    }).then(function (text) {
+      if (!text) {
+        ocrStatus('没有识别到文字，可换一张更清晰的图，或切换识别语言。', 'err');
+        ocrRender('', '');
+        return null;
+      }
+      ocrRender(text, '');
+      ocrStatus('识别完成，共 ' + text.length + ' 字，正在翻译…', 'busy');
+      return ocrTranslate(text).then(function (dst) {
+        ocrRender(text, dst);
+        ocrStatus('完成 · 原文 ' + text.length + ' 字', 'ok');
+      }).catch(function (err) {
+        ocrRender(text, '');
+        ocrStatus(err.message || '翻译服务不可用，已保留原文。', 'err');
+      });
+    }).catch(function (err) {
+      ocrStatus(err && err.message ? err.message : String(err), 'err');
+    }).finally(function () {
+      ocrSetBusy(false);
+    });
+  }
+
+  function ocrLoadFile(file) {
+    if (!file) return;
+    if (!/^image\//.test(file.type)) {
+      ocrStatus('请选择图片文件（PNG / JPG / WebP）。', 'err');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        ocr.imageCanvas = ocrCanvasFromImage(img);
+        ocr.file = file;
+        var nameEl = ocrEl('libOcrFilename');
+        if (nameEl) nameEl.textContent = file.name || '已粘贴的截图';
+        ocrSetTab('image');
+        ocrStatus('已载入图片，点击「识别这张图」开始。', 'ok');
+      };
+      img.onerror = function () { ocrStatus('图片解码失败，请换一张。', 'err'); };
+      img.src = String(reader.result || '');
+    };
+    reader.onerror = function () { ocrStatus('图片读取失败，请重试。', 'err'); };
+    reader.readAsDataURL(file);
+  }
+
+  function bindOcr() {
+    var btn = ocrEl('libOcrBtn');
+    if (btn) btn.addEventListener('click', function () { ocr.open ? closeOcrDock() : ocrOpen(); });
+    var close = ocrEl('libOcrClose');
+    if (close) close.addEventListener('click', closeOcrDock);
+    var tabPage = ocrEl('libOcrTabPage');
+    if (tabPage) tabPage.addEventListener('click', function () { ocrSetTab('page'); });
+    var tabImage = ocrEl('libOcrTabImage');
+    if (tabImage) tabImage.addEventListener('click', function () { ocrSetTab('image'); });
+    var pick = ocrEl('libOcrPick');
+    var file = ocrEl('libOcrFile');
+    if (pick && file) {
+      pick.addEventListener('click', function () { file.click(); });
+      file.addEventListener('change', function () {
+        if (file.files && file.files[0]) ocrLoadFile(file.files[0]);
+        file.value = '';
+      });
+    }
+    var run = ocrEl('libOcrRun');
+    if (run) run.addEventListener('click', ocrStart);
+    var swap = ocrEl('libOcrSwap');
+    if (swap) {
+      swap.addEventListener('click', function () {
+        var fromEl = ocrEl('libOcrFrom');
+        var toEl = ocrEl('libOcrTo');
+        if (!fromEl || !toEl) return;
+        var from = fromEl.value;
+        var to = toEl.value;
+        if (from === 'chi_sim' || to === 'zh-CN') {
+          fromEl.value = to === 'zh-CN' ? 'chi_sim' : 'jpn';
+          toEl.value = from === 'chi_sim' ? 'ja' : 'zh-CN';
+          return;
+        }
+        fromEl.value = to === 'ja' ? 'jpn' : 'eng';
+        toEl.value = 'zh-CN';
+      });
+    }
+    document.querySelectorAll('[data-ocr-copy]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        ocrCopy(b.getAttribute('data-ocr-copy') === 'dst' ? ocr.dstText : ocr.srcText, b);
+      });
+    });
+    document.addEventListener('paste', function (event) {
+      if (!ocr.open) return;
+      var items = event.clipboardData && event.clipboardData.items;
+      if (!items) return;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type && items[i].type.indexOf('image/') === 0) {
+          var f = items[i].getAsFile();
+          if (f) { ocrLoadFile(f); event.preventDefault(); }
+          return;
+        }
+      }
+    });
+    var drop = ocrEl('libOcrDrop');
+    if (drop) {
+      drop.addEventListener('dragover', function (e) { e.preventDefault(); });
+      drop.addEventListener('drop', function (e) {
+        e.preventDefault();
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) ocrLoadFile(f);
+      });
+    }
   }
 
   window.HMLibrary = { enter: enter, leave: leave, refresh: refresh };
