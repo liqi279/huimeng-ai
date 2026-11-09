@@ -16738,10 +16738,44 @@ a.lib-btn {
   flex: none;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 6px 8px;
   background: rgba(26, 18, 11, 0.72);
   border-bottom: 1px solid rgba(201, 162, 39, 0.14);
+}
+
+/* 缩放模式：适应宽度 / 适应高度 / 适应页面 */
+.lib-pdf-modes {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.lib-pdf-mode,
+.lib-pdf-toc-toggle {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 162, 39, 0.26);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(240, 222, 188, 0.68);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.lib-pdf-mode:hover,
+.lib-pdf-toc-toggle:hover {
+  background: rgba(201, 162, 39, 0.14);
+  color: #ffe9b5;
+}
+
+.lib-pdf-mode.is-on,
+.lib-pdf-toc-toggle.is-on {
+  border-color: rgba(201, 162, 39, 0.62);
+  background: rgba(201, 162, 39, 0.22);
+  color: #ffe9b5;
 }
 
 .lib-pdf-zoom {
@@ -16780,7 +16814,8 @@ a.lib-btn {
 }
 
 .lib-pdf-canvas {
-  display: inline-block;
+  display: block;
+  margin: 0 auto;
   max-width: none;
   background: #fff;
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
@@ -16799,12 +16834,37 @@ a.lib-btn {
   overflow: hidden;
 }
 
+/* 目录折叠：收起后整栏不占版面，工具栏「☰ 目录」可再展开 */
+.lib-pdf-toc.is-collapsed {
+  display: none;
+}
+
 .lib-pdf-toc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
   padding: 10px 12px;
+  font-family: inherit;
   font-size: 11px;
   letter-spacing: 0.16em;
   color: #c9a227;
+  text-align: left;
+  border: 0;
   border-bottom: 1px solid rgba(201, 162, 39, 0.16);
+  background: transparent;
+  cursor: pointer;
+}
+
+.lib-pdf-toc-head:hover {
+  background: rgba(201, 162, 39, 0.1);
+}
+
+.lib-pdf-toc-caret {
+  font-size: 10px;
+  letter-spacing: 0;
+  color: rgba(201, 162, 39, 0.8);
 }
 
 .lib-pdf-toc-list {
@@ -52292,7 +52352,9 @@ window.HMChat = (function () {
     fav: 'anidream.library.fav.v2',
     hist: 'anidream.library.history.v2',
     user: 'anidream.library.user.v1',
-    area: 'anidream.library.area.v1'
+    area: 'anidream.library.area.v1',
+    pdfMode: 'anidream.library.pdfmode.v1',
+    meta: 'anidream.library.books.meta.v1'
   };
 
   var SEED = (window.HM_LIBRARY_SEED && window.HM_LIBRARY_SEED.books) || [];
@@ -52322,7 +52384,8 @@ window.HMChat = (function () {
     flipBusy: false,
     editing: null,
     booted: false,
-    loading: false
+    loading: false,
+    pdfTocCollapsed: false /* 目录折叠状态：本次阅读内记住 */
   };
 
   var els = {};
@@ -52516,11 +52579,28 @@ window.HMChat = (function () {
     if (state.booted) return Promise.resolve();
     state.loading = true;
     renderSkeleton();
-    return request('/library/books', {}, 7000).then(function (data) {
+    /* 先上上次成功拉取的书架缓存，避免列表接口冷启动时白屏 */
+    var cached = readJSON(LS.meta, null);
+    if (cached && cached.books && cached.books.length) {
+      state.mode = 'remote';
+      state.books = cached.books.map(function (b, i) { return normalize(b, i); });
+      state.fav = cached.fav || {};
+      state.hist = cached.hist || [];
+      state.booted = true;
+      state.loading = false;
+      markShelf();
+      renderShelf();
+      renderStatus();
+    }
+    return request('/library/books', {}, 30000).then(function (data) {
       state.mode = 'remote';
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
+    }).then(function () {
+      saveRemoteMeta();
     }).catch(function (err) {
+      /* 已有缓存时保持缓存书架，不因一次接口超时清空 */
+      if (cached && cached.books && cached.books.length) return;
       state.mode = 'local';
       state.books = localBooks();
       state.fav = loadFavLocal();
@@ -52534,10 +52614,16 @@ window.HMChat = (function () {
     });
   }
 
+  function saveRemoteMeta() {
+    try {
+      writeJSON(LS.meta, { at: Date.now(), books: state.books, fav: state.fav, hist: state.hist });
+    } catch (e) {}
+  }
+
   function loadRemoteAux() {
     return Promise.all([
-      request('/library/favorites', {}, 6000).catch(function () { return { items: [] }; }),
-      request('/library/history', {}, 6000).catch(function () { return { items: [] }; })
+      request('/library/favorites', {}, 12000).catch(function () { return { items: [] }; }),
+      request('/library/history', {}, 12000).catch(function () { return { items: [] }; })
     ]).then(function (res) {
       var fav = {};
       (res[0].items || []).forEach(function (b) { fav[b.id] = true; });
@@ -52554,12 +52640,13 @@ window.HMChat = (function () {
       renderStatus();
       return Promise.resolve();
     }
-    return request('/library/books', {}, 10000).then(function (data) {
+    return request('/library/books', {}, 30000).then(function (data) {
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
+    }).then(function () {
+      saveRemoteMeta();
     }).catch(function () {
-      state.mode = 'local';
-      state.books = localBooks();
+      /* 刷新失败时保留当前书架，不因一次接口抖动切回本地数据 */
     }).then(function () {
       markShelf();
       renderShelf();
@@ -52571,7 +52658,7 @@ window.HMChat = (function () {
     var cached = byId(id);
     if (cached && cached.pages && cached.pages.length) return Promise.resolve(cached);
     if (state.mode === 'remote') {
-      return request('/library/books/' + encodeURIComponent(id), {}, 10000)
+      return request('/library/books/' + encodeURIComponent(id), {}, 20000)
         .then(function (data) { return data.book; })
         .catch(function () { return cached; });
     }
@@ -53057,7 +53144,6 @@ window.HMChat = (function () {
       + '<button type="button" class="lib-btn-primary" data-read>' + (progressOf(book.id) ? '继续阅读 · 第 ' + Math.max(progressOf(book.id), 1) + ' 页' : '开 始 阅 读') + '</button>'
       + '<button type="button" class="lib-btn lib-fav-btn' + (fav ? ' is-on' : '') + '" data-fav>' + (fav ? '★ 已收藏' : '☆ 收藏') + '</button>'
       + '<button type="button" class="lib-btn" data-edit>✎ 编辑</button>'
-      + '<button type="button" class="lib-btn lib-btn-danger" data-del>删除</button>'
       + '</div>'
       + '<div class="lib-detail-tip">点击「开始阅读」向左翻页进入目录；阅读时可点击左右两侧翻书。</div>'
       + '</div></div>'
@@ -53106,14 +53192,13 @@ window.HMChat = (function () {
     els.detail.querySelector('[data-edit]').addEventListener('click', function () {
       openBookForm(state.current);
     });
-    els.detail.querySelector('[data-del]').addEventListener('click', function () {
-      confirmDelete(state.current);
-    });
     els.detail.querySelectorAll('[data-page]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         enterReader(state.current, Number(btn.getAttribute('data-page')));
       });
     });
+    /* 详情页就预取签名直链：点「继续阅读」时无需再等一次后端握手 */
+    prefetchPdfSignedUrl(book);
   }
 
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
@@ -53283,26 +53368,107 @@ window.HMChat = (function () {
     kickPdfSlowTimer();
   }
 
-  /* 向后端要一次性签名直链：只发地址，不搬字节 */
-  function fetchPdfSignedUrl(book) {
-    return request('/library/books/' + encodeURIComponent(book.id) + '/pdf-url', {}, 8000)
-      .then(function (data) {
-        var url = data && (data.url || data.pdfUrl || data.signedUrl);
-        if (!url) throw new Error('pdf-url 未返回可用地址');
-        return String(url);
-      });
+  /* 向后端要一次性签名直链：只发地址，不搬字节；同一本书 5 分钟内复用 */
+  var pdfSignedCache = {};
+  var pdfSignedPending = {};
+  var PDF_SIGNED_TTL = 5 * 60 * 1000;
+
+  function fetchPdfSignedUrl(book, force) {
+    var id = String((book && book.id) || '');
+    var hit = id && pdfSignedCache[id];
+    if (!force && hit && Date.now() - hit.at < PDF_SIGNED_TTL) return Promise.resolve(hit.url);
+    if (!force && pdfSignedPending[id]) return pdfSignedPending[id];
+
+    function once() {
+      return request('/library/books/' + encodeURIComponent(id) + '/pdf-url', {}, 30000)
+        .then(function (data) {
+          var url = data && (data.url || data.pdfUrl || data.signedUrl);
+          if (!url) throw new Error('pdf-url 未返回可用地址');
+          pdfSignedCache[id] = { url: String(url), at: Date.now() };
+          return String(url);
+        });
+    }
+    var pending = once().catch(function (err) {
+      /* 超时 / 网络错误 / 5xx 先重试一次，避免一次慢握手就退回整卷流式 */
+      var status = err && err.status;
+      if (status && status < 500) throw err;
+      return new Promise(function (resolve) { setTimeout(resolve, 700); }).then(once);
+    }).then(function (url) {
+      delete pdfSignedPending[id];
+      return url;
+    }, function (err) {
+      delete pdfSignedPending[id];
+      throw err;
+    });
+    if (!force) pdfSignedPending[id] = pending;
+    return pending;
+  }
+
+  /* 详情页预取：不阻塞界面，失败静默，真正阅读时仍会重试 */
+  function prefetchPdfSignedUrl(book) {
+    if (!book || !book.pdfUrl) return;
+    fetchPdfSignedUrl(book).catch(function () {});
+  }
+
+  function setPdfTocCollapsed(on) {
+    state.pdfTocCollapsed = !!on;
+    if (!els.reader) return;
+    var aside = els.reader.querySelector('[data-pdf-toc]');
+    if (aside) aside.classList.toggle('is-collapsed', state.pdfTocCollapsed);
+    var caret = els.reader.querySelector('[data-toc-caret]');
+    if (caret) caret.textContent = state.pdfTocCollapsed ? '▸' : '▾';
+    var head = els.reader.querySelector('.lib-pdf-toc-head');
+    if (head) head.setAttribute('aria-expanded', state.pdfTocCollapsed ? 'false' : 'true');
+    var btn = els.reader.querySelector('.lib-pdf-toc-toggle');
+    if (btn) btn.classList.toggle('is-on', state.pdfTocCollapsed);
+  }
+
+  function pdfModeName(mode) {
+    if (mode === 'fit') return '适应宽度';
+    if (mode === 'height') return '适应高度';
+    if (mode === 'page') return '适应页面';
+    return Math.round(Number(mode) * 100) + '%';
+  }
+
+  function readPdfMode() {
+    try {
+      var v = localStorage.getItem(LS.pdfMode);
+      if (v === 'fit' || v === 'height' || v === 'page') return v;
+      var n = Number(v);
+      if (v && isFinite(n) && n >= 0.4 && n <= 6) return n;
+    } catch (e) {}
+    return 'fit';
+  }
+
+  function savePdfMode(mode) {
+    try { localStorage.setItem(LS.pdfMode, String(mode)); } catch (e) {}
   }
 
   function updatePdfZoomLabel() {
     var el = els.reader && els.reader.querySelector('[data-zoom-label]');
-    if (!el) return;
-    el.textContent = state.pdfZoom === 'fit' ? '适合宽度' : Math.round(Number(state.pdfZoom) * 100) + '%';
+    if (el) el.textContent = pdfModeName(state.pdfZoom);
+    if (!els.reader) return;
+    els.reader.querySelectorAll('[data-pdf-mode]').forEach(function (btn) {
+      btn.classList.toggle('is-on', btn.getAttribute('data-pdf-mode') === state.pdfZoom);
+    });
   }
 
   function setPdfZoom(next) {
     state.pdfZoom = next;
+    savePdfMode(next);
     updatePdfZoomLabel();
     renderPdfCanvas();
+  }
+
+  var PDF_ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+  function stepPdfZoom(dir) {
+    var cur = typeof state.pdfZoom === 'number' ? state.pdfZoom : (state.pdfLastScale || 1);
+    var i = 0;
+    while (i < PDF_ZOOM_STEPS.length && PDF_ZOOM_STEPS[i] < cur - 0.001) i++;
+    var next = dir > 0
+      ? PDF_ZOOM_STEPS[Math.min(PDF_ZOOM_STEPS.length - 1, i)]
+      : PDF_ZOOM_STEPS[Math.max(0, i - 1)];
+    setPdfZoom(next);
   }
 
   function renderPdfCanvas() {
@@ -53319,7 +53485,14 @@ window.HMChat = (function () {
       if (token !== state.pdfToken) return null;
       var base = page.getViewport({ scale: 1 });
       var availW = Math.max(240, (scroll.clientWidth || 820) - 28);
-      var scale = state.pdfZoom === 'fit' ? availW / base.width : Number(state.pdfZoom);
+      /* 减去上下 padding 与横向滚动条余量，保证「适应高度」不出现纵向滚动条 */
+      var availH = Math.max(220, (scroll.clientHeight || 640) - 48);
+      var scale;
+      if (state.pdfZoom === 'height') scale = availH / base.height;
+      else if (state.pdfZoom === 'page') scale = Math.min(availW / base.width, availH / base.height);
+      else if (state.pdfZoom === 'fit') scale = availW / base.width;
+      else scale = Number(state.pdfZoom) || 1;
+      state.pdfLastScale = scale;
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       var vp = page.getViewport({ scale: scale * dpr });
       canvas.width = Math.round(vp.width);
@@ -53389,6 +53562,8 @@ window.HMChat = (function () {
               url: url,
               disableRange: false,
               disableStream: false,
+              /* 不后台整卷预取：大 PDF 在慢网下会把带宽抢光，先保证首屏 */
+              disableAutoFetch: true,
               withCredentials: false
             });
             task.onProgress = function (p) {
@@ -53401,7 +53576,9 @@ window.HMChat = (function () {
 
         var attempts = [];
         /* 第一选择：后端签名直链，字节完全不过我们的服务器 */
+        if (!pdfSignedCache[String(book.id)]) pdfLoadingText('正在获取加速地址…');
         return fetchPdfSignedUrl(book).then(function (signed) {
+          pdfLoadingText('正在加载 PDF …');
           kickPdfSlowTimer(20000);
           return open(signed);
         }).catch(function (err) {
@@ -53427,7 +53604,7 @@ window.HMChat = (function () {
     state.pdfDoc = null;
     state.pdfDocPromise = null;
     state.pdfTotal = 0;
-    state.pdfZoom = 'fit';
+    state.pdfZoom = readPdfMode();
     state.pdfPrefetched = {};
     state.pdfToken = (state.pdfToken || 0) + 1;
 
@@ -53457,30 +53634,18 @@ window.HMChat = (function () {
       scroll.addEventListener('wheel', function (e) {
         if (!e.ctrlKey) return;
         e.preventDefault();
-        var steps = ['fit', 1, 1.5, 2, 3];
-        var i = steps.indexOf(state.pdfZoom);
-        if (i < 0) i = 0;
-        setPdfZoom(steps[Math.max(0, Math.min(steps.length - 1, i + (e.deltaY < 0 ? 1 : -1)))]);
+        stepPdfZoom(e.deltaY < 0 ? 1 : -1);
       }, { passive: false });
     }
     var zoomOut = els.reader.querySelector('[data-zoom-out]');
     var zoomIn = els.reader.querySelector('[data-zoom-in]');
-    var zoomSteps = ['fit', 1, 1.5, 2, 3];
-    if (zoomOut && !zoomOut.dataset.pdfZoom) zoomOut.dataset.pdfZoom = '1';
-    if (zoomIn && !zoomIn.dataset.pdfZoom) zoomIn.dataset.pdfZoom = '1';
     if (zoomOut && !zoomOut.dataset.pdfZoomBound) {
       zoomOut.dataset.pdfZoomBound = '1';
-      zoomOut.addEventListener('click', function () {
-        var i = zoomSteps.indexOf(state.pdfZoom);
-        setPdfZoom(zoomSteps[Math.max(0, (i < 0 ? 0 : i) - 1)]);
-      });
+      zoomOut.addEventListener('click', function () { stepPdfZoom(-1); });
     }
     if (zoomIn && !zoomIn.dataset.pdfZoomBound) {
       zoomIn.dataset.pdfZoomBound = '1';
-      zoomIn.addEventListener('click', function () {
-        var i = zoomSteps.indexOf(state.pdfZoom);
-        setPdfZoom(zoomSteps[Math.min(zoomSteps.length - 1, (i < 0 ? 0 : i) + 1)]);
-      });
+      zoomIn.addEventListener('click', function () { stepPdfZoom(1); });
     }
 
     if (retry) {
@@ -53544,15 +53709,22 @@ window.HMChat = (function () {
     var book = state.current;
     var isPdf = !!book.pdfUrl;
     var stageHtml = isPdf
-      ? '<aside class="lib-pdf-toc">'
-        + '<div class="lib-pdf-toc-head">目录</div>'
+      ? '<aside class="lib-pdf-toc" data-pdf-toc>'
+        + '<button type="button" class="lib-pdf-toc-head" data-toc-toggle aria-expanded="true">'
+        + '<span>目录</span><span class="lib-pdf-toc-caret" data-toc-caret>▾</span></button>'
         + '<div class="lib-pdf-toc-list" data-toc-list><div class="lib-toc-note">正在解析目录…</div></div>'
         + '<div class="lib-pdf-toc-jump"><input type="number" min="1" step="1" data-toc-jump placeholder="页码"><button type="button" class="lib-toc-go" data-toc-go>跳转</button></div>'
         + '</aside>'
         + '<div class="lib-pdf-view">'
         + '<div class="lib-pdf-toolbar">'
+        + '<button type="button" class="lib-pdf-toc-toggle" data-toc-toggle aria-label="展开或收起目录">☰ 目录</button>'
+        + '<span class="lib-pdf-modes">'
+        + '<button type="button" class="lib-pdf-mode" data-pdf-mode="fit">适应宽度</button>'
+        + '<button type="button" class="lib-pdf-mode" data-pdf-mode="height">适应高度</button>'
+        + '<button type="button" class="lib-pdf-mode" data-pdf-mode="page">适应页面</button>'
+        + '</span>'
         + '<button type="button" class="lib-pdf-zoom" data-zoom-out aria-label="缩小">−</button>'
-        + '<span class="lib-pdf-zoom-label" data-zoom-label>适合宽度</span>'
+        + '<span class="lib-pdf-zoom-label" data-zoom-label>适应宽度</span>'
         + '<button type="button" class="lib-pdf-zoom" data-zoom-in aria-label="放大">+</button>'
         + '<button type="button" class="lib-pdf-open" data-pdf-full>⛶ 全屏阅读</button>'
         + '</div>'
@@ -53592,7 +53764,17 @@ window.HMChat = (function () {
     var fullBtn = els.reader.querySelector('[data-pdf-full]');
     if (fullBtn) fullBtn.addEventListener('click', toggleReaderFullscreen);
     syncFsButton();
+    /* 目录展开 / 收起：标题与工具栏按钮都可切换 */
+    els.reader.querySelectorAll('[data-toc-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () { setPdfTocCollapsed(!state.pdfTocCollapsed); });
+    });
+    setPdfTocCollapsed(state.pdfTocCollapsed);
+    /* 缩放模式：适应宽度 / 适应高度 / 适应页面 */
+    els.reader.querySelectorAll('[data-pdf-mode]').forEach(function (btn) {
+      btn.addEventListener('click', function () { setPdfZoom(btn.getAttribute('data-pdf-mode')); });
+    });
     if (isPdf) setupPdfReader(book);
+    updatePdfZoomLabel();
     var topEl = els.reader.querySelector('[data-top]');
     if (topEl) topEl.addEventListener('click', function (event) {
       var toc = event.target.closest('[data-toc-page]');
@@ -54189,6 +54371,8 @@ window.HMChat = (function () {
         relayoutTimer = setTimeout(function () {
           if (!els.body) return;
           renderShelf();
+          /* 阅读器尺寸变化时，适应类缩放需要重新计算 */
+          if (state.pdfDoc && els.reader && !els.reader.hidden && typeof state.pdfZoom === 'string') renderPdfCanvas();
         }, 150);
       });
       els.body.addEventListener('click', function (event) {
