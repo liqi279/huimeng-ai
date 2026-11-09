@@ -8700,7 +8700,6 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-admin-actions button.is-danger:hover { background: rgba(251, 113, 133, 0.12); color: var(--danger); border-color: rgba(251, 113, 133, 0.3); }
 
 
-
 /* ========== 版本更新通知（右下角浮动卡片，非全屏遮罩） ========== */
 .hm-update-modal {
   position: fixed;
@@ -9572,7 +9571,6 @@ body.hm-light .hm-ov-model-card ul li,
 body.hm-light .hm-ov-work-card p,
 body.hm-light .hm-ov-steps ol li p,
 body.hm-light .hm-ov-tip p { color: #64748b; }
-
 
 
 /* ========== 动漫生图工坊（工具模块 · WebUI 式桌面） ========== */
@@ -13598,289 +13596,555 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* ============ 原画（OUA）模块 ============ */
+/* ============ 原画（OUA）模块 · 摄影框 + 时间轴骨架 ============ */
 .hm-oua-page {
   display: flex;
   flex-direction: column;
-  /* 页面本身是 fixed + top/bottom，高度由上下边自动撑满；写死 100% 会按视口算，
-     多出 46px 顶栏高度导致底部被裁 */
-  height: auto;
-  padding: 20px 24px;
-  overflow-y: auto;
-  gap: 14px;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  overflow: hidden;
 }
 
-/* 团队大 Tab */
-.hm-oua-team-tabs {
-  display: flex;
-  gap: 8px;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.hm-oua-team-tab {
+.oua-workbench {
   flex: 1;
-  padding: 12px 16px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: var(--hm-text-dim);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.hm-oua-team-tab:hover {
-  color: var(--hm-text);
-  background: rgba(255, 255, 255, 0.04);
-}
-.hm-oua-team-tab.active {
-  color: #fff;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(99, 102, 241, 0.3));
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.5);
-}
-
-/* 列表 */
-.hm-oua-list-head {
+  min-height: 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 2px;
-}
-.hm-oua-list-sort {
-  display: flex;
-  gap: 4px;
-}
-.hm-oua-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  flex-direction: column;
   gap: 12px;
 }
 
-/* 卡片 */
-.hm-oua-card {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
-  padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  transition: all 0.18s;
-  position: relative;
+/* ---------- 上：传统二维动画摄影框 ---------- */
+.oua-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(120, 170, 210, 0.14);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(19, 31, 45, 0.96), rgba(10, 18, 28, 0.96));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
-.hm-oua-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: #6b7280;
-}
-.hm-oua-card:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.4);
-  transform: translateY(-2px);
-}
-.hm-oua-st-todo::before { background: #6b7280; }
-.hm-oua-st-wip::before  { background: #3b82f6; }
-.hm-oua-st-review::before { background: #f59e0b; }
-.hm-oua-st-final::before { background: #22c55e; }
 
-.hm-oua-card-head {
+.oua-stage-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
-}
-.hm-oua-shotno {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-weight: 700;
-  font-size: 15px;
-  color: #a78bfa;
-  letter-spacing: 0.5px;
-}
-.hm-oua-status {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--hm-text-dim);
-}
-.hm-oua-card-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--hm-text);
-  margin-bottom: 8px;
-  line-height: 1.3;
-  min-height: 1.3em;
-}
-.hm-oua-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 12px;
-  color: var(--hm-text-dim);
-  margin-bottom: 10px;
-}
-.hm-oua-card-foot {
-  display: flex;
   justify-content: space-between;
-  font-size: 11px;
-  color: var(--hm-text-dim);
-  padding-top: 8px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  gap: 12px;
+  height: 42px;
+  flex-shrink: 0;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
 }
 
-/* 编辑器 */
-.hm-oua-editor-body {
+.oua-stage-title {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
-.hm-oua-top-row {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.hm-oua-top-row .hm-art-form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.hm-oua-top-row .hm-art-form-row label {
-  font-size: 11px;
-  color: var(--hm-text-dim);
-}
-.hm-oua-top-row input, .hm-oua-top-row select {
-  padding: 6px 10px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  color: var(--hm-text);
+.oua-stage-title b {
   font-size: 13px;
-  outline: none;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #e9f2fb;
 }
-.hm-oua-top-row input:focus, .hm-oua-top-row select:focus {
-  border-color: var(--hm-accent);
+.oua-stage-title span:last-child {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: #5f7a92;
 }
-
-/* 团队 block */
-.hm-oua-team-block {
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.hm-oua-team-block[hidden] { display: none; }
-.hm-oua-block-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--hm-text);
-  margin: 0 0 12px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.hm-oua-block-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.oua-stage-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a8c0ff;
+  box-shadow: 0 0 8px rgba(168, 192, 255, 0.7);
 }
 
-/* K帧行 */
-.hm-oua-kframes, .hm-oua-tweens {
+.oua-stage-meta {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
 }
-.hm-oua-kframe-row, .hm-oua-tween-row {
-  display: grid;
-  grid-template-columns: 28px 48px 1fr 28px;
-  gap: 8px;
-  align-items: center;
-  padding: 6px 8px;
+.oua-chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(140, 175, 205, 0.18);
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #8ea6bd;
+  white-space: nowrap;
 }
-.hm-oua-tween-row {
-  grid-template-columns: 24px 48px 1fr 28px;
+.oua-chip.is-accent {
+  color: #c7d7ff;
+  border-color: rgba(139, 160, 255, 0.35);
+  background: rgba(96, 118, 255, 0.12);
 }
-.hm-oua-kframe-idx, .hm-oua-tween-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 600;
-  color: #a78bfa;
-  font-size: 12px;
-  text-align: center;
-}
-.hm-oua-kframe-img, .hm-oua-tween-img {
-  width: 48px; height: 48px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.4);
+
+.oua-stage-body {
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.hm-oua-kframe-img img, .hm-oua-tween-img img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
-}
-.hm-oua-kframe-empty, .hm-oua-tween-empty {
-  font-size: 20px;
-  color: var(--hm-text-dim);
-  font-weight: 200;
+  padding: 16px 18px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(96, 165, 250, 0.07), transparent 62%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 28px),
+    #0c1520;
 }
 
-.hm-oua-kframe-fields, .hm-oua-tween-fields {
-  display: grid;
-  gap: 4px;
-}
-.hm-oua-kframe-fields {
-  grid-template-columns: 60px 60px 90px 1fr 1fr;
-}
-.hm-oua-tween-fields {
-  grid-template-columns: 60px 60px 1fr 1fr;
-}
-.hm-oua-kframe-fields input, .hm-oua-kframe-fields select,
-.hm-oua-tween-fields input {
-  padding: 4px 6px;
-  font-size: 12px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  color: var(--hm-text);
-  outline: none;
-  min-width: 0;
-}
-.hm-oua-kframe-fields input:focus, .hm-oua-tween-fields input:focus,
-.hm-oua-kframe-fields select:focus {
-  border-color: var(--hm-accent);
-}
-
-/* 两列布局 */
-.hm-oua-kframes-col, .hm-oua-info-col {
+/* 构图纸 */
+.oua-paper {
+  position: relative;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  padding: 18px 26px 30px;
+  border-radius: 4px;
+  background: #f7f4ea;
+  box-shadow:
+    0 24px 50px rgba(0, 0, 0, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+.oua-paper::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(78, 78, 70, 0.35);
+  border-radius: 1px;
+  pointer-events: none;
 }
 
-/* 响应式 */
-@media (max-width: 1200px) {
-  .hm-oua-top-row { grid-template-columns: repeat(3, 1fr); }
-  .hm-oua-block-inner { grid-template-columns: 1fr; }
+/* 定位孔 */
+.oua-pegstrip {
+  position: relative;
+  flex-shrink: 0;
+  height: 30px;
+  margin: 0 8px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-@media (max-width: 700px) {
-  .hm-oua-top-row { grid-template-columns: 1fr; }
-  .hm-oua-kframe-fields { grid-template-columns: 1fr 1fr; }
-  .hm-oua-tween-fields { grid-template-columns: 1fr; }
-  .hm-oua-kframe-row, .hm-oua-tween-row {
-    grid-template-columns: 24px 44px 1fr 24px;
+.oua-peg {
+  display: block;
+  border-radius: 999px;
+  background: #16222e;
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.oua-peg.is-small { width: 13px; height: 13px; }
+.oua-peg.is-large { width: 21px; height: 21px; }
+.oua-peg.is-slot { width: 11px; height: 26px; border-radius: 6px; }
+
+/* 摄影框画面 */
+.oua-frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border: 1.5px solid #46463f;
+  background: #fffdf6;
+  overflow: hidden;
+}
+.oua-frame::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(70, 70, 63, 0.5);
+  pointer-events: none;
+  z-index: 2;
+}
+.oua-frame-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.oua-frame-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.oua-guide {
+  position: absolute;
+  background: rgba(70, 70, 63, 0.32);
+}
+.oua-guide.is-v {
+  top: 7px;
+  bottom: 7px;
+  left: 50%;
+  width: 1px;
+}
+.oua-guide.is-h {
+  left: 7px;
+  right: 7px;
+  top: 50%;
+  height: 1px;
+}
+.oua-guide.is-safe {
+  inset: 6%;
+  border: 1px dashed rgba(86, 108, 138, 0.45);
+  border-radius: 2px;
+  background: none;
+}
+.oua-crop {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 0 solid rgba(70, 70, 63, 0.7);
+}
+.oua-crop.is-tl { top: 7px; left: 7px; border-top-width: 1px; border-left-width: 1px; }
+.oua-crop.is-tr { top: 7px; right: 7px; border-top-width: 1px; border-right-width: 1px; }
+.oua-crop.is-bl { bottom: 7px; left: 7px; border-bottom-width: 1px; border-left-width: 1px; }
+.oua-crop.is-br { bottom: 7px; right: 7px; border-bottom-width: 1px; border-right-width: 1px; }
+
+.oua-paper-mark {
+  position: absolute;
+  right: 18px;
+  bottom: 7px;
+  display: flex;
+  gap: 14px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #8b887c;
+}
+
+/* ---------- 下：Premiere 风格轨道区 ---------- */
+.oua-tl {
+  --oua-ruler-h: 26px;
+  --oua-head-w: 214px;
+  flex: 0 0 clamp(228px, 30vh, 320px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(120, 170, 210, 0.14);
+  border-radius: 12px;
+  background: #17191e;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.oua-tl-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  background: linear-gradient(180deg, #24262c, #1e2025);
+  border-bottom: 1px solid #0b0c0f;
+}
+.oua-tl-transport {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.oua-tl-btn {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.oua-tl-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+}
+.oua-tl-btn.is-play::before {
+  border-left: 7px solid #cfd6e2;
+}
+.oua-tl-btn.is-step::before {
+  border-right: 7px solid #8d95a3;
+}
+.oua-tl-btn.is-step.is-next::before {
+  border-right: none;
+  border-left: 7px solid #8d95a3;
+}
+.oua-tl-tc {
+  margin-left: 2px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.35);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #c8d6e6;
+}
+.oua-tl-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: #8b93a1;
+}
+.oua-tl-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #5b6472;
+}
+.oua-tl-zoom {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+}
+.oua-tl-zoom i {
+  display: block;
+  width: 2px;
+  border-radius: 2px;
+  background: #6d7684;
+}
+.oua-tl-zoom i:nth-child(1) { height: 5px; }
+.oua-tl-zoom i:nth-child(2) { height: 9px; }
+.oua-tl-zoom i:nth-child(3) { height: 13px; background: #9fb3c8; }
+
+.oua-tl-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 轨道头 */
+.oua-tl-heads {
+  width: var(--oua-head-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #1c1e23;
+  border-right: 1px solid #0a0b0d;
+}
+.oua-tl-heads-top {
+  height: var(--oua-ruler-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-bottom: 1px solid #0a0b0d;
+  background: #15171b;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #6d7380;
+}
+.oua-tl-head {
+  flex: 1 1 0;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 6px;
+  border-bottom: 1px solid #121418;
+  font-size: 11px;
+  color: #a9b1bd;
+}
+.oua-tl-head.is-v { box-shadow: inset 2px 0 0 rgba(96, 165, 250, 0.55); }
+.oua-tl-head.is-a { box-shadow: inset 2px 0 0 rgba(52, 211, 153, 0.5); }
+.oua-tl-head.is-alt { background: rgba(255, 255, 255, 0.022); }
+.oua-tl-twist {
+  width: 9px;
+  flex-shrink: 0;
+  font-size: 9px;
+  line-height: 1;
+  color: #6b7280;
+}
+.oua-tl-name {
+  flex: 1;
+  min-width: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: #b9c2cf;
+}
+.oua-tl-tools {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #7d8694;
+}
+.oua-tool {
+  position: relative;
+  display: block;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.oua-tool.is-eye::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 13px;
+  height: 7px;
+  border: 1px solid currentColor;
+  border-radius: 50% / 62%;
+}
+.oua-tool.is-eye::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 5.5px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.oua-tool.is-lock::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  width: 9px;
+  height: 7px;
+  border: 1px solid currentColor;
+  border-radius: 1.5px;
+}
+.oua-tool.is-lock::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 5px;
+  height: 6px;
+  border: 1px solid currentColor;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+}
+.oua-tool.is-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  color: #8b93a1;
+}
+
+/* 时间轴标尺 + 轨行 */
+.oua-tl-canvas {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1a1c21;
+}
+.oua-ruler {
+  position: relative;
+  height: var(--oua-ruler-h);
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #131519;
+  border-bottom: 1px solid #0a0b0d;
+}
+.oua-ruler::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background-image: repeating-linear-gradient(90deg, rgba(190, 205, 225, 0.2) 0 1px, transparent 1px 12px);
+}
+.oua-ruler-row {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+.oua-ruler-label {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 0 0 5px;
+  border-left: 1px solid rgba(190, 205, 225, 0.16);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 9px;
+  line-height: 1;
+  color: #79828f;
+  white-space: nowrap;
+}
+.oua-tl-rows {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.oua-track-row {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 24px;
+  border-bottom: 1px solid #14161a;
+  background: #1b1d22;
+}
+.oua-track-row:nth-child(even) { background: #22252b; }
+.oua-track-row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 80px);
+  pointer-events: none;
+}
+
+.oua-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 16.6%;
+  width: 1px;
+  background: #4d9de0;
+  box-shadow: 0 0 8px rgba(77, 157, 224, 0.5);
+  pointer-events: none;
+  z-index: 3;
+}
+.oua-playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -5px;
+  width: 11px;
+  height: 10px;
+  background: #4d9de0;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+@media (max-width: 900px) {
+  .oua-stage-body {
+    align-items: flex-start;
+    overflow-y: auto;
   }
+  .oua-paper {
+    height: auto;
+    width: 100%;
+  }
+  .oua-tl { --oua-head-w: 168px; }
+  .oua-stage-meta .oua-chip:first-child { display: none; }
 }
 
 /* ============ 动画（中间帧 Tweening）模块 ============ */
@@ -18973,7 +19237,7 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
         <span>分镜</span>
       </button>
-      <button class="hm-rail-item" data-rail="oua" title="原画（本番原画 / 動画 · 中割り）">
+      <button class="hm-rail-item" data-rail="oua" title="原画（摄影框 · 时间轴）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
         <span>原画</span>
       </button>
@@ -21953,205 +22217,158 @@ body.dv-open .hm-page {
     </div>
   </main>
 
-  <!-- ============ 原画（Original Animation） ============ -->
+  <!-- ============ 原画（摄影框 + 时间轴 · 结构骨架） ============ -->
   <main class="hm-page hm-oua-page" id="view-oua" hidden>
-    <div class="hm-art-top">
-      <div class="hm-art-top-left">
-        <h2>🎬 原画（Original Animation）</h2>
-        <span class="hm-art-top-sub">日式传统二维赛璐璐 · 本番原画 / 動画 / 中割り</span>
-      </div>
-      <div class="hm-art-top-right">
-        <button class="hm-pill" id="ouaExportBtn">📤 导出时间分配表</button>
-        <button class="hm-pill" id="ouaImportBtn">📥 批量导入</button>
-        <button class="hm-pill hm-pill-primary" id="ouaNewBtn">＋ 新建镜头</button>
-      </div>
-    </div>
-
-    <!-- 团队大 Tab -->
-    <div class="hm-oua-team-tabs" id="ouaTeamTabs">
-      <button class="hm-oua-team-tab active" data-team="first">🎨 第一原画（本番原画 · ラフ原画）</button>
-      <button class="hm-oua-team-tab" data-team="second">🎬 第二原画（動画 · 中割り）</button>
-    </div>
-
-    <!-- 筛选条 -->
-    <div class="hm-art-filter-bar">
-      <input class="hm-art-search" id="ouaSearch" placeholder="🔍 搜索镜号 / 标题 / 动作描述...">
-      <select id="ouaStatusFilter" class="hm-art-filter">
-        <option value="all">全部状态</option>
-        <option value="todo">未开始</option>
-        <option value="wip">进行中</option>
-        <option value="review">审图中</option>
-        <option value="final">定稿</option>
-      </select>
-      <input class="hm-art-search" id="ouaShotFilter" placeholder="镜号前缀（如 1-）" style="max-width:150px">
-    </div>
-
-    <!-- 列表 -->
-    <section class="hm-art-view-list" id="ouaListView">
-      <div class="hm-oua-list-head">
-        <span id="ouaListCount" class="hm-art-top-sub">0 镜头</span>
-        <div class="hm-oua-list-sort">
-          <button class="hm-pill hm-pill-mini" data-sort="shotNo">按镜号</button>
-          <button class="hm-pill hm-pill-mini" data-sort="updatedAt">按更新时间</button>
-        </div>
-      </div>
-      <div class="hm-oua-grid" id="ouaGrid"></div>
-    </section>
-
-    <!-- 编辑器 -->
-    <section class="hm-art-view-editor" id="ouaEditorView" hidden>
-      <div class="hm-art-editor-top">
-        <button class="hm-pill hm-pill-ghost" id="ouaBackBtn">← 返回列表</button>
-        <h3 id="ouaEditorTitle">镜头</h3>
-        <div class="hm-art-editor-meta">
-          <span id="ouaShotTag" class="hm-art-editor-path">—</span>
-          <span class="hm-art-editor-version" id="ouaStatusTag">未开始</span>
-        </div>
-      </div>
-
-      <div class="hm-oua-editor-body">
-        <!-- 顶部基础信息 -->
-        <div class="hm-oua-top-row">
-          <div class="hm-art-form-row"><label>镜号</label><input id="ouaShotNo" placeholder="如: 1-01, 2-03"></div>
-          <div class="hm-art-form-row"><label>镜头标题</label><input id="ouaTitle" placeholder="如: 主角奔跑入场"></div>
-          <div class="hm-art-form-row"><label>关联场次</label><input id="ouaSceneRef" placeholder="如: scene_abc"></div>
-          <div class="hm-art-form-row"><label>状态</label>
-            <select id="ouaStatus">
-              <option value="todo">未开始</option>
-              <option value="wip">进行中</option>
-              <option value="review">审图中</option>
-              <option value="final">定稿</option>
-            </select>
+    <div class="oua-workbench">
+      <!-- 上：传统二维动画摄影框 -->
+      <section class="oua-stage" aria-label="摄影框">
+        <div class="oua-stage-bar">
+          <div class="oua-stage-title">
+            <span class="oua-stage-dot" aria-hidden="true"></span>
+            <b>構図紙</b>
+            <span>CAMERA FRAME</span>
           </div>
-          <div class="hm-art-form-row"><label>版本号</label><input id="ouaVersion" value="Ver1.0"></div>
-          <div class="hm-art-form-row"><label>标签</label><input id="ouaTags" placeholder="回车添加"></div>
-        </div>
-
-        <!-- 第一原画区 -->
-        <div id="ouaFirstBlock" class="hm-oua-team-block">
-          <h4 class="hm-oua-block-title">🎨 第一原画（本番原画）— K 帧 · 时间分配 · 运镜</h4>
-          <div class="hm-oua-block-inner">
-            <div class="hm-oua-kframes-col">
-              <div class="hm-art-form-block">
-                <label>👤 原画担当（作画监督）</label>
-                <input id="ouaDirector" placeholder="如: 山田太郎">
-              </div>
-              <div class="hm-art-form-block">
-                <label>🔢 K 帧关键姿势（时间轴）</label>
-                <div class="hm-oua-kframes" id="ouaKeyframesList"></div>
-                <button class="hm-pill hm-pill-mini hm-pill-ghost" id="ouaAddKeyframe">＋ 添加 K 帧</button>
-              </div>
-            </div>
-
-            <div class="hm-oua-info-col">
-              <div class="hm-art-form-row hm-art-form-2col">
-                <div>
-                  <label>🎥 运镜指示</label>
-                  <select id="ouaCameraMove">
-                    <option>固定</option><option>左 PAN→</option><option>右 →PAN</option>
-                    <option>上 ↑TILT</option><option>下 ↓TILT</option>
-                    <option>前 DOLLY IN</option><option>后 DOLLY OUT</option>
-                    <option>回転</option><option>组合</option>
-                  </select>
-                </div>
-                <div><label>运镜时长（秒）</label><input id="ouaCameraDuration" placeholder="如: 3.0"></div>
-              </div>
-              <div class="hm-art-form-block">
-                <label>⏱ 时间分配表（タイムシート）</label>
-                <textarea id="ouaTimeSheet" rows="2" placeholder="如: 0:00 起始 Pose → 0:1.2 中间 → 0:2.8 结束"></textarea>
-              </div>
-              <div class="hm-art-form-block">
-                <label>📝 动作描述</label>
-                <textarea id="ouaActionFlow" rows="3" placeholder="角色从左到右奔跑，途中跃过障碍..."></textarea>
-              </div>
-              <div class="hm-art-form-row hm-art-form-2col">
-                <div><label>💬 对白进入时间</label><input id="ouaDialoguePoint" placeholder="如: 0:03.5"></div>
-                <div><label>🔊 音效进入时间</label><input id="ouaSfxPoint" placeholder="如: 0:00.0"></div>
-              </div>
-              <div class="hm-art-form-block">
-                <label>📐 Layout 对接参考（逗号分隔 URL）</label>
-                <input id="ouaLayoutRef" placeholder="如: /uploads/assets/art-1.png, /uploads/assets/art-2.png">
-              </div>
-              <div class="hm-art-form-block">
-                <label>🖊 原画绘画注意点</label>
-                <textarea id="ouaDrawingNotes" rows="2" placeholder="线条风格 / 变形 / 禁忌 / 透视基准..."></textarea>
-              </div>
-            </div>
+          <div class="oua-stage-meta" aria-hidden="true">
+            <span class="oua-chip">FIELD 12</span>
+            <span class="oua-chip">SAFE 90%</span>
+            <span class="oua-chip is-accent">TAKE ( + )</span>
           </div>
         </div>
 
-        <!-- 第二原画区 -->
-        <div id="ouaSecondBlock" class="hm-oua-team-block" hidden>
-          <h4 class="hm-oua-block-title">🎬 第二原画（動画）— 中割り · 质量检查 · 反馈</h4>
-          <div class="hm-oua-block-inner">
-            <div class="hm-oua-kframes-col">
-              <div class="hm-art-form-block">
-                <label>🧑‍💻 动画师担当</label>
-                <input id="ouaAnimator" placeholder="如: 佐々木花子">
-              </div>
-              <div class="hm-art-form-row hm-art-form-2col">
-                <div>
-                  <label>起始 K 帧 (A)</label>
-                  <select id="ouaKeyASelect"></select>
-                </div>
-                <div>
-                  <label>结束 K 帧 (B)</label>
-                  <select id="ouaKeyBSelect"></select>
-                </div>
-              </div>
-              <div class="hm-art-form-row">
-                <label>总中割帧数</label>
-                <input id="ouaTotalFrames" type="number" min="0" placeholder="如: 12">
-              </div>
-              <div class="hm-art-form-block">
-                <label>🎞 中割补间帧列表</label>
-                <div class="hm-oua-tweens" id="ouaTweensList"></div>
-                <button class="hm-pill hm-pill-mini hm-pill-ghost" id="ouaAddTween">＋ 添加中割帧</button>
+        <div class="oua-stage-body">
+          <div class="oua-paper">
+            <!-- 定位孔：左小孔 / 中部大孔 / 右竖向长孔 -->
+            <div class="oua-pegstrip" aria-hidden="true">
+              <span class="oua-peg is-small"></span>
+              <span class="oua-peg is-large"></span>
+              <span class="oua-peg is-slot"></span>
+            </div>
+
+            <div class="oua-frame" data-oua-frame-wrap>
+              <!-- 摄影框画面挂载点：后续绘制内容写入此 canvas -->
+              <canvas class="oua-frame-canvas" data-oua-frame width="1920" height="1080" aria-label="摄影框画面"></canvas>
+              <div class="oua-frame-guides" aria-hidden="true">
+                <i class="oua-guide is-v"></i>
+                <i class="oua-guide is-h"></i>
+                <i class="oua-guide is-safe"></i>
+                <i class="oua-crop is-tl"></i>
+                <i class="oua-crop is-tr"></i>
+                <i class="oua-crop is-bl"></i>
+                <i class="oua-crop is-br"></i>
               </div>
             </div>
 
-            <div class="hm-oua-info-col">
-              <div class="hm-art-form-block">
-                <label>✅ 形状守恒检查（shape check）</label>
-                <textarea id="ouaShapeCheck" rows="2" placeholder="帧3 手臂变形 → 修正"></textarea>
-              </div>
-              <div class="hm-art-form-block">
-                <label>🛤 运动轨迹检查（motion check）</label>
-                <textarea id="ouaMotionCheck" rows="2" placeholder="跳跃抛物线 帧4-6 偏下 → 微调"></textarea>
-              </div>
-              <div class="hm-art-form-row hm-art-form-2col">
-                <div>
-                  <label>📨 反馈状态</label>
-                  <select id="ouaFeedbackStatus">
-                    <option value="pending">待提交</option>
-                    <option value="submitted">已提交</option>
-                    <option value="reviewing">审图中</option>
-                    <option value="fixing">修正中</option>
-                    <option value="approved">已通过</option>
-                  </select>
-                </div>
-                <div><label>🔁 修正次数</label><input id="ouaRevisionCount" type="number" min="0"></div>
-              </div>
-              <div class="hm-art-form-block">
-                <label>📒 审图反馈备注</label>
-                <textarea id="ouaFeedbackNote" rows="4" placeholder="第一原画 / 动画监督的修正意见..."></textarea>
-              </div>
+            <div class="oua-paper-mark" aria-hidden="true">
+              <span>TAKE( + )</span>
+              <span>No. 001</span>
             </div>
           </div>
         </div>
+      </section>
 
-        <div class="hm-art-form-block">
-          <label>🧑 角色引用（逗号分隔）</label>
-          <input id="ouaCharacterRef" placeholder="如: 角色A, 角色B">
+      <!-- 下：Premiere 风格轨道区 -->
+      <section class="oua-tl" aria-label="时间轴">
+        <div class="oua-tl-bar">
+          <div class="oua-tl-transport" aria-hidden="true">
+            <span class="oua-tl-btn is-step"></span>
+            <span class="oua-tl-btn is-play"></span>
+            <span class="oua-tl-btn is-step is-next"></span>
+            <span class="oua-tl-tc">00:00:00:00</span>
+          </div>
+          <div class="oua-tl-info" aria-hidden="true">
+            <span>序列 01</span>
+            <span class="oua-tl-dot"></span>
+            <span>25 fps</span>
+            <span class="oua-tl-zoom"><i></i><i></i><i></i></span>
+          </div>
         </div>
-      </div>
 
-      <div class="hm-art-editor-footer">
-        <button class="hm-pill" id="ouaDeleteBtn">🗑 删除</button>
-        <button class="hm-pill hm-pill-ghost" id="ouaSaveBtn">💾 保存</button>
-        <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
-      </div>
-    </section>
+        <div class="oua-tl-body">
+          <div class="oua-tl-heads">
+            <div class="oua-tl-heads-top"><span>轨道</span><span>V / A</span></div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v is-alt" data-oua-track-head="V2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a" data-oua-track-head="A2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="oua-tl-canvas">
+            <div class="oua-ruler" aria-hidden="true">
+              <div class="oua-ruler-row">
+                <span class="oua-ruler-label">00:00</span>
+                <span class="oua-ruler-label">00:02</span>
+                <span class="oua-ruler-label">00:04</span>
+                <span class="oua-ruler-label">00:06</span>
+                <span class="oua-ruler-label">00:08</span>
+                <span class="oua-ruler-label">00:10</span>
+                <span class="oua-ruler-label">00:12</span>
+                <span class="oua-ruler-label">00:14</span>
+                <span class="oua-ruler-label">00:16</span>
+              </div>
+            </div>
+
+            <div class="oua-tl-rows">
+              <!-- 轨道数据行挂载点 -->
+              <div class="oua-track-row" data-oua-track-row="V3"></div>
+              <div class="oua-track-row" data-oua-track-row="V2"></div>
+              <div class="oua-track-row" data-oua-track-row="V1"></div>
+              <div class="oua-track-row" data-oua-track-row="A1"></div>
+              <div class="oua-track-row" data-oua-track-row="A2"></div>
+              <div class="oua-track-row" data-oua-track-row="A3"></div>
+            </div>
+
+            <div class="oua-playhead" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
   <!-- ============ 动画（中间帧处理 · Tweening） ============ -->
@@ -23518,16 +23735,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.bulkImportArts = function (items) { return request('/art/bulk', { method: 'POST', body: { items: items } }, 30000); };
   api.exportArtBoard = function (id, format) { return request('/art/' + encodeURIComponent(id) + '/export?format=' + encodeURIComponent(format), null, 15000); };
 
-  /* ===== 原画（OUA / Original Animation）===== */
-  api.listOua = function (q) { return request('/oua' + (q || ''), null, 20000); };
-  api.getOua = function (id) { return request('/oua/' + encodeURIComponent(id), null, 20000); };
-  api.createOua = function (payload) { return request('/oua', { method: 'POST', body: payload }, 20000); };
-  api.updateOua = function (id, payload) { return request('/oua/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
-  api.deleteOua = function (id) { return request('/oua/' + encodeURIComponent(id), { method: 'DELETE', body: null }, 15000); };
-  api.duplicateOua = function (id) { return request('/oua/' + encodeURIComponent(id) + '/duplicate', { method: 'POST', body: null }, 20000); };
-  api.bulkOua = function (items) { return request('/oua/bulk', { method: 'POST', body: { items: items } }, 30000); };
-  api.exportOua = function (team) { return '/api/oua/export' + (team ? '?team=' + encodeURIComponent(team) : ''); };
-  api.dictOua = function () { return request('/oua/dict', null, 10000); };
 
   /* ===== 动画（Animation / Tweening）===== */
   api.listAnimation = function (q) { return request('/animation' + (q || ''), null, 20000); };
@@ -56430,9 +56637,6 @@ window.HMChat = (function () {
     if (view === 'art' && window.HMArt) {
       try { window.HMArt.enter(); } catch (e) { console.error('[Art] enter failed', e); }
     }
-    if (view === 'oua' && window.HMOUA) {
-      try { window.HMOUA.enter(); } catch (e) { console.error('[OUA] enter failed', e); }
-    }
     if (view === 'animation' && window.HMAnimation) {
       try { window.HMAnimation.enter(); } catch (e) { console.error('[Animation] enter failed', e); }
     }
@@ -60892,879 +61096,6 @@ window.HMChat = (function () {
 
   window.HMArt = { enter: enter, state: state };
 })();
-
-/* ========================================================================
- * HMOUA — Original Animation 原画（第一原画 / 第二原画 · 中割り）
- * ======================================================================== */
-(function () {
-  var A = window.HMApp;
-  var state = {
-    list: [], team: 'first', sortBy: 'updatedAt',
-    editing: null, draft: null, saveTimer: null,
-  };
-  var ST_LABELS = { todo: '未开始', wip: '进行中', review: '审图中', final: '定稿' };
-  var FB_LABELS = { pending: '待提交', submitted: '已提交', reviewing: '审图中', fixing: '修正中', approved: '已通过' };
-
-  function $(id) { return document.getElementById(id); }
-
-  function enter() {
-    bindTop();
-    bindTeamTabs();
-    bindFilters();
-    loadList();
-  }
-
-  /* ============ 事件绑定 ============ */
-  function bindTop() {
-    var btn = $('ouaNewBtn');
-    if (btn && !btn.__bound) {
-      btn.__bound = true;
-      btn.addEventListener('click', createNew);
-    }
-    var imp = $('ouaImportBtn');
-    if (imp && !imp.__bound) {
-      imp.__bound = true;
-      imp.addEventListener('click', openImportWizard);
-    }
-    var exp = $('ouaExportBtn');
-    if (exp && !exp.__bound) {
-      exp.__bound = true;
-      exp.addEventListener('click', exportCsv);
-    }
-  }
-  function bindTeamTabs() {
-    document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (el) {
-      if (el.__bound) return;
-      el.__bound = true;
-      el.addEventListener('click', function () {
-        document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (x) { x.classList.remove('active'); });
-        el.classList.add('active');
-        state.team = el.getAttribute('data-team');
-        // 如果有正在编辑的镜头，也要把它的 team 同步
-        if (state.editing) { state.editing.team = state.team; }
-        loadList();
-      });
-    });
-  }
-  function bindFilters() {
-    ['ouaSearch', 'ouaStatusFilter', 'ouaShotFilter'].forEach(function (id) {
-      var el = $(id); if (!el || el.__bound) return;
-      el.__bound = true;
-      var deb;
-      el.addEventListener('input', function () {
-        clearTimeout(deb); deb = setTimeout(loadList, 300);
-      });
-      el.addEventListener('change', function () { clearTimeout(deb); loadList(); });
-    });
-    document.querySelectorAll('.hm-oua-list-sort .hm-pill').forEach(function (el) {
-      if (el.__bound) return;
-      el.__bound = true;
-      el.addEventListener('click', function () {
-        state.sortBy = el.getAttribute('data-sort');
-        renderGrid();
-      });
-    });
-  }
-
-  /* ============ 列表 ============ */
-  function loadList() {
-    var qp = new URLSearchParams();
-    qp.set('team', state.team);
-    var kw = $('ouaSearch').value.trim(); if (kw) qp.set('keyword', kw);
-    var sf = $('ouaStatusFilter').value; if (sf !== 'all') qp.set('status', sf);
-    var shot = $('ouaShotFilter').value.trim(); if (shot) qp.set('shotNo', shot);
-    state.list = [];
-    api.listOua('?' + qp.toString()).then(function (res) {
-      state.list = res.items || [];
-      renderGrid();
-    }).catch(function (err) {
-      A.toast && A.toast('加载镜头失败: ' + (err.message || err), 'error');
-    });
-  }
-
-  function renderGrid() {
-    var grid = $('ouaGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    var items = state.list.slice();
-    items.sort(function (a, b) {
-      if (state.sortBy === 'shotNo') return (a.shotNo || '').localeCompare(b.shotNo || '');
-      return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
-    });
-    items.forEach(function (s) {
-      var card = document.createElement('div');
-      card.className = 'hm-oua-card hm-oua-st-' + s.status;
-      var first = s.first || {}; var second = s.second || {};
-      var kCount = (first.poseKeyframes || []).length;
-      var tCount = (second.tweens || []).length;
-      var teamLabel = (s.team === 'second') ? '🎬 第二原画' : '🎨 第一原画';
-      card.innerHTML =
-        '<div class="hm-oua-card-head">' +
-          '<span class="hm-oua-shotno">' + (s.shotNo || '—') + '</span>' +
-          '<span class="hm-oua-status">' + ST_LABELS[s.status] + '</span>' +
-        '</div>' +
-        '<div class="hm-oua-card-title">' + (s.title || '(无标题)') + '</div>' +
-        '<div class="hm-oua-card-info">' +
-          '<div>🏷 ' + teamLabel + '</div>' +
-          '<div>👤 ' + (first.director || first.animator || '—') + '</div>' +
-          '<div>🎥 ' + (first.cameraMove || '固定') + '</div>' +
-        '</div>' +
-        '<div class="hm-oua-card-foot">' +
-          '<span>🔢 K帧 ' + kCount + '</span>' +
-          '<span>🎞 中割 ' + tCount + '</span>' +
-        '</div>';
-      card.addEventListener('click', function () { openEditor(s.id); });
-      grid.appendChild(card);
-    });
-    $('ouaListCount').textContent = items.length + ' 镜头 · ' + teamLabelFor(state.team);
-  }
-  function teamLabelFor(t) { return t === 'second' ? '第二原画（動画）' : '第一原画（本番原画）'; }
-
-  /* ============ 新建 ============ */
-  function createNew() {
-    var shotNo = window.prompt('镜号（如: 1-01）', ('1-' + (state.list.filter(function (s) { return s.team === state.team; }).length + 1)));
-    if (shotNo === null) return;
-    var payload = { shotNo: shotNo, team: state.team, status: 'todo', title: '' };
-    api.createOua(payload).then(function (res) {
-      openEditor(res.shot.id);
-    }).catch(function (err) {
-      A.toast && A.toast('新建失败: ' + (err.message || err), 'error');
-    });
-  }
-
-  /* ============ 编辑器 ============ */
-  function openEditor(id) {
-    var listView = $('ouaListView');
-    var editView = $('ouaEditorView');
-    listView.hidden = true; editView.hidden = false;
-    api.getOua(id).then(function (res) {
-      state.editing = res.shot;
-      state.draft = JSON.parse(JSON.stringify(res.shot));
-      populateEditor();
-      A.toast && A.toast('已加载镜号 ' + res.shot.shotNo);
-    }).catch(function (err) {
-      A.toast && A.toast('加载失败: ' + (err.message || err), 'error');
-    });
-  }
-
-  function populateEditor() {
-    var s = state.editing;
-    var f = s.first = s.first || {};
-    var sec = s.second = s.second || {};
-    f.poseKeyframes = f.poseKeyframes || [];
-    sec.tweens = sec.tweens || [];
-    sec.shapeCheck = sec.shapeCheck || [];
-    sec.motionCheck = sec.motionCheck || [];
-
-    $('ouaBackBtn').onclick = function () {
-      editView.hidden = true; listView.hidden = false;
-      loadList(); state.editing = null; state.draft = null;
-    };
-    $('ouaDeleteBtn').onclick = function () {
-      if (!window.confirm('确定删除 ' + s.shotNo + ' ' + (s.title || '') + ' ?')) return;
-      api.deleteOua(s.id).then(function () {
-        editView.hidden = true; listView.hidden = false;
-        loadList(); state.editing = null; state.draft = null;
-        A.toast && A.toast('已删除');
-      });
-    };
-    $('ouaSaveBtn').onclick = function () { saveShot(); };
-
-    // 元信息
-    $('ouaShotNo').value = s.shotNo || '';
-    $('ouaTitle').value = s.title || '';
-    $('ouaSceneRef').value = s.sceneRef || '';
-    $('ouaStatus').value = s.status || 'todo';
-    $('ouaVersion').value = s.version || 'Ver1.0';
-    $('ouaTags').value = (s.tags || []).join(', ');
-    $('ouaEditorTitle').textContent = (s.title || '(无标题)') + ' — ' + (s.shotNo || '—');
-    $('ouaShotTag').textContent = s.shotNo || '—';
-    $('ouaStatusTag').textContent = ST_LABELS[s.status] || '未开始';
-
-    // 团队 block 切换
-    $('ouaFirstBlock').hidden = (s.team === 'second');
-    $('ouaSecondBlock').hidden = (s.team !== 'second');
-    // 同步 team tab
-    document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (x) { x.classList.toggle('active', x.getAttribute('data-team') === s.team); });
-    state.team = s.team;
-
-    // 第一原画字段
-    $('ouaDirector').value = f.director || '';
-    $('ouaCameraMove').value = f.cameraMove || '固定';
-    $('ouaCameraDuration').value = f.cameraDuration || '';
-    $('ouaTimeSheet').value = f.timeSheet || '';
-    $('ouaActionFlow').value = f.actionFlow || '';
-    $('ouaDialoguePoint').value = f.dialoguePoint || '';
-    $('ouaSfxPoint').value = f.sfxPoint || '';
-    $('ouaLayoutRef').value = (f.layoutRef || []).join(', ');
-    $('ouaDrawingNotes').value = f.drawingNotes || '';
-
-    // 第二原画字段
-    $('ouaAnimator').value = sec.animator || '';
-    $('ouaTotalFrames').value = sec.totalFrames || 0;
-    $('ouaFeedbackStatus').value = sec.feedbackStatus || 'pending';
-    $('ouaRevisionCount').value = sec.revisionCount || 0;
-    $('ouaFeedbackNote').value = sec.feedbackNote || '';
-    $('ouaShapeCheck').value = (Array.isArray(sec.shapeCheck) ? sec.shapeCheck.map(function (c) { return (c.frameNum ? '帧' + c.frameNum + ' ' : '') + (c.note || ''); }).join('\n') : (sec.shapeCheckText || ''));
-    $('ouaMotionCheck').value = (Array.isArray(sec.motionCheck) ? sec.motionCheck.map(function (c) { return (c.frameNum ? '帧' + c.frameNum + ' ' : '') + (c.note || ''); }).join('\n') : (sec.motionCheckText || ''));
-
-    // 公用
-    $('ouaCharacterRef').value = (f.characterRef || []).map(function (r) { return r.characterId || r.name || ''; }).filter(Boolean).join(', ');
-
-    // K帧列表 + 下拉
-    renderKeyframesList();
-    renderKeyframeSelects();
-    renderTweensList();
-
-    // 绑定输入 → 自动保存
-    bindAutoSave();
-
-    // 添加按钮
-    $('ouaAddKeyframe').onclick = function () {
-      f.poseKeyframes.push({
-        frame: f.poseKeyframes.length * 4 + 0,
-        second: (f.poseKeyframes.length * 0.4).toFixed(1),
-        pose: 'K 帧 ' + (f.poseKeyframes.length + 1),
-        url: '', note: '', keyType: 'key',
-      });
-      renderKeyframesList(); renderKeyframeSelects(); saveShot();
-    };
-    $('ouaAddTween').onclick = function () {
-      var total = (sec.totalFrames || 0) + sec.tweens.length + 1;
-      sec.tweens.push({
-        frameNum: total,
-        ratio: (sec.tweens.length + 1) / (sec.totalFrames || 12),
-        url: '', note: '', issue: '',
-      });
-      sec.totalFrames = total;
-      renderTweensList(); saveShot();
-    };
-  }
-
-  function renderKeyframesList() {
-    var list = $('ouaKeyframesList');
-    var f = state.editing.first;
-    list.innerHTML = '';
-    (f.poseKeyframes || []).forEach(function (k, idx) {
-      var row = document.createElement('div');
-      row.className = 'hm-oua-kframe-row';
-      var typeOpts = [
-        ['layout', 'Layout'], ['key', 'K帧/本番'], ['breakdown', '分解帧'], ['pose', 'Pose参考']
-      ].map(function (t) { return '<option value="' + t[0] + '"' + (k.keyType === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
-      var imgCell = '';
-      if (k.url) {
-        imgCell = '<div class="hm-oua-kframe-img"><img src="' + api.mediaUrl(k.url) + '" alt="" data-preview-click></div>';
-      } else {
-        imgCell = '<div class="hm-oua-kframe-img hm-oua-kframe-empty" data-kf-upload="' + idx + '">＋</div>';
-      }
-      row.innerHTML =
-        '<div class="hm-oua-kframe-idx">#' + (idx + 1) + '</div>' +
-        imgCell +
-        '<div class="hm-oua-kframe-fields">' +
-          '<input class="hm-oua-kf-f" placeholder="帧" type="number" min="0" value="' + (k.frame || '') + '" data-kf-frame="' + idx + '">' +
-          '<input class="hm-oua-kf-s" placeholder="秒" type="number" min="0" step="0.1" value="' + (k.second || '') + '" data-kf-sec="' + idx + '">' +
-          '<select class="hm-oua-kf-type" data-kf-type="' + idx + '">' + typeOpts + '</select>' +
-          '<input class="hm-oua-kf-pose" placeholder="Pose 名称" value="' + (k.pose || '').replace(/"/g, '&quot;') + '" data-kf-pose="' + idx + '">' +
-          '<input class="hm-oua-kf-note" placeholder="备注" value="' + (k.note || '').replace(/"/g, '&quot;') + '" data-kf-note="' + idx + '">' +
-        '</div>' +
-        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-kf-del="' + idx + '">✕</button>';
-      row.querySelectorAll('[data-kf-del]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          f.poseKeyframes.splice(idx, 1);
-          renderKeyframesList(); renderKeyframeSelects(); saveShot();
-        });
-      });
-      row.querySelectorAll('[data-kf-frame],[data-kf-sec],[data-kf-type],[data-kf-pose],[data-kf-note]').forEach(function (el) {
-        el.addEventListener('input', function () {
-          var key = el.getAttribute('data-kf-frame') !== null ? 'frame' :
-                    el.getAttribute('data-kf-sec') !== null ? 'second' :
-                    el.getAttribute('data-kf-type') !== null ? 'keyType' :
-                    el.getAttribute('data-kf-pose') !== null ? 'pose' : 'note';
-          if (key === 'frame') k.frame = Number(el.value) || 0;
-          else if (key === 'second') k.second = Number(el.value) || 0;
-          else k[key] = el.value;
-          scheduleSave();
-        });
-      });
-      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
-        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
-      });
-      row.querySelectorAll('[data-kf-upload]').forEach(function (el) {
-        el.addEventListener('click', function () { uploadKeyframe(idx); });
-      });
-      list.appendChild(row);
-    });
-  }
-
-  function renderKeyframeSelects() {
-    var f = state.editing.first;
-    var selA = $('ouaKeyASelect'); var selB = $('ouaKeyBSelect');
-    if (!selA || !selB) return;
-    var opts = '<option value="-1">（未选择）</option>';
-    (f.poseKeyframes || []).forEach(function (k, i) {
-      opts += '<option value="' + i + '">#' + (i + 1) + ' ' + (k.pose || '') + ' @' + (k.second || '0') + 's</option>';
-    });
-    selA.innerHTML = opts; selB.innerHTML = opts;
-    secBind('ouaKeyASelect'); secBind('ouaKeyBSelect');
-  }
-  function secBind(id) {
-    var sel = $(id);
-    if (!sel) return;
-    var sec = state.editing.second;
-    var val = (id === 'ouaKeyASelect') ? (sec.keyA_idx || -1) : (sec.keyB_idx || -1);
-    sel.value = String(val);
-    sel.onchange = function () {
-      var s = state.editing.second;
-      if (id === 'ouaKeyASelect') s.keyA_idx = Number(sel.value) || -1;
-      else s.keyB_idx = Number(sel.value) || -1;
-      saveShot();
-    };
-  }
-
-  function renderTweensList() {
-    var list = $('ouaTweensList');
-    var sec = state.editing.second;
-    list.innerHTML = '';
-    (sec.tweens || []).forEach(function (t, idx) {
-      var row = document.createElement('div');
-      row.className = 'hm-oua-tween-row';
-      var imgCell = '';
-      if (t.url) {
-        imgCell = '<div class="hm-oua-tween-img"><img src="' + api.mediaUrl(t.url) + '" alt="" data-preview-click></div>';
-      } else {
-        imgCell = '<div class="hm-oua-tween-img hm-oua-tween-empty" data-tween-upload="' + idx + '">＋</div>';
-      }
-      row.innerHTML =
-        '<div class="hm-oua-tween-num">' + (idx + 1) + '</div>' +
-        imgCell +
-        '<div class="hm-oua-tween-fields">' +
-          '<input class="hm-oua-tf-f" placeholder="帧" type="number" min="0" value="' + (t.frameNum || '') + '" data-tw-f="' + idx + '">' +
-          '<input class="hm-oua-tf-r" placeholder="比例" type="number" min="0" max="1" step="0.01" value="' + (t.ratio || '') + '" data-tw-r="' + idx + '">' +
-          '<input class="hm-oua-tf-note" placeholder="备注" value="' + (t.note || '').replace(/"/g, '&quot;') + '" data-tw-note="' + idx + '">' +
-          '<input class="hm-oua-tf-issue" placeholder="问题" value="' + (t.issue || '').replace(/"/g, '&quot;') + '" data-tw-issue="' + idx + '">' +
-        '</div>' +
-        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-tw-del="' + idx + '">✕</button>';
-      row.querySelectorAll('[data-tw-del]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          sec.tweens.splice(idx, 1); renderTweensList(); saveShot();
-        });
-      });
-      row.querySelectorAll('[data-tw-f],[data-tw-r],[data-tw-note],[data-tw-issue]').forEach(function (el) {
-        el.addEventListener('input', function () {
-          var key = el.getAttribute('data-tw-f') !== null ? 'frameNum' :
-                    el.getAttribute('data-tw-r') !== null ? 'ratio' :
-                    el.getAttribute('data-tw-note') !== null ? 'note' : 'issue';
-          if (key === 'frameNum' || key === 'ratio') t[key] = Number(el.value) || 0;
-          else t[key] = el.value;
-          scheduleSave();
-        });
-      });
-      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
-        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
-      });
-      row.querySelectorAll('[data-tween-upload]').forEach(function (el) {
-        el.addEventListener('click', function () { uploadTween(idx); });
-      });
-      list.appendChild(row);
-    });
-  }
-
-  /* ============ 图片上传（K帧 / 中割帧） ============ */
-  function uploadKeyframe(idx) {
-    var input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/*';
-    input.onchange = function () {
-      var f = input.files && input.files[0]; if (!f) return;
-      var reader = new FileReader();
-      reader.onload = function () {
-        A.toast && A.toast('上传中...');
-        api.uploadArtMedia(reader.result).then(function (res) {
-          state.editing.first.poseKeyframes[idx].url = res.url;
-          renderKeyframesList(); saveShot();
-          A.toast && A.toast('✅ 已上传', 'success');
-        }).catch(function (err) {
-          A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
-        });
-      };
-      reader.readAsDataURL(f);
-    };
-    input.click();
-  }
-  function uploadTween(idx) {
-    var input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/*';
-    input.onchange = function () {
-      var f = input.files && input.files[0]; if (!f) return;
-      var reader = new FileReader();
-      reader.onload = function () {
-        A.toast && A.toast('上传中...');
-        api.uploadArtMedia(reader.result).then(function (res) {
-          state.editing.second.tweens[idx].url = res.url;
-          renderTweensList(); saveShot();
-          A.toast && A.toast('✅ 已上传', 'success');
-        }).catch(function (err) {
-          A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
-        });
-      };
-      reader.readAsDataURL(f);
-    };
-    input.click();
-  }
-
-  /* ============ 自动保存绑定 ============ */
-  function bindAutoSave() {
-    var ids = [
-      'ouaShotNo', 'ouaTitle', 'ouaSceneRef', 'ouaStatus', 'ouaVersion', 'ouaTags',
-      'ouaDirector', 'ouaCameraMove', 'ouaCameraDuration', 'ouaTimeSheet', 'ouaActionFlow',
-      'ouaDialoguePoint', 'ouaSfxPoint', 'ouaLayoutRef', 'ouaDrawingNotes',
-      'ouaAnimator', 'ouaTotalFrames', 'ouaFeedbackStatus', 'ouaRevisionCount',
-      'ouaFeedbackNote', 'ouaShapeCheck', 'ouaMotionCheck', 'ouaCharacterRef',
-    ];
-    ids.forEach(function (id) {
-      var el = $(id); if (!el || el.__as) return;
-      el.__as = true;
-      el.addEventListener('input', scheduleSave);
-      el.addEventListener('change', scheduleSave);
-    });
-  }
-
-  function scheduleSave() {
-    clearTimeout(state.saveTimer);
-    state.saveTimer = setTimeout(saveShot, 1200);
-  }
-
-  function saveShot() {
-    if (!state.editing) return;
-    var s = state.editing;
-    var f = s.first = s.first || {};
-    var sec = s.second = s.second || {};
-    s.shotNo = $('ouaShotNo').value;
-    s.title = $('ouaTitle').value;
-    s.sceneRef = $('ouaSceneRef').value;
-    s.status = $('ouaStatus').value;
-    s.version = $('ouaVersion').value;
-    s.team = state.team;
-    s.tags = ($('ouaTags').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
-    f.director = $('ouaDirector').value;
-    f.cameraMove = $('ouaCameraMove').value;
-    f.cameraDuration = $('ouaCameraDuration').value;
-    f.timeSheet = $('ouaTimeSheet').value;
-    f.actionFlow = $('ouaActionFlow').value;
-    f.dialoguePoint = $('ouaDialoguePoint').value;
-    f.sfxPoint = $('ouaSfxPoint').value;
-    f.layoutRef = ($('ouaLayoutRef').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
-    f.drawingNotes = $('ouaDrawingNotes').value;
-    sec.animator = $('ouaAnimator').value;
-    sec.totalFrames = Number($('ouaTotalFrames').value) || 0;
-    sec.feedbackStatus = $('ouaFeedbackStatus').value;
-    sec.revisionCount = Number($('ouaRevisionCount').value) || 0;
-    sec.feedbackNote = $('ouaFeedbackNote').value;
-    sec.shapeCheckText = $('ouaShapeCheck').value;
-    sec.motionCheckText = $('ouaMotionCheck').value;
-    var chars = ($('ouaCharacterRef').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
-    f.characterRef = chars.map(function (c) { return { characterId: c, expression: '', outfit: '' }; });
-
-    api.updateOua(s.id, s).then(function () {
-      var tag = $('ouaStatusTag');
-      tag.textContent = ST_LABELS[s.status] || '未开始';
-      $('ouaEditorTitle').textContent = (s.title || '(无标题)') + ' — ' + (s.shotNo || '—');
-    }).catch(function (err) {
-      A.toast && A.toast('保存失败: ' + (err.message || err), 'error');
-    });
-  }
-
-  /* ============ 导出 ============ */
-  function exportCsv() {
-    var url = api.exportOua(state.team);
-    window.open(url, '_blank');
-  }
-
-  /* ============ 批量导入向导 ============ */
-  function openImportWizard() {
-    var overlay = document.createElement('div');
-    overlay.className = 'hm-import-overlay';
-    overlay.id = 'hmOuaImportOverlay';
-    overlay.innerHTML = buildImportMarkup();
-    document.body.appendChild(overlay);
-
-    var step = 1, parsed = null, inputTextarea, inputDrop, inputFile, curTab = 'json';
-
-    // 关闭
-    overlay.querySelector('.hm-import-close').onclick = closeAll;
-    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeAll(); });
-    function closeAll() { overlay.remove(); }
-
-    // Tab 切换
-    overlay.querySelectorAll('.hm-import-tab').forEach(function (t) {
-      t.addEventListener('click', function () {
-        curTab = t.getAttribute('data-tab');
-        overlay.querySelectorAll('.hm-import-tab').forEach(function (x) { x.classList.remove('active'); });
-        t.classList.add('active');
-        overlay.querySelectorAll('.hm-import-pane').forEach(function (p) { p.hidden = p.id !== 'hmOuaPane-' + curTab; });
-      });
-    });
-
-    // JSON textarea
-    inputTextarea = overlay.querySelector('#hmOuaPane-json .hm-import-ta');
-
-    // 文件 drop zone
-    inputDrop = overlay.querySelector('#hmOuaPane-file .hm-import-drop');
-    inputFile = overlay.querySelector('#hmOuaPane-file input[type=file]');
-    inputDrop.addEventListener('click', function () { inputFile.click(); });
-    inputDrop.addEventListener('dragover', function (e) { e.preventDefault(); inputDrop.classList.add('active'); });
-    inputDrop.addEventListener('dragleave', function () { inputDrop.classList.remove('active'); });
-    inputDrop.addEventListener('drop', function (e) {
-      e.preventDefault(); inputDrop.classList.remove('active');
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-    });
-    inputFile.addEventListener('change', function () {
-      if (inputFile.files && inputFile.files[0]) handleFile(inputFile.files[0]);
-    });
-
-    // 模板下载
-    overlay.querySelector('#hmOuaTemplateJson').onclick = function () {
-      downloadTemplate(getTemplateJson(), 'shot-import-template.json');
-    };
-    overlay.querySelector('#hmOuaTemplateCsv').onclick = function () {
-      downloadTemplate(getTemplateCsv(), 'shot-import-template.csv');
-    };
-
-    function handleFile(f) {
-      var reader = new FileReader();
-      reader.onload = function () {
-        var ext = (f.name.split('.').pop() || '').toLowerCase();
-        if (ext === 'csv') {
-          parsed = parseCsvToShots(reader.result);
-        } else {
-          try { parsed = normalizeShots(JSON.parse(reader.result)); }
-          catch (e) { alert('JSON 解析失败: ' + e.message); return; }
-        }
-        step = 2; renderStep();
-      };
-      reader.readAsText(f, 'utf-8');
-    }
-
-    function renderStep() {
-      overlay.querySelectorAll('.hm-import-step').forEach(function (s, i) {
-        s.classList.toggle('current', i + 1 === step);
-        s.classList.toggle('active', i + 1 < step);
-      });
-      var body = overlay.querySelector('.hm-import-body');
-      if (step === 1) { body.innerHTML = getStep1Html(); }
-      else if (step === 2) { body.innerHTML = getStep2Html(); }
-      else { body.innerHTML = getStep3Html(); }
-
-      // rebind
-      overlay.querySelectorAll('.hm-import-tab').forEach(function (t) {
-        t.addEventListener('click', function () {
-          curTab = t.getAttribute('data-tab');
-          overlay.querySelectorAll('.hm-import-tab').forEach(function (x) { x.classList.remove('active'); });
-          t.classList.add('active');
-          overlay.querySelectorAll('.hm-import-pane').forEach(function (p) { p.hidden = p.id !== 'hmOuaPane-' + curTab; });
-        });
-      });
-
-      // 文件 drop zone rebind
-      inputFile = body.querySelector('#hmOuaPane-file input[type=file]');
-      inputDrop = body.querySelector('#hmOuaPane-file .hm-import-drop');
-      if (inputDrop) {
-        inputDrop.addEventListener('click', function () { inputFile.click(); });
-        inputDrop.addEventListener('dragover', function (e) { e.preventDefault(); inputDrop.classList.add('active'); });
-        inputDrop.addEventListener('dragleave', function () { inputDrop.classList.remove('active'); });
-        inputDrop.addEventListener('drop', function (e) {
-          e.preventDefault(); inputDrop.classList.remove('active');
-          if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-        });
-        inputFile.addEventListener('change', function () {
-          if (inputFile.files && inputFile.files[0]) handleFile(inputFile.files[0]);
-        });
-      }
-
-      // Step 2 buttons
-      if (step === 2) {
-        overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = 1; renderStep(); };
-        overlay.querySelector('#hmOuaNextBtn').onclick = function () { step = 3; renderStep(); };
-        renderPreviewTable();
-      }
-      // Step 3 buttons
-      if (step === 3) {
-        overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = 2; renderStep(); };
-        overlay.querySelector('#hmOuaImportBtn').onclick = doImport;
-      }
-    }
-
-    function doImport() {
-      var items = parsed.slice(0, 500);
-      api.bulkOua(items).then(function (res) {
-        A.toast && A.toast('✅ 成功导入 ' + res.inserted + ' 条', 'success');
-        closeAll();
-        loadList();
-      }).catch(function (err) {
-        A.toast && A.toast('导入失败: ' + (err.message || err), 'error');
-      });
-    }
-
-    // 上一步按钮
-    overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = Math.max(1, step - 1); renderStep(); };
-    // 下一步按钮
-    overlay.querySelector('#hmOuaNextBtn').onclick = function () {
-      if (step === 1) {
-        var raw;
-        if (curTab === 'json') {
-          raw = inputTextarea.value.trim();
-          if (!raw) { alert('请输入 JSON'); return; }
-          try { parsed = normalizeShots(JSON.parse(raw)); }
-          catch (e) { alert('JSON 解析失败: ' + e.message); return; }
-        } else {
-          var file = inputFile && inputFile.files && inputFile.files[0];
-          if (!file) { alert('请选择或拖入文件'); return; }
-          return; // file reader 会自动进 step 2
-        }
-        step = 2; renderStep();
-      }
-    };
-
-    renderStep();
-  }
-
-  function buildImportMarkup() {
-    return '<div class="hm-import-modal">' +
-      '<div class="hm-import-header">' +
-        '<h3>🎬 原画批量导入 — 镜头表</h3>' +
-        '<button class="hm-import-close">✕</button>' +
-      '</div>' +
-      '<div class="hm-import-body">' +
-        '<div class="hm-import-steps">' +
-          '<div class="hm-import-step current">① 准备数据</div>' +
-          '<div class="hm-import-step">② 解析预览</div>' +
-          '<div class="hm-import-step">③ 确认导入</div>' +
-        '</div>' +
-        '<div class="hm-import-tabs">' +
-          '<button class="hm-import-tab active" data-tab="json">📄 JSON 粘贴</button>' +
-          '<button class="hm-import-tab" data-tab="file">📁 文件上传</button>' +
-          '<button class="hm-import-tab" data-tab="tpl">📑 下载模板</button>' +
-        '</div>' +
-
-        '<div class="hm-import-pane" id="hmOuaPane-json">' +
-          '<div class="hm-import-pane-title">粘贴 JSON 数组（支持 {items: [...]} 或纯数组）</div>' +
-          '<textarea class="hm-import-ta" placeholder=\'[{"shotNo":"1-01","team":"first","title":"主角奔跑","director":"山田太郎","cameraMove":"前 DOLLY IN","status":"todo"}]\'></textarea>' +
-          '<div class="hm-import-hint">支持字段：shotNo / team(first|second) / title / sceneRef / status / version / director / cameraMove / cameraDuration / timeSheet / actionFlow / animator / totalFrames / feedbackStatus</div>' +
-        '</div>' +
-
-        '<div class="hm-import-pane" id="hmOuaPane-file" hidden>' +
-          '<div class="hm-import-pane-title">选择或拖入 .json / .csv 文件</div>' +
-          '<div class="hm-import-drop">' +
-            '<div style="font-size:40px;margin-bottom:10px">📂</div>' +
-            '<div style="font-size:14px;font-weight:600">点击选择文件</div>' +
-            '<div style="font-size:12px;margin-top:6px">或拖入到此处</div>' +
-            '<input type="file" accept=".json,.csv" style="display:none">' +
-          '</div>' +
-          '<div class="hm-import-hint">CSV 列头：shotNo, team, title, sceneRef, status, director, cameraMove, actionFlow, animator, totalFrames...</div>' +
-        '</div>' +
-
-        '<div class="hm-import-pane" id="hmOuaPane-tpl" hidden>' +
-          '<div class="hm-import-pane-title">下载 Excel 兼容模板，填完后在 📁 文件上传 里导入</div>' +
-          '<div class="hm-import-templates">' +
-            '<button class="hm-pill hm-pill-primary" id="hmOuaTemplateJson">📥 下载 JSON 完整模板</button>' +
-            '<button class="hm-pill" id="hmOuaTemplateCsv">📥 下载 CSV 简易清单</button>' +
-          '</div>' +
-          '<div class="hm-import-hint" style="margin-top:14px">CSV 支持列头：shotNo, team(first/second), title, sceneRef, status(todo/wip/review/final), version, director, cameraMove(固定/PAN→/TILT/DOLLY IN/DOLLY OUT/回転/组合), cameraDuration, timeSheet, actionFlow, animator, totalFrames, feedbackStatus(pending/submitted/reviewing/fixing/approved), layoutRef(逗号分隔), drawingNotes</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="hm-import-footer">' +
-        '<button class="hm-pill hm-pill-ghost" id="hmOuaBackBtn" disabled>← 上一步</button>' +
-        '<button class="hm-pill hm-pill-primary" id="hmOuaNextBtn">下一步 →</button>' +
-      '</div>' +
-    '</div>';
-  }
-
-  function getStep1Html() { return ''; }
-  function getStep2Html() {
-    var items = parsed.slice(0, 50);
-    var body = '';
-    var totalTeam = { first: 0, second: 0 };
-    parsed.forEach(function (s) { if (s.team === 'second') totalTeam.second++; else totalTeam.first++; });
-    if (!parsed || !parsed.length) {
-      body = '<div class="hm-import-empty">❌ 未解析到任何镜头</div>';
-    } else {
-      var html = '<table><thead><tr><th>镜号</th><th>团队</th><th>标题</th><th>状态</th><th>担当</th><th>运镜/帧数</th></tr></thead><tbody>';
-      items.forEach(function (s) {
-        var dir = (s.first && s.first.director) || (s.second && s.second.animator) || '—';
-        var cam = (s.first && s.first.cameraMove) || ((s.second && s.second.totalFrames) ? (s.second.totalFrames + ' 帧') : '—');
-        var teamLabel = s.team === 'second' ? '第二原画' : '第一原画';
-        html += '<tr><td>' + (s.shotNo || '—') + '</td><td>' + teamLabel + '</td><td>' + (s.title || '') + '</td><td>' + (ST_LABELS[s.status] || s.status || '未开始') + '</td><td>' + dir + '</td><td>' + cam + '</td></tr>';
-      });
-      html += '</tbody></table>';
-      body = html + '<div class="hm-import-summary">共解析到 ' + parsed.length + ' 个镜头 · 第一原画 ' + totalTeam.first + ' · 第二原画 ' + totalTeam.second + (parsed.length > 50 ? '（表格只显示前 50 条）' : '') + '</div>';
-    }
-    return '<div class="hm-import-pane-title">② 预览前 50 条</div>' +
-           '<div class="hm-import-table">' + body + '</div>';
-  }
-  function renderPreviewTable() { /* 已在上一个函数直接生成 */ }
-  function getStep3Html() {
-    var items = parsed.slice(0, 500);
-    var totalTeam = { first: 0, second: 0 };
-    items.forEach(function (s) { if (s.team === 'second') totalTeam.second++; else totalTeam.first++; });
-    return '<div class="hm-import-pane-title">③ 确认导入</div>' +
-           '<div class="hm-import-confirm-box">' +
-             '<div class="hm-import-confirm-row"><span>📋 总条数</span><b>' + items.length + '</b></div>' +
-             '<div class="hm-import-confirm-row"><span>🎨 第一原画</span><b>' + totalTeam.first + ' 镜头</b></div>' +
-             '<div class="hm-import-confirm-row"><span>🎬 第二原画</span><b>' + totalTeam.second + ' 镜头</b></div>' +
-             '<div class="hm-import-confirm-row"><span>🔢 单次上限</span><b>500 条</b></div>' +
-             '<div class="hm-import-confirm-warn">⚠️ 导入后无法撤销。请确认以上数据正确。</div>' +
-           '</div>' +
-           '<button class="hm-pill hm-pill-primary" id="hmOuaImportBtn" style="margin-top:14px;padding:10px 30px">🚀 开始导入</button>';
-  }
-
-  /* CSV 解析 → Shot 数组 */
-  function parseCsvToShots(text) {
-    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim(); });
-    if (!lines.length) return [];
-    var header = splitCsv(lines[0]).map(function (h) { return h.trim().toLowerCase(); });
-    var items = [];
-    for (var i = 1; i < lines.length; i++) {
-      var cells = splitCsv(lines[i]);
-      var row = {};
-      header.forEach(function (h, idx) { row[h] = (cells[idx] || '').trim(); });
-      var shot = buildShotFromRow(row);
-      if (shot.shotNo || shot.title) items.push(shot);
-    }
-    return normalizeShots(items);
-  }
-  function splitCsv(line) {
-    var out = [], cur = '', inQ = false;
-    for (var i = 0; i < line.length; i++) {
-      var c = line[i];
-      if (inQ) {
-        if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
-        else if (c === '"') inQ = false;
-        else cur += c;
-      } else {
-        if (c === ',') { out.push(cur); cur = ''; }
-        else if (c === '"') inQ = true;
-        else cur += c;
-      }
-    }
-    out.push(cur); return out;
-  }
-  function buildShotFromRow(r) {
-    var team = (r.team || 'first').toLowerCase();
-    if (team.indexOf('sec') >= 0 || team.indexOf('動画') >= 0 || team === '2') team = 'second';
-    else team = 'first';
-
-    var shot = {
-      shotNo: r.shotno || r.shot_no || '',
-      team: team,
-      title: r.title || '',
-      sceneRef: r.sceneref || r.scene_ref || '',
-      status: r.status || 'todo',
-      version: r.version || 'Ver1.0',
-      first: {
-        director: r.director || '',
-        cameraMove: r.cameramove || r.camera_move || '固定',
-        cameraDuration: r.cameraduration || r.camera_duration || '',
-        timeSheet: r.timesheet || r.time_sheet || '',
-        actionFlow: r.actionflow || r.action_flow || '',
-        dialoguePoint: r.dialoguepoint || r.dialogue_point || '',
-        sfxPoint: r.sfxpoint || r.sfx_point || '',
-        layoutRef: (r.layoutref || r.layout_ref || '').split(/[,|]/).map(function (x) { return x.trim(); }).filter(Boolean),
-        drawingNotes: r.drawingnotes || r.drawing_notes || '',
-        poseKeyframes: [],
-        characterRef: [],
-      },
-      second: {
-        animator: r.animator || r.second_animator || '',
-        totalFrames: Number(r.totalframes || r.total_frames || 0) || 0,
-        feedbackStatus: r.feedbackstatus || r.feedback_status || 'pending',
-        revisionCount: Number(r.revisioncount || r.revision_count || 0) || 0,
-        feedbackNote: r.feedbacknote || r.feedback_note || '',
-        tweens: [],
-      },
-      tags: (r.tags || '').split(/[,|]/).map(function (x) { return x.trim(); }).filter(Boolean),
-    };
-    return shot;
-  }
-
-  function normalizeShots(raw) {
-    var arr = Array.isArray(raw) ? raw : (raw.items || []);
-    return arr.map(function (r) {
-      var team = (r.team || 'first').toLowerCase();
-      if (team.indexOf('sec') >= 0 || team.indexOf('second') >= 0) team = 'second'; else team = 'first';
-      return {
-        shotNo: r.shotNo || r.shotno || '',
-        team: team,
-        title: r.title || '',
-        sceneRef: r.sceneRef || r.sceneref || '',
-        status: r.status || 'todo',
-        version: r.version || 'Ver1.0',
-        first: Object.assign({
-          director: '', cameraMove: '固定', cameraDuration: '', timeSheet: '',
-          actionFlow: '', dialoguePoint: '', sfxPoint: '', layoutRef: [], drawingNotes: '',
-          poseKeyframes: [], characterRef: [],
-        }, r.first || {}),
-        second: Object.assign({
-          animator: '', totalFrames: 0, feedbackStatus: 'pending', revisionCount: 0,
-          feedbackNote: '', tweens: [],
-        }, r.second || {}),
-        tags: r.tags || [],
-      };
-    });
-  }
-
-  function getTemplateJson() {
-    return JSON.stringify({
-      _comment: '原画模块批量导入模板 — Shot 对象数组',
-      items: [
-        {
-          shotNo: '1-01', team: 'first', title: '主角奔跑入场', sceneRef: 'scene_001',
-          status: 'todo', version: 'Ver1.0', tags: ['主角', '奔跑'],
-          first: {
-            director: '山田太郎', cameraMove: '前 DOLLY IN', cameraDuration: '3.0',
-            timeSheet: '0:00 起始Pose → 0:1.2 中间Pose → 0:2.8 结束Pose',
-            actionFlow: '角色从左到右奔跑，途中跃过障碍...',
-            dialoguePoint: '0:03.5', sfxPoint: '0:00.0', layoutRef: [], drawingNotes: '',
-            poseKeyframes: [
-              { frame: 0, second: 0, pose: '起始Pose', keyType: 'key', url: '', note: '' },
-              { frame: 12, second: 0.5, pose: '中间Pose', keyType: 'breakdown', url: '', note: '' },
-              { frame: 24, second: 1.0, pose: '结束Pose', keyType: 'key', url: '', note: '' }
-            ]
-          }
-        },
-        {
-          shotNo: '1-02', team: 'second', title: '第二原画中割', status: 'wip',
-          second: {
-            animator: '佐々木花子', totalFrames: 12, feedbackStatus: 'pending', revisionCount: 0,
-            feedbackNote: '',
-            tweens: [
-              { frameNum: 2, ratio: 0.25, url: '', note: '', issue: '' },
-              { frameNum: 4, ratio: 0.5, url: '', note: '', issue: '' },
-              { frameNum: 6, ratio: 0.75, url: '', note: '', issue: '' }
-            ]
-          }
-        }
-      ]
-    }, null, 2);
-  }
-  function getTemplateCsv() {
-    var header = 'shotNo,team,title,sceneRef,status,version,director,cameraMove,cameraDuration,timeSheet,actionFlow,animator,totalFrames,feedbackStatus';
-    var row1 = '1-01,first,主角奔跑入场,scene_001,todo,Ver1.0,山田太郎,前 DOLLY IN,3.0,"0:00 Pose→0:1.2中间→0:2.8结束","角色从左到右奔跑",,,,';
-    var row2 = '1-02,second,第二原画中割,scene_001,wip,Ver1.0,,,,"主角奔跑-中割",佐々木花子,12,pending';
-    return '\ufeff' + header + '\n' + row1 + '\n' + row2 + '\n';
-  }
-
-  function downloadTemplate(text, filename) {
-    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  window.HMOUA = { enter: enter };
-})();
-
 
 
 /* ========================================================================
