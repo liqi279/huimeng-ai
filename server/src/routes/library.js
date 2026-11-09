@@ -38,6 +38,16 @@ router.post('/library/admin/bucket-security', authRequired, adminOnly, wrap(asyn
   res.json(await objectStore.ensureBucketSecurity());
 }));
 
+/* 删除对象存储里的单个对象（仅管理员）：清理废弃书籍文件用。
+   key 必须以 library/ 开头，避免误删其它前缀的对象。 */
+router.delete('/library/admin/object', authRequired, adminOnly, wrap(async (req, res) => {
+  const key = String(req.query.key || '').trim();
+  assert(key, 400, '缺少 key', '用法：DELETE /api/library/admin/object?key=library/books/xxx.pdf');
+  assert(/^library\/[A-Za-z0-9._\/-]+$/.test(key) && key.indexOf('..') < 0, 400, '非法文件路径');
+  await objectStore.deleteObject(key);
+  res.json({ ok: true, key });
+}));
+
 
 /* 从书目里存的 URL 反解对象 key：
    兼容后端地址（/api/library/file/<key>）与对象存储直链（路径即 key）。 */
