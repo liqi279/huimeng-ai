@@ -1,9 +1,9 @@
 {
-    "createdAt":  "2026-11-09T22:38:53",
+    "createdAt":  "2026-11-09T22:40:05",
     "backend":  "https://huimeng-ai-backend.onrender.com/api",
     "source":  "GET /api/library/books (public, read-only)",
     "fileCount":  18,
-    "totalBytes":  981033441,
+    "totalBytes":  1030228549,
     "note":  "admin 登录 401：账号/作品/桌面等用户数据本次未能备份；PDF 仅存本机（\u003e100MB 无法入库）",
     "files":  [
                   {
@@ -78,8 +78,8 @@
                   },
                   {
                       "relativePath":  "pdfs/mw9a5uhb-005-pixel-bg.pdf",
-                      "bytes":  196145152,
-                      "sha256":  null
+                      "bytes":  245340260,
+                      "sha256":  "122209842A28056109BBD68007450F5809A892DF8AF5C446B01F9B8D7FBCF993"
                   },
                   {
                       "relativePath":  "pdfs/mw9ahk53-006-girls-pose-9vol.pdf",
