@@ -53228,13 +53228,13 @@ window.HMChat = (function () {
     if (pdfSlowTimer) { clearTimeout(pdfSlowTimer); pdfSlowTimer = null; }
   }
 
-  function kickPdfSlowTimer() {
+  function kickPdfSlowTimer(ms) {
     clearPdfSlowTimer();
     pdfSlowTimer = setTimeout(function () {
       pdfLoadingText('仍在加载 PDF … 请稍候，或点击重试');
       var retry = els.reader && els.reader.querySelector('[data-pdf-retry]');
       if (retry) retry.hidden = false;
-    }, 14000);
+    }, ms || 14000);
   }
 
   function formatMb(bytes) {
@@ -53374,6 +53374,7 @@ window.HMChat = (function () {
         var attempts = [];
         /* 第一选择：后端签名直链，字节完全不过我们的服务器 */
         return fetchPdfSignedUrl(book).then(function (signed) {
+          kickPdfSlowTimer(20000);
           return open(signed);
         }).catch(function (err) {
           attempts.push('签名直链（' + (err && err.name) + ' / ' + (err && err.message) + '）');
@@ -53416,7 +53417,8 @@ window.HMChat = (function () {
       if (spinner) spinner.hidden = false;
       pdfLoadingText(text || '正在加载 PDF …');
       if (retry) retry.hidden = true;
-      kickPdfSlowTimer();
+      /* 首次取直链 + 首段字节可能较慢，给 20 秒；之后有进度就按 14 秒重置 */
+      kickPdfSlowTimer(20000);
     }
 
     resetLoading();
