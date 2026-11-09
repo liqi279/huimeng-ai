@@ -44,7 +44,7 @@ const corsOrigin = config.CORS_ORIGIN === '*'
   ? '*'
   : config.CORS_ORIGIN.split(',').map((value) => value.trim()).filter(Boolean);
 
-app.use(cors({ origin: corsOrigin }));
+app.use(cors({ origin: corsOrigin, maxAge: 86400 }));
 
 /* 允许自有前端用 iframe 内嵌 PDF / 页面：只放 frame-ancestors，
    绝不设 X-Frame-Options（DENY/SAMEORIGIN 会直接阻断嵌入）。

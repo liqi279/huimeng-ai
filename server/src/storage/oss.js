@@ -125,6 +125,11 @@ function signatureUrl(key, opts) {
   if (method === 'GET' && options.contentDisposition) {
     params.response = { 'content-disposition': String(options.contentDisposition) };
   }
+  /* 图片处理参数（如 image/resize,m_lfit,w_520）：ali-oss 会把它签进 URL，
+     直接在 OSS 侧出缩略图，避免把 500KB+ 原图经 Render 中转给浏览器 */
+  if (method === 'GET' && options.process) {
+    params.process = String(options.process);
+  }
   return state.client.signatureUrl(key, params);
 }
 

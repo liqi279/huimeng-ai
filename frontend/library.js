@@ -235,16 +235,29 @@
     if (state.booted) return Promise.resolve();
     state.loading = true;
     renderSkeleton();
+    /* 收藏/历史与书单并行发起：三者各自要 0.4~0.8s，串起来用户就得多等一倍以上 */
+    var aux = fetchAux();
     return request('/library/books', {}, 7000).then(function (data) {
       state.mode = 'remote';
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
-      return loadRemoteAux();
-    }).catch(function (err) {
+      state.booted = true;
+      state.loading = false;
+      markShelf();
+      renderShelf();   /* 书单先到先渲染，不等收藏/历史 */
+      renderStatus();
+      return aux.then(function (res) {
+        applyAux(res);
+        if (state.mode !== 'remote') return;
+        markShelf();
+        renderShelf();
+        renderStatus();
+      });
+    }, function () {
+      /* 书单请求失败（离线 / 超时 / 后端未启动）才回落到本地存储 */
       state.mode = 'local';
       state.books = localBooks();
       state.fav = loadFavLocal();
       state.hist = loadHistLocal();
-    }).then(function () {
       state.booted = true;
       state.loading = false;
       markShelf();
@@ -253,16 +266,22 @@
     });
   }
 
-  function loadRemoteAux() {
+  function fetchAux() {
     return Promise.all([
       request('/library/favorites', {}, 6000).catch(function () { return { items: [] }; }),
       request('/library/history', {}, 6000).catch(function () { return { items: [] }; })
-    ]).then(function (res) {
-      var fav = {};
-      (res[0].items || []).forEach(function (b) { fav[b.id] = true; });
-      state.fav = fav;
-      state.hist = res[1].items || [];
-    });
+    ]);
+  }
+
+  function applyAux(res) {
+    var fav = {};
+    (res[0].items || []).forEach(function (b) { fav[b.id] = true; });
+    state.fav = fav;
+    state.hist = res[1].items || [];
+  }
+
+  function loadRemoteAux() {
+    return fetchAux().then(applyAux);
   }
 
   function refreshRemote() {

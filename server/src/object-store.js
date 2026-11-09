@@ -72,6 +72,7 @@ function presignGet(objectKey, ttlSec, opts) {
     method: 'GET',
     ttl: ttlSec || config.STORAGE_URL_TTL,
     contentDisposition: extra.responseContentDisposition,
+    process: extra.process,
   });
 }
 

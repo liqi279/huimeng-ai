@@ -88,6 +88,9 @@ const MIME_BY_EXT = {
   '.png': 'image/png',
   '.webp': 'image/webp',
 };
+/* 封面走 OSS 侧缩略：520px 宽足够书架卡片（~100px 展示 × 2~3 倍图），q80 肉眼无损 */
+const IMAGE_EXTS = { '.jpg': true, '.jpeg': true, '.png': true, '.webp': true };
+const COVER_PROCESS = 'image/resize,m_lfit,w_520/quality,q_80';
 
 router.post('/library/uploads/presign', authOptional, wrap(async (req, res) => {
   /* 管理员优先：带有效登录 token 且 role=admin 时免上传口令；
@@ -125,7 +128,10 @@ router.post('/library/uploads/presign', authOptional, wrap(async (req, res) => {
    presignGet 是按 GET 签名的，OSS 会拒绝拿它发 HEAD（502），
    所以 HEAD 也向上游发 GET，只取响应头后丢弃 body。 */
 async function proxyFile(req, res, key, ext, filename) {
-  const url = objectStore.presignGet(key, 600);
+  const isImage = IMAGE_EXTS[ext] === true;
+  /* 封面原图常见 500KB+，经 Render 中转既慢又费带宽：
+     让 OSS 直接输出 520px 宽、q80 的缩略图（签名里带上 process 参数）。 */
+  const url = objectStore.presignGet(key, 600, isImage ? { process: COVER_PROCESS } : undefined);
   assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
 
   const headers = {};
@@ -136,6 +142,18 @@ async function proxyFile(req, res, key, ext, filename) {
     up = await fetch(url, { method: 'GET', headers });
   } catch (err) {
     throw jsonError(502, '文件读取失败', '对象存储不可达');
+  }
+  /* 桶未开图片处理时 OSS 会返回 4xx：退回原始对象，保证封面不裂 */
+  if (isImage && !up.ok && up.status !== 206) {
+    if (up.body) await up.body.cancel().catch(() => {});
+    const plain = objectStore.presignGet(key, 600);
+    if (plain && plain !== url) {
+      try {
+        up = await fetch(plain, { method: 'GET', headers });
+      } catch (err) {
+        throw jsonError(502, '文件读取失败', '对象存储不可达');
+      }
+    }
   }
   if (up.status === 404) {
     if (up.body) await up.body.cancel().catch(() => {});
@@ -149,7 +167,9 @@ async function proxyFile(req, res, key, ext, filename) {
   res.status(up.status === 206 ? 206 : 200);
   res.setHeader('Content-Type', up.headers.get('content-type') || MIME_BY_EXT[ext] || 'application/octet-stream');
   res.setHeader('Content-Disposition', 'inline; filename="' + filename + '"');
-  res.setHeader('Cache-Control', 'private, max-age=300');
+  /* 封面 URL 里带时间戳、内容不会变：长缓存 7 天，重复进书架不再回源；
+     PDF 等其它文件仍保持 5 分钟私有缓存 */
+  res.setHeader('Cache-Control', isImage ? 'public, max-age=604800' : 'private, max-age=300');
   res.setHeader('Accept-Ranges', 'bytes');
   /* 跨域直出（?stream=1 给 pdf.js 的兜底通道）：分段读取必须能看到这几个头 */
   res.setHeader('Access-Control-Expose-Headers',
