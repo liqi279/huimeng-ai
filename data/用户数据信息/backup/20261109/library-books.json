@@ -1,0 +1,311 @@
+{
+    "items":  [
+                  {
+                      "id":  "lib-mw81bt2h-51998e",
+                      "title":  "日本绘师到我家：跟着影片画，解锁人物卡关",
+                      "author":  "KawaiiSensei",
+                      "category":  "绘画教程",
+                      "tags":  [
+                                   "漫画教程",
+                                   "人物绘制",
+                                   "视频跟画"
+                               ],
+                      "intro":  "KawaiiSensei 的漫画人物绘制教程，跟着影片逐步解锁人物绘制卡关。",
+                      "accent":  "#7d5a3c",
+                      "coverUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/covers/mw80yetl-001-kawaii-cover.jpg",
+                      "area":  "paint",
+                      "pdfUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/books/mw819v2a-001-kawaii.pdf",
+                      "pageCount":  146,
+                      "toc":  [
+
+                              ],
+                      "sortNo":  0,
+                      "createdAt":  1794154604777,
+                      "updatedAt":  1794155128666,
+                      "pages":  [
+
+                                ]
+                  },
+                  {
+                      "id":  "lib-mw86nrb0-363dff",
+                      "title":  "如何描绘不同头身比例的迷你角色：动作、姿势篇",
+                      "author":  "",
+                      "category":  "绘画教程",
+                      "tags":  [
+
+                               ],
+                      "intro":  "包含第一章的迷你角色头身比例拆解，配有按页拆分的高清扫描图，适合跟着临摹。",
+                      "accent":  "#7d5a3c",
+                      "coverUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/covers/mw86m7g0-002-mini-chara-cover.jpg",
+                      "area":  "paint",
+                      "pdfUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/books/mw86menn-002-mini-chara.pdf",
+                      "pageCount":  177,
+                      "toc":  [
+
+                              ],
+                      "sortNo":  1,
+                      "createdAt":  1794163560444,
+                      "updatedAt":  1794163560444,
+                      "pages":  [
+
+                                ]
+                  },
+                  {
+                      "id":  "lib-mw97y0mu-d5ff0e",
+                      "title":  "ももこ绘制教程1例",
+                      "author":  "ももこ",
+                      "category":  "绘画教程",
+                      "tags":  [
+
+                               ],
+                      "intro":  "ももこ 的角色绘制示范（中文版 10 页），含分步步骤图，适合临摹练习。",
+                      "accent":  "#7d5a3c",
+                      "coverUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/covers/mw97uyjw-003-momoko-cover.jpg",
+                      "area":  "paint",
+                      "pdfUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/books/mw97uyyt-003-momoko.pdf",
+                      "pageCount":  10,
+                      "toc":  [
+
+                              ],
+                      "sortNo":  2,
+                      "createdAt":  1794226184887,
+                      "updatedAt":  1794226184887,
+                      "pages":  [
+
+                                ]
+                  },
+                  {
+                      "id":  "lib-mw9882jp-5ee852",
+                      "title":  "千穗像素画教程",
+                      "author":  "千穗",
+                      "category":  "绘画教程",
+                      "tags":  [
+
+                               ],
+                      "intro":  "千穗的像素画系列教程合集，共 9 册 66 页：Aseprite 入门、像素绘入门、食物构图、非商业委托、房间、背景、RPG 伪游戏画面、颜色处理、人物教学。",
+                      "accent":  "#7d5a3c",
+                      "coverUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/covers/mw985qu5-004-qiansui-cover.jpg",
+                      "area":  "paint",
+                      "pdfUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/books/mw985riv-004-qiansui-pixel.pdf",
+                      "pageCount":  66,
+                      "toc":  [
+                                  {
+                                      "title":  "Aseprite像素動圖軟體入門",
+                                      "page":  1
+                                  },
+                                  {
+                                      "title":  "Pixel Art1 像素繪入門教學本",
+                                      "page":  19
+                                  },
+                                  {
+                                      "title":  "Pixel Art2 像素食物構圖教學本",
+                                      "page":  25
+                                  },
+                                  {
+                                      "title":  "Pixel Art3 像素非商業委託本",
+                                      "page":  27
+                                  },
+                                  {
+                                      "title":  "Pixel Art4 像素房間教學本",
+                                      "page":  31
+                                  },
+                                  {
+                                      "title":  "Pixel Art5 像素背景教學本",
+                                      "page":  37
+                                  },
+                                  {
+                                      "title":  "Pixel Art6 RPG偽遊戲畫面像素教學本",
+                                      "page":  41
+                                  },
+                                  {
+                                      "title":  "Pixel Art7 颜色基本处理",
+                                      "page":  59
+                                  },
+                                  {
+                                      "title":  "Pixel Art8 像素人物教學本",
+                                      "page":  63
+                                  }
+                              ],
+                      "sortNo":  3,
+                      "createdAt":  1794226653925,
+                      "updatedAt":  1794226790722,
+                      "pages":  [
+
+                                ]
+                  },
+                  {
+                      "id":  "lib-mw9a8pu5-763209",
+                      "title":  "配色X构图X透视 像素艺术背景画法完全解析",
+                      "author":  "",
+                      "category":  "绘画教程",
+                      "tags":  [
+
+                               ],
+                      "intro":  "像素艺术背景的系统教程：从配色、构图到透视，逐章拆解背景画法，共 204 页。",
+                      "accent":  "#7d5a3c",
+                      "coverUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
+                      "area":  "paint",
+                      "pdfUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/books/mw9a5uhb-005-pixel-bg.pdf",
+                      "pageCount":  204,
+                      "toc":  [
+
+                              ],
+                      "sortNo":  4,
+                      "createdAt":  1794230043341,
+                      "updatedAt":  1794230043341,
+                      "pages":  [
+
+                                ]
+                  },
+                  {
+                      "id":  "lib-mw9ak57x-423ad7",
+                      "title":  "女子姿势集9册合集",
+                      "author":  "",
+                      "category":  "绘画教程",
+                      "tags":  [
+
+                               ],
+                      "intro":  "9 册女子姿势参考集合并：站立、跳跃线画、坐姿、坐姿线画、走路线画、站立线画、站立＆走路、跑步线画、跑步＆跳跃，共 1902 张参考图。",
+                      "accent":  "#7d5a3c",
+                      "coverUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/covers/mw9ahcng-006-girls-pose-cover.jpg",
+                      "area":  "paint",
+                      "pdfUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/books/mw9ahk53-006-girls-pose-9vol.pdf",
+                      "pageCount":  1902,
+                      "toc":  [
+                                  {
+                                      "title":  "制服ポーズ集『女の子・立ち』編",
+                                      "page":  1
+                                  },
+                                  {
+                                      "title":  "女の子ポーズ集『ジャンプ・線画』編",
+                                      "page":  256
+                                  },
+                                  {
+                                      "title":  "女の子ポーズ集『座り』編",
+                                      "page":  455
+                                  },
+                                  {
+                                      "title":  "女の子ポーズ集『座り・線画』編",
+                                      "page":  655
+                                  },
+                                  {
+                                      "title":  "女の子ポーズ集『歩き・線画』編",
+                                      "page":  806
+                                  },
+                                  {
+                                      "title":  "女の子ポーズ集『立ち・線画』編",
+                                      "page":  981
+                                  },
+                                  {
+                                      "title":  "女の子ポーズ集『立ち＆歩き編』",
+                                      "page":  1279
+                                  },
+                                  {
+                                      "title":  "女の子ポーズ集『走り・線画』編",
+                                      "page":  1446
+                                  },
+                                  {
+                                      "title":  "女の子ポーズ集『走り＆ジャンプ編』",
+                                      "page":  1671
+                                  }
+                              ],
+                      "sortNo":  5,
+                      "createdAt":  1794230576493,
+                      "updatedAt":  1794230576493,
+                      "pages":  [
+
+                                ]
+                  },
+                  {
+                      "id":  "lib-mw9bj5qo-f39210",
+                      "title":  "女子服饰姿势集4册合集",
+                      "author":  "",
+                      "category":  "绘画教程",
+                      "tags":  [
+
+                               ],
+                      "intro":  "",
+                      "accent":  "#7d5a3c",
+                      "coverUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
+                      "area":  "paint",
+                      "pdfUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/books/mw9bhcmo-007-dress-pose-4vol.pdf",
+                      "pageCount":  1037,
+                      "toc":  [
+                                  {
+                                      "title":  "ドレスポーズ集『座り・寝そべり』編",
+                                      "page":  1
+                                  },
+                                  {
+                                      "title":  "ドレスポーズ集『歩き』編",
+                                      "page":  383
+                                  },
+                                  {
+                                      "title":  "ドレスポーズ集『立ち』編",
+                                      "page":  587
+                                  },
+                                  {
+                                      "title":  "ドレスポーズ集『走り・ジャンプ』編",
+                                      "page":  856
+                                  }
+                              ],
+                      "sortNo":  6,
+                      "createdAt":  1794232210128,
+                      "updatedAt":  1794232210128,
+                      "pages":  [
+
+                                ]
+                  },
+                  {
+                      "id":  "lib-mw9bovcf-c4aa7a",
+                      "title":  "男子姿势集5册合集",
+                      "author":  "",
+                      "category":  "绘画教程",
+                      "tags":  [
+
+                               ],
+                      "intro":  "",
+                      "accent":  "#7d5a3c",
+                      "coverUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
+                      "area":  "paint",
+                      "pdfUrl":  "https://huimeng-ai-backend.onrender.com/api/library/file/library/books/mw9bn7yf-008-boys-pose-5vol.pdf",
+                      "pageCount":  1097,
+                      "toc":  [
+                                  {
+                                      "title":  "男の子ポーズ集『ジャンプ』編",
+                                      "page":  1
+                                  },
+                                  {
+                                      "title":  "男の子ポーズ集『座り』編",
+                                      "page":  226
+                                  },
+                                  {
+                                      "title":  "男の子ポーズ集『歩き』編",
+                                      "page":  463
+                                  },
+                                  {
+                                      "title":  "男の子ポーズ集『立ち』編",
+                                      "page":  673
+                                  },
+                                  {
+                                      "title":  "男の子ポーズ集『走り』編",
+                                      "page":  872
+                                  }
+                              ],
+                      "sortNo":  7,
+                      "createdAt":  1794232476591,
+                      "updatedAt":  1794232476591,
+                      "pages":  [
+
+                                ]
+                  }
+              ],
+    "total":  8,
+    "store":  {
+                  "mode":  "mysql",
+                  "mysqlError":  null,
+                  "storageLimit":  "500G",
+                  "books":  8,
+                  "pages":  0,
+                  "categories":  1
+              }
+}
