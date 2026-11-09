@@ -1,10 +1,9 @@
 {
-    "createdAt":  "2026-11-09T22:18:50",
+    "createdAt":  "2026-11-09T22:38:53",
     "backend":  "https://huimeng-ai-backend.onrender.com/api",
     "source":  "GET /api/library/books (public, read-only)",
-    "booksCount":  8,
-    "fileCount":  10,
-    "totalBytes":  413668,
+    "fileCount":  18,
+    "totalBytes":  981033441,
     "note":  "admin 登录 401：账号/作品/桌面等用户数据本次未能备份；PDF 仅存本机（\u003e100MB 无法入库）",
     "files":  [
                   {
@@ -56,6 +55,46 @@
                       "relativePath":  "covers/mw9bn7e8-008-boys-pose-cover.jpg",
                       "bytes":  66929,
                       "sha256":  "C467206C39AF3EECBEF74C1AF6D0F70CC2347B699536A3A5BF3B0D7C5925DACC"
+                  },
+                  {
+                      "relativePath":  "pdfs/mw819v2a-001-kawaii.pdf",
+                      "bytes":  83500919,
+                      "sha256":  "70416C7BACC6D662D3F886846B9A150081F63C7FCB51734197185D421787E2E2"
+                  },
+                  {
+                      "relativePath":  "pdfs/mw86menn-002-mini-chara.pdf",
+                      "bytes":  118452960,
+                      "sha256":  "B69DC8F54C2B1BE6ADCE527E237C3ADC8471804F7F7D5D2C6AFE6CD3F916878E"
+                  },
+                  {
+                      "relativePath":  "pdfs/mw97uyyt-003-momoko.pdf",
+                      "bytes":  8361528,
+                      "sha256":  "9012B44581546F02B00EC8B201FAFE75B0CCBFD8F0DBF85E113AFB26D49B9AE9"
+                  },
+                  {
+                      "relativePath":  "pdfs/mw985riv-004-qiansui-pixel.pdf",
+                      "bytes":  43324555,
+                      "sha256":  "836B2421C8851AA6F4B522ED498D1D8F6BE1BD7F1CD4EF50CDFD5E3E1F2F934C"
+                  },
+                  {
+                      "relativePath":  "pdfs/mw9a5uhb-005-pixel-bg.pdf",
+                      "bytes":  196145152,
+                      "sha256":  null
+                  },
+                  {
+                      "relativePath":  "pdfs/mw9ahk53-006-girls-pose-9vol.pdf",
+                      "bytes":  232280809,
+                      "sha256":  "F85C59D4647813D7EC8760515B4DD8D74255CD5859DED9F6A6A1AD41A24CD37F"
+                  },
+                  {
+                      "relativePath":  "pdfs/mw9bhcmo-007-dress-pose-4vol.pdf",
+                      "bytes":  141071323,
+                      "sha256":  "E224602B9010A88786E402122DC504DD1CADE213CA4D4C51F1AB0B4E72CEBABA"
+                  },
+                  {
+                      "relativePath":  "pdfs/mw9bn7yf-008-boys-pose-5vol.pdf",
+                      "bytes":  157482527,
+                      "sha256":  "CEF492C39E7828D630AC406CEE591B84312C0CAACF2860A14DCB3407519722AA"
                   }
               ]
 }
