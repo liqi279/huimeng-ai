@@ -1,80 +1,91 @@
 'use strict';
 
 /* =============================================================
- * 绘梦 · 对象存储适配层（S3 协议）
+ * 对象存储兼容门面（历史 API 保留）
  * -------------------------------------------------------------
- * 作品图片/视频等二进制只放对象存储，数据库只存 object key。
- * 兼容：Cloudflare R2（阶段0）、MinIO（阶段1 内网）、AWS S3、阿里云 OSS。
+ * 数据面（上传 / 读取 / 删除 / 签名 URL）已全部交给 storage 适配层
+ * （server/src/storage），本文件只保留两件事：
+ *   1. 旧调用方需要的 API 形状（putObject / presignGet / presignPut / status ...）
+ *   2. 桶级安全配置（CORS / 防盗链），用 SigV4 直接打 OSS 的桶接口
  *
- * 环境变量：
- *   OBJECT_STORE=auto|s3|local
- *   S3_ENDPOINT / S3_REGION / S3_BUCKET
- *   S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY
- *   S3_FORCE_PATH_STYLE=1（默认为 1；MinIO 需要）
- *     置 0/false 时改用 virtual-hosted：Host 变成 <bucket>.<endpoint host>，
- *     URL 路径不再带桶名。阿里云 OSS 只支持这种风格，必须置 0。
- *   S3_EXTRA_HEADER_OSS_COMPAT=1（可选，默认关闭）
- *     仅阿里云 OSS 需要时开启：给签名请求额外加 x-oss-s3-compat: true。
- *     走 s3.oss-*.aliyuncs.com 专属 endpoint 时一般不需要。
- *   S3_PUBLIC_BASE（可选 CDN）
- *
- * local 模式只用于开发调试：写 data/runtime/userdata，Render 重启会丢，
- * 启动日志与 /api/user-data/status 会明确告警。
+ * 换存储后端只改 STORAGE_BACKEND + 环境变量，业务代码与路由都不用动。
+ * 环境变量（全部只从环境读取，仓库里没有任何默认密钥）：
+ *   STORAGE_BACKEND=auto|oss|github|r2|local
+ *   OSS_REGION / OSS_BUCKET / OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET
+ *   OSS_ENDPOINT（可选，自定义/专有域名） / OSS_PUBLIC_BASE（可选 CDN 域名）
+ *   OSS_URL_TTL（签名有效期秒，默认 3600）
  * ============================================================= */
 
-const fs = require('fs');
-const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
 const config = require('./config');
+const storage = require('./storage');
 
-const LOCAL_ROOT = path.join(config.DATA_DIR, 'userdata');
+const LOCAL_ROOT = storage.LOCAL_ROOT;
 
 const state = {
-  mode: 'pending',
-  error: null,
-  bucket: config.S3_BUCKET || null,
-  endpoint: config.S3_ENDPOINT || null,
+  ready: false,
 };
 
-function wantS3() {
-  if (config.OBJECT_STORE === 'local') return false;
-  return Boolean(config.S3_ENDPOINT && config.S3_BUCKET &&
-    config.S3_ACCESS_KEY_ID && config.S3_SECRET_ACCESS_KEY);
-}
-
+/* ---------------- 兼容 API ---------------- */
 function init() {
-  if (wantS3()) {
-    state.mode = 's3';
-    state.error = null;
-  } else {
-    state.mode = 'local';
-    state.error = config.OBJECT_STORE === 's3'
-      ? 'OBJECT_STORE=s3 但缺少 S3_ENDPOINT / S3_BUCKET / 密钥，已回落本地盘'
-      : null;
-  }
-  if (state.mode === 'local') {
-    console.warn('[object-store] 当前为本地盘存储（' + LOCAL_ROOT + '）。' +
-      'Render 重启/重新部署会丢图片，请配置 S3_ENDPOINT/S3_BUCKET/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY（R2 或 MinIO）。');
-  } else {
-    console.log('[object-store] S3 对象存储已启用：' + state.endpoint + ' / ' + state.bucket + '（region=' + config.S3_REGION + '）');
-  }
+  storage.init();
+  const st = storage.status();
+  state.ready = st.mode === 's3';
   return state;
 }
 
 function status() {
+  const st = storage.status();
+  const ossStatus = st.backendStatus || {};
   return {
-    mode: state.mode === 's3' ? 's3' : 'local',
-    label: state.mode === 's3' ? '对象存储(S3)' : '服务器本地盘',
-    endpoint: state.endpoint,
-    bucket: state.bucket,
-    warning: state.mode === 's3' ? ''
-      : '图片存放在服务器本地盘，Render 重启会丢失；请配置 S3/R2/MinIO。',
-    error: state.error,
+    /* 旧调用方只认 s3 / local 两种值：OSS 即 s3 语义 */
+    mode: st.mode === 's3' ? 's3' : st.mode,
+    label: st.label,
+    backend: st.backend,
+    endpoint: ossStatus.endpoint || config.OSS_ENDPOINT || null,
+    bucket: ossStatus.bucket || config.OSS_BUCKET || null,
+    warning: st.mode === 's3' ? '' : '图片未落到对象存储，Render 重启会丢失；请配置 OSS。',
+    error: st.error,
   };
 }
 
-/* ---------------- SigV4 ---------------- */
+async function putObject(objectKey, buffer, mime) {
+  const saved = await storage.put(objectKey, buffer, mime);
+  return { storage: saved.storage, url: storage.publicUrl(objectKey) };
+}
+
+async function readObject(objectKey) {
+  return storage.read(objectKey);
+}
+
+async function deleteObject(objectKey) {
+  return storage.remove(objectKey);
+}
+
+/* 预签名 GET：私有桶 + 时效；配置了公开域名则直接给公开直链 */
+function presignGet(objectKey, ttlSec, opts) {
+  const extra = opts || {};
+  const direct = storage.publicUrl(objectKey);
+  if (direct) return direct;
+  return storage.signatureUrl(objectKey, {
+    method: 'GET',
+    ttl: ttlSec || config.STORAGE_URL_TTL,
+    contentDisposition: extra.responseContentDisposition,
+  });
+}
+
+/* 预签名 PUT：浏览器/本机直传大文件（如 83MB PDF），字节不经过 Render。
+   contentType 必须签进去，PUT 时要带同一个 Content-Type，否则 OSS 报 SignatureDoesNotMatch。 */
+function presignPut(objectKey, ttlSec, contentType) {
+  return storage.signatureUrl(objectKey, {
+    method: 'PUT',
+    ttl: ttlSec || config.STORAGE_URL_TTL,
+    contentType: contentType || '',
+  });
+}
+
+/* ---------------- 桶级配置（CORS / 防盗链） ---------------- */
 function hmac(key, data) {
   return crypto.createHmac('sha256', key).update(data, 'utf8').digest();
 }
@@ -87,36 +98,25 @@ function uriEncode(value) {
 function amzDate() {
   return new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
 }
-/* S3_FORCE_PATH_STYLE 语义：0/false 关闭 path-style（改用 virtual-hosted）。
-   config 里已转成 boolean，这里同时兼容字符串写法。 */
 function forcePathStyle() {
   const v = config.S3_FORCE_PATH_STYLE;
   if (typeof v === 'boolean') return v;
   return !(v === 0 || String(v).toLowerCase() === '0' || String(v).toLowerCase() === 'false');
 }
-/* canonical URI 与实际请求路径必须完全一致，两处都用这个函数。 */
 function keyPath(objectKey) {
   const key = String(objectKey).split('/').map(uriEncode).join('/');
-  if (!forcePathStyle()) return '/' + key; // virtual-hosted：桶名在 Host 里
+  if (!forcePathStyle()) return '/' + key;
   return '/' + uriEncode(config.S3_BUCKET) + '/' + key;
 }
 function endpointHost() {
   const host = new URL(config.S3_ENDPOINT).host;
   if (forcePathStyle()) return host;
   const bucket = String(config.S3_BUCKET);
-  // endpoint 已经写成桶域名时不再重复加前缀
   if (host.indexOf(bucket + '.') === 0) return host;
   return bucket + '.' + host;
 }
-/* 仅 OSS 需要时的兼容头；默认不加，避免影响 MinIO / R2 / AWS。 */
 function extraCompatHeaders() {
   return config.S3_EXTRA_HEADER_OSS_COMPAT ? { 'x-oss-s3-compat': 'true' } : {};
-}
-/* 实际请求 URL：协议 + Host（virtual-hosted 时已含桶前缀）+ 路径。
-   必须与 canonical URI 用同一套拼法，否则签名对不上。 */
-function requestUrl(objectKey) {
-  const u = new URL(config.S3_ENDPOINT);
-  return u.protocol + '//' + endpointHost() + keyPath(objectKey);
 }
 function signingKey(day) {
   const kDate = hmac('AWS4' + config.S3_SECRET_ACCESS_KEY, day);
@@ -125,246 +125,7 @@ function signingKey(day) {
   return hmac(kService, 'aws4_request');
 }
 
-/* 生成带签名的请求（用于 PUT/GET/DELETE） */
-function signedRequest(method, objectKey, payload, extra) {
-  const opts = extra || {};
-  const host = endpointHost();
-  const date = amzDate();
-  const day = date.slice(0, 8);
-  const scope = day + '/' + config.S3_REGION + '/s3/aws4_request';
-  const payloadHash = payload ? sha256hex(payload) : sha256hex(Buffer.alloc(0));
-  const contentType = opts.contentType || 'application/octet-stream';
-
-  const canonicalHeaders =
-    'content-type:' + contentType + '\n' +
-    'host:' + host + '\n' +
-    'x-amz-content-sha256:' + payloadHash + '\n' +
-    'x-amz-date:' + date + '\n';
-  const signedHeaders = 'content-type;host;x-amz-content-sha256;x-amz-date';
-  const canonicalRequest = [
-    method,
-    keyPath(objectKey),
-    '',
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash,
-  ].join('\n');
-
-  const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
-  const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
-  const authorization = 'AWS4-HMAC-SHA256 Credential=' + config.S3_ACCESS_KEY_ID + '/' + scope +
-    ', SignedHeaders=' + signedHeaders + ', Signature=' + signature;
-
-  const url = requestUrl(objectKey);
-  return {
-    url,
-    headers: {
-      'Content-Type': contentType,
-      'x-amz-content-sha256': payloadHash,
-      'x-amz-date': date,
-      Authorization: authorization,
-      ...extraCompatHeaders(),
-    },
-  };
-}
-
-/* 预签名 GET URL（私有桶 + 时效）
-   opts.responseContentDisposition：写进签名查询串，OSS 会按它覆盖 Content-Disposition。
-   注意：
-     - 这些参数必须参与签名（本函数统一由 canonicalQuery 生成），
-       外部再拼到 URL 上会直接 403 SignatureDoesNotMatch；
-     - OSS 不接受 response-content-type 覆盖（400 InvalidRequest:
-       Can not override response header on content-type），不要加。 */
-function presignGet(objectKey, ttlSec, opts) {
-  if (state.mode !== 's3') return null;
-  if (config.S3_PUBLIC_BASE) {
-    return config.S3_PUBLIC_BASE.replace(/\/+$/, '') + '/' + String(objectKey).split('/').map(uriEncode).join('/');
-  }
-  const host = endpointHost();
-  const date = amzDate();
-  const day = date.slice(0, 8);
-  const scope = day + '/' + config.S3_REGION + '/s3/aws4_request';
-  const expires = Math.max(60, Math.min(Number(ttlSec) || config.S3_URL_TTL, 604800));
-  const extra = opts || {};
-
-  const params = {
-    'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
-    'X-Amz-Credential': config.S3_ACCESS_KEY_ID + '/' + scope,
-    'X-Amz-Date': date,
-    'X-Amz-Expires': String(expires),
-    'X-Amz-SignedHeaders': 'host',
-  };
-  if (extra.responseContentDisposition) {
-    params['response-content-disposition'] = String(extra.responseContentDisposition);
-  }
-  const canonicalQuery = Object.keys(params).sort()
-    .map((k) => uriEncode(k) + '=' + uriEncode(params[k])).join('&');
-  const canonicalRequest = [
-    'GET',
-    keyPath(objectKey),
-    canonicalQuery,
-    'host:' + host + '\n',
-    'host',
-    'UNSIGNED-PAYLOAD',
-  ].join('\n');
-  const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
-  const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
-
-  return requestUrl(objectKey) +
-    '?' + canonicalQuery + '&X-Amz-Signature=' + signature;
-}
-
-/* 预签名 PUT URL：用于浏览器/本机把大文件（83MB PDF）直传对象存储，
-   字节不经过 Render，避免请求体过大和超时。
-   传了 contentType 就把它签进去：PUT 时必须带同一个 Content-Type，
-   否则 OSS 会拒绝（403 SignatureDoesNotMatch）；这样对象元信息不会变成 octet-stream。 */
-function presignPut(objectKey, ttlSec, contentType) {
-  if (state.mode !== 's3') return null;
-  const host = endpointHost();
-  const date = amzDate();
-  const day = date.slice(0, 8);
-  const scope = day + '/' + config.S3_REGION + '/s3/aws4_request';
-  const expires = Math.max(60, Math.min(Number(ttlSec) || config.S3_URL_TTL, 604800));
-  const type = String(contentType || '').trim();
-
-  const params = {
-    'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
-    'X-Amz-Credential': config.S3_ACCESS_KEY_ID + '/' + scope,
-    'X-Amz-Date': date,
-    'X-Amz-Expires': String(expires),
-    'X-Amz-SignedHeaders': type ? 'content-type;host' : 'host',
-  };
-  const canonicalQuery = Object.keys(params).sort()
-    .map((k) => uriEncode(k) + '=' + uriEncode(params[k])).join('&');
-  const canonicalHeaders = type
-    ? 'content-type:' + type + '\n' + 'host:' + host + '\n'
-    : 'host:' + host + '\n';
-  const canonicalRequest = [
-    'PUT',
-    keyPath(objectKey),
-    canonicalQuery,
-    canonicalHeaders,
-    params['X-Amz-SignedHeaders'],
-    'UNSIGNED-PAYLOAD',
-  ].join('\n');
-  const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
-  const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
-
-  /* 必须与 presignGet 用同一套 URL 拼法（virtual-hosted 时桶名在 Host 里），
-     否则签名里的 host 与实际请求 host 不一致，OSS 会直接 AccessDenied。 */
-  return requestUrl(objectKey) +
-    '?' + canonicalQuery + '&X-Amz-Signature=' + signature;
-}
-
-/* 通用签名：headersMap 里的每个头都参与签名（键统一小写），
-   用于带 x-amz-* / x-oss-* 头的请求。 */
-function signedWithHeaders(method, objectKey, headersMap, payload) {
-  const host = endpointHost();
-  const date = amzDate();
-  const day = date.slice(0, 8);
-  const scope = day + '/' + config.S3_REGION + '/s3/aws4_request';
-  const payloadHash = sha256hex(payload || Buffer.alloc(0));
-  const all = {};
-  Object.keys(headersMap || {}).forEach((k) => { all[k.toLowerCase()] = String(headersMap[k]); });
-  all.host = host;
-  all['x-amz-content-sha256'] = payloadHash;
-  all['x-amz-date'] = date;
-
-  const names = Object.keys(all).sort();
-  const canonicalHeaders = names.map((n) => n + ':' + all[n].trim() + '\n').join('');
-  const signedHeaders = names.join(';');
-  const canonicalRequest = [method, keyPath(objectKey), '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
-  const stringToSign = ['AWS4-HMAC-SHA256', date, scope, sha256hex(canonicalRequest)].join('\n');
-  const signature = crypto.createHmac('sha256', signingKey(day)).update(stringToSign, 'utf8').digest('hex');
-  const authorization = 'AWS4-HMAC-SHA256 Credential=' + config.S3_ACCESS_KEY_ID + '/' + scope +
-    ', SignedHeaders=' + signedHeaders + ', Signature=' + signature;
-
-  const headers = {};
-  names.forEach((n) => { headers[n] = all[n]; });
-  headers.Authorization = authorization;
-  Object.assign(headers, extraCompatHeaders());
-  return { url: requestUrl(objectKey), headers };
-}
-
-/* ---------------- 读写 ---------------- */
-function localPath(objectKey) {
-  const safe = String(objectKey).split('/').filter((s) => s && s !== '.' && s !== '..').join(path.sep);
-  return path.join(LOCAL_ROOT, safe);
-}
-
-async function putObject(objectKey, buffer, mime) {
-  if (state.mode === 's3') {
-    const req = signedRequest('PUT', objectKey, buffer, { contentType: mime || 'application/octet-stream' });
-    const res = await fetch(req.url, { method: 'PUT', headers: req.headers, body: buffer });
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error('对象存储写入失败（HTTP ' + res.status + '）：' + text.slice(0, 200));
-    }
-    return { storage: 's3', url: presignGet(objectKey) };
-  }
-  const file = localPath(objectKey);
-  await fsp.mkdir(path.dirname(file), { recursive: true });
-  const tmp = file + '.' + process.pid + '.' + crypto.randomBytes(4).toString('hex') + '.tmp';
-  await fsp.writeFile(tmp, buffer);
-  await fsp.rename(tmp, file);
-  return { storage: 'local', url: null };
-}
-
-async function readObject(objectKey) {
-  if (state.mode === 's3') {
-    const req = signedRequest('GET', objectKey, null, { contentType: 'application/octet-stream' });
-    const res = await fetch(req.url, { method: 'GET', headers: req.headers });
-    if (!res.ok) throw new Error('对象存储读取失败（HTTP ' + res.status + '）');
-    return Buffer.from(await res.arrayBuffer());
-  }
-  return fsp.readFile(localPath(objectKey));
-}
-
-async function deleteObject(objectKey) {
-  if (state.mode === 's3') {
-    const req = signedRequest('DELETE', objectKey, null, { contentType: 'application/octet-stream' });
-    const res = await fetch(req.url, { method: 'DELETE', headers: req.headers });
-    if (!res.ok && res.status !== 404) throw new Error('对象存储删除失败（HTTP ' + res.status + '）');
-    return true;
-  }
-  await fsp.unlink(localPath(objectKey)).catch(() => {});
-  return true;
-}
-
-/* ---------------- 桶级配置（CORS / 防盗链） ---------------- */
-/* 前端（GitHub Pages）用 pdf.js 直连 OSS 分段读取 PDF，浏览器必须先过 CORS 预检；
-   桶上没有匹配规则时 OPTIONS 直接 403（x-oss-ec 0003-00000601）。
-   规则固定在这里，PUT 是幂等的：启动跑一次，也可由管理员接口手动重跑。 */
-const CORS_ORIGINS = [
-  'https://liqi279.github.io',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-];
-const CORS_EXPOSE_HEADERS = [
-  'Content-Length', 'Content-Range', 'Accept-Ranges',
-  'Content-Type', 'ETag', 'Content-Disposition',
-];
-/* 防盗链白名单里要放行的自有前端 */
-const SITE_REFERERS = ['https://liqi279.github.io/*'];
-
-function xmlEscape(value) {
-  return String(value)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-}
-
-function corsXml() {
-  const origins = CORS_ORIGINS.map((o) => '<AllowedOrigin>' + xmlEscape(o) + '</AllowedOrigin>').join('');
-  const expose = CORS_EXPOSE_HEADERS.map((h) => '<ExposeHeader>' + xmlEscape(h) + '</ExposeHeader>').join('');
-  return '<CORSConfiguration><CORSRule>' + origins +
-    '<AllowedMethod>GET</AllowedMethod><AllowedMethod>HEAD</AllowedMethod>' +
-    '<AllowedHeader>*</AllowedHeader>' + expose +
-    '<MaxAgeSeconds>3600</MaxAgeSeconds></CORSRule></CORSConfiguration>';
-}
-
-/* 桶级签名请求：canonical URI 是 '/'，子资源（cors / referer）放 canonical query。
-   virtual-hosted 下 endpointHost() 已经是 <bucket>.<endpoint>，Host 不用改。
-   只签 content-type/host/x-amz-content-sha256/x-amz-date 四个头，与现有请求一致。 */
+/* 桶级签名请求：canonical URI 是 '/'，子资源（cors / referer）放 canonical query */
 function signedBucketRequest(method, subresource, payload, contentType) {
   const host = endpointHost();
   const date = amzDate();
@@ -399,15 +160,40 @@ function signedBucketRequest(method, subresource, payload, contentType) {
   };
 }
 
-/* 只保留 OSS 错误里的 Code/RequestId，绝不会带上任何凭据 */
-function ossErrorSummary(status, text) {
+const CORS_ORIGINS = [
+  'https://liqi279.github.io',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+const CORS_EXPOSE_HEADERS = [
+  'Content-Length', 'Content-Range', 'Accept-Ranges',
+  'Content-Type', 'ETag', 'Content-Disposition',
+];
+const SITE_REFERERS = ['https://liqi279.github.io/*'];
+
+function xmlEscape(value) {
+  return String(value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function corsXml() {
+  const origins = CORS_ORIGINS.map((o) => '<AllowedOrigin>' + xmlEscape(o) + '</AllowedOrigin>').join('');
+  const expose = CORS_EXPOSE_HEADERS.map((h) => '<ExposeHeader>' + xmlEscape(h) + '</ExposeHeader>').join('');
+  return '<CORSConfiguration><CORSRule>' + origins +
+    '<AllowedMethod>GET</AllowedMethod><AllowedMethod>HEAD</AllowedMethod>' +
+    '<AllowedHeader>*</AllowedHeader>' + expose +
+    '<MaxAgeSeconds>3600</MaxAgeSeconds></CORSRule></CORSConfiguration>';
+}
+
+function ossErrorSummary(statusCode, text) {
   const code = (String(text).match(/<Code>([^<]+)<\/Code>/) || [])[1] || '';
   const requestId = (String(text).match(/<RequestId>([^<]+)<\/RequestId>/) || [])[1] || '';
-  return { status, code, requestId };
+  return { status: statusCode, code, requestId };
 }
 
 async function putBucketCors() {
-  if (state.mode !== 's3') return { ok: false, action: 'put-bucket-cors', skipped: '对象存储未启用' };
+  if (status().mode !== 's3') return { ok: false, action: 'put-bucket-cors', skipped: '对象存储未启用' };
   const body = Buffer.from(corsXml(), 'utf8');
   const req = signedBucketRequest('PUT', 'cors', body, 'application/xml');
   const res = await fetch(req.url, { method: 'PUT', headers: req.headers, body });
@@ -421,7 +207,7 @@ async function putBucketCors() {
 
 /* 防盗链：只在「已开启（白名单非空）」且不含自有前端时追加，不动其它条目 */
 async function ensureBucketReferer() {
-  if (state.mode !== 's3') return { ok: false, action: 'put-bucket-referer', skipped: '对象存储未启用' };
+  if (status().mode !== 's3') return { ok: false, action: 'put-bucket-referer', skipped: '对象存储未启用' };
   const getReq = signedBucketRequest('GET', 'referer', null, 'application/xml');
   const res = await fetch(getReq.url, { method: 'GET', headers: getReq.headers });
   const text = await res.text().catch(() => '');
@@ -454,7 +240,7 @@ async function ensureBucketReferer() {
 
 /* 幂等的桶安全配置：启动时跑一次；失败只记录，绝不影响服务启动 */
 async function ensureBucketSecurity() {
-  if (state.mode !== 's3') {
+  if (status().mode !== 's3') {
     return { ok: false, skipped: '对象存储未启用（本地盘模式无需桶配置）' };
   }
   const cors = await putBucketCors().catch((err) => ({ ok: false, action: 'put-bucket-cors', error: err.message }));

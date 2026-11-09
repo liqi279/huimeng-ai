@@ -6,8 +6,8 @@
  * 背景：早先 assets.js / art.js / animation.js / generate.js / tts.js
  * 直接往 data/runtime/media|assets 写文件，再返回 /uploads/... 路径。
  * Render 这类容器重启即清空磁盘，生成结果会丢；本模块把这些写入
- * 统一改走 object-store（S3 / OSS；未配置时由 object-store 自带回落
- * 本地盘 data/runtime/userdata）。
+ * 统一改走 storage 适配层（当前后端为阿里云 OSS；未配置时由适合层
+ * 回落本地盘 data/runtime/userdata）。
  *
  * 设计约束：
  *   1. 对外 URL 形状完全不变：仍是 /uploads/assets/<name>、/uploads/media/<name>，
@@ -16,14 +16,14 @@
  *      便于 index.js 的 /uploads 兜底路由按同名 key 回读；
  *   3. 历史本地盘文件继续由 index.js 的 express.static 直接服务
  *      （静态中间件先命中，命中不到才轮到兜底路由）；
- *   4. 未配置对象存储（OBJECT_STORE=local）时，写读都落在本地盘，
+ *   4. 未配置对象存储（STORAGE_BACKEND=local）时，写读都落在本地盘，
  *      功能不受影响。
  * ============================================================= */
 
 const path = require('path');
 const fsp = require('fs').promises;
 const store = require('./store');
-const objectStore = require('./object-store');
+const storage = require('./storage');
 
 const KIND_DIR = {
   assets: () => store.dirs.assets,
@@ -61,22 +61,23 @@ function objectKey(kind, name) {
   return normalizeKind(kind) + '/' + path.basename(String(name || ''));
 }
 
-/* 写入：一律走 objectStore.putObject（S3 或本地盘回落）。
+/* 写入：一律走 storage 适配层（OSS 或本地盘回落）。
    返回的 url 与旧行为一致，仍是 /uploads/<kind>/<name>。 */
 async function put(kind, name, buffer, mime) {
   const key = objectKey(kind, name);
-  const saved = await objectStore.putObject(key, buffer, mime);
+  const saved = await storage.put(key, buffer, mime);
   return { url: '/uploads/' + key, objectKey: key, storage: saved.storage };
 }
 
 /* 读取：供 index.js 的 /uploads 兜底路由使用。
-   s3 模式返回预签名直链（跳转），本地模式返回文件内容。 */
+   对象存储模式返回签名直链（跳转），本地模式返回文件内容。 */
 async function send(kind, name) {
   const key = objectKey(kind, name);
-  if (objectStore.status().mode === 's3') {
-    return { mode: 's3', url: objectStore.presignGet(key) };
+  if (storage.status().mode === 's3') {
+    const url = storage.signatureUrl(key, { method: 'GET' });
+    if (url) return { mode: 's3', url };
   }
-  const buffer = await objectStore.readObject(key);
+  const buffer = await storage.read(key);
   return { mode: 'local', buffer, mime: mimeByName(key) };
 }
 
@@ -84,15 +85,18 @@ async function send(kind, name) {
 async function remove(kind, name) {
   const safeName = path.basename(String(name || ''));
   if (!safeName) return;
-  await objectStore.deleteObject(objectKey(kind, safeName)).catch(() => {});
+  await storage.remove(objectKey(kind, safeName)).catch(() => {});
   await fsp.unlink(path.join(KIND_DIR[normalizeKind(kind)](), safeName)).catch(() => {});
 }
 
 /* 需要交给第三方下载时用的绝对地址（如 Fish Audio 拉参考音频）：
-   s3 模式给预签名直链，本地模式给 /uploads 静态代理的完整 URL。 */
+   对象存储模式给签名直链，本地模式给 /uploads 静态代理的完整 URL。 */
 function absoluteUrl(kind, name, origin) {
   const key = objectKey(kind, name);
-  if (objectStore.status().mode === 's3') return objectStore.presignGet(key);
+  if (storage.status().mode === 's3') {
+    const url = storage.signatureUrl(key, { method: 'GET' });
+    if (url) return url;
+  }
   return String(origin || '').replace(/\/+$/, '') + '/uploads/' + key;
 }
 

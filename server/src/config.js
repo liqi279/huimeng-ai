@@ -23,6 +23,59 @@ const DEFAULT_CORS_ORIGINS = [
   'https://127.0.0.1:8443',
 ].join(',');
 
+/* ---------- 统一 storage 适配层（当前启用阿里云 OSS） ----------
+   变量优先级（同义变量同时存在时）：S3_* ＞ OSS_* ＞ 空。
+   Render 上已有的就是 S3_* 这一套，OSS_* 只是同义别名，不需要改线上配置。
+
+   后端开关：显式 STORAGE_BACKEND 优先；未设置时按旧开关 OBJECT_STORE 映射：
+     OBJECT_STORE=s3  → oss   （旧语义：走对象存储）
+     OBJECT_STORE=local → local
+     OBJECT_STORE=auto → auto（凭证齐全走 oss，否则本地盘）
+   STORAGE_BACKEND=oss 但凭证缺失：上传接口直接 503 并列出缺失变量，不静默落本地盘。
+
+   region 解析顺序：S3_ENDPOINT 里的 oss-<region> → S3_REGION → OSS_ENDPOINT → OSS_REGION。
+   凭证只从环境变量读取，仓库里不保留任何默认值。 */
+function regionFromOssEndpoint(url) {
+  const match = /^https?:\/\/(oss-[a-z0-9-]+)\.aliyuncs\.com\/?$/i.exec(String(url || '').trim());
+  return match ? match[1].toLowerCase() : '';
+}
+/* ali-oss 的 region 形如 oss-cn-hangzhou；允许只写 cn-hangzhou，这里补齐前缀 */
+function normalizeOssRegion(region) {
+  const value = String(region || '').trim();
+  if (!value || value.toLowerCase() === 'auto') return '';
+  return /^oss-/i.test(value) ? value.toLowerCase() : 'oss-' + value.toLowerCase();
+}
+
+const S3_REGION_ENV = env('S3_REGION', '');
+const S3_ENDPOINT_ENV = env('S3_ENDPOINT', '');
+const OSS_REGION_ENV = env('OSS_REGION', '');
+const OSS_ENDPOINT_ENV = env('OSS_ENDPOINT', '');
+
+const OSS_REGION = regionFromOssEndpoint(S3_ENDPOINT_ENV) ||
+  normalizeOssRegion(S3_REGION_ENV) ||
+  regionFromOssEndpoint(OSS_ENDPOINT_ENV) ||
+  normalizeOssRegion(OSS_REGION_ENV);
+const OSS_BUCKET = env('S3_BUCKET', '') || env('OSS_BUCKET', '');
+const OSS_ACCESS_KEY_ID = env('S3_ACCESS_KEY_ID', '') || env('OSS_ACCESS_KEY_ID', '');
+const OSS_ACCESS_KEY_SECRET = env('S3_SECRET_ACCESS_KEY', '') || env('OSS_ACCESS_KEY_SECRET', '');
+/* 自定义域名 / 专有域名（cname 模式）。S3_ENDPOINT 是地域域名，不能往这里塞 */
+const OSS_ENDPOINT = OSS_ENDPOINT_ENV;
+/* 可选：绑定的 CDN / 公开域名，配置后读取直接走公开直链，不再签名 */
+const OSS_PUBLIC_BASE = env('S3_PUBLIC_BASE', '') || env('OSS_PUBLIC_BASE', '');
+const STORAGE_URL_TTL = Number(env('S3_URL_TTL', env('OSS_URL_TTL', '3600')));
+/* 桶级安全配置（CORS/防盗链）走 SigV4，需要完整 endpoint；没有显式 endpoint 时按 region 推导 */
+const DERIVED_OSS_ENDPOINT = S3_ENDPOINT_ENV ||
+  (OSS_REGION
+    ? 'https://' + (/^oss-/i.test(OSS_REGION) ? '' : 'oss-') + OSS_REGION + '.aliyuncs.com'
+    : '');
+const S3_FORCE_PATH_STYLE_ENV = env('S3_FORCE_PATH_STYLE', '');
+
+/* 旧开关 OBJECT_STORE → 新后端；显式 STORAGE_BACKEND 优先 */
+const LEGACY_OBJECT_STORE = String(env('OBJECT_STORE', 'auto')).toLowerCase();
+const OBJECT_STORE_BACKEND =
+  ({ s3: 'oss', oss: 'oss', local: 'local', auto: 'auto' })[LEGACY_OBJECT_STORE] || 'auto';
+const STORAGE_BACKEND = env('STORAGE_BACKEND', '') || OBJECT_STORE_BACKEND;
+
 module.exports = {
   PORT: Number(env('PORT', '8787')),
   HTTPS_PORT: Number(env('HTTPS_PORT', '8443')),
@@ -102,20 +155,35 @@ module.exports = {
   /* 对象存储（S3 协议）：Cloudflare R2 / MinIO / AWS S3 均可。
      OBJECT_STORE=auto 时只要 S3_ENDPOINT + S3_BUCKET + 密钥齐全就走 S3，
      否则回落本地盘（data/runtime/userdata），仅用于开发调试，Render 重启会丢。 */
+  /* 统一 storage 适配层（当前启用 oss；github/r2 为预留空壳） */
+  STORAGE_BACKEND,
+  OSS_REGION,
+  OSS_BUCKET,
+  OSS_ACCESS_KEY_ID,
+  OSS_ACCESS_KEY_SECRET,
+  OSS_ENDPOINT,
+  OSS_PUBLIC_BASE,
+  STORAGE_URL_TTL,
+
+  /* ---------- 兼容旧变量名（图书馆 PDF 直传 / 桶安全配置仍在用） ----------
+     未单独配置 S3_* 时自动沿用 OSS_*，避免两套配置漏填。 */
   OBJECT_STORE: env('OBJECT_STORE', 'auto'), // auto | s3 | local
-  S3_ENDPOINT: env('S3_ENDPOINT', ''),
+  S3_ENDPOINT: env('S3_ENDPOINT', DERIVED_OSS_ENDPOINT),
   S3_REGION: env('S3_REGION', 'auto'),
-  S3_BUCKET: env('S3_BUCKET', ''),
-  S3_ACCESS_KEY_ID: env('S3_ACCESS_KEY_ID', ''),
-  S3_SECRET_ACCESS_KEY: env('S3_SECRET_ACCESS_KEY', ''),
-  /* 1=path-style（默认，MinIO）；0/false=virtual-hosted（阿里云 OSS 必须） */
-  S3_FORCE_PATH_STYLE: !/^(0|false)$/i.test(env('S3_FORCE_PATH_STYLE', '1')),
+  S3_BUCKET: env('S3_BUCKET', OSS_BUCKET),
+  S3_ACCESS_KEY_ID: env('S3_ACCESS_KEY_ID', OSS_ACCESS_KEY_ID),
+  S3_SECRET_ACCESS_KEY: env('S3_SECRET_ACCESS_KEY', OSS_ACCESS_KEY_SECRET),
+  /* 1=path-style（MinIO）；0/false=virtual-hosted（阿里云 OSS 必须）。
+     未显式设置时：配了 OSS 就走 virtual-hosted，否则沿用旧的 path-style 默认。 */
+  S3_FORCE_PATH_STYLE: S3_FORCE_PATH_STYLE_ENV
+    ? !/^(0|false)$/i.test(S3_FORCE_PATH_STYLE_ENV)
+    : !(OSS_REGION || OSS_BUCKET),
   /* 仅 OSS 需要时开启：签名请求加 x-oss-s3-compat: true（默认关闭） */
   S3_EXTRA_HEADER_OSS_COMPAT: /^(1|true)$/i.test(env('S3_EXTRA_HEADER_OSS_COMPAT', '0')),
   /* 可选 CDN/公开域名（私有桶留空，走服务端签名跳转） */
-  S3_PUBLIC_BASE: env('S3_PUBLIC_BASE', ''),
-  /* S3 预签名跳转有效期（秒），最大 7 天 */
-  S3_URL_TTL: Number(env('S3_URL_TTL', '3600')),
+  S3_PUBLIC_BASE: OSS_PUBLIC_BASE,
+  /* 预签名跳转有效期（秒），最大 7 天 */
+  S3_URL_TTL: STORAGE_URL_TTL,
   /* 后端对外基地址（可选）。用于拼接图片 URL，例如
      https://huimeng-ai-backend.onrender.com/api；留空则按请求头自动推导。 */
   PUBLIC_BASE_URL: env('PUBLIC_BASE_URL', ''),

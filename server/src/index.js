@@ -33,8 +33,12 @@ const animationRoutes = require('./routes/animation');
 const ollamaRoutes = require('./routes/ollama');
 const libraryRoutes = require('./routes/library');
 const objectStore = require('./object-store');
+const storage = require('./storage');
 
 const app = express();
+
+/* storage 适配层先初始化：上传/读取全部依赖它，且必须早于任何请求 */
+storage.init();
 
 const corsOrigin = config.CORS_ORIGIN === '*'
   ? '*'
