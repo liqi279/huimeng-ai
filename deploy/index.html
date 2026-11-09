@@ -52330,6 +52330,7 @@ window.HMChat = (function () {
   var searchTimer = null;
   var suggestItems = [];
   var suggestIndex = -1;
+  var pdfSlowTimer = null;
 
   /* ---------------- 工具 ---------------- */
   function $(id) { return document.getElementById(id); }
@@ -53217,8 +53218,51 @@ window.HMChat = (function () {
   }
 
   function hidePdfLoading() {
+    clearPdfSlowTimer();
     var overlay = pdfOverlay();
     if (overlay) overlay.classList.add('is-hidden');
+  }
+
+  /* 14 秒没有新进展才提示「仍在加载」，有进度就不断重置 */
+  function clearPdfSlowTimer() {
+    if (pdfSlowTimer) { clearTimeout(pdfSlowTimer); pdfSlowTimer = null; }
+  }
+
+  function kickPdfSlowTimer() {
+    clearPdfSlowTimer();
+    pdfSlowTimer = setTimeout(function () {
+      pdfLoadingText('仍在加载 PDF … 请稍候，或点击重试');
+      var retry = els.reader && els.reader.querySelector('[data-pdf-retry]');
+      if (retry) retry.hidden = false;
+    }, 14000);
+  }
+
+  function formatMb(bytes) {
+    return (Number(bytes || 0) / 1048576).toFixed(1) + ' MB';
+  }
+
+  function pdfProgress(loaded, total) {
+    var text;
+    if (total > 0) {
+      var pct = Math.max(0, Math.min(100, Math.round(loaded / total * 100)));
+      text = '正在加载 ' + formatMb(loaded) + ' / ' + formatMb(total) + '（' + pct + '%）';
+    } else if (loaded > 0) {
+      text = '正在加载 ' + formatMb(loaded) + ' …';
+    } else {
+      return;
+    }
+    pdfLoadingText(text);
+    kickPdfSlowTimer();
+  }
+
+  /* 向后端要一次性签名直链：只发地址，不搬字节 */
+  function fetchPdfSignedUrl(book) {
+    return request('/library/books/' + encodeURIComponent(book.id) + '/pdf-url', {}, 8000)
+      .then(function (data) {
+        var url = data && (data.url || data.pdfUrl || data.signedUrl);
+        if (!url) throw new Error('pdf-url 未返回可用地址');
+        return String(url);
+      });
   }
 
   function updatePdfZoomLabel() {
@@ -53277,6 +53321,7 @@ window.HMChat = (function () {
 
   /* 失败时只在站内提示 + 重试；不创建 iframe、不打开直链 */
   function showPdfError(err) {
+    clearPdfSlowTimer();
     var scroll = els.reader && els.reader.querySelector('[data-pdf-scroll]');
     if (scroll) scroll.hidden = true;
     var bar = els.reader && els.reader.querySelector('.lib-pdf-toolbar');
@@ -53309,24 +53354,36 @@ window.HMChat = (function () {
 
     state.pdfDocPromise = loadPdfJs()
       .then(function (pdfjs) {
+        /* 分段读取：只取当前页需要的字节；带真实进度回调 */
         function open(url) {
-          /* 分段读取：只取当前页需要的字节 */
-          return pdfjs.getDocument({
-            url: url,
-            disableRange: false,
-            disableStream: false
-          }).promise;
+          return new Promise(function (resolve, reject) {
+            var task = pdfjs.getDocument({
+              url: url,
+              disableRange: false,
+              disableStream: false,
+              withCredentials: false
+            });
+            task.onProgress = function (p) {
+              if (!p) return;
+              pdfProgress(p.loaded || 0, p.total || 0);
+            };
+            task.promise.then(resolve, reject);
+          });
         }
-        /* 第一选择：流式接口（不跳转、带 ACAO、支持 Range） */
-        var streamed = streamUrl(book.pdfUrl);
-        return open(streamed).catch(function (err) {
-          /* 流式失败才退回直链兜底 */
-          console.warn('[library] 流式加载失败，改用直链：', err && err.name, err && err.message);
-          return open(book.pdfUrl).catch(function (err2) {
-            var e = new Error(
-              '流式 ' + streamed + '：' + (err && err.name) + ' / ' + (err && err.message) +
-              '；直链 ' + book.pdfUrl + '：' + (err2 && err2.name) + ' / ' + (err2 && err2.message)
-            );
+
+        var attempts = [];
+        /* 第一选择：后端签名直链，字节完全不过我们的服务器 */
+        return fetchPdfSignedUrl(book).then(function (signed) {
+          return open(signed);
+        }).catch(function (err) {
+          attempts.push('签名直链（' + (err && err.name) + ' / ' + (err && err.message) + '）');
+          console.warn('[library] 签名直链失败，改用 stream=1：', err && err.name, err && err.message);
+          var streamed = streamUrl(book.pdfUrl);
+          pdfLoadingText('正在加载 PDF …');
+          kickPdfSlowTimer();
+          return open(streamed).catch(function (err2) {
+            attempts.push('流式 ' + streamed + '（' + (err2 && err2.name) + ' / ' + (err2 && err2.message) + '）');
+            var e = new Error('已尝试：' + attempts.join('；'));
             e.name = (err2 && err2.name) || (err && err.name) || 'Error';
             throw e;
           });
@@ -53348,7 +53405,6 @@ window.HMChat = (function () {
     var overlay = pdfOverlay();
     var txt = overlay && overlay.querySelector('[data-loading-text]');
     var retry = overlay && overlay.querySelector('[data-pdf-retry]');
-    var slow = null;
 
     function resetLoading(text) {
       var sc = els.reader && els.reader.querySelector('[data-pdf-scroll]');
@@ -53360,11 +53416,7 @@ window.HMChat = (function () {
       if (spinner) spinner.hidden = false;
       pdfLoadingText(text || '正在加载 PDF …');
       if (retry) retry.hidden = true;
-      if (slow) clearTimeout(slow);
-      slow = setTimeout(function () {
-        pdfLoadingText('仍在加载 PDF … 请稍候，或点击重试');
-        if (retry) retry.hidden = false;
-      }, 12000);
+      kickPdfSlowTimer();
     }
 
     resetLoading();
@@ -53718,6 +53770,7 @@ window.HMChat = (function () {
     state.pdfTotal = 0;
     state.pdfPrefetched = {};
     state.pdfToken = (state.pdfToken || 0) + 1;
+    clearPdfSlowTimer();
     els.reader.classList.remove('is-open', 'is-entering');
     els.reader.hidden = true;
     els.reader.innerHTML = '';
