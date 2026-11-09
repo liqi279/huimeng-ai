@@ -54780,7 +54780,11 @@ window.HMChat = (function () {
     frames: [],
     idx: 0,
     playing: false,
-    timer: null
+    timer: null,
+    rec: null,
+    localCancel: false,
+    localDuration: 0,
+    isLocalVideo: false
   };
 
   function toast(msg, type) {
@@ -54861,9 +54865,9 @@ window.HMChat = (function () {
     var el = $('tcApiState');
     if (!base) { toast('请填写推理服务地址', 'error'); return; }
     if (window.location.protocol === 'https:' && base.indexOf('http://') === 0) {
-      if (el) el.textContent = '被浏览器拦截（https 页面不能访问 http 本地服务）';
-      setBadge(false, '请用本地版打开');
-      if (!silent) toast('https 页面无法访问 http 本地推理服务，请打开本地单文件版或本机 http 服务', 'error');
+      if (el) el.textContent = '被浏览器拦截（https 页面不能访问 http 本地服务）· 可本地补间生成';
+      setBadge(false, '本地补间可用（未连 GPU）');
+      if (!silent) toast('https 页面无法访问 http 本地推理服务，已启用本地快速补间；真实推理请用本地版打开', 'error');
       return;
     }
     if (el) el.textContent = '检测中…';
@@ -54910,13 +54914,165 @@ window.HMChat = (function () {
   function setBusy(busy) {
     state.busy = busy;
     var gen = $('tcGenBtn'), stop = $('tcStopBtn');
-    if (gen) { gen.disabled = busy; gen.textContent = busy ? '推理中…' : '✨ 生成补间（真实推理）'; }
+    if (gen) { gen.disabled = busy; gen.textContent = busy ? '推理中…' : (localTweenBlocked() ? '✨ 生成补间（本地快速）' : '✨ 生成补间（真实推理）'); }
     if (stop) stop.hidden = !busy;
+  }
+
+  /* https 页面无法访问 http://127.0.0.1（Chrome 直接按 loopback 地址空间拦截），
+     此时改用浏览器内交叉淡化生成，不再把按钮做成「看起来能点、实际必然失败」。 */
+  function localTweenBlocked() {
+    return window.location.protocol === 'https:' && /^http:\/\//i.test(apiBase());
+  }
+
+  var TC_RES = { '320_512': [512, 320], '256_256': [256, 256], '576_1024': [1024, 576] };
+
+  function loadImg(src) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('关键帧读取失败')); };
+      img.src = src;
+    });
+  }
+
+  function drawCover(ctx, img, w, h) {
+    var s = Math.max(w / img.width, h / img.height);
+    var dw = img.width * s, dh = img.height * s;
+    ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  }
+
+  /* 线上兜底：首尾帧交叉淡化 → canvas 逐帧 → MediaRecorder 编码为视频 */
+  function generateLocalTween() {
+    if (!state.firstFile || !state.lastFile) { toast('请先上传首帧与尾帧', 'error'); return; }
+    var first = $('tcThumbFirst'), last = $('tcThumbLast');
+    if (!first || !last || !first.src || !last.src) { toast('关键帧尚未载入', 'error'); return; }
+    if (state.busy) return;
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+      toast('当前浏览器不支持本地视频编码，请下载本地版连接 GPU 推理服务', 'error');
+      return;
+    }
+
+    var fps = Math.max(5, Math.min(30, parseInt(($('tcFs') || {}).value, 10) || 10));
+    var resKey = ($('tcRes') || {}).value || '320_512';
+    var size = TC_RES[resKey] || TC_RES['320_512'];
+    var W = size[0], H = size[1];
+
+    setBusy(true);
+    state.localCancel = false;
+    var t0 = Date.now();
+    var meta = $('tcMeta');
+    if (meta) meta.textContent = '本地补间生成中…';
+
+    Promise.all([loadImg(first.src), loadImg(last.src)]).then(function (imgs) {
+      var attempt = 0;
+      var thumbs = [];
+      function buildThumbs() {
+        var tcv = document.createElement('canvas');
+        tcv.width = Math.max(2, Math.round(W / 2));
+        tcv.height = Math.max(2, Math.round(H / 2));
+        var tctx = tcv.getContext('2d');
+        thumbs = [];
+        for (var j = 0; j < 9; j++) {
+          var kk = (j / 8) * (j / 8) * (3 - 2 * (j / 8));
+          tctx.fillStyle = '#000';
+          tctx.fillRect(0, 0, tcv.width, tcv.height);
+          tctx.globalAlpha = 1;
+          drawCover(tctx, imgs[0], tcv.width, tcv.height);
+          tctx.globalAlpha = kk;
+          drawCover(tctx, imgs[1], tcv.width, tcv.height);
+          tctx.globalAlpha = 1;
+          thumbs.push(tcv.toDataURL('image/jpeg', 0.72));
+        }
+      }
+      /* 浏览器首次 canvas 录制常拿不到帧（空 blob），失败自动重试 */
+      function recordOnce() {
+        attempt++;
+        var cv = document.createElement('canvas');
+        cv.width = W; cv.height = H;
+        /* 挂到屏幕外并保持真实尺寸，否则部分 Chrome 版本 captureStream 一帧都录不到 */
+        cv.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + W + 'px;height:' + H + 'px;pointer-events:none;';
+        document.body.appendChild(cv);
+        var ctx = cv.getContext('2d');
+        var stream = cv.captureStream(fps);
+        var mime = '';
+        ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].some(function (m) {
+          if (window.MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; return true; }
+          return false;
+        });
+        var chunks = [];
+        var rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 4000000 } : undefined);
+        state.rec = rec;
+        var total = Math.max(6, Math.round(fps * 1.6));
+        var i = 0;
+        var step = Math.ceil(1000 / fps);
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+        rec.onstop = function () {
+          state.rec = null;
+          try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+          if (cv.parentNode) cv.parentNode.removeChild(cv);
+          if (state.localCancel) {
+            state.localCancel = false;
+            setBusy(false);
+            if (meta) meta.textContent = '已停止生成';
+            toast('已停止生成', 'info');
+            return;
+          }
+          var blob = new Blob(chunks, { type: (mime || 'video/webm').split(';')[0] });
+          if (blob.size < 2000) {
+            if (attempt < 3) {
+              if (meta) meta.textContent = '本地补间生成中…（重试 ' + attempt + '/3）';
+              window.setTimeout(recordOnce, 150);
+              return;
+            }
+            setBusy(false);
+            if (meta) meta.textContent = '本地补间未生成：浏览器未录到帧，请再点一次「生成补间」';
+            toast('本地补间未生成，请再点一次「生成补间」重试', 'error');
+            return;
+          }
+          /* 录制期间不能对同一 canvas 调 toDataURL（会让 captureStream 丢帧），停止后再生成缩略图 */
+          buildThumbs();
+          var url = URL.createObjectURL(blob);
+          setBusy(false);
+          onGenerated(url, {
+            elapsed: ((Date.now() - t0) / 1000).toFixed(1),
+            resolution: resKey,
+            steps: '本地',
+            fps: fps,
+            duration: total / fps,
+            thumbs: thumbs.slice(),
+            local: true
+          }, apiBase());
+          toast('未连接 GPU 推理服务，已用本地交叉淡化生成补间', 'info');
+        };
+        function frame() {
+          var t = total <= 1 ? 1 : i / (total - 1);
+          var k = t * t * (3 - 2 * t); /* 缓入缓出 */
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, W, H);
+          ctx.globalAlpha = 1;
+          drawCover(ctx, imgs[0], W, H);
+          ctx.globalAlpha = k;
+          drawCover(ctx, imgs[1], W, H);
+          ctx.globalAlpha = 1;
+          if (++i >= total) { window.setTimeout(function () { try { rec.stop(); } catch (e) {} }, step); return; }
+          window.setTimeout(frame, step);
+        }
+        rec.start();
+        frame();
+      }
+      recordOnce();
+    }).catch(function (err) {
+      setBusy(false);
+      if (meta) meta.textContent = '生成失败：' + (err && err.message || err);
+      toast('本地补间失败：' + (err && err.message || err), 'error');
+    });
   }
 
   function generate() {
     if (!state.firstFile || !state.lastFile) { toast('请先上传首帧与尾帧', 'error'); return; }
     if (state.busy) return;
+    /* https 线上页访问 http 本机服务必被浏览器拦截，直接走本地补间，避免「点了没反应」 */
+    if (localTweenBlocked()) { generateLocalTween(); return; }
     if (!state.apiOk) { testApi(true); }
 
     var base = apiBase();
@@ -54983,11 +55139,18 @@ window.HMChat = (function () {
   }
 
   function stopGenerate() {
+    if (state.rec) {
+      state.localCancel = true;
+      try { state.rec.stop(); } catch (e) {}
+      return;
+    }
     if (state.xhr) { try { state.xhr.abort(); } catch (e) {} }
   }
 
   function onGenerated(url, data, base) {
     state.videoUrl = url;
+    state.isLocalVideo = !!data.local;
+    state.localDuration = data.local ? (data.duration || 0) : 0;
     var video = $('tcVideo'), cv = $('tcCanvas'), empty = $('tcStageEmpty');
     if (cv) cv.hidden = true;
     if (empty) empty.hidden = true;
@@ -54999,11 +55162,18 @@ window.HMChat = (function () {
     }
     var meta = $('tcMeta');
     if (meta) {
-      meta.textContent = '完成 · ' + data.elapsed + 's · ' + data.resolution.replace('_', '×')
-        + ' · ' + data.steps + ' 步 · ' + data.fps + ' fps';
+      meta.textContent = (data.local ? '本地补间（未连 GPU）' : '完成') + ' · ' + data.elapsed + 's · ' + data.resolution.replace('_', '×')
+        + ' · ' + (data.local ? '交叉淡化' : data.steps + ' 步') + ' · ' + data.fps + ' fps';
     }
-    toast('真实推理完成，用时 ' + data.elapsed + 's', 'success');
-    extractFrames(base);
+    toast(data.local ? ('本地补间已生成，用时 ' + data.elapsed + 's') : ('真实推理完成，用时 ' + data.elapsed + 's'), 'success');
+    if (data.local && data.thumbs && data.thumbs.length) {
+      /* 本地视频没有 duration 元数据，直接用生成时截下的帧做时间轴 */
+      state.frames = data.thumbs.slice();
+      state.idx = 0;
+      renderTimeline();
+    } else {
+      extractFrames(base);
+    }
   }
 
   /* 从生成的真实视频抽帧，做时间轴缩略图 */
@@ -55060,6 +55230,11 @@ window.HMChat = (function () {
     var v = $('tcVideo');
     if (!v || !state.frames.length) return;
     var meta = $('tcMeta');
+    if (meta && state.isLocalVideo) {
+      meta.textContent = '本地补间（未连 GPU） · ' + state.frames.length + ' 帧缩略 · '
+        + (v.videoWidth || 0) + '×' + (v.videoHeight || 0) + ' · ' + (state.localDuration || 0).toFixed(1) + 's';
+      return;
+    }
     if (meta) {
       meta.textContent = state.frames.length + ' 帧缩略 · ' + (v.videoWidth || 0) + '×' + (v.videoHeight || 0)
         + ' · ' + (v.duration ? v.duration.toFixed(2) : '0') + 's';
@@ -55080,7 +55255,7 @@ window.HMChat = (function () {
     fetch(state.videoUrl).then(function (r) { return r.blob(); }).then(function (blob) {
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'tooncrafter_' + Date.now() + '.mp4';
+      a.download = 'tooncrafter_' + Date.now() + (/mp4/.test(blob.type || '') ? '.mp4' : '.webm');
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       toast('视频已下载', 'success');
     }).catch(function () {
@@ -55165,6 +55340,7 @@ window.HMChat = (function () {
       try { var saved = localStorage.getItem(API_LS); if (saved) api.value = saved; } catch (e) {}
       api.addEventListener('change', function () {
         try { localStorage.setItem(API_LS, api.value.trim()); } catch (e) {}
+        if (!state.busy) setBusy(false);
         testApi(true);
       });
     }
@@ -55188,8 +55364,9 @@ window.HMChat = (function () {
       if (!b) return;
       var v = $('tcVideo');
       var i = parseInt(b.dataset.i, 10);
-      if (v && v.duration && state.frames.length > 1) {
-        v.currentTime = (v.duration * i) / (state.frames.length - 1);
+      var dur = (v && isFinite(v.duration) && v.duration) ? v.duration : (state.localDuration || 0);
+      if (v && dur && state.frames.length > 1) {
+        v.currentTime = (dur * i) / (state.frames.length - 1);
       }
       var items = timeline.querySelectorAll('.tc-frame');
       for (var k = 0; k < items.length; k++) items[k].classList.toggle('is-active', k === i);
@@ -55209,6 +55386,11 @@ window.HMChat = (function () {
     if (booted) return;
     booted = true;
     bind();
+    setBusy(false);
+    if (localTweenBlocked()) {
+      var empty = $('tcStageEmpty');
+      if (empty) empty.textContent = '上传首尾帧后点击「生成补间」：线上版用本地补间，本地版用 GPU 真实推理';
+    }
     testApi(true);
   }
 
