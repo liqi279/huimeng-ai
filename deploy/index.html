@@ -52297,14 +52297,16 @@ window.HMChat = (function () {
 
   var SEED = (window.HM_LIBRARY_SEED && window.HM_LIBRARY_SEED.books) || [];
 
-  /* 图书馆区域：单按钮切换，五区目前均为空 */
+  /* 图书馆区域：单按钮切换；all 为汇总区（不按 area 过滤） */
   var LIB_AREAS = [
-    { id: 'ref', name: '参考素材' },
-    { id: 'psd', name: '插画作画过程PSD源文件' },
-    { id: 'anim', name: '动画教程' },
-    { id: 'paint', name: '绘画教程' },
-    { id: 'concept', name: '原画资料' }
+    { id: 'all', name: '全部藏书', desc: '汇总全部区域的书籍' },
+    { id: 'ref', name: '参考素材', desc: '该区域内容' },
+    { id: 'psd', name: '插画作画过程PSD源文件', desc: '该区域内容' },
+    { id: 'anim', name: '动画教程', desc: '该区域内容' },
+    { id: 'paint', name: '绘画教程', desc: '该区域内容' },
+    { id: 'concept', name: '原画资料', desc: '该区域内容' }
   ];
+  var DEFAULT_AREA = 'ref';   /* 默认区域保持为参考素材，不改成汇总 */
 
   var state = {
     mode: 'local',        /* local | remote */
@@ -52494,7 +52496,10 @@ window.HMChat = (function () {
   }
 
   function markShelf() {
-    var areaBooks = state.books.filter(function (b) { return b.area === state.area; });
+    /* all 为汇总区：不过滤 area，包含全部区域的书；其余区域严格按 area 过滤 */
+    var areaBooks = state.area === 'all'
+      ? state.books.slice()
+      : state.books.filter(function (b) { return b.area === state.area; });
     /* 排序：sortNo 升序（001=0、002=1）；同 sortNo 按 createdAt 升序，新书排后面 */
     areaBooks.sort(function (a, b) {
       var sa = Number(a.sortNo), sb = Number(b.sortNo);
@@ -53937,6 +53942,10 @@ window.HMChat = (function () {
     for (var i = 0; i < LIB_AREAS.length; i++) {
       if (LIB_AREAS[i].id === id) return LIB_AREAS[i];
     }
+    /* 旧 localStorage 值或非法值：回落到默认区域（不落到汇总区） */
+    for (var j = 0; j < LIB_AREAS.length; j++) {
+      if (LIB_AREAS[j].id === DEFAULT_AREA) return LIB_AREAS[j];
+    }
     return LIB_AREAS[0];
   }
 
@@ -53969,7 +53978,7 @@ window.HMChat = (function () {
         var on = a.id === state.area;
         return '<button type="button" class="lib-panel-item lib-area-item' + (on ? ' is-current' : '') + '" data-area="' + a.id + '">'
           + '<span class="lib-panel-cover" style="--accent:#c9a227"><span>' + esc(a.name.slice(0, 2)) + '</span></span>'
-          + '<span class="lib-panel-text"><b>' + esc(a.name) + '</b><small>该区域内容</small></span>'
+          + '<span class="lib-panel-text"><b>' + esc(a.name) + '</b><small>' + esc(a.desc || '该区域内容') + '</small></span>'
           + '<span class="lib-panel-go">' + (on ? '✓ 当前' : '选择 →') + '</span></button>';
       }).join('') + '</div></div>';
     els.modal.querySelectorAll('[data-close], [data-mask]').forEach(function (el) {
@@ -54003,7 +54012,7 @@ window.HMChat = (function () {
     /* 全屏状态变化（含 Esc 退出）时同步按钮 */
     document.addEventListener('fullscreenchange', syncFsButton);
 
-    var savedArea = readJSON(LS.area, LIB_AREAS[0].id);
+    var savedArea = readJSON(LS.area, DEFAULT_AREA);
     state.area = areaById(savedArea).id;
     syncAreaBtn();
     var areaBtn = $('libAreaBtn');
