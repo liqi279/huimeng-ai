@@ -7701,110 +7701,6 @@ body.hm-light .hm-page-empty {
   margin-top: 1px;
 }
 
-/* ---------- 叠放卡片（folder-card.is-stack）：desk-card 风格 ---------- */
-.folder-card.is-stack {
-  width: 200px;
-  height: 240px;
-  background: linear-gradient(180deg, #131e2d, #0d1725);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
-  border-radius: 13px;
-}
-.folder-card.is-stack:hover {
-  border-color: rgba(96, 165, 250, 0.38);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
-}
-.folder-card.is-stack.selected, .folder-card.is-stack.is-selected {
-  border-color: rgba(56, 189, 248, 0.85);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 16px 38px rgba(0, 0, 0, 0.42);
-}
-.folder-card.is-stack .desk-thumb {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  background: #0a1320;
-}
-.folder-card.is-stack .desk-info {
-  padding: 8px 10px 10px;
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.25));
-}
-.folder-card.is-stack .desk-info strong {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #e2e8f0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.folder-card.is-stack .desk-info small {
-  display: block;
-  font-size: 10px;
-  color: rgba(148, 163, 184, 0.8);
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.folder-stack-count {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(20, 40, 70, 0.88);
-  border: 1px solid rgba(96, 165, 250, 0.6);
-  border-radius: 8px;
-  padding: 2px 8px;
-  font-size: 10px;
-  font-weight: 600;
-  color: #cfe4ff;
-  backdrop-filter: blur(6px);
-  line-height: 1.4;
-  z-index: 2;
-}
-.folder-stack-rest {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  display: flex;
-  gap: 2px;
-  padding: 2px;
-  background: rgba(5, 10, 18, 0.75);
-  border-radius: 7px;
-  backdrop-filter: blur(4px);
-  z-index: 2;
-}
-.folder-stack-t {
-  width: 22px;
-  height: 22px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  display: block;
-}
-.folder-stack-rest-more {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  background: rgba(37, 99, 235, 0.85);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-}
-.folder-stack-empty {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  font-size: 14px;
-  color: rgba(148, 163, 184, 0.5);
-  gap: 8px;
-}
-
 /* 文件夹预览弹窗 */
 .hm-folder-preview-card {
   width: min(920px, 92vw);
@@ -18796,7 +18692,7 @@ body.dv-open .hm-page {
 
 </style>
 <script>window.HM_LIBRARY_SEED = {"version":1,"updatedAt":"2026-11-05","note":"绘梦图书馆 · 书籍种子数据（已清空，保留变量与结构）。","books":[]};</script>
-<script>window.HM_BUILD = "20261109034758-2ddc5b0";</script>
+<script>window.HM_BUILD = "20261107121734-84655f9";</script>
 </head>
 <body data-view="create">
 <script>
@@ -52614,29 +52510,16 @@ window.HMChat = (function () {
     if (state.booted) return Promise.resolve();
     state.loading = true;
     renderSkeleton();
-    /* 收藏/历史与书单并行发起：三者各自要 0.4~0.8s，串起来用户就得多等一倍以上 */
-    var aux = fetchAux();
     return request('/library/books', {}, 7000).then(function (data) {
       state.mode = 'remote';
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
-      state.booted = true;
-      state.loading = false;
-      markShelf();
-      renderShelf();   /* 书单先到先渲染，不等收藏/历史 */
-      renderStatus();
-      return aux.then(function (res) {
-        applyAux(res);
-        if (state.mode !== 'remote') return;
-        markShelf();
-        renderShelf();
-        renderStatus();
-      });
-    }, function () {
-      /* 书单请求失败（离线 / 超时 / 后端未启动）才回落到本地存储 */
+      return loadRemoteAux();
+    }).catch(function (err) {
       state.mode = 'local';
       state.books = localBooks();
       state.fav = loadFavLocal();
       state.hist = loadHistLocal();
+    }).then(function () {
       state.booted = true;
       state.loading = false;
       markShelf();
@@ -52645,22 +52528,16 @@ window.HMChat = (function () {
     });
   }
 
-  function fetchAux() {
+  function loadRemoteAux() {
     return Promise.all([
       request('/library/favorites', {}, 6000).catch(function () { return { items: [] }; }),
       request('/library/history', {}, 6000).catch(function () { return { items: [] }; })
-    ]);
-  }
-
-  function applyAux(res) {
-    var fav = {};
-    (res[0].items || []).forEach(function (b) { fav[b.id] = true; });
-    state.fav = fav;
-    state.hist = res[1].items || [];
-  }
-
-  function loadRemoteAux() {
-    return fetchAux().then(applyAux);
+    ]).then(function (res) {
+      var fav = {};
+      (res[0].items || []).forEach(function (b) { fav[b.id] = true; });
+      state.fav = fav;
+      state.hist = res[1].items || [];
+    });
   }
 
   function refreshRemote() {
@@ -53435,14 +53312,15 @@ window.HMChat = (function () {
             disableStream: false
           }).promise;
         }
-        return open(book.pdfUrl).catch(function (err) {
-          var directMsg = (err && err.name) + ' / ' + (err && err.message);
-          console.warn('[library] 直链加载失败，切换流式接口：', directMsg);
-          pdfLoadingText('直链加载失败，已切换流式加载 …');
-          return open(streamUrl(book.pdfUrl)).catch(function (err2) {
+        /* 第一选择：流式接口（不跳转、带 ACAO、支持 Range） */
+        var streamed = streamUrl(book.pdfUrl);
+        return open(streamed).catch(function (err) {
+          /* 流式失败才退回直链兜底 */
+          console.warn('[library] 流式加载失败，改用直链：', err && err.name, err && err.message);
+          return open(book.pdfUrl).catch(function (err2) {
             var e = new Error(
-              '直链 ' + book.pdfUrl + '：' + directMsg +
-              '；流式 ' + streamUrl(book.pdfUrl) + '：' + (err2 && err2.name) + ' / ' + (err2 && err2.message)
+              '流式 ' + streamed + '：' + (err && err.name) + ' / ' + (err && err.message) +
+              '；直链 ' + book.pdfUrl + '：' + (err2 && err2.name) + ' / ' + (err2 && err2.message)
             );
             e.name = (err2 && err2.name) || (err && err.name) || 'Error';
             throw e;
@@ -63035,35 +62913,6 @@ window.HMChat = (function () {
   function folderCardHtmlInner(folder) {
     var items = worksUnderFolder(folder.id);
     var subCount = desk.folders.filter(function (f) { return (f.parentId || null) === folder.id; }).length;
-
-    /* ---------- stack 模式（叠放）：desk-card 风格 ---------- */
-    if (folder.mode === 'stack') {
-      items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
-      var main = items[0];
-      var rest = items.slice(1);
-      if (!main) {
-        return '<div class="folder-stack-empty">📂 叠放已空</div>';
-      }
-      var mainName = workName(main);
-      var mainMeta = [main.modelName || 'AI', (main.width && main.height) ? main.width + '×' + main.height : ''];
-      if (main.type === 'video' && main.duration) mainMeta.push(main.duration + 's');
-      if (main.elapsed && main.elapsed > 0) mainMeta.push('耗时 ' + main.elapsed.toFixed(1) + 's');
-      var restHtml = '';
-      if (rest.length) {
-        var restImgs = rest.slice(0, 3).map(function (w) {
-          return '<img src="' + esc(w.thumb || w.url || '') + '" alt="" class="folder-stack-t">';
-        }).join('');
-        restHtml = '<div class="folder-stack-rest">' + restImgs + (rest.length > 3 ? '<span class="folder-stack-rest-more">+' + (rest.length - 3) + '</span>' : '') + '</div>';
-      }
-      return '<div class="desk-thumb">' + mediaHtml(main, 'desk') +
-        '<span class="desk-badge">已完成</span>' +
-        '<span class="folder-stack-count">叠放 ' + items.length + '</span>' + restHtml +
-        '</div>' +
-        '<div class="desk-info"><strong>' + esc(mainName) + '</strong><small>' + esc(mainMeta.filter(Boolean).join(' · ')) + '</small></div>' +
-        '<span class="desk-check" aria-hidden="true"></span>';
-    }
-
-    /* ---------- 普通文件夹模式：2×2 缩略图网格 ---------- */
     var thumbs = items.slice(0, 4);
     var more = Math.max(0, items.length - 4);
     var gridHtml = '';
@@ -63167,10 +63016,10 @@ window.HMChat = (function () {
       var existing = grid.querySelector('.folder-card[data-folder="' + f.id + '"]');
       if (!existing) {
         existing = document.createElement('article');
+        existing.className = 'folder-card';
         existing.dataset.folder = f.id;
         grid.appendChild(existing);
       }
-      existing.className = 'folder-card' + (f.mode === 'stack' ? ' is-stack' : '');
       existing.innerHTML = folderCardHtmlInner(f);
       var pos = desk.positions[f.id];
       if (!pos || !pos.pxLeft) {
@@ -64736,20 +64585,14 @@ window.HMChat = (function () {
       mergeBtn.addEventListener('click', function () {
         var ids = selectedIds();
         if (!ids.length) return;
-        /* 叠放：直接创建 stack 模式 folder（不走命名弹窗），自动命名 */
-        var siblings = desk.folders.filter(function (f) { return (f.parentId || null) === (view.activeFolder || null); });
-        var names = siblings.map(function (f) { return f.name; });
-        var n = ids.length;
-        var name = '叠放 (' + n + ')';
-        var idx = 2;
-        while (names.indexOf(name) >= 0) { name = '叠放 (' + n + ') ' + idx; idx++; }
-        var folder = { id: 'f' + A.uid(), name: name, parentId: view.activeFolder || null, createdAt: Date.now(), mode: 'stack' };
-        desk.folders.unshift(folder);
-        ids.forEach(function (id) { desk.assigns[id] = folder.id; });
-        persistNow();
-        clearSelection();
-        renderAll();
-        A.toast('已叠放 ' + n + ' 项', 'success');
+        newFolder(function (folder) {
+          ids.forEach(function (id) { desk.assigns[id] = folder.id; });
+          view.activeFolder = folder.id;
+          persistNow();
+          clearSelection();
+          renderAll();
+          A.toast('已把 ' + ids.length + ' 项合并到「' + folder.name + '」', 'success');
+        });
       });
     }
     var foldBtn = byId('deskFoldBtn');
