@@ -1,0 +1,61 @@
+{
+    "createdAt":  "2026-11-09T22:18:50",
+    "backend":  "https://huimeng-ai-backend.onrender.com/api",
+    "source":  "GET /api/library/books (public, read-only)",
+    "booksCount":  8,
+    "fileCount":  10,
+    "totalBytes":  413668,
+    "note":  "admin 登录 401：账号/作品/桌面等用户数据本次未能备份；PDF 仅存本机（\u003e100MB 无法入库）",
+    "files":  [
+                  {
+                      "relativePath":  "library-books.json",
+                      "bytes":  15672,
+                      "sha256":  "31415A523A1B9475C12B37055FCC0A0ECDDF0451067A734917257BB262A73F73"
+                  },
+                  {
+                      "relativePath":  "README_恢复说明.md",
+                      "bytes":  1352,
+                      "sha256":  "606A244CBDCF4FC82E1FDB79151CAA5CD5A7BAACBB92910C51D1ABDBF82D93BE"
+                  },
+                  {
+                      "relativePath":  "covers/mw80yetl-001-kawaii-cover.jpg",
+                      "bytes":  78791,
+                      "sha256":  "BCF94352797F3C05B9A8D2C69EBD3F0B422B0B4DD6AE4864683C4BC09D4C6975"
+                  },
+                  {
+                      "relativePath":  "covers/mw86m7g0-002-mini-chara-cover.jpg",
+                      "bytes":  51754,
+                      "sha256":  "C62F3F44296ABD5E9ABFAB2FC52F2467FB33EA7AAD9E9CEB3B63B038BCA429D7"
+                  },
+                  {
+                      "relativePath":  "covers/mw97uyjw-003-momoko-cover.jpg",
+                      "bytes":  34685,
+                      "sha256":  "40166A687455898A2C210DBC1D5DB2F2CCA5570EE3BCA33C18AE48E77DE479E7"
+                  },
+                  {
+                      "relativePath":  "covers/mw985qu5-004-qiansui-cover.jpg",
+                      "bytes":  32743,
+                      "sha256":  "8482B0E64244CFF334247BFE483F7D3BB2E34F3551E689DC8742D50E9DA49FEF"
+                  },
+                  {
+                      "relativePath":  "covers/mw9a55nr-005-pixel-bg-cover.jpg",
+                      "bytes":  53173,
+                      "sha256":  "BC225C22649055C092E1409FA665CD505E92D52A809257D6BBC973DF06F4D0A9"
+                  },
+                  {
+                      "relativePath":  "covers/mw9ahcng-006-girls-pose-cover.jpg",
+                      "bytes":  38568,
+                      "sha256":  "0570ADA520842D58546038C776951C81C7FB30480EE118C33B9D300C84295A29"
+                  },
+                  {
+                      "relativePath":  "covers/mw9bhc7f-007-dress-pose-cover.jpg",
+                      "bytes":  40001,
+                      "sha256":  "6583BD6C6D24BF3B2D25A3D85E0128EDE0CC25D3464A4DCB572CE08ACA3D8CE4"
+                  },
+                  {
+                      "relativePath":  "covers/mw9bn7e8-008-boys-pose-cover.jpg",
+                      "bytes":  66929,
+                      "sha256":  "C467206C39AF3EECBEF74C1AF6D0F70CC2347B699536A3A5BF3B0D7C5925DACC"
+                  }
+              ]
+}
