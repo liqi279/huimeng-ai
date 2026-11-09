@@ -847,6 +847,35 @@
   function folderCardHtmlInner(folder) {
     var items = worksUnderFolder(folder.id);
     var subCount = desk.folders.filter(function (f) { return (f.parentId || null) === folder.id; }).length;
+
+    /* ---------- stack 模式（叠放）：desk-card 风格 ---------- */
+    if (folder.mode === 'stack') {
+      items.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      var main = items[0];
+      var rest = items.slice(1);
+      if (!main) {
+        return '<div class="folder-stack-empty">📂 叠放已空</div>';
+      }
+      var mainName = workName(main);
+      var mainMeta = [main.modelName || 'AI', (main.width && main.height) ? main.width + '×' + main.height : ''];
+      if (main.type === 'video' && main.duration) mainMeta.push(main.duration + 's');
+      if (main.elapsed && main.elapsed > 0) mainMeta.push('耗时 ' + main.elapsed.toFixed(1) + 's');
+      var restHtml = '';
+      if (rest.length) {
+        var restImgs = rest.slice(0, 3).map(function (w) {
+          return '<img src="' + esc(w.thumb || w.url || '') + '" alt="" class="folder-stack-t">';
+        }).join('');
+        restHtml = '<div class="folder-stack-rest">' + restImgs + (rest.length > 3 ? '<span class="folder-stack-rest-more">+' + (rest.length - 3) + '</span>' : '') + '</div>';
+      }
+      return '<div class="desk-thumb">' + mediaHtml(main, 'desk') +
+        '<span class="desk-badge">已完成</span>' +
+        '<span class="folder-stack-count">叠放 ' + items.length + '</span>' + restHtml +
+        '</div>' +
+        '<div class="desk-info"><strong>' + esc(mainName) + '</strong><small>' + esc(mainMeta.filter(Boolean).join(' · ')) + '</small></div>' +
+        '<span class="desk-check" aria-hidden="true"></span>';
+    }
+
+    /* ---------- 普通文件夹模式：2×2 缩略图网格 ---------- */
     var thumbs = items.slice(0, 4);
     var more = Math.max(0, items.length - 4);
     var gridHtml = '';
@@ -950,10 +979,10 @@
       var existing = grid.querySelector('.folder-card[data-folder="' + f.id + '"]');
       if (!existing) {
         existing = document.createElement('article');
-        existing.className = 'folder-card';
         existing.dataset.folder = f.id;
         grid.appendChild(existing);
       }
+      existing.className = 'folder-card' + (f.mode === 'stack' ? ' is-stack' : '');
       existing.innerHTML = folderCardHtmlInner(f);
       var pos = desk.positions[f.id];
       if (!pos || !pos.pxLeft) {
@@ -2519,14 +2548,20 @@
       mergeBtn.addEventListener('click', function () {
         var ids = selectedIds();
         if (!ids.length) return;
-        newFolder(function (folder) {
-          ids.forEach(function (id) { desk.assigns[id] = folder.id; });
-          view.activeFolder = folder.id;
-          persistNow();
-          clearSelection();
-          renderAll();
-          A.toast('已把 ' + ids.length + ' 项合并到「' + folder.name + '」', 'success');
-        });
+        /* 叠放：直接创建 stack 模式 folder（不走命名弹窗），自动命名 */
+        var siblings = desk.folders.filter(function (f) { return (f.parentId || null) === (view.activeFolder || null); });
+        var names = siblings.map(function (f) { return f.name; });
+        var n = ids.length;
+        var name = '叠放 (' + n + ')';
+        var idx = 2;
+        while (names.indexOf(name) >= 0) { name = '叠放 (' + n + ') ' + idx; idx++; }
+        var folder = { id: 'f' + A.uid(), name: name, parentId: view.activeFolder || null, createdAt: Date.now(), mode: 'stack' };
+        desk.folders.unshift(folder);
+        ids.forEach(function (id) { desk.assigns[id] = folder.id; });
+        persistNow();
+        clearSelection();
+        renderAll();
+        A.toast('已叠放 ' + n + ' 项', 'success');
       });
     }
     var foldBtn = byId('deskFoldBtn');

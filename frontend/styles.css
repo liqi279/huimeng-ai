@@ -7693,6 +7693,110 @@ body.hm-light .hm-page-empty {
   margin-top: 1px;
 }
 
+/* ---------- 叠放卡片（folder-card.is-stack）：desk-card 风格 ---------- */
+.folder-card.is-stack {
+  width: 200px;
+  height: 240px;
+  background: linear-gradient(180deg, #131e2d, #0d1725);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+  border-radius: 13px;
+}
+.folder-card.is-stack:hover {
+  border-color: rgba(96, 165, 250, 0.38);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+.folder-card.is-stack.selected, .folder-card.is-stack.is-selected {
+  border-color: rgba(56, 189, 248, 0.85);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 16px 38px rgba(0, 0, 0, 0.42);
+}
+.folder-card.is-stack .desk-thumb {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: #0a1320;
+}
+.folder-card.is-stack .desk-info {
+  padding: 8px 10px 10px;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.25));
+}
+.folder-card.is-stack .desk-info strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.folder-card.is-stack .desk-info small {
+  display: block;
+  font-size: 10px;
+  color: rgba(148, 163, 184, 0.8);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.folder-stack-count {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(20, 40, 70, 0.88);
+  border: 1px solid rgba(96, 165, 250, 0.6);
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #cfe4ff;
+  backdrop-filter: blur(6px);
+  line-height: 1.4;
+  z-index: 2;
+}
+.folder-stack-rest {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(5, 10, 18, 0.75);
+  border-radius: 7px;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+.folder-stack-t {
+  width: 22px;
+  height: 22px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: block;
+}
+.folder-stack-rest-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(37, 99, 235, 0.85);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+.folder-stack-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-size: 14px;
+  color: rgba(148, 163, 184, 0.5);
+  gap: 8px;
+}
+
 /* 文件夹预览弹窗 */
 .hm-folder-preview-card {
   width: min(920px, 92vw);
