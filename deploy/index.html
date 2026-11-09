@@ -16856,6 +16856,100 @@ a.lib-btn {
   line-height: 1;
 }
 
+/* 整页译中文：PDF 画布上的原位覆盖层 */
+.lib-pdf-stage {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto;
+  vertical-align: top;
+  line-height: 0;
+}
+.lib-page-ocr-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.lib-page-ocr-layer[hidden] { display: none !important; }
+.lib-page-ocr-block {
+  position: absolute;
+  box-sizing: border-box;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  margin: 0;
+  padding: 1px 3px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 249, 234, 0.9);
+  color: #2c1d10;
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  line-height: 1.18;
+  text-align: left;
+  word-break: break-word;
+  pointer-events: auto;
+  user-select: text;
+  box-shadow: 0 1px 0 rgba(120, 82, 30, 0.14);
+}
+.lib-page-ocr-block.is-raw {
+  background: rgba(255, 255, 255, 0.78);
+  color: #7a6952;
+}
+.lib-page-ocr-tip {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 84%;
+  padding: 7px 10px 7px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  background: rgba(24, 16, 10, 0.9);
+  color: #f2e2c4;
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 11px;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
+  pointer-events: auto;
+}
+.lib-page-ocr-tip[hidden] { display: none !important; }
+.lib-page-ocr-tip.is-err { border-color: rgba(239, 126, 102, 0.5); color: #ffd9cd; }
+.lib-page-ocr-tip button {
+  flex: none;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  background: rgba(201, 162, 39, 0.16);
+  color: #ffe9b5;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.lib-page-ocr-tip button:hover { background: rgba(201, 162, 39, 0.28); }
+.lib-page-ocr-tip button[hidden] { display: none !important; }
+.lib-pdf-ocr.is-on {
+  border-color: rgba(201, 162, 39, 0.7);
+  background: rgba(201, 162, 39, 0.18);
+  color: #ffe9b5;
+}
+.lib-pdf-ocr-lang {
+  flex: none;
+  height: 26px;
+  padding: 0 4px;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 162, 39, 0.28);
+  background: #1c130c;
+  color: rgba(240, 222, 188, 0.85);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .lib-ocr-dock {
   --lib-ocr-w: 408px;
   position: absolute;
@@ -20022,6 +20116,7 @@ body.dv-open .hm-page {
         <label class="lib-ocr-lang">
           <span>识别</span>
           <select id="libOcrFrom">
+            <option value="auto" selected>自动</option>
             <option value="jpn">日文</option>
             <option value="eng">英文</option>
             <option value="chi_sim">中文</option>
@@ -52963,6 +53058,8 @@ window.HMChat = (function () {
     user: 'anidream.library.user.v1',
     area: 'anidream.library.area.v1',
     pdfMode: 'anidream.library.pdfmode.v1',
+    ocrLang: 'anidream.library.ocrlang.v1',
+    pageOcrLang: 'anidream.library.pageocrlang.v1',
     meta: 'anidream.library.books.meta.v1'
   };
 
@@ -54086,6 +54183,16 @@ window.HMChat = (function () {
     var scroll = els.reader && els.reader.querySelector('[data-pdf-scroll]');
     if (!doc || !canvas || !scroll) return;
     var pageNo = Math.max(1, Math.min(state.page, doc.numPages));
+    /* 页号变化：先清掉上一页覆盖层；处于译文态时渲染完成后自动翻新页 */
+    var pageChanged = !!(pageOcr.page && pageOcr.page !== pageNo);
+    if (pageChanged) {
+      pageOcr.page = pageNo;
+      pageOcr.bookId = state.current ? String(state.current.id) : '';
+      pageOcr.token++;
+      pageOcr.busy = false;
+      pageOcrClearVisual();
+      pageOcrSync();
+    }
     var token = ++state.pdfToken;
     if (state.pdfTask && state.pdfTask.cancel) {
       try { state.pdfTask.cancel(); } catch (e) {}
@@ -54113,6 +54220,10 @@ window.HMChat = (function () {
       return task.promise.then(function () {
         if (token !== state.pdfToken) return;
         hidePdfLoading();
+        requestAnimationFrame(function () {
+          if (pageChanged && pageOcr.mode === 'dst') pageOcrShow();
+          else pageOcrRelayout();
+        });
         /* 只预取下一页，不预取全书 */
         state.pdfPrefetched = state.pdfPrefetched || {};
         var next = pageNo + 1;
@@ -54336,8 +54447,21 @@ window.HMChat = (function () {
         + '<span class="lib-pdf-zoom-label" data-zoom-label>适应宽度</span>'
         + '<button type="button" class="lib-pdf-zoom" data-zoom-in aria-label="放大">+</button>'
         + '<button type="button" class="lib-pdf-open" data-pdf-full>⛶ 全屏阅读</button>'
+        + '<select class="lib-pdf-ocr-lang" data-page-ocr-lang title="整页识别语言">'
+        + '<option value="auto">自动</option><option value="jpn">日文</option>'
+        + '<option value="eng">英文</option><option value="chi_sim">中文</option>'
+        + '</select>'
+        + '<button type="button" class="lib-pdf-open lib-pdf-ocr" data-page-ocr aria-pressed="false" title="把当前页整页文字译成中文并原位覆盖">全文翻译</button>'
         + '</div>'
-        + '<div class="lib-pdf-scroll" data-pdf-scroll><canvas class="lib-pdf-canvas" data-pdf-canvas></canvas></div>'
+        + '<div class="lib-pdf-scroll" data-pdf-scroll>'
+        + '<div class="lib-pdf-stage" data-pdf-stage>'
+        + '<canvas class="lib-pdf-canvas" data-pdf-canvas></canvas>'
+        + '<div class="lib-page-ocr-layer" data-page-ocr-layer hidden></div>'
+        + '<div class="lib-page-ocr-tip" data-page-ocr-tip hidden>'
+        + '<span data-page-ocr-msg></span><button type="button" data-page-ocr-copy hidden>复制原文</button>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
         + '<div class="lib-pdf-loading" data-pdf-loading>'
         + '<span class="lib-pdf-spinner" data-pdf-spinner></span><span data-loading-text>正在加载 PDF …</span>'
         + '<button type="button" class="lib-pdf-retry" data-pdf-retry hidden>重试</button>'
@@ -54375,6 +54499,13 @@ window.HMChat = (function () {
     if (readerOcr) {
       if (ocr.open) { readerOcr.classList.add('is-on'); readerOcr.setAttribute('aria-expanded', 'true'); }
       readerOcr.addEventListener('click', function () { ocr.open ? closeOcrDock() : ocrOpen(); });
+    }
+    var pageOcrBtn = els.reader.querySelector('[data-page-ocr]');
+    if (pageOcrBtn) pageOcrBtn.addEventListener('click', pageOcrToggle);
+    var pageLangSel = els.reader.querySelector('[data-page-ocr-lang]');
+    if (pageLangSel) {
+      pageLangSel.value = pageOcrReadLang();
+      pageLangSel.addEventListener('change', function () { pageOcrSaveLang(pageLangSel.value); });
     }
     var fullBtn = els.reader.querySelector('[data-pdf-full]');
     if (fullBtn) fullBtn.addEventListener('click', toggleReaderFullscreen);
@@ -55015,6 +55146,7 @@ window.HMChat = (function () {
     hideSuggest();
     closeModal();
     closeOcrDock();
+    pageOcrReset();
     if (els.reader) { els.reader.classList.remove('is-open'); els.reader.hidden = true; els.reader.innerHTML = ''; }
     if (els.detail) { els.detail.classList.remove('is-open'); els.detail.hidden = true; els.detail.innerHTML = ''; }
     if (els.openLayer) { els.openLayer.hidden = true; els.openLayer.innerHTML = ''; }
@@ -55032,10 +55164,12 @@ window.HMChat = (function () {
     'https://unpkg.com/tesseract.js@5/dist/tesseract.min.js'
   ];
   var OCR_LANGS = {
+    auto: { tr: 'auto', label: '自动', size: '约 8MB' },
     jpn: { tr: 'ja', label: '日文', size: '2.0MB' },
     eng: { tr: 'en', label: '英文', size: '3.0MB' },
     chi_sim: { tr: 'zh-CN', label: '中文', size: '2.4MB' }
   };
+  var OCR_AUTO_PACK = 'jpn+eng+chi_sim';
   var ocr = {
     open: false,
     tab: 'page',
@@ -55046,7 +55180,20 @@ window.HMChat = (function () {
     imageCanvas: null,
     srcText: '',
     dstText: '',
-    tessPromise: null
+    tessPromise: null,
+    queue: Promise.resolve()
+  };
+  /* 整页译中文：与悬浮窗状态、缓存完全独立，仅共用识别 worker */
+  var PAGE_OCR_MAX_PARAS = 18;
+  var pageOcr = {
+    mode: 'src',      // src = 原文；dst = 译文覆盖
+    page: 0,
+    bookId: '',
+    busy: false,
+    token: 0,
+    entry: null,
+    cache: {},
+    tipTimer: 0
   };
 
   function ocrEl(id) { return document.getElementById(id); }
@@ -55174,8 +55321,9 @@ window.HMChat = (function () {
     return ocr.tessPromise;
   }
 
-  function ocrWorker(lang) {
-    var key = lang;
+  function ocrWorker(langKey) {
+    var pack = langKey === 'auto' ? OCR_AUTO_PACK : langKey;
+    var key = pack;
     if (ocr.worker && ocr.workerLang === key) return Promise.resolve(ocr.worker);
     var chain = Promise.resolve();
     if (ocr.worker) {
@@ -55187,8 +55335,8 @@ window.HMChat = (function () {
       return ocrEnsureTesseract();
     }).then(function (T) {
       var base = ocr.tessBase || 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/';
-      var langPath = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/' + lang + '/4.0.0_best_int';
-      return T.createWorker(lang, 1, {
+      var langPath = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/' + pack + '/4.0.0_best_int';
+      return T.createWorker(pack, 1, {
         workerPath: base + 'worker.min.js',
         corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/',
         langPath: langPath,
@@ -55197,7 +55345,7 @@ window.HMChat = (function () {
           if (m.status === 'recognizing text') {
             ocrStatus('识别中 ' + Math.round((m.progress || 0) * 100) + '%', 'busy');
           } else if (m.status && m.status.indexOf('loading') === 0) {
-            ocrStatus('正在加载识别模型（' + OCR_LANGS[lang].size + '，首次较慢）…', 'busy');
+            ocrStatus('正在准备语言包（' + OCR_LANGS[langKey].size + '，首次较慢）…', 'busy');
           }
         }
       }).then(function (worker) {
@@ -55208,12 +55356,35 @@ window.HMChat = (function () {
     });
   }
 
+  /* 自动识别：按结果字符集判断语种（自动模式本身用组合语言包识别） */
+  function ocrGuessLang(text) {
+    var s = String(text || '');
+    var kana = (s.match(/[\u3040-\u30ff]/g) || []).length;
+    var han = (s.match(/[\u3400-\u9fff]/g) || []).length;
+    var latin = (s.match(/[A-Za-z]/g) || []).length;
+    if (kana >= 3) return 'jpn';
+    if (latin >= 6 && latin >= han * 2) return 'eng';
+    if (han >= 3) return kana > 0 ? 'jpn' : 'chi_sim';
+    if (latin >= 3) return 'eng';
+    return '';
+  }
+
+  /* OCR worker 串行队列：悬浮窗单图识别与整页识别共用 worker，排队避免互相打断 */
+  function ocrEnqueue(fn) {
+    var run = ocr.queue.then(function () { return fn(); });
+    ocr.queue = run.then(function () {}, function () {});
+    return run;
+  }
+
   function ocrRunText(canvas, lang) {
-    return ocrWorker(lang).then(function (worker) {
-      ocrStatus('正在识别' + OCR_LANGS[lang].label + '文字…', 'busy');
-      return worker.recognize(canvas);
+    return ocrEnqueue(function () {
+      return ocrWorker(lang).then(function (worker) {
+        ocrStatus('正在识别' + OCR_LANGS[lang].label + '文字…', 'busy');
+        return worker.recognize(canvas);
+      });
     }).then(function (res) {
       var text = res && res.data && res.data.text ? String(res.data.text) : '';
+      ocr.detectedLang = lang === 'auto' ? ocrGuessLang(text) : lang;
       /* 日文识别常在汉字/假名之间插空格，先去掉再保留正常西文空格 */
       text = text.replace(/([\u3040-\u30ff\u3400-\u9fff])[ \t\u3000]+(?=[\u3040-\u30ff\u3400-\u9fff])/g, '$1');
       return text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -55250,7 +55421,10 @@ window.HMChat = (function () {
   }
 
   function ocrTranslate(text) {
-    var from = OCR_LANGS[ocrEl('libOcrFrom') ? ocrEl('libOcrFrom').value : 'jpn'].tr;
+    var sel = ocrEl('libOcrFrom') ? ocrEl('libOcrFrom').value : 'auto';
+    var fromKey = sel === 'auto' ? (ocr.detectedLang || '') : sel;
+    if (!OCR_LANGS[fromKey]) fromKey = 'jpn';
+    var from = OCR_LANGS[fromKey].tr;
     var to = ocrEl('libOcrTo') ? ocrEl('libOcrTo').value : 'zh-CN';
     if (from === to) return Promise.resolve(text);
     var parts = ocrChunks(text, 1600);
@@ -55378,6 +55552,411 @@ window.HMChat = (function () {
     reader.readAsDataURL(file);
   }
 
+  /* ---------------- 整页译中文（PDF 原位覆盖层） ---------------- */
+  function pageOcrReadLang() {
+    try {
+      var v = localStorage.getItem(LS.pageOcrLang);
+      if (OCR_LANGS[v]) return v;
+    } catch (e) {}
+    return 'auto';
+  }
+
+  function pageOcrSaveLang(v) {
+    try { localStorage.setItem(LS.pageOcrLang, v); } catch (e) {}
+  }
+
+  function pageOcrParts() {
+    var r = els.reader;
+    return {
+      layer: r && r.querySelector('[data-page-ocr-layer]'),
+      tip: r && r.querySelector('[data-page-ocr-tip]'),
+      msg: r && r.querySelector('[data-page-ocr-msg]'),
+      copy: r && r.querySelector('[data-page-ocr-copy]'),
+      btn: r && r.querySelector('[data-page-ocr]')
+    };
+  }
+
+  function pageOcrSync() {
+    var p = pageOcrParts();
+    if (!p.btn) return;
+    var on = pageOcr.mode === 'dst';
+    p.btn.classList.toggle('is-on', on);
+    p.btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    p.btn.textContent = pageOcr.busy ? '翻译中…' : (on ? '恢复原文' : '全文翻译');
+    p.btn.disabled = pageOcr.busy;
+  }
+
+  function pageOcrTip(text, type, autoHide) {
+    var p = pageOcrParts();
+    if (!p.tip || !p.msg) return;
+    clearTimeout(pageOcr.tipTimer);
+    if (!text) { p.tip.hidden = true; return; }
+    p.tip.hidden = false;
+    p.tip.className = 'lib-page-ocr-tip' + (type ? ' is-' + type : '');
+    p.msg.textContent = text;
+    if (autoHide) {
+      pageOcr.tipTimer = setTimeout(function () {
+        var q = pageOcrParts();
+        if (q.tip && !q.tip.classList.contains('is-err')) q.tip.hidden = true;
+      }, 2600);
+    }
+  }
+
+  function pageOcrShowCopy(show, text) {
+    var p = pageOcrParts();
+    if (!p.copy) return;
+    p.copy.hidden = !show;
+    p.copy.onclick = show ? function () { ocrCopy(text, p.copy); } : null;
+  }
+
+  function pageOcrClearVisual() {
+    var p = pageOcrParts();
+    if (p.layer) { p.layer.innerHTML = ''; p.layer.hidden = true; }
+    pageOcrTip('');
+    pageOcrShowCopy(false);
+    pageOcr.entry = null;
+    clearTimeout(pageOcr.tipTimer);
+  }
+
+  function pageOcrReset() {
+    pageOcr.token++;
+    pageOcr.busy = false;
+    pageOcr.mode = 'src';
+    pageOcr.page = 0;
+    pageOcr.bookId = '';
+    pageOcrClearVisual();
+    pageOcrSync();
+  }
+
+  function pageOcrToggle() {
+    if (pageOcr.busy) return;
+    if (pageOcr.mode === 'dst') {
+      /* 恢复原文：只还原显示，缓存保留 */
+      pageOcr.token++;
+      pageOcr.busy = false;
+      pageOcr.mode = 'src';
+      pageOcr.page = state.page;
+      pageOcr.bookId = state.current ? String(state.current.id) : '';
+      pageOcrClearVisual();
+      pageOcrSync();
+      return;
+    }
+    pageOcrTranslate();
+  }
+
+  function pageOcrTranslate() {
+    if (!state.current || !state.current.pdfUrl) {
+      pageOcrTip('整页翻译仅支持 PDF 页面。', 'err');
+      return;
+    }
+    if (!state.pdfDoc || state.page < 1) {
+      pageOcrTip('请先翻到 PDF 正文页。', 'err');
+      return;
+    }
+    pageOcr.mode = 'dst';
+    pageOcr.page = state.page;
+    pageOcr.bookId = String(state.current.id);
+    pageOcrSync();
+    pageOcrShow();
+  }
+
+  function pageOcrShow() {
+    var pageNo = state.page;
+    var langSel = els.reader && els.reader.querySelector('[data-page-ocr-lang]');
+    var langKey = langSel ? langSel.value : 'auto';
+    if (!OCR_LANGS[langKey]) langKey = 'auto';
+    var key = pageOcr.bookId + '|' + pageNo + '|' + langKey;
+    var cached = pageOcr.cache[key];
+    pageOcr.token++;
+    var token = pageOcr.token;
+    if (cached) {
+      pageOcr.busy = false;
+      pageOcr.entry = cached;
+      pageOcrPaint(cached);
+      pageOcrSync();
+      pageOcrTip('已复用本页译文缓存 · 点「恢复原文」还原', 'ok', true);
+      return;
+    }
+    pageOcr.busy = true;
+    pageOcrClearVisual();
+    pageOcrSync();
+    pageOcrTip(langKey === 'auto' ? '正在准备语言包并识别整页（首次约 8MB）…' : '正在识别整页文字…', 'busy');
+    var picked = null;
+    ocrGrabPage().then(function (canvas) {
+      picked = canvas;
+      if (token !== pageOcr.token) return null;
+      return ocrEnqueue(function () {
+        return ocrWorker(langKey).then(function (worker) {
+          return worker.recognize(canvas, {}, { tsv: true, text: true });
+        });
+      });
+    }).then(function (res) {
+      if (token !== pageOcr.token || !res) return null;
+      var parsed = pageOcrParse(res, picked);
+      if (!parsed.lines.length) {
+        pageOcr.busy = false;
+        pageOcr.mode = 'src';
+        pageOcrSync();
+        pageOcrClearVisual();
+        pageOcrTip('没有识别到文字，可切换识别语言后重试。', 'err');
+        return null;
+      }
+      var paras = pageOcrCapParas(pageOcrMakeParas(parsed.lines));
+      var fromKey = langKey === 'auto' ? (ocrGuessLang(parsed.text) || 'jpn') : langKey;
+      var entry = {
+        key: key, page: pageNo, lang: langKey, fromKey: fromKey,
+        lines: parsed.lines, paras: paras, srcText: parsed.text
+      };
+      pageOcrTip('识别到 ' + parsed.lines.length + ' 行，正在翻译 ' + paras.length + ' 段…', 'busy');
+      return pageOcrTranslateParas(entry, OCR_LANGS[fromKey].tr, 'zh-CN', token).then(function (failed) {
+        if (token !== pageOcr.token) return null;
+        pageOcr.busy = false;
+        if (failed >= entry.paras.length) {
+          pageOcr.mode = 'src';
+          pageOcrSync();
+          pageOcrClearVisual();
+          pageOcrTip('已识别 ' + entry.lines.length + ' 行，翻译暂不可用（原文已保留）。', 'err');
+          pageOcrShowCopy(true, entry.srcText);
+          return null;
+        }
+        pageOcr.cache[key] = entry;
+        pageOcr.entry = entry;
+        pageOcrPaint(entry);
+        pageOcrSync();
+        if (failed > 0) {
+          pageOcrTip('已译 ' + (paras.length - failed) + ' 段，' + failed + ' 段未译（显示原文）。', 'err');
+        } else {
+          pageOcrTip('整页已译成中文 · 点「恢复原文」还原', 'ok', true);
+        }
+        return null;
+      });
+    }).catch(function (err) {
+      if (token !== pageOcr.token) return;
+      pageOcr.busy = false;
+      pageOcr.mode = 'src';
+      pageOcrSync();
+      pageOcrTip(err && err.message ? err.message : '整页识别失败，请重试。', 'err');
+    });
+  }
+
+  function pageOcrTranslateParas(entry, from, to, token) {
+    var paras = entry.paras;
+    var total = paras.length;
+    var idx = 0;
+    var done = 0;
+    var failed = 0;
+    function lane() {
+      if (idx >= total || token !== pageOcr.token) return Promise.resolve();
+      var p = paras[idx++];
+      return pageOcrTranslateText(p.text, from, to).then(function (t) {
+        p.dst = t;
+      }).catch(function () {
+        p.dst = '';
+        failed++;
+      }).then(function () {
+        done++;
+        if (token === pageOcr.token && done < total) {
+          pageOcrTip('翻译中 ' + done + ' / ' + total + ' 段…', 'busy');
+        }
+        return lane();
+      });
+    }
+    var lanes = [];
+    for (var i = 0; i < 3; i++) lanes.push(lane());
+    return Promise.all(lanes).then(function () { return failed; });
+  }
+
+  function pageOcrTranslateText(text, from, to) {
+    if (!text) return Promise.resolve('');
+    if (from === to) return Promise.resolve(text);
+    var parts = ocrChunks(text, 1200);
+    var out = [];
+    return parts.reduce(function (chain, chunk) {
+      return chain.then(function () {
+        return request('/ocr/translate', { method: 'POST', body: { q: chunk, from: from, to: to } }, 8000)
+          .then(function (data) {
+            var t = data && (data.text || data.translation || data.result);
+            if (!t) throw new Error('翻译接口未返回文本');
+            out.push(String(t));
+          })
+          .catch(function () {
+            return ocrGoogle(chunk, from, to).then(function (t) { out.push(t); });
+          });
+      });
+    }, Promise.resolve()).then(function () { return out.join('\n'); });
+  }
+
+  function pageOcrJoin(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    var last = a.charAt(a.length - 1);
+    var first = b.charAt(0);
+    if (/[\u3040-\u30ff\u3400-\u9fff]/.test(last) && /[\u3040-\u30ff\u3400-\u9fff]/.test(first)) return a + b;
+    return a + ' ' + b;
+  }
+
+  function pageOcrMakeParas(lines) {
+    var sorted = lines.slice().sort(function (a, b) { return a.y - b.y || a.x - b.x; });
+    var hs = sorted.map(function (l) { return l.h; }).sort(function (a, b) { return a - b; });
+    var med = hs[Math.floor(hs.length / 2)] || 0.02;
+    var paras = [];
+    sorted.forEach(function (l) {
+      var cur = paras[paras.length - 1];
+      var gap = cur ? l.y - (cur.y + cur.h) : 0;
+      var nearX = cur ? Math.abs(l.x - cur.x) <= Math.max(0.05, cur.w * 0.4) : false;
+      if (cur && gap <= Math.max(med * 0.9, 0.008) && gap >= -med * 0.5 && nearX) {
+        var x0 = Math.min(cur.x, l.x);
+        var y0 = Math.min(cur.y, l.y);
+        var x1 = Math.max(cur.x + cur.w, l.x + l.w);
+        var y1 = Math.max(cur.y + cur.h, l.y + l.h);
+        cur.x = x0; cur.y = y0; cur.w = x1 - x0; cur.h = y1 - y0;
+        cur.text = pageOcrJoin(cur.text, l.text);
+        cur.lines += 1;
+      } else {
+        paras.push({ x: l.x, y: l.y, w: l.w, h: l.h, text: l.text, lines: 1, dst: '' });
+      }
+    });
+    return paras;
+  }
+
+  /* 单页请求上限：段落过多时合并相邻段，避免把接口打爆 */
+  function pageOcrCapParas(paras) {
+    while (paras.length > PAGE_OCR_MAX_PARAS) {
+      var best = 0;
+      var bestGap = Infinity;
+      for (var i = 0; i < paras.length - 1; i++) {
+        var gap = paras[i + 1].y - (paras[i].y + paras[i].h);
+        if (gap < bestGap) { bestGap = gap; best = i; }
+      }
+      var a = paras[best];
+      var b = paras[best + 1];
+      var x0 = Math.min(a.x, b.x);
+      var y0 = Math.min(a.y, b.y);
+      var x1 = Math.max(a.x + a.w, b.x + b.w);
+      var y1 = Math.max(a.y + a.h, b.y + b.h);
+      paras.splice(best, 2, {
+        x: x0, y: y0, w: x1 - x0, h: y1 - y0,
+        text: pageOcrJoin(a.text, b.text),
+        lines: (a.lines || 1) + (b.lines || 1),
+        dst: ''
+      });
+    }
+    return paras;
+  }
+
+  /* bbox 解析：优先 TSV（词级坐标），缺失时退回 blocks */
+  function pageOcrParse(res, canvas) {
+    var data = (res && res.data) || {};
+    var W = canvas.width || 1;
+    var H = canvas.height || 1;
+    var raw = [];
+    var tsv = data.tsv ? String(data.tsv) : '';
+    if (tsv.indexOf('level') === 0) {
+      var rows = tsv.split(/\r?\n/);
+      var map = {};
+      for (var i = 0; i < rows.length; i++) {
+        var c = rows[i].split('\t');
+        if (c.length < 12 || c[0] !== '5') continue;
+        var conf = Number(c[10]);
+        var word = c.slice(11).join('\t').trim();
+        if (!word || !(conf >= 25)) continue;
+        var k = c[1] + '/' + c[2] + '/' + c[3] + '/' + c[4];
+        var g = map[k];
+        if (!g) {
+          g = map[k] = { x0: +c[6], y0: +c[7], x1: +c[6] + +c[8], y1: +c[7] + +c[9], words: [] };
+        } else {
+          g.x0 = Math.min(g.x0, +c[6]);
+          g.y0 = Math.min(g.y0, +c[7]);
+          g.x1 = Math.max(g.x1, +c[6] + +c[8]);
+          g.y1 = Math.max(g.y1, +c[7] + +c[9]);
+        }
+        g.words.push(word);
+      }
+      Object.keys(map).forEach(function (k) {
+        var g = map[k];
+        raw.push({ x0: g.x0, y0: g.y0, x1: g.x1, y1: g.y1, words: g.words });
+      });
+    } else if (data.blocks) {
+      data.blocks.forEach(function (b) {
+        (b.paragraphs || []).forEach(function (p) {
+          (p.lines || []).forEach(function (l) {
+            if (!l.bbox || !l.text || !l.text.trim()) return;
+            raw.push({ x0: l.bbox.x0, y0: l.bbox.y0, x1: l.bbox.x1, y1: l.bbox.y1, words: [l.text.trim()] });
+          });
+        });
+      });
+    }
+    var lines = [];
+    raw.forEach(function (r) {
+      var text = r.words ? r.words.join(' ') : '';
+      text = text.replace(/([\u3040-\u30ff\u3400-\u9fff])[ \t]+(?=[\u3040-\u30ff\u3400-\u9fff])/g, '$1')
+        .replace(/[ \t]+([、。，．・：；！？）」』】])/g, '$1')
+        .trim();
+      if (!text) return;
+      var x = r.x0 / W;
+      var y = r.y0 / H;
+      var w = (r.x1 - r.x0) / W;
+      var h = (r.y1 - r.y0) / H;
+      if (w < 0.004 || h < 0.004) return;
+      lines.push({ x: x, y: y, w: w, h: h, text: text });
+    });
+    lines.sort(function (a, b) { return a.y - b.y || a.x - b.x; });
+    return { lines: lines, text: lines.map(function (l) { return l.text; }).join('\n') };
+  }
+
+  function pageOcrPaint(entry) {
+    var p = pageOcrParts();
+    if (!p.layer) return;
+    p.layer.innerHTML = '';
+    entry.paras.forEach(function (para) {
+      var d = document.createElement('div');
+      d.className = 'lib-page-ocr-block' + (para.dst ? '' : ' is-raw');
+      d.style.left = (para.x * 100).toFixed(3) + '%';
+      d.style.top = (para.y * 100).toFixed(3) + '%';
+      d.style.width = (para.w * 100).toFixed(3) + '%';
+      d.style.height = (para.h * 100).toFixed(3) + '%';
+      d.textContent = para.dst || para.text;
+      p.layer.appendChild(d);
+      para.el = d;
+    });
+    p.layer.hidden = false;
+    pageOcrFit();
+    requestAnimationFrame(pageOcrFit);
+  }
+
+  /* 字号按框高与文字长度自适应；放不下时按行截断省略 */
+  function pageOcrFit() {
+    var p = pageOcrParts();
+    var entry = pageOcr.entry;
+    if (!p.layer || p.layer.hidden || !entry) return;
+    var W = p.layer.clientWidth;
+    var H = p.layer.clientHeight;
+    if (!W || !H) return;
+    entry.paras.forEach(function (para) {
+      var el = para.el;
+      if (!el) return;
+      var w = Math.max(8, para.w * W);
+      var h = Math.max(8, para.h * H);
+      var text = el.textContent || '';
+      var fs = Math.min(20, Math.max(9, Math.floor(h * 0.66)));
+      for (; fs >= 8; fs--) {
+        var cpl = Math.max(1, Math.floor(w / (fs * 1.02)));
+        var need = Math.ceil(text.length / cpl) * fs * 1.18;
+        if (need <= h + 1) break;
+      }
+      fs = Math.max(8, fs);
+      el.style.fontSize = fs + 'px';
+      var cpl2 = Math.max(1, Math.floor(w / (fs * 1.02)));
+      var maxLines = Math.max(1, Math.floor((h + 1) / (fs * 1.18)));
+      el.style.webkitLineClamp = String(Math.min(maxLines, Math.max(1, Math.ceil(text.length / cpl2))));
+    });
+  }
+
+  function pageOcrRelayout() {
+    if (pageOcr.mode !== 'dst' || !pageOcr.entry) return;
+    pageOcrFit();
+  }
+
   function bindOcr() {
     var btn = ocrEl('libOcrBtn');
     if (btn) btn.addEventListener('click', function () { ocr.open ? closeOcrDock() : ocrOpen(); });
@@ -55441,6 +56020,18 @@ window.HMChat = (function () {
         if (f) ocrLoadFile(f);
       });
     }
+    /* 悬浮窗识别语言：默认自动，单独记住，不影响整页翻译的选择 */
+    var fromSel = ocrEl('libOcrFrom');
+    if (fromSel) {
+      try {
+        var saved = localStorage.getItem(LS.ocrLang);
+        if (OCR_LANGS[saved]) fromSel.value = saved;
+      } catch (e) {}
+      fromSel.addEventListener('change', function () {
+        try { localStorage.setItem(LS.ocrLang, fromSel.value); } catch (e) {}
+      });
+    }
+    window.addEventListener('resize', function () { requestAnimationFrame(pageOcrRelayout); });
   }
 
   window.HMLibrary = { enter: enter, leave: leave, refresh: refresh };
