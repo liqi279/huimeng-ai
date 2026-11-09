@@ -39,6 +39,89 @@ router.post('/library/admin/bucket-security', authRequired, adminOnly, wrap(asyn
 }));
 
 
+/* 从书目里存的 URL 反解对象 key：
+   兼容后端地址（/api/library/file/<key>）与对象存储直链（路径即 key）。 */
+function keyFromUrl(url) {
+  const m = /\/api\/library\/file\/(library\/[A-Za-z0-9._\/-]+)/.exec(String(url || ''));
+  if (m) return m[1];
+  try {
+    const u = new URL(String(url || ''));
+    const k = decodeURIComponent(u.pathname.replace(/^\/+/, ''));
+    if (/^library\/[A-Za-z0-9._\/-]+$/.test(k) && k.indexOf('..') < 0) return k;
+  } catch (err) { /* 不是合法 URL */ }
+  return '';
+}
+
+/* 用一次 Range 0-0 探对象：只回几个字节，拿到总长度和类型，不搬正文。
+   返回 null 表示对象存储不可达。 */
+async function probeObject(url, ext) {
+  let up;
+  try {
+    up = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-0' } });
+  } catch (err) {
+    return null;
+  }
+  const status = up.status;
+  const headers = up.headers;
+  if (up.body) await up.body.cancel().catch(() => {});
+  if (status !== 200 && status !== 206) return { status };
+  const range = headers.get('content-range') || '';
+  const total = Number((range.split('/')[1] || '').trim()) ||
+    Number(headers.get('content-length') || 0) || 0;
+  return {
+    status,
+    contentLength: total,
+    contentType: headers.get('content-type') || MIME_BY_EXT[ext] || 'application/octet-stream',
+  };
+}
+
+/* 只发通行证、不搬字节：给前端一个预签名直链，让浏览器直连 OSS（支持 Range）。
+   大 PDF（200MB+）走这条，避免每段都经 Render 中转。
+   前端示例：fetch('/api/library/books/<id>/pdf-url').then(r=>r.json()).then(d=>pdfjsLib.getDocument({
+     url: d.url, httpHeaders: {}, withCredentials: false })) */
+router.get('/library/books/:id/pdf-url', authOptional, wrap(async (req, res) => {
+  const book = await library.get(req.params.id);
+  assert(book, 404, '书籍不存在', '请检查书籍 ID');
+  const key = keyFromUrl(book.pdfUrl);
+  assert(key, 404, '这本书没有 PDF 正文', 'pdfUrl 为空或不是对象存储地址');
+
+  const filename = path.basename(key).replace(/["\\\r\n]/g, '') || 'book.pdf';
+  const url = objectStore.presignGet(key, PDF_DIRECT_TTL, {
+    responseContentDisposition: 'inline; filename="' + filename + '"',
+  });
+  assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
+
+  const info = await probeObject(url, '.pdf');
+  if (!info) throw jsonError(502, '文件读取失败', '对象存储不可达');
+  if (info.status === 404) throw jsonError(404, '文件不存在');
+  assert(info.contentLength != null, 502, '文件读取失败', '对象存储返回 ' + info.status);
+
+  /* 签名有效期 1 小时，响应缓存 10 分钟：仍远在有效期内，且减少重复换链 */
+  res.setHeader('Cache-Control', 'private, max-age=600');
+  res.json({
+    url,
+    expiresIn: PDF_DIRECT_TTL,
+    contentLength: info.contentLength,
+    contentType: info.contentType,
+  });
+}));
+
+/* 封面直链（可选通路）：带 OSS 缩略参数，书架卡片直接走 CDN 边缘，不占 Render 带宽 */
+router.get('/library/books/:id/cover-url', authOptional, wrap(async (req, res) => {
+  const book = await library.get(req.params.id);
+  assert(book, 404, '书籍不存在', '请检查书籍 ID');
+  const key = keyFromUrl(book.coverUrl);
+  assert(key, 404, '这本书没有封面', 'coverUrl 为空或不是对象存储地址');
+
+  const ext = path.extname(key).toLowerCase();
+  const url = objectStore.presignGet(key, PDF_DIRECT_TTL, {
+    process: IMAGE_EXTS[ext] ? COVER_PROCESS : undefined,
+  });
+  assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
+  res.setHeader('Cache-Control', 'private, max-age=600');
+  res.json({ url, expiresIn: PDF_DIRECT_TTL, contentType: IMAGE_EXTS[ext] ? 'image/jpeg' : 'application/octet-stream' });
+}));
+
 router.get('/library/books/:id', authOptional, wrap(async (req, res) => {
   const book = await library.get(req.params.id);
   assert(book, 404, '书籍不存在', '请检查书籍 ID');
