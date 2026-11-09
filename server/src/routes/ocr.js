@@ -13,7 +13,8 @@ const {
 } = require('../http');
 
 const MAX_CHARS = 2000;          /* 单次请求最大字符数 */
-const UPSTREAM_TIMEOUT = 8000;   /* 8 秒超时 */
+const UPSTREAM_TIMEOUT = 8000;   /* 整条链路 8 秒上限 */
+const ATTEMPT_MIN = 1200;        /* 单次尝试最小预算 */
 const RATE_LIMIT = 30;           /* 单 IP 每窗口次数 */
 const RATE_WINDOW = 60 * 1000;   /* 窗口 60 秒 */
 
@@ -60,17 +61,19 @@ function guessSource(text) {
   return 'en';
 }
 
-async function googleTranslate(q, from, to) {
-  const url = 'https://translate.googleapis.com/translate_a/single?client=gtx'
+async function googleTranslate(q, from, to, host, timeoutMs) {
+  const url = 'https://' + host + '/translate_a/single?client=gtx'
     + '&sl=' + encodeURIComponent(from)
     + '&tl=' + encodeURIComponent(to)
     + '&dt=t&q=' + encodeURIComponent(q);
   const res = await fetchWithTimeout(url, {
     headers: {
-      Accept: 'application/json',
+      Accept: 'application/json,text/plain,*/*',
+      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+      Referer: 'https://translate.google.com/',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
     },
-  }, UPSTREAM_TIMEOUT);
+  }, timeoutMs);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
   const segments = Array.isArray(data) && Array.isArray(data[0]) ? data[0] : [];
@@ -82,12 +85,12 @@ async function googleTranslate(q, from, to) {
   return text;
 }
 
-async function myMemoryTranslate(q, from, to) {
+async function myMemoryTranslate(q, from, to, timeoutMs) {
   const src = from === 'auto' ? guessSource(q) : from;
   if (src === to) throw new Error('源语言与目标语言相同');
   const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(q)
     + '&langpair=' + encodeURIComponent(src + '|' + to);
-  const res = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } }, UPSTREAM_TIMEOUT);
+  const res = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } }, timeoutMs);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
   const text = data && data.responseData && typeof data.responseData.translatedText === 'string'
@@ -120,21 +123,31 @@ router.post('/ocr/translate', wrap(async (req, res) => {
 
   const failures = [];
   let text = '';
-  try {
-    text = await googleTranslate(q, from, to);
-  } catch (err) {
-    failures.push('google: ' + (err && err.message));
-  }
-  if (!text) {
+  const startedAt = Date.now();
+  const budget = (min) => Math.max(min, UPSTREAM_TIMEOUT - (Date.now() - startedAt));
+
+  /* 主路：Google gtx（两个入口），兜底 MyMemory；整条链路不超过 8 秒 */
+  const attempts = [
+    ['google:gtx', () => googleTranslate(q, from, to, 'translate.googleapis.com', budget(ATTEMPT_MIN))],
+    ['google:translate', () => googleTranslate(q, from, to, 'translate.google.com', budget(ATTEMPT_MIN))],
+    ['mymemory', () => myMemoryTranslate(q, from, to, budget(ATTEMPT_MIN))],
+  ];
+  for (const [name, run] of attempts) {
+    if (Date.now() - startedAt >= UPSTREAM_TIMEOUT) {
+      failures.push(name + ': 超时未尝试');
+      continue;
+    }
     try {
-      text = await myMemoryTranslate(q, from, to);
+      text = await run();
+      if (text) break;
     } catch (err) {
-      failures.push('mymemory: ' + (err && err.message));
+      failures.push(name + ' ' + (err && err.message));
     }
   }
+
   if (!text) {
     console.error('[ocr-translate] 上游全部失败：' + failures.join(' | '));
-    throw jsonError(502, '翻译服务暂不可用', 'Google 与 MyMemory 均失败，请稍后重试');
+    throw jsonError(502, '翻译服务暂不可用', '上游均失败（' + failures.join('；').slice(0, 160) + '）');
   }
 
   res.json({ text });
