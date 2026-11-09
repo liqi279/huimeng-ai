@@ -12,6 +12,7 @@ const certUtil = require('./cert');
 
 const healthRoutes = require('./routes/health');
 const translateRoutes = require('./routes/translate');
+const ocrRoutes = require('./routes/ocr');
 const worksRoutes = require('./routes/works');
 const deskRoutes = require('./routes/desk');
 const userdataRoutes = require('./routes/userdata');
@@ -66,6 +67,7 @@ app.use('/api', healthRoutes);
 app.use('/api', authRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', translateRoutes);
+app.use('/api', ocrRoutes);
 /* 用户数据同步路由必须在 works/desk 之前：/works/:id/asset 等更具体的路径先匹配 */
 app.use('/api', userdataRoutes);
 app.use('/api', worksRoutes);
