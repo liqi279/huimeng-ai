@@ -150,13 +150,14 @@ app.use((err, req, res, next) => {
   const status = Number(err && (err.status || err.statusCode)) || 500;
   const message = err && err.expose ? err.message : (status >= 500 ? '服务器内部错误' : (err && err.message) || '请求失败');
   const payload = { error: { message } };
+  if (err && err.code) payload.error.code = err.code;
   if (err && err.hint) payload.error.hint = err.hint;
   if (status >= 500) console.error('[server-error]', err && err.message);
 
   res.status(status).json(payload);
 });
 
-store.ensureDirs()
+const ready = store.ensureDirs()
   .then(async () => {
     /* 账号库初始化：auto 先试 MySQL，失败回落文件；mysql 强制 MySQL，失败则认证接口 503 */
     const userState = await store.initUserStore();
@@ -187,9 +188,12 @@ store.ensureDirs()
       console.error('[init] 用户数据存储初始化失败：' + (err && err.message));
     }
 
-    app.listen(config.PORT, () => {
-      console.log(`绘梦 server listening on http://localhost:${config.PORT}`);
-    });
+    /* SCF：由 serverless-http 接管请求，不能再自己 listen 端口 */
+    if (!process.env.SCF_MODE) {
+      app.listen(config.PORT, () => {
+        console.log(`绘梦 server listening on http://localhost:${config.PORT}`);
+      });
+    }
 
     /* 对象存储桶级配置（CORS / 防盗链）幂等初始化：
        pdf.js 从 GitHub Pages 直连 OSS 分段读 PDF 需要 CORS，失败只记日志，绝不影响启动。
@@ -204,6 +208,9 @@ store.ensureDirs()
     } catch (err) {
       console.error('[init] 桶配置初始化异常：' + (err && err.message));
     }
+
+    /* SCF 里没有本地端口/证书，HTTPS 自签服务器一律不启动 */
+    if (process.env.SCF_MODE) return;
 
     /* 启动 HTTPS 服务器（用于 GitHub Pages 等 HTTPS 前端跨域访问本地后端） */
     const httpsMode = String(config.HTTPS).toLowerCase();
@@ -228,7 +235,15 @@ store.ensureDirs()
   })
   .catch((err) => {
     console.error('初始化数据目录失败：', err && err.message);
+    /* SCF：不能 process.exit，否则整个函数实例被标记崩溃；
+       把失败透给 ready，首次请求返回 500，下次冷启动重试。 */
+    if (process.env.SCF_MODE) throw err;
     process.exit(1);
   });
 
+/* 防止 Node 因未处理的 Promise rejection 直接退出；
+   真正的失败仍通过 module.exports.ready 传给首次请求（scf.js 的 waitReady）。 */
+ready.catch(() => {});
+
 module.exports = app;
+module.exports.ready = ready;
