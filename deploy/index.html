@@ -24842,6 +24842,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     }
     return value;
   };
+  /* 是否是迁移前旧域名的历史地址（可用来判断缓存是否过期） */
+  api.isLegacyFileUrl = function (url) {
+    var value = String(url || '');
+    for (var i = 0; i < LEGACY_ORIGINS.length; i++) {
+      if (value.indexOf(LEGACY_ORIGINS[i]) === 0) return true;
+    }
+    return false;
+  };
 
   /* -------------- 用户认证 -------------- */
   api.setToken = setAuthToken;
@@ -53743,6 +53751,22 @@ window.HMChat = (function () {
     return api && api.fileUrl ? api.fileUrl(value) : value;
   }
 
+  /* 封面地址是否仍可直接使用：
+     - 迁移前旧域名会被改写到 SCF /api/library/file/ 代理，该代理对文件响应不可用
+     - /api/library/file/ 代理地址（网关会塞 application/json + attachment，图片必坏）
+     - COS 预签名直链带 q-sign-time，过期后 403
+     不可用时由调用方换用列表里已刷新的地址，或退回文字封面 */
+  function coverUrlUsable(url) {
+    var value = String(url || '');
+    if (!value) return false;
+    var api = window.HM && window.HM.api;
+    if (api && api.isLegacyFileUrl && api.isLegacyFileUrl(value)) return false;
+    if (value.indexOf('/api/library/file/') >= 0) return false;
+    var m = /[?&]q-sign-time=(\d+);(\d+)/.exec(value);
+    if (m && Number(m[2]) * 1000 <= Date.now()) return false;
+    return true;
+  }
+
   function request(path, options, timeoutMs) {
     var opts = options || {};
     var controller = new AbortController();
@@ -53876,7 +53900,13 @@ window.HMChat = (function () {
     var cached = readJSON(LS.meta, null);
     if (cached && cached.books && cached.books.length) {
       state.mode = 'remote';
-      state.books = cached.books.map(function (b, i) { return normalize(b, i); });
+      state.books = cached.books.map(function (b, i) {
+        var nb = normalize(b, i);
+        /* 缓存可能是迁移前的快照：旧域名 / 代理地址 / 已过期的预签名直链先不展示，
+           等 /library/books 返回新地址后自然恢复，避免首屏坏图 */
+        if (!coverUrlUsable(nb.coverUrl)) nb.coverUrl = '';
+        return nb;
+      });
       state.fav = cached.fav || {};
       state.hist = cached.hist || [];
       state.booted = true;
@@ -53949,7 +53979,8 @@ window.HMChat = (function () {
 
   function fetchBook(id) {
     var cached = byId(id);
-    if (cached && cached.pages && cached.pages.length) return Promise.resolve(cached);
+    /* 只有正文缓存且封面地址仍可用时才直接复用，否则走远端详情刷新 */
+    if (cached && cached.pages && cached.pages.length && coverUrlUsable(cached.coverUrl)) return Promise.resolve(cached);
     if (state.mode === 'remote') {
       return request('/library/books/' + encodeURIComponent(id), {}, 20000)
         .then(function (data) { return data.book; })
@@ -54405,14 +54436,20 @@ window.HMChat = (function () {
     var pages = (book.pages || []).length;
     var updated = new Date(book.updatedAt || nowMs());
     var dateStr = updated.getFullYear() + '-' + pad2(updated.getMonth() + 1) + '-' + pad2(updated.getDate());
+    /* 详情接口的历史数据可能仍是旧域名/代理地址：优先改用列表接口已刷新的可用封面 */
+    var detailCover = coverUrlUsable(book.coverUrl) ? book.coverUrl : '';
+    if (!detailCover) {
+      var listed = byId(book.id);
+      if (listed && coverUrlUsable(listed.coverUrl)) detailCover = listed.coverUrl;
+    }
 
     els.detail.innerHTML = '<div class="lib-detail-inner">'
       + '<button type="button" class="lib-back-btn" data-back>← 返回书架</button>'
       + '<div class="lib-detail-grid">'
       + '<div class="lib-detail-cover-col">'
       + '<div class="lib-detail-cover" style="--accent:' + esc(book.accent) + '" data-author="' + esc(book.author) + '">'
-      + (book.coverUrl
-        ? '<img class="lib-detail-cover-img" src="' + esc(mediaFile(book.coverUrl)) + '" alt="' + esc(book.title) + '">'
+      + (detailCover
+        ? '<img class="lib-detail-cover-img" src="' + esc(mediaFile(detailCover)) + '" alt="' + esc(book.title) + '">'
         : '<span class="lib-detail-cover-frame"></span>'
           + '<span class="lib-detail-cover-title">' + esc(book.title) + '</span>'
           + '<span class="lib-detail-cover-rule"></span>'
@@ -54637,7 +54674,7 @@ window.HMChat = (function () {
   function kickPdfSlowTimer(ms) {
     clearPdfSlowTimer();
     pdfSlowTimer = setTimeout(function () {
-      pdfLoadingText('仍在加载 PDF … 请稍候，或点击重试');
+      pdfLoadingText('PDF 处理中（大文件首次打开较慢）… 请稍候，或点击重试');
       var retry = els.reader && els.reader.querySelector('[data-pdf-retry]');
       if (retry) retry.hidden = false;
     }, ms || 14000);
@@ -54649,6 +54686,12 @@ window.HMChat = (function () {
 
   function pdfProgress(loaded, total) {
     var text;
+    if (total > 0 && loaded >= total) {
+      /* 字节已下完，剩下的是 pdf.js 解析/排版，和网络无关 */
+      pdfLoadingText('PDF 已下载，正在解析页面…');
+      kickPdfSlowTimer(30000);
+      return;
+    }
     if (total > 0) {
       var pct = Math.max(0, Math.min(100, Math.round(loaded / total * 100)));
       text = '正在加载 ' + formatMb(loaded) + ' / ' + formatMb(total) + '（' + pct + '%）';
@@ -54839,11 +54882,10 @@ window.HMChat = (function () {
     if (overlay) overlay.classList.remove('is-hidden');
     var spinner = els.reader && els.reader.querySelector('[data-pdf-spinner]');
     if (spinner) spinner.hidden = true;
-    var detail = '';
-    if (err) {
-      detail = (err.name || 'Error') + (err.message ? '：' + String(err.message).slice(0, 400) : '');
-    }
-    pdfLoadingText(detail ? 'PDF 加载失败（' + detail + '），请点击「重试」' : 'PDF 加载失败，请点击「重试」');
+    var timedOut = !!(err && /加载超时/.test(String(err.message || '')));
+    pdfLoadingText(timedOut
+      ? 'PDF 加载失败：读取超时（网络或存储服务响应异常），请点击「重试」'
+      : 'PDF 加载失败：无法读取文件（网络或存储服务异常），请点击「重试」');
     var retry = els.reader && els.reader.querySelector('[data-pdf-retry]');
     if (retry) retry.hidden = false;
     if (err) console.warn('[library] PDF 加载失败：', err.name || '', err.message || '');
@@ -54863,7 +54905,11 @@ window.HMChat = (function () {
 
     state.pdfDocPromise = loadPdfJs()
       .then(function (pdfjs) {
-        /* 分段读取：只取当前页需要的字节；带真实进度回调 */
+        /* 分段读取：只取当前页需要的字节；带真实进度回调
+         * 看门狗：20 秒没有首字节 / 60 秒没有新进度就中止本次取件，
+         * 避免后端返回空响应（如 SCF 文件接口只给响应头）时一直转圈 */
+        var PDF_FIRST_BYTE_MS = 20000;
+        var PDF_STALL_MS = 60000;
         function open(url) {
           return new Promise(function (resolve, reject) {
             var task = pdfjs.getDocument({
@@ -54874,11 +54920,33 @@ window.HMChat = (function () {
               disableAutoFetch: true,
               withCredentials: false
             });
+            var settled = false;
+            var watchdog = null;
+            function arm(ms) {
+              if (watchdog) clearTimeout(watchdog);
+              watchdog = setTimeout(function () {
+                fail(new Error('加载超时：' + Math.round(ms / 1000) + ' 秒没有收到新数据'));
+              }, ms);
+            }
+            function fail(err) {
+              if (settled) return;
+              settled = true;
+              if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+              try { task.destroy(); } catch (e) {}
+              reject(err);
+            }
             task.onProgress = function (p) {
               if (!p) return;
               pdfProgress(p.loaded || 0, p.total || 0);
+              arm(PDF_STALL_MS);
             };
-            task.promise.then(resolve, reject);
+            task.promise.then(function (doc) {
+              if (settled) { try { doc.destroy(); } catch (e) {} return; }
+              settled = true;
+              if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+              resolve(doc);
+            }, fail);
+            arm(PDF_FIRST_BYTE_MS);
           });
         }
 
