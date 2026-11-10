@@ -8,11 +8,23 @@
 const { Router } = require('express');
 const path = require('path');
 const crypto = require('crypto');
-const { readJson, writeJson, enqueue, uid, httpError, mediaUrlFor, extFromMime, dataUrlToBuffer } = require('../http');
+/* 原来从 ../http 解构 readJson/writeJson/enqueue/uid/httpError/mediaUrlFor，
+   但这些函数并不在 http.js 里导出，GET /api/animation 首次读文件就 500。
+   改为复用 store 的读写/串行队列（与 oua / art / plan / script 一致）；
+   httpError 本来就不存在，用 jsonError 等价替代。 */
+const { jsonError: httpError, extFromMime, dataUrlToBuffer } = require('../http');
+const store = require('../store');
 const mediaStore = require('../media-store');
 
+const readJson = store.readJson;
+const writeJson = store.writeJson;
+const enqueue = store.enqueue;
+
+function uid() { return crypto.randomUUID(); }
+
 const router = Router();
-const ANIM_DIR = path.join(__dirname, '..', '..', 'data');
+/* 写入运行时可写目录（SCF 下为 /tmp/runtime），不能写只读的代码目录 server/data */
+const ANIM_DIR = store.dirs.root;
 const animFile = () => path.join(ANIM_DIR, 'animations.json');
 const ANIM_CAP = 1000;
 
