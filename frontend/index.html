@@ -814,6 +814,7 @@
             <span class="tc-api-state" id="tcApiState">未连接</span>
           </div>
           <p class="tc-hint">启动方式见插件目录 <b>服务/README.md</b>：先装权重，再运行 <code>python server.py</code>。页面通过该服务做<b>真实推理</b>。</p>
+          <p class="tc-hint" id="tcApiHelp" hidden></p>
         </div>
       </aside>
 
@@ -3406,6 +3407,193 @@
         <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
       </div>
     </section>
+
+    <!-- ============ 图层面板（对照 Photoshop「图层」面板 · 本期仅静态外观） ============ -->
+    <details class="hm-oua-layers" id="ouaLayersPanel" open>
+      <summary class="hm-oua-lyr-head">
+        <span class="hm-oua-lyr-head-ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+            <path d="M8 2.3 14 5.1 8 7.9 2 5.1z"/>
+            <path d="M2 8.5 8 11.3 14 8.5"/>
+          </svg>
+        </span>
+        <span class="hm-oua-lyr-head-title">图层</span>
+        <span class="hm-oua-lyr-head-count">6</span>
+        <span class="hm-oua-lyr-fold" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m4 6.5 4 4 4-4"/>
+          </svg>
+        </span>
+      </summary>
+
+      <div class="hm-oua-lyr-body">
+        <!-- 混合模式 / 不透明度 -->
+        <div class="hm-oua-lyr-props">
+          <div class="hm-oua-lyr-prop-row">
+            <span class="hm-oua-lyr-label">混合模式</span>
+            <select class="hm-oua-lyr-select" aria-label="混合模式">
+              <option selected>正常</option>
+              <option>溶解</option>
+              <option>正片叠底</option>
+              <option>滤色</option>
+              <option>叠加</option>
+              <option>柔光</option>
+              <option>颜色减淡</option>
+              <option>线性加深</option>
+            </select>
+          </div>
+          <div class="hm-oua-lyr-prop-row hm-oua-lyr-opacity">
+            <span class="hm-oua-lyr-label">不透明度</span>
+            <input class="hm-oua-lyr-range" type="range" min="0" max="100" value="100" aria-label="不透明度">
+            <span class="hm-oua-lyr-num">100%</span>
+          </div>
+        </div>
+
+        <!-- 图层列表（自上而下 = 画布自上而下） -->
+        <div class="hm-oua-lyr-list">
+          <div class="hm-oua-lyr-row">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="hl"><i></i></span>
+            <span class="hm-oua-lyr-name">高光</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-active">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="skin"><i></i></span>
+            <span class="hm-oua-lyr-name">上色 · 肌肤</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-locked">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="line"><i></i></span>
+            <span class="hm-oua-lyr-name">线稿</span>
+            <button class="hm-oua-lyr-lock is-locked" type="button" title="解锁图层" aria-label="解锁图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-group">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏组" aria-label="显示 / 隐藏组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-caret" aria-hidden="true">▾</span>
+            <span class="hm-oua-lyr-folder" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.8 5h3.5L6.7 6.3h7.5v6.5H1.8z"/>
+              </svg>
+            </span>
+            <span class="hm-oua-lyr-name">角色 A</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定组" aria-label="锁定组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-child">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="face"><i></i></span>
+            <span class="hm-oua-lyr-name">脸</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-off">
+            <button class="hm-oua-lyr-eye is-off" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="bg"><i></i></span>
+            <span class="hm-oua-lyr-name">背景</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 底部操作条 -->
+        <div class="hm-oua-lyr-foot">
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建图层" aria-label="新建图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M3.2 1.9h6.1l3.5 3.5v8.7H3.2z"/>
+              <path d="M8 6.9v4.2M5.9 9h4.2"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建组" aria-label="新建组">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M1.8 4.8h3.4l1.4 1.3h7.6v7.2H1.8z"/>
+              <path d="M8 7.5v3.3M6.35 9.15h3.3"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="复制图层" aria-label="复制图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="5.7" y="2.2" width="8.1" height="9.3" rx="1.1"/>
+              <rect x="2.2" y="4.5" width="8.1" height="9.3" rx="1.1"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="向下合并" aria-label="向下合并">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="2.4" y="9.7" width="11.2" height="4" rx="1"/>
+              <path d="M8 2.1v5.5M5.6 5.2 8 7.6l2.4-2.4"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn is-danger" type="button" title="删除图层" aria-label="删除图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.9 4.8h10.2M6.2 4.8V3.3h3.6v1.5M4.4 4.8l.7 8.6h5.8l.7-8.6"/>
+              <path d="M6.7 7.1v4M9.3 7.1v4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </details>
   </main>
 
   <!-- ============ 动画（中间帧处理 · Tweening） ============ -->

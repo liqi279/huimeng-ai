@@ -16,6 +16,7 @@
     apiBase: 'http://127.0.0.1:7861',
     apiOk: false,
     busy: false,
+    probing: false,
     xhr: null,
     videoUrl: '',
     frames: [],
@@ -97,20 +98,35 @@
   }
 
   /* ---------------- 服务连通性 ---------------- */
+  /* 失败时给出可执行的排查步骤：区分「服务未启动」与「浏览器本地网络访问权限被拒」 */
+  function showDisconnectHelp(base) {
+    var help = $('tcApiHelp');
+    if (!help) return;
+    var httpsPage = window.location.protocol === 'https:';
+    var lines = ['<b>排查步骤：</b>'];
+    lines.push('① 确认本机服务已启动：<code>cd 插件/09-ToonCrafter首尾帧补间/服务 && python server.py --port 7861</code>');
+    if (httpsPage) {
+      lines.push('② 允许「本地网络访问」：点地址栏左侧图标 → 网站设置 → 本地网络访问 → 允许（Chrome/Edge 138+ 默认拦截网页访问 127.0.0.1）；也可在 chrome://settings/content/localNetworkAccess 中添加本站。');
+      lines.push('③ 若没有②的权限项：直接双击本地单文件版 deploy/index.html 打开本页，本地打开不受该限制。');
+    }
+    lines.push('④ 按 F12 看控制台确切原因：ERR_CONNECTION_REFUSED＝服务未启动；"Permission was denied … loopback"＝本地网络访问被拒。');
+    help.innerHTML = lines.join('<br>');
+    help.hidden = false;
+  }
+
   function testApi(silent) {
     var base = apiBase();
     var el = $('tcApiState');
-    if (!base) { toast('请填写推理服务地址', 'error'); return; }
-    if (window.location.protocol === 'https:' && base.indexOf('http://') === 0) {
-      if (el) el.textContent = '被浏览器拦截（https 页面不能访问 http 本地服务）';
-      setBadge(false, '请用本地版打开');
-      if (!silent) toast('https 页面无法访问 http 本地推理服务，请打开本地单文件版或本机 http 服务', 'error');
-      return;
+    var help = $('tcApiHelp');
+    if (!base) {
+      if (el) el.textContent = '请填写推理服务地址';
+      return Promise.resolve(false);
     }
-    if (el) el.textContent = '检测中…';
+    if (el) { el.textContent = '检测中…'; el.classList.remove('is-ok'); }
+    if (help) help.hidden = true;
     var ctrl = window.AbortController ? new AbortController() : null;
-    var timer = ctrl ? window.setTimeout(function () { ctrl.abort(); }, 6000) : null;
-    fetch(base + '/api/health', { signal: ctrl && ctrl.signal })
+    var timer = ctrl ? window.setTimeout(function () { ctrl.abort(); }, 8000) : null;
+    return fetch(base + '/api/health', { cache: 'no-store', signal: ctrl && ctrl.signal })
       .then(function (r) { return r.json(); })
       .then(function (info) {
         if (timer) window.clearTimeout(timer);
@@ -124,26 +140,25 @@
           toast('推理服务已连接' + (info.device === 'cuda' ? '（' + (info.gpu || 'GPU') + '）' : ''), 'success');
           if (!ok512) toast('提示：512 权重尚未下载，首次生成会自动拉取', 'info');
         }
+        return true;
       })
       .catch(function (err) {
         if (timer) window.clearTimeout(timer);
         var timeout = err && err.name === 'AbortError';
-        var httpsPage = window.location.protocol === 'https:';
-        var reason = timeout ? '超时' : (httpsPage ? '被浏览器拦截 / 服务未启动' : '拒绝连接');
         if (el) {
-          el.textContent = '未连接（' + reason + '）' + (httpsPage ? ' · 见下方提示' : '');
+          el.textContent = timeout ? '未连接（8s 超时）' : '未连接（请求失败）';
           el.classList.remove('is-ok');
         }
         setBadge(false, '服务未连接');
+        showDisconnectHelp(base);
         if (!silent) {
-          if (httpsPage) {
-            toast('线上 https 页面直连本机 http 服务常被拦截：请下载本地单文件版打开，或改用 HTTPS 推理服务', 'error');
-          } else if (timeout) {
+          if (timeout) {
             toast('连接超时：确认 server.py 已启动且端口为 ' + base.split(':').pop(), 'error');
           } else {
-            toast('无法连接推理服务：请先运行 server.py，并确认地址 ' + base, 'error');
+            toast('无法连接推理服务：见「推理服务」下的排查步骤（服务未启动 / 本地网络访问被拒）', 'error');
           }
         }
+        return false;
       });
   }
 
@@ -158,8 +173,20 @@
   function generate() {
     if (!state.firstFile || !state.lastFile) { toast('请先上传首帧与尾帧', 'error'); return; }
     if (state.busy) return;
-    if (!state.apiOk) { testApi(true); }
+    if (state.apiOk) { doGenerate(); return; }
+    if (state.probing) return;
+    state.probing = true;
+    var meta0 = $('tcMeta');
+    if (meta0) meta0.textContent = '正在检测推理服务…';
+    testApi(false).then(function (ok) {
+      state.probing = false;
+      if (ok) { doGenerate(); return; }
+      if (meta0) meta0.textContent = '未发送生成请求：推理服务未连接（见左侧排查步骤）';
+      toast('推理服务未连接，已停止发送生成请求', 'error');
+    });
+  }
 
+  function doGenerate() {
     var base = apiBase();
     var fd = new FormData();
     fd.append('first', state.firstFile);
@@ -211,7 +238,7 @@
       setBusy(false);
       state.xhr = null;
       if (meta) meta.textContent = '连接中断';
-      toast('连接推理服务失败（检查地址 / CORS / 服务是否运行）', 'error');
+      toast('生成请求失败：服务未启动或本地网络访问被拒，见「推理服务」排查步骤', 'error');
     };
     xhr.onabort = function () {
       window.clearInterval(timer);

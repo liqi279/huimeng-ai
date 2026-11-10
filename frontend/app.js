@@ -606,14 +606,29 @@ function setCurrentTabRefWeight(v) {
   state.refWeight = v; /* 兼容旧字段 */
 }
 
+/* 参考主体强度 → 参考图预览缩放比：0% 缩到 55%（仍清晰可见），100% 为 100%（不外溢、不放大发糊） */
+function refWeightToScale(v) {
+  v = Math.max(0, Math.min(100, Number(v) || 0));
+  return 0.55 + 0.45 * (v / 100);
+}
+/* 把当前强度实时刷到「参考主体」区域内的每张预览图上（只改 transform，不重建 DOM） */
+function applyRefPreviewScale(v) {
+  var scale = refWeightToScale(v).toFixed(3);
+  var imgs = document.querySelectorAll('#refGrid .hm-ref-cell img');
+  for (var i = 0; i < imgs.length; i++) imgs[i].style.transform = 'scale(' + scale + ')';
+}
+
 /* 参考主体强度 UI（顶层版本：bindEvents 里那份是局部函数，顶层调用不到会 ReferenceError 导致 boot 中断） */
 function applyRefWeightUI(v) {
-  v = Number(v) || 70;
+  v = Number(v);
+  if (!isFinite(v)) v = 70;
+  v = Math.max(0, Math.min(100, Math.round(v)));
   var slider = document.getElementById('refWeightSlider');
   var label = document.getElementById('refWeightLabel');
   if (label) label.textContent = v + '%';
   if (slider) slider.value = String(v);
   setCurrentTabRefWeight(v);
+  applyRefPreviewScale(v); /* 强度变了 → 预览图同步缩放 */
 }
 
 /* ========== 每个桌面（文件夹）独立的提示词与参考图，且跨刷新保留 ========== */
@@ -1838,6 +1853,7 @@ function renderRef() {
     }
 
     els.refGrid.hidden = !hasRef;
+    applyRefPreviewScale(currentTabRefWeight()); /* 新建的预览图按当前强度缩放 */
   }
 
   /* 右侧工具条（有素材且非选择模式时显示） */
@@ -5416,16 +5432,9 @@ function bindEvents() {
     if (state.fontSize) fsSlider.value = String(state.fontSize);
   }
 
-  /* 参考主体强度 slider —— 每个 tab 独立 */
+  /* 参考主体强度 slider —— 每个 tab 独立（UI/预览同步走顶层 applyRefWeightUI） */
   var rwSlider = document.getElementById('refWeightSlider');
-  var rwLabel = document.getElementById('refWeightLabel');
   if (rwSlider) {
-    function applyRefWeightUI(v) {
-      v = Number(v) || 70;
-      if (rwLabel) rwLabel.textContent = v + '%';
-      rwSlider.value = String(v);
-      setCurrentTabRefWeight(v);
-    }
     rwSlider.addEventListener('input', function () {
       applyRefWeightUI(rwSlider.value);
       persistPrefs();

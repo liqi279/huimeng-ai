@@ -4284,6 +4284,9 @@ body.hm-resizing * {
   object-fit: cover;
   display: block;
   border-radius: 6px;
+  /* 参考主体强度滑块会实时改这里的 transform：锚点居中 + 轻微过渡让拖动连续不跳 */
+  transform-origin: 50% 50%;
+  transition: transform 90ms linear;
 }
 
 /* ========== 参考图单元格左上角标签 图1/图2/... ========== */
@@ -13977,6 +13980,372 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   .hm-oua-kframe-row, .hm-oua-tween-row {
     grid-template-columns: 24px 44px 1fr 24px;
   }
+}
+
+/* ============ 原画 · 图层面板（对照 PS「图层」面板 · 仅静态外观） ============
+   面板为视口右侧常驻栏，原画页右边界让出面板宽度，避免遮住页面滚动条。
+   折叠由 <details> 原生完成，不依赖任何脚本。 */
+#view-oua.hm-oua-page { right: 288px; }
+
+.hm-oua-layers {
+  position: fixed;
+  top: 46px;
+  right: 0;
+  bottom: 0;
+  width: 288px;
+  z-index: 42;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0c1220;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.34);
+  color: #e6e9ef;
+  font-size: 12px;
+  user-select: none;
+}
+
+/* 折叠态：只剩一条竖向标题条，页面右边界同步收窄 */
+#view-oua.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
+.hm-oua-layers:not([open]) { width: 40px; }
+.hm-oua-layers:not([open]) .hm-oua-lyr-body { display: none; }
+.hm-oua-layers:not([open]) .hm-oua-lyr-head {
+  flex-direction: column;
+  height: 100%;
+  padding: 12px 0;
+  gap: 10px;
+}
+.hm-oua-layers:not([open]) .hm-oua-lyr-head-title {
+  writing-mode: vertical-rl;
+  letter-spacing: 0.28em;
+}
+.hm-oua-layers:not([open]) .hm-oua-lyr-head-ico,
+.hm-oua-layers:not([open]) .hm-oua-lyr-head-count { display: none; }
+.hm-oua-layers:not([open]) .hm-oua-lyr-fold { margin: 0; transform: rotate(90deg); }
+
+/* 面板头 */
+.hm-oua-lyr-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  list-style: none;
+  outline: none;
+}
+.hm-oua-lyr-head::-webkit-details-marker { display: none; }
+.hm-oua-lyr-head::marker { content: ''; }
+.hm-oua-lyr-head:hover { background: rgba(255, 255, 255, 0.05); }
+.hm-oua-lyr-head-ico {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+}
+.hm-oua-lyr-head-ico svg { width: 16px; height: 16px; }
+.hm-oua-lyr-head-title {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: #eef1f7;
+}
+.hm-oua-lyr-head-count {
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.22);
+  color: #c4b5fd;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.hm-oua-lyr-fold {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b93a1;
+  transition: transform 0.18s ease;
+}
+.hm-oua-lyr-fold svg { width: 14px; height: 14px; }
+
+/* 面板主体 */
+.hm-oua-lyr-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 混合模式 / 不透明度 */
+.hm-oua-lyr-props {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 10px 10px;
+  background: rgba(255, 255, 255, 0.022);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.hm-oua-lyr-prop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hm-oua-lyr-label {
+  flex: none;
+  width: 56px;
+  font-size: 11px;
+  color: #8b93a1;
+  letter-spacing: 0.02em;
+}
+.hm-oua-lyr-select {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: #11151f;
+  color: #e6e9ef;
+  font-size: 11.5px;
+  outline: none;
+  cursor: pointer;
+}
+.hm-oua-lyr-select:hover { border-color: rgba(255, 255, 255, 0.22); }
+.hm-oua-lyr-select:focus { border-color: rgba(139, 92, 246, 0.65); }
+.hm-oua-lyr-range {
+  flex: 1;
+  min-width: 0;
+  height: 14px;
+  margin: 0;
+  accent-color: #8b5cf6;
+  cursor: pointer;
+}
+.hm-oua-lyr-num {
+  flex: none;
+  width: 36px;
+  text-align: right;
+  font-size: 11px;
+  color: #8b93a1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* 图层列表 */
+.hm-oua-lyr-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.hm-oua-lyr-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: default;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.hm-oua-lyr-row:hover { background: rgba(255, 255, 255, 0.055); }
+.hm-oua-lyr-row.is-active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: inset 2px 0 0 #a78bfa;
+}
+.hm-oua-lyr-row.is-active .hm-oua-lyr-name { color: #fff; }
+.hm-oua-lyr-row.is-child { margin-left: 14px; }
+.hm-oua-lyr-row.is-off .hm-oua-lyr-name { opacity: 0.55; }
+.hm-oua-lyr-row.is-off .hm-oua-lyr-thumb { opacity: 0.45; }
+.hm-oua-lyr-row.is-locked .hm-oua-lyr-name { color: #b9c0cd; }
+
+.hm-oua-lyr-eye,
+.hm-oua-lyr-lock {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #9aa4b6;
+  cursor: pointer;
+}
+.hm-oua-lyr-eye svg,
+.hm-oua-lyr-lock svg { width: 14px; height: 14px; display: block; }
+.hm-oua-lyr-eye:hover,
+.hm-oua-lyr-lock:hover {
+  color: #eef1f7;
+  background: rgba(255, 255, 255, 0.09);
+}
+.hm-oua-lyr-eye.is-off { color: #575f70; }
+.hm-oua-lyr-eye.is-off::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: currentColor;
+  transform: rotate(-40deg);
+}
+.hm-oua-lyr-lock.is-unlocked { color: #4d5567; }
+.hm-oua-lyr-lock.is-locked { color: #ffce5c; }
+
+.hm-oua-lyr-thumb {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 3px;
+  overflow: hidden;
+  background-color: #f7f8fb;
+  background-image: repeating-conic-gradient(#dfe2ea 0 25%, #f7f8fb 0 50%);
+  background-size: 8px 8px;
+}
+.hm-oua-lyr-thumb > i {
+  position: absolute;
+  inset: 3px;
+  border-radius: 2px;
+}
+.hm-oua-lyr-thumb[data-kind="hl"] > i {
+  background:
+    radial-gradient(circle at 32% 30%, #ffffff 0%, #ffffff 22%, rgba(125, 227, 255, 0.85) 48%, rgba(125, 227, 255, 0) 72%),
+    linear-gradient(135deg, rgba(125, 227, 255, 0.18), rgba(139, 92, 246, 0.16));
+}
+.hm-oua-lyr-thumb[data-kind="skin"] > i {
+  background: radial-gradient(circle at 42% 34%, #ffe7d6 0%, #f9c6a6 52%, #e79a76 100%);
+}
+.hm-oua-lyr-thumb[data-kind="line"] > i {
+  background:
+    linear-gradient(115deg, transparent 45%, #2f3542 46% 48%, transparent 49%),
+    linear-gradient(66deg, transparent 60%, #4a5162 61% 63%, transparent 64%),
+    #ffffff;
+}
+.hm-oua-lyr-thumb[data-kind="face"] > i {
+  background:
+    radial-gradient(circle at 50% 44%, #ffe9da 0%, #f7c3a3 60%, rgba(247, 195, 163, 0) 78%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+}
+.hm-oua-lyr-thumb[data-kind="bg"] > i {
+  background: linear-gradient(155deg, #2b4b6d 0%, #5d86a8 58%, #a9c6da 100%);
+}
+
+.hm-oua-lyr-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: #dfe4ee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-oua-lyr-row.is-group .hm-oua-lyr-name { font-weight: 600; }
+.hm-oua-lyr-caret {
+  flex: none;
+  width: 10px;
+  text-align: center;
+  font-size: 9px;
+  line-height: 1;
+  color: #8b93a1;
+}
+.hm-oua-lyr-folder {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d6b25f;
+}
+.hm-oua-lyr-folder svg { width: 15px; height: 15px; }
+
+/* 底部操作条 */
+.hm-oua-lyr-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 7px;
+  background: rgba(0, 0, 0, 0.25);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.hm-oua-lyr-fbtn {
+  flex: none;
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #9aa4b6;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.hm-oua-lyr-fbtn svg { width: 15px; height: 15px; }
+.hm-oua-lyr-fbtn:hover {
+  color: #eef1f7;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.hm-oua-lyr-fbtn.is-danger { margin-left: auto; }
+.hm-oua-lyr-fbtn.is-danger:hover {
+  color: #ff8194;
+  background: rgba(255, 92, 122, 0.14);
+  border-color: rgba(255, 92, 122, 0.45);
+}
+.hm-oua-lyr-fbtn:focus-visible,
+.hm-oua-lyr-eye:focus-visible,
+.hm-oua-lyr-lock:focus-visible,
+.hm-oua-lyr-head:focus-visible {
+  outline: 1px solid rgba(167, 139, 250, 0.8);
+  outline-offset: 1px;
+}
+
+/* 浅色主题：面板维持深色（与原画页底色一致），只提亮文字与描边对比度 */
+body.hm-light .hm-oua-layers { border-left-color: rgba(15, 23, 42, 0.18); }
+
+/* 原画页右侧被面板占用时，AI 聊天把手左移，避免压在面板上 */
+body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -322px; }
+body[data-view="oua"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle { left: -74px; }
+
+/* 响应式：窄屏收窄面板，极小屏隐藏 */
+@media (max-width: 1180px) {
+  #view-oua.hm-oua-page { right: 248px; }
+  .hm-oua-layers { width: 248px; }
+  #view-oua.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
+  .hm-oua-lyr-label { width: 48px; }
+  body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -282px; }
+}
+@media (max-width: 820px) {
+  #view-oua.hm-oua-page { right: 0; }
+  .hm-oua-layers { display: none; }
+  body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -34px; }
 }
 
 /* ============ 动画（中间帧 Tweening）模块 ============ */
