@@ -84,7 +84,10 @@ app.use('/api', planRoutes);
 app.use('/api', scriptRoutes);
 app.use('/api', artRoutes);
 app.use('/api', ouaRoutes);
-app.use('/api', animationRoutes);
+/* animation 路由内部用的是 '/'、'/:id'（没有 '/animation' 前缀），
+   挂到 /api 会让 GET /api/animation 命中 '/:id'（被当成 id=animation）返回 404。
+   与 oua/art 的「路由内自带前缀」不同，这里按实际路径单独挂载。 */
+app.use('/api/animation', animationRoutes);
 app.use('/api', libraryRoutes);
 
 app.use('/api', (req, res) => {
