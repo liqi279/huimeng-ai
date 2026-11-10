@@ -20445,7 +20445,7 @@ body.dv-open .hm-page {
       <div class="lib-top-actions">
         <button type="button" class="lib-btn lib-area-btn" id="libAreaBtn" aria-haspopup="dialog" title="切换图书馆区域">
           <span class="lib-area-icon" aria-hidden="true">▤</span>
-          <span class="lib-area-name" id="libAreaName">参考素材</span>
+          <span class="lib-area-name" id="libAreaName">全部藏书</span>
           <span class="lib-area-caret" aria-hidden="true">▾</span>
         </button>
         <button type="button" class="lib-btn lib-btn-gold" id="libAddBtn">＋ 新增书籍</button>
@@ -53653,11 +53653,11 @@ window.HMChat = (function () {
     { id: 'paint', name: '绘画教程', desc: '该区域内容' },
     { id: 'concept', name: '原画资料', desc: '该区域内容' }
   ];
-  var DEFAULT_AREA = 'ref';   /* 默认区域保持为参考素材，不改成汇总 */
+  var DEFAULT_AREA = 'all';   /* 首次进入默认展示汇总；已有分区选择的用户保持原选择 */
 
   var state = {
     mode: 'local',        /* local | remote */
-    area: 'ref',          /* 当前图书馆区域 id */
+    area: 'all',          /* 当前图书馆区域 id（无历史记录时默认全部藏书） */
     shelfPage: 1,         /* 当前书架页码（区域过滤后分页，与阅读器页码解耦） */
     books: [],
     shelfBooks: [],
