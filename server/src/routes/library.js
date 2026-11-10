@@ -4,6 +4,7 @@ const express = require('express');
 const path = require('path');
 const { Readable } = require('stream');
 const { wrap, assert, jsonError } = require('../http');
+const config = require('../config');
 const { authOptional, authRequired, adminOnly } = require('../auth');
 const library = require('../library-store');
 const objectStore = require('../object-store');
@@ -17,11 +18,47 @@ function keyOf(req) {
 }
 
 /* ---------- 书籍 ---------- */
+/* 书目里存的 pdfUrl/coverUrl 是绝对地址（历史数据写的是 Render 域名）。
+   SCF 上 Render 已停，直接返回会把前端带去死域名，所以统一改写到当前后端。
+   只改写 /api/library/file/ 这种代理地址，对象存储直链（签名 URL）原样保留。 */
+function requestOrigin(req) {
+  const base = config.PUBLIC_BASE_URL || (req.protocol + '://' + (req.get('host') || ''));
+  return String(base).replace(/\/+$/, '').replace(/\/api$/i, '');
+}
+
+function retarget(url, origin) {
+  const s = String(url || '');
+  const m = /\/api\/library\/file\/.+$/.exec(s);
+  return m ? origin + m[0] : url;
+}
+
+function retargetBook(item, origin) {
+  if (!item || typeof item !== 'object') return item;
+  const next = Object.assign({}, item);
+  if (next.pdfUrl) next.pdfUrl = retarget(next.pdfUrl, origin);
+  if (next.coverUrl) {
+    next.coverUrl = retarget(next.coverUrl, origin);
+    /* 封面改走对象存储签名直链：SCF 网关会给代理响应再补一条
+       Content-Type: application/json，浏览器取第一条 → <img> 解码失败、封面空白。
+       直链由 COS 直接返回单一 image/* 响应头，且桶已配 CORS。 */
+    try {
+      const key = keyFromUrl(next.coverUrl);
+      const signed = key ? objectStore.presignGet(key, 3600) : '';
+      if (signed) next.coverUrl = signed;
+    } catch (err) {
+      /* 存储不可用时保留原地址，不影响书目返回 */
+    }
+  }
+  return next;
+}
+
 router.get('/library/books', authOptional, wrap(async (req, res) => {
   const q = String(req.query.q || '');
   const category = String(req.query.category || '');
   const items = await library.list(q, category);
-  res.json({ items, total: items.length, store: await library.stats() });
+  const origin = requestOrigin(req);
+  const mapped = items.map((item) => retargetBook(item, origin));
+  res.json({ items: mapped, total: mapped.length, store: await library.stats() });
 }));
 
 router.get('/library/suggest', authOptional, wrap(async (req, res) => {
@@ -137,7 +174,9 @@ router.get('/library/books/:id', authOptional, wrap(async (req, res) => {
   assert(book, 404, '书籍不存在', '请检查书籍 ID');
   const key = keyOf(req);
   res.json({
-    book,
+    /* 详情页与列表用同一套地址换算：老 Render 域名改写为当前后端，
+       封面统一换成对象存储签名直链（否则私读桶直链 403、详情页只剩文字占位）。 */
+    book: retargetBook(book, requestOrigin(req)),
     favorite: await library.isFavorite(key, book.id),
     progress: await library.progress(key, book.id),
   });
