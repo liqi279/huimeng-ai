@@ -21,17 +21,42 @@ const SEED_FILE = path.join(LIB_DIR, 'books.seed.json');
 const BOOKS_FILE = path.join(LIB_DIR, 'books.json');
 const FAV_FILE = path.join(LIB_DIR, 'favorites.json');
 const HIST_FILE = path.join(LIB_DIR, 'reading-history.json');
-const SCHEMA_FILE = path.join(config.DATA_ROOT, 'mysql', 'schema.sql');
+
+/* schema.sql 有两份可能位置：DATA_ROOT（Render 上是仓库 data/），
+   以及代码包自带的 server/data/mysql/（SCF 里 DATA_ROOT=/tmp 不会包含它）。
+   先找 DATA_ROOT，再回落到代码目录，两处都没有才跳过建表。 */
+function resolveSchemaFile() {
+  const candidates = [
+    path.join(config.DATA_ROOT, 'mysql', 'schema.sql'),
+    path.join(__dirname, '..', 'data', 'mysql', 'schema.sql'),
+  ];
+  for (const file of candidates) {
+    if (fs.existsSync(file)) return file;
+  }
+  return candidates[0];
+}
+const SCHEMA_FILE = resolveSchemaFile();
 
 const info = {
   mode: 'file',
   storageLimit: config.LIBRARY_STORAGE_LIMIT,
   mysqlError: null,
+  /* 降级状态：MySQL 连不上时置 true，恢复后自动清除。
+     以前失败会永久缓存成 file 模式，导致书架只剩 4 本种子书且再也不会重连。 */
+  degraded: false,
+  initialized: false,
+  retryCount: 0,
+  lastAttemptAt: 0,
+  nextRetryAt: 0,
+  database: '',
 };
 
 let pool = null;
 let initPromise = null;
 let mysql2 = null;
+let started = false;
+/* 退避：1s / 3s / 10s / 30s / 60s，之后固定 60s；只重试、不永久放弃 */
+const RETRY_DELAYS = [1000, 3000, 10000, 30000, 60000];
 
 /* ---------------- 通用 ---------------- */
 function now() { return Date.now(); }
@@ -154,6 +179,8 @@ function makeId() {
 /* 连接参数：MYSQL_URL 优先（云上只有这一条连接串），否则用 MYSQL_* 单字段。
    TiDB Cloud / 托管 MySQL 通常要求 TLS，连接串里带 ssl=true 时按需开启。 */
 function mysqlBaseOptions() {
+  /* 连接超时压短：降级重试是在请求里顺手做的，不能让一个请求卡太久 */
+  const connectTimeout = Number(process.env.MYSQL_CONNECT_TIMEOUT_MS || 5000);
   if (config.MYSQL_URL) {
     const u = new URL(config.MYSQL_URL);
     const opts = {
@@ -163,6 +190,7 @@ function mysqlBaseOptions() {
       password: decodeURIComponent(u.password || ''),
       charset: 'utf8mb4',
       multipleStatements: true,
+      connectTimeout,
     };
     const ssl = u.searchParams.get('ssl') || u.searchParams.get('sslmode');
     if (ssl && ssl !== 'disable' && ssl !== 'false') opts.ssl = { rejectUnauthorized: false };
@@ -175,6 +203,7 @@ function mysqlBaseOptions() {
     password: config.MYSQL_PASSWORD,
     charset: 'utf8mb4',
     multipleStatements: true,
+    connectTimeout,
   };
 }
 
@@ -229,12 +258,20 @@ async function ensureMysql() {
       console.warn('[library] 无建库权限，books 表建到已有库：' + dbName);
     }
     await boot.query('USE `' + dbName + '`');
-    /* schema.sql 自带的 CREATE DATABASE / USE 去掉，统一在选定库里执行 */
-    const schema = fs.readFileSync(SCHEMA_FILE, 'utf8')
-      .replace(/^\s*CREATE\s+DATABASE[\s\S]*?;/gim, '')
-      .replace(/^\s*USE\s+`?[A-Za-z0-9_]+`?\s*;/gim, '');
-    await boot.query(schema);
-    await ensureColumns(boot, dbName);
+    /* schema.sql 自带的 CREATE DATABASE / USE 去掉，统一在选定库里执行。
+       SCF 代码包里没有 data/ 目录（只有 server/），schema.sql 不存在时直接复用已有库表，
+       否则会因 ENOENT 误判 MySQL 不可用并回退到空文件存储。 */
+    if (fs.existsSync(SCHEMA_FILE)) {
+      const schema = fs.readFileSync(SCHEMA_FILE, 'utf8')
+        .replace(/^\s*CREATE\s+DATABASE[\s\S]*?;/gim, '')
+        .replace(/^\s*USE\s+`?[A-Za-z0-9_]+`?\s*;/gim, '');
+      await boot.query(schema);
+    } else {
+      console.warn('[library] 未找到 ' + SCHEMA_FILE + '，跳过建表（复用已有库表）');
+    }
+    await ensureColumns(boot, dbName).catch((err) => {
+      console.warn('[library] 补列检查跳过：' + (err && err.message));
+    });
   } finally {
     await boot.end().catch(() => {});
   }
@@ -252,35 +289,94 @@ async function ensureMysql() {
   info.mode = 'mysql';
 }
 
-async function init() {
-  if (initPromise) return initPromise;
-  initPromise = (async () => {
-    if (config.LIBRARY_STORE !== 'file') {
-      try {
-        await ensureMysql();
-        return info;
-      } catch (err) {
-        info.mysqlError = err && err.message ? err.message : String(err);
-        console.warn('[library] MySQL 不可用，回退文件存储：' + info.mysqlError);
-        pool = null;
-        info.mode = 'file';
+/* 文件存储只需初始化一次（首次从种子导入） */
+let fileReady = null;
+function ensureFileStore() {
+  if (!fileReady) {
+    fileReady = (async () => {
+      await fsp.mkdir(LIB_DIR, { recursive: true });
+      if (!fs.existsSync(BOOKS_FILE)) {
+        const seed = readJSON(SEED_FILE, { books: [] });
+        const books = (seed.books || []).map((b, i) => normalizeSeed(b, i));
+        await writeJSON(BOOKS_FILE, books);
       }
-    } else {
-      info.mode = 'file';
-    }
+      if (!fs.existsSync(FAV_FILE)) await writeJSON(FAV_FILE, {});
+      if (!fs.existsSync(HIST_FILE)) await writeJSON(HIST_FILE, {});
+    })();
+  }
+  return fileReady;
+}
 
-    /* 文件模式初始化：首次从种子导入 */
-    await fsp.mkdir(LIB_DIR, { recursive: true });
-    if (!fs.existsSync(BOOKS_FILE)) {
-      const seed = readJSON(SEED_FILE, { books: [] });
-      const books = (seed.books || []).map((b, i) => normalizeSeed(b, i));
-      await writeJSON(BOOKS_FILE, books);
-    }
-    if (!fs.existsSync(FAV_FILE)) await writeJSON(FAV_FILE, {});
-    if (!fs.existsSync(HIST_FILE)) await writeJSON(HIST_FILE, {});
-    return info;
-  })();
+/* 单飞：同一时刻只跑一个连接尝试，避免并发请求一起压库 */
+function attemptOnce() {
+  if (!initPromise) {
+    initPromise = runAttempt().finally(() => { initPromise = null; });
+  }
   return initPromise;
+}
+
+async function runAttempt() {
+  started = true;
+  info.lastAttemptAt = now();
+  try {
+    if (config.LIBRARY_STORE === 'file') throw new Error('LIBRARY_STORE=file');
+    await ensureMysql();
+    info.degraded = false;
+    info.mysqlError = null;
+    info.retryCount = 0;
+    info.nextRetryAt = 0;
+    info.mode = 'mysql';
+    info.initialized = true;
+    console.log('[library] MySQL 已连接：' + info.database);
+    return info;
+  } catch (err) {
+    info.mysqlError = err && err.message ? err.message : String(err);
+    pool = null;
+    info.mode = 'file';
+    info.initialized = true;
+    if (config.LIBRARY_STORE === 'file') {
+      /* 显式配置成 file：这是目标状态，不算降级、也不重试 */
+      info.degraded = false;
+      info.nextRetryAt = 0;
+    } else {
+      info.degraded = true;
+      info.retryCount += 1;
+      const delay = RETRY_DELAYS[Math.min(info.retryCount - 1, RETRY_DELAYS.length - 1)];
+      info.nextRetryAt = now() + delay;
+      console.warn('[library] MySQL 不可用（第 ' + info.retryCount + ' 次），' + delay +
+        'ms 后重试：' + info.mysqlError);
+    }
+    await ensureFileStore();
+    return info;
+  }
+}
+
+/* 读路径：首次阻塞等待结果；之后失败不再永久固化，到退避时间就在后台重试（不拖慢本次读） */
+async function init() {
+  if (info.mode === 'mysql') return info;
+  if (!started) return attemptOnce();
+  if (!initPromise && info.degraded && now() >= info.nextRetryAt) {
+    attemptOnce().catch(() => {});
+  }
+  return info;
+}
+
+/* 写路径：降级模式下不允许静默写 /tmp。要么先确认库连上，要么明确报错。 */
+async function initForWrite() {
+  await init();
+  if (info.mode === 'mysql') return info;
+  if (config.LIBRARY_STORE === 'file') return info;
+  await attemptOnce();
+  if (info.mode !== 'mysql') {
+    const err = new Error('数据库暂不可用，图书馆处于降级模式（' + info.mysqlError +
+      '），本次写入未保存，请稍后重试');
+    err.status = 503;
+    err.expose = true;
+    err.code = 'STORE_DEGRADED';
+    err.hint = '当前为降级模式（file），书目来自本机种子数据；数据库恢复后会自动重连';
+    throw err;
+  }
+  return info;
 }
 
 function normalizeSeed(b, i) {
@@ -529,13 +625,13 @@ const store = {
   },
 
   async create(body) {
-    await init();
+    await initForWrite();
     const data = validateBookInput(body);
     return info.mode === 'mysql' ? mysqlCreate(data) : fileCreate(data);
   },
 
   async update(id, body) {
-    await init();
+    await initForWrite();
     const data = validateBookInput(Object.assign({}, body, { title: (body && body.title) || '占位' }));
     /* 更新时允许只传部分字段 */
     const patch = Object.assign({}, body || {});
@@ -546,8 +642,23 @@ const store = {
   },
 
   async remove(id) {
-    await init();
+    await initForWrite();
     return info.mode === 'mysql' ? mysqlDelete(id) : fileDelete(id);
+  },
+
+  /* 供 /api/health 同步读取的降级快照（不触发连接尝试） */
+  state() {
+    return {
+      mode: info.mode,
+      degraded: info.degraded,
+      initialized: info.initialized,
+      retrying: Boolean(initPromise),
+      retryCount: info.retryCount,
+      nextRetryInMs: info.nextRetryAt ? Math.max(0, info.nextRetryAt - now()) : 0,
+      lastAttemptAt: info.lastAttemptAt,
+      mysqlError: info.mysqlError,
+      database: info.database || '',
+    };
   },
 
   /* 搜索推荐：书名/作者/标签前缀匹配 + 热门词 */
@@ -702,6 +813,8 @@ const store = {
     return {
       mode: info.mode,
       mysqlError: info.mysqlError,
+      degraded: info.degraded,
+      retryCount: info.retryCount,
       storageLimit: info.storageLimit,
       books: books.length,
       pages: books.reduce((n, b) => n + b.pages.length, 0),
