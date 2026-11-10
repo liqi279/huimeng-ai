@@ -14152,7 +14152,9 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 /* ============ 原画 · 图层面板（对照 PS「图层」面板 · 仅静态外观） ============
    面板为视口右侧常驻栏，原画页右边界让出面板宽度，避免遮住页面滚动条。
    折叠由 <details> 原生完成，不依赖任何脚本。 */
-#view-oua.hm-oua-page { right: 288px; }
+#view-oua.hm-oua-page,
+#view-bg.hm-oua-page,
+#view-layout.hm-oua-page { right: 288px; }
 
 .hm-oua-layers {
   position: fixed;
@@ -14173,7 +14175,9 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 }
 
 /* 折叠态：只剩一条竖向标题条，页面右边界同步收窄 */
-#view-oua.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
+#view-oua.hm-oua-page:has(.hm-oua-layers:not([open])),
+#view-bg.hm-oua-page:has(.hm-oua-layers:not([open])),
+#view-layout.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
 .hm-oua-layers:not([open]) { width: 40px; }
 .hm-oua-layers:not([open]) .hm-oua-lyr-body { display: none; }
 .hm-oua-layers:not([open]) .hm-oua-lyr-head {
@@ -14498,21 +14502,35 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 body.hm-light .hm-oua-layers { border-left-color: rgba(15, 23, 42, 0.18); }
 
 /* 原画页右侧被面板占用时，AI 聊天把手左移，避免压在面板上 */
-body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -322px; }
-body[data-view="oua"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle { left: -74px; }
+body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+body[data-view="bg"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -322px; }
+body[data-view="oua"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle,
+body[data-view="bg"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle,
+body[data-view="layout"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle { left: -74px; }
 
 /* 响应式：窄屏收窄面板，极小屏隐藏 */
 @media (max-width: 1180px) {
-  #view-oua.hm-oua-page { right: 248px; }
+  #view-oua.hm-oua-page,
+  #view-bg.hm-oua-page,
+  #view-layout.hm-oua-page { right: 248px; }
   .hm-oua-layers { width: 248px; }
-  #view-oua.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
+  #view-oua.hm-oua-page:has(.hm-oua-layers:not([open])),
+  #view-bg.hm-oua-page:has(.hm-oua-layers:not([open])),
+  #view-layout.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
   .hm-oua-lyr-label { width: 48px; }
-  body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -282px; }
+  body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+  body[data-view="bg"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+  body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -282px; }
 }
 @media (max-width: 820px) {
-  #view-oua.hm-oua-page { right: 0; }
+  #view-oua.hm-oua-page,
+  #view-bg.hm-oua-page,
+  #view-layout.hm-oua-page { right: 0; }
   .hm-oua-layers { display: none; }
-  body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -34px; }
+  body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+  body[data-view="bg"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+  body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -34px; }
 }
 
 /* ============ 动画（中间帧 Tweening）模块 ============ */
@@ -15445,6 +15463,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 }
 .hm-home-menu-item.is-current .hm-home-menu-check { opacity: 1; }
 .hm-home-menu-item.is-current { background: rgba(139, 109, 246, 0.12); }
+.hm-artwork-menu { width: 250px; }
 
 /* ================= 无限节点画布 ================= */
 #view-canvas.hm-nc-page {
@@ -18889,12 +18908,14 @@ body.dv-open .hm-page {
 }
 
 /* =============================================================
- * 作画模块 · 共享顶栏（原画 / 动画 / 着色）
+ * 作画模块 · 视图底色（原画 / 动画 / 背景 / Layout / 着色）
  * ============================================================= */
-/* 原画 / 动画 / 着色 已是一级视图，各自独立入口，不再有「作画」共享顶栏。
+/* 原画 / 动画 / 背景 / Layout 均为独立视图；原画与动画收进「作画」母入口。
    仅保留常驻不透明底色（杜绝视图切换时背景透闪） */
 #view-oua,
 #view-animation,
+#view-bg,
+#view-layout,
 #view-paint {
   background-color: #0f1320;
 }
@@ -20026,14 +20047,29 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
         <span>分镜</span>
       </button>
-      <button class="hm-rail-item" data-rail="oua" title="原画（摄影框 · 时间轴）">
+      <button class="hm-rail-item" data-rail="artwork" id="railArtworkBtn" title="作画（原画 / 动画 / 背景）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
-        <span>原画</span>
+        <span>作画</span>
       </button>
-      <button class="hm-rail-item" data-rail="animation" title="动画（動画 · 帧序列与播放）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M3 15h18" stroke="currentColor" stroke-width="1.1" opacity=".55"/><path d="M10.5 9.5l4 2.5-4 2.5v-5Z" fill="currentColor" opacity=".85"/></svg>
-        <span>动画</span>
-      </button>
+      <!-- 作画模块选择弹窗：点击「作画」后在右侧冒出（原画 / 动画 / 背景） -->
+      <div class="hm-home-menu hm-artwork-menu" id="artworkModeMenu" hidden>
+        <div class="hm-home-menu-title">选择作画模块</div>
+        <button type="button" class="hm-home-menu-item" data-amode="oua">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
+          <span class="hm-home-menu-text"><b>原画</b><small>摄影框 · 定位孔 · 轨道 · 图层</small></span>
+          <span class="hm-home-menu-check">✓</span>
+        </button>
+        <button type="button" class="hm-home-menu-item" data-amode="animation">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M3 15h18" stroke="currentColor" stroke-width="1.1" opacity=".55"/><path d="M10.5 9.5l4 2.5-4 2.5v-5Z" fill="currentColor" opacity=".85"/></svg>
+          <span class="hm-home-menu-text"><b>动画</b><small>中间帧 · 帧序列与播放</small></span>
+          <span class="hm-home-menu-check">✓</span>
+        </button>
+        <button type="button" class="hm-home-menu-item" data-amode="bg">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.2" cy="9.2" r="1.7" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4 17l4.6-4.4 3.2 3 3.1-2.8L20 17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          <span class="hm-home-menu-text"><b>背景</b><small>与原画同款骨架 · 暂未接入</small></span>
+          <span class="hm-home-menu-check">✓</span>
+        </button>
+      </div>
       <button class="hm-rail-item" data-rail="paint" title="上色（赛璐璐 · PaintMan 工作流）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.6 12.4l5.3-5.3a1.7 1.7 0 0 1 2.4 0l3.6 3.6a1.7 1.7 0 0 1 0 2.4l-5.3 5.3a1.7 1.7 0 0 1-2.4 0l-3.6-3.6a1.7 1.7 0 0 1 0-2.4Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 7.5L15 13" stroke="currentColor" stroke-width="1.3" opacity=".65"/><path d="M19.4 15.2c.9 1.2 1.4 2 1.4 2.6a1.4 1.4 0 1 1-2.8 0c0-.6.5-1.4 1.4-2.6Z" fill="currentColor" opacity=".85"/></svg>
         <span>上色</span>
@@ -20058,7 +20094,7 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
         <span>美术设定</span>
       </button>
-      <button class="hm-rail-item" data-rail="layout" title="layout（Layout 版面 · 场景构图 · 功能预留）">
+      <button class="hm-rail-item" data-rail="layout" title="layout（Layout 版面 · 样式预览 · 暂未接入）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 8.5h18" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M9.5 8.5V20" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M13.5 12.5h4M13.5 16h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".85"/></svg>
         <span>layout</span>
       </button>
@@ -22034,7 +22070,7 @@ body.dv-open .hm-page {
     </div>
   </main>
 
-  <!-- 原画 / 动画 / 着色 已提升为侧栏一级入口，各自独立视图，不再共用「作画」顶栏 -->
+  <!-- 原画 / 动画 已收进「作画」母入口；背景 / Layout 仅静态样式壳 -->
 
   <!-- ===================== 着色（参考 RETAS PaintMan） ===================== -->
   <main class="hm-page hm-pt-page" id="view-paint" hidden>
@@ -23052,34 +23088,345 @@ body.dv-open .hm-page {
     </div>
   </main>
 
-  <!-- ============ Layout 版面（功能预留，仅占位） ============ -->
-  <main class="hm-page" id="view-layout" hidden>
-    <div class="hm-page-head">
-      <div>
-        <h2>Layout 版面</h2>
-        <p>场景版面与镜头构图设计</p>
-      </div>
-    </div>
-    <div class="hm-page-empty">
-      <div class="hm-page-empty-icon">▦</div>
-      <h3>功能预留</h3>
-      <p>Layout 模块尚未开放，后续会在这里提供版面设计与镜头构图工具。</p>
-    </div>
-  </main>
+  <!-- ============ Layout（样式预览 · 静态壳，照搬原画骨架，暂未接入） ============ -->
+  <main class="hm-page hm-oua-page" id="view-layout" hidden>
+    <div class="oua-workbench">
+      <!-- 上：传统二维动画摄影框 -->
+      <section class="oua-stage" aria-label="摄影框">
+        <div class="oua-stage-bar">
+          <div class="oua-stage-title">
+            <span class="oua-stage-dot" aria-hidden="true"></span>
+            <b>構図紙</b>
+            <span>CAMERA FRAME</span>
+          </div>
+          <div class="oua-stage-meta">
+            <span class="oua-chip">FIELD 12</span>
+            <span class="oua-chip">SAFE 90%</span>
+            <span class="oua-chip is-accent">样式预览 · 暂未接入</span>
+          </div>
+        </div>
 
-  <!-- ============ 剪辑（功能预留，仅占位） ============ -->
-  <main class="hm-page" id="view-edit" hidden>
-    <div class="hm-page-head">
-      <div>
-        <h2>剪辑</h2>
-        <p>时间线剪辑与成片输出</p>
+        <div class="oua-stage-body">
+          <div class="oua-paper">
+            <!-- 定位孔：左小孔 / 中部大孔 / 右竖向长孔 -->
+            <div class="oua-pegstrip" aria-hidden="true">
+              <span class="oua-peg is-small"></span>
+              <span class="oua-peg is-large"></span>
+              <span class="oua-peg is-slot"></span>
+            </div>
+
+            <div class="oua-frame" data-oua-frame-wrap>
+              <!-- 摄影框画面挂载点：后续绘制内容写入此 canvas -->
+              <canvas class="oua-frame-canvas" data-oua-frame width="1920" height="1080" aria-label="摄影框画面"></canvas>
+              <div class="oua-frame-guides" aria-hidden="true">
+                <i class="oua-guide is-v"></i>
+                <i class="oua-guide is-h"></i>
+                <i class="oua-guide is-safe"></i>
+                <i class="oua-crop is-tl"></i>
+                <i class="oua-crop is-tr"></i>
+                <i class="oua-crop is-bl"></i>
+                <i class="oua-crop is-br"></i>
+              </div>
+            </div>
+
+            <div class="oua-paper-mark" aria-hidden="true">
+              <span>TAKE( + )</span>
+              <span>No. 001</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 下：Premiere 风格轨道区 -->
+      <section class="oua-tl" aria-label="时间轴">
+        <div class="oua-tl-bar">
+          <div class="oua-tl-transport" aria-hidden="true">
+            <span class="oua-tl-btn is-step"></span>
+            <span class="oua-tl-btn is-play"></span>
+            <span class="oua-tl-btn is-step is-next"></span>
+            <span class="oua-tl-tc">00:00:00:00</span>
+          </div>
+          <div class="oua-tl-info" aria-hidden="true">
+            <span>序列 01</span>
+            <span class="oua-tl-dot"></span>
+            <span>25 fps</span>
+            <span class="oua-tl-zoom"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+
+        <div class="oua-tl-body">
+          <div class="oua-tl-heads">
+            <div class="oua-tl-heads-top"><span>轨道</span><span>V / A</span></div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v is-alt" data-oua-track-head="V2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a" data-oua-track-head="A2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="oua-tl-canvas">
+            <div class="oua-ruler" aria-hidden="true">
+              <div class="oua-ruler-row">
+                <span class="oua-ruler-label">00:00</span>
+                <span class="oua-ruler-label">00:02</span>
+                <span class="oua-ruler-label">00:04</span>
+                <span class="oua-ruler-label">00:06</span>
+                <span class="oua-ruler-label">00:08</span>
+                <span class="oua-ruler-label">00:10</span>
+                <span class="oua-ruler-label">00:12</span>
+                <span class="oua-ruler-label">00:14</span>
+                <span class="oua-ruler-label">00:16</span>
+              </div>
+            </div>
+
+            <div class="oua-tl-rows">
+              <!-- 轨道数据行挂载点 -->
+              <div class="oua-track-row" data-oua-track-row="V3"></div>
+              <div class="oua-track-row" data-oua-track-row="V2"></div>
+              <div class="oua-track-row" data-oua-track-row="V1"></div>
+              <div class="oua-track-row" data-oua-track-row="A1"></div>
+              <div class="oua-track-row" data-oua-track-row="A2"></div>
+              <div class="oua-track-row" data-oua-track-row="A3"></div>
+            </div>
+
+            <div class="oua-playhead" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ 图层面板（对照 Photoshop「图层」面板 · 本期仅静态外观） ============ -->
+    <details class="hm-oua-layers" id="layoutLayersPanel" open>
+      <summary class="hm-oua-lyr-head">
+        <span class="hm-oua-lyr-head-ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+            <path d="M8 2.3 14 5.1 8 7.9 2 5.1z"/>
+            <path d="M2 8.5 8 11.3 14 8.5"/>
+          </svg>
+        </span>
+        <span class="hm-oua-lyr-head-title">图层</span>
+        <span class="hm-oua-lyr-head-count">6</span>
+        <span class="hm-oua-lyr-fold" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m4 6.5 4 4 4-4"/>
+          </svg>
+        </span>
+      </summary>
+
+      <div class="hm-oua-lyr-body">
+        <!-- 混合模式 / 不透明度 -->
+        <div class="hm-oua-lyr-props">
+          <div class="hm-oua-lyr-prop-row">
+            <span class="hm-oua-lyr-label">混合模式</span>
+            <select class="hm-oua-lyr-select" aria-label="混合模式">
+              <option selected>正常</option>
+              <option>溶解</option>
+              <option>正片叠底</option>
+              <option>滤色</option>
+              <option>叠加</option>
+              <option>柔光</option>
+              <option>颜色减淡</option>
+              <option>线性加深</option>
+            </select>
+          </div>
+          <div class="hm-oua-lyr-prop-row hm-oua-lyr-opacity">
+            <span class="hm-oua-lyr-label">不透明度</span>
+            <input class="hm-oua-lyr-range" type="range" min="0" max="100" value="100" aria-label="不透明度">
+            <span class="hm-oua-lyr-num">100%</span>
+          </div>
+        </div>
+
+        <!-- 图层列表（自上而下 = 画布自上而下） -->
+        <div class="hm-oua-lyr-list">
+          <div class="hm-oua-lyr-row">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="hl"><i></i></span>
+            <span class="hm-oua-lyr-name">高光</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-active">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="skin"><i></i></span>
+            <span class="hm-oua-lyr-name">上色 · 肌肤</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-locked">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="line"><i></i></span>
+            <span class="hm-oua-lyr-name">线稿</span>
+            <button class="hm-oua-lyr-lock is-locked" type="button" title="解锁图层" aria-label="解锁图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-group">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏组" aria-label="显示 / 隐藏组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-caret" aria-hidden="true">▾</span>
+            <span class="hm-oua-lyr-folder" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.8 5h3.5L6.7 6.3h7.5v6.5H1.8z"/>
+              </svg>
+            </span>
+            <span class="hm-oua-lyr-name">角色 A</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定组" aria-label="锁定组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-child">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="face"><i></i></span>
+            <span class="hm-oua-lyr-name">脸</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-off">
+            <button class="hm-oua-lyr-eye is-off" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="bg"><i></i></span>
+            <span class="hm-oua-lyr-name">背景</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 底部操作条 -->
+        <div class="hm-oua-lyr-foot">
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建图层" aria-label="新建图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M3.2 1.9h6.1l3.5 3.5v8.7H3.2z"/>
+              <path d="M8 6.9v4.2M5.9 9h4.2"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建组" aria-label="新建组">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M1.8 4.8h3.4l1.4 1.3h7.6v7.2H1.8z"/>
+              <path d="M8 7.5v3.3M6.35 9.15h3.3"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="复制图层" aria-label="复制图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="5.7" y="2.2" width="8.1" height="9.3" rx="1.1"/>
+              <rect x="2.2" y="4.5" width="8.1" height="9.3" rx="1.1"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="向下合并" aria-label="向下合并">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="2.4" y="9.7" width="11.2" height="4" rx="1"/>
+              <path d="M8 2.1v5.5M5.6 5.2 8 7.6l2.4-2.4"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn is-danger" type="button" title="删除图层" aria-label="删除图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.9 4.8h10.2M6.2 4.8V3.3h3.6v1.5M4.4 4.8l.7 8.6h5.8l.7-8.6"/>
+              <path d="M6.7 7.1v4M9.3 7.1v4"/>
+            </svg>
+          </button>
+        </div>
       </div>
-    </div>
-    <div class="hm-page-empty">
-      <div class="hm-page-empty-icon">✂</div>
-      <h3>功能预留</h3>
-      <p>剪辑模块尚未开放，后续会在这里提供时间线剪辑、片段与字幕工具。</p>
-    </div>
+    </details>
   </main>
 
   <!-- ============ 原画（摄影框 + 时间轴 · 结构骨架） ============ -->
@@ -23237,6 +23584,347 @@ body.dv-open .hm-page {
 
     <!-- ============ 图层面板（对照 Photoshop「图层」面板 · 本期仅静态外观） ============ -->
     <details class="hm-oua-layers" id="ouaLayersPanel" open>
+      <summary class="hm-oua-lyr-head">
+        <span class="hm-oua-lyr-head-ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+            <path d="M8 2.3 14 5.1 8 7.9 2 5.1z"/>
+            <path d="M2 8.5 8 11.3 14 8.5"/>
+          </svg>
+        </span>
+        <span class="hm-oua-lyr-head-title">图层</span>
+        <span class="hm-oua-lyr-head-count">6</span>
+        <span class="hm-oua-lyr-fold" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m4 6.5 4 4 4-4"/>
+          </svg>
+        </span>
+      </summary>
+
+      <div class="hm-oua-lyr-body">
+        <!-- 混合模式 / 不透明度 -->
+        <div class="hm-oua-lyr-props">
+          <div class="hm-oua-lyr-prop-row">
+            <span class="hm-oua-lyr-label">混合模式</span>
+            <select class="hm-oua-lyr-select" aria-label="混合模式">
+              <option selected>正常</option>
+              <option>溶解</option>
+              <option>正片叠底</option>
+              <option>滤色</option>
+              <option>叠加</option>
+              <option>柔光</option>
+              <option>颜色减淡</option>
+              <option>线性加深</option>
+            </select>
+          </div>
+          <div class="hm-oua-lyr-prop-row hm-oua-lyr-opacity">
+            <span class="hm-oua-lyr-label">不透明度</span>
+            <input class="hm-oua-lyr-range" type="range" min="0" max="100" value="100" aria-label="不透明度">
+            <span class="hm-oua-lyr-num">100%</span>
+          </div>
+        </div>
+
+        <!-- 图层列表（自上而下 = 画布自上而下） -->
+        <div class="hm-oua-lyr-list">
+          <div class="hm-oua-lyr-row">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="hl"><i></i></span>
+            <span class="hm-oua-lyr-name">高光</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-active">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="skin"><i></i></span>
+            <span class="hm-oua-lyr-name">上色 · 肌肤</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-locked">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="line"><i></i></span>
+            <span class="hm-oua-lyr-name">线稿</span>
+            <button class="hm-oua-lyr-lock is-locked" type="button" title="解锁图层" aria-label="解锁图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-group">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏组" aria-label="显示 / 隐藏组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-caret" aria-hidden="true">▾</span>
+            <span class="hm-oua-lyr-folder" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.8 5h3.5L6.7 6.3h7.5v6.5H1.8z"/>
+              </svg>
+            </span>
+            <span class="hm-oua-lyr-name">角色 A</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定组" aria-label="锁定组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-child">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="face"><i></i></span>
+            <span class="hm-oua-lyr-name">脸</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-off">
+            <button class="hm-oua-lyr-eye is-off" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="bg"><i></i></span>
+            <span class="hm-oua-lyr-name">背景</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 底部操作条 -->
+        <div class="hm-oua-lyr-foot">
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建图层" aria-label="新建图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M3.2 1.9h6.1l3.5 3.5v8.7H3.2z"/>
+              <path d="M8 6.9v4.2M5.9 9h4.2"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建组" aria-label="新建组">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M1.8 4.8h3.4l1.4 1.3h7.6v7.2H1.8z"/>
+              <path d="M8 7.5v3.3M6.35 9.15h3.3"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="复制图层" aria-label="复制图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="5.7" y="2.2" width="8.1" height="9.3" rx="1.1"/>
+              <rect x="2.2" y="4.5" width="8.1" height="9.3" rx="1.1"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="向下合并" aria-label="向下合并">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="2.4" y="9.7" width="11.2" height="4" rx="1"/>
+              <path d="M8 2.1v5.5M5.6 5.2 8 7.6l2.4-2.4"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn is-danger" type="button" title="删除图层" aria-label="删除图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.9 4.8h10.2M6.2 4.8V3.3h3.6v1.5M4.4 4.8l.7 8.6h5.8l.7-8.6"/>
+              <path d="M6.7 7.1v4M9.3 7.1v4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </details>
+  </main>
+
+  <!-- ============ 背景（样式预览 · 静态壳，照搬原画骨架，暂未接入） ============ -->
+  <main class="hm-page hm-oua-page" id="view-bg" hidden>
+    <div class="oua-workbench">
+      <!-- 上：传统二维动画摄影框 -->
+      <section class="oua-stage" aria-label="摄影框">
+        <div class="oua-stage-bar">
+          <div class="oua-stage-title">
+            <span class="oua-stage-dot" aria-hidden="true"></span>
+            <b>構図紙</b>
+            <span>CAMERA FRAME</span>
+          </div>
+          <div class="oua-stage-meta">
+            <span class="oua-chip">FIELD 12</span>
+            <span class="oua-chip">SAFE 90%</span>
+            <span class="oua-chip is-accent">样式预览 · 暂未接入</span>
+          </div>
+        </div>
+
+        <div class="oua-stage-body">
+          <div class="oua-paper">
+            <!-- 定位孔：左小孔 / 中部大孔 / 右竖向长孔 -->
+            <div class="oua-pegstrip" aria-hidden="true">
+              <span class="oua-peg is-small"></span>
+              <span class="oua-peg is-large"></span>
+              <span class="oua-peg is-slot"></span>
+            </div>
+
+            <div class="oua-frame" data-oua-frame-wrap>
+              <!-- 摄影框画面挂载点：后续绘制内容写入此 canvas -->
+              <canvas class="oua-frame-canvas" data-oua-frame width="1920" height="1080" aria-label="摄影框画面"></canvas>
+              <div class="oua-frame-guides" aria-hidden="true">
+                <i class="oua-guide is-v"></i>
+                <i class="oua-guide is-h"></i>
+                <i class="oua-guide is-safe"></i>
+                <i class="oua-crop is-tl"></i>
+                <i class="oua-crop is-tr"></i>
+                <i class="oua-crop is-bl"></i>
+                <i class="oua-crop is-br"></i>
+              </div>
+            </div>
+
+            <div class="oua-paper-mark" aria-hidden="true">
+              <span>TAKE( + )</span>
+              <span>No. 001</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 下：Premiere 风格轨道区 -->
+      <section class="oua-tl" aria-label="时间轴">
+        <div class="oua-tl-bar">
+          <div class="oua-tl-transport" aria-hidden="true">
+            <span class="oua-tl-btn is-step"></span>
+            <span class="oua-tl-btn is-play"></span>
+            <span class="oua-tl-btn is-step is-next"></span>
+            <span class="oua-tl-tc">00:00:00:00</span>
+          </div>
+          <div class="oua-tl-info" aria-hidden="true">
+            <span>序列 01</span>
+            <span class="oua-tl-dot"></span>
+            <span>25 fps</span>
+            <span class="oua-tl-zoom"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+
+        <div class="oua-tl-body">
+          <div class="oua-tl-heads">
+            <div class="oua-tl-heads-top"><span>轨道</span><span>V / A</span></div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v is-alt" data-oua-track-head="V2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a" data-oua-track-head="A2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="oua-tl-canvas">
+            <div class="oua-ruler" aria-hidden="true">
+              <div class="oua-ruler-row">
+                <span class="oua-ruler-label">00:00</span>
+                <span class="oua-ruler-label">00:02</span>
+                <span class="oua-ruler-label">00:04</span>
+                <span class="oua-ruler-label">00:06</span>
+                <span class="oua-ruler-label">00:08</span>
+                <span class="oua-ruler-label">00:10</span>
+                <span class="oua-ruler-label">00:12</span>
+                <span class="oua-ruler-label">00:14</span>
+                <span class="oua-ruler-label">00:16</span>
+              </div>
+            </div>
+
+            <div class="oua-tl-rows">
+              <!-- 轨道数据行挂载点 -->
+              <div class="oua-track-row" data-oua-track-row="V3"></div>
+              <div class="oua-track-row" data-oua-track-row="V2"></div>
+              <div class="oua-track-row" data-oua-track-row="V1"></div>
+              <div class="oua-track-row" data-oua-track-row="A1"></div>
+              <div class="oua-track-row" data-oua-track-row="A2"></div>
+              <div class="oua-track-row" data-oua-track-row="A3"></div>
+            </div>
+
+            <div class="oua-playhead" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ 图层面板（对照 Photoshop「图层」面板 · 本期仅静态外观） ============ -->
+    <details class="hm-oua-layers" id="bgLayersPanel" open>
       <summary class="hm-oua-lyr-head">
         <span class="hm-oua-lyr-head-ico" aria-hidden="true">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
@@ -27862,7 +28550,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'edit', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'layout', 'oua', 'animation', 'history', 'admin', 'compile', 'publish'];
+var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'edit', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'layout', 'oua', 'animation', 'bg', 'history', 'admin', 'compile', 'publish'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -57845,6 +58533,60 @@ window.HMChat = (function () {
     });
   }
 
+  /* 作画母入口：原画 / 动画 / 背景 选择菜单（与桌面模式菜单同款交互） */
+  function toggleArtworkMenu() {
+    var menu = document.getElementById('artworkModeMenu');
+    if (!menu) return;
+    syncArtworkMenu();
+    if (menu.hidden) {
+      var btn = document.getElementById('railArtworkBtn');
+      if (btn && btn.getBoundingClientRect) {
+        var r = btn.getBoundingClientRect();
+        menu.style.left = (r.right + 8) + 'px';
+        menu.style.top = r.top + 'px';
+      }
+      menu.hidden = false;
+    } else {
+      menu.hidden = true;
+    }
+  }
+
+  function closeArtworkMenu() {
+    var menu = document.getElementById('artworkModeMenu');
+    if (menu) menu.hidden = true;
+  }
+
+  function syncArtworkMenu() {
+    var menu = document.getElementById('artworkModeMenu');
+    if (!menu) return;
+    var view = document.body.dataset.view || '';
+    menu.querySelectorAll('[data-amode]').forEach(function (el) {
+      el.classList.toggle('is-current', el.getAttribute('data-amode') === view);
+    });
+  }
+
+  function bindArtworkMenu() {
+    var menu = document.getElementById('artworkModeMenu');
+    if (menu) {
+      menu.addEventListener('click', function (event) {
+        var item = event.target.closest('[data-amode]');
+        if (!item) return;
+        event.stopPropagation();
+        closeArtworkMenu();
+        A.switchView(item.getAttribute('data-amode'));
+      });
+    }
+    document.addEventListener('click', function (event) {
+      var m = document.getElementById('artworkModeMenu');
+      if (!m || m.hidden) return;
+      if (event.target.closest('#artworkModeMenu') || event.target.closest('#railArtworkBtn')) return;
+      closeArtworkMenu();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeArtworkMenu();
+    });
+  }
+
   function initHomeMode() {
     var saved = 'create';
     try { saved = localStorage.getItem(LS.homeMode) || 'create'; } catch (err) {}
@@ -58488,7 +59230,15 @@ window.HMChat = (function () {
         /* 桌面/画布双模式按钮：点击同时切回桌面布局并弹出模式菜单 */
         event.preventDefault();
         setHomeMode('create');
+        closeArtworkMenu();
         toggleHomeMenu();
+        return;
+      }
+      if (item.id === 'railArtworkBtn') {
+        /* 作画母入口：点开 原画 / 动画 / 背景 选择菜单 */
+        event.preventDefault();
+        closeHomeMenu();
+        toggleArtworkMenu();
         return;
       }
       var view = item.getAttribute('data-rail');
@@ -58499,6 +59249,7 @@ window.HMChat = (function () {
       }
       event.preventDefault();
       closeHomeMenu();
+      closeArtworkMenu();
       A.switchView(view);
     });
   }
@@ -58510,30 +59261,29 @@ window.HMChat = (function () {
 
     var items = railTop.querySelectorAll('.hm-rail-item[data-rail]');
 
-    // 恢复保存的顺序（旧数据里的「作画」母入口按原位置拆成 原画 / 动画 / 着色）
+    // 恢复保存的顺序（旧数据里的「作画」母入口按原位置换成合并后的「作画」）
     try {
       var order = readJSON(LS.railOrder, null);
       if (Array.isArray(order) && order.length) {
         var map = {};
         items.forEach(function (el) { map[el.getAttribute('data-rail')] = el; });
+        var artworkPlaced = false;
         order.forEach(function (rail) {
-          if (rail === 'oua') {
-            ['oua', 'animation', 'paint'].forEach(function (key) {
-              if (map[key]) railTop.appendChild(map[key]);
-            });
+          /* 旧数据里的 原画 / 动画 两个入口已合并为「作画」，首次遇到时原位放回 */
+          if (!artworkPlaced && (rail === 'oua' || rail === 'animation' || rail === 'artwork')) {
+            if (map.artwork) { railTop.appendChild(map.artwork); artworkPlaced = true; }
+            if (rail === 'oua' && map.paint) railTop.appendChild(map.paint);
             return;
           }
+          if (rail === 'oua' || rail === 'animation' || rail === 'artwork') return;
           if (map[rail]) railTop.appendChild(map[rail]);
         });
-        /* 旧顺序里没有的新入口跟随「原画」，避免被排到最前或最末。
-           倒序插入，保证最终排列为 原画 → 动画 → 着色 */
-        ['paint', 'animation'].forEach(function (key) {
-          if (!map[key] || order.indexOf(key) >= 0) return;
-          var anchor = map.oua;
-          if (anchor && anchor.parentNode === railTop) {
-            railTop.insertBefore(map[key], anchor.nextSibling);
-          }
-        });
+        /* 旧顺序里完全没有作画入口时，补在末尾，避免停留在最前 */
+        if (!artworkPlaced && map.artwork) railTop.appendChild(map.artwork);
+        /* 旧顺序里没有着色时，让它跟随「作画」 */
+        if (map.paint && order.indexOf('paint') < 0 && map.artwork && map.artwork.parentNode === railTop) {
+          railTop.insertBefore(map.paint, map.artwork.nextSibling);
+        }
         /* 旧顺序里没有 layout 时，默认排在「美术设定」之后 */
         if (map.layout && order.indexOf('layout') < 0 && map.art && map.art.parentNode === railTop) {
           railTop.insertBefore(map.layout, map.art.nextSibling);
@@ -58606,8 +59356,8 @@ window.HMChat = (function () {
   var prevView = null;
 
   function onView(view) {
-    /* 原画 / 动画 / 着色 已是一级入口，各自高亮自己的侧栏按钮 */
-    var railView = view;
+    /* 原画 / 动画 / 背景 收进「作画」母入口，统一高亮作画按钮 */
+    var railView = (view === 'oua' || view === 'animation' || view === 'bg') ? 'artwork' : view;
     document.querySelectorAll('[data-rail]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-rail') === railView);
     });
@@ -60227,6 +60977,7 @@ window.HMChat = (function () {
     readPrefs();
     bindRail();
     bindHomeSwitch();
+    bindArtworkMenu();
     initHomeMode();
     bindRailToggle();
     initRailCollapsed();
