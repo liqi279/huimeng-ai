@@ -184,6 +184,15 @@ module.exports = {
   S3_PUBLIC_BASE: OSS_PUBLIC_BASE,
   /* 预签名跳转有效期（秒），最大 7 天 */
   S3_URL_TTL: STORAGE_URL_TTL,
+
+  /* ---------- 腾讯云 COS（STORAGE_BACKEND=cos 时生效） ----------
+     只需要改 STORAGE_BACKEND=cos，其余键可复用上面的 S3_*；
+     显式配置 COS_* 时优先用 COS_*。 */
+  COS_SECRET_ID: env('COS_SECRET_ID', ''),
+  COS_SECRET_KEY: env('COS_SECRET_KEY', ''),
+  COS_BUCKET: env('COS_BUCKET', ''),
+  COS_REGION: env('COS_REGION', ''),
+  COS_PUBLIC_BASE: env('COS_PUBLIC_BASE', ''),
   /* 后端对外基地址（可选）。用于拼接图片 URL，例如
      https://huimeng-ai-backend.onrender.com/api；留空则按请求头自动推导。 */
   PUBLIC_BASE_URL: env('PUBLIC_BASE_URL', ''),

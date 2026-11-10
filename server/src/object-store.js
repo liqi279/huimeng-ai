@@ -43,7 +43,9 @@ function status() {
     mode: st.mode === 's3' ? 's3' : st.mode,
     label: st.label,
     backend: st.backend,
-    endpoint: ossStatus.endpoint || config.OSS_ENDPOINT || null,
+    /* backendStatus.endpoint：cos 后端会给出 https://<bucket>.cos.<region>.myqcloud.com；
+       oss 后端只认自定义域名（OSS_ENDPOINT），没有时回落到 S3_ENDPOINT（用户在控制台填的那个） */
+    endpoint: ossStatus.endpoint || config.OSS_ENDPOINT || config.S3_ENDPOINT || null,
     bucket: ossStatus.bucket || config.OSS_BUCKET || null,
     warning: st.mode === 's3' ? '' : '图片未落到对象存储，Render 重启会丢失；请配置 OSS。',
     error: st.error,

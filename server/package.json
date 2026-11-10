@@ -14,10 +14,12 @@
   "dependencies": {
     "ali-oss": "^6.23.0",
     "cors": "^2.8.5",
+    "cos-nodejs-sdk-v5": "^3.0.0",
     "express": "4.22.3",
     "mysql2": "^3.24.6",
     "node-edge-tts": "^1.2.12",
     "pg": "^8.23.1",
+    "serverless-http": "^3.2.0",
     "ws": "^8.22.0"
   }
 }

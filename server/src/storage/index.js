@@ -24,12 +24,13 @@ const crypto = require('crypto');
 const config = require('../config');
 
 const oss = require('./oss');
+const cos = require('./cos');
 const github = require('./github');
 const r2 = require('./r2');
 
 const LOCAL_ROOT = path.join(config.DATA_DIR, 'userdata');
 
-const BACKENDS = { oss, github, r2 };
+const BACKENDS = { oss, cos, github, r2 };
 
 const state = {
   backend: 'local',
