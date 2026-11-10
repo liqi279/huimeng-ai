@@ -24466,8 +24466,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 /* =============================================================
  * 绘梦 · 后端 API 客户端（前后端分离）
  * 默认使用同源 /api；也可用 ?api= 指定后端地址，例如：
- *   GitHub Pages 默认指向 Render 后端：
- *     https://huimeng-ai-backend.onrender.com/api
+ *   GitHub Pages 默认指向腾讯云 SCF 后端：
+ *     https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api
  *   本地开发可覆盖为本地后端：
  *     ?api=https://localhost:8443/api   （首次需访问 https://localhost:8443 信任自签证书）
  *     ?api=http://localhost:8787/api    （Chrome 允许 localhost 混合内容，其他浏览器可能拦截）
@@ -24482,10 +24482,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     override = new URLSearchParams(location.search).get('api') || '';
   } catch (err) { override = ''; }
 
-  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向 Render 后端，
+  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向腾讯云 SCF 后端，
    * 本地运行时仍走同源 /api。可用 ?api= 覆盖。 */
   var isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(location.hostname);
-  var autoBase = isLocalHost ? '/api' : 'https://huimeng-ai-backend.onrender.com/api';
+  var autoBase = isLocalHost ? '/api' : 'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api';
 
   var base = String(override || (META && META.content) || autoBase).replace(/\/+$/, '');
   var origin = '';
@@ -24825,6 +24825,21 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (!value) return '';
     if (/^(https?:|data:|blob:)/i.test(value)) return value;
     if (value.charAt(0) === '/' && origin) return origin + value;
+    return value;
+  };
+
+  /* 历史数据里保存的旧域名绝对地址（后端已迁移）统一改写到当前 API origin。
+     - 仅改写已知旧域名前缀，新域名/第三方地址原样返回
+     - 相对地址先按 mediaUrl 补全；file:// 下没有同源 origin，则保持原值交给浏览器 */
+  var LEGACY_ORIGINS = ['https://huimeng-ai-backend.onrender.com'];
+  api.fileUrl = function (url) {
+    var value = api.mediaUrl(url);
+    if (!value || !origin) return value;
+    for (var i = 0; i < LEGACY_ORIGINS.length; i++) {
+      if (value.indexOf(LEGACY_ORIGINS[i]) === 0) {
+        return origin + value.slice(LEGACY_ORIGINS[i].length);
+      }
+    }
     return value;
   };
 
@@ -53720,6 +53735,14 @@ window.HMChat = (function () {
     return base + (path.charAt(0) === '/' ? path : '/' + path);
   }
 
+  /* 书籍封面 / PDF 地址统一出口：旧域名（Render）历史数据自动改写到当前 API origin */
+  function mediaFile(url) {
+    var api = window.HM && window.HM.api;
+    var value = String(url || '');
+    if (!value) return '';
+    return api && api.fileUrl ? api.fileUrl(value) : value;
+  }
+
   function request(path, options, timeoutMs) {
     var opts = options || {};
     var controller = new AbortController();
@@ -54111,7 +54134,7 @@ window.HMChat = (function () {
       + '<span class="lib-book-cover-brand">绘梦藏书</span>'
       + '</span>'
       + (b.coverUrl
-        ? '<img class="lib-book-cover-img" src="' + esc(b.coverUrl) + '" alt="' + esc(b.title) + '" loading="lazy">'
+        ? '<img class="lib-book-cover-img" src="' + esc(mediaFile(b.coverUrl)) + '" alt="' + esc(b.title) + '" loading="lazy">'
         : '')
       + '</span>'
       + '<span class="lib-book-edge"></span>'
@@ -54389,7 +54412,7 @@ window.HMChat = (function () {
       + '<div class="lib-detail-cover-col">'
       + '<div class="lib-detail-cover" style="--accent:' + esc(book.accent) + '" data-author="' + esc(book.author) + '">'
       + (book.coverUrl
-        ? '<img class="lib-detail-cover-img" src="' + esc(book.coverUrl) + '" alt="' + esc(book.title) + '">'
+        ? '<img class="lib-detail-cover-img" src="' + esc(mediaFile(book.coverUrl)) + '" alt="' + esc(book.title) + '">'
         : '<span class="lib-detail-cover-frame"></span>'
           + '<span class="lib-detail-cover-title">' + esc(book.title) + '</span>'
           + '<span class="lib-detail-cover-rule"></span>'
@@ -54654,6 +54677,7 @@ window.HMChat = (function () {
         .then(function (data) {
           var url = data && (data.url || data.pdfUrl || data.signedUrl);
           if (!url) throw new Error('pdf-url 未返回可用地址');
+          url = mediaFile(url);
           pdfSignedCache[id] = { url: String(url), at: Date.now() };
           return String(url);
         });
@@ -54868,7 +54892,7 @@ window.HMChat = (function () {
         }).catch(function (err) {
           attempts.push('签名直链（' + (err && err.name) + ' / ' + (err && err.message) + '）');
           console.warn('[library] 签名直链失败，改用 stream=1：', err && err.name, err && err.message);
-          var streamed = streamUrl(book.pdfUrl);
+          var streamed = streamUrl(mediaFile(book.pdfUrl));
           pdfLoadingText('正在加载 PDF …');
           kickPdfSlowTimer();
           return open(streamed).catch(function (err2) {
