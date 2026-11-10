@@ -14154,7 +14154,8 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
    折叠由 <details> 原生完成，不依赖任何脚本。 */
 #view-oua.hm-oua-page,
 #view-bg.hm-oua-page,
-#view-layout.hm-oua-page { right: 288px; }
+#view-layout.hm-oua-page,
+#view-animation.hm-oua-page { right: 288px; }
 
 .hm-oua-layers {
   position: fixed;
@@ -14177,7 +14178,8 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 /* 折叠态：只剩一条竖向标题条，页面右边界同步收窄 */
 #view-oua.hm-oua-page:has(.hm-oua-layers:not([open])),
 #view-bg.hm-oua-page:has(.hm-oua-layers:not([open])),
-#view-layout.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
+#view-layout.hm-oua-page:has(.hm-oua-layers:not([open])),
+#view-animation.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
 .hm-oua-layers:not([open]) { width: 40px; }
 .hm-oua-layers:not([open]) .hm-oua-lyr-body { display: none; }
 .hm-oua-layers:not([open]) .hm-oua-lyr-head {
@@ -14504,33 +14506,40 @@ body.hm-light .hm-oua-layers { border-left-color: rgba(15, 23, 42, 0.18); }
 /* 原画页右侧被面板占用时，AI 聊天把手左移，避免压在面板上 */
 body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle,
 body[data-view="bg"]:not(.hm-chat-open) .hm-chat-edge-toggle,
-body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -322px; }
+body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+body[data-view="animation"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -322px; }
 body[data-view="oua"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle,
 body[data-view="bg"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle,
-body[data-view="layout"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle { left: -74px; }
+body[data-view="layout"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle,
+body[data-view="animation"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-chat-edge-toggle { left: -74px; }
 
 /* 响应式：窄屏收窄面板，极小屏隐藏 */
 @media (max-width: 1180px) {
   #view-oua.hm-oua-page,
   #view-bg.hm-oua-page,
-  #view-layout.hm-oua-page { right: 248px; }
+  #view-layout.hm-oua-page,
+  #view-animation.hm-oua-page { right: 248px; }
   .hm-oua-layers { width: 248px; }
   #view-oua.hm-oua-page:has(.hm-oua-layers:not([open])),
   #view-bg.hm-oua-page:has(.hm-oua-layers:not([open])),
-  #view-layout.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
+  #view-layout.hm-oua-page:has(.hm-oua-layers:not([open])),
+  #view-animation.hm-oua-page:has(.hm-oua-layers:not([open])) { right: 40px; }
   .hm-oua-lyr-label { width: 48px; }
   body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle,
   body[data-view="bg"]:not(.hm-chat-open) .hm-chat-edge-toggle,
-  body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -282px; }
+  body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+  body[data-view="animation"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -282px; }
 }
 @media (max-width: 820px) {
   #view-oua.hm-oua-page,
   #view-bg.hm-oua-page,
-  #view-layout.hm-oua-page { right: 0; }
+  #view-layout.hm-oua-page,
+  #view-animation.hm-oua-page { right: 0; }
   .hm-oua-layers { display: none; }
   body[data-view="oua"]:not(.hm-chat-open) .hm-chat-edge-toggle,
   body[data-view="bg"]:not(.hm-chat-open) .hm-chat-edge-toggle,
-  body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -34px; }
+  body[data-view="layout"]:not(.hm-chat-open) .hm-chat-edge-toggle,
+  body[data-view="animation"]:not(.hm-chat-open) .hm-chat-edge-toggle { left: -34px; }
 }
 
 /* ============ 动画（中间帧 Tweening）模块 ============ */
@@ -14702,6 +14711,113 @@ body[data-view="layout"]:not(.hm-chat-open):has(.hm-oua-layers:not([open])) .hm-
   font-size: 12px; color: var(--hm-text-dim); padding: 6px 10px;
   background: rgba(0, 0, 0, 0.2); border-radius: 6px;
   display: flex; justify-content: space-between;
+}
+
+/* ---------- 动画：套用原画「摄影框 / 定位孔 / 轨道 / 图层」视觉 ---------- */
+#view-animation.hm-oua-page { padding: 14px 16px 16px; }
+#view-animation .hm-anim-stage { flex: 0 0 auto; }
+#view-animation .hm-anim-stage .oua-stage-bar { flex-wrap: wrap; height: auto; min-height: 42px; padding: 6px 14px; }
+#view-animation .hm-anim-stage .oua-stage-meta { flex-wrap: wrap; gap: 6px; }
+#view-animation .hm-anim-paper-head {
+  flex: none;
+  padding: 8px 14px 0;
+  background: none;
+}
+#view-animation .hm-anim-paper-head .oua-pegstrip {
+  width: 280px;
+  height: 30px;
+  margin: 0;
+  padding: 0 14px;
+  background: linear-gradient(180deg, #fbf8ee, #eee7d3);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.16);
+}
+#view-animation .hm-anim-frame-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  min-width: 0;
+}
+#view-animation .oua-chip.hm-anim-chip {
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1.6;
+  cursor: pointer;
+  color: #cfe0ff;
+  background: rgba(168, 192, 255, 0.12);
+  border: 1px solid rgba(168, 192, 255, 0.32);
+}
+#view-animation .oua-chip.hm-anim-chip:hover { background: rgba(168, 192, 255, 0.24); border-color: rgba(168, 192, 255, 0.55); }
+#view-animation .oua-chip.hm-anim-chip.is-primary {
+  color: #e6ddff;
+  background: rgba(139, 109, 246, 0.24);
+  border-color: rgba(139, 109, 246, 0.55);
+}
+#view-animation .oua-chip.hm-anim-chip.is-primary:hover { background: rgba(139, 109, 246, 0.36); }
+
+/* 筛选与内容卡片统一到原画面板质感 */
+#view-animation .hm-art-search,
+#view-animation .hm-art-filter {
+  background: rgba(10, 18, 28, 0.78);
+  border: 1px solid rgba(120, 170, 210, 0.18);
+  border-radius: 8px;
+  color: #cfe0ff;
+}
+#view-animation .hm-art-search::placeholder { color: #5f7a92; }
+#view-animation .hm-anim-card,
+#view-animation .hm-anim-meta-row,
+#view-animation .hm-anim-block,
+#view-animation .hm-art-form-block {
+  background: linear-gradient(180deg, rgba(19, 31, 45, 0.96), rgba(10, 18, 28, 0.96));
+  border: 1px solid rgba(120, 170, 210, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+#view-animation .hm-anim-card:hover { background: rgba(24, 40, 58, 0.98); border-color: rgba(168, 192, 255, 0.42); }
+#view-animation .hm-anim-block-title { color: #cfe0ff; letter-spacing: 0.04em; }
+#view-animation .hm-anim-meta-row { padding: 12px 14px; }
+#view-animation .hm-anim-card-info,
+#view-animation .hm-anim-card-foot { color: #8aa2bd; }
+
+/* 下方轨道区：沿用原画时间轴的深色条 + 分隔线 */
+#view-animation .hm-anim-track-block {
+  padding: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(13, 22, 33, 0.98), rgba(8, 14, 22, 0.98));
+  border-color: rgba(120, 170, 210, 0.18);
+}
+#view-animation .hm-anim-track-block .hm-anim-block-title {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  margin: 0;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 13px;
+}
+#view-animation .hm-anim-track-block .hm-anim-timeline { padding: 10px 12px 12px; }
+#view-animation .hm-anim-tl-bar {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(120, 170, 210, 0.14);
+  border-radius: 6px;
+}
+#view-animation .hm-anim-tl-track { border-radius: 6px; }
+#view-animation .hm-anim-tl-summary {
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid rgba(120, 170, 210, 0.12);
+  border-radius: 6px;
+  color: #8aa2bd;
+}
+
+/* 按钮语言与原画一致 */
+#view-animation .hm-pill { border-radius: 8px; border-color: rgba(120, 170, 210, 0.24); }
+#view-animation .hm-pill-primary {
+  background: linear-gradient(135deg, #7c6cf6, #8b6df6);
+  border-color: rgba(168, 192, 255, 0.4);
 }
 
 /* 响应式 */
@@ -20047,11 +20163,11 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="5" width="6" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="16.5" y="5" width="5" height="14" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".6"/><path d="M5.5 9l1.5 1-1.5 1V9Z" fill="currentColor" opacity=".8"/></svg>
         <span>分镜</span>
       </button>
-      <button class="hm-rail-item" data-rail="artwork" id="railArtworkBtn" title="作画（原画 / 动画 / 背景）">
+      <button class="hm-rail-item" data-rail="artwork" id="railArtworkBtn" title="作画（原画 / 动画）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20c1.5-.2 2.6-.7 3.3-1.6L18.5 7.2a2.05 2.05 0 0 0-2.9-2.9L4.4 15.5c-.9.8-1.3 2-1.4 3.5l1-.001Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13.5 5.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M15 19h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>
         <span>作画</span>
       </button>
-      <!-- 作画模块选择弹窗：点击「作画」后在右侧冒出（原画 / 动画 / 背景） -->
+      <!-- 作画模块选择弹窗：点击「作画」后在右侧冒出（原画 / 动画） -->
       <div class="hm-home-menu hm-artwork-menu" id="artworkModeMenu" hidden>
         <div class="hm-home-menu-title">选择作画模块</div>
         <button type="button" class="hm-home-menu-item" data-amode="oua">
@@ -20062,11 +20178,6 @@ body.dv-open .hm-page {
         <button type="button" class="hm-home-menu-item" data-amode="animation">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M3 15h18" stroke="currentColor" stroke-width="1.1" opacity=".55"/><path d="M10.5 9.5l4 2.5-4 2.5v-5Z" fill="currentColor" opacity=".85"/></svg>
           <span class="hm-home-menu-text"><b>动画</b><small>中间帧 · 帧序列与播放</small></span>
-          <span class="hm-home-menu-check">✓</span>
-        </button>
-        <button type="button" class="hm-home-menu-item" data-amode="bg">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.2" cy="9.2" r="1.7" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4 17l4.6-4.4 3.2 3 3.1-2.8L20 17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-          <span class="hm-home-menu-text"><b>背景</b><small>与原画同款骨架 · 暂未接入</small></span>
           <span class="hm-home-menu-check">✓</span>
         </button>
       </div>
@@ -20093,6 +20204,10 @@ body.dv-open .hm-page {
       <button class="hm-rail-item" data-rail="art" title="美术设定设计（6 大分类 · 日本动画交付标准）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 4c2.5 2 4 4.8 4 8s-1.5 6-4 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.3" fill="currentColor" opacity=".6"/><circle cx="15" cy="13" r="1.3" fill="currentColor" opacity=".6"/><circle cx="10" cy="16" r="1.3" fill="currentColor" opacity=".6"/></svg>
         <span>美术设定</span>
+      </button>
+      <button class="hm-rail-item" data-rail="bg" title="背景（样式预览 · 暂未接入）">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.2" cy="9.2" r="1.7" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4 17l4.6-4.4 3.2 3 3.1-2.8L20 17" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span>背景</span>
       </button>
       <button class="hm-rail-item" data-rail="layout" title="layout（Layout 版面 · 样式预览 · 暂未接入）">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 8.5h18" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M9.5 8.5V20" stroke="currentColor" stroke-width="1.3" opacity=".6"/><path d="M13.5 12.5h4M13.5 16h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".85"/></svg>
@@ -24112,17 +24227,30 @@ body.dv-open .hm-page {
   </main>
 
   <!-- ============ 动画（中间帧处理 · Tweening） ============ -->
-  <main class="hm-page hm-anim-page" id="view-animation" hidden>
-    <div class="hm-art-top">
-      <div class="hm-art-top-left">
-        <h2>🎞️ 动画 · 中间帧处理</h2>
-        <span class="hm-art-top-sub">中割り / Tweening · 帧序列 · 节奏曲线</span>
+  <main class="hm-page hm-anim-page hm-oua-page" id="view-animation" hidden>
+    <section class="oua-stage hm-anim-stage">
+      <div class="oua-stage-bar">
+        <div class="oua-stage-title">
+          <span class="oua-stage-dot" aria-hidden="true"></span>
+          <b>動画</b>
+          <span>ANIMATION · TWEENING</span>
+        </div>
+        <div class="oua-stage-meta">
+          <span class="oua-chip">FRAME 24</span>
+          <span class="oua-chip">SAFE 90%</span>
+          <button class="oua-chip hm-anim-chip" id="animExportBtn" type="button">📤 导出帧表</button>
+          <button class="oua-chip hm-anim-chip is-primary" id="animNewBtn" type="button">＋ 新建序列</button>
+        </div>
       </div>
-      <div class="hm-art-top-right">
-        <button class="hm-pill" id="animExportBtn">📤 导出帧表</button>
-        <button class="hm-pill hm-pill-primary" id="animNewBtn">＋ 新建序列</button>
-      </div>
-    </div>
+      <div class="hm-anim-stage-body">
+        <div class="hm-anim-paper-head" aria-hidden="true">
+          <div class="oua-pegstrip">
+            <span class="oua-peg is-small"></span>
+            <span class="oua-peg is-large"></span>
+            <span class="oua-peg is-slot"></span>
+          </div>
+        </div>
+        <div class="hm-anim-frame-body">
 
     <!-- 筛选 -->
     <div class="hm-art-filter-bar">
@@ -24233,7 +24361,7 @@ body.dv-open .hm-page {
         </div>
 
         <!-- 全帧时间轴预览 -->
-        <div class="hm-anim-block">
+        <div class="hm-anim-block hm-anim-track-block">
           <h4 class="hm-anim-block-title">📊 全帧时间轴预览（K帧 + 中割）</h4>
           <div class="hm-anim-timeline" id="animTimeline"></div>
         </div>
@@ -24251,6 +24379,195 @@ body.dv-open .hm-page {
         <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
       </div>
     </section>
+        </div>
+      </div>
+    </section>
+
+    <details class="hm-oua-layers" id="animLayersPanel" open>
+      <summary class="hm-oua-lyr-head">
+        <span class="hm-oua-lyr-head-ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+            <path d="M8 2.3 14 5.1 8 7.9 2 5.1z"/>
+            <path d="M2 8.5 8 11.3 14 8.5"/>
+          </svg>
+        </span>
+        <span class="hm-oua-lyr-head-title">图层</span>
+        <span class="hm-oua-lyr-head-count">6</span>
+        <span class="hm-oua-lyr-fold" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m4 6.5 4 4 4-4"/>
+          </svg>
+        </span>
+      </summary>
+
+      <div class="hm-oua-lyr-body">
+        <!-- 混合模式 / 不透明度 -->
+        <div class="hm-oua-lyr-props">
+          <div class="hm-oua-lyr-prop-row">
+            <span class="hm-oua-lyr-label">混合模式</span>
+            <select class="hm-oua-lyr-select" aria-label="混合模式">
+              <option selected>正常</option>
+              <option>溶解</option>
+              <option>正片叠底</option>
+              <option>滤色</option>
+              <option>叠加</option>
+              <option>柔光</option>
+              <option>颜色减淡</option>
+              <option>线性加深</option>
+            </select>
+          </div>
+          <div class="hm-oua-lyr-prop-row hm-oua-lyr-opacity">
+            <span class="hm-oua-lyr-label">不透明度</span>
+            <input class="hm-oua-lyr-range" type="range" min="0" max="100" value="100" aria-label="不透明度">
+            <span class="hm-oua-lyr-num">100%</span>
+          </div>
+        </div>
+
+        <!-- 图层列表（自上而下 = 画布自上而下） -->
+        <div class="hm-oua-lyr-list">
+          <div class="hm-oua-lyr-row">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="hl"><i></i></span>
+            <span class="hm-oua-lyr-name">高光</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-active">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="skin"><i></i></span>
+            <span class="hm-oua-lyr-name">上色 · 肌肤</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-locked">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="line"><i></i></span>
+            <span class="hm-oua-lyr-name">线稿</span>
+            <button class="hm-oua-lyr-lock is-locked" type="button" title="解锁图层" aria-label="解锁图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-group">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏组" aria-label="显示 / 隐藏组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-caret" aria-hidden="true">▾</span>
+            <span class="hm-oua-lyr-folder" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.8 5h3.5L6.7 6.3h7.5v6.5H1.8z"/>
+              </svg>
+            </span>
+            <span class="hm-oua-lyr-name">角色 A</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定组" aria-label="锁定组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-child">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="face"><i></i></span>
+            <span class="hm-oua-lyr-name">脸</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-off">
+            <button class="hm-oua-lyr-eye is-off" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="bg"><i></i></span>
+            <span class="hm-oua-lyr-name">背景</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 底部操作条 -->
+        <div class="hm-oua-lyr-foot">
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建图层" aria-label="新建图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M3.2 1.9h6.1l3.5 3.5v8.7H3.2z"/>
+              <path d="M8 6.9v4.2M5.9 9h4.2"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建组" aria-label="新建组">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M1.8 4.8h3.4l1.4 1.3h7.6v7.2H1.8z"/>
+              <path d="M8 7.5v3.3M6.35 9.15h3.3"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="复制图层" aria-label="复制图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="5.7" y="2.2" width="8.1" height="9.3" rx="1.1"/>
+              <rect x="2.2" y="4.5" width="8.1" height="9.3" rx="1.1"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="向下合并" aria-label="向下合并">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="2.4" y="9.7" width="11.2" height="4" rx="1"/>
+              <path d="M8 2.1v5.5M5.6 5.2 8 7.6l2.4-2.4"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn is-danger" type="button" title="删除图层" aria-label="删除图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.9 4.8h10.2M6.2 4.8V3.3h3.6v1.5M4.4 4.8l.7 8.6h5.8l.7-8.6"/>
+              <path d="M6.7 7.1v4M9.3 7.1v4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </details>
   </main>
 
   <style id="hmAccountAdminCss">
@@ -59288,6 +59605,14 @@ window.HMChat = (function () {
         if (map.layout && order.indexOf('layout') < 0 && map.art && map.art.parentNode === railTop) {
           railTop.insertBefore(map.layout, map.art.nextSibling);
         }
+        /* 旧顺序里没有背景入口时，默认紧挨在 Layout 之前；缓存里已有 bg 则按缓存位置 */
+        if (map.bg && order.indexOf('bg') < 0) {
+          if (map.layout && map.layout.parentNode === railTop) {
+            railTop.insertBefore(map.bg, map.layout);
+          } else if (map.artwork && map.artwork.parentNode === railTop) {
+            railTop.insertBefore(map.bg, map.artwork.nextSibling);
+          }
+        }
         /* 旧顺序里没有 edit 时，默认排在「摄影」之后 */
         if (map.edit && order.indexOf('edit') < 0 && map.director && map.director.parentNode === railTop) {
           railTop.insertBefore(map.edit, map.director.nextSibling);
@@ -59356,8 +59681,8 @@ window.HMChat = (function () {
   var prevView = null;
 
   function onView(view) {
-    /* 原画 / 动画 / 背景 收进「作画」母入口，统一高亮作画按钮 */
-    var railView = (view === 'oua' || view === 'animation' || view === 'bg') ? 'artwork' : view;
+    /* 原画 / 动画 收进「作画」入口，统一高亮作画按钮；背景已是独立入口 */
+    var railView = (view === 'oua' || view === 'animation') ? 'artwork' : view;
     document.querySelectorAll('[data-rail]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-rail') === railView);
     });
