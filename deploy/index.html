@@ -27012,7 +27012,7 @@ function saveComposer() {
   store[_composerKey] = {
     prompts: snap.prompts,
     refs: snap.refs.map(function (arr) {
-      return (arr || []).map(function (r) { return { thumb: r.thumb || r.dataUrl, name: r.name, width: r.width, height: r.height, weight: r.weight }; });
+      return (arr || []).map(function (r) { return { thumb: r.preview || r.thumb || r.dataUrl, name: r.name, width: r.width, height: r.height, weight: r.weight }; });
     }),
     weights: snap.weights,
     active: snap.active
