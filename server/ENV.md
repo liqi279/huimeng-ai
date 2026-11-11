@@ -32,8 +32,8 @@
 | 变量名 | 必填 | 用途 |
 | --- | --- | --- |
 | `HM_GITHUB_TOKEN` | 部署/导出脚本必填 | GitHub Contents / Git Data API 提交用 token。只从环境变量读，不打印。 |
-| `SCF_FUNCTION` | 可选 | SCF 函数名，默认 `huimeng-api`。 |
-| `SCF_NAMESPACE` | 可选 | SCF 命名空间，默认 `default`。 |
+| `SCF_FUNCTION` | 可选 | SCF 函数名；脚本未设置时使用代码内置默认。 |
+| `SCF_NAMESPACE` | 可选 | SCF 命名空间；脚本未设置时使用代码内置默认。 |
 | `API_BASE` | 可选 | 脚本自检时请求的线上 API 基址；不设则用内置默认地址。 |
 | `CLOUDBASE_ENV_ID` | 仅 CloudBase 发布时需要 | 云开发环境 ID，`web-deploy.js --cloudbase` 使用。 |
 | `CLOUDBASE_DOMAIN` | 可选 | 覆盖 CloudBase 默认域名（绑定自定义域名后使用）。 |
