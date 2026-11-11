@@ -4,12 +4,13 @@ const express = require('express');
 const config = require('../config');
 const store = require('../store');
 const library = require('../library-store');
+const libraryUsage = require('../library-usage');
 const userData = require('../user-data');
 const { PRESETS } = require('./presets');
 
 const router = express.Router();
 
-router.get('/health', (req, res) => {
+router.get('/health', async (req, res) => {
   let userDataStatus = null;
   try {
     userDataStatus = userData.status();
@@ -17,10 +18,11 @@ router.get('/health', (req, res) => {
     userDataStatus = { error: err && err.message };
   }
   /* 图书馆库状态：degraded=true 表示 MySQL 连不上、正在按退避重试，
-     此时书目只来自本机种子数据，写入会被拒绝（不会静默落 /tmp）。 */
+     此时书目只来自本机种子数据，写入会被拒绝（不会静默落 /tmp）。
+     usedBytes 放在 library 下：COS library/ 前缀对象大小之和（90s 缓存）。 */
   let libraryStatus = null;
   try {
-    libraryStatus = library.state();
+    libraryStatus = Object.assign({}, library.state(), await libraryUsage.stats());
   } catch (err) {
     libraryStatus = { error: err && err.message };
   }
