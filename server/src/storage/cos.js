@@ -172,6 +172,32 @@ function publicUrl(key) {
   return state.publicBase + '/' + String(key).split('/').map(encodeURIComponent).join('/');
 }
 
+/* 列举前缀下所有对象（Key + Size）：用于统计藏书阁实际占用。
+   COS 单页最多 1000 条，按 Marker 翻页。 */
+function list(prefix) {
+  assertReady();
+  return new Promise((resolve, reject) => {
+    const out = [];
+    const next = (marker) => {
+      state.client.getBucket({
+        Bucket: state.bucket,
+        Region: state.region,
+        Prefix: String(prefix || ''),
+        Marker: marker || '',
+        MaxKeys: 1000,
+      }, (err, data) => {
+        if (err) return reject(err);
+        (data.Contents || []).forEach((o) => out.push({ key: o.Key, size: Number(o.Size) || 0 }));
+        const truncated = data.IsTruncated === 'true' || data.IsTruncated === true;
+        const nextMarker = data.NextMarker || (out.length ? out[out.length - 1].key : '');
+        if (truncated && nextMarker && nextMarker !== marker) return next(nextMarker);
+        resolve(out);
+      });
+    };
+    next('');
+  });
+}
+
 function status() {
   return {
     backend: 'cos',
@@ -192,6 +218,7 @@ module.exports = {
   remove,
   signatureUrl,
   publicUrl,
+  list,
   status,
   resolve,
 };
