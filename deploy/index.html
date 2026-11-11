@@ -30324,6 +30324,11 @@ function markJobDone(job, url, seed, elapsed) {
     });
   } catch (e) {}
 
+  /* 先落盘再管界面：卡片可能已被切换视图/重排移除，
+     但作品不能因此不保存（这是「刷新后新图不见」的一条静默丢失路径） */
+  job.rawUrl = job.rawUrl || url;
+  saveWork(job);
+
   const card = document.querySelector('[data-job="' + job.id + '"]');
   if (!card) return;
 
@@ -30662,31 +30667,44 @@ function saveWorks() {
     if (prev && prev !== '[]' && prev.length > 40) localStorage.setItem(bakKey, prev);
   } catch (e) {}
 
-  /* base64 原图写进 IndexedDB，localStorage 只留元数据（否则 5MB 配额会写失败） */
-  var meta = state.works.map(function (work) {
-    if (work.url && work.url.indexOf('data:') === 0) {
-      idbPutBlob(work.id, work.url);
-      return Object.assign({}, work, { url: '', blob: true });
-    }
-    return work;
-  });
+  /* base64 原图写进 IndexedDB，localStorage 只留元数据（否则 5MB 配额会写失败）。
+     refImages / thumb 同样是 base64，体积大；配额不足时分级降级，
+     绝不允许「整条作品都写不进去」这种静默丢失。 */
+  function persistMeta(dropRefs, dropThumb) {
+    return state.works.map(function (work, index) {
+      var copy = Object.assign({}, work);
+      if (copy.url && copy.url.indexOf('data:') === 0) {
+        idbPutBlob(copy.id, copy.url);
+        copy.url = '';
+        copy.blob = true;
+      }
+      if (dropRefs) copy.refImages = null;
+      if (dropThumb || (dropRefs && index > 8)) copy.thumb = null;
+      return copy;
+    });
+  }
 
-  if (saveJSON(key, meta)) {
+  if (saveJSON(key, persistMeta(false, false))) {
     syncWorksToServer();
     return;
   }
 
-  /* 还是超限：缩略图从第 9 张起丢掉再试 */
-  state.works = state.works.map(function (work, index) {
-    return index > 8 ? Object.assign({}, work, { thumb: null }) : work;
-  });
-  saveJSON(key, state.works.map(function (work) {
-    if (work.url && work.url.indexOf('data:') === 0) {
-      idbPutBlob(work.id, work.url);
-      return Object.assign({}, work, { url: '', blob: true });
-    }
-    return work;
-  }));
+  /* 配额不足：先去掉参考图缓存（通常是最大头）再试 */
+  if (saveJSON(key, persistMeta(true, false))) {
+    toast('本机存储空间紧张：已省略参考图缓存，作品本身已保存', 'warn', 6000);
+    syncWorksToServer();
+    return;
+  }
+
+  /* 仍不足：连缩略图一起省略，只保作品主体 */
+  if (saveJSON(key, persistMeta(true, true))) {
+    toast('本机存储空间紧张：已省略缩略图缓存，作品本身已保存', 'warn', 6000);
+    syncWorksToServer();
+    return;
+  }
+
+  /* 彻底写不进：必须显式告知，不能假装保存成功 */
+  toast('本机存储空间不足，这张作品未能写入本地缓存，请立即下载保存', 'error', 9000);
   syncWorksToServer();
 }
 
