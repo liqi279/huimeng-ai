@@ -19,14 +19,14 @@ const router = express.Router();
 
 const INLINE_THUMB_LIMIT = 120 * 1024;
 
-function wrapWork(row, req) {
+async function wrapWork(row, req) {
   var out = Object.assign({}, row.data || {}, {
     id: row.id,
     _rev: row.rev,
     _updatedAt: row.updatedAt,
   });
-  /* 资产 URL 带时效签名，每次返回重新签发，避免本地缓存的旧链接过期后图片打不开 */
-  if (out._assetId) out.url = userData.assetPublicUrl(out._assetId, req);
+  /* 资产 URL 带时效签名（COS 直链 3600s），每次返回重新签发，避免本地缓存的旧链接过期后图片打不开 */
+  if (out._assetId) out.url = await userData.assetPublicUrl(out._assetId, req);
   return out;
 }
 
@@ -70,7 +70,7 @@ router.get('/works', authOptional, wrap(async (req, res) => {
   const limit = Math.max(1, Math.min(Number(req.query.limit) || 200, 500));
   const page = await userData.listChanges(userId, { since, limit });
   res.json({
-    items: page.items.map(function (row) { return wrapWork(row, req); }),
+    items: await Promise.all(page.items.map(function (row) { return wrapWork(row, req); })),
     deleted: page.deleted,
     cursor: page.cursor,
     hasMore: page.hasMore,
