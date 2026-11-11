@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-11T18:11:05.678Z",
+  "generatedAt": "2026-11-11T18:11:46.489Z",
   "source": "huimeng_library.books",
   "total": 40,
   "areas": {
-    "paint": 31,
-    "ref": 9
+    "paint": 30,
+    "ref": 10
   },
   "books": [
     {
@@ -804,7 +804,7 @@
       "author": "人体パーツ素材集制作部",
       "intro": "500 个可直接使用的女孩姿势，覆盖日常、校园、运动与情绪动作，方便直接描摹与改画。",
       "pageCount": 482,
-      "area": "paint",
+      "area": "ref",
       "toc": [],
       "pdfKey": "library/books/034-girl-poses-500.pdf",
       "pdfBytes": 49107842,
