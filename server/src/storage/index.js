@@ -159,6 +159,34 @@ function signatureUrl(key, opts) {
   return impl().signatureUrl(key, opts);
 }
 
+/* 列举前缀下对象及大小：对象存储走各后端 list，本地盘走文件系统。 */
+async function list(prefix) {
+  assertUsable();
+  const pre = String(prefix || '');
+  if (state.backend === 'local') {
+    const root = localPath(pre);
+    const out = [];
+    async function walk(dir, rel) {
+      let entries = [];
+      try { entries = await fsp.readdir(dir, { withFileTypes: true }); } catch (err) { return; }
+      for (const ent of entries) {
+        const abs = path.join(dir, ent.name);
+        const key = rel ? rel + '/' + ent.name : ent.name;
+        if (ent.isDirectory()) {
+          await walk(abs, key);
+        } else {
+          const st = await fsp.stat(abs).catch(() => null);
+          if (st) out.push({ key: pre + key, size: st.size });
+        }
+      }
+    }
+    await walk(root, '');
+    return out;
+  }
+  if (!impl() || typeof impl().list !== 'function') throw new Error('当前存储后端不支持列举对象');
+  return impl().list(pre);
+}
+
 /* 给前端/第三方用的可读地址：公开域名 > 签名 URL > 本地 /uploads 相对路径 */
 function readableUrl(key, opts) {
   const direct = publicUrl(key);
@@ -188,6 +216,7 @@ module.exports = {
   publicUrl,
   signatureUrl,
   readableUrl,
+  list,
   status,
   LOCAL_ROOT,
 };
