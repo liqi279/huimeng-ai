@@ -18092,6 +18092,26 @@ a.lib-btn {
   display: none;
 }
 
+/* 解析失败时把 pdf.js 的原始错误摊开，方便用户截图直接定位 */
+.lib-pdf-raw {
+  flex: 0 0 100%;
+  max-width: 620px;
+  max-height: 150px;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  overflow: auto;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.42);
+  color: #9fb3c8;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
 .lib-pdf-spinner {
   width: 16px;
   height: 16px;
@@ -19877,7 +19897,7 @@ body.dv-open .hm-page {
 
 </style>
 <script>window.HM_LIBRARY_SEED = {"version":1,"updatedAt":"2026-11-05","note":"绘梦图书馆 · 书籍种子数据（已清空，保留变量与结构）。","books":[]};</script>
-<script>window.HM_BUILD = "20261112103500-0a1b2c3";</script>
+<script>window.HM_BUILD = "20261112112000-1b2c3d4";</script>
 </head>
 <body data-view="create">
 <script>
@@ -55963,6 +55983,21 @@ window.HMChat = (function () {
       : 'PDF 加载失败：无法读取文件（网络或存储服务异常），请点击「重试」');
     var retry = els.reader && els.reader.querySelector('[data-pdf-retry]');
     if (retry) retry.hidden = false;
+    /* 原始错误：name / message / stack 前几行，可选中复制，便于用户截图定位 */
+    var raw = els.reader && els.reader.querySelector('[data-pdf-raw]');
+    if (raw) {
+      if (err) {
+        var lines = [];
+        lines.push((err.name || 'Error') + ': ' + (err.message || String(err)));
+        var stack = String(err.stack || '').split('\n').slice(1, 4);
+        for (var i = 0; i < stack.length; i++) if (stack[i].trim()) lines.push(stack[i].trim());
+        raw.textContent = lines.join('\n');
+        raw.hidden = false;
+      } else {
+        raw.hidden = true;
+        raw.textContent = '';
+      }
+    }
     if (err) console.warn('[library] PDF 加载失败：', err.name || '', err.message || '');
   }
 
@@ -56196,6 +56231,7 @@ window.HMChat = (function () {
         + '<div class="lib-pdf-loading" data-pdf-loading>'
         + '<span class="lib-pdf-spinner" data-pdf-spinner></span><span data-loading-text>正在加载 PDF …</span>'
         + '<button type="button" class="lib-pdf-retry" data-pdf-retry hidden>重试</button>'
+        + '<pre class="lib-pdf-raw" data-pdf-raw hidden></pre>'
         + '</div>'
         + '</div>'
       : '<div class="lib-book-frame">'
