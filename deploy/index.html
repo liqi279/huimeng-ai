@@ -16718,6 +16718,10 @@ body.rail-collapsed .hm-page {
   opacity: 0.45;
 }
 
+.lib-store-used {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- 开书动画层 ---------- */
 .lib-open-layer {
   position: absolute;
@@ -54479,7 +54483,9 @@ window.HMChat = (function () {
     editing: null,
     booted: false,
     loading: false,
-    pdfTocCollapsed: false /* 目录折叠状态：本次阅读内记住 */
+    pdfTocCollapsed: false, /* 目录折叠状态：本次阅读内记住 */
+    storeUsedBytes: null,   /* 全库已用字节数（GET /library/books 的 store.usedBytes） */
+    storeLimitLabel: ''     /* 全库上限文案（store.limitLabel，如 "500G"） */
   };
 
   var els = {};
@@ -54718,6 +54724,7 @@ window.HMChat = (function () {
     }
     return request('/library/books', {}, 30000).then(function (data) {
       state.mode = 'remote';
+      applyStore(data.store); /* 全库用量随书目一起刷新 */
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
     }).then(function () {
@@ -54765,6 +54772,7 @@ window.HMChat = (function () {
       return Promise.resolve();
     }
     return request('/library/books', {}, 30000).then(function (data) {
+      applyStore(data.store); /* 全库用量随书目一起刷新 */
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
     }).then(function () {
@@ -54982,12 +54990,34 @@ window.HMChat = (function () {
     var total = state.books.length;
     var shown = state.shelfBooks.length;
     var modeLabel = state.mode === 'remote' ? 'MySQL · 后端已连接' : '本地藏书 · 离线模式';
+    var limitLabel = state.storeLimitLabel || '500G';
+    var usedLabel = state.storeUsedBytes == null ? '--' : formatBytes(state.storeUsedBytes);
     els.status.innerHTML = '<span class="lib-status-dot ' + (state.mode === 'remote' ? 'is-on' : '') + '"></span>'
       + '<span>' + modeLabel + '</span>'
       + '<span class="lib-status-sep">·</span>'
       + '<span>共 ' + total + ' 册，当前展示 ' + shown + ' 册</span>'
       + '<span class="lib-status-sep">·</span>'
-      + '<span>存储空间上限 500G</span>';
+      + '<span class="lib-store-used">' + esc(usedLabel + ' / ' + limitLabel) + '</span>'
+      + '<span>存储空间上限 ' + esc(limitLabel) + '</span>';
+  }
+
+  /* 全库存储用量：store.usedBytes / store.limitLabel，缺字段时保持降级显示 */
+  function applyStore(store) {
+    store = store || {};
+    var used = Number(store.usedBytes);
+    state.storeUsedBytes = isFinite(used) && used >= 0 ? used : null;
+    state.storeLimitLabel = typeof store.limitLabel === 'string' && store.limitLabel ? store.limitLabel : '';
+  }
+
+  /* 字节数 → KB/MB/GB，保留 1 位小数 */
+  function formatBytes(n) {
+    if (!isFinite(n) || n < 0) return '--';
+    if (n < 1024) return n + ' B';
+    var units = ['KB', 'MB', 'GB', 'TB'];
+    var v = n / 1024;
+    var i = 0;
+    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+    return v.toFixed(1) + ' ' + units[i];
   }
 
   /* ---------------- 搜索 ---------------- */
