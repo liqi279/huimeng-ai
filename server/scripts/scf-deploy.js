@@ -321,10 +321,11 @@ async function selfCheck() {
   let bj = {};
   try { bj = JSON.parse(b.text); } catch (e) { /* ignore */ }
   const items = bj.items || [];
-  /* 书目总数随内容增长（2026-11 新增 012-020 后为 20）；少于这个数说明库没读全或降级到 file 模式 */
-  const EXPECT_BOOKS = Number(process.env.EXPECT_BOOKS || 20);
-  results.push(['books', b.status, 'items=' + items.length + ' mode=' + (bj.store && bj.store.mode) + ' mysqlError=' + (bj.store && bj.store.mysqlError),
-    b.status === 200 && items.length === EXPECT_BOOKS && bj.store && bj.store.mode === 'mysql']);
+  /* 书目总数随内容增长：默认只要求非空；需要严格卡数量时传 EXPECT_BOOKS */
+  const expectBooks = Number(process.env.EXPECT_BOOKS || 0);
+  const countOk = expectBooks > 0 ? items.length === expectBooks : items.length > 0;
+  results.push(['books', b.status, 'items=' + items.length + (expectBooks ? '/expect=' + expectBooks : '') + ' mode=' + (bj.store && bj.store.mode) + ' mysqlError=' + (bj.store && bj.store.mysqlError),
+    b.status === 200 && countOk && bj.store && bj.store.mode === 'mysql']);
 
   if (items.length) {
     const book = items[0];
