@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-11T18:06:27.631Z",
+  "generatedAt": "2026-11-11T18:11:05.678Z",
   "source": "huimeng_library.books",
   "total": 40,
   "areas": {
-    "paint": 32,
-    "ref": 8
+    "paint": 31,
+    "ref": 9
   },
   "books": [
     {
@@ -790,7 +790,7 @@
       "author": "内田有紀",
       "intro": "内田有紀的五头身女子姿势集，收录站、坐、卧与日常动作，附服装与手部细节，适合角色设计与速写参考。",
       "pageCount": 560,
-      "area": "paint",
+      "area": "ref",
       "toc": [],
       "pdfKey": "library/books/033-five-head-poses-girls.pdf",
       "pdfBytes": 97711255,
