@@ -54775,6 +54775,7 @@ window.HMChat = (function () {
   var suggestItems = [];
   var suggestIndex = -1;
   var pdfSlowTimer = null;
+  var libPrefsPushTimer = null;
 
   /* ---------------- 工具 ---------------- */
   function $(id) { return document.getElementById(id); }
@@ -55929,6 +55930,10 @@ window.HMChat = (function () {
 
   function savePdfMode(mode) {
     try { localStorage.setItem(LS.pdfMode, String(mode)); } catch (e) {}
+    if (window.HMSync && window.HMSync.pushLibraryPrefs) {
+      clearTimeout(libPrefsPushTimer);
+      libPrefsPushTimer = setTimeout(function () { window.HMSync.pushLibraryPrefs(); }, 600);
+    }
   }
 
   function updatePdfZoomLabel() {
@@ -56822,10 +56827,25 @@ window.HMChat = (function () {
     state.area = areaById(id).id;
     state.shelfPage = 1;
     writeJSON(LS.area, state.area);
+    if (window.HMSync && window.HMSync.pushLibraryPrefs) {
+      clearTimeout(libPrefsPushTimer);
+      libPrefsPushTimer = setTimeout(function () { window.HMSync.pushLibraryPrefs(); }, 600);
+    }
     syncAreaBtn();
     markShelf();
     renderShelf();
   }
+
+  /* 登录后账号数据先落到 localStorage，再回灌当前 UI（避免本地默认值盖掉线上值） */
+  window.HMLibrary = {
+    applyRemotePrefs: function () {
+      state.area = areaById(readJSON(LS.area, DEFAULT_AREA)).id;
+      state.pdfZoom = readPdfMode();
+      syncAreaBtn();
+      updatePdfZoomLabel();
+      if (bound) { markShelf(); renderShelf(); }
+    }
+  };
 
   function openAreaPicker() {
     if (!els.modal) return;
@@ -61275,11 +61295,17 @@ window.HMChat = (function () {
     var label = document.getElementById('writingSaved');
     if (!input) return;
     var at = Date.now();
-    writeJSON(LS.draft, { text: input.value, at: at });
+    var data = { text: input.value, at: at };
+    writeJSON(LS.draft, data);
     if (label) {
       label.textContent = '已保存 ' + new Date(at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     }
     if (!silent) A.toast('草稿已保存', 'success');
+    /* 输入时 700ms 自动保存，同步到账号再慢一点，避免每敲一次就发请求 */
+    if (window.HMSync && window.HMSync.pushDraftDoc) {
+      clearTimeout(saveDraft._push);
+      saveDraft._push = setTimeout(function () { window.HMSync.pushDraftDoc(data); }, 3000);
+    }
   }
 
   /* ---------------- 论坛（本地） ---------------- */
@@ -70961,7 +70987,7 @@ window.HMChat = (function () {
   var LS_REV = 'anidream.rev.v1';
   var LS_SYNC = 'anidream.sync.v1';
   var LS_QUEUE = 'anidream.queue.v1';
-  var DOC_KINDS = { desk: 1, compile: 1, publish: 1, prefs: 1 };
+  var DOC_KINDS = { desk: 1, compile: 1, publish: 1, prefs: 1, library: 1, draft: 1 };
 
   var revs = read(LS_REV, { works: {}, docs: {}, fp: {}, docfp: {} });
   if (!revs.docfp) revs.docfp = {};
@@ -71190,7 +71216,10 @@ window.HMChat = (function () {
       headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
       signal: controller.signal
     };
-    if (body !== undefined) {
+    /* GET/HEAD 不能带 body：原来传 null 也会序列化成 "null"，
+       浏览器直接抛「Request with GET/HEAD method cannot have body」，
+       导致登录后拉取 bootstrap / docs 全军覆没 */
+    if (body !== undefined && body !== null && method !== 'GET' && method !== 'HEAD') {
       init.headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(body);
     }
@@ -71407,6 +71436,8 @@ window.HMChat = (function () {
     if (kind === 'compile') return 'anidream.compile.v1';
     if (kind === 'publish') return 'anidream.publish.v1';
     if (kind === 'prefs') return 'anidream.prefs.v1';
+    if (kind === 'library') return 'anidream.library.area.v1';
+    if (kind === 'draft') return 'anidream.draft.v1';
     return '';
   }
 
@@ -71453,10 +71484,71 @@ window.HMChat = (function () {
 
   function pushPrefs() {
     var prefs = read('anidream.prefs.v1', null);
-    if (prefs) pushDoc('prefs', prefs);
+    if (prefs) pushDoc('prefs', prefs).catch(function () {});
+  }
+
+  /* 阅读分区 + PDF 阅读模式：合并成一个 library 文档，随账号走 */
+  function pushLibraryPrefs() {
+    if (!uid()) return null;
+    /* 这两个键是字符串/数字，不能用只认对象的 read()，否则会读出 null */
+    var area = null, pdfMode = null;
+    try {
+      var rawArea = localStorage.getItem('anidream.library.area.v1');
+      if (rawArea) {
+        try { area = JSON.parse(rawArea); } catch (e2) { area = rawArea; }
+      }
+    } catch (e) {}
+    try { pdfMode = localStorage.getItem('anidream.library.pdfmode.v1'); } catch (e) {}
+    var data = { area: area, pdfMode: pdfMode, updatedAt: Date.now() };
+    return pushDoc('library', data).catch(function (err) {
+      if (err && err.offline) return;
+      toast('阅读偏好同步失败：' + ((err && err.message) || '网络异常'), 'error');
+    });
+  }
+
+  /* 写作草稿（纯文本）随账号走；大体积画布草稿不走这里 */
+  function pushDraftDoc(draft) {
+    if (!uid() || !draft || typeof draft.text !== 'string') return null;
+    return pushDoc('draft', { text: draft.text, at: Number(draft.at) || Date.now() }).catch(function (err) {
+      if (err && err.offline) return;
+      toast('草稿同步失败：' + ((err && err.message) || '网络异常'), 'error');
+    });
   }
 
   function applyDoc(kind, data, rev) {
+    /* library：一个文档拆回两个本地键，不能按整 JSON 覆盖 area 键 */
+    if (kind === 'library') {
+      if (data && typeof data === 'object') {
+        try {
+          if (data.area != null) localStorage.setItem('anidream.library.area.v1', JSON.stringify(data.area));
+          if (data.pdfMode != null) localStorage.setItem('anidream.library.pdfmode.v1', String(data.pdfMode));
+        } catch (e) {}
+      }
+      if (rev != null) { revs.docs[kind] = rev; saveRevs(); }
+      revs.docfp[kind] = hash(JSON.stringify(data));
+      if (window.HMLibrary && window.HMLibrary.applyRemotePrefs) {
+        try { window.HMLibrary.applyRemotePrefs(); } catch (e) {}
+      }
+      return;
+    }
+    /* draft：时间戳旧的远端草稿不能覆盖本机更新的内容 */
+    if (kind === 'draft') {
+      var local = read('anidream.draft.v1', null) || {};
+      var remoteAt = Number(data && data.at) || 0;
+      var localAt = Number(local.at) || 0;
+      if (data && remoteAt >= localAt) {
+        try { localStorage.setItem('anidream.draft.v1', JSON.stringify({ text: data.text || '', at: remoteAt })); } catch (e) {}
+        var input = document.getElementById('writingInput');
+        if (input && !input.value && data.text) {
+          input.value = data.text;
+          var count = document.getElementById('writingCount');
+          if (count) count.textContent = input.value.length + ' / 6000';
+        }
+      }
+      if (rev != null) { revs.docs[kind] = rev; saveRevs(); }
+      revs.docfp[kind] = hash(JSON.stringify(data));
+      return;
+    }
     var key = docKey(kind);
     if (!key || data == null) return;
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
@@ -71529,6 +71621,18 @@ window.HMChat = (function () {
       return;
     }
 
+    /* 账号数据（含阅读偏好/草稿）必须先落地，再做作品渲染，
+       避免本地空默认值把线上值盖掉；作品为空也不能跳过这一步 */
+    var docs = boot.docs || {};
+    Object.keys(DOC_KINDS).forEach(function (kind) {
+      var d = docs[kind];
+      if (!d || d.data == null) return;
+      var localRev = Number(revs.docs[kind]) || 0;
+      if (!localRev || Number(d.rev) > localRev) applyDoc(kind, d.data, d.rev);
+      else revs.docs[kind] = Number(d.rev);
+    });
+    saveRevs();
+
     var serverWorks = boot.works.filter(validWork);
     var deleted = Array.isArray(boot.deleted) ? boot.deleted : [];
     var deletedMap = {};
@@ -71581,16 +71685,6 @@ window.HMChat = (function () {
       if (window.HMApp.saveWorks) window.HMApp.saveWorks();
       if (window.HMApp.renderWorks) window.HMApp.renderWorks();
     });
-
-    var docs = boot.docs || {};
-    Object.keys(DOC_KINDS).forEach(function (kind) {
-      var d = docs[kind];
-      if (!d || d.data == null) return;
-      var localRev = Number(revs.docs[kind]) || 0;
-      if (!localRev || Number(d.rev) > localRev) applyDoc(kind, d.data, d.rev);
-      else revs.docs[kind] = Number(d.rev);
-    });
-    saveRevs();
   }
 
   async function migrateLocal() {
@@ -71890,6 +71984,8 @@ window.HMChat = (function () {
     clearAll: clearAll,
     pushDoc: pushDoc,
     pushPrefs: pushPrefs,
+    pushLibraryPrefs: pushLibraryPrefs,
+    pushDraftDoc: pushDraftDoc,
     /* 数据安全层（供页面内其它模块与排障使用） */
     collectLocalWorks: collectLocalWorks,
     mergeLists: mergeLists,
