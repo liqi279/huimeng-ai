@@ -4137,9 +4137,9 @@ body.hm-resizing * {
 /* 多图网格 — 紧凑水平滚动 */
 .hm-ref-grid {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: visible;
   scroll-behavior: smooth;
   padding: 2px 2px 4px;
   scrollbar-width: thin;
@@ -4279,12 +4279,13 @@ body.hm-resizing * {
 
 /* ========== 每张参考图独立的主体强度 slider ========== */
 /* per-ref slider 已移除，底部全局 refWeightSlider 负责控制 */
-/* ref cell 恢复为紧凑小方格，hover 加轻微放大 */
+/* ref cell 尺寸由底部全局 refWeightSlider 控制（--hm-ref-size），整块区域一起缩放 */
 .hm-ref-cell {
-  width: 52px;
-  height: 52px;
+  width: var(--hm-ref-size, 52px);
+  height: var(--hm-ref-size, 52px);
   overflow: visible;
   position: relative;
+  transition: width 90ms linear, height 90ms linear;
 }
 .hm-ref-cell img {
   width: 100%;
@@ -4760,76 +4761,124 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   font-size: 10px;
 }
 
-/* ========== 紧凑滑动调节组 ========== */
+/* ========== 紧凑滑动调节组（图一样式：单个深色面板 + 双行滑块） ========== */
 .hm-slider-group {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 2px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: rgba(13, 28, 47, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .hm-slider {
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 3px 5px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 10px;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
   cursor: default;
 }
 
-.hm-slider svg {
-  width: 12px;
-  height: 12px;
-  color: #93a7bd;
-  flex-shrink: 0;
+.hm-slider svg,
+.hm-slider-ico {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  color: #cbd5e1;
+}
+
+.hm-slider-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 .hm-slider input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  width: 58px;
-  height: 3px;
-  background: rgba(148, 163, 184, 0.35);
+  flex: 0 0 132px;
+  width: 132px;
+  height: 4px;
   border-radius: 2px;
   outline: none;
   cursor: pointer;
+  background: linear-gradient(to right,
+    #2f8cf5 0 var(--fill, 50%),
+    rgba(203, 213, 225, 0.38) var(--fill, 50%) 100%);
 }
 
 .hm-slider input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: #7dd3fc;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  box-shadow: 0 0 4px rgba(125, 211, 252, 0.55);
+  background: #2f8cf5;
+  border: 0;
+  box-shadow: 0 0 0 2px rgba(226, 232, 240, 0.92), 0 0 6px rgba(47, 140, 245, 0.55);
   cursor: pointer;
   transition: transform 0.12s ease;
 }
 
 .hm-slider input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+  transform: scale(1.12);
+}
+
+.hm-slider input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(203, 213, 225, 0.38);
+}
+
+.hm-slider input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: #2f8cf5;
 }
 
 .hm-slider input[type="range"]::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: #7dd3fc;
-  border: 1px solid rgba(0, 0, 0, 0.3);
+  background: #2f8cf5;
+  border: 2px solid #e2e8f0;
   cursor: pointer;
 }
 
 .hm-slider-val {
-  font-size: 9.5px;
-  color: #c4b5fd;
+  font-size: 10.5px;
+  color: #94a3b8;
   font-variant-numeric: tabular-nums;
-  min-width: 22px;
+  min-width: 28px;
   text-align: right;
   line-height: 1;
+}
+
+body.hm-light .hm-slider-group {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+body.hm-light .hm-slider {
+  background: transparent;
+  border-color: transparent;
+  color: #334155;
+}
+
+body.hm-light .hm-slider-val {
+  color: #64748b;
 }
 .hm-ref.has-ref .hm-ref-state {
   font-size: 10.5px;
@@ -5592,6 +5641,7 @@ body[data-view="works"] .hm-dock {
 
 @media (max-width: 980px) {
   .hm-slider { display: none; }
+  .hm-slider-group { display: none; }
   .hm-search { width: 132px; }
   .hm-top { padding: 0 12px; }
   .hm-canvas { padding: 24px 20px 260px; }
@@ -24436,15 +24486,15 @@ body.dv-open .hm-page {
             <span>随机</span>
           </button>
 
-          <!-- 滑动调节组 -->
+          <!-- 滑动调节组（图一样式：单面板双行） -->
           <div class="hm-slider-group">
             <div class="hm-slider" title="提示词字体大小">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M9 10h6M5 15h14M7 20h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <span class="hm-slider-ico" aria-hidden="true">A</span>
               <input type="range" id="fontSizeSlider" min="10" max="22" step="1" value="13">
               <span id="fontSizeLabel" class="hm-slider-val">13</span>
             </div>
             <div class="hm-slider" title="参考主体强度">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+              <svg class="hm-slider-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 19h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="8" y="8" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
               <input type="range" id="refWeightSlider" min="0" max="100" step="5" value="70">
               <span id="refWeightLabel" class="hm-slider-val">70%</span>
             </div>
@@ -26772,16 +26822,48 @@ function setCurrentTabRefWeight(v) {
   state.refWeight = v; /* 兼容旧字段 */
 }
 
-/* 参考主体强度 → 参考图预览缩放比：0% 缩到 55%（仍清晰可见），100% 为 100%（不外溢、不放大发糊） */
-function refWeightToScale(v) {
+/* 参考主体强度 → 参考图卡片边长（px）：0% = 30、70% = 52、100% = 76，分段线性 */
+function refWeightToCellSize(v) {
   v = Math.max(0, Math.min(100, Number(v) || 0));
-  return 0.55 + 0.45 * (v / 100);
+  if (v <= 70) return 30 + (22 / 70) * v;
+  return 52 + (24 / 30) * (v - 70);
 }
-/* 把当前强度实时刷到「参考主体」区域内的每张预览图上（只改 transform，不重建 DOM） */
+/* 同步 range 的已填充段（图一样式：蓝色轨道到滑块位置） */
+function syncRangeFill(input) {
+  if (!input) return;
+  var min = Number(input.min || 0);
+  var max = Number(input.max || 100);
+  var val = Number(input.value || 0);
+  var pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+  input.style.setProperty('--fill', pct.toFixed(2) + '%');
+}
+/* 参考区变大后把输入台整体向上撑高：提示词框尺寸不变，工具条不被裁切 */
+var _refDockExtra = 0;
+var _refDockTimer = 0;
+function fitRefDock() {
+  var dock = document.getElementById('hmDock');
+  if (!dock || typeof applyDockHeight !== 'function') return;
+  var h = Math.round(dock.getBoundingClientRect().height);
+  if (_refDockExtra > 0) {
+    h -= _refDockExtra;
+    _refDockExtra = 0;
+    applyDockHeight(h);
+  }
+  var extra = dock.scrollHeight - dock.clientHeight;
+  if (extra > 0) {
+    _refDockExtra = extra;
+    applyDockHeight(h + extra);
+  }
+}
+/* 把当前强度实时刷到「参考主体」区域：整块卡片（含 + 槽）等比缩放，网格随之换行重排 */
 function applyRefPreviewScale(v) {
-  var scale = refWeightToScale(v).toFixed(3);
+  var size = refWeightToCellSize(v).toFixed(1) + 'px';
+  var grid = document.getElementById('refGrid');
+  if (grid) grid.style.setProperty('--hm-ref-size', size);
   var imgs = document.querySelectorAll('#refGrid .hm-ref-cell img');
-  for (var i = 0; i < imgs.length; i++) imgs[i].style.transform = 'scale(' + scale + ')';
+  for (var i = 0; i < imgs.length; i++) imgs[i].style.transform = '';
+  if (_refDockTimer) clearTimeout(_refDockTimer);
+  _refDockTimer = setTimeout(fitRefDock, 120); /* 等卡片尺寸过渡结束再量 */
 }
 
 /* 参考主体强度 UI（顶层版本：bindEvents 里那份是局部函数，顶层调用不到会 ReferenceError 导致 boot 中断） */
@@ -26792,7 +26874,10 @@ function applyRefWeightUI(v) {
   var slider = document.getElementById('refWeightSlider');
   var label = document.getElementById('refWeightLabel');
   if (label) label.textContent = v + '%';
-  if (slider) slider.value = String(v);
+  if (slider) {
+    slider.value = String(v);
+    syncRangeFill(slider);
+  }
   setCurrentTabRefWeight(v);
   applyRefPreviewScale(v); /* 强度变了 → 预览图同步缩放 */
 }
@@ -31587,6 +31672,7 @@ function bindEvents() {
         ov.style.lineHeight = lh;
       }
       if (fsLabel) fsLabel.textContent = String(v);
+      syncRangeFill(fsSlider);
     }
     fsSlider.addEventListener('input', function () {
       state.fontSize = Number(fsSlider.value);
@@ -31594,8 +31680,8 @@ function bindEvents() {
       persistPrefs();
     });
     /* 初始化 */
-    applyFontSize(state.fontSize || 13);
     if (state.fontSize) fsSlider.value = String(state.fontSize);
+    applyFontSize(state.fontSize || 13);
   }
 
   /* 参考主体强度 slider —— 每个 tab 独立（UI/预览同步走顶层 applyRefWeightUI） */
