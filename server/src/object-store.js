@@ -65,6 +65,18 @@ async function deleteObject(objectKey) {
   return storage.remove(objectKey);
 }
 
+/* 列举前缀下的对象（key/size）：用于统计藏书阁实际占用。
+   后端不支持列举或调用失败时抛错，由调用方决定降级。 */
+async function listPrefix(prefix) {
+  return storage.list(prefix);
+}
+
+/* 前缀下所有对象的 Content-Length 之和（字节） */
+async function sumPrefixBytes(prefix) {
+  const objects = await storage.list(prefix);
+  return objects.reduce((sum, o) => sum + (Number(o.size) || 0), 0);
+}
+
 /* 预签名 GET：私有桶 + 时效；配置了公开域名则直接给公开直链 */
 function presignGet(objectKey, ttlSec, opts) {
   const extra = opts || {};
@@ -259,6 +271,8 @@ module.exports = {
   putObject,
   readObject,
   deleteObject,
+  listPrefix,
+  sumPrefixBytes,
   presignGet,
   presignPut,
   putBucketCors,
