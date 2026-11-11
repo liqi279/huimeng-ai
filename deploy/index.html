@@ -20404,7 +20404,7 @@ body.dv-open .hm-page {
       <div class="lib-top-actions">
         <button type="button" class="lib-btn lib-area-btn" id="libAreaBtn" aria-haspopup="dialog" title="切换图书馆区域">
           <span class="lib-area-icon" aria-hidden="true">▤</span>
-          <span class="lib-area-name" id="libAreaName">全部藏书</span>
+          <span class="lib-area-name" id="libAreaName">全部藏书（0本）</span>
           <span class="lib-area-caret" aria-hidden="true">▾</span>
         </button>
         <button type="button" class="lib-btn lib-btn-gold" id="libAddBtn">＋ 新增书籍</button>
@@ -28095,7 +28095,8 @@ function openRefFullscreen(idx) {
   _refFsIdx = idx;
   _refFsScale = 1;
   if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
-  if (els.refFsImg) els.refFsImg.src = list[idx].dataUrl;
+  /* 配额降级/旧数据可能只有 preview 或 thumb，没有 dataUrl，逐级回退避免 src=undefined */
+  if (els.refFsImg) els.refFsImg.src = list[idx].dataUrl || list[idx].preview || list[idx].thumb || '';
   if (els.refFsIdx) els.refFsIdx.textContent = '@' + (idx + 1);
   if (els.refFullscreen) els.refFullscreen.hidden = false;
 }
@@ -28114,7 +28115,7 @@ function showRefHover(idx, anchorEl) {
   if (!list[idx] || _refSelectMode) return;
   _refHoverIdx = idx;
   if (!els.refHover) return;
-  els.refHover.querySelector('img').src = list[idx].dataUrl;
+  els.refHover.querySelector('img').src = list[idx].dataUrl || list[idx].preview || list[idx].thumb || '';
   els.refHover.hidden = false;
   /* 位置：anchorEl 右侧或下侧，避免超出视口 */
   var r = anchorEl.getBoundingClientRect();
@@ -55102,6 +55103,7 @@ window.HMChat = (function () {
       + '<span class="lib-status-sep">·</span>'
       + '<span class="lib-store-used">' + esc(usedLabel + ' / ' + limitLabel) + '</span>'
       + '<span>存储空间上限 ' + esc(limitLabel) + '</span>';
+    syncAreaBtn(); /* 书目变化后同步区域按钮上的数量 */
   }
 
   /* 全库存储用量：store.usedBytes / store.limitLabel，缺字段时保持降级显示 */
@@ -56557,11 +56559,29 @@ window.HMChat = (function () {
 
   function currentArea() { return areaById(state.area); }
 
+  /* 各区域书籍数量：all = 全库总数，其余按 area 字段前端统计 */
+  function areaCounts() {
+    var counts = { all: state.books.length };
+    for (var i = 0; i < state.books.length; i++) {
+      var a = state.books[i] && state.books[i].area;
+      if (!a) continue;
+      counts[a] = (counts[a] || 0) + 1;
+    }
+    return counts;
+  }
+
+  function areaLabel(area, counts) {
+    var n = (counts && counts[area.id] != null) ? counts[area.id] : 0;
+    return area.name + '（' + n + '本）';
+  }
+
   function syncAreaBtn() {
+    var counts = areaCounts();
+    var label = areaLabel(currentArea(), counts);
     var nameEl = $('libAreaName');
-    if (nameEl) nameEl.textContent = currentArea().name;
+    if (nameEl) nameEl.textContent = label;
     var btn = $('libAreaBtn');
-    if (btn) btn.title = '切换图书馆区域 · 当前：' + currentArea().name;
+    if (btn) btn.title = '切换图书馆区域 · 当前：' + label;
   }
 
   function setArea(id) {
@@ -56575,6 +56595,7 @@ window.HMChat = (function () {
 
   function openAreaPicker() {
     if (!els.modal) return;
+    var counts = areaCounts();
     els.modal.hidden = false;
     els.modal.innerHTML = '<div class="lib-modal-mask" data-mask></div>'
       + '<div class="lib-modal-card lib-panel" role="dialog" aria-label="选择图书馆区域">'
@@ -56584,7 +56605,7 @@ window.HMChat = (function () {
         var on = a.id === state.area;
         return '<button type="button" class="lib-panel-item lib-area-item' + (on ? ' is-current' : '') + '" data-area="' + a.id + '">'
           + '<span class="lib-panel-cover" style="--accent:#c9a227"><span>' + esc(a.name.slice(0, 2)) + '</span></span>'
-          + '<span class="lib-panel-text"><b>' + esc(a.name) + '</b><small>' + esc(a.desc || '该区域内容') + '</small></span>'
+          + '<span class="lib-panel-text"><b>' + esc(areaLabel(a, counts)) + '</b><small>' + esc(a.desc || '该区域内容') + '</small></span>'
           + '<span class="lib-panel-go">' + (on ? '✓ 当前' : '选择 →') + '</span></button>';
       }).join('') + '</div></div>';
     els.modal.querySelectorAll('[data-close], [data-mask]').forEach(function (el) {
@@ -56594,7 +56615,7 @@ window.HMChat = (function () {
       btn.addEventListener('click', function () {
         setArea(btn.getAttribute('data-area'));
         closeModal();
-        toast('已切换到「' + currentArea().name + '」', 'info');
+        toast('已切换到「' + areaLabel(currentArea(), areaCounts()) + '」', 'info');
       });
     });
   }
