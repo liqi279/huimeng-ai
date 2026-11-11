@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-11T16:07:22.390Z",
+  "generatedAt": "2026-11-11T17:07:42.883Z",
   "source": "huimeng_library.books",
-  "total": 28,
+  "total": 29,
   "areas": {
-    "paint": 22,
+    "paint": 23,
     "ref": 6
   },
   "books": [
@@ -705,6 +705,41 @@
       "pdfBytes": 140967295,
       "coverKey": "library/covers/028-360-multi-angle-pose-vol01-07-cover.jpg",
       "coverBytes": 171946
+    },
+    {
+      "id": "lib-mwcde99q-996620",
+      "sortNo": 28,
+      "title": "姿势资料集 POSE REFERENCE vol01-05",
+      "author": "",
+      "intro": "5 册姿势参考素材：背负、骑乘、抱持、推倒、骑肩/扛负；每册 64–65 张同一动作的多角度照片，无文字内容。",
+      "pageCount": 321,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "VOL.1 「おんぶ」",
+          "page": 1
+        },
+        {
+          "title": "VOL.2 「馬乗り」",
+          "page": 65
+        },
+        {
+          "title": "VOL.3 「抱きかかえる」",
+          "page": 129
+        },
+        {
+          "title": "VOL.4 「押し倒す」",
+          "page": 193
+        },
+        {
+          "title": "VOL.5 「肩車 担ぐ」",
+          "page": 257
+        }
+      ],
+      "pdfKey": "library/books/029-pose-reference-vol01-05.pdf",
+      "pdfBytes": 101930564,
+      "coverKey": "library/covers/029-pose-reference-vol01-05-cover.jpg",
+      "coverBytes": 116957
     }
   ]
 }
