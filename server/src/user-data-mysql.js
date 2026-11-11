@@ -18,7 +18,7 @@ const config = require('./config');
 const userStore = require('./user-store-mysql');
 const { jsonError } = require('./http');
 
-const DOC_KINDS = ['desk', 'compile', 'publish', 'prefs'];
+const DOC_KINDS = ['desk', 'compile', 'publish', 'prefs', 'library', 'draft'];
 
 const SCHEMA_SQL = [
   `CREATE TABLE IF NOT EXISTS user_works (

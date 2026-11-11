@@ -19,7 +19,7 @@ const crypto = require('crypto');
 const config = require('./config');
 const { jsonError } = require('./http');
 
-const DOC_KINDS = ['desk', 'compile', 'publish', 'prefs'];
+const DOC_KINDS = ['desk', 'compile', 'publish', 'prefs', 'library', 'draft'];
 
 let queue = Promise.resolve();
 function enqueue(task) {
