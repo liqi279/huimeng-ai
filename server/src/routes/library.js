@@ -8,6 +8,7 @@ const config = require('../config');
 const { authOptional, authRequired, adminOnly } = require('../auth');
 const library = require('../library-store');
 const objectStore = require('../object-store');
+const libraryUsage = require('../library-usage');
 
 const router = express.Router();
 
@@ -58,7 +59,10 @@ router.get('/library/books', authOptional, wrap(async (req, res) => {
   const items = await library.list(q, category);
   const origin = requestOrigin(req);
   const mapped = items.map((item) => retargetBook(item, origin));
-  res.json({ items: mapped, total: mapped.length, store: await library.stats() });
+  /* store 里追加真实占用：COS library/ 下对象 Content-Length 之和（90s 缓存，
+     写入时失效）；统计失败时为 null，不影响书目返回。 */
+  const store = Object.assign({}, await library.stats(), await libraryUsage.stats());
+  res.json({ items: mapped, total: mapped.length, store });
 }));
 
 router.get('/library/suggest', authOptional, wrap(async (req, res) => {
@@ -66,7 +70,7 @@ router.get('/library/suggest', authOptional, wrap(async (req, res) => {
 }));
 
 router.get('/library/stats', wrap(async (req, res) => {
-  res.json(await library.stats());
+  res.json(Object.assign({}, await library.stats(), await libraryUsage.stats()));
 }));
 
 /* 手动重跑对象存储桶配置（CORS / 防盗链），仅管理员：
@@ -186,6 +190,7 @@ router.get('/library/books/:id', authOptional, wrap(async (req, res) => {
 router.post('/library/books', authOptional, wrap(async (req, res) => {
   const body = req.body && req.body.book ? req.body.book : (req.body || {});
   const book = await library.create(body);
+  libraryUsage.invalidate();
   res.status(201).json({ book });
 }));
 
@@ -193,12 +198,14 @@ router.put('/library/books/:id', authOptional, wrap(async (req, res) => {
   const body = req.body && req.body.book ? req.body.book : (req.body || {});
   const book = await library.update(req.params.id, body);
   assert(book, 404, '书籍不存在', '请检查书籍 ID');
+  libraryUsage.invalidate();
   res.json({ book });
 }));
 
 router.delete('/library/books/:id', authOptional, wrap(async (req, res) => {
   const ok = await library.remove(req.params.id);
   assert(ok, 404, '书籍不存在', '请检查书籍 ID');
+  libraryUsage.invalidate();
   res.json({ ok: true });
 }));
 
