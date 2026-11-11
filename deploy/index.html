@@ -4294,6 +4294,7 @@ body.hm-resizing * {
   display: block;
   border-radius: 6px;
   transform-origin: 50% 50%;
+  image-rendering: auto; /* 高分辨率源正常缩放，不用像素化渲染 */
   transition: transform 90ms linear;
 }
 
@@ -4762,6 +4763,48 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 }
 
 /* ========== 紧凑滑动调节组（图一样式：单个深色面板 + 双行滑块） ========== */
+.hm-slider-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.hm-slider-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.hm-slider-btn:hover,
+.hm-slider-btn[aria-expanded="true"] {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(56, 189, 248, 0.09);
+}
+
+.hm-slider-btn svg {
+  width: 12px;
+  height: 12px;
+  color: #93a7bd;
+  flex: 0 0 12px;
+}
+
+.hm-slider-pop {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 70;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5));
+}
+
 .hm-slider-group {
   display: flex;
   flex-direction: column;
@@ -5641,7 +5684,7 @@ body[data-view="works"] .hm-dock {
 
 @media (max-width: 980px) {
   .hm-slider { display: none; }
-  .hm-slider-group { display: none; }
+  .hm-slider-wrap { display: none; }
   .hm-search { width: 132px; }
   .hm-top { padding: 0 12px; }
   .hm-canvas { padding: 24px 20px 260px; }
@@ -24490,17 +24533,25 @@ body.dv-open .hm-page {
             <span>随机</span>
           </button>
 
-          <!-- 滑动调节组（图一样式：单面板双行） -->
-          <div class="hm-slider-group">
-            <div class="hm-slider" title="提示词字体大小">
-              <span class="hm-slider-ico" aria-hidden="true">A</span>
-              <input type="range" id="fontSizeSlider" min="10" max="22" step="1" value="13">
-              <span id="fontSizeLabel" class="hm-slider-val">13</span>
-            </div>
-            <div class="hm-slider" title="参考主体强度">
-              <svg class="hm-slider-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 19h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="8" y="8" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-              <input type="range" id="refWeightSlider" min="0" max="100" step="5" value="70">
-              <span id="refWeightLabel" class="hm-slider-val">70%</span>
+          <!-- 滑动调节：按钮 + 浮层（图一样式双行） -->
+          <div class="hm-slider-wrap" id="sliderWrap">
+            <button type="button" class="hm-slider-btn" id="sliderBtn" aria-haspopup="true" aria-expanded="false" title="字号 / 参考主体强度">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="7" r="2.3" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="17" r="2.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+              <span id="sliderBtnText">13 · 70%</span>
+            </button>
+            <div class="hm-slider-pop" id="sliderPop" hidden>
+              <div class="hm-slider-group">
+                <div class="hm-slider" title="提示词字体大小">
+                  <span class="hm-slider-ico" aria-hidden="true">A</span>
+                  <input type="range" id="fontSizeSlider" min="10" max="22" step="1" value="13">
+                  <span id="fontSizeLabel" class="hm-slider-val">13</span>
+                </div>
+                <div class="hm-slider" title="参考主体强度">
+                  <svg class="hm-slider-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 19h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="8" y="8" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                  <input type="range" id="refWeightSlider" min="0" max="100" step="5" value="70">
+                  <span id="refWeightLabel" class="hm-slider-val">70%</span>
+                </div>
+              </div>
             </div>
           </div>
           <button class="hm-chip is-on" id="translateToggle" role="switch" aria-checked="true" title="中文智能英译">
@@ -26826,11 +26877,22 @@ function setCurrentTabRefWeight(v) {
   state.refWeight = v; /* 兼容旧字段 */
 }
 
-/* 参考主体强度 → 参考图卡片边长（px）：0% = 30、70% = 52、100% = 76，分段线性 */
+/* 参考主体强度 → 参考图卡片边长（px）：0% = 32、70% = 80、100% = 128，分段线性 */
 function refWeightToCellSize(v) {
   v = Math.max(0, Math.min(100, Number(v) || 0));
-  if (v <= 70) return 30 + (22 / 70) * v;
-  return 52 + (24 / 30) * (v - 70);
+  if (v <= 70) return 32 + (48 / 70) * v;
+  return 80 + (48 / 30) * (v - 70);
+}
+/* 按钮上直接显示当前两个值，不必打开浮层 */
+function updateSliderBtn() {
+  var t = document.getElementById('sliderBtnText');
+  if (!t) return;
+  var fs = document.getElementById('fontSizeSlider');
+  var rw = document.getElementById('refWeightSlider');
+  var parts = [];
+  if (fs) parts.push(fs.value);
+  if (rw) parts.push(rw.value + '%');
+  t.textContent = parts.join(' · ');
 }
 /* 同步 range 的已填充段（图一样式：蓝色轨道到滑块位置） */
 function syncRangeFill(input) {
@@ -26884,7 +26946,40 @@ function applyRefWeightUI(v) {
   }
   setCurrentTabRefWeight(v);
   applyRefPreviewScale(v); /* 强度变了 → 预览图同步缩放 */
+  updateSliderBtn();
 }
+
+/* 滑块浮层：点按钮开合，点外面或 Esc 关闭；拖动实时生效 */
+(function bindSliderPopover() {
+  var btn = document.getElementById('sliderBtn');
+  var pop = document.getElementById('sliderPop');
+  if (!btn || !pop) return;
+  function open() {
+    pop.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    updateSliderBtn();
+  }
+  function close() {
+    pop.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  btn.addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    if (pop.hidden) open(); else close();
+  });
+  document.addEventListener('click', function (ev) {
+    if (pop.hidden) return;
+    if (pop.contains(ev.target) || btn.contains(ev.target)) return;
+    close();
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (!pop.hidden && ev.key === 'Escape') {
+      ev.preventDefault();
+      close();
+    }
+  });
+  updateSliderBtn();
+})();
 
 /* ========== 每个桌面（文件夹）独立的提示词与参考图，且跨刷新保留 ========== */
 const LS_COMPOSER = 'anidream.composer.v1';
@@ -28059,7 +28154,7 @@ function renderRef() {
         : '';
 
       cell.innerHTML =
-        '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.thumb || ref.dataUrl) + '">' +
+        '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.preview || ref.dataUrl || ref.thumb) + '">' +
         '<span class="hm-ref-tag">图' + (idx + 1) + '</span>' +
         check;
 
@@ -28547,10 +28642,17 @@ async function pickRefFile(file) {
     var side = Math.min(width, height);
     tCtx.drawImage(canvas, (width - side) / 2, (height - side) / 2, side, side, 0, 0, 48, 48);
 
+    /* 高清预览：参考图网格最大显示 128px，用 384px 源（3x）保证放大不糊 */
+    var pCanvas = document.createElement('canvas');
+    pCanvas.width = 384;
+    pCanvas.height = 384;
+    pCanvas.getContext('2d').drawImage(canvas, (width - side) / 2, (height - side) / 2, side, side, 0, 0, 384, 384);
+
     var arr = currentRefs();
     arr.push({
       dataUrl: canvas.toDataURL('image/jpeg', 0.92),
       thumb: tCanvas.toDataURL('image/jpeg', 0.7),
+      preview: pCanvas.toDataURL('image/jpeg', 0.86),
       name: 'reference_' + (arr.length + 1) + '.jpg',
       width: width,
       height: height,
@@ -31677,6 +31779,7 @@ function bindEvents() {
       }
       if (fsLabel) fsLabel.textContent = String(v);
       syncRangeFill(fsSlider);
+      updateSliderBtn();
     }
     fsSlider.addEventListener('input', function () {
       state.fontSize = Number(fsSlider.value);
