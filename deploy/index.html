@@ -13841,6 +13841,35 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 .oua-peg.is-large { width: 21px; height: 21px; }
 .oua-peg.is-slot { width: 11px; height: 26px; border-radius: 6px; }
 
+/* 胶片齿孔观感：每个圆形定位孔左右各补一条横条（绝对定位，不占布局、不挤压画布） */
+.oua-peg {
+  position: relative;
+  --peg-bar-w: 11px;
+  --peg-bar-h: 4px;
+  --peg-bar-gap: 3px;
+}
+.oua-peg.is-large {
+  --peg-bar-w: 14px;
+  --peg-bar-h: 5px;
+}
+.oua-peg::before,
+.oua-peg::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: var(--peg-bar-w);
+  height: var(--peg-bar-h);
+  margin-top: calc(var(--peg-bar-h) / -2);
+  border-radius: 2px;
+  background: #16222e;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.oua-peg::before { right: calc(100% + var(--peg-bar-gap)); }
+.oua-peg::after { left: calc(100% + var(--peg-bar-gap)); }
+/* 竖向长孔保持原样，仅圆形孔加横条 */
+.oua-peg.is-slot::before,
+.oua-peg.is-slot::after { display: none; }
+
 /* 摄影框画面 */
 .oua-frame {
   position: relative;
