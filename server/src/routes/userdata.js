@@ -30,13 +30,13 @@ function currentUserId(req) {
   return req.user.id;
 }
 
-function wrapWork(row, req) {
+async function wrapWork(row, req) {
   var out = Object.assign({}, row.data || {}, {
     id: row.id,
     _rev: row.rev,
     _updatedAt: row.updatedAt,
   });
-  if (out._assetId) out.url = userData.assetPublicUrl(out._assetId);
+  if (out._assetId) out.url = await userData.assetPublicUrl(out._assetId);
   return out;
 }
 
@@ -76,7 +76,7 @@ router.get('/user-data/bootstrap', authRequired, wrap(async (req, res) => {
   let hasMore = true;
   while (hasMore && guard < 30) {
     const page = await userData.listChanges(userId, { since: cursor, limit: 200 });
-    works.push(...page.items.map(function (row) { return wrapWork(row, req); }));
+    works.push(...await Promise.all(page.items.map(function (row) { return wrapWork(row, req); })));
     deleted.push(...page.deleted);
     cursor = page.cursor;
     hasMore = page.hasMore;
