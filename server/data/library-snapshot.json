@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-11T17:07:42.883Z",
+  "generatedAt": "2026-11-11T17:09:35.751Z",
   "source": "huimeng_library.books",
   "total": 29,
   "areas": {
-    "paint": 23,
-    "ref": 6
+    "paint": 21,
+    "ref": 8
   },
   "books": [
     {
@@ -670,7 +670,7 @@
       "author": "[日] 西村光太",
       "intro": "多角度姿势参考合集 7 册：男性体型、女性标准体型、手部、双人、猫狗、儿童、持枪；每册围绕同一姿势提供 360° 环绕视角的 jpeg 素材，无文字内容。",
       "pageCount": 1202,
-      "area": "paint",
+      "area": "ref",
       "toc": [
         {
           "title": "1 [体型別 男性編]",
@@ -713,7 +713,7 @@
       "author": "",
       "intro": "5 册姿势参考素材：背负、骑乘、抱持、推倒、骑肩/扛负；每册 64–65 张同一动作的多角度照片，无文字内容。",
       "pageCount": 321,
-      "area": "paint",
+      "area": "ref",
       "toc": [
         {
           "title": "VOL.1 「おんぶ」",
