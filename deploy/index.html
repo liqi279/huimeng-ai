@@ -19897,7 +19897,7 @@ body.dv-open .hm-page {
 
 </style>
 <script>window.HM_LIBRARY_SEED = {"version":1,"updatedAt":"2026-11-05","note":"绘梦图书馆 · 书籍种子数据（已清空，保留变量与结构）。","books":[]};</script>
-<script>window.HM_BUILD = "20261112112000-1b2c3d4";</script>
+<script>window.HM_BUILD = "20261112120500-9f8e7d6";</script>
 </head>
 <body data-view="create">
 <script>
@@ -55804,6 +55804,43 @@ window.HMChat = (function () {
   var pdfSignedPending = {};
   var PDF_SIGNED_TTL = 5 * 60 * 1000;
 
+  /* 打开一本书的分段耗时打点：点击 → /pdf-url → pdf.js 就绪 → 首页渲染 */
+  var pdfPerf = {};
+  function pdfPerfReset() {
+    pdfPerf = { t0: performance.now() };
+    window.__pdfPerf = null;
+  }
+  function reportPdfPerf() {
+    if (!pdfPerf.t0 || !pdfPerf.first) return;
+    var worker = Math.max(pdfPerf.js || pdfPerf.t0, pdfPerf.url || pdfPerf.t0);
+    var out = {
+      url: Math.round((pdfPerf.url || 0) - pdfPerf.t0),
+      js: Math.round((pdfPerf.js || 0) - pdfPerf.t0),
+      doc: Math.round((pdfPerf.doc || 0) - pdfPerf.t0),
+      firstPaint: Math.round(pdfPerf.first - pdfPerf.t0),
+      urlToWorker: Math.round(worker - (pdfPerf.url || pdfPerf.t0)),
+      workerToFirst: Math.round(pdfPerf.first - worker)
+    };
+    window.__pdfPerf = out;
+    try { console.info('[perf] pdf.open ' + JSON.stringify(out)); } catch (e) {}
+  }
+
+  /* 阅读器预热：空闲时把 pdf.js 主脚本与 worker 拉进浏览器缓存，点击时不再付这一笔 */
+  var pdfWarmStarted = false;
+  function warmPdfReader() {
+    if (pdfWarmStarted) return;
+    pdfWarmStarted = true;
+    var idle = window.requestIdleCallback || function (fn) { return setTimeout(fn, 1200); };
+    idle(function () {
+      loadPdfJs().then(function () {
+        try {
+          /* 只为进 HTTP 缓存；失败无副作用 */
+          fetch(PDFJS_BASE + 'pdf.worker.min.js', { cache: 'force-cache' }).catch(function () {});
+        } catch (e) {}
+      }).catch(function () {});
+    }, { timeout: 3000 });
+  }
+
   function fetchPdfSignedUrl(book, force) {
     var id = String((book && book.id) || '');
     var hit = id && pdfSignedCache[id];
@@ -55945,6 +55982,7 @@ window.HMChat = (function () {
       state.pdfTask = task;
       return task.promise.then(function () {
         if (token !== state.pdfToken) return;
+        if (!pdfPerf.first) { pdfPerf.first = performance.now(); reportPdfPerf(); }
         hidePdfLoading();
         requestAnimationFrame(function () {
           if (pageChanged && pageOcr.mode === 'dst') pageOcrShow();
@@ -56015,6 +56053,7 @@ window.HMChat = (function () {
 
     state.pdfDocPromise = loadPdfJs()
       .then(function (pdfjs) {
+        pdfPerf.js = performance.now();
         /* 分段读取：只取当前页需要的字节；带真实进度回调
          * 看门狗：20 秒没有首字节 / 60 秒没有新进度就中止本次取件，
          * 避免后端返回空响应（如 SCF 文件接口只给响应头）时一直转圈 */
@@ -56064,6 +56103,7 @@ window.HMChat = (function () {
         /* 第一选择：后端签名直链，字节完全不过我们的服务器 */
         if (!pdfSignedCache[String(book.id)]) pdfLoadingText('正在获取加速地址…');
         return fetchPdfSignedUrl(book).then(function (signed) {
+          pdfPerf.url = performance.now();
           pdfLoadingText('正在加载 PDF …');
           kickPdfSlowTimer(20000);
           return open(signed);
@@ -56081,7 +56121,7 @@ window.HMChat = (function () {
           });
         });
       })
-      .then(function (doc) { state.pdfDoc = doc; return doc; });
+      .then(function (doc) { state.pdfDoc = doc; pdfPerf.doc = performance.now(); return doc; });
     return state.pdfDocPromise;
   }
 
@@ -56175,6 +56215,7 @@ window.HMChat = (function () {
   function enterReader(book, page) {
     if (!book) return;
     state.current = book;
+    if (book.pdfUrl) pdfPerfReset();
     if (book.pdfUrl) {
       /* PDF 书：页号 1..真实总页数 */
       var pdfMax = Math.max(1, bookTotalPages(book));
@@ -56914,6 +56955,22 @@ window.HMChat = (function () {
         /* 统一走站内详情/阅读；PDF 入口在详情与阅读界面内 */
         openBook(card.getAttribute('data-id'));
       });
+      /* 悬停 / 键盘聚焦 / 按下即预取 pdf-url：点击时省掉一次后端握手 */
+      function prefetchCard(el) {
+        var card = el && el.closest && el.closest('.lib-book');
+        if (!card) return;
+        var id = card.getAttribute('data-id');
+        for (var i = 0; i < state.shelfBooks.length; i++) {
+          if (String(state.shelfBooks[i].id) === String(id)) {
+            prefetchPdfSignedUrl(state.shelfBooks[i]);
+            return;
+          }
+        }
+      }
+      els.body.addEventListener('mouseover', function (event) { prefetchCard(event.target); });
+      els.body.addEventListener('focusin', function (event) { prefetchCard(event.target); });
+      els.body.addEventListener('pointerdown', function (event) { prefetchCard(event.target); }, { passive: true });
+      warmPdfReader();
     }
   }
 
