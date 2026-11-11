@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-11T17:09:35.751Z",
+  "generatedAt": "2026-11-11T17:22:47.219Z",
   "source": "huimeng_library.books",
-  "total": 29,
+  "total": 30,
   "areas": {
-    "paint": 21,
+    "paint": 22,
     "ref": 8
   },
   "books": [
@@ -740,6 +740,20 @@
       "pdfBytes": 101930564,
       "coverKey": "library/covers/029-pose-reference-vol01-05-cover.jpg",
       "coverBytes": 116957
+    },
+    {
+      "id": "lib-mwcdzptv-d8cbb1",
+      "sortNo": 29,
+      "title": "如何描绘不同头身比例的迷你角色：温馨可爱 2.5 / 2 / 3 头身篇",
+      "author": "",
+      "intro": "同一角色的 2.5 头身、2 头身、3 头身三种比例画法：头身比例的取舍、五官与手脚简化、Q 版动作与服装褶皱，附大量对照示范。",
+      "pageCount": 184,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/030-chibi-head-body-ratio-2.5-2-3.pdf",
+      "pdfBytes": 235372007,
+      "coverKey": "library/covers/030-chibi-head-body-ratio-2.5-2-3-cover.jpg",
+      "coverBytes": 231987
     }
   ]
 }
