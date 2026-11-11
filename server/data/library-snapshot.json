@@ -1,0 +1,710 @@
+{
+  "generatedAt": "2026-11-11T16:07:22.390Z",
+  "source": "huimeng_library.books",
+  "total": 28,
+  "areas": {
+    "paint": 22,
+    "ref": 6
+  },
+  "books": [
+    {
+      "id": "lib-mw81bt2h-51998e",
+      "sortNo": 0,
+      "title": "日本绘师到我家：跟着影片画，解锁人物卡关",
+      "author": "[日] KawaiiSensei",
+      "intro": "原名《いいトコどり！人物パーツの描き方》，画师KawaiiSensei的一本人物绘制入门教程，\n附带87段实例视频，中日双版本特典(中文版的特典目录比较乱 推荐使用日文版的)。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/mw819v2a-001-kawaii.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw80yetl-001-kawaii-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw86nrb0-363dff",
+      "sortNo": 1,
+      "title": "如何描绘不同头身比例的迷你角色：动作、姿势篇",
+      "author": "[日] 宮月もそこ",
+      "intro": "《ミニキャラクターの描き分け　アクション・ポーズ編》的繁体中文版，Q版漫画教程，非常萌。",
+      "pageCount": 177,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/mw86menn-002-mini-chara.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw86m7g0-002-mini-chara-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw97y0mu-d5ff0e",
+      "sortNo": 2,
+      "title": "ももこ绘制教程1例",
+      "author": "[日] ももこ(Momoco)",
+      "intro": "画师ももこ(Momoco)的画集《arietta》抽出来的1例教程，扫描的繁体中文+DL版本的日文，8页教程+2页访谈，使用工具为SAI。",
+      "pageCount": 10,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/mw97uyyt-003-momoko.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw97uyjw-003-momoko-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw9882jp-5ee852",
+      "sortNo": 3,
+      "title": "千穗像素画教程",
+      "author": "千穗",
+      "intro": "千穗的像素画系列教程合集，共 9 册 66 页：Aseprite 入门、像素绘入门、食物构图、非商业委托、房间、背景、RPG 伪游戏画面、颜色处理、人物教学。",
+      "pageCount": 66,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Aseprite像素動圖軟體入門",
+          "page": 1
+        },
+        {
+          "title": "Pixel Art1 像素繪入門教學本",
+          "page": 19
+        },
+        {
+          "title": "Pixel Art2 像素食物構圖教學本",
+          "page": 25
+        },
+        {
+          "title": "Pixel Art3 像素非商業委託本",
+          "page": 27
+        },
+        {
+          "title": "Pixel Art4 像素房間教學本",
+          "page": 31
+        },
+        {
+          "title": "Pixel Art5 像素背景教學本",
+          "page": 37
+        },
+        {
+          "title": "Pixel Art6 RPG偽遊戲畫面像素教學本",
+          "page": 41
+        },
+        {
+          "title": "Pixel Art7 颜色基本处理",
+          "page": 59
+        },
+        {
+          "title": "Pixel Art8 像素人物教學本",
+          "page": 63
+        }
+      ],
+      "pdfKey": "api/library/file/library/books/mw985riv-004-qiansui-pixel.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw985qu5-004-qiansui-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw9a8pu5-763209",
+      "sortNo": 4,
+      "title": "配色X构图X透视 像素艺术背景画法完全解析",
+      "author": "",
+      "intro": "原名《ULTIMATE PIXEL CREW REPORT ピクセルアートではじめる背景の描き方》，一本像素画教程。",
+      "pageCount": 204,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/mw9a5uhb-005-pixel-bg.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw9ak57x-423ad7",
+      "sortNo": 5,
+      "title": "女子姿势集9册合集",
+      "author": "[日] アートラボ",
+      "intro": "原名《女の子ポーズ集》，一套女子姿势参考素材，收录\"ジャンプ・線画(跳跃/线描)\"、“歩き・線画(行走/线描)”、“立ち＆歩き編(站立和行走)”\n、\"立ち・線画(站立/线描)\"、\"走り＆ジャンプ(奔跑与跳跃版)\"、\n“走り・線画(奔跑/线描)”、“座り(坐)”、“座り・線画(坐姿/线描)”以及“制服ポーズ集『女の子・立ち』編(制服女孩站立)”等等9册内容，\n纯图片内容，无文字。*该系列参考图例是AI生成后修改的。",
+      "pageCount": 1902,
+      "area": "ref",
+      "toc": [
+        {
+          "title": "制服ポーズ集『女の子・立ち』編",
+          "page": 1
+        },
+        {
+          "title": "女の子ポーズ集『ジャンプ・線画』編",
+          "page": 256
+        },
+        {
+          "title": "女の子ポーズ集『座り』編",
+          "page": 455
+        },
+        {
+          "title": "女の子ポーズ集『座り・線画』編",
+          "page": 655
+        },
+        {
+          "title": "女の子ポーズ集『歩き・線画』編",
+          "page": 806
+        },
+        {
+          "title": "女の子ポーズ集『立ち・線画』編",
+          "page": 981
+        },
+        {
+          "title": "女の子ポーズ集『立ち＆歩き編』",
+          "page": 1279
+        },
+        {
+          "title": "女の子ポーズ集『走り・線画』編",
+          "page": 1446
+        },
+        {
+          "title": "女の子ポーズ集『走り＆ジャンプ編』",
+          "page": 1671
+        }
+      ],
+      "pdfKey": "api/library/file/library/books/mw9ahk53-006-girls-pose-9vol.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9ahcng-006-girls-pose-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw9bj5qo-f39210",
+      "sortNo": 6,
+      "title": "女子服饰姿势集4册合集",
+      "author": "[日] アートラボ",
+      "intro": "原名《ドレスポーズ集》，一套女子服饰姿势参考素材，\n收录“立ち(站立)、“歩き(走)”、\"走り・ジャンプ(奔跑/跳跃)\"与“座り・寝そべり(坐/卧)”等等常见姿势，纯图片内容，无文字。\n*该系列参考图例是AI生成后修改的。",
+      "pageCount": 1037,
+      "area": "ref",
+      "toc": [
+        {
+          "title": "ドレスポーズ集『座り・寝そべり』編",
+          "page": 1
+        },
+        {
+          "title": "ドレスポーズ集『歩き』編",
+          "page": 383
+        },
+        {
+          "title": "ドレスポーズ集『立ち』編",
+          "page": 587
+        },
+        {
+          "title": "ドレスポーズ集『走り・ジャンプ』編",
+          "page": 856
+        }
+      ],
+      "pdfKey": "api/library/file/library/books/mw9bhcmo-007-dress-pose-4vol.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw9bovcf-c4aa7a",
+      "sortNo": 7,
+      "title": "男子姿势集5册合集",
+      "author": "[日] アートラボ",
+      "intro": "原名《男の子ポーズ集》，一套男子的姿势参考素材，\n收录了“ジャンプ(跳跃)”、“座り(坐)”、“歩き(走)”、“立ち(站立)”与\"走り(跑步)\"等等五种常见姿势，纯图片内容，无文字。\n*该系列参考图例是AI生成后修改的。",
+      "pageCount": 1097,
+      "area": "ref",
+      "toc": [
+        {
+          "title": "男の子ポーズ集『ジャンプ』編",
+          "page": 1
+        },
+        {
+          "title": "男の子ポーズ集『座り』編",
+          "page": 226
+        },
+        {
+          "title": "男の子ポーズ集『歩き』編",
+          "page": 463
+        },
+        {
+          "title": "男の子ポーズ集『立ち』編",
+          "page": 673
+        },
+        {
+          "title": "男の子ポーズ集『走り』編",
+          "page": 872
+        }
+      ],
+      "pdfKey": "api/library/file/library/books/mw9bn7yf-008-boys-pose-5vol.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw9ler9s-e9679b",
+      "sortNo": 8,
+      "title": "是新手也没关系！教你靠插画生财的秘诀",
+      "author": "[日]虎硬",
+      "intro": "原名《はじめてでもわかる! イラストでお金を生み出す秘訣》，日本画师虎硬推出的一本日本插画师的生存指南，清晰度一般，不影响观看。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/mw9leg53-009-paint-income.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9lecyl-009-paint-income-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw9mgki5-4f1173",
+      "sortNo": 9,
+      "title": "SAI超级绘画技术",
+      "author": "",
+      "intro": "原名《SAIですぐできる!スーパーペイントテクニック》，一本2008年推出的SAI官方指南，缺失了光盘文件。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/mw9mfr0i-010-sai-paint-tech.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mw9mna4r-02d065",
+      "sortNo": 10,
+      "title": "奇幻卡通创作技法 交通工具和机器人篇",
+      "author": "[美]Keith Thompson(基斯·汤普森)",
+      "intro": "“交通工具”和\"机器人\"的设计绘制教程，科幻+奇幻风格，收录了英文和中文双版本。\n《50 Fantasy Vehicles to Draw & Paint Create Awe-Inspiring Crafts for Comics, Computer Games, and Graphic Novels》、《50 Robots to Draw and Paint Create Fantastic Robot Characters for Comic Books, Computer Games, and Graphic》。",
+      "pageCount": 456,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "50 Fantasy Vehicles to Draw & Paint",
+          "page": 1
+        },
+        {
+          "title": "奇幻卡通创作技法 交通工具设定篇",
+          "page": 132
+        },
+        {
+          "title": "50 Robots to Draw and Paint",
+          "page": 262
+        },
+        {
+          "title": "奇幻卡通创作技法 机器人绘制篇",
+          "page": 390
+        }
+      ],
+      "pdfKey": "api/library/file/library/books/mw9mlkok-011-fantasy-tech.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
+      "coverBytes": null
+    },
+    {
+      "id": "lib-mwaz6plf-33b5a3",
+      "sortNo": 11,
+      "title": "幻想系美少女設定資料集",
+      "author": "[日]佐倉おりこ（Sakura Oriko、佐仓织子）",
+      "intro": "佐倉おりこ（Sakura Oriko、佐仓织子）的童话风格女孩设定集，属于半画集半漫画教程性质，日文原名《メルヘンファンタジーな女の子のキャラデザ&作画テクニック》。",
+      "pageCount": 145,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/012-fantasy-girl-character-design.pdf",
+      "pdfBytes": 68170803,
+      "coverKey": "library/covers/012-fantasy-girl-character-design-cover.jpg",
+      "coverBytes": 361543
+    },
+    {
+      "id": "lib-mwaz6oot-51cd86",
+      "sortNo": 12,
+      "title": "漫画时尚圣经：绘制时尚服装和人物的入门指南",
+      "author": "Christopher Hart",
+      "intro": "原名《The Manga Fashion Bible: The Go-To Guide for Drawing Stylish Outfits and Characters》，一本日式二次元人物的绘制教程。",
+      "pageCount": 75,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/013-manga-fashion-bible.pdf",
+      "pdfBytes": 154205536,
+      "coverKey": "library/covers/013-manga-fashion-bible-cover.jpg",
+      "coverBytes": 262353
+    },
+    {
+      "id": "lib-mwaz6p5h-14e0b7",
+      "sortNo": 13,
+      "title": "画出暖心手感 我的第一堂iPad人物电绘课",
+      "author": "",
+      "intro": "目前比较流行的IPAD画图软件Procreate的入门教程，繁体中文版，附带了epub格式。",
+      "pageCount": 212,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/014-ipad-digital-painting.pdf",
+      "pdfBytes": 159821890,
+      "coverKey": "library/covers/014-ipad-digital-painting-cover.jpg",
+      "coverBytes": 169769
+    },
+    {
+      "id": "lib-mwaz1nu4-0f8795",
+      "sortNo": 14,
+      "title": "轻松掌握数码绘 绘画技巧提升培训",
+      "author": "[日] 和錆 岩元健一 Citron 藤森ゆゆ缶 七輝翼 有間じろう",
+      "intro": "《デジ絵を簡単マスター 画力向上トレーニング ペイントツールSAI&IllustStudio対応》，多位画师（和錆 岩元健一 Citron 藤森ゆゆ缶 七輝翼 有間じろう）合作推出的一本SAI&IllustStudio教程。",
+      "pageCount": 253,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/015-digital-painting-training.pdf",
+      "pdfBytes": 105004852,
+      "coverKey": "library/covers/015-digital-painting-training-cover.jpg",
+      "coverBytes": 319074
+    },
+    {
+      "id": "lib-mwaz1m9h-0de22c",
+      "sortNo": 15,
+      "title": "萌之绘的教科书",
+      "author": "[日] refeia",
+      "intro": "原名《萌え絵の教科書 増補改訂版》，来自画师refeia的一本萌系漫画教程，使用工具是photoshop和clip studo paint，汉化版本是初版的内容，相比起改订版少了一个教学例子。",
+      "pageCount": 275,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[漫画教程][refeia]萌え絵の教科書 増補改訂版",
+          "page": 1
+        },
+        {
+          "title": "[漫画教程]数码绘画进阶教程 萌之绘的教科书",
+          "page": 147
+        }
+      ],
+      "pdfKey": "library/books/016-moe-drawing-textbook.pdf",
+      "pdfBytes": 126845315,
+      "coverKey": "library/covers/016-moe-drawing-textbook-cover.jpg",
+      "coverBytes": 231520
+    },
+    {
+      "id": "lib-mwaz1n0z-3c8f75",
+      "sortNo": 16,
+      "title": "数码绘画进阶教程 背景插画的制作方法",
+      "author": "",
+      "intro": "多位画师合作推出的一本背景绘制教程，拍摄版本，部分文字不太清晰",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/017-background-illustration.pdf",
+      "pdfBytes": 156654180,
+      "coverKey": "library/covers/017-background-illustration-cover.jpg",
+      "coverBytes": 303216
+    },
+    {
+      "id": "lib-mwayx6h0-c502f0",
+      "sortNo": 17,
+      "title": "服装绘画技法完全攻略2 休闲服、外出服、小礼服",
+      "author": "",
+      "intro": "一本从真人照片入门的漫画服饰教程，教您画出自然生动的皱褶。",
+      "pageCount": 82,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/018-clothing-technique-2.pdf",
+      "pdfBytes": 46883134,
+      "coverKey": "library/covers/018-clothing-technique-2-cover.jpg",
+      "coverBytes": 204389
+    },
+    {
+      "id": "lib-mwayx6xa-dedae3",
+      "sortNo": 18,
+      "title": "服装绘画技法完全攻略 男女生制服&便服",
+      "author": "",
+      "intro": "一本从真人照片入门的漫画服饰教程，教您画出自然生动的皱褶。",
+      "pageCount": 78,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/019-uniform-casual-clothes.pdf",
+      "pdfBytes": 35486291,
+      "coverKey": "library/covers/019-uniform-casual-clothes-cover.jpg",
+      "coverBytes": 194001
+    },
+    {
+      "id": "lib-mwayvg4t-50ac21",
+      "sortNo": 19,
+      "title": "漫画发型绘画技法完全攻略 从实际写真学习绘画技巧",
+      "author": "[日] ブレインナビ",
+      "intro": "一本从真人照片入门的漫画发型绘画教程，繁体中文版。",
+      "pageCount": 126,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/020-manga-hairstyle.pdf",
+      "pdfBytes": 30740640,
+      "coverKey": "library/covers/020-manga-hairstyle-cover.jpg",
+      "coverBytes": 237762
+    },
+    {
+      "id": "lib-mwc2tup6-944e1c",
+      "sortNo": 20,
+      "title": "即使新手也能上手 SAI使用手册",
+      "author": "[日]イマジネーション・クリエイティブ",
+      "intro": "原名《ビギナーでもここまでできる！ペイントツールSAIマスターブック》，一本SAI入门教程。",
+      "pageCount": 208,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/021-sai-master-book.pdf",
+      "pdfBytes": 113657572,
+      "coverKey": "library/covers/021-sai-master-book-cover.jpg",
+      "coverBytes": 235776
+    },
+    {
+      "id": "lib-mwc315wl-84a192",
+      "sortNo": 21,
+      "title": "详细解说！人物“上色”步骤完全剖析：CLIP STUDIO PAINT PRO电绘技法大全",
+      "author": "[日] 乃樹坂くしお",
+      "intro": "原名《とことん解説！キャラクターの「塗り」入門教室　CLIP STUDIO PAINT PROで学ぶ描画の基本テクニック》，画师乃樹坂くしお的一本CSP入门教程，附带源文件，繁体中文版。",
+      "pageCount": 209,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/022-coloring-process-clip-studio.pdf",
+      "pdfBytes": 54376013,
+      "coverKey": "library/covers/022-coloring-process-clip-studio-cover.jpg",
+      "coverBytes": 278483
+    },
+    {
+      "id": "lib-mwc44r85-9b47ac",
+      "sortNo": 22,
+      "title": "CLIP STUDIO灰阶画法&特效完全绘制指南",
+      "author": "[日] 天領寺セナ",
+      "intro": "《グリザイユ画法&エフェクト 完全マスターブック》的繁体中文版，P站画师天領寺セナ的一本clip studio paint“灰阶画法”教程。",
+      "pageCount": 193,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/023-clip-studio-grayscale-guide.pdf",
+      "pdfBytes": 84601610,
+      "coverKey": "library/covers/023-clip-studio-grayscale-guide-cover.jpg",
+      "coverBytes": 227580
+    },
+    {
+      "id": "lib-mwc5rjlx-7f7a96",
+      "sortNo": 23,
+      "title": "漫画・插图・素描用多角度姿势集vol0-16",
+      "author": "[日] 作画支援堂スタジオ",
+      "intro": "原名《漫画・イラスト・デッサン用マルチアングルポーズ集》，一套姿势参考素材，收录的是“战斗”的常见姿势，包括“枪、刀、拳脚、跳跃”等等有多种角度，无文字内容。",
+      "pageCount": 24038,
+      "area": "ref",
+      "toc": [
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集00 (剣・ハンドガン・打撃・防御・攻撃を受けるポーズ)",
+          "page": 1
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集01 (パンチ・拳を使った攻撃ポーズ1)",
+          "page": 1415
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集02 (パンチ・拳を使った攻撃ポーズ2)",
+          "page": 2829
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集03 (キック・足を使った攻撃ポーズ)",
+          "page": 4243
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集04 (跳び蹴り攻撃のポーズ)",
+          "page": 5657
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集05 (超能力を使った攻撃ポーズ)",
+          "page": 7071
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集06 (攻撃を受ける・倒されるポーズ)",
+          "page": 8485
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集07 (ガード・防御のポーズ)",
+          "page": 9899
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集08 (よける・かわすポーズ)",
+          "page": 11313
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集09 (剣で戦うポーズ1)",
+          "page": 12727
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集10 (剣で戦うポーズ2 激しいアクション編)",
+          "page": 14141
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集11 (双剣で戦うポーズ)",
+          "page": 15555
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集12 (逆手持ちの剣で戦うポーズ)",
+          "page": 16969
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集13 (ハンドガンで戦うポーズ1)",
+          "page": 18383
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集14 (ハンドガンで戦うポーズ2 激しいアクション編)",
+          "page": 19797
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集15 (二丁拳銃で戦うポーズ1)",
+          "page": 21211
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集16 (二丁拳銃で戦うポーズ2 激しいアクション編)",
+          "page": 22625
+        }
+      ],
+      "pdfKey": "library/books/024-pose-collection-vol0-16.pdf",
+      "pdfBytes": 1303170322,
+      "coverKey": "library/covers/024-pose-collection-vol0-16-cover.jpg",
+      "coverBytes": 306230
+    },
+    {
+      "id": "lib-mwc64zt9-fe9dcd",
+      "sortNo": 24,
+      "title": "漫画・插图・素描用多角度姿势集 日常生活篇vol1-4",
+      "author": "[日] 作画支援堂スタジオ",
+      "intro": "原名《漫画・イラスト・デッサン用マルチアングルポーズ集〔日常生活編〕》，一套姿势参考素材，收录的是“日常生活篇”的常见姿势“学校生活的姿势-桌子和椅子、撑着伞的姿势、跑步姿势、走路姿势”有多种角度，无文字内容。",
+      "pageCount": 5656,
+      "area": "ref",
+      "toc": [
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集〔日常生活編〕01(学校生活のポーズ 机と椅子)",
+          "page": 1
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集〔日常生活編〕02(傘をさしているポーズ)",
+          "page": 1415
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集〔日常生活編〕03(走るポーズ)",
+          "page": 2829
+        },
+        {
+          "title": "漫画・イラスト・デッサン用マルチアングルポーズ集〔日常生活編〕04(歩くポーズ)",
+          "page": 4243
+        }
+      ],
+      "pdfKey": "library/books/025-pose-collection-daily-vol1-4.pdf",
+      "pdfBytes": 328897722,
+      "coverKey": "library/covers/025-pose-collection-daily-vol1-4-cover.jpg",
+      "coverBytes": 283667
+    },
+    {
+      "id": "lib-mwc9g6lo-139124",
+      "sortNo": 25,
+      "title": "漫画服装造型绘画技法",
+      "author": "",
+      "intro": "以真人模特照片对照素描示范漫画服装画法：从布料材质与衣服褶皱的成因讲起，解析站、坐、移动、跳跃等动作与褶皱的关系，对比女性与男性服装的结构差异，再分便服/上班服、制服/角色扮演服、科幻奇幻服装等章节，涵盖牛仔外套、长裙、风衣、水手服、西装、护士服、女仆装、哥德萝莉服、铠甲等常见款式。",
+      "pageCount": 189,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Point 01-05 各种材质的布料",
+          "page": 5
+        },
+        {
+          "title": "Chapter 01 基本篇1 关于布料",
+          "page": 13
+        },
+        {
+          "title": "Chapter 02 基本篇2 身体与褶皱的关系",
+          "page": 25
+        },
+        {
+          "title": "Chapter 03 实践篇 女性与男性的服装差异",
+          "page": 53
+        },
+        {
+          "title": "Chapter 04 应用篇1 便服与上班服饰风格",
+          "page": 85
+        },
+        {
+          "title": "Chapter 05 应用篇2 制服与角色扮演服装",
+          "page": 147
+        },
+        {
+          "title": "Chapter 06 其他特殊服饰 科幻&奇幻的服装",
+          "page": 179
+        },
+        {
+          "title": "资料 世界的民族服饰",
+          "page": 187
+        }
+      ],
+      "pdfKey": "library/books/026-manga-costume-drawing-techniques.pdf",
+      "pdfBytes": 145710915,
+      "coverKey": "library/covers/026-manga-costume-drawing-techniques-cover.jpg",
+      "coverBytes": 272456
+    },
+    {
+      "id": "lib-mwcaluzz-03657d",
+      "sortNo": 26,
+      "title": "可以直接使用的姿势系列光盘 5 套合集",
+      "author": "[日] 人体パーツ素材集制作部",
+      "intro": "原名《そのまま使える》系列姿势素材光盘 5 套合集，收录双人姿势500、动作姿势450、女孩姿势500、手的表情700、足与鞋700；每套按章节提供 JPG/PSD/EPS 三种格式的姿势参考素材，无文字内容。",
+      "pageCount": 2553,
+      "area": "ref",
+      "toc": [
+        {
+          "title": "そのまま使えるふたりポーズ500",
+          "page": 1
+        },
+        {
+          "title": "そのまま使えるアクションポーズ450",
+          "page": 257
+        },
+        {
+          "title": "そのまま使える女の子ポーズ500",
+          "page": 670
+        },
+        {
+          "title": "そのまま使える手の表情700",
+          "page": 1147
+        },
+        {
+          "title": "そのまま使える足と靴700",
+          "page": 1847
+        }
+      ],
+      "pdfKey": "library/books/027-pose-material-collection-5sets.pdf",
+      "pdfBytes": 428218346,
+      "coverKey": "library/covers/027-pose-material-collection-5sets-cover.jpg",
+      "coverBytes": 65634
+    },
+    {
+      "id": "lib-mwcb67r0-241ff0",
+      "sortNo": 27,
+      "title": "360°多角度姿势合集 vol01-07",
+      "author": "[日] 西村光太",
+      "intro": "多角度姿势参考合集 7 册：男性体型、女性标准体型、手部、双人、猫狗、儿童、持枪；每册围绕同一姿势提供 360° 环绕视角的 jpeg 素材，无文字内容。",
+      "pageCount": 1202,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "1 [体型別 男性編]",
+          "page": 1
+        },
+        {
+          "title": "2 [標準体型 女性編]",
+          "page": 363
+        },
+        {
+          "title": "3 [ハンドポーズ編]",
+          "page": 486
+        },
+        {
+          "title": "4 [二人ポーズ編]",
+          "page": 566
+        },
+        {
+          "title": "5 [犬猫ポーズ編]",
+          "page": 700
+        },
+        {
+          "title": "6 [標準体型 子供編]",
+          "page": 941
+        },
+        {
+          "title": "7 [銃ポーズ編]",
+          "page": 1072
+        }
+      ],
+      "pdfKey": "library/books/028-360-multi-angle-pose-vol01-07.pdf",
+      "pdfBytes": 140967295,
+      "coverKey": "library/covers/028-360-multi-angle-pose-vol01-07-cover.jpg",
+      "coverBytes": 171946
+    }
+  ]
+}
