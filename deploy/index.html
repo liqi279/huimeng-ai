@@ -59376,7 +59376,7 @@ window.HMChat = (function () {
   }
 
   /* ===== 场景（天空 / 光晕 / 山峦） ===== */
-  function drawSeasonScene(ctx, W, H, s, t) {
+  function drawSeasonScene(ctx, W, H, s, t, noGlow) {
     var sky = ctx.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, s.sky[0]);
     sky.addColorStop(0.38, s.sky[1]);
@@ -59385,18 +59385,20 @@ window.HMChat = (function () {
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H);
 
-    /* 光晕 */
-    var cx = W * 0.62, cy = H * 0.34;
-    var rad = Math.max(W, H) * 0.28;
-    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-    g.addColorStop(0, 'rgba(255,255,255,.55)');
-    g.addColorStop(0.12, hexA(s.glow, 0.55));
-    g.addColorStop(0.42, hexA(s.accent, 0.10));
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad, 0, Math.PI * 2);
-    ctx.fill();
+    /* 光晕（noGlow 时跳过，其余渐变与粒子不受影响） */
+    if (!noGlow) {
+      var cx = W * 0.62, cy = H * 0.34;
+      var rad = Math.max(W, H) * 0.28;
+      var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      g.addColorStop(0, 'rgba(255,255,255,.55)');
+      g.addColorStop(0.12, hexA(s.glow, 0.55));
+      g.addColorStop(0.42, hexA(s.accent, 0.10));
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     /* 云层 / 光束 */
     ctx.save();
@@ -59464,7 +59466,7 @@ window.HMChat = (function () {
     function frame(now) {
       var t = (now - t0) / 1000;
       ctx.clearRect(0, 0, W, H);
-      drawSeasonScene(ctx, W, H, s, t);
+      drawSeasonScene(ctx, W, H, s, t, opts.noGlow);
       for (var j = 0; j < ps.length; j++) {
         updateSeasonParticle(ps[j], s.type, W, H, t);
         drawSeasonParticle(ctx, ps[j], s.type);
@@ -59531,7 +59533,7 @@ window.HMChat = (function () {
       cv.className = 'hm-season-ambient';
       document.body.appendChild(cv);
     }
-    seasonAmbientStop = runSeasonCanvas(cv, SEASONS[key], { count: 42 });
+    seasonAmbientStop = runSeasonCanvas(cv, SEASONS[key], { count: 42, noGlow: key === 'summer' });
   }
 
   function stopSeasonAmbient() {
