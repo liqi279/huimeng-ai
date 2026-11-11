@@ -117,7 +117,14 @@ function publicBase(req) {
   return proto + '://' + host + '/api';
 }
 
-function assetPublicUrl(assetId, req) {
+/* 作品图片优先给 COS 预签名直链（3600s，与封面一致）：
+   SCF 函数 URL 网关会把 /api 代理返回的二进制强制改成 application/json + attachment，
+   浏览器 <img> 因此拒绝渲染；直连对象存储可拿到正确的 image/jpeg。
+   对象或存储未就绪时回落到本服务代理链接。 */
+async function assetPublicUrl(assetId, req) {
+  const asset = await impl().getAsset(assetId).catch(() => null);
+  const direct = asset && asset.objectKey ? objectStore.presignGet(asset.objectKey, 3600) : '';
+  if (direct) return direct;
   return publicBase(req) + '/user-data/assets/' + encodeURIComponent(assetId) +
     '?t=' + signAssetToken(assetId);
 }
@@ -181,7 +188,7 @@ async function saveWorkAsset(userId, workId, dataUrl, req) {
   return {
     assetId,
     objectKey,
-    url: assetPublicUrl(assetId, req),
+    url: objectStore.presignGet(objectKey, 3600) || await assetPublicUrl(assetId, req),
     mime: decoded.mime,
     bytes: decoded.buffer.length,
     sha256,
