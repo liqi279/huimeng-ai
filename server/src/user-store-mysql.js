@@ -32,6 +32,15 @@ let initPromise = null;
 let lastAttempt = 0;
 const state = { mode: 'pending', error: null };
 
+/* 冷启动连接重试：TiDB 在 ap-northeast-1，广州 SCF 到东京偶发 connect ETIMEDOUT。
+   单次失败不能把实例钉死在“账号库不可用”，按退避重试；全部失败后 5s 允许再试。 */
+const RETRY_DELAYS = [0, 800, 2000, 4000, 8000];
+const RETRY_AFTER_FAIL_MS = 5000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /* ---------------- 建表（与 SQL 脚本等价，幂等） ---------------- */
 const SCHEMA_SQL = [
   `CREATE TABLE IF NOT EXISTS users (
@@ -134,6 +143,10 @@ function connectionOptions(withDatabase) {
       };
   if (withDatabase === false) delete base.database;
   else base.database = base.database || databaseName();
+  /* 跨地域连 TiDB（东京）偶发握手超时：限定 8s 快速失败，复用长连接减少握手次数 */
+  base.connectTimeout = 8000;
+  base.enableKeepAlive = true;
+  base.keepAliveInitialDelay = 10000;
   return base;
 }
 
@@ -180,60 +193,72 @@ async function ensureSchema() {
 async function init() {
   if (state.mode === 'mysql') return state;
   if (initPromise) return initPromise;
-  if (state.mode === 'error' && Date.now() - lastAttempt < 60000) return state;
+  if (state.mode === 'error' && Date.now() - lastAttempt < RETRY_AFTER_FAIL_MS) return state;
 
   lastAttempt = Date.now();
   initPromise = (async () => {
-    try {
-      if (config.USER_STORE === 'file') {
-        state.mode = 'file';
-        state.error = 'USER_STORE=file（显式使用本地 JSON）';
-        console.warn('[users] USER_STORE=file：账号落本地 JSON 文件，Render 重启会丢失。');
-        return state;
-      }
+    if (config.USER_STORE === 'file') {
+      state.mode = 'file';
+      state.error = 'USER_STORE=file（显式使用本地 JSON）';
+      console.warn('[users] USER_STORE=file：账号落本地 JSON 文件，Render 重启会丢失。');
+      return state;
+    }
+
+    let lastErr = null;
+    for (let i = 0; i < RETRY_DELAYS.length; i++) {
+      if (RETRY_DELAYS[i]) await sleep(RETRY_DELAYS[i]);
       try {
-        mysql2 = require('mysql2/promise');
+        try {
+          mysql2 = require('mysql2/promise');
+        } catch (err) {
+          throw new Error('未安装 mysql2，请在 server/ 执行 npm install mysql2');
+        }
+
+        await ensureSchema();
+
+        pool = mysql2.createPool(Object.assign({}, connectionOptions(true), {
+          waitForConnections: true,
+          connectionLimit: 10,
+          queueLimit: 0,
+          charset: 'utf8mb4',
+        }));
+        await pool.query('SELECT 1');
+
+        state.mode = 'mysql';
+        state.error = null;
+        console.log('[users] MySQL 已连接（第 ' + (i + 1) + ' 次尝试）：' +
+          (config.MYSQL_URL ? 'MYSQL_URL' : (config.MYSQL_HOST + ':' + config.MYSQL_PORT)) + '/' + databaseName());
+
+        await migrateLegacyUsers().catch((err) => {
+          console.error('[users] 旧账号迁移失败：' + (err && err.message));
+        });
+        await migrateFromPg().catch((err) => {
+          console.error('[users] PostgreSQL 账号迁移失败：' + (err && err.message));
+        });
+        return state;
       } catch (err) {
-        throw new Error('未安装 mysql2，请在 server/ 执行 npm install mysql2');
-      }
-
-      await ensureSchema();
-
-      pool = mysql2.createPool(Object.assign({}, connectionOptions(true), {
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
-        charset: 'utf8mb4',
-      }));
-      await pool.query('SELECT 1');
-
-      state.mode = 'mysql';
-      state.error = null;
-      console.log('[users] MySQL 已连接：' + (config.MYSQL_URL ? 'MYSQL_URL' : (config.MYSQL_HOST + ':' + config.MYSQL_PORT)) +
-        '/' + databaseName());
-
-      await migrateLegacyUsers().catch((err) => {
-        console.error('[users] 旧账号迁移失败：' + (err && err.message));
-      });
-      await migrateFromPg().catch((err) => {
-        console.error('[users] PostgreSQL 账号迁移失败：' + (err && err.message));
-      });
-    } catch (err) {
-      state.error = (err && err.message) ? err.message : String(err);
-      if (config.USER_STORE === 'auto') {
-        /* auto：不让注册/登录不可用，明确告警后回落文件存储 */
-        state.mode = 'file';
-        console.warn('[users] MySQL 不可用（' + state.error + '），已按 USER_STORE=auto 回落到文件存储 ' +
-          LEGACY_USERS_FILE + '。⚠ Render 重启/重新部署会丢失，配置 MYSQL_URL 后可在账号管理页一键迁移入库。');
-      } else {
-        state.mode = 'error';
-        console.error('[users] USER_STORE=mysql 但账号数据库不可用：' + state.error);
-        console.error('[users] 登录/注册/审批接口将返回 503。请配置 MYSQL_URL 或 MYSQL_HOST/MYSQL_USER/MYSQL_PASSWORD；' +
-          '也可改成 USER_STORE=auto 临时回落文件存储。');
+        lastErr = err;
+        if (pool) {
+          await pool.end().catch(() => {});
+          pool = null;
+        }
+        console.warn('[users] 第 ' + (i + 1) + ' 次连接 MySQL 失败：' + ((err && err.message) || err));
       }
     }
+
+    state.error = (lastErr && lastErr.message) ? lastErr.message : String(lastErr || '未知错误');
+    if (config.USER_STORE === 'auto') {
+      /* auto：不让注册/登录不可用，明确告警后回落文件存储 */
+      state.mode = 'file';
+      console.warn('[users] MySQL 不可用（' + state.error + '），已按 USER_STORE=auto 回落到文件存储 ' +
+        LEGACY_USERS_FILE + '。⚠ Render 重启/重新部署会丢失，配置 MYSQL_URL 后可在账号管理页一键迁移入库。');
+    } else {
+      state.mode = 'error';
+      console.error('[users] USER_STORE=mysql 但账号数据库不可用：' + state.error +
+        '（已重试 ' + RETRY_DELAYS.length + ' 次，' + RETRY_AFTER_FAIL_MS + 'ms 后允许再试）');
+    }
     return state;
-  })();
+  })().finally(() => { initPromise = null; });
   return initPromise;
 }
 
