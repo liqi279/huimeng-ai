@@ -59,8 +59,90 @@ const KEYLESS = [
   },
 ];
 
-/* PROVIDERS（免费额度平台）— 全部移除：用户明确要纯免密钥通道 */
-const PROVIDERS = [];
+/* PROVIDERS（免费额度平台）
+ * 只用于「接入设置 / API 接入管理」列出可配置平台；生成默认仍是免密钥通道，
+ * 用户不填密钥不会走这里。之前被清空导致前端 /catalog 收到 providers: []，
+ * 设置页「接入总数」只剩 RayinAPI 一条。 */
+const PROVIDERS = [
+  {
+    id: 'siliconflow',
+    name: '硅基流动 SiliconFlow',
+    base: 'https://api.siliconflow.cn/v1',
+    color: '#60a5fa',
+    keyUrl: 'https://cloud.siliconflow.cn/account/ak',
+    models: [
+      { id: 'Kwai-Kolors/Kolors', name: 'Kolors 中文动漫', badge: '动漫 · 官方' },
+      { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', badge: '通用 · 快速' },
+      { id: 'black-forest-labs/FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用 · 高质量' },
+      { id: 'stabilityai/stable-diffusion-3.5-large', name: 'SD 3.5 Large', badge: 'SD · 标准' },
+    ],
+  },
+  {
+    id: 'modelscope',
+    name: '魔搭 ModelScope',
+    base: 'https://api-inference.modelscope.cn/v1',
+    color: '#34d399',
+    keyUrl: 'https://modelscope.cn/my/myaccesstoken',
+    models: [
+      { id: 'Kolors', name: 'Kolors 中文动漫', badge: '动漫 · 官方' },
+      { id: 'FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
+    ],
+  },
+  {
+    id: 'together',
+    name: 'Together AI',
+    base: 'https://api.together.xyz/v1',
+    color: '#fb923c',
+    keyUrl: 'https://api.together.xyz/settings/api-keys',
+    models: [
+      { id: 'black-forest-labs/FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
+      { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', badge: '快速' },
+      { id: 'stabilityai/stable-diffusion-xl-base-1.0', name: 'SDXL 1.0', badge: 'SD · 经典' },
+    ],
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    base: 'https://openrouter.ai/api/v1',
+    color: '#f472b6',
+    keyUrl: 'https://openrouter.ai/keys',
+    models: [
+      { id: 'black-forest-labs/flux.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
+      { id: 'google/imagen-3.0-free', name: 'Imagen 3.0 Free', badge: '免费' },
+    ],
+  },
+  {
+    id: 'dashscope',
+    name: '阿里百炼 DashScope',
+    base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    color: '#6366f1',
+    keyUrl: 'https://dashscope.console.aliyun.com/apiKey',
+    models: [
+      { id: 'flux-schnell', name: 'FLUX Schnell', badge: '阿里 · 官方' },
+      { id: 'wanx-v1', name: '通义万相', badge: '阿里 · 中文' },
+    ],
+  },
+  {
+    id: 'ark',
+    name: '火山方舟 Ark',
+    base: 'https://ark.cn-beijing.volces.com/api/v3',
+    color: '#ef4444',
+    keyUrl: 'https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey',
+    models: [
+      { id: 'doubao-1-5-vision-pro-32k-250115', name: '豆包 Vision Pro', badge: '火山' },
+    ],
+  },
+  {
+    id: 'hunyuan',
+    name: '混元 Hunyuan',
+    base: 'https://api.hunyuan.cloud.tencent.com/v1',
+    color: '#06b6d4',
+    keyUrl: 'https://cloud.tencent.com/product/hunyuan',
+    models: [
+      { id: 'hunyuan-image', name: '混元生图', badge: '腾讯' },
+    ],
+  },
+];
 
 /* RayinAI 代理 —— 两套 key，各 3 个图像模型（2026-10-30 从 API 拉取确认）
  *
