@@ -70553,6 +70553,22 @@ window.HMChat = (function () {
     if (!doc.bindings || typeof doc.bindings !== 'object') doc.bindings = {};
     if (!doc.billing || typeof doc.billing !== 'object') doc.billing = {};
     if (!doc.rayin || typeof doc.rayin !== 'object') doc.rayin = {};
+    /* Rayin 拆卡迁移：同一平台按模型系列拆成两条独立配置，原 Key / 类型 / 计费沿用 */
+    if (!doc.providers['__rayin_banana__']) {
+      var baseRec = doc.providers['__rayin__'] || {};
+      var sharedBase = baseRec.base || doc.rayin.base || 'https://www.rayinai.com/v1';
+      var sharedKey = baseRec.key || doc.rayin.key || '';
+      doc.providers['__rayin__'] = Object.assign({}, baseRec, {
+        name: 'RayinAPI · GPT-image', base: sharedBase, key: sharedKey,
+        engine: 'gpt-image', model: baseRec.model || doc.gptModel || 'gpt-image-2', model2: ''
+      });
+      doc.providers['__rayin_banana__'] = {
+        name: 'RayinAPI · Gemini Banana', base: sharedBase, key: sharedKey,
+        engine: 'banana', model: doc.bananaModel || 'gemini-3.1-flash-image', model2: ''
+      };
+      if (!doc.bindings['__rayin_banana__'] && doc.bindings['__rayin__']) doc.bindings['__rayin_banana__'] = doc.bindings['__rayin__'];
+      if (!doc.billing['__rayin_banana__'] && doc.billing['__rayin__']) doc.billing['__rayin_banana__'] = doc.billing['__rayin__'];
+    }
     doc.updatedAt = Number(doc.updatedAt) || 0;
     apiDocCache = doc;
     return doc;
@@ -70642,25 +70658,43 @@ window.HMChat = (function () {
         billing: apiBilling(p.id)
       };
     });
-    // RayinAPI 单独一条
+    // RayinAPI：同一平台按模型系列拆成两条独立配置
     var prefs = (App.state && App.state.prefs) || {};
     var rayinPrefs = (doc.rayin && (doc.rayin.base || doc.rayin.key)) ? doc.rayin : (prefs.rayin || {});
+    var gptRec = doc.providers['__rayin__'] || {};
+    var banRec = doc.providers['__rayin_banana__'] || {};
+    var sharedBase = rayinPrefs.base || gptRec.base || 'https://www.rayinai.com/v1';
+    var sharedKey = rayinPrefs.key || gptRec.key || banRec.key || '';
+    var rayinModels = (App.state && App.state.catalog && App.state.catalog.rayin) || [];
     list.push({
       id: '__rayin__',
-      name: 'RayinAPI（GPT-image / Gemini Banana）',
-      base: rayinPrefs.base || 'https://www.rayinai.com/v1',
-      key: rayinPrefs.key || '',
-      model: doc.gptModel || prefs.gptModel || 'gpt-image-2',
-      model2: doc.bananaModel || prefs.bananaModel || 'gemini-3.1-flash-image',
-      models: (App.state && App.state.catalog && App.state.catalog.rayin) || [],
-      enabled: true,
+      name: 'RayinAPI · GPT-image',
+      base: gptRec.base || sharedBase,
+      key: gptRec.key || sharedKey,
+      model: gptRec.model || doc.gptModel || prefs.gptModel || 'gpt-image-2',
+      models: rayinModels.filter(function (m) { return m.engine === 'gpt-image'; }),
+      enabled: ((App.state && App.state.engine) || 'gpt-image') === 'gpt-image',
       isRayin: true,
+      rayinVariant: 'gpt',
       type: apiBinding('__rayin__'),
       billing: apiBilling('__rayin__')
     });
+    list.push({
+      id: '__rayin_banana__',
+      name: 'RayinAPI · Gemini Banana',
+      base: banRec.base || sharedBase,
+      key: banRec.key || sharedKey,
+      model: banRec.model || doc.bananaModel || prefs.bananaModel || 'gemini-3.1-flash-image',
+      models: rayinModels.filter(function (m) { return m.engine === 'banana'; }),
+      enabled: (App.state && App.state.engine) === 'banana',
+      isRayin: true,
+      rayinVariant: 'banana',
+      type: apiBinding('__rayin_banana__'),
+      billing: apiBilling('__rayin_banana__')
+    });
     // 自定义已填但 catalog 里没有的
     Object.keys(saved).forEach(function (id) {
-      if (id === '__rayin__') return;
+      if (id === '__rayin__' || id === '__rayin_banana__') return;
       if (!list.find(function (p) { return p.id === id; })) {
         list.push({
           id: id,
@@ -70780,16 +70814,25 @@ window.HMChat = (function () {
       else if (doc.bindings[id] == null) doc.bindings[id] = '';
       if (p.billing === 'free' || p.billing === 'paid') doc.billing[id] = p.billing;
 
-      if (id === '__rayin__') {
+      if (id === '__rayin__' || id === '__rayin_banana__') {
+        var isBanana = id === '__rayin_banana__';
         var prevRayin = doc.rayin || {};
-        var rayinKey = p.key || prevRayin.key || '';
+        var rayinKey = p.key || prevRayin.key || prevProvider.key || '';
         prefs.rayin = { base: p.base, key: rayinKey };
-        prefs.gptModel = p.model;
-        prefs.bananaModel = p.model2 || prefs.bananaModel;
+        if (isBanana) {
+          prefs.bananaModel = p.model;
+          doc.bananaModel = p.model;
+          if (p.enabled) App.state.engine = 'banana';
+        } else {
+          prefs.gptModel = p.model;
+          doc.gptModel = p.model;
+          if (p.enabled) App.state.engine = 'gpt-image';
+        }
         doc.rayin = { base: p.base, key: rayinKey };
-        doc.gptModel = p.model;
-        doc.bananaModel = prefs.bananaModel;
-        if (p.enabled) App.state.engine = 'gpt-image';
+        nextProvider.model = p.model;
+        nextProvider.model2 = '';
+        nextProvider.engine = isBanana ? 'banana' : 'gpt-image';
+        doc.providers[id] = nextProvider;
         try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(prefs.rayin)); } catch (e) {}
       } else {
         providers[id] = { base: p.base, key: nextProvider.key, model: p.model };
@@ -70814,7 +70857,7 @@ window.HMChat = (function () {
         var gotKey = null;
         if (cloud) {
           if (cloud.providers && cloud.providers[id]) gotKey = cloud.providers[id].key;
-          else if (id === '__rayin__' && cloud.rayin) gotKey = cloud.rayin.key;
+          else if ((id === '__rayin__' || id === '__rayin_banana__') && cloud.rayin) gotKey = cloud.rayin.key;
         }
         if (cloud && gotKey != null && String(gotKey) !== expectKey) {
           throw new Error('云端未保存 API Key，请重试');
@@ -70904,12 +70947,6 @@ window.HMChat = (function () {
     var keyMask = p._showKey ? hmEsc(p.key) : maskKey(p.key);
     var keyEye = p._showKey ? '👁‍🗨' : '👁';
 
-    var extraField = '';
-    if (p.isRayin) {
-      extraField =
-        '<label class="hm-api-field"><span>Gemini Banana 模型</span>' +
-        '<input class="hm-api-input" data-ik="model2" value="' + hmEsc(p.model2 || '') + '" placeholder="gemini-3.1-flash-image"></label>';
-    }
     var nameField = p.isCustom
       ? '<label class="hm-api-field"><span>平台名称</span>' +
         '<input class="hm-api-input" data-ik="name" value="' + hmEsc(p.name) + '" placeholder="例如 OpenAI / 硅基流动"></label>'
@@ -70940,9 +70977,8 @@ window.HMChat = (function () {
             '<input class="hm-api-input" data-ik="key" type="' + (p._showKey ? 'text' : 'password') + '" value="' + hmEsc(p.key) + '" placeholder="sk-...">' +
             '<button class="hm-api-eye" data-eye title="显示/隐藏">' + keyEye + '</button>' +
           '</div></label>' +
-        '<label class="hm-api-field"><span>' + (p.isRayin ? 'GPT-image 模型' : '默认模型 ID') + '</span>' +
+        '<label class="hm-api-field"><span>' + (p.isRayin ? (p.rayinVariant === 'banana' ? 'Gemini Banana 模型' : 'GPT-image 模型') : '默认模型 ID') + '</span>' +
           '<input class="hm-api-input" data-ik="model" value="' + hmEsc(p.model) + '" placeholder="..."></label>' +
-        extraField +
       '</div>' +
       '<div class="hm-api-card-foot">' +
         '<div class="hm-api-foot-left">' +
@@ -70957,7 +70993,7 @@ window.HMChat = (function () {
         '<div class="hm-api-foot-btns">' +
           '<button class="hm-api-btn hm-api-btn-ghost" data-test>测试连接</button>' +
           '<button class="hm-api-btn hm-api-btn-primary" data-save>保存</button>' +
-          (!p.preset && p.id !== '__rayin__' ? '<button class="hm-api-btn hm-api-btn-danger" data-del>删除</button>' : '') +
+          (!p.preset && !p.isRayin ? '<button class="hm-api-btn hm-api-btn-danger" data-del>删除</button>' : '') +
         '</div>' +
       '</div>' +
     '</div>';
