@@ -15565,6 +15565,24 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   white-space: nowrap;
 }
 .hm-api-type-none { font-size: 10.5px; color: rgba(160, 155, 185, 0.55); white-space: nowrap; }
+.hm-api-series {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  margin: 2px 0;
+}
+.hm-api-series-name {
+  font-size: 10px; color: rgba(167, 139, 250, 0.9);
+  padding: 1px 6px; border-radius: 5px;
+  background: rgba(167, 139, 250, 0.10);
+  border: 1px solid rgba(167, 139, 250, 0.18);
+  white-space: nowrap;
+}
+.hm-api-model-chip {
+  display: inline-block; padding: 1px 7px; border-radius: 5px;
+  font-size: 10.5px; color: rgba(225, 222, 240, 0.88);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  white-space: nowrap;
+}
 .hm-api-model-state .is-on { color: #4ade80; font-size: 11px; }
 .hm-api-model-state .is-off { color: rgba(160, 155, 185, 0.55); font-size: 11px; }
 .hm-api-model-empty {
@@ -70376,6 +70394,33 @@ window.HMChat = (function () {
     return out;
   }
 
+  /* 同系列识别：仅按已有模型名/ID 的明确前缀归组，认不出来的保持自己的名字，
+     不凭空编造系列；同一系列只保留一条接入记录展示。 */
+  function apiSeriesOf(m) {
+    var s = String(m.name || m.id || '');
+    var low = s.toLowerCase();
+    if (low.indexOf('flux') >= 0) return 'FLUX.1';
+    if (low.indexOf('kolors') >= 0) return 'Kolors';
+    if (low.indexOf('sdxl') >= 0 || low.indexOf('sd 3') >= 0 || low.indexOf('stable-diffusion') >= 0) return 'Stable Diffusion';
+    if (low.indexOf('gemini') >= 0) return 'Gemini';
+    if (low.indexOf('gpt-image') >= 0) return 'GPT-image';
+    if (low.indexOf('imagen') >= 0) return 'Imagen';
+    if (s.indexOf('通义万相') >= 0) return '通义万相';
+    if (s.indexOf('豆包') >= 0) return '豆包';
+    if (s.indexOf('混元') >= 0) return '混元';
+    return s || '未命名';
+  }
+
+  function apiSeriesGroups(models) {
+    var map = {}, order = [];
+    models.forEach(function (m) {
+      var name = apiSeriesOf(m);
+      if (!map[name]) { map[name] = []; order.push(name); }
+      map[name].push(m);
+    });
+    return order.map(function (name) { return { name: name, models: map[name] }; });
+  }
+
   /* 平台/类型互相约束：先按平台过滤可选类型，再按已选类型收敛平台，
      保证不会出现「平台 A + 类型 B 永远空表」的死角。 */
   function normalizeApiFilter(providers) {
@@ -70602,12 +70647,23 @@ window.HMChat = (function () {
       '</div>';
   }
 
+  /* 一条接入记录 = 一行；同系列模型归并在同一格的系列标签下，不再一个模型一行 */
   function apiModelTableHtml(rows) {
     if (!rows.length) return '<div class="hm-api-model-empty">当前筛选下没有模型</div>';
     var body = rows.map(function (r) {
+      var groups = apiSeriesGroups(r.models);
+      var modelsHtml = groups.map(function (g) {
+        var chips = g.models.map(function (m) {
+          return '<span class="hm-api-model-chip" title="' + hmEsc(m.id) + '">' + hmEsc(m.name) + '</span>';
+        }).join('');
+        var showLabel = !(g.models.length === 1 && g.models[0].name === g.name);
+        return '<div class="hm-api-series">' +
+          (showLabel ? '<span class="hm-api-series-name">' + hmEsc(g.name) + '</span>' : '') +
+          chips + '</div>';
+      }).join('');
       return '<tr>' +
         '<td class="hm-api-model-platform" title="' + hmEsc(r.p.name) + '">' + hmEsc(r.p.name) + '</td>' +
-        '<td class="hm-api-log-model" title="' + hmEsc(r.m.id) + '">' + hmEsc(r.m.name) + '</td>' +
+        '<td class="hm-api-log-model">' + modelsHtml + '</td>' +
         '<td>' + (r.p.type ? '<span class="hm-api-type-badge">' + apiTypeLabel(r.p.type) + '</span>'
           : '<span class="hm-api-type-none">未分类</span>') + '</td>' +
         '<td class="hm-api-model-state">' + (r.p.enabled ? '<span class="is-on">● 已启用</span>'
@@ -70615,7 +70671,7 @@ window.HMChat = (function () {
         '</tr>';
     }).join('');
     return '<div class="hm-api-model-wrap"><table class="hm-api-log-table hm-api-model-table">' +
-      '<thead><tr><th>平台</th><th>模型</th><th>类型</th><th>状态</th></tr></thead>' +
+      '<thead><tr><th>平台</th><th>模型（按系列归并）</th><th>类型</th><th>状态</th></tr></thead>' +
       '<tbody>' + body + '</tbody></table></div>';
   }
 
@@ -70653,14 +70709,15 @@ window.HMChat = (function () {
     var platformProviders = providers.filter(function (p) {
       return !apiFilter.platform || p.id === apiFilter.platform;
     });
-    var rows = [];
-    platformProviders.forEach(function (p) {
-      apiModelsOf(p).forEach(function (m) { rows.push({ p: p, m: m }); });
+    var rows = platformProviders.map(function (p) {
+      return { p: p, models: apiModelsOf(p) };
     });
     if (apiFilter.types.length) {
       rows = rows.filter(function (r) { return apiFilter.types.indexOf(r.p.type) >= 0; });
     }
     var unclassified = rows.filter(function (r) { return !r.p.type; }).length;
+    var modelCount = rows.reduce(function (n, r) { return n + r.models.length; }, 0);
+    var seriesCount = rows.reduce(function (n, r) { return n + apiSeriesGroups(r.models).length; }, 0);
     var cardsHtml = '';
     platformProviders.forEach(function (p) { cardsHtml += apiCardHtml(p); });
 
@@ -70670,8 +70727,9 @@ window.HMChat = (function () {
       apiSectionControlsHtml(providers, supported) +
       '    </div>' +
       '    <div class="hm-api-listbox">' +
-      '      <div class="hm-api-subhead">模型列表 <span>' + rows.length + ' 个' +
-        (unclassified ? ' · 未分类 ' + unclassified : '') + '</span></div>' +
+      '      <div class="hm-api-subhead">模型列表 <span>' + rows.length + ' 条接入记录 · ' +
+        seriesCount + ' 个系列 · ' + modelCount + ' 个模型' +
+        (unclassified ? ' · 未分类 ' + unclassified + ' 条' : '') + '</span></div>' +
       apiModelTableHtml(rows) +
       '      <div class="hm-api-subhead">接入配置 <span>' + platformProviders.length + ' 条</span></div>' +
       (platformProviders.length
