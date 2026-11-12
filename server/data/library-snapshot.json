@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-12T12:52:43.658Z",
+  "generatedAt": "2026-11-12T13:12:03.387Z",
   "source": "huimeng_library.books",
   "total": 70,
   "areas": {
-    "paint": 55,
-    "ref": 15
+    "paint": 54,
+    "ref": 16
   },
   "books": [
     {
@@ -3502,7 +3502,7 @@
       "author": "渡辺信吾",
       "intro": "西洋甲胄与武具作画资料：头盔、胸甲、护手与武器的结构分解，适合设定与考据参考。",
       "pageCount": 82,
-      "area": "paint",
+      "area": "ref",
       "toc": [],
       "pdfKey": "library/books/056-western-armor-reference.pdf",
       "pdfBytes": 45292322,
