@@ -7795,6 +7795,25 @@ body.hm-light .hm-page-empty {
   color: rgba(148, 163, 184, 0.8);
   margin-top: 1px;
 }
+/* 叠放组：缩略图靠左上，名称在卡片下方，右下角保留数量角标 */
+.folder-card.is-stack { overflow: visible; }
+.folder-card.is-stack .folder-thumb {
+  grid-template-columns: repeat(2, 58px);
+  grid-auto-rows: 42px;
+  align-content: start;
+  justify-content: start;
+  gap: 6px;
+  padding: 16px;
+}
+.folder-card.is-stack .folder-info {
+  position: absolute;
+  left: 2px; right: 2px; top: 100%;
+  padding: 8px 4px 0;
+  background: none;
+  text-align: left;
+}
+.folder-card.is-stack .folder-info strong { font-size: 12px; color: #cbd5e1; }
+.folder-card.is-stack .folder-info small { display: none; }
 
 /* 文件夹预览弹窗 */
 .hm-folder-preview-card {
@@ -65973,6 +65992,9 @@ window.HMChat = (function () {
   /* 某文件夹是否"有内容"：自身有作品，或有子文件夹 */
   function folderHasContent(id) {
     if (state.works.some(function (w) { return desk.assigns[w.id] === id; })) return true;
+    /* 叠放组：只要还有归属记录就显示，不能因为另一台设备还没把作品拉下来就整组消失 */
+    var isStack = desk.folders.some(function (f) { return f.id === id && /^叠放/.test(f.name || ''); });
+    if (isStack && Object.keys(desk.assigns).some(function (k) { return desk.assigns[k] === id; })) return true;
     return desk.folders.some(function (f) { return (f.parentId || null) === id; });
   }
 
@@ -66106,8 +66128,12 @@ window.HMChat = (function () {
   function folderCardHtmlInner(folder) {
     var items = worksUnderFolder(folder.id);
     var subCount = desk.folders.filter(function (f) { return (f.parentId || null) === folder.id; }).length;
+    var isStack = /^叠放/.test(folder.name || '');
+    var assignedCount = 0;
+    Object.keys(desk.assigns).forEach(function (k) { if (desk.assigns[k] === folder.id) assignedCount += 1; });
+    var total = isStack ? Math.max(items.length, assignedCount) : items.length;
     var thumbs = items.slice(0, 4);
-    var more = Math.max(0, items.length - 4);
+    var more = isStack ? total : Math.max(0, items.length - 4);
     var gridHtml = '';
     if (thumbs.length === 0) {
       gridHtml = '<div class="folder-grid-empty">📂</div>';
@@ -66118,7 +66144,7 @@ window.HMChat = (function () {
         return '<img src="' + esc(w.thumb || w.url || '') + '" data-fp="' + esc(w.id) + '" class="folder-t folder-t-' + i + '" alt="">';
       }).join('');
     }
-    var moreHtml = more > 0 ? '<span class="folder-more">+' + more + '</span>' : '';
+    var moreHtml = more > 0 ? '<span class="folder-more">' + (isStack ? more : '+' + more) + '</span>' : '';
     var meta = items.length + ' 项' + (subCount ? ' · ' + subCount + ' 个子文件夹' : '');
     return '<div class="folder-thumb">' + gridHtml + moreHtml + '</div>' +
       '<div class="folder-info"><strong>' + esc(folder.name) + '</strong><small>' + meta + '</small></div>' +
@@ -66214,6 +66240,7 @@ window.HMChat = (function () {
         grid.appendChild(existing);
       }
       existing.innerHTML = folderCardHtmlInner(f);
+      existing.classList.toggle('is-stack', /^叠放/.test(f.name || ''));
       var pos = desk.positions[f.id];
       if (!pos || !pos.pxLeft) {
         pos = nextFreeSlot(works.length + folders.indexOf(f), grid, occupied);
@@ -66528,7 +66555,14 @@ window.HMChat = (function () {
     }
     if (!ids.length) return;
 
-    view.z += 1;
+    /* 每次拖动都要真正压在已有卡片之上：z 计数在刷新后会回到 20，
+       若不清到当前最大值，重开页面后再拖会被上次的高 z 卡片盖住 */
+    var maxZ = view.z;
+    Object.keys(desk.positions).forEach(function (k) {
+      var z = Number(desk.positions[k] && desk.positions[k].z) || 0;
+      if (z > maxZ) maxZ = z;
+    });
+    view.z = maxZ + 1;
     var items = [];
     ids.forEach(function (wid) {
       var q;
@@ -66742,6 +66776,29 @@ window.HMChat = (function () {
 
     if (merged) return;
 
+    /* 图片拖到另一张图片上松手 → 叠成一张「叠放」卡（参考图里的效果）：
+       两张缩略图同卡展示 + 右下角数量角标，点开里面仍可自由拖动、互相压住 */
+    if (event && typeof document.elementFromPoint === 'function' && !merged) {
+      var overEl = document.elementFromPoint(event.clientX, event.clientY);
+      var overWork = overEl ? overEl.closest('.desk-card[data-work]') : null;
+      if (overWork) {
+        var targetWid = overWork.dataset.work;
+        var moving = current.items.map(function (i) { return String(i.id || '').replace(/^job:/, ''); })
+          .filter(function (id) { return id && !desk.folders.some(function (f) { return f.id === id; }); });
+        if (moving.length && moving.indexOf(targetWid) < 0) {
+          var stack = stackWorks(targetWid, moving);
+          if (stack) {
+            persistNow();
+            clearSelection();
+            renderDesktop();
+            A.toast('已叠放（' + stack.count + ' 张）', 'success');
+            merged = true;
+          }
+        }
+      }
+    }
+    if (merged) return;
+
     /* 没合并：清 is-dragging + 保存位置 */
     if (current.moved) {
       current.items.forEach(function (item) {
@@ -66764,6 +66821,33 @@ window.HMChat = (function () {
     }
 
     persistSoon();
+  }
+
+  /* 把图片叠到目标图片上：目标已属于某个「叠放」组就并入，否则新建一组。
+     数据仍用 folders + assigns 表达，所以刷新和换设备都能靠 /docs/desk 还原。 */
+  function stackWorks(targetId, ids) {
+    if (!targetId || !ids || !ids.length) return null;
+    var folderId = desk.assigns[targetId] || null;
+    var folder = folderId ? desk.folders.find(function (f) { return f.id === folderId; }) : null;
+    if (!folder || !/^叠放/.test(folder.name || '')) {
+      folder = {
+        id: 'f' + A.uid(),
+        name: '叠放 (2)',
+        createdAt: Date.now(),
+        parentId: view.activeFolder || null
+      };
+      desk.folders.unshift(folder);
+      desk.assigns[targetId] = folder.id;
+    }
+    ids.forEach(function (id) {
+      if (id && id !== targetId) desk.assigns[id] = folder.id;
+    });
+    if (ids.length) {
+      var count = Object.keys(desk.assigns).filter(function (k) { return desk.assigns[k] === folder.id; }).length;
+      folder.name = '叠放 (' + count + ')';
+      return { id: folder.id, count: count };
+    }
+    return { id: folder.id, count: 0 };
   }
 
   /* 把一组 id 合并进文件夹（create=true 时若无文件夹则新建） */
