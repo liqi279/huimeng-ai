@@ -66942,9 +66942,9 @@ window.HMChat = (function () {
       pendingKey: pendingKey,
       pointerId: event.pointerId
     };
-    /* 文件夹/叠放卡：拖动按网格插入排序（其他卡让位）。作品卡保留原有「自由拖动 +
-       拖到另一张图上叠放」语义，避免把生成图随手一拖就吸附到网格里。 */
-    if (card.classList.contains('folder-card') && items.length === 1 &&
+    /* 文件夹卡：拖动按网格插入排序（其他卡让位）。作品卡与叠放卡保留自由拖动语义：
+       叠放卡必须能放到桌面任意位置，不能像文件夹那样被网格插队吸附。 */
+    if (card.classList.contains('folder-card') && !card.dataset.stack && items.length === 1 &&
         !(event.ctrlKey || event.metaKey || event.shiftKey)) {
       var all = [], elMap = {}, draggedId = items[0].id;
       Array.prototype.forEach.call(grid.querySelectorAll('.desk-card[data-work], .folder-card[data-folder]'), function (el) {
@@ -67138,6 +67138,36 @@ window.HMChat = (function () {
         renderDesktop();
         /* 移动结束后焦点落在这张叠放上：选中态、键盘删除、后续右键都作用于它 */
         selectOnly(current.draggedId);
+      }
+      return;
+    }
+
+    /* 叠放卡：自由拖到桌面任意位置，松手即写回坐标并同步；
+       不参与文件夹/图片的合并与网格排序，避免被任何目标卡「吸」回去。 */
+    var stackOnlyId = '';
+    if (current.items.length === 1 && current.items[0].el && current.items[0].el.dataset.stack) {
+      stackOnlyId = current.items[0].el.dataset.stack;
+    }
+    if (stackOnlyId) {
+      current.items.forEach(function (item) {
+        if (item.el) item.el.classList.remove('is-dragging');
+      });
+      if (current.moved) {
+        current.items.forEach(function (item) {
+          var left = typeof item.nextLeft === 'number' ? item.nextLeft : item.left;
+          var top = typeof item.nextTop === 'number' ? item.nextTop : item.top;
+          var pos = desk.positions[item.id] || {};
+          pos.pxLeft = left;
+          pos.pxTop = Math.max(0, top);
+          pos._userSet = true;
+          delete pos.x;
+          delete pos.y;
+          desk.positions[item.id] = pos;
+        });
+        persistNow();
+        renderDesktop();
+        /* 移动结束后焦点落在被移动的叠放上：选中态、键盘操作、右键都作用于它 */
+        selectOnly(stackOnlyId);
       }
       return;
     }
