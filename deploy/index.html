@@ -3080,6 +3080,10 @@ body[data-engine="banana"] .split-controls {
   color: #8c84a9;
 }
 
+/* 连接状态统一配色：已连接绿色，未连接/失败/异常红色 */
+#backendStatus { color: #f87171; }
+body[data-backend="online"] #backendStatus { color: #4ade80; }
+
 .api-actions {
   display: flex;
   gap: 10px;
@@ -15341,22 +15345,22 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   font-size: 11px; font-weight: 500; letter-spacing: 0.03em;
   white-space: nowrap;
 }
-.hm-api-state.is-idle  { color: rgba(160, 155, 185, 0.65); }
+.hm-api-state.is-idle  { color: #f87171; text-shadow: 0 0 6px rgba(248, 113, 113, 0.32); }
 .hm-api-state.is-ok    { color: #4ade80; text-shadow: 0 0 6px rgba(74, 222, 128, 0.4); }
 .hm-api-state.is-bad   { color: #f87171; text-shadow: 0 0 6px rgba(248, 113, 113, 0.4); }
 .hm-api-state.is-testing {
   display: inline-flex; align-items: center; gap: 5px;
-  color: #fbbf24;
+  color: #f87171;
 }
 .hm-api-state.is-testing i {
   width: 8px; height: 8px; border-radius: 50%;
-  background: #fbbf24;
+  background: #f87171;
   animation: hmApiSpin 0.9s linear infinite;
 }
 @keyframes hmApiSpin {
-  0% { transform: rotate(0); box-shadow: 0 -6px 0 #fbbf24, 4px -4px 0 #fbbf24, 6px 0 0 #fbbf24; opacity: 0.5; }
+  0% { transform: rotate(0); box-shadow: 0 -6px 0 #f87171, 4px -4px 0 #f87171, 6px 0 0 #f87171; opacity: 0.5; }
   50% { opacity: 1; }
-  100% { transform: rotate(360deg); box-shadow: 0 -6px 0 rgba(251,191,36,0.4), 4px -4px 0 rgba(251,191,36,0.4), 6px 0 0 rgba(251,191,36,0.4); opacity: 0.5; }
+  100% { transform: rotate(360deg); box-shadow: 0 -6px 0 rgba(248,113,113,0.4), 4px -4px 0 rgba(248,113,113,0.4), 6px 0 0 rgba(248,113,113,0.4); opacity: 0.5; }
 }
 
 /* 开关 */
@@ -15600,7 +15604,7 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   white-space: nowrap;
 }
 .hm-api-model-state .is-on { color: #4ade80; font-size: 11px; }
-.hm-api-model-state .is-off { color: rgba(160, 155, 185, 0.55); font-size: 11px; }
+.hm-api-model-state .is-off { color: #f87171; font-size: 11px; }
 .hm-api-model-empty {
   padding: 22px 16px; text-align: center;
   font-size: 12px; color: rgba(160, 155, 185, 0.6);
@@ -17114,12 +17118,12 @@ body.rail-collapsed .hm-page {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #a9884f;
+  background: #f87171;
 }
 
 .lib-status-dot.is-on {
-  background: #46c98b;
-  box-shadow: 0 0 8px rgba(70, 201, 139, 0.8);
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
 }
 
 .lib-status-sep {
@@ -19570,9 +19574,9 @@ body.dv-open .hm-page {
   border-radius: 99px;
   font-size: 11px;
   font-weight: 650;
-  color: #c4b5fd;
-  border: 1px solid rgba(167, 139, 250, 0.42);
-  background: rgba(139, 92, 246, 0.14);
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.42);
+  background: rgba(248, 113, 113, 0.14);
 }
 
 .tc-body {
@@ -19630,8 +19634,8 @@ body.dv-open .hm-page {
 .tc-input:focus, .tc-select:focus { outline: none; border-color: rgba(167,139,250,.55); }
 
 .tc-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.tc-api-state { font-size: 11px; color: var(--muted); }
-.tc-api-state.is-ok { color: var(--green); }
+.tc-api-state { font-size: 11px; color: #f87171; }
+.tc-api-state.is-ok { color: #4ade80; }
 .tc-hint { margin: 8px 0 0; font-size: 10.5px; line-height: 1.7; color: var(--muted); }
 
 .tc-btn {
@@ -19731,9 +19735,9 @@ body.dv-open .hm-page {
 
 /* 真实推理模式补充 */
 .tc-head-badge.is-ok {
-  color: #a7f3d0;
-  border-color: rgba(52, 211, 153, 0.45);
-  background: rgba(52, 211, 153, 0.14);
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(74, 222, 128, 0.14);
 }
 .tc-stage video {
   max-width: 100%;
@@ -20042,10 +20046,10 @@ body.dv-open .hm-page {
 .hm-admin-account-status i {
   width: 6px; height: 6px; border-radius: 50%;
 }
-.hm-admin-account-status.is-online { color: #10b981; }
-.hm-admin-account-status.is-online i { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
-.hm-admin-account-status.is-offline { color: #475569; }
-.hm-admin-account-status.is-offline i { background: #475569; }
+.hm-admin-account-status.is-online { color: #4ade80; }
+.hm-admin-account-status.is-online i { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.6); }
+.hm-admin-account-status.is-offline { color: #f87171; }
+.hm-admin-account-status.is-offline i { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.5); }
 
 .hm-admin-account-bars { margin-bottom: 10px; }
 .hm-admin-account-item {
@@ -21766,9 +21770,10 @@ body.dv-open .hm-page {
       <style>
         .hm-modeling{display:flex;flex-direction:column;gap:12px;height:calc(100vh - 140px);min-height:480px}
         .hm-m-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--hm-surface,#1b2030);border:1px solid var(--hm-line,#2a3142);border-radius:12px;flex-wrap:wrap}
-        .hm-m-dot{width:10px;height:10px;border-radius:50%;background:#555;flex:none}
-        .hm-m-dot.on{background:#3ecf6e}.hm-m-dot.err{background:#ff5c5c}.hm-m-dot.conn{background:#f5a623}
-        .hm-m-status{font-size:12px;color:var(--hm-dim,#8b93a1);white-space:nowrap}
+        .hm-m-dot{width:10px;height:10px;border-radius:50%;background:#ff5c5c;flex:none}
+        .hm-m-dot.on{background:#4ade80}.hm-m-dot.err{background:#ff5c5c}.hm-m-dot.conn{background:#ff5c5c}
+        .hm-m-status{font-size:12px;color:#f87171;white-space:nowrap}
+        .hm-m-status.on{color:#4ade80}.hm-m-status.err,.hm-m-status.conn{color:#f87171}
         .hm-m-bar .hm-m-spacer{flex:1}
         .hm-m-bar input{font-size:12px;border:1px solid var(--hm-line,#2a3142);border-radius:8px;background:#11151f;color:var(--hm-text,#e6e9ef);padding:7px 10px}
         .hm-m-bar input[type=text]{width:150px}
@@ -29218,7 +29223,7 @@ var BlenderBridge = (function () {
   }
 
   function setStatus(txt, cls) {
-    if (statusEl()) statusEl().textContent = txt;
+    if (statusEl()) { statusEl().textContent = txt; statusEl().className = 'hm-m-status ' + (cls || ''); }
     if (dotEl()) dotEl().className = 'hm-m-dot ' + (cls || '');
   }
 
@@ -73228,7 +73233,7 @@ window.HMChat = (function () {
         '<div>最近同步：<b>' + (sync.lastSync ? new Date(sync.lastSync).toLocaleString() : '尚未同步') + '</b></div>' +
         '<div>待重试：<b>' + queue.length + '</b> 条 · 冲突：<b>' + (sync.conflicts || 0) + '</b></div>' +
       '</div>' + warn +
-      (sync.lastError ? '<div style="color:#fbbf24;font-size:12px;margin-top:6px">最近错误：' + String(sync.lastError).slice(0, 160) + '</div>' : '');
+      (sync.lastError ? '<div style="color:#f87171;font-size:12px;margin-top:6px">最近错误：' + String(sync.lastError).slice(0, 160) + '</div>' : '');
 
     var btnNow = el.querySelector('#hmSyncNow');
     if (btnNow) btnNow.onclick = function () {
