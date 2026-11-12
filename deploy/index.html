@@ -15565,6 +15565,22 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   white-space: nowrap;
 }
 .hm-api-type-none { font-size: 10.5px; color: rgba(160, 155, 185, 0.55); white-space: nowrap; }
+.hm-api-billing-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 6px;
+  font-size: 10.5px; white-space: nowrap;
+}
+.hm-api-billing-badge.is-free {
+  color: #86efac; background: rgba(74, 222, 128, 0.14);
+  border: 1px solid rgba(74, 222, 128, 0.24);
+}
+.hm-api-billing-badge.is-paid {
+  color: #fcd34d; background: rgba(251, 191, 36, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.24);
+}
+.hm-api-billing-badge.is-none {
+  color: rgba(160, 155, 185, 0.55); background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+}
 .hm-api-series {
   display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
   margin: 2px 0;
@@ -70267,7 +70283,7 @@ window.HMChat = (function () {
     { id: 'chat', label: 'AI 对话' },
     { id: 'audio', label: '生音频' }
   ];
-  var apiFilter = { platform: '', types: [] };
+  var apiFilter = { platform: '', types: [], billing: '' };
   var apiDocCache = null;
 
   /* 接入配置文档：providers / bindings / rayin，随 /docs/api 同步，换设备可恢复。
@@ -70279,6 +70295,7 @@ window.HMChat = (function () {
     if (!doc || typeof doc !== 'object') doc = {};
     if (!doc.providers || typeof doc.providers !== 'object') doc.providers = {};
     if (!doc.bindings || typeof doc.bindings !== 'object') doc.bindings = {};
+    if (!doc.billing || typeof doc.billing !== 'object') doc.billing = {};
     if (!doc.rayin || typeof doc.rayin !== 'object') doc.rayin = {};
     doc.updatedAt = Number(doc.updatedAt) || 0;
     apiDocCache = doc;
@@ -70303,6 +70320,37 @@ window.HMChat = (function () {
       html += '<option value="' + t.id + '"' + (t.id === selected ? ' selected' : '') + '>' + t.label + '</option>';
     });
     return html;
+  }
+
+  /* 计费方式：每条接入记录一个值，未选择时为「未绑定」，不默认归到免费或收费 */
+  var API_BILLING = [
+    { id: 'free', label: '免费' },
+    { id: 'paid', label: '收费' }
+  ];
+  function apiBilling(id) {
+    var v = getApiDoc().billing[id];
+    return v === 'free' || v === 'paid' ? v : '';
+  }
+  function apiBillingLabel(v) { return v === 'free' ? '免费' : (v === 'paid' ? '收费' : '未绑定'); }
+  function apiBillingKey(p) { return p.billing === 'free' || p.billing === 'paid' ? p.billing : 'unbound'; }
+  function apiBillingOptionsHtml(selected) {
+    var html = '<option value="">未绑定</option>';
+    API_BILLING.forEach(function (b) {
+      html += '<option value="' + b.id + '"' + (b.id === selected ? ' selected' : '') + '>' + b.label + '</option>';
+    });
+    return html;
+  }
+  function apiBillingFilterOptionsHtml(selected) {
+    var html = '<option value="">全部计费</option><option value="unbound"' + (selected === 'unbound' ? ' selected' : '') + '>未绑定</option>';
+    API_BILLING.forEach(function (b) {
+      html += '<option value="' + b.id + '"' + (b.id === selected ? ' selected' : '') + '>' + b.label + '</option>';
+    });
+    return html;
+  }
+  function apiBillingBadgeHtml(v) {
+    return v === 'free' ? '<span class="hm-api-billing-badge is-free">免费</span>'
+      : (v === 'paid' ? '<span class="hm-api-billing-badge is-paid">收费</span>'
+        : '<span class="hm-api-billing-badge is-none">未绑定</span>');
   }
 
   function hmEsc(str) {
@@ -70334,7 +70382,8 @@ window.HMChat = (function () {
         models: p.models || [],
         enabled: p.id === (App.state && App.state.providerId) || !!s.key,
         preset: p,
-        type: apiBinding(p.id)
+        type: apiBinding(p.id),
+        billing: apiBilling(p.id)
       };
     });
     // RayinAPI 单独一条
@@ -70350,7 +70399,8 @@ window.HMChat = (function () {
       models: (App.state && App.state.catalog && App.state.catalog.rayin) || [],
       enabled: true,
       isRayin: true,
-      type: apiBinding('__rayin__')
+      type: apiBinding('__rayin__'),
+      billing: apiBilling('__rayin__')
     });
     // 自定义已填但 catalog 里没有的
     Object.keys(saved).forEach(function (id) {
@@ -70364,7 +70414,8 @@ window.HMChat = (function () {
           model: saved[id].model || '',
           enabled: !!saved[id].key,
           isCustom: true,
-          type: apiBinding(id)
+          type: apiBinding(id),
+          billing: apiBilling(id)
         });
       }
     });
@@ -70430,6 +70481,9 @@ window.HMChat = (function () {
     var scope = apiFilter.platform
       ? providers.filter(function (p) { return p.id === apiFilter.platform; })
       : providers;
+    if (apiFilter.billing) {
+      scope = scope.filter(function (p) { return apiBillingKey(p) === apiFilter.billing; });
+    }
     var supported = {};
     scope.forEach(function (p) { if (p.type) supported[p.type] = 1; });
     apiFilter.types = apiFilter.types.filter(function (t) { return supported[t]; });
@@ -70459,6 +70513,8 @@ window.HMChat = (function () {
       model2: p.model2 || ''
     });
     doc.bindings[id] = p.type || '';
+    if (p.billing === 'free' || p.billing === 'paid') doc.billing[id] = p.billing;
+    else delete doc.billing[id];
 
     if (id === '__rayin__') {
       prefs.rayin = { base: p.base, key: p.key };
@@ -70485,7 +70541,20 @@ window.HMChat = (function () {
       noSync.localSaved = true;
       return Promise.reject(noSync);
     }
-    return push(doc).catch(function (err) {
+    return push(doc).then(function (res) {
+      /* 回读校验：后端返回的文档里必须仍带这次填的 Key，防止被服务端过滤后只剩本机 */
+      var cloud = res && res.doc && res.doc.data;
+      var expectKey = String(p.key || '');
+      var gotKey = null;
+      if (cloud) {
+        if (cloud.providers && cloud.providers[id]) gotKey = cloud.providers[id].key;
+        else if (id === '__rayin__' && cloud.rayin) gotKey = cloud.rayin.key;
+      }
+      if (cloud && gotKey != null && String(gotKey) !== expectKey) {
+        throw new Error('云端未保存 API Key，请重试');
+      }
+      return res;
+    }).catch(function (err) {
       err.localSaved = true;
       throw err;
     });
@@ -70503,12 +70572,15 @@ window.HMChat = (function () {
       delete doc.rayin;
       delete doc.gptModel;
       delete doc.bananaModel;
+      delete doc.bindings[id];
+      delete doc.billing[id];
     } else {
       delete App.state.providers[id];
       try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
       if (App.state.providerId === id) App.state.providerId = null;
       delete doc.providers[id];
       delete doc.bindings[id];
+      delete doc.billing[id];
     }
     doc.updatedAt = Date.now();
     try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
@@ -70610,6 +70682,9 @@ window.HMChat = (function () {
           '<label class="hm-api-type-bind" title="绑定后，上方类型筛选按这里归类">类型' +
             '<select class="hm-api-select sm" data-ik="type">' + apiTypeOptionsHtml(p.type) + '</select>' +
           '</label>' +
+          '<label class="hm-api-type-bind" title="计费方式会随这条接入配置一起保存到云端">计费' +
+            '<select class="hm-api-select sm" data-ik="billing">' + apiBillingOptionsHtml(p.billing) + '</select>' +
+          '</label>' +
           '<div class="hm-api-foot-msg" data-msg></div>' +
         '</div>' +
         '<div class="hm-api-foot-btns">' +
@@ -70624,11 +70699,12 @@ window.HMChat = (function () {
   function apiSectionControlsHtml(providers, supported) {
     var opts = '<option value="">全部平台</option>';
     providers.forEach(function (p) {
-      var match = !apiFilter.types.length || apiFilter.types.indexOf(p.type) >= 0;
+      var match = (!apiFilter.types.length || apiFilter.types.indexOf(p.type) >= 0) &&
+        (!apiFilter.billing || apiBillingKey(p) === apiFilter.billing);
       opts += '<option value="' + hmEsc(p.id) + '"' +
         (apiFilter.platform === p.id ? ' selected' : '') +
         (match ? '' : ' disabled') + '>' +
-        hmEsc(p.name) + (match ? '' : '（无匹配类型）') + '</option>';
+        hmEsc(p.name) + (match ? '' : '（无匹配记录）') + '</option>';
     });
     var chips = API_TYPES.map(function (t) {
       var on = apiFilter.types.indexOf(t.id) >= 0;
@@ -70641,6 +70717,7 @@ window.HMChat = (function () {
     var anyType = Object.keys(supported).length > 0;
     return '<div class="hm-api-sec-controls">' +
       '<select class="hm-api-select" data-api-platform title="按接入平台筛选">' + opts + '</select>' +
+      '<select class="hm-api-select" data-api-billing title="按计费方式筛选（未绑定单独一类）">' + apiBillingFilterOptionsHtml(apiFilter.billing) + '</select>' +
       '<div class="hm-api-types">' + chips + '</div>' +
       (anyType ? '' : '<span class="hm-api-type-hint">先给接入记录绑定类型</span>') +
       '<button class="hm-api-tool-btn" data-api-act="add-api">＋ 新增 API</button>' +
@@ -70666,12 +70743,13 @@ window.HMChat = (function () {
         '<td class="hm-api-log-model">' + modelsHtml + '</td>' +
         '<td>' + (r.p.type ? '<span class="hm-api-type-badge">' + apiTypeLabel(r.p.type) + '</span>'
           : '<span class="hm-api-type-none">未分类</span>') + '</td>' +
+        '<td>' + apiBillingBadgeHtml(r.p.billing) + '</td>' +
         '<td class="hm-api-model-state">' + (r.p.enabled ? '<span class="is-on">● 已启用</span>'
           : '<span class="is-off">○ 未启用</span>') + '</td>' +
         '</tr>';
     }).join('');
     return '<div class="hm-api-model-wrap"><table class="hm-api-log-table hm-api-model-table">' +
-      '<thead><tr><th>平台</th><th>模型（按系列归并）</th><th>类型</th><th>状态</th></tr></thead>' +
+      '<thead><tr><th>平台</th><th>模型（按系列归并）</th><th>类型</th><th>计费</th><th>状态</th></tr></thead>' +
       '<tbody>' + body + '</tbody></table></div>';
   }
 
@@ -70715,11 +70793,20 @@ window.HMChat = (function () {
     if (apiFilter.types.length) {
       rows = rows.filter(function (r) { return apiFilter.types.indexOf(r.p.type) >= 0; });
     }
+    if (apiFilter.billing) {
+      rows = rows.filter(function (r) { return apiBillingKey(r.p) === apiFilter.billing; });
+    }
     var unclassified = rows.filter(function (r) { return !r.p.type; }).length;
     var modelCount = rows.reduce(function (n, r) { return n + r.models.length; }, 0);
     var seriesCount = rows.reduce(function (n, r) { return n + apiSeriesGroups(r.models).length; }, 0);
+    /* 接入配置与列表共用同一组筛选条件：平台 ∩ 类型 ∩ 计费 */
+    var filteredProviders = platformProviders.filter(function (p) {
+      if (apiFilter.types.length && apiFilter.types.indexOf(p.type) < 0) return false;
+      if (apiFilter.billing && apiBillingKey(p) !== apiFilter.billing) return false;
+      return true;
+    });
     var cardsHtml = '';
-    platformProviders.forEach(function (p) { cardsHtml += apiCardHtml(p); });
+    filteredProviders.forEach(function (p) { cardsHtml += apiCardHtml(p); });
 
     html += '  <section class="hm-api-sec">' +
       '    <div class="hm-api-sec-head">' +
@@ -70731,10 +70818,10 @@ window.HMChat = (function () {
         seriesCount + ' 个系列 · ' + modelCount + ' 个模型' +
         (unclassified ? ' · 未分类 ' + unclassified + ' 条' : '') + '</span></div>' +
       apiModelTableHtml(rows) +
-      '      <div class="hm-api-subhead">接入配置 <span>' + platformProviders.length + ' 条</span></div>' +
-      (platformProviders.length
+      '      <div class="hm-api-subhead">接入配置 <span>' + filteredProviders.length + ' 条</span></div>' +
+      (filteredProviders.length
         ? '<div class="hm-api-grid">' + cardsHtml + '</div>'
-        : '<div class="hm-api-model-empty">该平台下暂无接入记录</div>') +
+        : '<div class="hm-api-model-empty">当前筛选下没有接入记录</div>') +
       '    </div>' +
       '  </section>';
 
@@ -70805,6 +70892,12 @@ window.HMChat = (function () {
         renderApiPanel(body);
         return;
       }
+      var billingSel = e.target.closest('[data-api-billing]');
+      if (billingSel) {
+        apiFilter.billing = billingSel.value;
+        renderApiPanel(body);
+        return;
+      }
       var typeInput = e.target.closest('[data-api-type]');
       if (typeInput) {
         var typeId = typeInput.dataset.apiType;
@@ -70858,6 +70951,7 @@ window.HMChat = (function () {
                   ['providers', 'bindings'].forEach(function (k) {
                     if (j.api[k] && typeof j.api[k] === 'object') imported[k] = j.api[k];
                   });
+                  if (j.api.billing && typeof j.api.billing === 'object') imported.billing = j.api.billing;
                   if (j.api.rayin) imported.rayin = j.api.rayin;
                   if (j.api.gptModel) imported.gptModel = j.api.gptModel;
                   if (j.api.bananaModel) imported.bananaModel = j.api.bananaModel;
@@ -70983,7 +71077,8 @@ window.HMChat = (function () {
       model: p.model,
       model2: p.model2,
       enabled: p.enabled,
-      type: apiBinding(p.id)
+      type: apiBinding(p.id),
+      billing: p.billing || ''
     };
     inputs.forEach(function (el) {
       var k = el.dataset.ik;
@@ -71009,6 +71104,7 @@ window.HMChat = (function () {
     providers[id] = { base: '', key: '', model: '' };
     doc.providers[id] = { name: name, base: '', key: '', model: '', model2: '' };
     doc.bindings[id] = '';
+    doc.billing[id] = '';
     doc.updatedAt = Date.now();
     try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
     try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}

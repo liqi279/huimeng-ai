@@ -139,7 +139,7 @@ function github(method, apiPath, body) {
     headers['Content-Type'] = 'application/json';
     headers['Content-Length'] = Buffer.byteLength(payload);
   }
-  return request('https://api.github.com' + apiPath, { method, headers, body: payload })
+  return request('https://api.github.com' + apiPath, { method, headers, body: payload, timeout: 180000 })
     .then((r) => {
       let json = null;
       try { json = JSON.parse(r.body.toString('utf8')); } catch (e) { /* ignore */ }
