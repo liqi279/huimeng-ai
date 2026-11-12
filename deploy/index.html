@@ -70553,21 +70553,30 @@ window.HMChat = (function () {
     if (!doc.bindings || typeof doc.bindings !== 'object') doc.bindings = {};
     if (!doc.billing || typeof doc.billing !== 'object') doc.billing = {};
     if (!doc.rayin || typeof doc.rayin !== 'object') doc.rayin = {};
-    /* Rayin 拆卡迁移：同一平台按模型系列拆成两条独立配置，原 Key / 类型 / 计费沿用 */
-    if (!doc.providers['__rayin_banana__']) {
-      var baseRec = doc.providers['__rayin__'] || {};
-      var sharedBase = baseRec.base || doc.rayin.base || 'https://www.rayinai.com/v1';
-      var sharedKey = baseRec.key || doc.rayin.key || '';
-      doc.providers['__rayin__'] = Object.assign({}, baseRec, {
-        name: 'RayinAPI · GPT-image', base: sharedBase, key: sharedKey,
-        engine: 'gpt-image', model: baseRec.model || doc.gptModel || 'gpt-image-2', model2: ''
-      });
-      doc.providers['__rayin_banana__'] = {
-        name: 'RayinAPI · Gemini Banana', base: sharedBase, key: sharedKey,
-        engine: 'banana', model: doc.bananaModel || 'gemini-3.1-flash-image', model2: ''
-      };
-      if (!doc.bindings['__rayin_banana__'] && doc.bindings['__rayin__']) doc.bindings['__rayin_banana__'] = doc.bindings['__rayin__'];
-      if (!doc.billing['__rayin_banana__'] && doc.billing['__rayin__']) doc.billing['__rayin_banana__'] = doc.billing['__rayin__'];
+    /* Rayin 拆卡迁移：平台只有 RayinAPI，配置用「平台:系列」区分，原 Key / 类型 / 计费沿用 */
+    if (!doc.providers['__rayin__:gpt-image'] || !doc.providers['__rayin__:banana']) {
+      var oldGpt = doc.providers['__rayin__'] || {};
+      var oldBan = doc.providers['__rayin_banana__'] || {};
+      var rb = oldGpt.base || oldBan.base || doc.rayin.base || 'https://www.rayinai.com/v1';
+      var rk = oldGpt.key || oldBan.key || doc.rayin.key || '';
+      var gpt = Object.assign({}, oldGpt);
+      gpt.name = 'RayinAPI'; gpt.platform = '__rayin__'; gpt.series = 'GPT-image'; gpt.engine = 'gpt-image';
+      gpt.base = oldGpt.base || rb; gpt.key = oldGpt.key || rk;
+      gpt.model = oldGpt.model || doc.gptModel || 'gpt-image-2'; gpt.model2 = '';
+      doc.providers['__rayin__:gpt-image'] = gpt;
+      var ban = Object.assign({}, oldBan);
+      ban.name = 'RayinAPI'; ban.platform = '__rayin__'; ban.series = 'Gemini Banana'; ban.engine = 'banana';
+      ban.base = oldBan.base || rb; ban.key = oldBan.key || rk;
+      ban.model = oldBan.model || doc.bananaModel || 'gemini-3.1-flash-image'; ban.model2 = '';
+      doc.providers['__rayin__:banana'] = ban;
+      if (doc.bindings['__rayin__'] != null) doc.bindings['__rayin__:gpt-image'] = doc.bindings['__rayin__'];
+      if (doc.bindings['__rayin_banana__'] != null) doc.bindings['__rayin__:banana'] = doc.bindings['__rayin_banana__'];
+      if (doc.billing['__rayin__'] != null) doc.billing['__rayin__:gpt-image'] = doc.billing['__rayin__'];
+      if (doc.billing['__rayin_banana__'] != null) doc.billing['__rayin__:banana'] = doc.billing['__rayin_banana__'];
+      delete doc.providers['__rayin__'];
+      delete doc.providers['__rayin_banana__'];
+      delete doc.bindings['__rayin_banana__'];
+      delete doc.billing['__rayin_banana__'];
     }
     doc.updatedAt = Number(doc.updatedAt) || 0;
     apiDocCache = doc;
@@ -70658,43 +70667,46 @@ window.HMChat = (function () {
         billing: apiBilling(p.id)
       };
     });
-    // RayinAPI：同一平台按模型系列拆成两条独立配置
+    // RayinAPI：一个平台下挂两条接入配置（GPT-image / Gemini Banana）
     var prefs = (App.state && App.state.prefs) || {};
-    var rayinPrefs = (doc.rayin && (doc.rayin.base || doc.rayin.key)) ? doc.rayin : (prefs.rayin || {});
-    var gptRec = doc.providers['__rayin__'] || {};
-    var banRec = doc.providers['__rayin_banana__'] || {};
-    var sharedBase = rayinPrefs.base || gptRec.base || 'https://www.rayinai.com/v1';
-    var sharedKey = rayinPrefs.key || gptRec.key || banRec.key || '';
+    var gptRec = doc.providers['__rayin__:gpt-image'] || {};
+    var banRec = doc.providers['__rayin__:banana'] || {};
     var rayinModels = (App.state && App.state.catalog && App.state.catalog.rayin) || [];
     list.push({
-      id: '__rayin__',
-      name: 'RayinAPI · GPT-image',
-      base: gptRec.base || sharedBase,
-      key: gptRec.key || sharedKey,
+      id: '__rayin__:gpt-image',
+      platform: '__rayin__',
+      platformName: 'RayinAPI',
+      name: 'RayinAPI',
+      series: 'GPT-image',
+      base: gptRec.base || 'https://www.rayinai.com/v1',
+      key: gptRec.key || '',
       model: gptRec.model || doc.gptModel || prefs.gptModel || 'gpt-image-2',
       models: rayinModels.filter(function (m) { return m.engine === 'gpt-image'; }),
       enabled: ((App.state && App.state.engine) || 'gpt-image') === 'gpt-image',
       isRayin: true,
       rayinVariant: 'gpt',
-      type: apiBinding('__rayin__'),
-      billing: apiBilling('__rayin__')
+      type: apiBinding('__rayin__:gpt-image'),
+      billing: apiBilling('__rayin__:gpt-image')
     });
     list.push({
-      id: '__rayin_banana__',
-      name: 'RayinAPI · Gemini Banana',
-      base: banRec.base || sharedBase,
-      key: banRec.key || sharedKey,
+      id: '__rayin__:banana',
+      platform: '__rayin__',
+      platformName: 'RayinAPI',
+      name: 'RayinAPI',
+      series: 'Gemini Banana',
+      base: banRec.base || 'https://www.rayinai.com/v1',
+      key: banRec.key || '',
       model: banRec.model || doc.bananaModel || prefs.bananaModel || 'gemini-3.1-flash-image',
       models: rayinModels.filter(function (m) { return m.engine === 'banana'; }),
       enabled: (App.state && App.state.engine) === 'banana',
       isRayin: true,
       rayinVariant: 'banana',
-      type: apiBinding('__rayin_banana__'),
-      billing: apiBilling('__rayin_banana__')
+      type: apiBinding('__rayin__:banana'),
+      billing: apiBilling('__rayin__:banana')
     });
     // 自定义已填但 catalog 里没有的
     Object.keys(saved).forEach(function (id) {
-      if (id === '__rayin__' || id === '__rayin_banana__') return;
+      if (id.indexOf('__rayin__') === 0) return;
       if (!list.find(function (p) { return p.id === id; })) {
         list.push({
           id: id,
@@ -70765,11 +70777,11 @@ window.HMChat = (function () {
   /* 平台/类型互相约束：先按平台过滤可选类型，再按已选类型收敛平台，
      保证不会出现「平台 A + 类型 B 永远空表」的死角。 */
   function normalizeApiFilter(providers) {
-    if (apiFilter.platform && !providers.some(function (p) { return p.id === apiFilter.platform; })) {
+    if (apiFilter.platform && !providers.some(function (p) { return (p.platform || p.id) === apiFilter.platform; })) {
       apiFilter.platform = '';
     }
     var scope = apiFilter.platform
-      ? providers.filter(function (p) { return p.id === apiFilter.platform; })
+      ? providers.filter(function (p) { return (p.platform || p.id) === apiFilter.platform; })
       : providers;
     if (apiFilter.billing) {
       scope = scope.filter(function (p) { return apiBillingKey(p) === apiFilter.billing; });
@@ -70778,7 +70790,7 @@ window.HMChat = (function () {
     scope.forEach(function (p) { if (p.type) supported[p.type] = 1; });
     apiFilter.types = apiFilter.types.filter(function (t) { return supported[t]; });
     if (apiFilter.types.length) {
-      var cur = providers.filter(function (p) { return p.id === apiFilter.platform; })[0];
+      var cur = providers.filter(function (p) { return (p.platform || p.id) === apiFilter.platform; })[0];
       if (cur && apiFilter.types.indexOf(cur.type) < 0) apiFilter.platform = '';
     }
     return supported;
@@ -70814,10 +70826,10 @@ window.HMChat = (function () {
       else if (doc.bindings[id] == null) doc.bindings[id] = '';
       if (p.billing === 'free' || p.billing === 'paid') doc.billing[id] = p.billing;
 
-      if (id === '__rayin__' || id === '__rayin_banana__') {
-        var isBanana = id === '__rayin_banana__';
+      if (id.indexOf('__rayin__') === 0) {
+        var isBanana = id === '__rayin__:banana';
         var prevRayin = doc.rayin || {};
-        var rayinKey = p.key || prevRayin.key || prevProvider.key || '';
+        var rayinKey = p.key || prevProvider.key || '';
         prefs.rayin = { base: p.base, key: rayinKey };
         if (isBanana) {
           prefs.bananaModel = p.model;
@@ -70832,6 +70844,9 @@ window.HMChat = (function () {
         nextProvider.model = p.model;
         nextProvider.model2 = '';
         nextProvider.engine = isBanana ? 'banana' : 'gpt-image';
+        nextProvider.platform = '__rayin__';
+        nextProvider.series = isBanana ? 'Gemini Banana' : 'GPT-image';
+        nextProvider.name = 'RayinAPI';
         doc.providers[id] = nextProvider;
         try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(prefs.rayin)); } catch (e) {}
       } else {
@@ -70857,7 +70872,7 @@ window.HMChat = (function () {
         var gotKey = null;
         if (cloud) {
           if (cloud.providers && cloud.providers[id]) gotKey = cloud.providers[id].key;
-          else if ((id === '__rayin__' || id === '__rayin_banana__') && cloud.rayin) gotKey = cloud.rayin.key;
+          else if (id.indexOf('__rayin__') === 0 && cloud.rayin) gotKey = cloud.rayin.key;
         }
         if (cloud && gotKey != null && String(gotKey) !== expectKey) {
           throw new Error('云端未保存 API Key，请重试');
@@ -70957,6 +70972,7 @@ window.HMChat = (function () {
         '<div class="hm-api-card-title">' +
           '<span class="hm-api-card-dot" style="background:' + (p.isRayin ? '#a78bfa' : (p.preset && p.preset.color) || '#60a5fa') + '"></span>' +
           '<strong>' + hmEsc(p.name) + '</strong>' +
+          (p.series ? '<em class="hm-api-tag">' + hmEsc(p.series) + '</em>' : '') +
           (p.isCustom ? '<em class="hm-api-tag">自定义</em>' : '') +
           (p.type ? '<span class="hm-api-type-badge">' + apiTypeLabel(p.type) + '</span>' : '<span class="hm-api-type-none">未分类</span>') +
         '</div>' +
@@ -71001,13 +71017,24 @@ window.HMChat = (function () {
 
   function apiSectionControlsHtml(providers, supported) {
     var opts = '<option value="">全部平台</option>';
+    var seenPlat = {};
     providers.forEach(function (p) {
+      var pid = p.platform || p.id;
+      if (seenPlat[pid]) return;
+      seenPlat[pid] = 1;
       var match = (!apiFilter.types.length || apiFilter.types.indexOf(p.type) >= 0) &&
         (!apiFilter.billing || apiBillingKey(p) === apiFilter.billing);
-      opts += '<option value="' + hmEsc(p.id) + '"' +
-        (apiFilter.platform === p.id ? ' selected' : '') +
+      if (p.platform) {
+        match = providers.some(function (q) {
+          return (q.platform || q.id) === pid &&
+            (!apiFilter.types.length || apiFilter.types.indexOf(q.type) >= 0) &&
+            (!apiFilter.billing || apiBillingKey(q) === apiFilter.billing);
+        });
+      }
+      opts += '<option value="' + hmEsc(pid) + '"' +
+        (apiFilter.platform === pid ? ' selected' : '') +
         (match ? '' : ' disabled') + '>' +
-        hmEsc(p.name) + (match ? '' : '（无匹配记录）') + '</option>';
+        hmEsc(p.platformName || p.name) + (match ? '' : '（无匹配记录）') + '</option>';
     });
     var chips = API_TYPES.map(function (t) {
       var on = apiFilter.types.indexOf(t.id) >= 0;
@@ -71041,8 +71068,9 @@ window.HMChat = (function () {
           (showLabel ? '<span class="hm-api-series-name">' + hmEsc(g.name) + '</span>' : '') +
           chips + '</div>';
       }).join('');
+      var rowName = r.p.name + (r.p.series ? ' · ' + r.p.series : '');
       return '<tr>' +
-        '<td class="hm-api-model-platform" title="' + hmEsc(r.p.name) + '">' + hmEsc(r.p.name) + '</td>' +
+        '<td class="hm-api-model-platform" title="' + hmEsc(rowName) + '">' + hmEsc(rowName) + '</td>' +
         '<td class="hm-api-log-model">' + modelsHtml + '</td>' +
         '<td>' + (r.p.type ? '<span class="hm-api-type-badge">' + apiTypeLabel(r.p.type) + '</span>'
           : '<span class="hm-api-type-none">未分类</span>') + '</td>' +
@@ -71088,7 +71116,7 @@ window.HMChat = (function () {
 
     /* 平台 + 类型共同作用：只显示交集；平台下拉与类型勾选互相收敛 */
     var platformProviders = providers.filter(function (p) {
-      return !apiFilter.platform || p.id === apiFilter.platform;
+      return !apiFilter.platform || (p.platform || p.id) === apiFilter.platform;
     });
     var rows = platformProviders.map(function (p) {
       return { p: p, models: apiModelsOf(p) };
