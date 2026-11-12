@@ -70578,6 +70578,15 @@ window.HMChat = (function () {
       delete doc.bindings['__rayin_banana__'];
       delete doc.billing['__rayin_banana__'];
     }
+    /* 无论是否刚迁移，历史伪平台 id 一律清掉（先从旧 id 补值到新配置，避免丢类型/计费） */
+    [['__rayin__', '__rayin__:gpt-image'], ['__rayin_banana__', '__rayin__:banana']].forEach(function (pair) {
+      var oldId = pair[0], newId = pair[1];
+      if (doc.bindings[oldId] != null && doc.bindings[newId] == null) doc.bindings[newId] = doc.bindings[oldId];
+      if (doc.billing[oldId] != null && doc.billing[newId] == null) doc.billing[newId] = doc.billing[oldId];
+      delete doc.providers[oldId];
+      delete doc.bindings[oldId];
+      delete doc.billing[oldId];
+    });
     doc.updatedAt = Number(doc.updatedAt) || 0;
     apiDocCache = doc;
     return doc;
@@ -70706,7 +70715,7 @@ window.HMChat = (function () {
     });
     // 自定义已填但 catalog 里没有的
     Object.keys(saved).forEach(function (id) {
-      if (id.indexOf('__rayin__') === 0) return;
+      if (id.indexOf('__rayin') === 0) return;
       if (!list.find(function (p) { return p.id === id; })) {
         list.push({
           id: id,
