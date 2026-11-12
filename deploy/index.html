@@ -7819,7 +7819,10 @@ body.hm-light .hm-page-empty {
 .stack-panel {
   position: absolute;
   z-index: 9000;
-  width: min(520px, calc(100% - 24px));
+  /* 宽度由 JS 按内容列数与桌面宽度算出；这里只兜底上限，避免小窗口下盖掉大半个桌面 */
+  width: auto;
+  max-width: min(380px, calc(100% - 24px));
+  max-height: calc(100% - 16px);
   background: linear-gradient(180deg, rgba(30, 58, 95, 0.97), rgba(12, 25, 42, 0.99));
   border: 1px solid rgba(96, 165, 250, 0.45);
   border-radius: 16px;
@@ -7851,12 +7854,12 @@ body.hm-light .hm-page-empty {
 }
 .stack-panel-close:hover { background: rgba(148, 163, 184, 0.16); color: #fff; }
 .stack-panel-body {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px;
-  max-height: min(58vh, 520px); overflow: auto;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px;
+  max-height: min(46vh, 360px); overflow: auto;
 }
 .sp-cell {
   border: 2px solid transparent; border-radius: 10px; padding: 0; cursor: pointer;
-  background: transparent; text-align: left;
+  background: transparent; text-align: left; min-width: 0;
 }
 .sp-cell.is-selected {
   border-color: #6366f1;
@@ -7867,10 +7870,10 @@ body.hm-light .hm-page-empty {
   width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border-radius: 8px;
 }
 .sp-cell strong {
-  display: block; font-size: 12px; font-weight: 500; margin-top: 8px;
+  display: block; font-size: 11px; font-weight: 500; margin-top: 5px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cbd5e1;
 }
-.sp-cell small { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.sp-cell small { display: block; font-size: 10px; color: #94a3b8; margin-top: 2px; }
 .stack-panel-foot {
   display: flex; align-items: center; gap: 10px; padding: 10px 14px;
   border-top: 1px solid rgba(96, 165, 250, 0.16); min-height: 46px;
@@ -65458,7 +65461,9 @@ window.HMChat = (function () {
         name: s.name || '叠放',
         createdAt: Number(s.createdAt) || 0,
         memberIds: Array.isArray(s.memberIds) ? s.memberIds.filter(Boolean) : [],
-        panel: s.panel && typeof s.panel === 'object' ? { x: Number(s.panel.x) || 0, y: Number(s.panel.y) || 0 } : null
+        panel: s.panel && typeof s.panel === 'object'
+          ? { x: Number(s.panel.x) || 0, y: Number(s.panel.y) || 0, userSet: !!s.panel.userSet }
+          : null
       };
     }) : [];
     desk.updatedAt = Number(stored.updatedAt) || 0;
@@ -65597,7 +65602,8 @@ window.HMChat = (function () {
         desk.stacks = Array.isArray(remote.stacks) ? remote.stacks.filter(function (s) {
           return s && s.id && Array.isArray(s.memberIds);
         }).map(function (s) {
-          return { id: s.id, name: s.name || '叠放', createdAt: Number(s.createdAt) || 0, memberIds: s.memberIds.slice(), panel: s.panel || null };
+          return { id: s.id, name: s.name || '叠放', createdAt: Number(s.createdAt) || 0, memberIds: s.memberIds.slice(),
+                   panel: s.panel ? { x: Number(s.panel.x) || 0, y: Number(s.panel.y) || 0, userSet: !!s.panel.userSet } : null };
         }) : [];
         desk.positions = remote.positions || {};
         desk.assigns = remote.assigns || {};
@@ -67212,16 +67218,54 @@ window.HMChat = (function () {
       '<div class="stack-panel-foot"><span class="sp-sel"></span>' +
         '<button type="button" class="sp-remove" hidden>→ 移出</button></div>';
 
-    /* 位置：记住上次；首次居中；始终限制在桌面区域内 */
-    var pw = panel.offsetWidth || 520;
-    var ph = panel.offsetHeight || 320;
-    var maxX = Math.max(8, grid.clientWidth - pw - 8);
-    var maxY = Math.max(8, grid.clientHeight - ph - 8);
+    /* 尺寸跟内容走：1 项 1 列、2–4 项 2 列、5 项以上 3 列；宽度/高度都有上限，
+       窄窗口下按桌面宽度收，缩略图跟着列宽自适应（不会一张图占满浮窗）。 */
+    var n = items.length;
+    var cols = n <= 1 ? 1 : (n <= 4 ? 2 : 3);
+    var avail = Math.max(180, grid.clientWidth - 24);
+    var want = cols * 108 + (cols - 1) * 10 + 24 + 2;
+    var pw = Math.max(200, Math.min(380, avail, want));
+    panel.style.width = pw + 'px';
+    var bodyEl = panel.querySelector('.stack-panel-body');
+    if (bodyEl) {
+      bodyEl.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
+      bodyEl.style.maxHeight = Math.max(120, grid.clientHeight - 140) + 'px';
+    }
+    var ph = panel.offsetHeight || 240;
+
+    /* 位置：默认贴着被点的叠放卡（右侧 → 左侧 → 下方 → 上方），不盖住卡片本身。
+       只有用户主动拖过（panel.userSet）才沿用该组自己的坐标；旧数据没标记的一律重新贴卡。 */
+    var scrollTop = grid.scrollTop || 0;
+    var minX = 8, maxX = Math.max(minX, grid.clientWidth - pw - 8);
+    var minY = scrollTop + 8, maxY = Math.max(minY, scrollTop + grid.clientHeight - ph - 8);
     var pos = st.panel || {};
-    var x = typeof pos.x === 'number' ? pos.x : Math.max(8, (grid.clientWidth - pw) / 2);
-    var y = typeof pos.y === 'number' ? pos.y : Math.max(8, (grid.clientHeight - ph) / 2);
-    panel.style.left = Math.min(maxX, Math.max(8, x)) + 'px';
-    panel.style.top = Math.min(maxY, Math.max(8, y)) + 'px';
+    var x, y;
+    if (pos.userSet && typeof pos.x === 'number') {
+      x = pos.x;
+      y = pos.y;
+    } else {
+      var cardEl = grid.querySelector('.folder-card[data-stack="' + st.id + '"]');
+      if (cardEl) {
+        var cl = cardEl.offsetLeft, ct = cardEl.offsetTop;
+        var cw = cardEl.offsetWidth || 200, ch = cardEl.offsetHeight || 200;
+        x = cl + cw + 12;
+        if (x > maxX) x = cl - pw - 12;
+        y = ct;
+        if (x < minX) {
+          /* 左右都放不下 → 卡片下方 */
+          x = Math.max(minX, Math.min(maxX, cl));
+          y = ct + ch + 12;
+          if (y > maxY) y = Math.max(minY, ct - ph - 12);
+        } else if (y > maxY) {
+          y = Math.max(minY, Math.min(maxY, ct + ch - ph));
+        }
+      } else {
+        x = Math.max(minX, (grid.clientWidth - pw) / 2);
+        y = Math.max(minY, (grid.clientHeight - ph) / 2);
+      }
+    }
+    panel.style.left = Math.min(maxX, Math.max(minX, x)) + 'px';
+    panel.style.top = Math.min(maxY, Math.max(minY, y)) + 'px';
 
     updateStackFoot(st);
 
@@ -67280,11 +67324,12 @@ window.HMChat = (function () {
         var gridRect = grid.getBoundingClientRect();
         var offX = event.clientX - rect.left;
         var offY = event.clientY - rect.top;
+        var scrollTop = grid.scrollTop || 0;
         var maxX = Math.max(8, grid.clientWidth - rect.width - 8);
-        var maxY = Math.max(8, grid.clientHeight - rect.height - 8);
+        var maxY = Math.max(scrollTop + 8, scrollTop + grid.clientHeight - rect.height - 8);
         function move(e) {
           var nx = Math.min(maxX, Math.max(8, e.clientX - gridRect.left - offX));
-          var ny = Math.min(maxY, Math.max(8, e.clientY - gridRect.top - offY));
+          var ny = Math.min(maxY, Math.max(scrollTop + 8, e.clientY - gridRect.top - offY + scrollTop));
           panel.style.left = nx + 'px';
           panel.style.top = ny + 'px';
         }
@@ -67293,7 +67338,8 @@ window.HMChat = (function () {
           document.removeEventListener('pointerup', up);
           var st2 = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
           if (st2) {
-            st2.panel = { x: parseInt(panel.style.left, 10) || 0, y: parseInt(panel.style.top, 10) || 0 };
+            /* 只有用户真的拖过才记住该组坐标；下次打开优先贴卡，贴不下再用这里 */
+            st2.panel = { x: parseInt(panel.style.left, 10) || 0, y: parseInt(panel.style.top, 10) || 0, userSet: true };
             persistNow();
           }
         }
@@ -68386,6 +68432,8 @@ window.HMChat = (function () {
     window.addEventListener('resize', function () {
       setDockVar();
       if (document.body.getAttribute('data-view') === 'create') renderDesktop();
+      /* 浮窗按内容/桌面宽度算尺寸，窗口变窄时要重新收一次 */
+      if (view.stackOpen) { try { renderStackPanel(); } catch (e) {} }
     });
 
     /* 选择工具条 */
