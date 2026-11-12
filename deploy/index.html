@@ -56237,6 +56237,8 @@ window.HMChat = (function () {
 
   function enterReader(book, page) {
     if (!book) return;
+    /* pdf.js 只在真正进入 PDF 阅读器时加载，书架上浏览不再抢占首屏带宽 */
+    if (book.pdfUrl) warmPdfReader();
     state.current = book;
     if (book.pdfUrl) pdfPerfReset();
     if (book.pdfUrl) {
@@ -57017,7 +57019,6 @@ window.HMChat = (function () {
       els.body.addEventListener('mouseover', function (event) { prefetchCard(event.target); });
       els.body.addEventListener('focusin', function (event) { prefetchCard(event.target); });
       els.body.addEventListener('pointerdown', function (event) { prefetchCard(event.target); }, { passive: true });
-      warmPdfReader();
     }
   }
 
