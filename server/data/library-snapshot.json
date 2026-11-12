@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-12T13:52:40.281Z",
+  "generatedAt": "2026-11-12T16:58:39.068Z",
   "source": "huimeng_library.books",
-  "total": 97,
+  "total": 107,
   "areas": {
-    "paint": 81,
+    "paint": 91,
     "ref": 16
   },
   "books": [
@@ -4082,6 +4082,351 @@
       "pdfBytes": 38784339,
       "coverKey": "library/covers/099-cartoon-tech-3-motion-cover.jpg",
       "coverBytes": 292195
+    },
+    {
+      "id": "lib-mwdsi3w7-7b8e32",
+      "sortNo": 100,
+      "title": "最新卡通漫画技法 1：造型基础篇",
+      "author": "",
+      "intro": "系列第一册：角色造型基础，头身、五官、发型与体态的分步画法。",
+      "pageCount": 118,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/101-cartoon-tech-1-basics.pdf",
+      "pdfBytes": 28320254,
+      "coverKey": "library/covers/101-cartoon-tech-1-basics-cover.jpg",
+      "coverBytes": 278787
+    },
+    {
+      "id": "lib-mwdshoyt-4bb150",
+      "sortNo": 101,
+      "title": "漫画绘制技法速成 2：校园人物百态",
+      "author": "",
+      "intro": "校园场景人物百态：学生、教师与社团角色的姿势、服装与互动。",
+      "pageCount": 135,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/102-quick-manga-2-school.pdf",
+      "pdfBytes": 15233608,
+      "coverKey": "library/covers/102-quick-manga-2-school-cover.jpg",
+      "coverBytes": 190558
+    },
+    {
+      "id": "lib-mwdsh32i-6e190d",
+      "sortNo": 102,
+      "title": "漫画绘制技法速成 1：乘车人物百态",
+      "author": "",
+      "intro": "乘车场景人物百态：站姿、坐姿与拥挤状态下的动作和表情。",
+      "pageCount": 137,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/103-quick-manga-1-transit.pdf",
+      "pdfBytes": 2826308,
+      "coverKey": "library/covers/103-quick-manga-1-transit-cover.jpg",
+      "coverBytes": 179141
+    },
+    {
+      "id": "lib-mwdsigx9-c4b2a7",
+      "sortNo": 104,
+      "title": "SAI 古风水彩技法",
+      "author": "",
+      "intro": "古风题材的 SAI 水彩表现：墨色、晕染与古风服饰配色的数码画法。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "第1章 认识古风水彩",
+          "page": 19
+        },
+        {
+          "title": "1.1 古风水彩插画",
+          "page": 20
+        },
+        {
+          "title": "1.2 绘画软件介绍",
+          "page": 22
+        },
+        {
+          "title": "1.3 SAI仿水彩画笔及纸纹添加介绍",
+          "page": 23
+        },
+        {
+          "title": "1.3.1 常用仿水彩画笔",
+          "page": 23
+        },
+        {
+          "title": "1.3.2 常用水彩纸纹",
+          "page": 26
+        },
+        {
+          "title": "1.3.3 图层属性",
+          "page": 26
+        },
+        {
+          "title": "1.3.4 SAI的快捷方式",
+          "page": 27
+        },
+        {
+          "title": "第2章 古风人物",
+          "page": 29
+        },
+        {
+          "title": "2.1 人物面部和五官绘制",
+          "page": 30
+        },
+        {
+          "title": "2.1.1 面部绘制",
+          "page": 30
+        },
+        {
+          "title": "2.1.2 绘制不同特点的面孔",
+          "page": 37
+        },
+        {
+          "title": "2.1.3 人物面部表情",
+          "page": 40
+        },
+        {
+          "title": "2.2 人物比例与动态",
+          "page": 41
+        },
+        {
+          "title": "2.2.1 人物比例",
+          "page": 41
+        },
+        {
+          "title": "2.2.2 人物动态",
+          "page": 42
+        },
+        {
+          "title": "第3章 古风造型",
+          "page": 45
+        },
+        {
+          "title": "3.1 古风发型",
+          "page": 46
+        },
+        {
+          "title": "3.1.1 古代发型",
+          "page": 46
+        },
+        {
+          "title": "3.1.2 融入现代元素的古风发型",
+          "page": 47
+        },
+        {
+          "title": "3.1.3 古风发型画法",
+          "page": 49
+        },
+        {
+          "title": "3.2 古风服饰",
+          "page": 49
+        },
+        {
+          "title": "3.2.1 衣服皱褶的画法",
+          "page": 49
+        },
+        {
+          "title": "3.2.2 不同朝代的服饰",
+          "page": 51
+        },
+        {
+          "title": "3.3 古风配饰",
+          "page": 66
+        },
+        {
+          "title": "3.3.1 不同材质配饰画法",
+          "page": 66
+        },
+        {
+          "title": "3.3.2 古风配饰",
+          "page": 67
+        },
+        {
+          "title": "3.4 古风纹理",
+          "page": 73
+        },
+        {
+          "title": "第4章 水彩花草植物与动物",
+          "page": 79
+        },
+        {
+          "title": "4.1 花草植物",
+          "page": 80
+        },
+        {
+          "title": "4.1.1 凌霄花",
+          "page": 80
+        },
+        {
+          "title": "4.1.2 桔梗",
+          "page": 83
+        },
+        {
+          "title": "4.1.3 樱花",
+          "page": 85
+        },
+        {
+          "title": "4.2 动物",
+          "page": 88
+        },
+        {
+          "title": "4.2.1 马",
+          "page": 88
+        },
+        {
+          "title": "4.2.2 鹤",
+          "page": 89
+        },
+        {
+          "title": "第5章 古风水彩场景",
+          "page": 91
+        },
+        {
+          "title": "5.1 自然风光",
+          "page": 92
+        },
+        {
+          "title": "5.1.1 朦胧星空",
+          "page": 92
+        },
+        {
+          "title": "5.1.2 淡彩山河",
+          "page": 98
+        },
+        {
+          "title": "5.1.3 梦幻花海",
+          "page": 103
+        },
+        {
+          "title": "5.2 古风人文建筑",
+          "page": 109
+        },
+        {
+          "title": "5.2.1 中国古风建筑",
+          "page": 109
+        },
+        {
+          "title": "5.2.2 景物透视规律",
+          "page": 115
+        },
+        {
+          "title": "5.2.3 园林建筑画法示例",
+          "page": 116
+        },
+        {
+          "title": "第6章 完整古风水彩绘制",
+          "page": 125
+        },
+        {
+          "title": "6.1 美男子与花",
+          "page": 126
+        },
+        {
+          "title": "6.2 红妆",
+          "page": 136
+        },
+        {
+          "title": "6.3 枷锁",
+          "page": 144
+        },
+        {
+          "title": "6.4 枫色",
+          "page": 156
+        },
+        {
+          "title": "6.5 破军",
+          "page": 164
+        }
+      ],
+      "pdfKey": "library/books/105-sai-gufeng-watercolor.pdf",
+      "pdfBytes": 31418773,
+      "coverKey": "library/covers/105-sai-gufeng-watercolor-cover.jpg",
+      "coverBytes": 198998
+    },
+    {
+      "id": "lib-mwdsj947-e164dc",
+      "sortNo": 106,
+      "title": "上吧！漫画达人必修课：Q 版古风",
+      "author": "",
+      "intro": "Q 版古风角色：头身简化、古装造型与场景搭配。",
+      "pageCount": 183,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/107-manga-master-class-q-gufeng.pdf",
+      "pdfBytes": 38168767,
+      "coverKey": "library/covers/107-manga-master-class-q-gufeng-cover.jpg",
+      "coverBytes": 330639
+    },
+    {
+      "id": "lib-mwdsjcdw-064219",
+      "sortNo": 115,
+      "title": "超级漫画萌少女，5 天掌握！来自日本漫画一线的绘制心得",
+      "author": "",
+      "intro": "五天进阶萌少女：脸部、身体、动作与上色的分日训练。",
+      "pageCount": 151,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/116-moe-girl-5days.pdf",
+      "pdfBytes": 41999054,
+      "coverKey": "library/covers/116-moe-girl-5days-cover.jpg",
+      "coverBytes": 244704
+    },
+    {
+      "id": "lib-mwdshywz-8f5085",
+      "sortNo": 116,
+      "title": "动漫彩色绘：水彩手绘基础教程",
+      "author": "",
+      "intro": "水彩手绘入门：颜料、水分与叠色，画动漫角色的基础练习。",
+      "pageCount": 168,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/117-watercolor-handdrawn-basics.pdf",
+      "pdfBytes": 26738653,
+      "coverKey": "library/covers/117-watercolor-handdrawn-basics-cover.jpg",
+      "coverBytes": 248288
+    },
+    {
+      "id": "lib-mwdsi12d-899fad",
+      "sortNo": 117,
+      "title": "动漫彩色绘：水彩美少女绘制基础教程",
+      "author": "",
+      "intro": "水彩美少女：肤色、发色与服饰的水彩表现步骤。",
+      "pageCount": 176,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/118-watercolor-bishojo-basics.pdf",
+      "pdfBytes": 30875623,
+      "coverKey": "library/covers/118-watercolor-bishojo-basics-cover.jpg",
+      "coverBytes": 309965
+    },
+    {
+      "id": "lib-mwdsjaub-56628b",
+      "sortNo": 118,
+      "title": "动漫彩色绘：漫画上色基础教程",
+      "author": "",
+      "intro": "漫画上色基础：配色思路、阴影分层与高光处理。",
+      "pageCount": 168,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/119-manga-coloring-basics.pdf",
+      "pdfBytes": 35553781,
+      "coverKey": "library/covers/119-manga-coloring-basics-cover.jpg",
+      "coverBytes": 279054
+    },
+    {
+      "id": "lib-mwdsj5nr-f366af",
+      "sortNo": 119,
+      "title": "动漫彩色绘：马克笔绘制基础教程",
+      "author": "",
+      "intro": "马克笔上色基础：笔触、叠色与渐变，完成整幅角色插画。",
+      "pageCount": 168,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/120-marker-drawing-basics.pdf",
+      "pdfBytes": 32200080,
+      "coverKey": "library/covers/120-marker-drawing-basics-cover.jpg",
+      "coverBytes": 259536
     }
   ]
 }
