@@ -73272,6 +73272,12 @@ window.HMChat = (function () {
     }
     if (playheadEl) playheadEl.style.left = (pxPerSec * ts.time / ts.fps) + 'px';
     if (playBtn) playBtn.classList.toggle('is-playing', !!ts.playing);
+    if (trackRow) {
+      var clips = trackRow.querySelectorAll('.oua-clip');
+      for (var i = 0; i < clips.length; i++) {
+        clips[i].classList.toggle('is-current', Number(clips[i].getAttribute('data-index')) === ts.frame);
+      }
+    }
   }
 
   if (transportEl) {
@@ -73513,7 +73519,14 @@ window.HMChat = (function () {
   eng.on('layers', function () { renderLayers(); });
   eng.on('settings', function () { pullBrush(); });
   eng.on('frames', function () { renderLayers(); renderTimeline(); });
-  eng.on('time', function (ts) { updateTime(ts); });
+  var uiFrameIndex = -1;
+  eng.on('time', function (ts) {
+    if (ts && ts.frame !== uiFrameIndex) {
+      uiFrameIndex = ts.frame;
+      renderLayers();
+    }
+    updateTime(ts);
+  });
   eng.on('stroke', function () { renderLayers(); });
   eng.on('change', function (info) {
     if (info && (info.reason === 'undo' || info.reason === 'redo')) {
