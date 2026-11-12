@@ -15476,6 +15476,120 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 .hm-api-log-actions { display: flex; gap: 8px; margin-bottom: 10px; }
 .hm-api-tool-btn.small { padding: 5px 10px; font-size: 11.5px; }
 
+/* ========= API 接入列表 — 平台下拉 / 类型筛选 / 列表容器 ========= */
+.hm-api-sec-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.hm-api-sec-head .hm-api-sec-title { margin: 0; }
+.hm-api-sec-controls {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.hm-api-select {
+  height: 30px; padding: 0 26px 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.28);
+  color: #e7e2fb; font-size: 12px; font-family: inherit;
+  cursor: pointer; outline: none;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(200, 195, 220, 0.7) 50%), linear-gradient(135deg, rgba(200, 195, 220, 0.7) 50%, transparent 50%);
+  background-position: calc(100% - 13px) 13px, calc(100% - 9px) 13px;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+.hm-api-select:focus { border-color: rgba(147, 197, 253, 0.5); box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14); }
+.hm-api-select option { background: #17142a; color: #e7e2fb; }
+.hm-api-select option:disabled { color: rgba(160, 155, 185, 0.45); }
+.hm-api-select.sm { height: 26px; font-size: 11.5px; }
+
+.hm-api-types { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hm-api-type-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 9px; border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.03);
+  color: #c9c1e2; font-size: 11.5px; line-height: 1.2;
+  cursor: pointer; user-select: none;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+.hm-api-type-chip:hover { border-color: rgba(147, 197, 253, 0.35); }
+.hm-api-type-chip input { accent-color: #8b7cf6; cursor: pointer; }
+.hm-api-type-chip.is-disabled {
+  opacity: 0.35; cursor: not-allowed;
+  border-style: dashed;
+}
+.hm-api-type-chip.is-disabled input { cursor: not-allowed; }
+.hm-api-type-chip:has(input:checked) {
+  border-color: rgba(147, 197, 253, 0.5);
+  background: rgba(96, 165, 250, 0.14);
+  color: #e2e8ff;
+}
+.hm-api-type-hint { font-size: 10.5px; color: rgba(160, 155, 185, 0.55); }
+
+/* 红框容器：列表只在框内渲染，超出滚动 */
+.hm-api-listbox {
+  height: 540px; overflow-y: auto;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(10, 9, 22, 0.35);
+}
+.hm-api-listbox::-webkit-scrollbar { width: 8px; }
+.hm-api-listbox::-webkit-scrollbar-track { background: transparent; }
+.hm-api-listbox::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
+.hm-api-listbox::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+.hm-api-subhead {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 12px; font-weight: 600; color: #d9d3f2;
+  margin: 4px 2px 9px;
+}
+.hm-api-subhead + .hm-api-subhead { margin-top: 18px; }
+.hm-api-subhead span { font-size: 10.5px; font-weight: 400; color: rgba(160, 155, 185, 0.6); }
+
+.hm-api-model-wrap {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(14, 12, 28, 0.55);
+  overflow: hidden;
+}
+.hm-api-model-table .hm-api-model-platform {
+  max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: rgba(160, 190, 255, 0.9);
+}
+.hm-api-type-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 6px;
+  font-size: 10.5px; color: #c4b5fd;
+  background: rgba(167, 139, 250, 0.16);
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  white-space: nowrap;
+}
+.hm-api-type-none { font-size: 10.5px; color: rgba(160, 155, 185, 0.55); white-space: nowrap; }
+.hm-api-model-state .is-on { color: #4ade80; font-size: 11px; }
+.hm-api-model-state .is-off { color: rgba(160, 155, 185, 0.55); font-size: 11px; }
+.hm-api-model-empty {
+  padding: 22px 16px; text-align: center;
+  font-size: 12px; color: rgba(160, 155, 185, 0.6);
+  border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* 卡片底部：类型绑定 */
+.hm-api-foot-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.hm-api-type-bind {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; color: rgba(200, 195, 220, 0.62);
+  white-space: nowrap;
+}
+.hm-api-type-bind .hm-api-select { min-width: 92px; }
+
+@media (max-width: 1100px) {
+  .hm-api-listbox { height: 460px; }
+}
+@media (max-width: 700px) {
+  .hm-api-sec-head { align-items: flex-start; flex-direction: column; }
+  .hm-api-listbox { height: 420px; padding: 10px; }
+}
+
 .hm-api-log-empty {
   padding: 32px 20px; text-align: center;
   border-radius: 14px;
@@ -70098,6 +70212,51 @@ window.HMChat = (function () {
 
   var apiTestState = {}; // {providerId: 'ok' | 'fail' | 'loading'}
 
+  /* 类型筛选与平台下拉的当前选择（会话内保留，不写磁盘） */
+  var API_TYPES = [
+    { id: 'image', label: '生图' },
+    { id: 'video', label: '生视频' },
+    { id: 'chat', label: 'AI 对话' },
+    { id: 'audio', label: '生音频' }
+  ];
+  var apiFilter = { platform: '', types: [] };
+  var apiDocCache = null;
+
+  /* 接入配置文档：providers / bindings / rayin，随 /docs/api 同步，换设备可恢复。
+     旧数据只在本地 localStorage 时按需合并，不覆盖云端已有值。 */
+  function getApiDoc() {
+    if (apiDocCache) return apiDocCache;
+    var doc = null;
+    try { doc = JSON.parse(localStorage.getItem('anidream.api.v1') || 'null'); } catch (e) { doc = null; }
+    if (!doc || typeof doc !== 'object') doc = {};
+    if (!doc.providers || typeof doc.providers !== 'object') doc.providers = {};
+    if (!doc.bindings || typeof doc.bindings !== 'object') doc.bindings = {};
+    if (!doc.rayin || typeof doc.rayin !== 'object') doc.rayin = {};
+    doc.updatedAt = Number(doc.updatedAt) || 0;
+    apiDocCache = doc;
+    return doc;
+  }
+  function resetApiDoc() {
+    apiDocCache = null;
+    var body = document.getElementById('adminBody');
+    if (body && body.querySelector('.hm-api-body')) renderApiPanel(body);
+  }
+  function apiBinding(id) {
+    var v = getApiDoc().bindings[id];
+    return API_TYPES.some(function (t) { return t.id === v; }) ? v : '';
+  }
+  function apiTypeLabel(t) {
+    var hit = API_TYPES.filter(function (x) { return x.id === t; })[0];
+    return hit ? hit.label : '';
+  }
+  function apiTypeOptionsHtml(selected) {
+    var html = '<option value="">未分类</option>';
+    API_TYPES.forEach(function (t) {
+      html += '<option value="' + t.id + '"' + (t.id === selected ? ' selected' : '') + '>' + t.label + '</option>';
+    });
+    return html;
+  }
+
   function hmEsc(str) {
     return String(str == null ? '' : str).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -70113,89 +70272,179 @@ window.HMChat = (function () {
   function getProviders() {
     var App = window.HMApp;
     if (!App) return [];
+    var doc = getApiDoc();
     var catalog = (App.state && App.state.catalog && App.state.catalog.providers) || [];
-    var saved = (App.state && App.state.providers) || {};
+    var saved = Object.assign({}, (App.state && App.state.providers) || {}, doc.providers || {});
     var list = catalog.map(function (p) {
       var s = saved[p.id] || {};
       return {
         id: p.id,
-        name: p.name,
+        name: s.name || p.name,
         base: s.base || p.base || '',
         key: s.key || '',
-        model: s.model || (p.models && p.models[0] ? p.models[0].id : ''),
+        model: s.model || (p.models && p.models[0] ? (p.models[0].id || p.models[0].model) : ''),
+        models: p.models || [],
         enabled: p.id === (App.state && App.state.providerId) || !!s.key,
-        preset: p
+        preset: p,
+        type: apiBinding(p.id)
       };
     });
     // RayinAPI 单独一条
     var prefs = (App.state && App.state.prefs) || {};
-    var rayinPrefs = prefs.rayin || {};
+    var rayinPrefs = (doc.rayin && (doc.rayin.base || doc.rayin.key)) ? doc.rayin : (prefs.rayin || {});
     list.push({
       id: '__rayin__',
       name: 'RayinAPI（GPT-image / Gemini Banana）',
       base: rayinPrefs.base || 'https://www.rayinai.com/v1',
       key: rayinPrefs.key || '',
-      model: prefs.gptModel || 'gpt-image-2',
-      model2: prefs.bananaModel || 'gemini-3.1-flash-image',
-      enabled: !!rayinPrefs.key || true,
-      isRayin: true
+      model: doc.gptModel || prefs.gptModel || 'gpt-image-2',
+      model2: doc.bananaModel || prefs.bananaModel || 'gemini-3.1-flash-image',
+      models: (App.state && App.state.catalog && App.state.catalog.rayin) || [],
+      enabled: true,
+      isRayin: true,
+      type: apiBinding('__rayin__')
     });
     // 自定义已填但 catalog 里没有的
     Object.keys(saved).forEach(function (id) {
       if (id === '__rayin__') return;
       if (!list.find(function (p) { return p.id === id; })) {
         list.push({
-          id: id, name: id,
+          id: id,
+          name: saved[id].name || id,
           base: saved[id].base || '',
           key: saved[id].key || '',
           model: saved[id].model || '',
           enabled: !!saved[id].key,
-          isCustom: true
+          isCustom: true,
+          type: apiBinding(id)
         });
       }
     });
     return list;
   }
 
-  function saveApiCard(id, base, key, model, model2, enabled) {
+  /* 一条接入记录对应的模型列表：Rayin 用后端 catalog 的全量模型，
+     其他平台用配置里保存的模型，保证表格里每个模型都属于当前平台。 */
+  function apiModelsOf(p) {
+    var out = [];
+    var seen = {};
+    function push(id, name, configured) {
+      id = String(id || '').trim();
+      if (!id || seen[id]) return;
+      seen[id] = 1;
+      out.push({ id: id, name: name || id, configured: !!configured });
+    }
+    (p.models || []).forEach(function (m) {
+      push(m.id || m.model, m.name || m.id || m.model, p.isRayin ? (m.id === p.model || m.id === p.model2) : ((m.id || m.model) === p.model));
+    });
+    if (p.isRayin) {
+      push(p.model, p.model, true);
+      push(p.model2, p.model2, true);
+    } else {
+      push(p.model, p.model, true);
+    }
+    return out;
+  }
+
+  /* 平台/类型互相约束：先按平台过滤可选类型，再按已选类型收敛平台，
+     保证不会出现「平台 A + 类型 B 永远空表」的死角。 */
+  function normalizeApiFilter(providers) {
+    if (apiFilter.platform && !providers.some(function (p) { return p.id === apiFilter.platform; })) {
+      apiFilter.platform = '';
+    }
+    var scope = apiFilter.platform
+      ? providers.filter(function (p) { return p.id === apiFilter.platform; })
+      : providers;
+    var supported = {};
+    scope.forEach(function (p) { if (p.type) supported[p.type] = 1; });
+    apiFilter.types = apiFilter.types.filter(function (t) { return supported[t]; });
+    if (apiFilter.types.length) {
+      var cur = providers.filter(function (p) { return p.id === apiFilter.platform; })[0];
+      if (cur && apiFilter.types.indexOf(cur.type) < 0) apiFilter.platform = '';
+    }
+    return supported;
+  }
+
+  /* 保存一条接入记录：先落本机，再 PUT /docs/api；
+     云端失败必须把原因带回界面，不能静默成功。 */
+  function saveApiCard(p) {
     var App = window.HMApp;
-    if (!App) return;
+    if (!App) return Promise.reject(new Error('应用未就绪'));
+    var doc = getApiDoc();
     var prefs = App.state.prefs = App.state.prefs || {};
     var providers = App.state.providers = App.state.providers || {};
+    var id = p.id;
+    var name = String(p.name || '').trim() || id;
+
+    doc.providers[id] = Object.assign({}, doc.providers[id], {
+      name: name,
+      base: p.base,
+      key: p.key,
+      model: p.model,
+      model2: p.model2 || ''
+    });
+    doc.bindings[id] = p.type || '';
 
     if (id === '__rayin__') {
-      prefs.rayin = prefs.rayin || {};
-      prefs.rayin.base = base;
-      prefs.rayin.key = key;
-      prefs.gptModel = model;
-      prefs.bananaModel = model2 || prefs.bananaModel;
-      if (enabled) App.state.engine = 'gpt-image';
-      // 持久化
+      prefs.rayin = { base: p.base, key: p.key };
+      prefs.gptModel = p.model;
+      prefs.bananaModel = p.model2 || prefs.bananaModel;
+      doc.rayin = { base: p.base, key: p.key };
+      doc.gptModel = p.model;
+      doc.bananaModel = prefs.bananaModel;
+      if (p.enabled) App.state.engine = 'gpt-image';
       try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(prefs.rayin)); } catch (e) {}
-      try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
     } else {
-      providers[id] = { base: base, key: key, model: model };
-      if (enabled) App.state.providerId = id;
+      providers[id] = { base: p.base, key: p.key, model: p.model };
+      if (p.enabled) App.state.providerId = id;
       try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
-      try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
     }
-    if (App.toast) App.toast('已保存 ' + id, 'success');
+    try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
+    doc.updatedAt = Date.now();
+    try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
+    apiDocCache = doc;
+
+    var push = window.HMSync && window.HMSync.pushApi;
+    if (!push) {
+      var noSync = new Error('云同步模块未加载，请刷新页面重试');
+      noSync.localSaved = true;
+      return Promise.reject(noSync);
+    }
+    return push(doc).catch(function (err) {
+      err.localSaved = true;
+      throw err;
+    });
   }
 
   function deleteApiCard(id) {
     var App = window.HMApp;
     if (!App) return;
-    if (!confirm('确定删除这个 API 接入配置？密钥将从本地清除。')) return;
+    if (!confirm('确定删除这个 API 接入配置？密钥会从本机与云端一起清除。')) return;
+    var doc = getApiDoc();
     if (id === '__rayin__') {
       try { localStorage.removeItem('anidream.rayin.v1'); } catch (e) {}
       App.state.prefs = App.state.prefs || {};
       App.state.prefs.rayin = { base: 'https://www.rayinai.com/v1', key: '' };
+      delete doc.rayin;
+      delete doc.gptModel;
+      delete doc.bananaModel;
     } else {
       delete App.state.providers[id];
       try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
       if (App.state.providerId === id) App.state.providerId = null;
+      delete doc.providers[id];
+      delete doc.bindings[id];
     }
+    doc.updatedAt = Date.now();
+    try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
+    apiDocCache = doc;
     if (App.toast) App.toast('已删除 ' + id, 'info');
+    var push = window.HMSync && window.HMSync.pushApi;
+    if (push) {
+      push(doc).catch(function (err) {
+        if (App.toast) App.toast('本机已删除；云端删除失败：' + ((err && err.message) || '网络异常'), 'error');
+      });
+    }
     renderApiPanel(document.getElementById('adminBody'));
   }
 
@@ -70247,6 +70496,10 @@ window.HMChat = (function () {
         '<label class="hm-api-field"><span>Gemini Banana 模型</span>' +
         '<input class="hm-api-input" data-ik="model2" value="' + hmEsc(p.model2 || '') + '" placeholder="gemini-3.1-flash-image"></label>';
     }
+    var nameField = p.isCustom
+      ? '<label class="hm-api-field"><span>平台名称</span>' +
+        '<input class="hm-api-input" data-ik="name" value="' + hmEsc(p.name) + '" placeholder="例如 OpenAI / 硅基流动"></label>'
+      : '';
 
     return '<div class="hm-api-card" data-api="' + hmEsc(p.id) + '">' +
       '<div class="hm-api-card-head">' +
@@ -70254,6 +70507,7 @@ window.HMChat = (function () {
           '<span class="hm-api-card-dot" style="background:' + (p.isRayin ? '#a78bfa' : (p.preset && p.preset.color) || '#60a5fa') + '"></span>' +
           '<strong>' + hmEsc(p.name) + '</strong>' +
           (p.isCustom ? '<em class="hm-api-tag">自定义</em>' : '') +
+          (p.type ? '<span class="hm-api-type-badge">' + apiTypeLabel(p.type) + '</span>' : '<span class="hm-api-type-none">未分类</span>') +
         '</div>' +
         '<div class="hm-api-card-head-right">' +
           stateHtml +
@@ -70264,6 +70518,7 @@ window.HMChat = (function () {
         '</div>' +
       '</div>' +
       '<div class="hm-api-card-body">' +
+        nameField +
         '<label class="hm-api-field"><span>接口地址</span>' +
           '<input class="hm-api-input" data-ik="base" value="' + hmEsc(p.base) + '" placeholder="https://.../v1"></label>' +
         '<label class="hm-api-field"><span>API Key</span>' +
@@ -70276,7 +70531,12 @@ window.HMChat = (function () {
         extraField +
       '</div>' +
       '<div class="hm-api-card-foot">' +
-        '<div class="hm-api-foot-msg" data-msg></div>' +
+        '<div class="hm-api-foot-left">' +
+          '<label class="hm-api-type-bind" title="绑定后，上方类型筛选按这里归类">类型' +
+            '<select class="hm-api-select sm" data-ik="type">' + apiTypeOptionsHtml(p.type) + '</select>' +
+          '</label>' +
+          '<div class="hm-api-foot-msg" data-msg></div>' +
+        '</div>' +
         '<div class="hm-api-foot-btns">' +
           '<button class="hm-api-btn hm-api-btn-ghost" data-test>测试连接</button>' +
           '<button class="hm-api-btn hm-api-btn-primary" data-save>保存</button>' +
@@ -70286,12 +70546,56 @@ window.HMChat = (function () {
     '</div>';
   }
 
+  function apiSectionControlsHtml(providers, supported) {
+    var opts = '<option value="">全部平台</option>';
+    providers.forEach(function (p) {
+      var match = !apiFilter.types.length || apiFilter.types.indexOf(p.type) >= 0;
+      opts += '<option value="' + hmEsc(p.id) + '"' +
+        (apiFilter.platform === p.id ? ' selected' : '') +
+        (match ? '' : ' disabled') + '>' +
+        hmEsc(p.name) + (match ? '' : '（无匹配类型）') + '</option>';
+    });
+    var chips = API_TYPES.map(function (t) {
+      var on = apiFilter.types.indexOf(t.id) >= 0;
+      var enabled = !!supported[t.id];
+      return '<label class="hm-api-type-chip' + (enabled ? '' : ' is-disabled') + '"' +
+        ' title="' + (enabled ? '按 ' + t.label + ' 筛选' : '当前平台没有该类型的接入记录') + '">' +
+        '<input type="checkbox" data-api-type="' + t.id + '"' + (on ? ' checked' : '') + (enabled ? '' : ' disabled') + '>' +
+        t.label + '</label>';
+    }).join('');
+    var anyType = Object.keys(supported).length > 0;
+    return '<div class="hm-api-sec-controls">' +
+      '<select class="hm-api-select" data-api-platform title="按接入平台筛选">' + opts + '</select>' +
+      '<div class="hm-api-types">' + chips + '</div>' +
+      (anyType ? '' : '<span class="hm-api-type-hint">先给接入记录绑定类型</span>') +
+      '<button class="hm-api-tool-btn" data-api-act="add-api">＋ 新增 API</button>' +
+      '</div>';
+  }
+
+  function apiModelTableHtml(rows) {
+    if (!rows.length) return '<div class="hm-api-model-empty">当前筛选下没有模型</div>';
+    var body = rows.map(function (r) {
+      return '<tr>' +
+        '<td class="hm-api-model-platform" title="' + hmEsc(r.p.name) + '">' + hmEsc(r.p.name) + '</td>' +
+        '<td class="hm-api-log-model" title="' + hmEsc(r.m.id) + '">' + hmEsc(r.m.name) + '</td>' +
+        '<td>' + (r.p.type ? '<span class="hm-api-type-badge">' + apiTypeLabel(r.p.type) + '</span>'
+          : '<span class="hm-api-type-none">未分类</span>') + '</td>' +
+        '<td class="hm-api-model-state">' + (r.p.enabled ? '<span class="is-on">● 已启用</span>'
+          : '<span class="is-off">○ 未启用</span>') + '</td>' +
+        '</tr>';
+    }).join('');
+    return '<div class="hm-api-model-wrap"><table class="hm-api-log-table hm-api-model-table">' +
+      '<thead><tr><th>平台</th><th>模型</th><th>类型</th><th>状态</th></tr></thead>' +
+      '<tbody>' + body + '</tbody></table></div>';
+  }
+
   function renderApiPanel(body) {
     var App = window.HMApp;
     if (!body || !App) return;
     var providers = getProviders();
     var total = providers.length;
     var enabledCount = providers.filter(function (p) { return p.enabled; }).length;
+    var supported = normalizeApiFilter(providers);
 
     /* ---- 读取调用日志 ---- */
     var apiLogs = [];
@@ -70312,15 +70616,38 @@ window.HMChat = (function () {
       '      <button class="hm-api-tool-btn" data-api-act="test-all">🔍 测试全部</button>' +
       '      <button class="hm-api-tool-btn" data-api-act="export">📤 导出配置</button>' +
       '      <button class="hm-api-tool-btn" data-api-act="import">📥 导入配置</button>' +
-      '      <button class="hm-api-tool-btn" data-api-act="add-custom">＋ 新增接入</button>' +
       '    </div>' +
       '  </header>';
 
+    /* 平台 + 类型共同作用：只显示交集；平台下拉与类型勾选互相收敛 */
+    var platformProviders = providers.filter(function (p) {
+      return !apiFilter.platform || p.id === apiFilter.platform;
+    });
+    var rows = [];
+    platformProviders.forEach(function (p) {
+      apiModelsOf(p).forEach(function (m) { rows.push({ p: p, m: m }); });
+    });
+    if (apiFilter.types.length) {
+      rows = rows.filter(function (r) { return apiFilter.types.indexOf(r.p.type) >= 0; });
+    }
+    var unclassified = rows.filter(function (r) { return !r.p.type; }).length;
+    var cardsHtml = '';
+    platformProviders.forEach(function (p) { cardsHtml += apiCardHtml(p); });
+
     html += '  <section class="hm-api-sec">' +
-      '    <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>API 接入列表</h3>' +
-      '    <div class="hm-api-grid">';
-    providers.forEach(function (p) { html += apiCardHtml(p); });
-    html += '    </div>' +
+      '    <div class="hm-api-sec-head">' +
+      '      <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>API 接入列表</h3>' +
+      apiSectionControlsHtml(providers, supported) +
+      '    </div>' +
+      '    <div class="hm-api-listbox">' +
+      '      <div class="hm-api-subhead">模型列表 <span>' + rows.length + ' 个' +
+        (unclassified ? ' · 未分类 ' + unclassified : '') + '</span></div>' +
+      apiModelTableHtml(rows) +
+      '      <div class="hm-api-subhead">接入配置 <span>' + platformProviders.length + ' 条</span></div>' +
+      (platformProviders.length
+        ? '<div class="hm-api-grid">' + cardsHtml + '</div>'
+        : '<div class="hm-api-model-empty">该平台下暂无接入记录</div>') +
+      '    </div>' +
       '  </section>';
 
     html += '  <section class="hm-api-sec">' +
@@ -70346,7 +70673,7 @@ window.HMChat = (function () {
     }
     html += '  </section>';
 
-    html += '  <p class="hm-api-footer">密钥仅保存在本浏览器（localStorage），不会上传服务器。调用日志同样仅本地，可随时清空。</p>';
+    html += '  <p class="hm-api-footer">接入配置与密钥会随账号保存到云端（/docs/api），换设备登录后可恢复；未登录时只保存在本机。调用日志仍仅本地，可随时清空。</p>';
     html += '</div>';
 
     body.innerHTML = html;
@@ -70379,6 +70706,26 @@ window.HMChat = (function () {
 
   function bindApiPanel(body) {
     if (!body) return;
+    /* 面板会反复重渲染，事件只绑一次，避免重复保存/重复请求 */
+    if (body.dataset.apiBound === '1') return;
+    body.dataset.apiBound = '1';
+
+    body.addEventListener('change', function (e) {
+      var plat = e.target.closest('[data-api-platform]');
+      if (plat) {
+        apiFilter.platform = plat.value;
+        renderApiPanel(body);
+        return;
+      }
+      var typeInput = e.target.closest('[data-api-type]');
+      if (typeInput) {
+        var typeId = typeInput.dataset.apiType;
+        var idx = apiFilter.types.indexOf(typeId);
+        if (typeInput.checked && idx < 0) apiFilter.types.push(typeId);
+        else if (!typeInput.checked && idx >= 0) apiFilter.types.splice(idx, 1);
+        renderApiPanel(body);
+      }
+    });
 
     /* 全局按钮 */
     body.addEventListener('click', function (e) {
@@ -70391,6 +70738,7 @@ window.HMChat = (function () {
         } else if (act === 'export') {
           var data = { providers: (window.HMApp.state && window.HMApp.state.providers) || {} };
           data.rayin = (window.HMApp.state && window.HMApp.state.prefs && window.HMApp.state.prefs.rayin) || {};
+          data.api = getApiDoc();
           var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
           var a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
@@ -70416,6 +70764,24 @@ window.HMChat = (function () {
                   App.state.prefs.rayin = j.rayin;
                   try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(j.rayin)); } catch (e) {}
                 }
+                if (j.api && typeof j.api === 'object') {
+                  apiDocCache = null;
+                  var imported = getApiDoc();
+                  ['providers', 'bindings'].forEach(function (k) {
+                    if (j.api[k] && typeof j.api[k] === 'object') imported[k] = j.api[k];
+                  });
+                  if (j.api.rayin) imported.rayin = j.api.rayin;
+                  if (j.api.gptModel) imported.gptModel = j.api.gptModel;
+                  if (j.api.bananaModel) imported.bananaModel = j.api.bananaModel;
+                  imported.updatedAt = Date.now();
+                  try { localStorage.setItem('anidream.api.v1', JSON.stringify(imported)); } catch (e) {}
+                  apiDocCache = imported;
+                  if (window.HMSync && HMSync.pushApi) {
+                    HMSync.pushApi(imported).catch(function (e2) {
+                      if (App.toast) App.toast('已导入本机；云端同步失败：' + ((e2 && e2.message) || '网络异常'), 'error');
+                    });
+                  }
+                }
                 if (App.toast) App.toast('导入成功', 'success');
                 renderApiPanel(document.getElementById('adminBody'));
               } catch (err) { if (window.HMApp.toast) window.HMApp.toast('导入失败：' + err.message, 'error'); }
@@ -70423,14 +70789,8 @@ window.HMChat = (function () {
             r.readAsText(f);
           };
           inp.click();
-        } else if (act === 'add-custom') {
-          var id = prompt('请输入新接入的唯一 ID（例如 my-provider）', 'custom-' + Date.now());
-          if (!id) return;
-          var App = window.HMApp;
-          App.state.providers = App.state.providers || {};
-          App.state.providers[id] = { base: '', key: '', model: '' };
-          try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
-          renderApiPanel(document.getElementById('adminBody'));
+        } else if (act === 'add-custom' || act === 'add-api') {
+          addApiRecord();
         }
         return;
       }
@@ -70494,7 +70854,28 @@ window.HMChat = (function () {
         return;
       }
       if (e.target.closest('[data-save]')) {
-        saveFromCard(card, p);
+        var saveBtn = e.target.closest('[data-save]');
+        if (saveBtn.disabled) return;
+        saveBtn.disabled = true;
+        var msgEl = card.querySelector('[data-msg]');
+        if (msgEl) { msgEl.textContent = '保存中…'; msgEl.className = 'hm-api-foot-msg'; }
+        saveFromCard(card, p).then(function () {
+          if (window.HMApp && HMApp.toast) HMApp.toast('已保存 ' + p.name, 'success');
+          renderApiPanel(body);
+        }).catch(function (err) {
+          var reason = (err && err.message) || '网络异常';
+          if (err && err.localSaved) {
+            /* 本机已写入，重渲染让绑定/表格立即生效，同时把云端失败原因留在卡片上 */
+            renderApiPanel(body);
+            var msg2 = document.querySelector('.hm-api-card[data-api="' + p.id + '"] [data-msg]');
+            if (msg2) { msg2.textContent = '本机已保存；云端失败：' + reason; msg2.className = 'hm-api-foot-msg is-bad'; }
+            if (window.HMApp && HMApp.toast) HMApp.toast('已保存到本机；云端失败：' + reason, 'error');
+          } else {
+            saveBtn.disabled = false;
+            if (msgEl) { msgEl.textContent = '保存失败：' + reason; msgEl.className = 'hm-api-foot-msg is-bad'; }
+            if (window.HMApp && HMApp.toast) HMApp.toast('保存失败：' + reason, 'error');
+          }
+        });
         return;
       }
       if (e.target.closest('[data-del]')) {
@@ -70506,13 +70887,51 @@ window.HMChat = (function () {
 
   function saveFromCard(card, p) {
     var inputs = card.querySelectorAll('[data-ik]');
-    var payload = { base: p.base, key: p.key, model: p.model, model2: p.model2, enabled: p.enabled };
+    var payload = {
+      id: p.id,
+      name: p.name,
+      base: p.base,
+      key: p.key,
+      model: p.model,
+      model2: p.model2,
+      enabled: p.enabled,
+      type: apiBinding(p.id)
+    };
     inputs.forEach(function (el) {
       var k = el.dataset.ik;
       if (k === 'enabled') payload.enabled = el.checked;
+      else if (k === 'type') payload.type = el.value;
       else payload[k] = el.value.trim();
     });
-    saveApiCard(p.id, payload.base, payload.key, payload.model, payload.model2, payload.enabled);
+    if (!payload.base) return Promise.reject(new Error('接口地址不能为空'));
+    if (!payload.model) return Promise.reject(new Error('模型 ID 不能为空'));
+    return saveApiCard(payload);
+  }
+
+  /* 新增一条空白接入记录：先进输入态，点保存才写后端 */
+  function addApiRecord() {
+    var App = window.HMApp;
+    if (!App) return;
+    var providers = App.state.providers = App.state.providers || {};
+    var doc = getApiDoc();
+    var seq = 1;
+    var id = 'custom-' + seq;
+    while (providers[id] || doc.providers[id]) { seq += 1; id = 'custom-' + seq; }
+    var name = '新接入 ' + seq;
+    providers[id] = { base: '', key: '', model: '' };
+    doc.providers[id] = { name: name, base: '', key: '', model: '', model2: '' };
+    doc.bindings[id] = '';
+    doc.updatedAt = Date.now();
+    try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
+    try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
+    apiDocCache = doc;
+    apiFilter.platform = '';
+    renderApiPanel(document.getElementById('adminBody'));
+    setTimeout(function () {
+      var el = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-ik="name"]');
+      if (!el) el = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-ik="base"]');
+      if (el) { try { el.focus(); } catch (e) {} }
+    }, 30);
   }
 
   function testAndUpdate(id) {
@@ -70537,6 +70956,10 @@ window.HMChat = (function () {
       }
     });
   }
+
+  /* 云端 /docs/api 拉回后：刷新缓存并按需重渲染接入面板 */
+  window.HMCloudReload = window.HMCloudReload || {};
+  window.HMCloudReload.api = function () { resetApiDoc(); };
 
   /* 全局暴露 */
   window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin };
@@ -71700,7 +72123,7 @@ window.HMChat = (function () {
   var LS_REV = 'anidream.rev.v1';
   var LS_SYNC = 'anidream.sync.v1';
   var LS_QUEUE = 'anidream.queue.v1';
-  var DOC_KINDS = { desk: 1, compile: 1, publish: 1, prefs: 1, library: 1, draft: 1 };
+  var DOC_KINDS = { desk: 1, compile: 1, publish: 1, prefs: 1, library: 1, draft: 1, api: 1 };
 
   var revs = read(LS_REV, { works: {}, docs: {}, fp: {}, docfp: {} });
   if (!revs.docfp) revs.docfp = {};
@@ -72201,10 +72624,11 @@ window.HMChat = (function () {
     if (kind === 'prefs') return 'anidream.prefs.v1';
     if (kind === 'library') return 'anidream.library.area.v1';
     if (kind === 'draft') return 'anidream.draft.v1';
+    if (kind === 'api') return 'anidream.api.v1';
     return '';
   }
 
-  async function pushDoc(kind, data) {
+  async function pushDoc(kind, data, opts) {
     if (!uid() || !DOC_KINDS[kind]) return null;
     var body = { data: data };
     if (revs.docs[kind] != null) body.rev = revs.docs[kind];
@@ -72237,6 +72661,7 @@ window.HMChat = (function () {
         return retry;
       }
       if (err.offline) {
+        if (opts && opts.strict) throw err;
         queue.push({ op: 'doc', kind: kind, data: data, ts: Date.now() });
         saveQueue();
         return null;
@@ -72749,6 +73174,14 @@ window.HMChat = (function () {
     pushPrefs: pushPrefs,
     pushLibraryPrefs: pushLibraryPrefs,
     pushDraftDoc: pushDraftDoc,
+    /* 接入配置：必须真正写到云端；未登录/离线直接抛错，界面据此提示 */
+    pushApi: function (data) {
+      if (!uid()) return Promise.reject(new Error('未登录，无法保存到云端'));
+      return pushDoc('api', data, { strict: true }).then(function (res) {
+        if (!res) throw new Error('云端保存未完成，请重试');
+        return res;
+      });
+    },
     /* 数据安全层（供页面内其它模块与排障使用） */
     collectLocalWorks: collectLocalWorks,
     mergeLists: mergeLists,
