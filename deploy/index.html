@@ -72967,6 +72967,57 @@ window.HMChat = (function () {
     }
   }
 
+  /* ---------------- 自动重试 + 断线接回 ----------------
+   * 一次失败不允许长期停在红字：
+   *   1) 拉取本身先做短退避重试，吃掉网关瞬时 406/5xx/断网；
+   *   2) 仍失败则按 5s→120s 指数退避在后台重连，成功即刻清空错误；
+   *   3) 网络恢复（online）、页面重新可见、手动同步都会立即再试一次。 */
+  var retryTimer = null;
+  var retryCount = 0;
+  var RETRY_DELAYS = [5000, 10000, 20000, 40000, 60000, 120000];
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function clearRetry() {
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+    retryCount = 0;
+    sync.retryAt = 0;
+    sync.retryCount = 0;
+  }
+
+  function scheduleRetry() {
+    if (!uid() || retryTimer) return;
+    var delay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
+    retryCount += 1;
+    sync.retryAt = Date.now() + delay;
+    sync.retryCount = retryCount;
+    saveSync();
+    renderPanel();
+    retryTimer = setTimeout(function () {
+      retryTimer = null;
+      if (!uid()) { retryCount = 0; return; }
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) { scheduleRetry(); return; }
+      lastPullAt = 0;
+      afterLogin(true);
+    }, delay);
+  }
+
+  /* bootstrap 单次请求内部再重试 2 次（间隔 1.2s / 3s）；
+     401/403 是登录态问题，重试无意义，直接抛给上层。 */
+  function pullBootstrap() {
+    var delays = [0, 1200, 3000];
+    var attempt = 0;
+    function next() {
+      return request('GET', '/user-data/bootstrap', null, 30000).catch(function (err) {
+        if (err && (err.status === 401 || err.status === 403)) throw err;
+        attempt += 1;
+        if (attempt >= delays.length) throw err;
+        return sleep(delays[attempt]).then(next);
+      });
+    }
+    return next();
+  }
+
   /* ---------------- 登录后：拉取 + 迁移 ----------------
    * 铁律：拉取失败 / 401 / 403 / 超时 / 结构异常 / 云端为空，都不允许改动本地作品。 */
   async function afterLogin(force) {
@@ -72978,28 +73029,35 @@ window.HMChat = (function () {
       await window.HMApp.hydrateWorks();
       var boot;
       try {
-        boot = await request('GET', '/user-data/bootstrap', null, 30000);
+        boot = await pullBootstrap();
       } catch (err) {
-        sync.lastError = '云端拉取失败（' + ((err && err.message) || '网络异常') + '），本机作品保持不变';
+        sync.lastError = '云端拉取失败（' + ((err && err.message) || '网络异常') +
+          (err && err.status ? ' HTTP ' + err.status : '') + '），本机作品保持不变；已转入自动重连';
         saveSync();
         renderPanel();
+        scheduleRetry();
         return;
       }
       if (!boot || typeof boot !== 'object') {
-        sync.lastError = '云端返回结构异常，已忽略本次同步，本机作品保持不变';
+        sync.lastError = '云端返回结构异常，已忽略本次同步，本机作品保持不变；稍后自动重试';
         saveSync();
         renderPanel();
+        scheduleRetry();
         return;
       }
+      /* 拉取成功：先清掉历史遗留的失败提示，再落地数据（applyBootstrap 自己的告警不受影响） */
+      sync.lastError = '';
+      clearRetry();
       applyBootstrap(boot);
       await migrateLocal();
       await flushQueue();
       sync.lastSync = Date.now();
-      if (!sync.lastError) sync.lastError = '';
       saveSync();
     } catch (err) {
       sync.lastError = (err && err.message) || '拉取失败';
       saveSync();
+      renderPanel();
+      scheduleRetry();
     } finally {
       busy = false;
       renderPanel();
@@ -73213,7 +73271,19 @@ window.HMChat = (function () {
   }
 
   window.addEventListener('online', function () {
-    setTimeout(function () { flushQueue().then(function () { pushDirtyWorks(); }); }, 1500);
+    setTimeout(function () {
+      if (uid()) { lastPullAt = 0; afterLogin(true); }
+      flushQueue().then(function () { pushDirtyWorks(); });
+    }, 1500);
+  });
+
+  /* 长时间停留后台再切回来：上次失败或数据已过期，立即补拉一次 */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible' || !uid() || busy) return;
+    if (sync.lastError || Date.now() - (Number(sync.lastSync) || 0) > 300000) {
+      lastPullAt = 0;
+      afterLogin(true);
+    }
   });
 
   /* ---------------- 设置页「云同步」面板 ---------------- */
@@ -73266,7 +73336,13 @@ window.HMChat = (function () {
         '<div>最近同步：<b>' + (sync.lastSync ? new Date(sync.lastSync).toLocaleString() : '尚未同步') + '</b></div>' +
         '<div>待重试：<b>' + queue.length + '</b> 条 · 冲突：<b>' + (sync.conflicts || 0) + '</b></div>' +
       '</div>' + warn +
-      (sync.lastError ? '<div style="color:#f87171;font-size:12px;margin-top:6px">最近错误：' + String(sync.lastError).slice(0, 160) + '</div>' : '');
+      (sync.lastError
+        ? '<div style="color:#f87171;font-size:12px;margin-top:6px">最近错误：' + String(sync.lastError).slice(0, 180) +
+          (sync.retryAt && sync.retryAt > Date.now()
+            ? '（第 ' + (sync.retryCount || 1) + ' 次自动重连将在 ' + Math.max(1, Math.round((sync.retryAt - Date.now()) / 1000)) + ' 秒后开始）'
+            : '') +
+          '</div>'
+        : '');
 
     var btnNow = el.querySelector('#hmSyncNow');
     if (btnNow) btnNow.onclick = function () {
@@ -73414,7 +73490,9 @@ window.HMChat = (function () {
     autoRecover: maybeAutoRecover,
     assertNoDataLoss: assertNoDataLoss,
     pullDocs: async function () {
-      var boot = await request('GET', '/user-data/bootstrap', null, 30000);
+      var boot = await pullBootstrap();
+      sync.lastError = '';
+      saveSync();
       applyBootstrap(boot);
     },
     status: function () { return { storage: storage, usage: usage, sync: sync, queue: queue.length }; },
