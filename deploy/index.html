@@ -70750,64 +70750,75 @@ window.HMChat = (function () {
   function saveApiCard(p) {
     var App = window.HMApp;
     if (!App) return Promise.reject(new Error('应用未就绪'));
-    var doc = getApiDoc();
-    var prefs = App.state.prefs = App.state.prefs || {};
-    var providers = App.state.providers = App.state.providers || {};
     var id = p.id;
     var name = String(p.name || '').trim() || id;
+    /* 保存前先拉云端最新文档：本机缓存可能过期，直接 push 会把云端类型/计费/Key 覆盖成空 */
+    var fresh = (window.HMSync && window.HMSync.pullApi)
+      ? window.HMSync.pullApi().catch(function () { return null; })
+      : Promise.resolve(null);
+    return fresh.then(function () {
+      var doc = getApiDoc();
+      var prefs = App.state.prefs = App.state.prefs || {};
+      var providers = App.state.providers = App.state.providers || {};
+      var prevProvider = doc.providers[id] || {};
+      var nextProvider = Object.assign({}, prevProvider, {
+        name: name,
+        base: p.base,
+        key: p.key,
+        model: p.model,
+        model2: p.model2 || ''
+      });
+      if (!nextProvider.key) nextProvider.key = prevProvider.key || '';
+      doc.providers[id] = nextProvider;
+      /* 空值不覆盖已有类型/计费，避免旧页面把云端值冲掉 */
+      if (p.type) doc.bindings[id] = p.type;
+      else if (doc.bindings[id] == null) doc.bindings[id] = '';
+      if (p.billing === 'free' || p.billing === 'paid') doc.billing[id] = p.billing;
 
-    doc.providers[id] = Object.assign({}, doc.providers[id], {
-      name: name,
-      base: p.base,
-      key: p.key,
-      model: p.model,
-      model2: p.model2 || ''
-    });
-    doc.bindings[id] = p.type || '';
-    if (p.billing === 'free' || p.billing === 'paid') doc.billing[id] = p.billing;
-    else delete doc.billing[id];
-
-    if (id === '__rayin__') {
-      prefs.rayin = { base: p.base, key: p.key };
-      prefs.gptModel = p.model;
-      prefs.bananaModel = p.model2 || prefs.bananaModel;
-      doc.rayin = { base: p.base, key: p.key };
-      doc.gptModel = p.model;
-      doc.bananaModel = prefs.bananaModel;
-      if (p.enabled) App.state.engine = 'gpt-image';
-      try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(prefs.rayin)); } catch (e) {}
-    } else {
-      providers[id] = { base: p.base, key: p.key, model: p.model };
-      if (p.enabled) App.state.providerId = id;
-      try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
-    }
-    try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
-    doc.updatedAt = Date.now();
-    try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
-    apiDocCache = doc;
-
-    var push = window.HMSync && window.HMSync.pushApi;
-    if (!push) {
-      var noSync = new Error('云同步模块未加载，请刷新页面重试');
-      noSync.localSaved = true;
-      return Promise.reject(noSync);
-    }
-    return push(doc).then(function (res) {
-      /* 回读校验：后端返回的文档里必须仍带这次填的 Key，防止被服务端过滤后只剩本机 */
-      var cloud = res && res.doc && res.doc.data;
-      var expectKey = String(p.key || '');
-      var gotKey = null;
-      if (cloud) {
-        if (cloud.providers && cloud.providers[id]) gotKey = cloud.providers[id].key;
-        else if (id === '__rayin__' && cloud.rayin) gotKey = cloud.rayin.key;
+      if (id === '__rayin__') {
+        var prevRayin = doc.rayin || {};
+        var rayinKey = p.key || prevRayin.key || '';
+        prefs.rayin = { base: p.base, key: rayinKey };
+        prefs.gptModel = p.model;
+        prefs.bananaModel = p.model2 || prefs.bananaModel;
+        doc.rayin = { base: p.base, key: rayinKey };
+        doc.gptModel = p.model;
+        doc.bananaModel = prefs.bananaModel;
+        if (p.enabled) App.state.engine = 'gpt-image';
+        try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(prefs.rayin)); } catch (e) {}
+      } else {
+        providers[id] = { base: p.base, key: nextProvider.key, model: p.model };
+        if (p.enabled) App.state.providerId = id;
+        try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
       }
-      if (cloud && gotKey != null && String(gotKey) !== expectKey) {
-        throw new Error('云端未保存 API Key，请重试');
+      try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
+      doc.updatedAt = Date.now();
+      try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
+      apiDocCache = doc;
+
+      var push = window.HMSync && window.HMSync.pushApi;
+      if (!push) {
+        var noSync = new Error('云同步模块未加载，请刷新页面重试');
+        noSync.localSaved = true;
+        return Promise.reject(noSync);
       }
-      return res;
-    }).catch(function (err) {
-      err.localSaved = true;
-      throw err;
+      return push(doc).then(function (res) {
+        /* 回读校验：后端返回的文档里必须仍带这次填的 Key，防止被服务端过滤后只剩本机 */
+        var cloud = res && res.doc && res.doc.data;
+        var expectKey = String(nextProvider.key || '');
+        var gotKey = null;
+        if (cloud) {
+          if (cloud.providers && cloud.providers[id]) gotKey = cloud.providers[id].key;
+          else if (id === '__rayin__' && cloud.rayin) gotKey = cloud.rayin.key;
+        }
+        if (cloud && gotKey != null && String(gotKey) !== expectKey) {
+          throw new Error('云端未保存 API Key，请重试');
+        }
+        return res;
+      }).catch(function (err) {
+        err.localSaved = true;
+        throw err;
+      });
     });
   }
 
@@ -73185,6 +73196,13 @@ window.HMChat = (function () {
           if (!cp[id]) cp[id] = lp[id];
           else if (!cp[id].key && lp[id] && lp[id].key) cp[id].key = lp[id].key;
         });
+        /* 云端缺类型/计费时保留本机已有值，避免拉取时丢数据 */
+        var cb = data.bindings || (data.bindings = {});
+        var lb = prev.bindings || {};
+        Object.keys(lb).forEach(function (id) { if (!cb[id] && lb[id]) cb[id] = lb[id]; });
+        var cbi = data.billing || (data.billing = {});
+        var lbi = prev.billing || {};
+        Object.keys(lbi).forEach(function (id) { if (!cbi[id] && lbi[id]) cbi[id] = lbi[id]; });
         if ((!data.rayin || !data.rayin.key) && prev.rayin && prev.rayin.key) {
           data.rayin = Object.assign({}, prev.rayin, data.rayin || {});
         }
@@ -73716,6 +73734,16 @@ window.HMChat = (function () {
       return pushDoc('api', data, { strict: true }).then(function (res) {
         if (!res) throw new Error('云端保存未完成，请重试');
         return res;
+      });
+    },
+    /* 保存接入配置前先拉云端最新文档，避免本机过期数据覆盖云端 */
+    pullApi: function () {
+      if (!uid()) return Promise.resolve(null);
+      return request('GET', '/docs/api', null, 30000).then(function (res) {
+        if (!res || !res.doc || res.doc.data == null) return null;
+        applyDoc('api', res.doc.data, res.doc.rev);
+        saveRevs();
+        return res.doc.data;
       });
     },
     /* 数据安全层（供页面内其它模块与排障使用） */
