@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-12T17:13:09.816Z",
+  "generatedAt": "2026-11-12T18:01:10.135Z",
   "source": "huimeng_library.books",
-  "total": 117,
+  "total": 147,
   "areas": {
-    "paint": 101,
+    "paint": 131,
     "ref": 16
   },
   "books": [
@@ -5072,6 +5072,1197 @@
       "pdfBytes": 32200080,
       "coverKey": "library/covers/120-marker-drawing-basics-cover.jpg",
       "coverBytes": 259536
+    },
+    {
+      "id": "lib-mwdufjeg-f77af5",
+      "sortNo": 120,
+      "title": "动漫彩色绘：彩色铅笔绘制基础教程",
+      "author": "",
+      "intro": "彩铅上色基础：叠色、渐变与笔触，完成动漫角色的彩铅表现。",
+      "pageCount": 168,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/121-colored-pencil-basics.pdf",
+      "pdfBytes": 34859451,
+      "coverKey": "library/covers/121-colored-pencil-basics-cover.jpg",
+      "coverBytes": 283402
+    },
+    {
+      "id": "lib-mwduicco-d14593",
+      "sortNo": 121,
+      "title": "黑马骑士绘战记：马克笔日式插画绘制技法",
+      "author": "",
+      "intro": "马克笔日式插画：配色、叠色与质感，完整绘制流程示范。",
+      "pageCount": 194,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "第一章 马克笔日式插画",
+          "page": 10
+        },
+        {
+          "title": "马克笔概述",
+          "page": 10
+        },
+        {
+          "title": "马克笔与插画创作",
+          "page": 12
+        },
+        {
+          "title": "第二章 马克笔家族的成员们",
+          "page": 16
+        },
+        {
+          "title": "马克笔的基本类型",
+          "page": 16
+        },
+        {
+          "title": "马克笔测评",
+          "page": 18
+        },
+        {
+          "title": "第三章 马克笔纸张与辅助工具",
+          "page": 28
+        },
+        {
+          "title": "全11种马克笔纸张测评",
+          "page": 28
+        },
+        {
+          "title": "针管笔、水彩等10种绘制工具介绍",
+          "page": 40
+        },
+        {
+          "title": "第四章 马克笔重要技法",
+          "page": 50
+        },
+        {
+          "title": "制作自己的马克笔色卡",
+          "page": 50
+        },
+        {
+          "title": "马克笔的色彩叠加",
+          "page": 53
+        },
+        {
+          "title": "马克笔混色方法",
+          "page": 55
+        },
+        {
+          "title": "马克笔插画的基本流程",
+          "page": 59
+        },
+        {
+          "title": "第五章 马克笔人物、服饰绘制技巧",
+          "page": 64
+        },
+        {
+          "title": "人物皮肤与阴影的绘制",
+          "page": 64
+        },
+        {
+          "title": "人物眼睛的绘制",
+          "page": 70
+        },
+        {
+          "title": "手的上色方法",
+          "page": 75
+        },
+        {
+          "title": "人物头发的绘制",
+          "page": 80
+        },
+        {
+          "title": "服装的绘制",
+          "page": 90
+        },
+        {
+          "title": "金属配件的上色",
+          "page": 100
+        },
+        {
+          "title": "半透明雪纺材质衣物的上色",
+          "page": 104
+        },
+        {
+          "title": "第六章 马克笔完整插画绘制",
+          "page": 111
+        },
+        {
+          "title": "黑马骑士",
+          "page": 111
+        },
+        {
+          "title": "爱丽丝与红心女王的初见",
+          "page": 133
+        },
+        {
+          "title": "橘子蓝的幻想",
+          "page": 153
+        },
+        {
+          "title": "第七章 特别收录",
+          "page": 175
+        },
+        {
+          "title": "解救 安子申马克笔教程",
+          "page": 175
+        },
+        {
+          "title": "星骑士 缺糖的芝士棒马克笔教程",
+          "page": 185
+        }
+      ],
+      "pdfKey": "library/books/122-marker-japanese-illustration.pdf",
+      "pdfBytes": 43011648,
+      "coverKey": "library/covers/122-marker-japanese-illustration-cover.jpg",
+      "coverBytes": 248722
+    },
+    {
+      "id": "lib-mwdui6p8-9764a8",
+      "sortNo": 122,
+      "title": "日本漫画创作技法：肢体表情",
+      "author": "",
+      "intro": "肢体语言与表情：姿态、手势与情绪的组合表达。",
+      "pageCount": 140,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/123-manga-body-expression.pdf",
+      "pdfBytes": 37461828,
+      "coverKey": "library/covers/123-manga-body-expression-cover.jpg",
+      "coverBytes": 250823
+    },
+    {
+      "id": "lib-mwdum6ut-311be2",
+      "sortNo": 123,
+      "title": "日本漫画创作技法：妖怪造型",
+      "author": "",
+      "intro": "妖怪角色设计：传说原型、造型夸张与细节设定。",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/124-manga-yokai-design.pdf",
+      "pdfBytes": 55554749,
+      "coverKey": "library/covers/124-manga-yokai-design-cover.jpg",
+      "coverBytes": 268457
+    },
+    {
+      "id": "lib-mwduk79t-752a5a",
+      "sortNo": 124,
+      "title": "日本漫画创作技法：嘻哈文化",
+      "author": "",
+      "intro": "嘻哈题材角色与场景：街头服饰、涂鸦元素与动态。",
+      "pageCount": 140,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/125-manga-hiphop-culture.pdf",
+      "pdfBytes": 47139136,
+      "coverKey": "library/covers/125-manga-hiphop-culture-cover.jpg",
+      "coverBytes": 257273
+    },
+    {
+      "id": "lib-mwduq8n1-aef374",
+      "sortNo": 125,
+      "title": "日本漫画创作技法：神奇幻想",
+      "author": "",
+      "intro": "奇幻题材创作：世界观、种族与幻想生物的画法。",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/126-manga-fantasy.pdf",
+      "pdfBytes": 69903304,
+      "coverKey": "library/covers/126-manga-fantasy-cover.jpg",
+      "coverBytes": 250692
+    },
+    {
+      "id": "lib-mwduf2hb-00593f",
+      "sortNo": 126,
+      "title": "日本漫画创作技法：少女角色",
+      "author": "",
+      "intro": "少女角色塑造：脸型、体型、服饰与表情。",
+      "pageCount": 138,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/127-manga-girl-characters.pdf",
+      "pdfBytes": 33009648,
+      "coverKey": "library/covers/127-manga-girl-characters-cover.jpg",
+      "coverBytes": 249309
+    },
+    {
+      "id": "lib-mwduprv5-d0aa6a",
+      "sortNo": 127,
+      "title": "日本漫画创作技法：色彩运用",
+      "author": "",
+      "intro": "漫画配色方法：色相搭配、明暗层次与画面气氛。",
+      "pageCount": 122,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/128-manga-color-usage.pdf",
+      "pdfBytes": 61476266,
+      "coverKey": "library/covers/128-manga-color-usage-cover.jpg",
+      "coverBytes": 246023
+    },
+    {
+      "id": "lib-mwdui8ek-545e73",
+      "sortNo": 128,
+      "title": "日本漫画创作技法：格斗动作",
+      "author": "",
+      "intro": "格斗动作设计：出拳、踢击与受击的动态与透视。",
+      "pageCount": 128,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/129-manga-fight-motion.pdf",
+      "pdfBytes": 40116198,
+      "coverKey": "library/covers/129-manga-fight-motion-cover.jpg",
+      "coverBytes": 222342
+    },
+    {
+      "id": "lib-mwduf5h1-871d92",
+      "sortNo": 129,
+      "title": "日本漫画创作技法：变形金刚",
+      "author": "",
+      "intro": "机械角色画法：变形结构、透视与金属质感。",
+      "pageCount": 126,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/130-manga-transformers.pdf",
+      "pdfBytes": 33014972,
+      "coverKey": "library/covers/130-manga-transformers-cover.jpg",
+      "coverBytes": 244875
+    },
+    {
+      "id": "lib-mwduen31-bfd39f",
+      "sortNo": 130,
+      "title": "如何画漫画：基础漫画工具大全",
+      "author": "",
+      "intro": "漫画工具全解：笔、墨、网点纸与透写台的使用技巧。",
+      "pageCount": 83,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/131-manga-tools-guide.pdf",
+      "pdfBytes": 12381702,
+      "coverKey": "library/covers/131-manga-tools-guide-cover.jpg",
+      "coverBytes": 241648
+    },
+    {
+      "id": "lib-mwduo0f4-97094a",
+      "sortNo": 131,
+      "title": "卡通漫画绘画技法：衣服的画法·学校制服少女篇",
+      "author": "",
+      "intro": "学校制服画法：款式、褶皱与身体贴合的表现。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/132-clothing-school-uniform.pdf",
+      "pdfBytes": 60701506,
+      "coverKey": "library/covers/132-clothing-school-uniform-cover.jpg",
+      "coverBytes": 224028
+    },
+    {
+      "id": "lib-mwdunwoh-80f18b",
+      "sortNo": 132,
+      "title": "卡通漫画绘画技法：衣服的画法·西服、校服篇",
+      "author": "",
+      "intro": "西服与校服画法：版型、领口与褶皱细节。",
+      "pageCount": 176,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/133-clothing-suit-uniform.pdf",
+      "pdfBytes": 57154414,
+      "coverKey": "library/covers/133-clothing-suit-uniform-cover.jpg",
+      "coverBytes": 221250
+    },
+    {
+      "id": "lib-mwdulzgc-ca2985",
+      "sortNo": 133,
+      "title": "卡通漫画绘画技法：世界各地美少女的画法",
+      "author": "",
+      "intro": "不同地域风格的美少女：五官、发型与服饰差异。",
+      "pageCount": 132,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/134-worldwide-bishojo.pdf",
+      "pdfBytes": 53957425,
+      "coverKey": "library/covers/134-worldwide-bishojo-cover.jpg",
+      "coverBytes": 351208
+    },
+    {
+      "id": "lib-mwdulo13-f1e9d9",
+      "sortNo": 134,
+      "title": "卡通漫画绘画技法：神怪的画法",
+      "author": "",
+      "intro": "神怪与魔物设计：原型、结构与氛围表现。",
+      "pageCount": 124,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/135-mythical-creatures.pdf",
+      "pdfBytes": 49985584,
+      "coverKey": "library/covers/135-mythical-creatures-cover.jpg",
+      "coverBytes": 248851
+    },
+    {
+      "id": "lib-mwdugaw1-da318d",
+      "sortNo": 135,
+      "title": "卡通漫画绘画技法：身体的画法",
+      "author": "",
+      "intro": "身体结构画法：比例、关节与肌肉的简化表达。",
+      "pageCount": 134,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/136-body-drawing.pdf",
+      "pdfBytes": 35737315,
+      "coverKey": "library/covers/136-body-drawing-cover.jpg",
+      "coverBytes": 254181
+    },
+    {
+      "id": "lib-mwdugffs-5a1c1f",
+      "sortNo": 136,
+      "title": "卡通漫画绘画技法：少女漫画的画法",
+      "author": "",
+      "intro": "少女漫画表现：角色、分镜与情绪的绘制要点。",
+      "pageCount": 134,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/137-shojo-manga-drawing.pdf",
+      "pdfBytes": 36265472,
+      "coverKey": "library/covers/137-shojo-manga-drawing-cover.jpg",
+      "coverBytes": 241752
+    },
+    {
+      "id": "lib-mwduf8fq-2dadb7",
+      "sortNo": 137,
+      "title": "卡通漫画绘画技法：男孩子的画法",
+      "author": "",
+      "intro": "男性角色画法：体型、五官与动作气质。",
+      "pageCount": 131,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/138-boys-drawing.pdf",
+      "pdfBytes": 29627313,
+      "coverKey": "library/covers/138-boys-drawing-cover.jpg",
+      "coverBytes": 174476
+    },
+    {
+      "id": "lib-mwduk0mv-9a9a54",
+      "sortNo": 138,
+      "title": "卡通漫画绘画技法：美少女的画法",
+      "author": "",
+      "intro": "美少女角色画法：脸部、身材与服饰搭配。",
+      "pageCount": 129,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/139-bishojo-drawing.pdf",
+      "pdfBytes": 46393042,
+      "coverKey": "library/covers/139-bishojo-drawing-cover.jpg",
+      "coverBytes": 237426
+    },
+    {
+      "id": "lib-mwdupvh4-218fb5",
+      "sortNo": 139,
+      "title": "卡通漫画绘画技法：漫画入门·画笔和网点纸的使用技巧",
+      "author": "",
+      "intro": "漫画入门：画笔与网点纸的使用，完成一页漫画。",
+      "pageCount": 127,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/140-manga-intro-tools.pdf",
+      "pdfBytes": 61862787,
+      "coverKey": "library/covers/140-manga-intro-tools-cover.jpg",
+      "coverBytes": 246603
+    },
+    {
+      "id": "lib-mwduqaim-a34cf8",
+      "sortNo": 140,
+      "title": "卡通漫画绘画技法：漫画技法提升版·演出技巧和技法的提高",
+      "author": "",
+      "intro": "漫画演出技巧：分镜、视线引导与画面节奏。",
+      "pageCount": 150,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/141-manga-direction-advanced.pdf",
+      "pdfBytes": 95103319,
+      "coverKey": "library/covers/141-manga-direction-advanced-cover.jpg",
+      "coverBytes": 223278
+    },
+    {
+      "id": "lib-mwdum3e0-ecd880",
+      "sortNo": 141,
+      "title": "卡通漫画绘画技法：漫画的创作·故事情节篇",
+      "author": "",
+      "intro": "漫画编剧：起承转合、冲突设计与分镜叙事。",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/142-manga-story-creation.pdf",
+      "pdfBytes": 50610493,
+      "coverKey": "library/covers/142-manga-story-creation-cover.jpg",
+      "coverBytes": 241331
+    },
+    {
+      "id": "lib-mwdujxm0-b43089",
+      "sortNo": 142,
+      "title": "卡通漫画绘画技法：来，让我们画漫画吧",
+      "author": "",
+      "intro": "从画材准备到完稿：漫画制作全流程实操。",
+      "pageCount": 127,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/143-lets-draw-manga.pdf",
+      "pdfBytes": 47518028,
+      "coverKey": "library/covers/143-lets-draw-manga-cover.jpg",
+      "coverBytes": 212573
+    },
+    {
+      "id": "lib-mwdug8fj-ae1d01",
+      "sortNo": 143,
+      "title": "卡通漫画绘画技法：格斗的画法·运动竞技篇",
+      "author": "",
+      "intro": "运动竞技题材：动作张力、速度感与对抗构图。",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/144-fight-sports.pdf",
+      "pdfBytes": 35174940,
+      "coverKey": "library/covers/144-fight-sports-cover.jpg",
+      "coverBytes": 214348
+    },
+    {
+      "id": "lib-mwduiaey-376cc0",
+      "sortNo": 144,
+      "title": "卡通漫画绘画技法：格斗的画法·理论和变化篇",
+      "author": "",
+      "intro": "格斗理论与招式变化：攻防动作的拆解画法。",
+      "pageCount": 132,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "第1章 格斗绘画的理论",
+          "page": 7
+        },
+        {
+          "title": "营造感染力",
+          "page": 8
+        },
+        {
+          "title": "1．侧面构图更有说明性受击一方画成“〈”形",
+          "page": 8
+        },
+        {
+          "title": "2．大特写",
+          "page": 9
+        },
+        {
+          "title": "3．速度感",
+          "page": 10
+        },
+        {
+          "title": "4．头发的刻画",
+          "page": 11
+        },
+        {
+          "title": "5．视线盯着对方",
+          "page": 12
+        },
+        {
+          "title": "6．采用大画幅",
+          "page": 13
+        },
+        {
+          "title": "7．混战场面中受击一方是重点",
+          "page": 14
+        },
+        {
+          "title": "8．大量描画攻击局部，突出速度感——攻击方",
+          "page": 16
+        },
+        {
+          "title": "9．大量描画局部攻击，突出速度感——受击方",
+          "page": 17
+        },
+        {
+          "title": "结束模式～理论性构图～",
+          "page": 18
+        },
+        {
+          "title": "1．受击一方的脚放在眼前",
+          "page": 18
+        },
+        {
+          "title": "2．受击一方的头部放在眼前",
+          "page": 19
+        },
+        {
+          "title": "脸被打肿的画法",
+          "page": 20
+        },
+        {
+          "title": "第2章 打、踢、打耳光的画法",
+          "page": 21
+        },
+        {
+          "title": "受击方的画法",
+          "page": 22
+        },
+        {
+          "title": "攻击上部（攻击脸部和头部）",
+          "page": 24
+        },
+        {
+          "title": "1．正面击打脸部",
+          "page": 24
+        },
+        {
+          "title": "2．从斜下往上击打",
+          "page": 28
+        },
+        {
+          "title": "3．上钩拳",
+          "page": 30
+        },
+        {
+          "title": "4．踢头部（踢上部）",
+          "page": 32
+        },
+        {
+          "title": "5．脸部受击（正面）",
+          "page": 34
+        },
+        {
+          "title": "6．脸部受击（背面）",
+          "page": 35
+        },
+        {
+          "title": "画出击打感觉的诀窍",
+          "page": 36
+        },
+        {
+          "title": "简单的画法",
+          "page": 37
+        },
+        {
+          "title": "打耳光",
+          "page": 38
+        },
+        {
+          "title": "1．基本变化",
+          "page": 38
+        },
+        {
+          "title": "2．用掌掴打",
+          "page": 40
+        },
+        {
+          "title": "3．用手背掴",
+          "page": 42
+        },
+        {
+          "title": "4．反复掴掌",
+          "page": 43
+        },
+        {
+          "title": "击打中部（胸部）",
+          "page": 44
+        },
+        {
+          "title": "攻击胸口以下至腹部",
+          "page": 46
+        },
+        {
+          "title": "攻击向前扑的对手（劈打下来）",
+          "page": 50
+        },
+        {
+          "title": "挂击",
+          "page": 52
+        },
+        {
+          "title": "剁掌",
+          "page": 54
+        },
+        {
+          "title": "肘和膝",
+          "page": 56
+        },
+        {
+          "title": "躲闪",
+          "page": 58
+        },
+        {
+          "title": "闪避场面的画法",
+          "page": 60
+        },
+        {
+          "title": "曲线效果线的画法～使用毫米笔～",
+          "page": 62
+        },
+        {
+          "title": "疲乏的表现",
+          "page": 64
+        },
+        {
+          "title": "第3章 摔、抓、厮打的画法",
+          "page": 65
+        },
+        {
+          "title": "摔",
+          "page": 66
+        },
+        {
+          "title": "1．抓住胳膊摔出去",
+          "page": 66
+        },
+        {
+          "title": "2．简单的摔法",
+          "page": 67
+        },
+        {
+          "title": "3．合气术式的摔法",
+          "page": 68
+        },
+        {
+          "title": "4．倒地姿势的应用",
+          "page": 69
+        },
+        {
+          "title": "5．其他摔的场景",
+          "page": 70
+        },
+        {
+          "title": "抛出和倒撞",
+          "page": 72
+        },
+        {
+          "title": "1．男孩",
+          "page": 72
+        },
+        {
+          "title": "2．女孩",
+          "page": 74
+        },
+        {
+          "title": "揪住（抓住）",
+          "page": 76
+        },
+        {
+          "title": "1．揪住衣领",
+          "page": 76
+        },
+        {
+          "title": "2．抓住脸部",
+          "page": 78
+        },
+        {
+          "title": "3．掐住咽喉",
+          "page": 79
+        },
+        {
+          "title": "4．抓住手臂",
+          "page": 80
+        },
+        {
+          "title": "勒住",
+          "page": 83
+        },
+        {
+          "title": "挣脱的技巧",
+          "page": 85
+        },
+        {
+          "title": "从后面擒拿",
+          "page": 86
+        },
+        {
+          "title": "飞扑",
+          "page": 88
+        },
+        {
+          "title": "骑在身上打",
+          "page": 90
+        },
+        {
+          "title": "蹲、跪、倒下",
+          "page": 92
+        },
+        {
+          "title": "爬起来和站起来",
+          "page": 94
+        },
+        {
+          "title": "用手臂夹～夹头和勒脖子",
+          "page": 96
+        },
+        {
+          "title": "1．夹头的基本动作",
+          "page": 96
+        },
+        {
+          "title": "2．夹头的动作变化",
+          "page": 97
+        },
+        {
+          "title": "3．勒脖子",
+          "page": 98
+        },
+        {
+          "title": "身穿制服的格斗",
+          "page": 100
+        },
+        {
+          "title": "1．击打",
+          "page": 100
+        },
+        {
+          "title": "2．踢",
+          "page": 104
+        },
+        {
+          "title": "3．摔",
+          "page": 108
+        },
+        {
+          "title": "4．职业搏击的技巧",
+          "page": 109
+        },
+        {
+          "title": "5．厮打",
+          "page": 110
+        },
+        {
+          "title": "6．骑压",
+          "page": 112
+        },
+        {
+          "title": "衣服破烂和满身创伤",
+          "page": 114
+        },
+        {
+          "title": "第4章 漫画家的表现技巧",
+          "page": 115
+        },
+        {
+          "title": "英雄救美／森田和明",
+          "page": 116
+        },
+        {
+          "title": "一击定音／里见美代子",
+          "page": 118
+        },
+        {
+          "title": "来吧！！／中川尚",
+          "page": 120
+        },
+        {
+          "title": "打架／森本贵美子",
+          "page": 122
+        },
+        {
+          "title": "战斗／松本刚彦",
+          "page": 124
+        },
+        {
+          "title": "摔跤／原田久仁信",
+          "page": 126
+        }
+      ],
+      "pdfKey": "library/books/145-fight-theory.pdf",
+      "pdfBytes": 41360355,
+      "coverKey": "library/covers/145-fight-theory-cover.jpg",
+      "coverBytes": 255668
+    },
+    {
+      "id": "lib-mwdugcql-8b65ad",
+      "sortNo": 145,
+      "title": "卡通漫画绘画技法：动物的画法",
+      "author": "",
+      "intro": "动物画法：骨骼、体态与卡通化处理。",
+      "pageCount": 142,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "第1章 动物画法的基础",
+          "page": 7
+        },
+        {
+          "title": "前言 简单化绘制",
+          "page": 8
+        },
+        {
+          "title": "从火柴棍画起",
+          "page": 10
+        },
+        {
+          "title": "关于“头身”",
+          "page": 11
+        },
+        {
+          "title": "S形的腿",
+          "page": 12
+        },
+        {
+          "title": "例作：从模式图画起 S形＋倒三角形迈出一条腿 脚的动作的各个阶段坐下时的后脚坐姿卧倒时的姿势各个角度与腿的姿态动物的脸",
+          "page": 22
+        },
+        {
+          "title": "变形后赋予的各种表情形态和毛的表现手法：动物的颜色",
+          "page": 26
+        },
+        {
+          "title": "各种各样的腮鼠",
+          "page": 27
+        },
+        {
+          "title": "动物和人的大小比较",
+          "page": 28
+        },
+        {
+          "title": "第2章 宠物和身边常见的动物",
+          "page": 29
+        },
+        {
+          "title": "狗",
+          "page": 30
+        },
+        {
+          "title": "耳朵竖起型耳朵下垂型清晰地画出狗身体的线条绘制长毛狗绘制毛很顺的狗站起抓痒行走奔跑同一角度的对比嗅·舔·吃画幼犬猫",
+          "page": 40
+        },
+        {
+          "title": "日本猫波斯猫南美栗鼠型张嘴普通猫长毛猫走姿注视·猛扑睡觉·躺着舔毛抱着猫小猫白鼬",
+          "page": 50
+        },
+        {
+          "title": "花栗鼠",
+          "page": 53
+        },
+        {
+          "title": "兔子",
+          "page": 56
+        },
+        {
+          "title": "草原犬鼠",
+          "page": 58
+        },
+        {
+          "title": "猫鼬",
+          "page": 60
+        },
+        {
+          "title": "刺猬",
+          "page": 62
+        },
+        {
+          "title": "臭鼬",
+          "page": 64
+        },
+        {
+          "title": "腮鼠",
+          "page": 65
+        },
+        {
+          "title": "马",
+          "page": 68
+        },
+        {
+          "title": "驴",
+          "page": 73
+        },
+        {
+          "title": "牛 非洲野牛",
+          "page": 74
+        },
+        {
+          "title": "绵羊",
+          "page": 76
+        },
+        {
+          "title": "山羊",
+          "page": 77
+        },
+        {
+          "title": "猪",
+          "page": 78
+        },
+        {
+          "title": "青蛙",
+          "page": 79
+        },
+        {
+          "title": "蛇",
+          "page": 80
+        },
+        {
+          "title": "蜥蜴 壁虎",
+          "page": 81
+        },
+        {
+          "title": "鬣蜥 变色龙",
+          "page": 82
+        },
+        {
+          "title": "鳄鱼",
+          "page": 83
+        },
+        {
+          "title": "小龙虾 蝎子",
+          "page": 84
+        },
+        {
+          "title": "螃蟹 寄居蟹",
+          "page": 85
+        },
+        {
+          "title": "乌龟",
+          "page": 86
+        },
+        {
+          "title": "第3章 大自然的动物",
+          "page": 87
+        },
+        {
+          "title": "大猩猩",
+          "page": 88
+        },
+        {
+          "title": "猩猩",
+          "page": 89
+        },
+        {
+          "title": "黑猩猩",
+          "page": 90
+        },
+        {
+          "title": "日本猿",
+          "page": 91
+        },
+        {
+          "title": "狮子",
+          "page": 92
+        },
+        {
+          "title": "虎",
+          "page": 94
+        },
+        {
+          "title": "豹",
+          "page": 95
+        },
+        {
+          "title": "狼",
+          "page": 96
+        },
+        {
+          "title": "熊",
+          "page": 98
+        },
+        {
+          "title": "白熊",
+          "page": 99
+        },
+        {
+          "title": "斑马",
+          "page": 100
+        },
+        {
+          "title": "长颈鹿",
+          "page": 101
+        },
+        {
+          "title": "河马",
+          "page": 102
+        },
+        {
+          "title": "大象",
+          "page": 103
+        },
+        {
+          "title": "犀牛",
+          "page": 104
+        },
+        {
+          "title": "野猪",
+          "page": 105
+        },
+        {
+          "title": "鹿",
+          "page": 106
+        },
+        {
+          "title": "骆驼",
+          "page": 108
+        },
+        {
+          "title": "袋鼠",
+          "page": 109
+        },
+        {
+          "title": "考拉",
+          "page": 110
+        },
+        {
+          "title": "熊猫",
+          "page": 111
+        },
+        {
+          "title": "浣熊",
+          "page": 112
+        },
+        {
+          "title": "小熊猫",
+          "page": 114
+        },
+        {
+          "title": "狐狸",
+          "page": 116
+        },
+        {
+          "title": "有关耳朵",
+          "page": 117
+        },
+        {
+          "title": "貉",
+          "page": 118
+        },
+        {
+          "title": "大飞鼠",
+          "page": 120
+        },
+        {
+          "title": "飞鼠",
+          "page": 121
+        },
+        {
+          "title": "犰狳 貘",
+          "page": 122
+        },
+        {
+          "title": "食蚁兽 树懒",
+          "page": 123
+        },
+        {
+          "title": "水獭",
+          "page": 124
+        },
+        {
+          "title": "海獭",
+          "page": 125
+        },
+        {
+          "title": "海狮 海豹",
+          "page": 126
+        },
+        {
+          "title": "海豚 虎鲸 鲸",
+          "page": 127
+        },
+        {
+          "title": "鳐鱼 鲨鱼",
+          "page": 128
+        },
+        {
+          "title": "章鱼 乌贼 河豚",
+          "page": 129
+        },
+        {
+          "title": "水母",
+          "page": 130
+        },
+        {
+          "title": "第4章 鸟",
+          "page": 131
+        },
+        {
+          "title": "鸣鸟",
+          "page": 132
+        },
+        {
+          "title": "乌鸦",
+          "page": 136
+        },
+        {
+          "title": "鸡",
+          "page": 137
+        },
+        {
+          "title": "水鸟",
+          "page": 138
+        },
+        {
+          "title": "猛禽类",
+          "page": 139
+        },
+        {
+          "title": "海鸥",
+          "page": 140
+        },
+        {
+          "title": "企鹅",
+          "page": 141
+        },
+        {
+          "title": "热带鱼 金鱼",
+          "page": 142
+        }
+      ],
+      "pdfKey": "library/books/146-animal-drawing.pdf",
+      "pdfBytes": 35310099,
+      "coverKey": "library/covers/146-animal-drawing-cover.jpg",
+      "coverBytes": 227776
+    },
+    {
+      "id": "lib-mwdur4r2-01a5ec",
+      "sortNo": 146,
+      "title": "古风漫画技法从入门到精通",
+      "author": "",
+      "intro": "古风漫画系统教程：人物、服饰、场景与上色。",
+      "pageCount": 226,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/147-gufeng-comic-mastery.pdf",
+      "pdfBytes": 137777034,
+      "coverKey": "library/covers/147-gufeng-comic-mastery-cover.jpg",
+      "coverBytes": 246496
+    },
+    {
+      "id": "lib-mwdujvh0-a86394",
+      "sortNo": 147,
+      "title": "日本经典动漫技法教程：角色设计基础",
+      "author": "",
+      "intro": "角色设计基础：设定思路、外形与性格的视觉化。",
+      "pageCount": 176,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/148-classic-character-design.pdf",
+      "pdfBytes": 44180670,
+      "coverKey": "library/covers/148-classic-character-design-cover.jpg",
+      "coverBytes": 205226
+    },
+    {
+      "id": "lib-mwdunqw5-dfbc66",
+      "sortNo": 148,
+      "title": "日本经典动漫技法教程：个性角色造型",
+      "author": "",
+      "intro": "个性化角色造型：差异化设计与记忆点塑造。",
+      "pageCount": 245,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/149-classic-character-styling.pdf",
+      "pdfBytes": 56584588,
+      "coverKey": "library/covers/149-classic-character-styling-cover.jpg",
+      "coverBytes": 188437
+    },
+    {
+      "id": "lib-mwdunj98-226364",
+      "sortNo": 149,
+      "title": "国际插画大师惠特拉奇的动物绘本：从现实到幻想",
+      "author": "特里尔·惠特拉奇",
+      "intro": "从真实动物到幻想生物：以绘本方式讲解形体推演与设计。",
+      "pageCount": 161,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/150-whitlatch-animal-picturebook.pdf",
+      "pdfBytes": 55833468,
+      "coverKey": "library/covers/150-whitlatch-animal-picturebook-cover.jpg",
+      "coverBytes": 176145
     }
   ]
 }
