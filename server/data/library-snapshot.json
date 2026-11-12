@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-12T11:42:18.976Z",
+  "generatedAt": "2026-11-12T11:55:59.641Z",
   "source": "huimeng_library.books",
-  "total": 68,
+  "total": 70,
   "areas": {
-    "paint": 58,
+    "paint": 60,
     "ref": 10
   },
   "books": [
@@ -3634,6 +3634,34 @@
       "pdfBytes": 57997229,
       "coverKey": "library/covers/065-female-costume-reference-cover.jpg",
       "coverBytes": 213579
+    },
+    {
+      "id": "lib-mwdhpdwe-d5365f",
+      "sortNo": 65,
+      "title": "国际插画大师惠特拉奇的动物画教程：创造奇幻生物的法则",
+      "author": "特里尔·惠特拉奇",
+      "intro": "Terryl Whitlatch 的生物设计课：从真实动物解剖出发，推演奇幻生物的结构、比例与生态合理性。",
+      "pageCount": 233,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/066-creature-design-imaginary-animals.pdf",
+      "pdfBytes": 64042642,
+      "coverKey": "library/covers/066-creature-design-imaginary-animals-cover.jpg",
+      "coverBytes": 147920
+    },
+    {
+      "id": "lib-mwdhqzy6-197ca1",
+      "sortNo": 66,
+      "title": "国际插画大师惠特拉奇的动物画教程：艺用生物解剖",
+      "author": "特里尔·惠特拉奇",
+      "intro": "以真实动物为对象的艺用解剖：骨骼、肌肉与体表结构，讲清四足与飞行动物的形体逻辑。",
+      "pageCount": 169,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/067-animal-anatomy-art.pdf",
+      "pdfBytes": 167741970,
+      "coverKey": "library/covers/067-animal-anatomy-art-cover.jpg",
+      "coverBytes": 165289
     },
     {
       "id": "lib-mwdh5q74-e5ae92",
