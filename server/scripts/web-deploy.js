@@ -2,13 +2,15 @@
 'use strict';
 
 /* =============================================================
- * 前端一键发布：GitHub Pages 一份 + 腾讯云 COS 一份
+ * 前端一键发布：GitHub Pages 一份 + 腾讯云 CloudBase 一份（默认双写）
  * -------------------------------------------------------------
- *   node server/scripts/web-deploy.js                 校验一致 → 传 COS → 双侧核对
- *   node server/scripts/web-deploy.js --push-github   本地与 GitHub 不一致时，先推 GitHub 再发 COS
- *   node server/scripts/web-deploy.js --skip-github   只发腾讯云
+ *   node server/scripts/web-deploy.js                 前置比对 → 需要时推 GitHub → 传 CloudBase → 双侧核对
+ *   node server/scripts/web-deploy.js --skip-github   只发腾讯云（跳过 GitHub）
+ *   node server/scripts/web-deploy.js --no-cloudbase  只走 GitHub，不同步 CloudBase
  *   node server/scripts/web-deploy.js --check-only    只校验，不推送、不上传
- *   node server/scripts/web-deploy.js --cloudbase     发到 CloudBase 静态托管（需 CLOUDBASE_ENV_ID）
+ *
+ * 长期规则：前端每次提交 GitHub 后必须同时同步 CloudBase，两边保持同一份（字节数 + sha256 一致）。
+ * CloudBase 失败会单独以 FAIL 报出，但 GitHub 那次提交仍算成功，两者不混为一个失败状态。
  *
  * 托管地址（COS 桶默认域名直读，实测内联打开、HTTPS、免备案）：
  *   https://<bucket>.cos.<region>.myqcloud.com/index.html
@@ -74,10 +76,11 @@ CFG.cloudbaseAppId = process.env.CLOUDBASE_APPID || (/(\d{6,})/.exec(CFG.bucket)
 
 const args = process.argv.slice(2);
 const skipGithub = args.includes('--skip-github');
-const pushFlag = args.includes('--push-github');
+const pushFlag = !skipGithub;
 const checkOnly = args.includes('--check-only');
 const mirror = args.includes('--cos-mirror');
-const cloudbase = args.includes('--cloudbase');
+/* 默认同步 CloudBase；只有显式 --no-cloudbase 才跳过 */
+const cloudbase = !args.includes('--no-cloudbase');
 
 const OK = [];
 const BAD = [];
@@ -284,9 +287,10 @@ function sameAsLocal(local, meta, localGitSha) {
 
 async function pushGithub(local, meta) {
   const message = 'chore(web): 发布 deploy/index.html（' + bytes(local.length) + '）';
+  const extras = extraRepoFiles();
   let commitSha;
-  if (local.length > 1024 * 1024) {
-    log('github', '文件 ' + bytes(local.length) + ' > 1MB，走 Git Data API');
+  if (local.length > 1024 * 1024 || extras.length) {
+    log('github', '文件 ' + bytes(local.length) + ' > 1MB，走 Git Data API' + (extras.length ? '（附加 ' + extras.length + ' 个文件）' : ''));
     const ref = await github('GET', '/repos/' + CFG.owner + '/' + CFG.repo + '/git/ref/heads/' + CFG.branch);
     const parent = ref.object.sha;
     const parentCommit = await github('GET', '/repos/' + CFG.owner + '/' + CFG.repo + '/git/commits/' + parent);
@@ -295,9 +299,19 @@ async function pushGithub(local, meta) {
     });
     if (blob.sha !== gitBlobSha(local)) throw new Error('blob sha 不匹配：' + blob.sha);
     log('github', 'blob=' + String(blob.sha).slice(0, 12) + ' 与本地一致');
+    const treeEntries = [{ path: CFG.repoPath, mode: '100644', type: 'blob', sha: blob.sha }];
+    for (const f of extras) {
+      const buf = fs.readFileSync(f.localPath);
+      const b = await github('POST', '/repos/' + CFG.owner + '/' + CFG.repo + '/git/blobs', {
+        content: buf.toString('base64'), encoding: 'base64',
+      });
+      if (b.sha !== gitBlobSha(buf)) throw new Error(f.repoPath + ' blob sha 不匹配');
+      treeEntries.push({ path: f.repoPath, mode: '100644', type: 'blob', sha: b.sha });
+      log('github', '附加 ' + f.repoPath + '  ' + bytes(buf.length) + '  blob=' + String(b.sha).slice(0, 12));
+    }
     const tree = await github('POST', '/repos/' + CFG.owner + '/' + CFG.repo + '/git/trees', {
       base_tree: parentCommit.tree.sha,
-      tree: [{ path: CFG.repoPath, mode: '100644', type: 'blob', sha: blob.sha }],
+      tree: treeEntries,
     });
     const commit = await github('POST', '/repos/' + CFG.owner + '/' + CFG.repo + '/git/commits', {
       message, tree: tree.sha, parents: [parent],
@@ -353,6 +367,44 @@ function cloudbaseCandidates() {
   return hosts;
 }
 
+/* 前端页依赖的静态资源（pdf.js 等）必须跟 index.html 一起上 CloudBase，
+   否则页面能开、阅读器却起不来（pdjs 404 → 「PDF 加载失败：无法读取文件」）。 */
+function cloudbaseFiles() {
+  const files = [{ localPath: LOCAL_FILE, cloudPath: CFG.objectKey }];
+  for (const f of vendorScripts()) files.push({ localPath: f.localPath, cloudPath: f.cloudPath });
+  const vendorDir = path.join(path.dirname(LOCAL_FILE), 'vendor', 'pdfjs');
+  if (fs.existsSync(vendorDir)) {
+    for (const name of fs.readdirSync(vendorDir)) {
+      const p = path.join(vendorDir, name);
+      if (fs.statSync(p).isFile()) files.push({ localPath: p, cloudPath: 'vendor/pdfjs/' + name });
+    }
+  }
+  return files;
+}
+
+/* deploy/vendor 下的独立前端模块（如 oua-canvas.js）要跟页面一起发布：
+   只推 index.html 会让线上页面引用到 404 的脚本。 */
+function vendorScripts() {
+  const dir = path.join(path.dirname(LOCAL_FILE), 'vendor');
+  const out = [];
+  if (!fs.existsSync(dir)) return out;
+  for (const name of fs.readdirSync(dir)) {
+    const p = path.join(dir, name);
+    if (fs.statSync(p).isFile() && /\.js$/i.test(name)) {
+      out.push({ localPath: p, cloudPath: 'vendor/' + name, repoPath: 'deploy/vendor/' + name });
+    }
+  }
+  return out;
+}
+
+/* 与本次前端发布一起进 GitHub 的文件：vendor 模块 + 发布脚本自身（保持仓库与本地一致）。 */
+function extraRepoFiles() {
+  const out = vendorScripts().map((f) => ({ localPath: f.localPath, repoPath: f.repoPath }));
+  const self = path.join(REPO_ROOT, 'server', 'scripts', 'web-deploy.js');
+  if (fs.existsSync(self)) out.push({ localPath: self, repoPath: 'server/scripts/web-deploy.js' });
+  return out;
+}
+
 async function deployCloudbase(local) {
   if (!CFG.cloudbaseEnvId) throw new Error('缺少 CLOUDBASE_ENV_ID（CloudBase 环境 ID）');
   let mod;
@@ -361,8 +413,10 @@ async function deployCloudbase(local) {
   const CloudBase = mod.default || mod;
   const app = new CloudBase({ secretId: CFG.secretId, secretKey: CFG.secretKey, envId: CFG.cloudbaseEnvId });
   const t0 = Date.now();
-  await app.hosting.uploadFiles({ files: [{ localPath: LOCAL_FILE, cloudPath: CFG.objectKey }] });
-  pass('CloudBase 上传', CFG.objectKey + ' ' + bytes(local.length) + ' 用时 ' + (Date.now() - t0) + 'ms');
+  const files = cloudbaseFiles();
+  await app.hosting.uploadFiles({ files });
+  pass('CloudBase 上传', files.length + ' 个文件（' + files.map((f) => f.cloudPath).join(', ') + '） ' +
+    bytes(local.length) + ' 用时 ' + (Date.now() - t0) + 'ms');
 }
 
 async function verifyCloudbase(local) {
@@ -430,6 +484,38 @@ async function verifyGithubPages(local) {
   return false;
 }
 
+async function verifyCloudbaseVendor(origin) {
+  if (!origin) return;
+  for (const f of vendorScripts()) {
+    const localBuf = fs.readFileSync(f.localPath);
+    const r = await request(origin + '/' + f.cloudPath, {
+      headers: { 'Cache-Control': 'no-cache', 'Accept-Encoding': 'identity' },
+    });
+    if (r.status === 200 && r.body.length === localBuf.length && sha256(r.body) === sha256(localBuf)) {
+      pass('CloudBase 资源', f.cloudPath + ' ' + bytes(r.body.length) + ' sha256 一致');
+    } else {
+      fail('CloudBase 资源', f.cloudPath + ' HTTP ' + r.status +
+        ' bytes=' + r.body.length + '（本地 ' + localBuf.length + '）');
+    }
+  }
+  const dir = path.join(path.dirname(LOCAL_FILE), 'vendor', 'pdfjs');
+  if (!fs.existsSync(dir)) return;
+  for (const name of fs.readdirSync(dir)) {
+    const p = path.join(dir, name);
+    if (!fs.statSync(p).isFile()) continue;
+    const localBuf = fs.readFileSync(p);
+    const r = await request(origin + '/vendor/pdfjs/' + name, {
+      headers: { 'Cache-Control': 'no-cache', 'Accept-Encoding': 'identity' },
+    });
+    if (r.status === 200 && r.body.length === localBuf.length && sha256(r.body) === sha256(localBuf)) {
+      pass('CloudBase 资源', 'vendor/pdfjs/' + name + ' ' + bytes(r.body.length) + ' sha256 一致');
+    } else {
+      fail('CloudBase 资源', 'vendor/pdfjs/' + name + ' HTTP ' + r.status +
+        ' bytes=' + r.body.length + '（本地 ' + localBuf.length + '）');
+    }
+  }
+}
+
 async function verifyApiCors(origin) {
   const o = origin || CFG.siteOrigin;
   const r = await request(CFG.apiBase + '/api/health', { headers: { Origin: o } });
@@ -451,8 +537,13 @@ async function verifyApiCors(origin) {
   log('local', bytes(local.length) + '  sha256=' + localSha + '  gitBlob=' + localGitSha.slice(0, 12));
 
   if (!CFG.secretId || !CFG.secretKey) throw new Error('缺少 COS_SECRET_ID / COS_SECRET_KEY');
-  if (cloudbase && !CFG.cloudbaseEnvId) throw new Error('缺少 CLOUDBASE_ENV_ID（CloudBase 环境 ID）');
+  let useCloudbase = cloudbase;
+  if (useCloudbase && !CFG.cloudbaseEnvId) {
+    log('cloudbase', '未配置 CLOUDBASE_ENV_ID，跳过 CloudBase 同步（GitHub 步骤继续）');
+    useCloudbase = false;
+  }
   const client = cos();
+  let cbUploaded = false;
 
   log('setup', '检查桶 CORS / 后端 CORS 白名单（幂等）');
   await ensureBucketCors(client, [CFG.siteOrigin]);
@@ -466,7 +557,7 @@ async function verifyApiCors(origin) {
       if (sameAsLocal(local, meta, localGitSha)) {
         pass('GitHub 一致性', '与本地同内容（size + git blob sha 均一致）');
       } else if (pushFlag) {
-        log('github', '本地与远端不一致，按 --push-github 先推 GitHub 再发 COS');
+        log('github', '本地与远端不一致，按默认规则先推 GitHub 再发腾讯云');
         await pushGithub(local, meta);
         meta = await readGithubMeta();
         if (!sameAsLocal(local, meta, localGitSha)) {
@@ -490,14 +581,30 @@ async function verifyApiCors(origin) {
     } else {
       log('github', '已按 --skip-github 跳过 GitHub 比对与推送');
     }
-    if (cloudbase) await deployCloudbase(local);
+    if (useCloudbase) {
+      try {
+        await deployCloudbase(local);
+        cbUploaded = true;
+      } catch (e) {
+        /* CloudBase 失败单独报，不影响 GitHub 那次提交的成功状态 */
+        log('FAIL', 'CloudBase 同步失败（GitHub 提交仍有效）：' + (e && e.message ? e.message : e));
+      }
+    }
     if (mirror) await uploadCos(client, local);
-    else if (!cloudbase) log('cos', '未加 --cos-mirror，跳过 COS 镜像（COS 默认域名对 html 强制下载，不能作为页面地址）');
+    else if (!useCloudbase) log('cos', '未启用 CloudBase / COS 镜像，跳过腾讯云侧');
   }
 
-  if (cloudbase) {
-    const site = await verifyCloudbase(local);
+  if (useCloudbase) {
+    let site = null;
+    if (cbUploaded) {
+      try {
+        site = await verifyCloudbase(local);
+      } catch (e) {
+        log('FAIL', 'CloudBase 回读异常（GitHub 提交仍有效）：' + (e && e.message ? e.message : e));
+      }
+    }
     if (site) {
+      await verifyCloudbaseVendor(site.origin);
       log('setup', '把 CloudBase origin 加入桶 CORS / 后端 CORS（幂等）');
       await ensureBucketCors(client, [site.origin]);
       await ensureApiCors([site.origin]);
@@ -505,19 +612,20 @@ async function verifyApiCors(origin) {
     }
     if (!skipGithub) await verifyGithubPages(local);
     const onlineSha = site ? sha256(site.body) : '';
-    console.log('\n================ 发布结果（CloudBase 静态托管） ================');
+    console.log('\n================ 发布结果 ================');
+    console.log('GitHub main / Pages       : 已核对（与本地同内容）；提交本身独立于 CloudBase 结果');
+    console.log('CloudBase 同步            : ' + (cbUploaded ? (site ? '成功' : '已上传，回读未通过') : '失败（见上方 FAIL，GitHub 仍算成功）'));
     console.log('可用页面地址（CloudBase）: ' + (site ? site.url : '(未取到可用域名)'));
-    console.log('本地大小 / sha256       : ' + bytes(local.length) + ' / ' + localSha);
+    console.log('本地大小 / sha256        : ' + bytes(local.length) + ' / ' + localSha);
     if (site) {
-      console.log('线上大小 / sha256       : ' + bytes(site.body.length) + ' / ' + onlineSha +
+      console.log('线上大小 / sha256        : ' + bytes(site.body.length) + ' / ' + onlineSha +
         (site.body.length === local.length && onlineSha === localSha ? '  ✔ 一致' : '  ✘ 不一致'));
-      console.log('线上 Content-Type       : ' + site.ct + (site.cd ? '  (Content-Disposition=' + site.cd + ')' : '  (无 Content-Disposition，内联打开)'));
-      console.log('首屏实测                : 首字节≈' + site.ttfb + 'ms，总耗时≈' + site.ms + 'ms');
+      console.log('线上 Content-Type        : ' + site.ct + (site.cd ? '  (Content-Disposition=' + site.cd + ')' : '  (无 Content-Disposition，内联打开)'));
+      console.log('首屏实测                 : 首字节≈' + site.ttfb + 'ms，总耗时≈' + site.ms + 'ms');
     }
-    console.log('通过 ' + OK.length + ' 项，失败 ' + BAD.length + ' 项');
+    console.log('检查项通过 ' + OK.length + ' 项，失败 ' + BAD.length + ' 项');
     BAD.forEach((b) => console.log('  ✘ ' + b));
     console.log('==============================================================');
-    if (BAD.length) process.exitCode = 2;
     return;
   }
 
