@@ -66320,10 +66320,10 @@ window.HMChat = (function () {
     if (thumbs.length === 0) {
       gridHtml = '<div class="folder-grid-empty">▣</div>';
     } else if (thumbs.length === 1) {
-      gridHtml = '<img src="' + esc(thumbs[0].thumb || thumbs[0].url || '') + '" class="folder-t" alt="">';
+      gridHtml = '<img src="' + esc(thumbs[0].thumb || thumbs[0].url || '') + '" class="folder-t" data-stack-fp="' + esc(thumbs[0].id) + '" alt="">';
     } else {
       gridHtml = thumbs.map(function (w, i) {
-        return '<img src="' + esc(w.thumb || w.url || '') + '" class="folder-t folder-t-' + i + '" alt="">';
+        return '<img src="' + esc(w.thumb || w.url || '') + '" class="folder-t folder-t-' + i + '" data-stack-fp="' + esc(w.id) + '" alt="">';
       }).join('');
     }
     return '<div class="folder-thumb">' + gridHtml +
@@ -67022,6 +67022,8 @@ window.HMChat = (function () {
         });
         persistNow();
         renderDesktop();
+        /* 移动结束后焦点落在这张叠放上：选中态、键盘删除、后续右键都作用于它 */
+        selectOnly(current.draggedId);
       }
       return;
     }
@@ -67341,6 +67343,7 @@ window.HMChat = (function () {
             /* 只有用户真的拖过才记住该组坐标；下次打开优先贴卡，贴不下再用这里 */
             st2.panel = { x: parseInt(panel.style.left, 10) || 0, y: parseInt(panel.style.top, 10) || 0, userSet: true };
             persistNow();
+            selectOnly(st2.id); /* 移动浮窗后，焦点也落回这组叠放 */
           }
         }
         document.addEventListener('pointermove', move);
@@ -68355,6 +68358,18 @@ window.HMChat = (function () {
             return;
           }
         }
+        /* 右键叠放卡：缩略图 → 该图的作品菜单（预览/参数/参考图/删除，和桌面图一致）；
+           卡身 → 选中这组并打开浮窗。绝不能再落到 folderCtx（叠放不是文件夹，菜单项全是空操作） */
+        var stackCardCtx = event.target.closest('.folder-card[data-stack]');
+        if (stackCardCtx) {
+          var sid = stackCardCtx.dataset.stack;
+          selectOnly(sid);
+          var th = event.target.closest('.folder-t[data-stack-fp]');
+          var thWork = th ? findWork(th.dataset.stackFp) : null;
+          if (thWork) openWorkMenu(thWork, event.clientX, event.clientY);
+          else openStackPanel(sid);
+          return;
+        }
         /* 右键 folder-card → folderCtx */
         var folderCard = event.target.closest('.folder-card[data-folder]');
         if (folderCard) {
@@ -68751,13 +68766,37 @@ window.HMChat = (function () {
 
       if ((event.key === 'Delete' || event.key === 'Backspace') && !event.ctrlKey && !event.metaKey) {
         var keys = selectedIds();
-        /* 没有选中项时，以鼠标光标下的卡片为准 */
-        if (!keys.length) {
+        /* 叠放不在 selectedIds 的批量操作集合里，但它可以是“当前焦点”：
+           焦点叠放优先于鼠标位置，避免移动完叠放后按 Delete 作用到别的卡 */
+        var focusStackIds = Object.keys(view.selected).filter(function (k) {
+          return desk.stacks.some(function (s) { return s.id === k; });
+        });
+        if (!keys.length && focusStackIds.length) {
+          keys = focusStackIds;
+        } else if (!keys.length) {
+          /* 没有选中项时，以鼠标光标下的卡片为准 */
           var hovEl = document.elementFromPoint(lastMouse.x, lastMouse.y);
           var hovCard = hovEl && hovEl.closest('.folder-card, .desk-card');
           if (hovCard) keys = [hovCard.dataset.folder || hovCard.dataset.work];
         }
         if (!keys.length) return;
+        /* 叠放：只解散分组，图片回到桌面，图片本身不删除 */
+        var stackIds = keys.filter(function (k) {
+          return desk.stacks.some(function (s) { return s.id === k; });
+        });
+        if (stackIds.length) {
+          event.preventDefault();
+          desk.stacks = desk.stacks.filter(function (s) { return stackIds.indexOf(s.id) < 0; });
+          desk.updatedAt = Date.now();
+          keys = keys.filter(function (k) { return stackIds.indexOf(k) < 0; });
+          if (!keys.length) {
+            clearSelection();
+            persistNow();
+            renderDesktop();
+            return;
+          }
+          renderDesktop();
+        }
         var folderIds = keys.filter(function (k) { return desk.folders.some(function (f) { return f.id === k; }); });
         if (folderIds.length) {
           event.preventDefault();
