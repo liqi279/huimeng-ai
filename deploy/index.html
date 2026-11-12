@@ -28404,10 +28404,15 @@ async function loadCatalog() {
   try {
     const data = await window.HM.api.catalog();
     if (!data) return;
+    /* 后端曾把 providers 清成 []（纯免密钥通道改造的副作用）；空数组不能覆盖
+       内置平台目录，否则设置页「接入总数」只剩 RayinAPI 一条。 */
+    const providers = (Array.isArray(data.providers) && data.providers.length)
+      ? data.providers
+      : (CATALOG_FALLBACK.providers || []);
     state.catalog = {
-      keyless: data.keyless || [],
-      providers: data.providers || [],
-      rayin: data.rayin || [],
+      keyless: (data.keyless && data.keyless.length) ? data.keyless : (CATALOG_FALLBACK.keyless || []),
+      providers: providers,
+      rayin: (data.rayin && data.rayin.length) ? data.rayin : (CATALOG_FALLBACK.rayin || []),
       loras: data.loras || []
     };
     renderCatalogMenus();
@@ -72574,6 +72579,14 @@ window.HMChat = (function () {
   var revs = read(LS_REV, { works: {}, docs: {}, fp: {}, docfp: {} });
   if (!revs.docfp) revs.docfp = {};
   var sync = read(LS_SYNC, { lastSync: 0, migrated: {}, conflicts: 0, lastError: '' });
+  /* 历史版本把每次 409 乐观锁重试都累加到 conflicts 并永久持久化，数字只增不减
+     （线上看到的 571 就是历次自动重试的累计值，不是 571 条待处理冲突）。
+     现在 conflicts 只统计「自动合并失败、仍未解决」的冲突；升级时清零一次。 */
+  if (sync.conflictSchema !== 2) {
+    sync.conflicts = 0;
+    sync.conflictSchema = 2;
+    saveSync();
+  }
   var queue = read(LS_QUEUE, []);
   var storage = null;
   var usage = null;
@@ -72981,11 +72994,14 @@ window.HMChat = (function () {
       return res;
     } catch (err) {
       if (err.status === 409) {
-        sync.conflicts += 1;
+        /* 409 是乐观锁「版本号过期」，不是数据损坏：下面会拿服务端当前版本
+           自动合并或强制重推。只有这一步也失败，才算真正未解决的冲突。 */
         var cur = err.data && err.data.current;
         if (!cur) {
-          var list = await request('GET', '/works?since=0&limit=500', null, 20000);
-          (list && list.items || []).forEach(function (w) { if (w.id === work.id) cur = w; });
+          /* 旧 /works 列表会带全部内联图（>6MB），SCF 网关 406 且无 CORS 头；
+             改用已瘦身的 bootstrap 取当前作品。 */
+          var snap = await request('GET', '/user-data/bootstrap', null, 30000);
+          (snap && snap.works || []).forEach(function (w) { if (w.id === work.id) cur = w; });
         }
         if (cur && Number(cur._updatedAt) > workTime(work)) {
           applyServerWork(cur);
@@ -72995,13 +73011,19 @@ window.HMChat = (function () {
         var rev = cur && cur._rev != null ? cur._rev : null;
         var force = { work: payload };
         if (rev != null) force.rev = rev;
-        var retry = await request('POST', '/works', force, 45000);
-        if (retry && retry.rev != null) {
-          revs.works[work.id] = retry.rev;
-          revs.fp[key] = fingerprint(work);
-          saveRevs();
+        try {
+          var retry = await request('POST', '/works', force, 45000);
+          if (retry && retry.rev != null) {
+            revs.works[work.id] = retry.rev;
+            revs.fp[key] = fingerprint(work);
+            saveRevs();
+          }
+          return retry;
+        } catch (mergeErr) {
+          sync.conflicts += 1;
+          saveSync();
+          throw mergeErr;
         }
-        return retry;
       }
       throw err;
     }
@@ -73086,7 +73108,7 @@ window.HMChat = (function () {
       return res;
     } catch (err) {
       if (err.status === 409) {
-        sync.conflicts += 1;
+        /* 同作品逻辑：409 先尝试自动合并/强制重推，失败才计入未解决冲突 */
         var cur = (err.data && err.data.doc) || null;
         if (!cur) {
           var got = await request('GET', '/docs/' + kind, null, 15000);
@@ -73100,11 +73122,17 @@ window.HMChat = (function () {
           return null;
         }
         var force = { data: data, rev: cur ? cur.rev : undefined };
-        var retry = await request('PUT', '/docs/' + kind, force, 30000);
-        if (retry && retry.doc) revs.docs[kind] = retry.doc.rev;
-        saveRevs();
-        saveSync();
-        return retry;
+        try {
+          var retry = await request('PUT', '/docs/' + kind, force, 30000);
+          if (retry && retry.doc) revs.docs[kind] = retry.doc.rev;
+          saveRevs();
+          saveSync();
+          return retry;
+        } catch (mergeErr) {
+          sync.conflicts += 1;
+          saveSync();
+          throw mergeErr;
+        }
       }
       if (err.offline) {
         if (opts && opts.strict) throw err;
