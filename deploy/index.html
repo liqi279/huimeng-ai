@@ -27417,17 +27417,33 @@ function composerSnapshot() {
 function saveComposer() {
   var store = readComposerStore();
   var snap = composerSnapshot();
-  store[_composerKey] = snap;
-  if (saveJSON(LS_COMPOSER, store)) return;
-  /* 配额不足：退化成只存缩略图，保证提示词与缩略预览不丢 */
-  store[_composerKey] = {
+  var entry = {
     prompts: snap.prompts,
-    refs: snap.refs.map(function (arr) {
-      return (arr || []).map(function (r) { return { thumb: r.preview || r.thumb || r.dataUrl, name: r.name, width: r.width, height: r.height, weight: r.weight }; });
-    }),
+    refs: snap.refs,
     weights: snap.weights,
     active: snap.active
   };
+  /* 参考图 dataUrl 太大，完整对象写 IndexedDB；localStorage 只留缩略图与元数据 */
+  if (window.indexedDB) {
+    idbPutBlobAsync('cmp:' + _composerKey, JSON.stringify(snap.refs));
+    entry.refs = snap.refs.map(function (arr) {
+      return (arr || []).map(function (r) {
+        return {
+          name: r.name, width: r.width, height: r.height, weight: r.weight,
+          thumb: r.thumb || r.preview || '', refsIdb: true
+        };
+      });
+    });
+    entry.refsIdb = true;
+  }
+  store[_composerKey] = entry;
+  if (saveJSON(LS_COMPOSER, store)) return;
+  /* 仍写不进（IDB 不可用或其它键占满）：只保提示词与缩略预览，不丢文案 */
+  entry.refs = snap.refs.map(function (arr) {
+    return (arr || []).map(function (r) {
+      return { thumb: r.thumb || r.preview || r.dataUrl, name: r.name, width: r.width, height: r.height, weight: r.weight, refsIdb: true };
+    });
+  });
   saveJSON(LS_COMPOSER, store);
 }
 
@@ -27453,6 +27469,22 @@ function applyComposer(data) {
   renderRef();
   applyRefWeightUI(currentTabRefWeight());
   updateCharCount();
+
+  /* 参考图本体在 IndexedDB：先渲染缩略图，异步补回完整 dataUrl 后再渲染一次 */
+  if (data && data.refsIdb && window.indexedDB) {
+    var loadKey = _composerKey;
+    idbGetBlob('cmp:' + loadKey).then(function (raw) {
+      if (loadKey !== _composerKey || !raw) return;
+      try {
+        var full = JSON.parse(raw);
+        if (!Array.isArray(full)) return;
+        while (full.length < state.prompts.length) full.push([]);
+        state.tabRefs = full;
+        state.refImages = (full[0] || []).slice();
+        renderRef();
+      } catch (e) {}
+    });
+  }
 }
 
 /* desk.js 在每次切换桌面时调用：先把旧桌面的内容存下来，再载入新桌面的 */
@@ -30750,6 +30782,33 @@ function idbPutBlob(id, url) {
     try { db.transaction('blobs', 'readwrite').objectStore('blobs').put(url, id); } catch (e) {}
   });
 }
+/* 需要确保写入完成（迁移、参考图缓存）时用 Promise 版本 */
+function idbPutBlobAsync(id, val) {
+  return _blobDb().then(function (db) {
+    if (!db) return false;
+    return new Promise(function (resolve) {
+      try {
+        var tx = db.transaction('blobs', 'readwrite');
+        tx.objectStore('blobs').put(val, id);
+        tx.oncomplete = function () { resolve(true); };
+        tx.onerror = function () { resolve(false); };
+        tx.onabort = function () { resolve(false); };
+      } catch (e) { resolve(false); }
+    });
+  });
+}
+function idbGetBlob(id) {
+  return _blobDb().then(function (db) {
+    if (!db) return null;
+    return new Promise(function (resolve) {
+      try {
+        var req = db.transaction('blobs', 'readonly').objectStore('blobs').get(id);
+        req.onsuccess = function () { resolve(req.result == null ? null : req.result); };
+        req.onerror = function () { resolve(null); };
+      } catch (e) { resolve(null); }
+    });
+  });
+}
 function idbDelBlob(id) {
   _blobDb().then(function (db) {
     if (!db) return;
@@ -30773,16 +30832,164 @@ function idbAllBlobs() {
   });
 }
 
-/* 把 localStorage 里标记为 blob 的作品补回原图 */
+/* 把 localStorage 里标记为 blob 的作品补回原图、参考图与缩略图。
+   localStorage 只留元数据，图片本体全部在 IndexedDB，避免 5MB 配额溢出。 */
 function hydrateWorks() {
   return idbAllBlobs().then(function (map) {
     var changed = false;
     state.works.forEach(function (w) {
       if (!w) return;
       if (!w.url && map[w.id]) { w.url = map[w.id]; changed = true; }
+      if (w.refsBlob && !w.refImages && map[w.id + ':refs']) {
+        try {
+          var refs = JSON.parse(map[w.id + ':refs']);
+          if (Array.isArray(refs)) { w.refImages = refs; changed = true; }
+        } catch (e) {}
+      }
+      if (w.thumbBlob && !w.thumb && map[w.id + ':thumb']) {
+        w.thumb = map[w.id + ':thumb'];
+        changed = true;
+      }
     });
     return changed;
   });
+}
+
+/* ---------------- localStorage → IndexedDB 一次性迁移 ----------------
+ * 旧版本把作品原图/参考图/缩略图一起塞在 localStorage，48 张就撑爆 5MB。
+ * 这里把当前用户键、.bak、.snap.* 里的作品合并去重，图片写入 IndexedDB，
+ * 再回写一份只含元数据的 JSON；只有全部图片都写入成功才删旧快照。 */
+var LS_IDB_MIGRATED = 'anidream.idb.migrated.v1';
+
+function workKeyCandidates(key) {
+  var out = [key, key + '.bak'];
+  try {
+    for (var i = 0; i < localStorage.length; i += 1) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf(key + '.snap.') === 0) out.push(k);
+    }
+  } catch (e) {}
+  return out;
+}
+
+/* 迁移所有账号键（含访客键），避免启动时 HMApp.user 尚未恢复而只迁错一个键 */
+async function migrateWorksToIdb() {
+  if (!window.indexedDB) return false;
+  var keys = [];
+  try {
+    for (var i = 0; i < localStorage.length; i += 1) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('anidream.works.v1') !== 0) continue;
+      if (k.indexOf('.snap.') >= 0 || /\.bak$/.test(k)) continue;
+      keys.push(k);
+    }
+  } catch (e) { return false; }
+  var any = false;
+  for (var j = 0; j < keys.length; j += 1) {
+    try { any = (await migrateOneWorkKey(keys[j])) || any; } catch (e) {}
+  }
+  return any;
+}
+
+async function migrateOneWorkKey(key) {
+  var bak = key + '.bak';
+  try { if (localStorage.getItem(LS_IDB_MIGRATED + ':' + key) === '1') return false; } catch (e) { return false; }
+  var candidates = workKeyCandidates(key);
+  var snaps = candidates.filter(function (k) { return k.indexOf(key + '.snap.') === 0; }).sort();
+  var ordered = snaps.concat([bak, key]);
+  var map = Object.create(null), order = [];
+  ordered.forEach(function (k) {
+    var list = [];
+    try { list = JSON.parse(localStorage.getItem(k) || '[]'); } catch (e) { list = []; }
+    if (!Array.isArray(list)) return;
+    list.forEach(function (w) {
+      if (!w || !w.id) return;
+      var hit = map[w.id];
+      if (hit) {
+        Object.keys(w).forEach(function (f) {
+          if (w[f] !== null && w[f] !== undefined && w[f] !== '') hit[f] = w[f];
+        });
+      } else {
+        map[w.id] = Object.assign({}, w);
+        order.push(w.id);
+      }
+    });
+  });
+  if (!order.length) {
+    try { localStorage.setItem(LS_IDB_MIGRATED + ':' + key, '1'); } catch (e) {}
+    return false;
+  }
+  var works = order.map(function (id) { return map[id]; });
+  var written = { url: 0, refs: 0, thumb: 0 };
+  var ok = works.length === order.length;
+
+  /* 逐条写入 + 读回逐字节校验；任何一条不一致立即中止，旧数据原样保留 */
+  async function putVerified(id, val) {
+    if (!(await idbPutBlobAsync(id, val))) return false;
+    var back = await idbGetBlob(id);
+    return back === val;
+  }
+
+  for (var i = 0; ok && i < works.length; i += 1) {
+    var w = works[i];
+    if (w.url && w.url.indexOf('data:') === 0) {
+      if (!(await putVerified(w.id, w.url))) { ok = false; break; }
+      written.url += 1;
+      w.url = ''; w.blob = true;
+    }
+    if (Array.isArray(w.refImages) && w.refImages.length) {
+      var refsJson = JSON.stringify(w.refImages);
+      if (!(await putVerified(w.id + ':refs', refsJson))) { ok = false; break; }
+      written.refs += 1;
+      w.refImages = null; w.refsBlob = true;
+    }
+    if (w.thumb && w.thumb.indexOf('data:') === 0) {
+      if (!(await putVerified(w.id + ':thumb', w.thumb))) { ok = false; break; }
+      written.thumb += 1;
+      w.thumb = null; w.thumbBlob = true;
+    }
+  }
+  if (!ok) return false;                       /* 图片没写全/校验失败，绝不删旧数据 */
+  var compact = JSON.stringify(works);
+  var check = [];
+  try { check = JSON.parse(compact); } catch (e) { check = []; }
+  if (!Array.isArray(check) || check.length !== works.length) return false;
+  if (!saveJSON(key, works)) return false;     /* 回写失败，保留旧键 */
+  try { localStorage.setItem(bak, compact); } catch (e) {}
+  snaps.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+  try { localStorage.setItem(LS_IDB_MIGRATED + ':' + key, '1'); } catch (e) {}
+  console.log('[storage] 已迁移并校验：works=' + works.length +
+    '，原图=' + written.url + '，参考图=' + written.refs + '，缩略图=' + written.thumb +
+    '，localStorage 紧凑后=' + compact.length + ' B');
+  return true;
+}
+
+/* 输入框参考图缓存（anidream.composer.v1）同样迁到 IndexedDB，只留缩略图 */
+async function migrateComposerToIdb() {
+  if (!window.indexedDB) return false;
+  var store = readComposerStore();
+  var keys = Object.keys(store);
+  var changed = false;
+  for (var i = 0; i < keys.length; i += 1) {
+    var k = keys[i];
+    var entry = store[k];
+    if (!entry || entry.refsIdb || !Array.isArray(entry.refs)) continue;
+    var full = JSON.stringify(entry.refs);
+    var ok = await idbPutBlobAsync('cmp:' + k, full);
+    if (!ok) continue;
+    entry.refs = entry.refs.map(function (arr) {
+      return (arr || []).map(function (r) {
+        return {
+          name: r.name, width: r.width, height: r.height, weight: r.weight,
+          thumb: r.thumb || r.preview || '', refsIdb: true
+        };
+      });
+    });
+    entry.refsIdb = true;
+    changed = true;
+  }
+  if (changed) return saveJSON(LS_COMPOSER, store);
+  return false;
 }
 
 /* ---------------- 作品库 ---------------- */
@@ -30923,6 +31130,7 @@ function saveWorks() {
      refImages / thumb 同样是 base64，体积大；配额不足时分级降级，
      绝不允许「整条作品都写不进去」这种静默丢失。 */
   function persistMeta(dropRefs, dropThumb) {
+    var canIdb = !!window.indexedDB;
     return state.works.map(function (work, index) {
       var copy = Object.assign({}, work);
       if (copy.url && copy.url.indexOf('data:') === 0) {
@@ -30930,8 +31138,26 @@ function saveWorks() {
         copy.url = '';
         copy.blob = true;
       }
-      if (dropRefs) copy.refImages = null;
-      if (dropThumb || (dropRefs && index > 8)) copy.thumb = null;
+      /* 参考图与缩略图也是 base64，和原图一样迁到 IndexedDB；
+         localStorage 只留 refsBlob / thumbBlob 标记。IDB 不可用时退回旧降级逻辑。 */
+      if (canIdb && Array.isArray(copy.refImages) && copy.refImages.length) {
+        idbPutBlob(copy.id + ':refs', JSON.stringify(copy.refImages));
+        copy.refImages = null;
+        copy.refsBlob = true;
+      } else if (copy.refsBlob) {
+        copy.refImages = null;
+      }
+      if (canIdb && copy.thumb && copy.thumb.indexOf('data:') === 0) {
+        idbPutBlob(copy.id + ':thumb', copy.thumb);
+        copy.thumb = null;
+        copy.thumbBlob = true;
+      } else if (copy.thumbBlob) {
+        copy.thumb = null;
+      }
+      if (!canIdb) {
+        if (dropRefs) copy.refImages = null;
+        if (dropThumb || (dropRefs && index > 8)) copy.thumb = null;
+      }
       return copy;
     });
   }
@@ -33030,6 +33256,17 @@ function boot() {
   renderModels('');
   renderRatios();
   renderWorks();
+  /* 本地存储迁移：先写入 IndexedDB 并逐条读回校验，成功后才压缩 localStorage；
+     任何一步失败都保留旧 JSON。完成后补回图片再渲染，35 件作品都能打开/放大。 */
+  try { migrateComposerToIdb(); } catch (e) {}
+  migrateWorksToIdb().then(function (moved) {
+    return hydrateWorks().then(function (changed) {
+      if (moved || changed) {
+        renderWorks();
+        if (window.HMDesk && HMDesk.renderDesktop) HMDesk.renderDesktop();
+      }
+    });
+  }).catch(function (err) { console.warn('[storage] 迁移失败，已保留旧数据：', err); });
   syncSettingsUI();
   bindEvents();
   initResizer();
