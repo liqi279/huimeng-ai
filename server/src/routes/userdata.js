@@ -30,6 +30,22 @@ function currentUserId(req) {
   return req.user.id;
 }
 
+/* SCF 网关对同步响应有 6MB 上限，超限时网关返回 406 且不带 CORS 头，
+   浏览器只会报「Failed to fetch」。作品里历史遗留的内联 data: 图片（rawUrl 常有 3~4MB）
+   在同步响应里替换为已签名的资产代理地址，数据库内容不做任何修改。 */
+const INLINE_LIMIT = 64 * 1024;
+const MAX_SYNC_BYTES = 4.5 * 1024 * 1024;
+
+function trimInlineMedia(out) {
+  for (const key of Object.keys(out)) {
+    const value = out[key];
+    if (typeof value !== 'string' || !value.startsWith('data:') || value.length <= INLINE_LIMIT) continue;
+    if (key === 'rawUrl' && out.url) out[key] = out.url;
+    else delete out[key];
+  }
+  return out;
+}
+
 async function wrapWork(row, req) {
   var out = Object.assign({}, row.data || {}, {
     id: row.id,
@@ -37,7 +53,7 @@ async function wrapWork(row, req) {
     _updatedAt: row.updatedAt,
   });
   if (out._assetId) out.url = await userData.assetPublicUrl(out._assetId);
-  return out;
+  return trimInlineMedia(out);
 }
 
 function workTimeOf(work) {
@@ -89,7 +105,7 @@ router.get('/user-data/bootstrap', authRequired, wrap(async (req, res) => {
     docs[kind] = await userData.getDoc(userId, kind);
   }
 
-  res.json({
+  const payload = {
     ok: true,
     user: { id: req.user.id, username: req.user.username, role: req.user.role },
     works,
@@ -101,7 +117,23 @@ router.get('/user-data/bootstrap', authRequired, wrap(async (req, res) => {
     usage: await userData.usage(userId),
     storage: userData.status(),
     serverTime: Date.now(),
-  });
+  };
+  let body = JSON.stringify(payload);
+  if (Buffer.byteLength(body) > MAX_SYNC_BYTES) {
+    /* 兜底：仍超 6MB 网关上限时，把作品里所有内联 data: 字段再压掉，
+       保留 url 代理地址；只影响本次响应，不改库。 */
+    payload.works = payload.works.map(function (work) {
+      const copy = Object.assign({}, work);
+      trimInlineMedia(copy);
+      for (const key of Object.keys(copy)) {
+        if (typeof copy[key] === 'string' && copy[key].startsWith('data:')) copy[key] = copy.url || '';
+      }
+      return copy;
+    });
+    payload.trimmed = true;
+    body = JSON.stringify(payload);
+  }
+  res.type('application/json').send(body);
 }));
 
 /* ---------------- 旧数据迁移（幂等） ---------------- */
