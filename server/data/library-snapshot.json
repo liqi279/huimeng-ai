@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-12T16:58:39.068Z",
+  "generatedAt": "2026-11-12T17:13:09.816Z",
   "source": "huimeng_library.books",
-  "total": 107,
+  "total": 117,
   "areas": {
-    "paint": 91,
+    "paint": 101,
     "ref": 16
   },
   "books": [
@@ -4126,6 +4126,20 @@
       "coverBytes": 179141
     },
     {
+      "id": "lib-mwdsl51p-5ae955",
+      "sortNo": 103,
+      "title": "零基础学画漫画：SAI 超级漫画技法宝典",
+      "author": "",
+      "intro": "SAI 零基础入门：界面、笔刷、图层与线稿上色，完整走一遍漫画绘制流程。",
+      "pageCount": 223,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/104-zero-basis-sai-manga.pdf",
+      "pdfBytes": 51889820,
+      "coverKey": "library/covers/104-zero-basis-sai-manga-cover.jpg",
+      "coverBytes": 273003
+    },
+    {
       "id": "lib-mwdsigx9-c4b2a7",
       "sortNo": 104,
       "title": "SAI 古风水彩技法",
@@ -4345,6 +4359,525 @@
       "coverBytes": 198998
     },
     {
+      "id": "lib-mwdsmhny-82afb6",
+      "sortNo": 105,
+      "title": "用 SAI 绘制超精致插画",
+      "author": "",
+      "intro": "精致插画的 SAI 制作流程：线稿、分区上色、光影与细节刻画。",
+      "pageCount": 187,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "第1章 日系插画基础知识",
+          "page": 19
+        },
+        {
+          "title": "1.1 日系插画概念讲解",
+          "page": 19
+        },
+        {
+          "title": "1.1.1 萌系插画",
+          "page": 19
+        },
+        {
+          "title": "1.1.2 森系插画",
+          "page": 20
+        },
+        {
+          "title": "1.1.3 魔幻系插画",
+          "page": 21
+        },
+        {
+          "title": "1.1.4 幻想系插画",
+          "page": 21
+        },
+        {
+          "title": "1.2 手绘板和绘图软件介绍",
+          "page": 22
+        },
+        {
+          "title": "1.2.1 SAI软件介绍",
+          "page": 22
+        },
+        {
+          "title": "1.2.2 手绘板介绍",
+          "page": 23
+        },
+        {
+          "title": "1.3 SAI软件常用功能介绍",
+          "page": 24
+        },
+        {
+          "title": "1.3.1 常用画笔制作和使用讲解",
+          "page": 24
+        },
+        {
+          "title": "1.3.2 制作不同效果的画笔",
+          "page": 26
+        },
+        {
+          "title": "1.3.3 图层混合模式",
+          "page": 27
+        },
+        {
+          "title": "1.4 常见日系插画构图讲解",
+          "page": 27
+        },
+        {
+          "title": "1.4.1 单人构图",
+          "page": 27
+        },
+        {
+          "title": "1.4.2 多人组合构图",
+          "page": 28
+        },
+        {
+          "title": "1.5 画面配色讲解",
+          "page": 29
+        },
+        {
+          "title": "第2章 日系插画人物绘制",
+          "page": 31
+        },
+        {
+          "title": "2.1 人物脸部绘制",
+          "page": 31
+        },
+        {
+          "title": "2.1.1 女生五官",
+          "page": 31
+        },
+        {
+          "title": "2.1.2 男生五官",
+          "page": 32
+        },
+        {
+          "title": "2.2 常见发型设计",
+          "page": 32
+        },
+        {
+          "title": "2.2.1 女生常见发型",
+          "page": 33
+        },
+        {
+          "title": "2.2.2 男生常见发型",
+          "page": 34
+        },
+        {
+          "title": "2.3 人物手足绘制",
+          "page": 35
+        },
+        {
+          "title": "2.3.1 人物手掌绘制",
+          "page": 35
+        },
+        {
+          "title": "2.3.2 人物脚部绘制",
+          "page": 36
+        },
+        {
+          "title": "2.4 人物常见动态绘制",
+          "page": 37
+        },
+        {
+          "title": "2.4.1 女生坐姿",
+          "page": 37
+        },
+        {
+          "title": "2.4.2 女生站姿",
+          "page": 38
+        },
+        {
+          "title": "2.4.3 男生坐姿",
+          "page": 39
+        },
+        {
+          "title": "2.4.4 男生站姿",
+          "page": 40
+        },
+        {
+          "title": "第3章 日系插画服饰绘制",
+          "page": 42
+        },
+        {
+          "title": "3.1 画面植物绘制",
+          "page": 42
+        },
+        {
+          "title": "3.1.1 玫瑰",
+          "page": 42
+        },
+        {
+          "title": "3.1.2 橙子",
+          "page": 42
+        },
+        {
+          "title": "3.1.3 樱花",
+          "page": 42
+        },
+        {
+          "title": "3.2 画面动物绘制",
+          "page": 43
+        },
+        {
+          "title": "3.2.1 蝴蝶",
+          "page": 43
+        },
+        {
+          "title": "3.2.2 兔子",
+          "page": 43
+        },
+        {
+          "title": "3.2.3 喵咪",
+          "page": 43
+        },
+        {
+          "title": "3.3 小物件绘制",
+          "page": 44
+        },
+        {
+          "title": "3.3.1 糖果罐子",
+          "page": 44
+        },
+        {
+          "title": "3.3.2 多肉盆景",
+          "page": 44
+        },
+        {
+          "title": "3.3.3 魔法宝石",
+          "page": 44
+        },
+        {
+          "title": "3.4 人物服装绘制",
+          "page": 45
+        },
+        {
+          "title": "3.4.1 日常服装",
+          "page": 45
+        },
+        {
+          "title": "3.4.2 可爱洋装",
+          "page": 47
+        },
+        {
+          "title": "3.4.3 礼服装扮",
+          "page": 49
+        },
+        {
+          "title": "3.4.4 魔幻装扮",
+          "page": 51
+        },
+        {
+          "title": "3.4.5 剑客服装",
+          "page": 53
+        },
+        {
+          "title": "第4章 日系插画绘制过程",
+          "page": 56
+        },
+        {
+          "title": "4.1 洋装少女线稿绘制",
+          "page": 56
+        },
+        {
+          "title": "4.2 清新色彩搭配",
+          "page": 59
+        },
+        {
+          "title": "4.3 少女皮肤和五官绘制",
+          "page": 59
+        },
+        {
+          "title": "4.4 柔顺的长直发绘制",
+          "page": 61
+        },
+        {
+          "title": "4.5 洋装的明暗绘制",
+          "page": 63
+        },
+        {
+          "title": "4.6 丰富画面背景",
+          "page": 65
+        },
+        {
+          "title": "第5章 清新可爱糖果萌少女",
+          "page": 69
+        },
+        {
+          "title": "5.1 糖果萌少女草稿绘制",
+          "page": 69
+        },
+        {
+          "title": "5.2 糖果少女线稿绘制",
+          "page": 70
+        },
+        {
+          "title": "5.2.1 少女的线稿绘制",
+          "page": 70
+        },
+        {
+          "title": "5.2.2 糖果背景绘制",
+          "page": 74
+        },
+        {
+          "title": "5.3 萌系色彩搭配",
+          "page": 76
+        },
+        {
+          "title": "5.4 糖果少女的颜色绘制",
+          "page": 77
+        },
+        {
+          "title": "5.4.1 少女白皙皮肤绘制",
+          "page": 77
+        },
+        {
+          "title": "5.4.2 可爱的五官绘制",
+          "page": 79
+        },
+        {
+          "title": "5.4.3 棕色长发绘制",
+          "page": 81
+        },
+        {
+          "title": "5.4.4 粉色长裙绘制",
+          "page": 83
+        },
+        {
+          "title": "5.5 画面背景的绘制",
+          "page": 88
+        },
+        {
+          "title": "5.5.1 人物点缀物绘制",
+          "page": 88
+        },
+        {
+          "title": "5.5.2 背景物体绘制",
+          "page": 92
+        },
+        {
+          "title": "第6章 华丽精致时间之城",
+          "page": 96
+        },
+        {
+          "title": "6.1 时间之城草稿绘制",
+          "page": 96
+        },
+        {
+          "title": "6.2 画面线稿绘制",
+          "page": 97
+        },
+        {
+          "title": "6.2.1 人物线稿绘制",
+          "page": 97
+        },
+        {
+          "title": "6.2.2 背景齿轮线稿绘制",
+          "page": 101
+        },
+        {
+          "title": "6.3 神秘古朴的色彩搭配",
+          "page": 104
+        },
+        {
+          "title": "6.4 少女的色彩绘制",
+          "page": 105
+        },
+        {
+          "title": "6.4.1 白皙的皮肤绘制",
+          "page": 105
+        },
+        {
+          "title": "6.4.2 唯美的五官绘制",
+          "page": 108
+        },
+        {
+          "title": "6.4.3 浅紫色长发绘制",
+          "page": 110
+        },
+        {
+          "title": "6.4.4 人物服装细化",
+          "page": 112
+        },
+        {
+          "title": "6.4.5 不同材质饰品刻画",
+          "page": 117
+        },
+        {
+          "title": "6.5 画面背景细化",
+          "page": 119
+        },
+        {
+          "title": "6.5.1 背景物体质感的细化",
+          "page": 120
+        },
+        {
+          "title": "6.5.2 添加画面光效",
+          "page": 122
+        },
+        {
+          "title": "6.6 增添画面氛围",
+          "page": 123
+        },
+        {
+          "title": "第7章 魔幻绚丽魔法师",
+          "page": 128
+        },
+        {
+          "title": "7.1 魔幻主题画面草稿绘制",
+          "page": 128
+        },
+        {
+          "title": "7.2 画面线稿绘制",
+          "page": 129
+        },
+        {
+          "title": "7.2.1 魔法师线稿绘制",
+          "page": 129
+        },
+        {
+          "title": "7.2.2 画面背景物体绘制",
+          "page": 133
+        },
+        {
+          "title": "7.3 魔幻风色彩搭配",
+          "page": 135
+        },
+        {
+          "title": "7.4 魔法师色彩绘制",
+          "page": 136
+        },
+        {
+          "title": "7.4.1 少女皮肤绘制",
+          "page": 136
+        },
+        {
+          "title": "7.4.2 闪亮的五官绘制",
+          "page": 138
+        },
+        {
+          "title": "7.4.3 飘飞的栗色长发绘制",
+          "page": 140
+        },
+        {
+          "title": "7.4.4 不同色彩的服装绘制",
+          "page": 142
+        },
+        {
+          "title": "7.4.5 不同材质的服饰绘制",
+          "page": 148
+        },
+        {
+          "title": "7.5 画面背景物体的绘制",
+          "page": 151
+        },
+        {
+          "title": "7.5.1 绘制召唤兽",
+          "page": 151
+        },
+        {
+          "title": "7.5.2 添加画面光效",
+          "page": 153
+        },
+        {
+          "title": "第8章 多人组合空之城",
+          "page": 156
+        },
+        {
+          "title": "8.1 多人组合草稿绘制",
+          "page": 156
+        },
+        {
+          "title": "8.2 多人组合线稿绘制",
+          "page": 157
+        },
+        {
+          "title": "8.2.1 人物线稿绘制",
+          "page": 157
+        },
+        {
+          "title": "8.2.2 画面背景绘制",
+          "page": 161
+        },
+        {
+          "title": "8.3 唯美幻想的色调",
+          "page": 163
+        },
+        {
+          "title": "8.4 红裙天使的色彩绘制",
+          "page": 164
+        },
+        {
+          "title": "8.4.1 人物的皮肤绘制",
+          "page": 164
+        },
+        {
+          "title": "8.4.2 晶莹的绿色双眼",
+          "page": 165
+        },
+        {
+          "title": "8.4.3 飞扬的长直发绘制",
+          "page": 166
+        },
+        {
+          "title": "8.4.4 红色系长裙绘制",
+          "page": 167
+        },
+        {
+          "title": "8.4.5 人物翅膀绘制",
+          "page": 170
+        },
+        {
+          "title": "8.5 飞舞天使色彩绘制",
+          "page": 171
+        },
+        {
+          "title": "8.5.1 人物脸部色彩绘制",
+          "page": 171
+        },
+        {
+          "title": "8.5.2 飞扬的长卷发绘制",
+          "page": 172
+        },
+        {
+          "title": "8.5.3 浅黄色服饰绘制",
+          "page": 173
+        },
+        {
+          "title": "8.6 绿裙天使色彩绘制",
+          "page": 174
+        },
+        {
+          "title": "8.6.1 人物脸部色彩绘制",
+          "page": 174
+        },
+        {
+          "title": "8.6.2 浅黄色长发绘制",
+          "page": 176
+        },
+        {
+          "title": "8.6.3 绿色长裙绘制",
+          "page": 178
+        },
+        {
+          "title": "8.7 画面背景绘制",
+          "page": 180
+        },
+        {
+          "title": "8.7.1 玫瑰和水晶色彩绘制",
+          "page": 180
+        },
+        {
+          "title": "8.7.2 画面氛围绘制",
+          "page": 184
+        }
+      ],
+      "pdfKey": "library/books/106-sai-exquisite-illustration.pdf",
+      "pdfBytes": 72062350,
+      "coverKey": "library/covers/106-sai-exquisite-illustration-cover.jpg",
+      "coverBytes": 380167
+    },
+    {
       "id": "lib-mwdsj947-e164dc",
       "sortNo": 106,
       "title": "上吧！漫画达人必修课：Q 版古风",
@@ -4357,6 +4890,118 @@
       "pdfBytes": 38168767,
       "coverKey": "library/covers/107-manga-master-class-q-gufeng-cover.jpg",
       "coverBytes": 330639
+    },
+    {
+      "id": "lib-mwdsl71l-c86b90",
+      "sortNo": 107,
+      "title": "掌握漫画：美国天才漫画家 Mark Crilley 经典漫画教程",
+      "author": "Mark Crilley",
+      "intro": "Mark Crilley 的漫画教学：脸部、人体、透视与分镜，循序渐进练到成稿。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/108-master-manga-mark-crilley.pdf",
+      "pdfBytes": 48355817,
+      "coverKey": "library/covers/108-master-manga-mark-crilley-cover.jpg",
+      "coverBytes": 372306
+    },
+    {
+      "id": "lib-mwdsx59i-0dc945",
+      "sortNo": 108,
+      "title": "为绘画角色注入生命力：插画·漫画进阶技法 5 总集篇",
+      "author": "",
+      "intro": "系列总集篇：角色表现的综合案例，把前四册方法落到完整作品。",
+      "pageCount": 155,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/109-inject-life-5-collection.pdf",
+      "pdfBytes": 298974259,
+      "coverKey": "library/covers/109-inject-life-5-collection-cover.jpg",
+      "coverBytes": 280153
+    },
+    {
+      "id": "lib-mwdst2gk-6e0ad2",
+      "sortNo": 109,
+      "title": "为绘画角色注入生命力：插画·漫画进阶技法 4 基本法则篇",
+      "author": "",
+      "intro": "角色生命力基本法则：姿态、视线与情绪的基本构成。",
+      "pageCount": 160,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/110-inject-life-4-basics.pdf",
+      "pdfBytes": 272965203,
+      "coverKey": "library/covers/110-inject-life-4-basics-cover.jpg",
+      "coverBytes": 238655
+    },
+    {
+      "id": "lib-mwdt19o2-6c5985",
+      "sortNo": 110,
+      "title": "为绘画角色注入生命力：插画·漫画进阶技法 3 妄想力提高篇",
+      "author": "",
+      "intro": "提升角色想象力：从设定到画面的转化，制造记忆点。",
+      "pageCount": 159,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/111-inject-life-3-imagination.pdf",
+      "pdfBytes": 424225913,
+      "coverKey": "library/covers/111-inject-life-3-imagination-cover.jpg",
+      "coverBytes": 131968
+    },
+    {
+      "id": "lib-mwdt15gl-b4fc63",
+      "sortNo": 111,
+      "title": "为绘画角色注入生命力：插画·漫画进阶技法 2 表现力提高篇",
+      "author": "",
+      "intro": "表现力进阶：构图、光影与镜头，让角色更有戏。",
+      "pageCount": 159,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/112-inject-life-2-expression.pdf",
+      "pdfBytes": 422153792,
+      "coverKey": "library/covers/112-inject-life-2-expression-cover.jpg",
+      "coverBytes": 243205
+    },
+    {
+      "id": "lib-mwdstpez-e82856",
+      "sortNo": 112,
+      "title": "为绘画角色注入生命力：插画·漫画进阶技法 1",
+      "author": "",
+      "intro": "系列第一册：从角色设定到画面呈现的基础方法。",
+      "pageCount": 159,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/113-inject-life-1.pdf",
+      "pdfBytes": 268516492,
+      "coverKey": "library/covers/113-inject-life-1-cover.jpg",
+      "coverBytes": 112278
+    },
+    {
+      "id": "lib-mwdsvnmi-31caa0",
+      "sortNo": 113,
+      "title": "杀死童贞的服装的描绘方式",
+      "author": "",
+      "intro": "服装与身体的互动描绘：贴身、透视与褶皱，尺度较大的表现示范。",
+      "pageCount": 83,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/114-deadly-virgin-clothing.pdf",
+      "pdfBytes": 292891067,
+      "coverKey": "library/covers/114-deadly-virgin-clothing-cover.jpg",
+      "coverBytes": 208199
+    },
+    {
+      "id": "lib-mwdsonah-c04d14",
+      "sortNo": 114,
+      "title": "唯美幻想世界与惊艳角色的描绘方法",
+      "author": "",
+      "intro": "幻想世界观与角色设计：场景氛围、服饰设定与整体配色。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/115-fantasy-world-characters.pdf",
+      "pdfBytes": 166499509,
+      "coverKey": "library/covers/115-fantasy-world-characters-cover.jpg",
+      "coverBytes": 276780
     },
     {
       "id": "lib-mwdsjcdw-064219",
