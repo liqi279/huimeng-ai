@@ -32790,7 +32790,10 @@ async function authBoot() {
      - api.me() 与 api.listWorks() 互不依赖（服务端都从 token 解析 uid）→ 同时发；
      - HMDesk.pullNow() 依赖 me 的 uid（desk 键按 uid 取，内部还有 deskUid 守卫）→ 必须等 me。 */
   var meP = (api && typeof api.me === 'function') ? api.me() : Promise.reject(new Error('api 未就绪'));
-  var worksP = (api && typeof api.listWorks === 'function')
+  /* 云同步模块在用 /user-data/bootstrap 拉作品；
+     旧 /works 列表会把全部内联图一起返回（>6MB），SCF 函数 URL 网关会直接断连。
+     有 HMSync 时不再发这条注定失败的请求。 */
+  var worksP = (api && typeof api.listWorks === 'function' && !window.HMSync)
     ? api.listWorks().catch(function () { return null; })
     : Promise.resolve(null);
   try {
