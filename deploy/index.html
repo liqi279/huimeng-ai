@@ -71313,10 +71313,58 @@ window.HMChat = (function () {
     }
   }
 
+  /* 把上游直链（可能是临时签名地址）读成 dataUrl，才能落到账号资产库。
+     先生成图/视频直连 URL 过期后，换设备就会整片打不开——这一步是根治。 */
+  async function remoteToDataUrl(url) {
+    try {
+      var r = await fetch(url, { mode: 'cors', credentials: 'omit' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var blob = await r.blob();
+      if (!/^(image|video)\//.test(blob.type || '')) throw new Error('不是媒体类型');
+      return await new Promise(function (resolve, reject) {
+        var fr = new FileReader();
+        fr.onload = function () { resolve(fr.result); };
+        fr.onerror = function () { reject(fr.error); };
+        fr.readAsDataURL(blob);
+      });
+    } catch (e) {
+      /* 没有 CORS 头时退一步：用 crossorigin 图片画进 canvas */
+      var img = await new Promise(function (resolve, reject) {
+        var im = new Image();
+        im.crossOrigin = 'anonymous';
+        im.onload = function () { resolve(im); };
+        im.onerror = function () { reject(new Error('图片跨域不可读')); };
+        im.src = url;
+      });
+      var canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      return canvas.toDataURL('image/png');
+    }
+  }
+
   async function uploadAsset(work) {
-    if (!work || typeof work.url !== 'string' || work.url.indexOf('data:') !== 0) return work;
-    var res = await request('POST', '/works/' + encodeURIComponent(work.id) + '/asset', { dataUrl: work.url }, 120000);
-    if (!res || !res.asset) return work;
+    if (!work || typeof work.url !== 'string' || !work.url) return work;
+    /* 已镜像过（服务端有 _assetId，每次 /works 会重新签发新链接）*/
+    if (work._assetId) return work;
+    var src = work.url;
+    if (src.indexOf('data:') !== 0) {
+      if (!/^https?:/i.test(src)) return work;
+      var mirrored = null;
+      try { mirrored = await remoteToDataUrl(src); } catch (e) { mirrored = null; }
+      if (!mirrored) {
+        /* 跨域读不到：保留原直链，6 小时内不再重试，避免每次同步都白跑一次下载 */
+        work._mirrorFailAt = Date.now();
+        return work;
+      }
+      work.rawUrl = work.rawUrl || src;
+      src = mirrored;
+    }
+    /* 无论上传是否成功，先把原图字节留在本机 IndexedDB：
+       上游直链以后失效时，这台设备还能重新镜像，不会连原图一起丢 */
+    try { idbPutBlob(work.id, src); } catch (e) {}
+    var res = await request('POST', '/works/' + encodeURIComponent(work.id) + '/asset', { dataUrl: src }, 120000);    if (!res || !res.asset) return work;
     work.url = res.asset.url;
     work._assetId = res.asset.assetId;
     work._assetBytes = res.asset.bytes;
@@ -71331,7 +71379,9 @@ window.HMChat = (function () {
 
   async function pushOne(work) {
     if (!work || !work.id) return null;
-    if (work.url && work.url.indexOf('data:') === 0) {
+    if (work.url && (work.url.indexOf('data:') === 0 ||
+        (!work._assetId && /^https?:/i.test(work.url) &&
+          !(work._mirrorFailAt && Date.now() - work._mirrorFailAt < 6 * 3600 * 1000)))) {
       await uploadAsset(work);
     }
     var key = uid() + ':' + work.id;
