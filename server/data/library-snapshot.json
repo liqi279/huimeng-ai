@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-12T11:55:59.641Z",
+  "generatedAt": "2026-11-12T12:39:46.046Z",
   "source": "huimeng_library.books",
   "total": 70,
   "areas": {
-    "paint": 60,
-    "ref": 10
+    "paint": 55,
+    "ref": 15
   },
   "books": [
     {
@@ -3572,7 +3572,7 @@
       "author": "",
       "intro": "5000 例服装图典：日常、校园、职业与幻想服饰的分类图例，按部件与款式快速查找。",
       "pageCount": 275,
-      "area": "paint",
+      "area": "ref",
       "toc": [],
       "pdfKey": "library/books/061-manga-5000-costume.pdf",
       "pdfBytes": 69530743,
@@ -3586,7 +3586,7 @@
       "author": "",
       "intro": "5000 例 Q 版图典：二至四头身的动作、表情与服饰范例，适合萌系角色速查。",
       "pageCount": 258,
-      "area": "paint",
+      "area": "ref",
       "toc": [],
       "pdfKey": "library/books/062-manga-5000-chibi.pdf",
       "pdfBytes": 94704186,
@@ -3600,7 +3600,7 @@
       "author": "",
       "intro": "5000 例美少女图典：发型、表情、姿态与服饰的成组范例，按场景快速取用。",
       "pageCount": 264,
-      "area": "paint",
+      "area": "ref",
       "toc": [],
       "pdfKey": "library/books/063-manga-5000-bishojo.pdf",
       "pdfBytes": 64289332,
@@ -3614,7 +3614,7 @@
       "author": "",
       "intro": "5000 例人物图典：不同年龄、体型与职业的人物造型，附动作与服饰组合。",
       "pageCount": 258,
-      "area": "paint",
+      "area": "ref",
       "toc": [],
       "pdfKey": "library/books/064-manga-5000-characters.pdf",
       "pdfBytes": 72984958,
@@ -3628,7 +3628,7 @@
       "author": "",
       "intro": "女子角色服饰资料集：从内衣到外套的层次结构、褶皱与配件，附搭配示例。",
       "pageCount": 99,
-      "area": "paint",
+      "area": "ref",
       "toc": [],
       "pdfKey": "library/books/065-female-costume-reference.pdf",
       "pdfBytes": 57997229,
