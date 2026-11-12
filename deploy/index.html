@@ -7815,6 +7815,74 @@ body.hm-light .hm-page-empty {
 .folder-card.is-stack .folder-info strong { font-size: 12px; color: #cbd5e1; }
 .folder-card.is-stack .folder-info small { display: none; }
 
+/* 叠放浮窗：桌面内浮层，不切换视图 */
+.stack-panel {
+  position: absolute;
+  z-index: 9000;
+  width: min(520px, calc(100% - 24px));
+  background: linear-gradient(180deg, rgba(30, 58, 95, 0.97), rgba(12, 25, 42, 0.99));
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.stack-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  cursor: grab;
+  user-select: none;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.16);
+  touch-action: none;
+}
+.stack-panel-head:active { cursor: grabbing; }
+.stack-panel-head strong { font-size: 13px; font-weight: 600; }
+.stack-panel-count {
+  font-size: 11px; color: #93c5fd; background: rgba(59, 130, 246, 0.18);
+  border-radius: 999px; padding: 1px 7px;
+}
+.stack-panel-close {
+  margin-left: auto; width: 24px; height: 24px; border: 0; border-radius: 6px;
+  background: transparent; color: #94a3b8; font-size: 16px; cursor: pointer;
+}
+.stack-panel-close:hover { background: rgba(148, 163, 184, 0.16); color: #fff; }
+.stack-panel-body {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px;
+  max-height: min(58vh, 520px); overflow: auto;
+}
+.sp-cell {
+  border: 2px solid transparent; border-radius: 10px; padding: 0; cursor: pointer;
+  background: transparent; text-align: left;
+}
+.sp-cell.is-selected {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+  border-radius: 10px;
+}
+.sp-cell img {
+  width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border-radius: 8px;
+}
+.sp-cell strong {
+  display: block; font-size: 12px; font-weight: 500; margin-top: 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cbd5e1;
+}
+.sp-cell small { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.stack-panel-foot {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  border-top: 1px solid rgba(96, 165, 250, 0.16); min-height: 46px;
+}
+.sp-sel { font-size: 12px; color: #cbd5e1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-remove {
+  margin-left: auto; border: 1px solid rgba(96, 165, 250, 0.5); border-radius: 8px;
+  background: rgba(59, 130, 246, 0.16); color: #bfdbfe; font-size: 12px; padding: 6px 12px; cursor: pointer;
+}
+.sp-remove[hidden] { display: none; }
+.sp-remove:hover { background: rgba(59, 130, 246, 0.3); }
+
 /* 文件夹预览弹窗 */
 .hm-folder-preview-card {
   width: min(920px, 92vw);
@@ -65302,6 +65370,7 @@ window.HMChat = (function () {
   /* ---------------- 数据 ---------------- */
   var desk = {
     folders: [],
+    stacks: [],      /* 桌面层的叠放组：不属于项目/文件夹，不进项目列表 */
     positions: {},
     assigns: {},
     names: {},
@@ -65312,6 +65381,7 @@ window.HMChat = (function () {
 
   var view = {
     activeFolder: null,
+    activeStack: null,  /* 当前打开的叠放组；与项目/文件夹互斥 */
     parentFolder: null,
     selectedFolders: {},  /* { folderId: true } 多选 */
     sort: 'newest',
@@ -65380,10 +65450,47 @@ window.HMChat = (function () {
     desk.positions = stored.positions && typeof stored.positions === 'object' ? stored.positions : {};
     desk.assigns = stored.assigns && typeof stored.assigns === 'object' ? stored.assigns : {};
     desk.names = stored.names && typeof stored.names === 'object' ? stored.names : {};
+    desk.stacks = Array.isArray(stored.stacks) ? stored.stacks.filter(function (s) {
+      return s && s.id;
+    }).map(function (s) {
+      return {
+        id: s.id,
+        name: s.name || '叠放',
+        createdAt: Number(s.createdAt) || 0,
+        memberIds: Array.isArray(s.memberIds) ? s.memberIds.filter(Boolean) : [],
+        panel: s.panel && typeof s.panel === 'object' ? { x: Number(s.panel.x) || 0, y: Number(s.panel.y) || 0 } : null
+      };
+    }) : [];
     desk.updatedAt = Number(stored.updatedAt) || 0;
+    /* 旧的「叠放 (N)」是按文件夹存的，安全迁成 stacks：成员转进 memberIds，
+       不删作品、不丢位置；迁移失败也不影响其它数据 */
+    try { migrateStackFolders(); } catch (e) {}
     /* 恢复上次停留的桌面（每个文件夹桌面独立，刷新后回到同一个桌面） */
     view.activeFolder = stored.activeFolder && desk.folders.some(function (f) { return f.id === stored.activeFolder; })
       ? stored.activeFolder : null;
+    view.activeStack = null;  /* 叠放改为桌面内浮窗，不再作为“进入某一层”的状态 */
+  }
+
+  /* 把旧文件夹语义的「叠放 (N)」迁到 desk.stacks；幂等，可重复执行 */
+  function migrateStackFolders() {
+    var migrated = 0;
+    desk.folders = desk.folders.filter(function (f) {
+      if (!/^叠放/.test(f.name || '')) return true;
+      var ids = Object.keys(desk.assigns).filter(function (k) { return desk.assigns[k] === f.id; });
+      desk.stacks.push({
+        id: f.id,
+        name: f.name,
+        createdAt: Number(f.createdAt) || Date.now(),
+        memberIds: ids
+      });
+      ids.forEach(function (k) { delete desk.assigns[k]; });
+      migrated += 1;
+      return false;
+    });
+    if (migrated) {
+      desk.updatedAt = Date.now();
+      try { persistNow(); } catch (e) {}
+    }
   }
 
   var persistTimer = null;
@@ -65391,10 +65498,12 @@ window.HMChat = (function () {
   function payload() {
     return {
       folders: desk.folders,
+      stacks: desk.stacks,
       positions: desk.positions,
       assigns: desk.assigns,
       names: desk.names,
       activeFolder: view.activeFolder || null,
+      activeStack: view.activeStack || null,
       updatedAt: desk.updatedAt
     };
   }
@@ -65428,6 +65537,7 @@ window.HMChat = (function () {
       var remoteTime = Number(remote.updatedAt) || 0;
       if (remoteTime > desk.updatedAt) {
         desk.folders = remote.folders;
+        desk.stacks = Array.isArray(remote.stacks) ? remote.stacks : [];
         desk.positions = remote.positions || {};
         desk.assigns = remote.assigns || {};
         desk.names = remote.names || {};
@@ -65455,15 +65565,21 @@ window.HMChat = (function () {
       var remote = d.desk || d;
       if (!remote || !Array.isArray(remote.folders)) return false;
       var remoteTime = Number(remote.updatedAt) || 0;
-      var remoteHasData = remote.folders.length || Object.keys(remote.positions || {}).length ||
+      var remoteHasData = remote.folders.length || (Array.isArray(remote.stacks) && remote.stacks.length) ||
+        Object.keys(remote.positions || {}).length ||
         Object.keys(remote.assigns || {}).length || Object.keys(remote.names || {}).length;
-      var localEmpty = !desk.folders.length && !Object.keys(desk.positions || {}).length;
+      var localEmpty = !desk.folders.length && !desk.stacks.length && !Object.keys(desk.positions || {}).length;
       if (remoteTime > desk.updatedAt || (localEmpty && remoteHasData)) {
         desk.folders = remote.folders.filter(function (f) { return f && f.id && f.name; }).map(function (f) {
           f.parentId = f.parentId || null;
           f.createdAt = Number(f.createdAt) || 0;
           return f;
         });
+        desk.stacks = Array.isArray(remote.stacks) ? remote.stacks.filter(function (s) {
+          return s && s.id && Array.isArray(s.memberIds);
+        }).map(function (s) {
+          return { id: s.id, name: s.name || '叠放', createdAt: Number(s.createdAt) || 0, memberIds: s.memberIds.slice(), panel: s.panel || null };
+        }) : [];
         desk.positions = remote.positions || {};
         desk.assigns = remote.assigns || {};
         desk.names = remote.names || {};
@@ -65958,19 +66074,36 @@ window.HMChat = (function () {
   /* ---------------- 桌面 ---------------- */
   function activeWorks() {
     var list = state.works.slice();
+    if (view.activeStack) {
+      var st = desk.stacks.find(function (s) { return s.id === view.activeStack; });
+      var ids = st ? st.memberIds : [];
+      return list.filter(function (w) { return ids.indexOf(w.id) >= 0; });
+    }
     if (view.activeFolder) {
       /* 正在查看某个文件夹内部 */
       list = list.filter(function (w) { return desk.assigns[w.id] === view.activeFolder; });
     } else {
-      /* 桌面根视图：只显示散落（没有被任何文件夹收走）的作品 */
-      list = list.filter(function (w) { return !desk.assigns[w.id]; });
+      /* 桌面根视图：只显示散落作品；已进文件夹或已叠放的不再单独出现 */
+      var inStack = {};
+      desk.stacks.forEach(function (s) { (s.memberIds || []).forEach(function (id) { inStack[id] = true; }); });
+      list = list.filter(function (w) { return !desk.assigns[w.id] && !inStack[w.id]; });
     }
     return list;
   }
 
   /* 新生成的作品：如果当前正处在某个文件夹的桌面里，自动归入该文件夹 */
   function onWorkCreated(work) {
-    if (!work || !work.id || !view.activeFolder) return;
+    if (!work || !work.id) return;
+    if (view.activeStack) {
+      var st = desk.stacks.find(function (s) { return s.id === view.activeStack; });
+      if (st && st.memberIds.indexOf(work.id) < 0) {
+        st.memberIds.push(work.id);
+        delete desk.positions[work.id];
+        persistSoon();
+      }
+      return;
+    }
+    if (!view.activeFolder) return;
     if (desk.assigns[work.id]) return;
     desk.assigns[work.id] = view.activeFolder;
     delete desk.positions[work.id];
@@ -65992,9 +66125,6 @@ window.HMChat = (function () {
   /* 某文件夹是否"有内容"：自身有作品，或有子文件夹 */
   function folderHasContent(id) {
     if (state.works.some(function (w) { return desk.assigns[w.id] === id; })) return true;
-    /* 叠放组：只要还有归属记录就显示，不能因为另一台设备还没把作品拉下来就整组消失 */
-    var isStack = desk.folders.some(function (f) { return f.id === id && /^叠放/.test(f.name || ''); });
-    if (isStack && Object.keys(desk.assigns).some(function (k) { return desk.assigns[k] === id; })) return true;
     return desk.folders.some(function (f) { return (f.parentId || null) === id; });
   }
 
@@ -66002,6 +66132,7 @@ window.HMChat = (function () {
      根桌面 → 顶层文件夹；进入某文件夹 → 它的直接子文件夹。
      这样每个文件夹都有自己独立的一层桌面，互不混在一起。 */
   function activeFolders() {
+    if (view.activeStack) return [];
     var parentId = view.activeFolder || null;
     return desk.folders.filter(function (f) {
       if (!f || !f.id) return false;
@@ -66151,6 +66282,27 @@ window.HMChat = (function () {
       '<span class="desk-check" aria-hidden="true"></span>';
   }
 
+  /* 叠放卡片 HTML：与文件夹卡同构，但成员来自 stack.memberIds，不读 assigns */
+  function stackCardHtmlInner(st) {
+    var items = state.works.filter(function (w) { return st.memberIds.indexOf(w.id) >= 0; });
+    var total = st.memberIds.length || items.length;
+    var thumbs = items.slice(0, 4);
+    var gridHtml = '';
+    if (thumbs.length === 0) {
+      gridHtml = '<div class="folder-grid-empty">▣</div>';
+    } else if (thumbs.length === 1) {
+      gridHtml = '<img src="' + esc(thumbs[0].thumb || thumbs[0].url || '') + '" class="folder-t" alt="">';
+    } else {
+      gridHtml = thumbs.map(function (w, i) {
+        return '<img src="' + esc(w.thumb || w.url || '') + '" class="folder-t folder-t-' + i + '" alt="">';
+      }).join('');
+    }
+    return '<div class="folder-thumb">' + gridHtml +
+      '<span class="folder-more">' + total + '</span></div>' +
+      '<div class="folder-info"><strong>' + esc(st.name || '叠放') + '</strong><small>' + total + ' 项</small></div>' +
+      '<span class="desk-check" aria-hidden="true"></span>';
+  }
+
   function setDockVar() {
     var dock = $('.hm-dock');
     var h = dock ? dock.offsetHeight : 210;
@@ -66227,6 +66379,7 @@ window.HMChat = (function () {
     folders.forEach(function (f) { needFolderIds[f.id] = true; });
 
     Array.prototype.forEach.call(grid.querySelectorAll('.folder-card'), function (node) {
+      if (node.dataset.stack) return;
       var id = node.dataset.folder;
       if (!needFolderIds[id]) node.parentNode.removeChild(node);
     });
@@ -66246,6 +66399,37 @@ window.HMChat = (function () {
         pos = nextFreeSlot(works.length + folders.indexOf(f), grid, occupied);
         pos._userSet = false;
         desk.positions[f.id] = pos;
+      }
+      var left = typeof pos.pxLeft === 'number' ? pos.pxLeft : PAD;
+      var top = typeof pos.pxTop === 'number' ? pos.pxTop : PAD;
+      existing.style.left = left + 'px';
+      existing.style.top = top + 'px';
+      existing.style.zIndex = String(pos.z || idx + 1);
+      occupied.push({ left: left, top: top });
+    });
+
+    /* ---------- 叠放卡：只存在于桌面根层，不进项目列表 ---------- */
+    var stacks = (!view.activeFolder && !view.activeStack) ? desk.stacks.slice() : [];
+    var needStackIds = {};
+    stacks.forEach(function (s) { needStackIds[s.id] = true; });
+    Array.prototype.forEach.call(grid.querySelectorAll('.folder-card[data-stack]'), function (node) {
+      if (!needStackIds[node.dataset.stack]) node.parentNode.removeChild(node);
+    });
+    stacks.forEach(function (s, si) {
+      var existing = grid.querySelector('.folder-card[data-stack="' + s.id + '"]');
+      if (!existing) {
+        existing = document.createElement('article');
+        existing.className = 'folder-card is-stack';
+        existing.dataset.stack = s.id;
+        existing.dataset.folder = s.id;
+        grid.appendChild(existing);
+      }
+      existing.innerHTML = stackCardHtmlInner(s);
+      var pos = desk.positions[s.id];
+      if (!pos || !pos.pxLeft) {
+        pos = nextFreeSlot(works.length + folders.length + si, grid, occupied);
+        pos._userSet = false;
+        desk.positions[s.id] = pos;
       }
       var left = typeof pos.pxLeft === 'number' ? pos.pxLeft : PAD;
       var top = typeof pos.pxTop === 'number' ? pos.pxTop : PAD;
@@ -66391,11 +66575,13 @@ window.HMChat = (function () {
     /* 先把访客态下创建的文件夹迁移到用户专属 key，防止"刷新后文件夹消失" */
     migrateGuestToUser();
     desk.folders = [];
+    desk.stacks = [];
     desk.positions = {};
     desk.assigns = {};
     desk.names = {};
     desk.updatedAt = 0;
     view.activeFolder = null;
+    view.activeStack = null;
     view.selected = {};
     load();
     renderAll();
@@ -66406,12 +66592,14 @@ window.HMChat = (function () {
   /* 登出时：清空桌面内存数据，避免下个账号看到上个账号的文件夹布局 */
   function resetForLogout() {
     desk.folders = [];
+    desk.stacks = [];
     desk.positions = {};
     desk.assigns = {};
     desk.names = {};
     desk.updatedAt = 0;
     deskUid = '';
     view.activeFolder = null;
+    view.activeStack = null;
     view.selected = {};
     renderAll();
   }
@@ -66759,8 +66947,33 @@ window.HMChat = (function () {
         var dropId = dropCard.dataset.folder;
         var targetFolderId = dropId;
         var draggedIds = current.items.map(function (i) { return i.id; });
+        /* 叠放卡：只接受图片叠入；项目和其它叠放都不能拖进去 */
+        if (dropCard.dataset.stack) {
+          if (draggedIds.some(function (id) { return desk.folders.some(function (f) { return f.id === id; }) || desk.stacks.some(function (s) { return s.id === id; }); })) {
+            A.toast('叠放只存在于桌面，不能把项目拖进去', 'error');
+            merged = true;
+          } else {
+            var st = desk.stacks.find(function (s) { return s.id === dropCard.dataset.stack; });
+            if (st) {
+              draggedIds.forEach(function (id) {
+                var real = String(id || '');
+                if (real && st.memberIds.indexOf(real) < 0) st.memberIds.push(real);
+                delete desk.assigns[real];
+              });
+              st.name = '叠放 (' + st.memberIds.length + ')';
+              persistNow(); clearSelection(); renderDesktop();
+              A.toast('已叠放（' + st.memberIds.length + ' 张）', 'success');
+              merged = true;
+            }
+          }
+        }
+        /* 叠放卡不能拖进项目 */
+        if (!merged && draggedIds.some(function (id) { return desk.stacks.some(function (s) { return s.id === id; }); })) {
+          A.toast('叠放只存在于桌面，不能拖进项目', 'error');
+          merged = true;
+        }
         /* 不能拖到自己身上（folder 被拖也不能拖进自己） */
-        if (draggedIds.indexOf(dropId) < 0 && !draggedIds.some(function (d) { return d === targetFolderId; })) {
+        if (!merged && draggedIds.indexOf(dropId) < 0 && !draggedIds.some(function (d) { return d === targetFolderId; })) {
           /* create=false：拖拽路径永不新建文件夹；目标文件夹不存在时返回 null，merged 保持 false */
           var folder = mergeItemsIntoFolder(draggedIds, targetFolderId, false);
           if (folder) {
@@ -66823,31 +67036,201 @@ window.HMChat = (function () {
     persistSoon();
   }
 
-  /* 把图片叠到目标图片上：目标已属于某个「叠放」组就并入，否则新建一组。
-     数据仍用 folders + assigns 表达，所以刷新和换设备都能靠 /docs/desk 还原。 */
+  /* ---------------- 叠放浮窗 ---------------- */
+  var stackPanelBound = false;
+
+  function stackMembers(st) {
+    return state.works.filter(function (w) { return st.memberIds.indexOf(w.id) >= 0; });
+  }
+
+  function closeStackPanel() {
+    var panel = byId('stackPanel');
+    if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+    view.stackOpen = null;
+    view.stackSel = {};
+  }
+
+  function openStackPanel(id) {
+    var st = desk.stacks.find(function (s) { return s.id === id; });
+    if (!st) return;
+    view.stackOpen = id;
+    view.stackSel = {};
+    renderStackPanel();
+  }
+
+  function renderStackPanel() {
+    var st = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+    if (!st) { closeStackPanel(); return; }
+    var grid = byId('resultGrid');
+    if (!grid) return;
+    var panel = byId('stackPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'stackPanel';
+      panel.className = 'stack-panel';
+      grid.appendChild(panel);
+    }
+    var items = stackMembers(st);
+    var cells = items.map(function (w) {
+      var ts = w.elapsed ? ('耗时 ' + Number(w.elapsed).toFixed(1) + 's') : '';
+      return '<button type="button" class="sp-cell' + (view.stackSel[w.id] ? ' is-selected' : '') + '" data-sp="' + esc(w.id) + '">' +
+        '<img src="' + esc(w.thumb || w.url || '') + '" alt="" draggable="false">' +
+        '<strong>' + esc(w.prompt || workName(w)) + '</strong>' +
+        (ts ? '<small>' + esc(ts) + '</small>' : '') +
+        '</button>';
+    }).join('');
+    panel.innerHTML =
+      '<div class="stack-panel-head"><span>▣</span><strong>' + esc(st.name || '叠放') + '</strong>' +
+        '<span class="stack-panel-count">' + st.memberIds.length + '</span>' +
+        '<button type="button" class="stack-panel-close" title="关闭">✕</button></div>' +
+      '<div class="stack-panel-body">' + (cells || '<div class="folder-grid-empty">空</div>') + '</div>' +
+      '<div class="stack-panel-foot"><span class="sp-sel"></span>' +
+        '<button type="button" class="sp-remove" hidden>→ 移出</button></div>';
+
+    /* 位置：记住上次；首次居中；始终限制在桌面区域内 */
+    var pw = panel.offsetWidth || 520;
+    var ph = panel.offsetHeight || 320;
+    var maxX = Math.max(8, grid.clientWidth - pw - 8);
+    var maxY = Math.max(8, grid.clientHeight - ph - 8);
+    var pos = st.panel || {};
+    var x = typeof pos.x === 'number' ? pos.x : Math.max(8, (grid.clientWidth - pw) / 2);
+    var y = typeof pos.y === 'number' ? pos.y : Math.max(8, (grid.clientHeight - ph) / 2);
+    panel.style.left = Math.min(maxX, Math.max(8, x)) + 'px';
+    panel.style.top = Math.min(maxY, Math.max(8, y)) + 'px';
+
+    updateStackFoot(st);
+
+    if (!stackPanelBound) {
+      stackPanelBound = true;
+      panel.addEventListener('click', function (event) {
+        if (event.target.closest('.stack-panel-close')) { closeStackPanel(); return; }
+        var cell = event.target.closest('.sp-cell[data-sp]');
+        if (cell) {
+          var wid = cell.dataset.sp;
+          if (view.stackSel[wid]) delete view.stackSel[wid];
+          else view.stackSel[wid] = true;
+          /* 只更新选中态，不重建 DOM：否则双击的第二下会落到新节点上，dblclick 永远不触发 */
+          cell.classList.toggle('is-selected', !!view.stackSel[wid]);
+          var stNow = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+          if (stNow) updateStackFoot(stNow);
+          return;
+        }
+        if (event.target.closest('.sp-remove')) {
+          removeSelectedFromStack();
+        }
+      });
+      panel.addEventListener('dblclick', function (event) {
+        var cell = event.target.closest('.sp-cell[data-sp]');
+        if (!cell) return;
+        var work = findWork(cell.dataset.sp);
+        if (work) A.openLightbox(work);
+      });
+      panel.addEventListener('contextmenu', function (event) {
+        var cell = event.target.closest('.sp-cell[data-sp]');
+        if (!cell) return;
+        event.preventDefault();
+        event.stopPropagation();
+        view.stackSel = {};
+        view.stackSel[cell.dataset.sp] = true;
+        Array.prototype.forEach.call(panel.querySelectorAll('.sp-cell'), function (c) {
+          c.classList.toggle('is-selected', c === cell);
+        });
+        var stNow = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+        if (stNow) updateStackFoot(stNow);
+        var work = findWork(cell.dataset.sp);
+        if (work) openWorkMenu(work, event.clientX, event.clientY);
+      });
+      /* 拖动标题栏移动浮窗，限制在桌面区域内 */
+      var head = panel.querySelector('.stack-panel-head');
+      head.addEventListener('pointerdown', function (event) {
+        if (event.target.closest('.stack-panel-close')) return;
+        event.preventDefault();
+        var rect = panel.getBoundingClientRect();
+        var gridRect = grid.getBoundingClientRect();
+        var offX = event.clientX - rect.left;
+        var offY = event.clientY - rect.top;
+        var maxX = Math.max(8, grid.clientWidth - rect.width - 8);
+        var maxY = Math.max(8, grid.clientHeight - rect.height - 8);
+        function move(e) {
+          var nx = Math.min(maxX, Math.max(8, e.clientX - gridRect.left - offX));
+          var ny = Math.min(maxY, Math.max(8, e.clientY - gridRect.top - offY));
+          panel.style.left = nx + 'px';
+          panel.style.top = ny + 'px';
+        }
+        function up() {
+          document.removeEventListener('pointermove', move);
+          document.removeEventListener('pointerup', up);
+          var st2 = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+          if (st2) {
+            st2.panel = { x: parseInt(panel.style.left, 10) || 0, y: parseInt(panel.style.top, 10) || 0 };
+            persistNow();
+          }
+        }
+        document.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', up);
+      });
+    }
+  }
+
+  function updateStackFoot(st) {
+    var panel = byId('stackPanel');
+    if (!panel) return;
+    var ids = Object.keys(view.stackSel || {});
+    var label = panel.querySelector('.sp-sel');
+    var btn = panel.querySelector('.sp-remove');
+    if (ids.length) {
+      var names = ids.map(function (id) {
+        var w = findWork(id);
+        return w ? (w.prompt || workName(w)).slice(0, 10) : id;
+      });
+      label.textContent = '已选 ' + ids.length + ' 项 · ' + names.join('、');
+      btn.hidden = false;
+    } else {
+      label.textContent = '';
+      btn.hidden = true;
+    }
+    Array.prototype.forEach.call(panel.querySelectorAll('.sp-cell'), function (cell) {
+      cell.classList.toggle('is-selected', !!view.stackSel[cell.dataset.sp]);
+    });
+  }
+
+  function removeSelectedFromStack() {
+    var st = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+    if (!st) return;
+    var ids = Object.keys(view.stackSel || {});
+    if (!ids.length) return;
+    st.memberIds = st.memberIds.filter(function (id) { return ids.indexOf(id) < 0; });
+    ids.forEach(function (id) { delete desk.positions[id]; });
+    var empty = !st.memberIds.length;
+    if (empty) desk.stacks = desk.stacks.filter(function (s) { return s.id !== st.id; });
+    else st.name = '叠放 (' + st.memberIds.length + ')';
+    view.stackSel = {};
+    persistNow();
+    renderDesktop();
+    if (empty) closeStackPanel();
+    else renderStackPanel();
+    A.toast('已移出 ' + ids.length + ' 张，回到桌面', 'success');
+  }
+
+  /* 把图片叠到目标图片上：目标已属于某个叠放组就并入，否则在桌面根层新建一组。
+     叠放只存在桌面层，不写入 folders / assigns，因此不会出现在项目列表里。 */
   function stackWorks(targetId, ids) {
     if (!targetId || !ids || !ids.length) return null;
-    var folderId = desk.assigns[targetId] || null;
-    var folder = folderId ? desk.folders.find(function (f) { return f.id === folderId; }) : null;
-    if (!folder || !/^叠放/.test(folder.name || '')) {
-      folder = {
-        id: 'f' + A.uid(),
-        name: '叠放 (2)',
-        createdAt: Date.now(),
-        parentId: view.activeFolder || null
-      };
-      desk.folders.unshift(folder);
-      desk.assigns[targetId] = folder.id;
+    if (view.activeFolder && !view.activeStack) return null; /* 项目内不生成叠放 */
+    var st = desk.stacks.find(function (s) { return (s.memberIds || []).indexOf(targetId) >= 0; });
+    if (!st && view.activeStack) st = desk.stacks.find(function (s) { return s.id === view.activeStack; });
+    if (!st) {
+      st = { id: 's' + A.uid(), name: '叠放 (2)', createdAt: Date.now(), memberIds: [] };
+      desk.stacks.unshift(st);
     }
     ids.forEach(function (id) {
-      if (id && id !== targetId) desk.assigns[id] = folder.id;
+      if (id && id !== targetId && st.memberIds.indexOf(id) < 0) st.memberIds.push(id);
     });
-    if (ids.length) {
-      var count = Object.keys(desk.assigns).filter(function (k) { return desk.assigns[k] === folder.id; }).length;
-      folder.name = '叠放 (' + count + ')';
-      return { id: folder.id, count: count };
-    }
-    return { id: folder.id, count: 0 };
+    if (st.memberIds.indexOf(targetId) < 0) st.memberIds.push(targetId);
+    /* 从项目归属里摘出来，避免同一张图同时出现在项目和叠放里 */
+    st.memberIds.forEach(function (id) { delete desk.assigns[id]; });
+    st.name = '叠放 (' + st.memberIds.length + ')';
+    return { id: st.id, count: st.memberIds.length };
   }
 
   /* 把一组 id 合并进文件夹（create=true 时若无文件夹则新建） */
@@ -67815,6 +68198,11 @@ window.HMChat = (function () {
         var folderCard = event.target.closest('.folder-card[data-folder]');
         if (folderCard) {
           if (event.target.closest('button')) return;
+          /* 叠放：双击/点击都弹桌面内浮窗，不再切换成“进入项目” */
+          if (folderCard.dataset.stack) {
+            openStackPanel(folderCard.dataset.stack);
+            return;
+          }
           var folder = desk.folders.find(function (f) { return f.id === folderCard.dataset.folder; });
           if (folder) {
             view.activeFolder = folder.id;
