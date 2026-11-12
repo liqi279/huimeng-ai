@@ -8892,9 +8892,9 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 /* ========== 版本更新通知（右下角浮动卡片，非全屏遮罩） ========== */
 .hm-update-modal {
   position: fixed;
-  /* 浮在输入 dock 之上，避免遮挡底栏与侧栏按钮 */
-  bottom: calc(var(--hm-dock-h, 250px) + 16px);
-  right: 28px;
+  /* 固定在页面右下角 */
+  bottom: 22px;
+  right: 22px;
   z-index: 2147483000;
   /* 没有背景遮罩！不阻塞页面操作 */
   animation: hmUpdateSlideIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
@@ -8932,14 +8932,22 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   position: relative;
 }
 
-/* 顶部细进度条点缀（暗示"有新版本"） */
+/* 顶部渐变光带：向右流动，表示"等待更新确认" */
 .hm-update-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
   border-radius: 14px 14px 0 0;
-  background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+  background: linear-gradient(90deg, #06b6d4, #8b5cf6, #ec4899, #06b6d4);
+  background-size: 200% 100%;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.55);
+  animation: hmUpdateFlow 1.6s linear infinite;
+}
+
+@keyframes hmUpdateFlow {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
 }
 
 .hm-update-icon {
@@ -9033,7 +9041,7 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 /* 响应式：小屏幕贴底 */
 @media (max-width: 640px) {
   .hm-update-modal {
-    bottom: calc(var(--hm-dock-h, 220px) + 12px);
+    bottom: 16px;
     right: 16px;
     left: 16px;
   }
