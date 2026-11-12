@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-12T11:27:59.702Z",
+  "generatedAt": "2026-11-12T11:42:18.976Z",
   "source": "huimeng_library.books",
-  "total": 60,
+  "total": 68,
   "areas": {
-    "paint": 50,
+    "paint": 58,
     "ref": 10
   },
   "books": [
@@ -3564,6 +3564,118 @@
       "pdfBytes": 37817101,
       "coverKey": "library/covers/060-dynamic-anatomy-cover.jpg",
       "coverBytes": 235777
+    },
+    {
+      "id": "lib-mwdgv6z5-720268",
+      "sortNo": 60,
+      "title": "超级漫画图典 5000 例：服装篇",
+      "author": "",
+      "intro": "5000 例服装图典：日常、校园、职业与幻想服饰的分类图例，按部件与款式快速查找。",
+      "pageCount": 275,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/061-manga-5000-costume.pdf",
+      "pdfBytes": 69530743,
+      "coverKey": "library/covers/061-manga-5000-costume-cover.jpg",
+      "coverBytes": 235132
+    },
+    {
+      "id": "lib-mwdgw6sd-c014fe",
+      "sortNo": 61,
+      "title": "超级漫画图典 5000 例：Q 版篇",
+      "author": "",
+      "intro": "5000 例 Q 版图典：二至四头身的动作、表情与服饰范例，适合萌系角色速查。",
+      "pageCount": 258,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/062-manga-5000-chibi.pdf",
+      "pdfBytes": 94704186,
+      "coverKey": "library/covers/062-manga-5000-chibi-cover.jpg",
+      "coverBytes": 259101
+    },
+    {
+      "id": "lib-mwdgxxso-7d5e7d",
+      "sortNo": 62,
+      "title": "超级漫画图典 5000 例：美少女篇",
+      "author": "",
+      "intro": "5000 例美少女图典：发型、表情、姿态与服饰的成组范例，按场景快速取用。",
+      "pageCount": 264,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/063-manga-5000-bishojo.pdf",
+      "pdfBytes": 64289332,
+      "coverKey": "library/covers/063-manga-5000-bishojo-cover.jpg",
+      "coverBytes": 244476
+    },
+    {
+      "id": "lib-mwdh00qm-3ee87f",
+      "sortNo": 63,
+      "title": "超级漫画图典 5000 例：人物篇",
+      "author": "",
+      "intro": "5000 例人物图典：不同年龄、体型与职业的人物造型，附动作与服饰组合。",
+      "pageCount": 258,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/064-manga-5000-characters.pdf",
+      "pdfBytes": 72984958,
+      "coverKey": "library/covers/064-manga-5000-characters-cover.jpg",
+      "coverBytes": 296069
+    },
+    {
+      "id": "lib-mwdh1yt3-d6340b",
+      "sortNo": 64,
+      "title": "漫画女子角色服饰资料集",
+      "author": "",
+      "intro": "女子角色服饰资料集：从内衣到外套的层次结构、褶皱与配件，附搭配示例。",
+      "pageCount": 99,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/065-female-costume-reference.pdf",
+      "pdfBytes": 57997229,
+      "coverKey": "library/covers/065-female-costume-reference-cover.jpg",
+      "coverBytes": 213579
+    },
+    {
+      "id": "lib-mwdh5q74-e5ae92",
+      "sortNo": 67,
+      "title": "从零开始学神技作画（汉化版）",
+      "author": "toshi",
+      "intro": "toshi 的神技作画：从起稿、透视到完成度的专业流程；本版为汉化版。",
+      "pageCount": 153,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/068-divine-technique-cn.pdf",
+      "pdfBytes": 293250888,
+      "coverKey": "library/covers/068-divine-technique-cn-cover.jpg",
+      "coverBytes": 143066
+    },
+    {
+      "id": "lib-mwdh6ghl-d71005",
+      "sortNo": 68,
+      "title": "游戏动漫人体结构造型手绘技法",
+      "author": "肖玮春、刘昊",
+      "intro": "游戏动漫人体结构造型：骨骼、肌肉与动态的系统训练，配大量手绘示范。",
+      "pageCount": 470,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/069-game-anime-anatomy.pdf",
+      "pdfBytes": 37586082,
+      "coverKey": "library/covers/069-game-anime-anatomy-cover.jpg",
+      "coverBytes": 103803
+    },
+    {
+      "id": "lib-mwdh8cta-43abf0",
+      "sortNo": 69,
+      "title": "漫画的奥义：神话世界的绘制技法",
+      "author": "",
+      "intro": "漫画的奥义：神话世界的绘制技法——神祇、怪兽与幻想场景的设定与表现。",
+      "pageCount": 194,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/070-myth-world-drawing.pdf",
+      "pdfBytes": 50854795,
+      "coverKey": "library/covers/070-myth-world-drawing-cover.jpg",
+      "coverBytes": 219625
     }
   ]
 }
