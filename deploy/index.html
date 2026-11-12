@@ -72936,6 +72936,22 @@ window.HMChat = (function () {
     }
     var key = docKey(kind);
     if (!key || data == null) return;
+    /* api：云端文档缺 Key 时保留本机已有 Key，避免刷新后凭证被清空 */
+    if (kind === 'api' && typeof data === 'object') {
+      try {
+        var prev = read(key, null) || {};
+        data = JSON.parse(JSON.stringify(data));
+        var cp = data.providers || (data.providers = {});
+        var lp = prev.providers || {};
+        Object.keys(lp).forEach(function (id) {
+          if (!cp[id]) cp[id] = lp[id];
+          else if (!cp[id].key && lp[id] && lp[id].key) cp[id].key = lp[id].key;
+        });
+        if ((!data.rayin || !data.rayin.key) && prev.rayin && prev.rayin.key) {
+          data.rayin = Object.assign({}, prev.rayin, data.rayin || {});
+        }
+      } catch (e) {}
+    }
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
     if (rev != null) { revs.docs[kind] = rev; saveRevs(); }
     revs.docfp[kind] = hash(JSON.stringify(data));
@@ -73013,7 +73029,16 @@ window.HMChat = (function () {
       var d = docs[kind];
       if (!d || d.data == null) return;
       var localRev = Number(revs.docs[kind]) || 0;
-      if (!localRev || Number(d.rev) > localRev) applyDoc(kind, d.data, d.rev);
+      /* rev 是浏览器级计数，换账号/换设备后可能高于云端；
+         云端文档的 updatedAt 更新时也要落地，避免服务端新数据被本地旧数据挡住 */
+      var cloudAt = Number(d.data && d.data.updatedAt) || 0;
+      var localAt = 0;
+      try {
+        var lk = docKey(kind);
+        var ld = lk ? read(lk, null) : null;
+        localAt = Number(ld && ld.updatedAt) || 0;
+      } catch (e) {}
+      if (!localRev || Number(d.rev) > localRev || (cloudAt && cloudAt > localAt)) applyDoc(kind, d.data, d.rev);
       else revs.docs[kind] = Number(d.rev);
     });
     saveRevs();
