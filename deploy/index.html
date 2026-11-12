@@ -56957,7 +56957,16 @@ window.HMChat = (function () {
         var availH = (books.clientHeight || 184) - 24;
         var slotW = ((books.clientWidth || 960) - 40 - gap * Math.max(0, count - 1)) / count;
         var ratio = img.naturalWidth / img.naturalHeight;
-        var w = Math.min(120, slotW);
+        var baseW = Math.min(120, slotW);
+        var w = baseW;
+        /* 宽幅封面（横图）：在整层放得下的前提下放大到接近竖版书的高度，
+           避免被 120px 的竖版书宽“压”成一条小横条；仍然按真实比例、不裁切不拉伸 */
+        if (ratio > 1.12 && count > 0) {
+          var freeW = (books.clientWidth || 960) - 40 - gap * Math.max(0, count - 1);
+          var maxW = freeW - 120 * Math.max(0, count - 1);
+          var tallW = availH * ratio;
+          w = Math.min(tallW, Math.max(baseW, maxW));
+        }
         if (w / ratio > availH) w = availH * ratio;
         w = Math.max(56, Math.round(w));
         card.style.width = w + 'px';
