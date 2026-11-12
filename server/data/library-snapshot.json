@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-12T13:32:29.259Z",
+  "generatedAt": "2026-11-12T13:51:53.452Z",
   "source": "huimeng_library.books",
-  "total": 85,
+  "total": 97,
   "areas": {
-    "paint": 69,
+    "paint": 81,
     "ref": 16
   },
   "books": [
@@ -3706,6 +3706,48 @@
       "coverBytes": 219625
     },
     {
+      "id": "lib-mwdl9q09-139e2f",
+      "sortNo": 70,
+      "title": "超级漫画素描技法：人物结构篇",
+      "author": "",
+      "intro": "从骨骼与肌肉讲人体结构，分部位拆解动态与透视，配大量结构线稿示范。",
+      "pageCount": 161,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/071-anime-anatomy-structure.pdf",
+      "pdfBytes": 92904325,
+      "coverKey": "library/covers/071-anime-anatomy-structure-cover.jpg",
+      "coverBytes": 296721
+    },
+    {
+      "id": "lib-mwdl7p4u-67a562",
+      "sortNo": 71,
+      "title": "超级漫画素描技法：角色设计基础",
+      "author": "",
+      "intro": "角色设计入门：性格设定、外形轮廓、服饰与配色，教你把设定落成可画的人物。",
+      "pageCount": 174,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/072-character-design-basics.pdf",
+      "pdfBytes": 43414285,
+      "coverKey": "library/covers/072-character-design-basics-cover.jpg",
+      "coverBytes": 245963
+    },
+    {
+      "id": "lib-mwdla9pb-fb4019",
+      "sortNo": 72,
+      "title": "超级漫画素描技法：运动篇",
+      "author": "",
+      "intro": "运动与动作表现：跑跳打斗的重心、动势线与透视变化，附连续动作分解。",
+      "pageCount": 201,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/073-motion-drawing.pdf",
+      "pdfBytes": 98797857,
+      "coverKey": "library/covers/073-motion-drawing-cover.jpg",
+      "coverBytes": 223037
+    },
+    {
       "id": "lib-mwdl3avo-35834b",
       "sortNo": 73,
       "title": "SSbook 超人气绘师精讲教程：马克笔零基础篇",
@@ -3732,6 +3774,589 @@
       "pdfBytes": 29790778,
       "coverKey": "library/covers/075-ssbook-lineart-cover.jpg",
       "coverBytes": 408195
+    },
+    {
+      "id": "lib-mwdlf9ws-27c6d7",
+      "sortNo": 75,
+      "title": "稍带色情 H 的女孩子的画法",
+      "author": "",
+      "intro": "女性角色性感表现画法：身体曲线、姿势与服装松紧的描绘，含尺度较大的示范。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/076-h-girl-drawing.pdf",
+      "pdfBytes": 250390992,
+      "coverKey": "library/covers/076-h-girl-drawing-cover.jpg",
+      "coverBytes": 251686
+    },
+    {
+      "id": "lib-mwdllhqc-e94173",
+      "sortNo": 76,
+      "title": "Paint！美少女彩绘的基本肌肤上色究极技巧",
+      "author": "",
+      "intro": "肌肤上色专题：底色、阴影、红晕与高光的分层画法，附完整绘制流程。",
+      "pageCount": 110,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/077-paint-skin-coloring.pdf",
+      "pdfBytes": 345060363,
+      "coverKey": "library/covers/077-paint-skin-coloring-cover.jpg",
+      "coverBytes": 230231
+    },
+    {
+      "id": "lib-mwdligq4-84ade0",
+      "sortNo": 77,
+      "title": "超人气偶像的绘画法：SAI 与 Photoshop 的完全教学",
+      "author": "",
+      "intro": "偶像角色插画全流程：构图、线稿、上色与后期，SAI 与 Photoshop 配合使用。",
+      "pageCount": 144,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/078-idol-drawing-sai-ps.pdf",
+      "pdfBytes": 331740341,
+      "coverKey": "library/covers/078-idol-drawing-sai-ps-cover.jpg",
+      "coverBytes": 207598
+    },
+    {
+      "id": "lib-mwdldbuy-255f0d",
+      "sortNo": 78,
+      "title": "载具和少女的绘画方法：SAI 与 Photoshop 的完全教学",
+      "author": "",
+      "intro": "机械载具与少女同框：透视、材质与光影，讲清人与机械的比例关系。",
+      "pageCount": 143,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/079-vehicle-girl-drawing.pdf",
+      "pdfBytes": 189460387,
+      "coverKey": "library/covers/079-vehicle-girl-drawing-cover.jpg",
+      "coverBytes": 162432
+    },
+    {
+      "id": "lib-mwdlqznr-dd53c9",
+      "sortNo": 79,
+      "title": "内衣的绘画法",
+      "author": "",
+      "intro": "内衣结构与画法：款式、受力与褶皱，附穿着状态下的身体表现。",
+      "pageCount": 128,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "IMG_0001",
+          "page": 1
+        },
+        {
+          "title": "IMG_0002",
+          "page": 2
+        },
+        {
+          "title": "IMG_0003",
+          "page": 3
+        },
+        {
+          "title": "IMG_0004",
+          "page": 4
+        },
+        {
+          "title": "IMG_0005",
+          "page": 5
+        },
+        {
+          "title": "IMG_0006",
+          "page": 6
+        },
+        {
+          "title": "IMG_0007",
+          "page": 7
+        },
+        {
+          "title": "IMG_0008",
+          "page": 8
+        },
+        {
+          "title": "IMG_0009",
+          "page": 9
+        },
+        {
+          "title": "IMG_0010",
+          "page": 10
+        },
+        {
+          "title": "IMG_0011",
+          "page": 11
+        },
+        {
+          "title": "IMG_0012",
+          "page": 12
+        },
+        {
+          "title": "IMG_0013",
+          "page": 13
+        },
+        {
+          "title": "IMG_0014",
+          "page": 14
+        },
+        {
+          "title": "IMG_0015",
+          "page": 15
+        },
+        {
+          "title": "IMG_0016",
+          "page": 16
+        },
+        {
+          "title": "IMG_0017",
+          "page": 17
+        },
+        {
+          "title": "IMG_0018",
+          "page": 18
+        },
+        {
+          "title": "IMG_0019",
+          "page": 19
+        },
+        {
+          "title": "IMG_0020",
+          "page": 20
+        },
+        {
+          "title": "IMG_0021",
+          "page": 21
+        },
+        {
+          "title": "IMG_0022",
+          "page": 22
+        },
+        {
+          "title": "IMG_0023",
+          "page": 23
+        },
+        {
+          "title": "IMG_0024",
+          "page": 24
+        },
+        {
+          "title": "IMG_0025",
+          "page": 25
+        },
+        {
+          "title": "IMG_0026",
+          "page": 26
+        },
+        {
+          "title": "IMG_0027",
+          "page": 27
+        },
+        {
+          "title": "IMG_0028",
+          "page": 28
+        },
+        {
+          "title": "IMG_0029",
+          "page": 29
+        },
+        {
+          "title": "IMG_0030",
+          "page": 30
+        },
+        {
+          "title": "IMG_0031",
+          "page": 31
+        },
+        {
+          "title": "IMG_0032",
+          "page": 32
+        },
+        {
+          "title": "IMG_0033",
+          "page": 33
+        },
+        {
+          "title": "IMG_0034",
+          "page": 34
+        },
+        {
+          "title": "IMG_0035",
+          "page": 35
+        },
+        {
+          "title": "IMG_0036",
+          "page": 36
+        },
+        {
+          "title": "IMG_0037",
+          "page": 37
+        },
+        {
+          "title": "IMG_0038",
+          "page": 38
+        },
+        {
+          "title": "IMG_0039",
+          "page": 39
+        },
+        {
+          "title": "IMG_0040",
+          "page": 40
+        },
+        {
+          "title": "IMG_0041",
+          "page": 41
+        },
+        {
+          "title": "IMG_0042",
+          "page": 42
+        },
+        {
+          "title": "IMG_0043",
+          "page": 43
+        },
+        {
+          "title": "IMG_0044",
+          "page": 44
+        },
+        {
+          "title": "IMG_0045",
+          "page": 45
+        },
+        {
+          "title": "IMG_0046",
+          "page": 46
+        },
+        {
+          "title": "IMG_0047",
+          "page": 47
+        },
+        {
+          "title": "IMG_0048",
+          "page": 48
+        },
+        {
+          "title": "IMG_0049",
+          "page": 49
+        },
+        {
+          "title": "IMG_0050",
+          "page": 50
+        },
+        {
+          "title": "IMG_0051",
+          "page": 51
+        },
+        {
+          "title": "IMG_0052",
+          "page": 52
+        },
+        {
+          "title": "IMG_0053",
+          "page": 53
+        },
+        {
+          "title": "IMG_0054",
+          "page": 54
+        },
+        {
+          "title": "IMG_0055",
+          "page": 55
+        },
+        {
+          "title": "IMG_0056",
+          "page": 56
+        },
+        {
+          "title": "IMG_0057",
+          "page": 57
+        },
+        {
+          "title": "IMG_0058",
+          "page": 58
+        },
+        {
+          "title": "IMG_0059",
+          "page": 59
+        },
+        {
+          "title": "IMG_0060",
+          "page": 60
+        },
+        {
+          "title": "IMG_0061",
+          "page": 61
+        },
+        {
+          "title": "IMG_0062",
+          "page": 62
+        },
+        {
+          "title": "IMG_0063",
+          "page": 63
+        },
+        {
+          "title": "IMG_0064",
+          "page": 64
+        },
+        {
+          "title": "IMG_0065",
+          "page": 65
+        },
+        {
+          "title": "IMG_0066",
+          "page": 66
+        },
+        {
+          "title": "IMG_0067",
+          "page": 67
+        },
+        {
+          "title": "IMG_0068",
+          "page": 68
+        },
+        {
+          "title": "IMG_0069",
+          "page": 69
+        },
+        {
+          "title": "IMG_0070",
+          "page": 70
+        },
+        {
+          "title": "IMG_0071",
+          "page": 71
+        },
+        {
+          "title": "IMG_0072",
+          "page": 72
+        },
+        {
+          "title": "IMG_0073",
+          "page": 73
+        },
+        {
+          "title": "IMG_0074",
+          "page": 74
+        },
+        {
+          "title": "IMG_0075",
+          "page": 75
+        },
+        {
+          "title": "IMG_0076",
+          "page": 76
+        },
+        {
+          "title": "IMG_0077",
+          "page": 77
+        },
+        {
+          "title": "IMG_0078",
+          "page": 78
+        },
+        {
+          "title": "IMG_0079",
+          "page": 79
+        },
+        {
+          "title": "IMG_0080",
+          "page": 80
+        },
+        {
+          "title": "IMG_0081",
+          "page": 81
+        },
+        {
+          "title": "IMG_0082",
+          "page": 82
+        },
+        {
+          "title": "IMG_0083",
+          "page": 83
+        },
+        {
+          "title": "IMG_0084",
+          "page": 84
+        },
+        {
+          "title": "IMG_0085",
+          "page": 85
+        },
+        {
+          "title": "IMG_0086",
+          "page": 86
+        },
+        {
+          "title": "IMG_0087",
+          "page": 87
+        },
+        {
+          "title": "IMG_0088",
+          "page": 88
+        },
+        {
+          "title": "IMG_0089",
+          "page": 89
+        },
+        {
+          "title": "IMG_0090",
+          "page": 90
+        },
+        {
+          "title": "IMG_0091",
+          "page": 91
+        },
+        {
+          "title": "IMG_0092",
+          "page": 92
+        },
+        {
+          "title": "IMG_0093",
+          "page": 93
+        },
+        {
+          "title": "IMG_0094",
+          "page": 94
+        },
+        {
+          "title": "IMG_0095",
+          "page": 95
+        },
+        {
+          "title": "IMG_0096",
+          "page": 96
+        },
+        {
+          "title": "IMG_0097",
+          "page": 97
+        },
+        {
+          "title": "IMG_0098",
+          "page": 98
+        },
+        {
+          "title": "IMG_0099",
+          "page": 99
+        },
+        {
+          "title": "IMG_0100",
+          "page": 100
+        },
+        {
+          "title": "IMG_0101",
+          "page": 101
+        },
+        {
+          "title": "IMG_0102",
+          "page": 102
+        },
+        {
+          "title": "IMG_0103",
+          "page": 103
+        },
+        {
+          "title": "IMG_0104",
+          "page": 104
+        },
+        {
+          "title": "IMG_0105",
+          "page": 105
+        },
+        {
+          "title": "IMG_0106",
+          "page": 106
+        },
+        {
+          "title": "IMG_0107",
+          "page": 107
+        },
+        {
+          "title": "IMG_0108",
+          "page": 108
+        },
+        {
+          "title": "IMG_0109",
+          "page": 109
+        },
+        {
+          "title": "IMG_0110",
+          "page": 110
+        },
+        {
+          "title": "IMG_0111",
+          "page": 111
+        },
+        {
+          "title": "IMG_0112",
+          "page": 112
+        },
+        {
+          "title": "IMG_0113",
+          "page": 113
+        },
+        {
+          "title": "IMG_0114",
+          "page": 114
+        },
+        {
+          "title": "IMG_0115",
+          "page": 115
+        },
+        {
+          "title": "IMG_0116",
+          "page": 116
+        },
+        {
+          "title": "IMG_0117",
+          "page": 117
+        },
+        {
+          "title": "IMG_0118",
+          "page": 118
+        },
+        {
+          "title": "IMG_0119",
+          "page": 119
+        },
+        {
+          "title": "IMG_0120",
+          "page": 120
+        },
+        {
+          "title": "IMG_0121",
+          "page": 121
+        },
+        {
+          "title": "IMG_0122",
+          "page": 122
+        },
+        {
+          "title": "IMG_0123",
+          "page": 123
+        },
+        {
+          "title": "IMG_0124",
+          "page": 124
+        },
+        {
+          "title": "IMG_0125",
+          "page": 125
+        },
+        {
+          "title": "IMG_0126",
+          "page": 126
+        },
+        {
+          "title": "IMG_0127",
+          "page": 127
+        },
+        {
+          "title": "IMG_0128",
+          "page": 128
+        }
+      ],
+      "pdfKey": "library/books/080-underwear-drawing.pdf",
+      "pdfBytes": 441700363,
+      "coverKey": "library/covers/080-underwear-drawing-cover.jpg",
+      "coverBytes": 314520
     },
     {
       "id": "lib-mwdl6mum-d86be4",
@@ -3776,6 +4401,34 @@
       "coverBytes": 199646
     },
     {
+      "id": "lib-mwdlu11u-208550",
+      "sortNo": 83,
+      "title": "Let's Make ★ Character CG 插画绘画技巧 Vol.9 Anmi 篇（汉化版）",
+      "author": "Anmi",
+      "intro": "Anmi 的 CG 角色制作流程：线稿、配色、光影与质感，完整拆解一张插画的诞生。",
+      "pageCount": 209,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/084-lets-make-character-anmi-cn.pdf",
+      "pdfBytes": 713662606,
+      "coverKey": "library/covers/084-lets-make-character-anmi-cn-cover.jpg",
+      "coverBytes": 297080
+    },
+    {
+      "id": "lib-mwdlnlyw-981842",
+      "sortNo": 84,
+      "title": "正太少年的绘画法",
+      "author": "",
+      "intro": "正太角色画法：头身比例、五官与体态，附服装与动作示例。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/085-shota-drawing.pdf",
+      "pdfBytes": 348154619,
+      "coverKey": "library/covers/085-shota-drawing-cover.jpg",
+      "coverBytes": 247913
+    },
+    {
       "id": "lib-mwdl2ior-880990",
       "sortNo": 85,
       "title": "动漫设计 超炫动态大图集：基本姿势篇",
@@ -3804,6 +4457,20 @@
       "coverBytes": 248874
     },
     {
+      "id": "lib-mwdl83j7-462be1",
+      "sortNo": 88,
+      "title": "跟日本动漫大师学漫画：从照片到动漫之服饰描绘技法",
+      "author": "",
+      "intro": "从实拍照片提炼动漫服饰：褶皱、材质与简化方法，附对照示范。",
+      "pageCount": 199,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/089-photo-to-anime-clothing.pdf",
+      "pdfBytes": 64045358,
+      "coverKey": "library/covers/089-photo-to-anime-clothing-cover.jpg",
+      "coverBytes": 174819
+    },
+    {
       "id": "lib-mwdl3cgt-e5d5ec",
       "sortNo": 89,
       "title": "漫画家大课堂：漫画人物绘画的基本法则",
@@ -3830,6 +4497,20 @@
       "pdfBytes": 25960644,
       "coverKey": "library/covers/091-manga-class-animation-cover.jpg",
       "coverBytes": 204203
+    },
+    {
+      "id": "lib-mwdl81wa-45f7c8",
+      "sortNo": 91,
+      "title": "超级漫画 CG 技法完全自学教程：线稿+透视+光影+上色+质感",
+      "author": "",
+      "intro": "CG 漫画全流程自学：线稿、透视、光影、上色与质感，一步步完成成稿。",
+      "pageCount": 232,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/092-cg-manga-self-study.pdf",
+      "pdfBytes": 44410160,
+      "coverKey": "library/covers/092-cg-manga-self-study-cover.jpg",
+      "coverBytes": 277753
     },
     {
       "id": "lib-mwdl47c3-7d8d0c",
