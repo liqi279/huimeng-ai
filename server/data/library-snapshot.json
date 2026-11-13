@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T16:15:14.845Z",
+  "generatedAt": "2026-11-13T16:23:42.449Z",
   "source": "huimeng_library.books",
-  "total": 355,
+  "total": 365,
   "areas": {
-    "paint": 339,
+    "paint": 349,
     "ref": 16
   },
   "books": [
@@ -15615,6 +15615,424 @@
       "pdfBytes": 138453344,
       "coverKey": "library/covers/360-book-cover.jpg",
       "coverBytes": 282965
+    },
+    {
+      "id": "lib-mwf6kbcp-4773c6",
+      "sortNo": 360,
+      "title": "美少年绘画技法-从人物到背景、食物、自然、照明的绘画技巧",
+      "author": "[日] 村カルキ",
+      "intro": "原名《美少年の描き分け　塗りテクニック　人物から背景・食べ物・自然・照明まで》，日本画师村カルキ(murakaruki)的一本具有强烈个人风格的漫画教程。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/361-book.pdf",
+      "pdfBytes": 108974250,
+      "coverKey": "library/covers/361-book-cover.jpg",
+      "coverBytes": 327359
+    },
+    {
+      "id": "lib-mwf6jj2y-62f0b7",
+      "sortNo": 361,
+      "title": "带有角色姿势的背景集 基本的室内、城镇和自然篇",
+      "author": "[日]背景倉庫",
+      "intro": "原名《キャラポーズ入り背景集 基本の室内・タウン・自然編》，一本带有背景的人物绘制参考教程，光盘收录了一些相关的图例素材(psd/jpg双版本)。",
+      "pageCount": 182,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 2
+        },
+        {
+          "title": "目次",
+          "page": 5
+        },
+        {
+          "title": "使用許諾",
+          "page": 8
+        },
+        {
+          "title": "プロローグ",
+          "page": 9
+        },
+        {
+          "title": "1章 一番手軽に使える！ 簡単背景＆ポーズ",
+          "page": 24
+        },
+        {
+          "title": "2章 物語が動き出す！ 室内背景＆ポーズ",
+          "page": 56
+        },
+        {
+          "title": "3章 キャラのいる背景を描こう！ 屋外背景＆ポーズ",
+          "page": 128
+        },
+        {
+          "title": "カラーイラストメイキング",
+          "page": 164
+        },
+        {
+          "title": "電子書籍版 特典データについて",
+          "page": 179
+        }
+      ],
+      "pdfKey": "library/books/362-book.pdf",
+      "pdfBytes": 66402310,
+      "coverKey": "library/covers/362-book-cover.jpg",
+      "coverBytes": 271435
+    },
+    {
+      "id": "lib-mwf6l09y-ca240b",
+      "sortNo": 362,
+      "title": "Photoshop数码绘入门指南 角色设计 第2版",
+      "author": "3dtotal Publishing",
+      "intro": "原名《Beginner's Guide to Digital Painting in Photoshop 2nd Edition》，一本欧美风格photoshop教程",
+      "pageCount": 290,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/363-book.pdf",
+      "pdfBytes": 164109178,
+      "coverKey": "library/covers/363-book-cover.jpg",
+      "coverBytes": 184538
+    },
+    {
+      "id": "lib-mwf6n8hc-9186be",
+      "sortNo": 363,
+      "title": "角色设计基础：如何为插图、动画和视觉开发创建引人入胜的角色",
+      "author": "3dtotal Publishing",
+      "intro": "原名《Fundamentals of Character Design: How to Create Engaging Characters for Illustration, Animation & Visual Development》，一本欧美风格卡通人物绘制教程。",
+      "pageCount": 314,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/364-book.pdf",
+      "pdfBytes": 186624337,
+      "coverKey": "library/covers/364-book-cover.jpg",
+      "coverBytes": 238962
+    },
+    {
+      "id": "lib-mwf6mjja-c16b5c",
+      "sortNo": 364,
+      "title": "适合不同情况的快速漫画人物画法",
+      "author": "[日]藤井英俊",
+      "intro": "原名《すぐ描けるまんがキャラクターデッサン シチュエーション別描き分けテクニック》，一本漫画教程。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/365-book.pdf",
+      "pdfBytes": 76707889,
+      "coverKey": "library/covers/365-book-cover.jpg",
+      "coverBytes": 298731
+    },
+    {
+      "id": "lib-mwf6nvux-86cd81",
+      "sortNo": 365,
+      "title": "动漫工作室教授的背景绘画基本原理",
+      "author": "[日]増山修",
+      "intro": "原名《アニメスタジオで教わる背景画の大原則》，“神技作画シリーズ”系列的一本，背景画教程。",
+      "pageCount": 77,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/366-book.pdf",
+      "pdfBytes": 106148509,
+      "coverKey": "library/covers/366-book-cover.jpg",
+      "coverBytes": 336133
+    },
+    {
+      "id": "lib-mwf6o9s3-11c223",
+      "sortNo": 366,
+      "title": "FORCE 织物",
+      "author": "迈克尔·马特西(Mike Mattesi)",
+      "intro": "原名《FORCE Fabric》，皮克斯动画工作室的人物素描讲师的一本服饰绘制教程。",
+      "pageCount": 242,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/367-book.pdf",
+      "pdfBytes": 97169281,
+      "coverKey": "library/covers/367-book-cover.jpg",
+      "coverBytes": 199504
+    },
+    {
+      "id": "lib-mwf6pdch-7f5810",
+      "sortNo": 367,
+      "title": "The FORCE Companion 快速提示和技巧",
+      "author": "迈克尔·马特西(Mike Mattesi)/Swendly Benilia(史文力.贝尼力亚)",
+      "intro": "原名《The FORCE Companion: Quick Tips and Tricks》，皮克斯动画工作室的人物素描讲师的一本\"FORCE(力量表现)\"绘画教程。",
+      "pageCount": 256,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/368-book.pdf",
+      "pdfBytes": 93524011,
+      "coverKey": "library/covers/368-book-cover.jpg",
+      "coverBytes": 162897
+    },
+    {
+      "id": "lib-mwf6phj6-5224b7",
+      "sortNo": 368,
+      "title": "FORCE 绘画人体解剖学",
+      "author": "迈克尔·马特西(Mike Mattesi)",
+      "intro": "原名《FORCE: Drawing Human Anatomy》，皮克斯动画工作室的人物素描讲师的一本绘画教程。",
+      "pageCount": 334,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/369-book.pdf",
+      "pdfBytes": 101227311,
+      "coverKey": "library/covers/369-book-cover.jpg",
+      "coverBytes": 216264
+    },
+    {
+      "id": "lib-mwf6pbia-5c3ece",
+      "sortNo": 369,
+      "title": "FORCE 从写生中进行角色设计",
+      "author": "迈克尔·马特西(Mike Mattesi)",
+      "intro": "原名《Force: Character Design from Life Drawing》，皮克斯动画工作室的人物素描讲师的一本绘画教程。",
+      "pageCount": 256,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Front Cover",
+          "page": 1
+        },
+        {
+          "title": "Force: Character Design from Life Drawing",
+          "page": 4
+        },
+        {
+          "title": "Copyright Page",
+          "page": 5
+        },
+        {
+          "title": "Contents",
+          "page": 8
+        },
+        {
+          "title": "Foreword",
+          "page": 10
+        },
+        {
+          "title": "Preface",
+          "page": 12
+        },
+        {
+          "title": "Key Concepts",
+          "page": 14
+        },
+        {
+          "title": "Fear",
+          "page": 14
+        },
+        {
+          "title": "Risk",
+          "page": 14
+        },
+        {
+          "title": "Opinion",
+          "page": 14
+        },
+        {
+          "title": "Hierarchy",
+          "page": 15
+        },
+        {
+          "title": "Contrast and Affinity",
+          "page": 15
+        },
+        {
+          "title": "Chapter 1: Force with Character",
+          "page": 18
+        },
+        {
+          "title": "Amazing Angles",
+          "page": 32
+        },
+        {
+          "title": "Developing Ideas",
+          "page": 39
+        },
+        {
+          "title": "Chapter 2: Space with Character",
+          "page": 54
+        },
+        {
+          "title": "Forceful Form",
+          "page": 54
+        },
+        {
+          "title": "The Spatial Bounding Box—Size Equals Depth",
+          "page": 60
+        },
+        {
+          "title": "Location Equals Depth",
+          "page": 71
+        },
+        {
+          "title": "Chapter 3: Shape with Character",
+          "page": 78
+        },
+        {
+          "title": "Abstraction of Shapes",
+          "page": 79
+        },
+        {
+          "title": "Forceful Shape",
+          "page": 81
+        },
+        {
+          "title": "The Forceful Triangle",
+          "page": 86
+        },
+        {
+          "title": "The Brilliant Bounding Box Returns",
+          "page": 91
+        },
+        {
+          "title": "The Law of Thirds",
+          "page": 98
+        },
+        {
+          "title": "Facial Ratios",
+          "page": 105
+        },
+        {
+          "title": "Chapter 4: Costume with Character",
+          "page": 112
+        },
+        {
+          "title": "Tone or Value",
+          "page": 113
+        },
+        {
+          "title": "Color Theory",
+          "page": 116
+        },
+        {
+          "title": "Character Inspiration",
+          "page": 167
+        },
+        {
+          "title": "Imaginative Design",
+          "page": 171
+        },
+        {
+          "title": "Chapter 5: Reportage with Character",
+          "page": 188
+        },
+        {
+          "title": "Finding Character",
+          "page": 189
+        },
+        {
+          "title": "Character Layout",
+          "page": 205
+        },
+        {
+          "title": "Architecture with Character",
+          "page": 213
+        },
+        {
+          "title": "Chapter 6: Animals with Character",
+          "page": 224
+        },
+        {
+          "title": "Closing",
+          "page": 246
+        },
+        {
+          "title": "Artist Bios",
+          "page": 248
+        },
+        {
+          "title": "Index",
+          "page": 254
+        },
+        {
+          "title": "A",
+          "page": 254
+        },
+        {
+          "title": "B",
+          "page": 254
+        },
+        {
+          "title": "C",
+          "page": 254
+        },
+        {
+          "title": "D",
+          "page": 255
+        },
+        {
+          "title": "E",
+          "page": 255
+        },
+        {
+          "title": "F",
+          "page": 255
+        },
+        {
+          "title": "G",
+          "page": 255
+        },
+        {
+          "title": "H",
+          "page": 255
+        },
+        {
+          "title": "I",
+          "page": 255
+        },
+        {
+          "title": "K",
+          "page": 255
+        },
+        {
+          "title": "L",
+          "page": 255
+        },
+        {
+          "title": "M",
+          "page": 255
+        },
+        {
+          "title": "N",
+          "page": 255
+        },
+        {
+          "title": "O",
+          "page": 255
+        },
+        {
+          "title": "P",
+          "page": 256
+        },
+        {
+          "title": "R",
+          "page": 256
+        },
+        {
+          "title": "S",
+          "page": 256
+        },
+        {
+          "title": "T",
+          "page": 256
+        },
+        {
+          "title": "V",
+          "page": 256
+        },
+        {
+          "title": "W",
+          "page": 256
+        },
+        {
+          "title": "Y",
+          "page": 256
+        }
+      ],
+      "pdfKey": "library/books/370-book.pdf",
+      "pdfBytes": 27562636,
+      "coverKey": "library/covers/370-book-cover.jpg",
+      "coverBytes": 207447
     }
   ]
 }
