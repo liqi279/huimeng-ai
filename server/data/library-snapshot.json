@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T16:23:42.449Z",
+  "generatedAt": "2026-11-13T16:44:32.145Z",
   "source": "huimeng_library.books",
-  "total": 365,
+  "total": 375,
   "areas": {
-    "paint": 349,
+    "paint": 359,
     "ref": 16
   },
   "books": [
@@ -16033,6 +16033,1230 @@
       "pdfBytes": 27562636,
       "coverKey": "library/covers/370-book-cover.jpg",
       "coverBytes": 207447
+    },
+    {
+      "id": "lib-mwf6tv5c-70c175",
+      "sortNo": 370,
+      "title": "FORCE 动物绘图",
+      "author": "迈克尔·马特西(Mike Mattesi)",
+      "intro": "原名《Force: Animal Drawing: Animal locomotion and design concepts for animators》，皮克斯动画工作室的人物素描讲师的一本动物速写教程",
+      "pageCount": 235,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Front Cover",
+          "page": 1
+        },
+        {
+          "title": "Force: Animal Drawing Animal Locomotion and Design Concepts for Animators",
+          "page": 3
+        },
+        {
+          "title": "Copyright",
+          "page": 4
+        },
+        {
+          "title": "Dedication",
+          "page": 5
+        },
+        {
+          "title": "Special Thanks",
+          "page": 6
+        },
+        {
+          "title": "Contents",
+          "page": 7
+        },
+        {
+          "title": "Foreword",
+          "page": 9
+        },
+        {
+          "title": "Preface",
+          "page": 11
+        },
+        {
+          "title": "Key Concepts",
+          "page": 14
+        },
+        {
+          "title": "Force: Line Is an Idea!",
+          "page": 16
+        },
+        {
+          "title": "Forceful Shape",
+          "page": 21
+        },
+        {
+          "title": "Chapter 1: The FORCE Animal",
+          "page": 27
+        },
+        {
+          "title": "Step One",
+          "page": 28
+        },
+        {
+          "title": "Step Two",
+          "page": 29
+        },
+        {
+          "title": "Step Three",
+          "page": 30
+        },
+        {
+          "title": "Step Four",
+          "page": 31
+        },
+        {
+          "title": "The Big Reveal!",
+          "page": 32
+        },
+        {
+          "title": "Form",
+          "page": 33
+        },
+        {
+          "title": "Chapter 2: Plantigrades (Slow Land Animals)",
+          "page": 47
+        },
+        {
+          "title": "Bears",
+          "page": 47
+        },
+        {
+          "title": "Raccoons",
+          "page": 63
+        },
+        {
+          "title": "Kangaroos",
+          "page": 66
+        },
+        {
+          "title": "Rodents",
+          "page": 67
+        },
+        {
+          "title": "Lizards",
+          "page": 72
+        },
+        {
+          "title": "Primates",
+          "page": 73
+        },
+        {
+          "title": "Chapter 3: Digitigrades (Intermediate-Speed Land Animals)",
+          "page": 82
+        },
+        {
+          "title": "Dogs",
+          "page": 82
+        },
+        {
+          "title": "Cats",
+          "page": 97
+        },
+        {
+          "title": "Elephants",
+          "page": 120
+        },
+        {
+          "title": "Birds",
+          "page": 131
+        },
+        {
+          "title": "Chapter 4: Unguligrades (Fast Land Animals)",
+          "page": 140
+        },
+        {
+          "title": "Odd-Toed Ungulates",
+          "page": 140
+        },
+        {
+          "title": "Horses",
+          "page": 140
+        },
+        {
+          "title": "Zebras",
+          "page": 160
+        },
+        {
+          "title": "Rhinos",
+          "page": 163
+        },
+        {
+          "title": "Even-Toed Ungulates",
+          "page": 174
+        },
+        {
+          "title": "Deer",
+          "page": 174
+        },
+        {
+          "title": "Elk",
+          "page": 179
+        },
+        {
+          "title": "Antelopes",
+          "page": 181
+        },
+        {
+          "title": "Goats",
+          "page": 184
+        },
+        {
+          "title": "Bulls",
+          "page": 185
+        },
+        {
+          "title": "Giraffes",
+          "page": 189
+        },
+        {
+          "title": "Chapter 5: Animal Design",
+          "page": 196
+        },
+        {
+          "title": "The Law of Thirds",
+          "page": 196
+        },
+        {
+          "title": "References",
+          "page": 214
+        },
+        {
+          "title": "Index",
+          "page": 215
+        },
+        {
+          "title": "Colour Plate",
+          "page": 220
+        }
+      ],
+      "pdfKey": "library/books/371-book.pdf",
+      "pdfBytes": 24497563,
+      "coverKey": "library/covers/371-book-cover.jpg",
+      "coverBytes": 219460
+    },
+    {
+      "id": "lib-mwf6us05-42866b",
+      "sortNo": 371,
+      "title": "FORCE 人体动态姿势 十周年纪念版",
+      "author": "迈克尔·马特西(Mike Mattesi)",
+      "intro": "原名《FORCE: Dynamic Life Drawing: 10th Anniversary Edition》，皮克斯动画工作室的人物素描讲师的一本人体速写教程",
+      "pageCount": 234,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/372-book.pdf",
+      "pdfBytes": 76506531,
+      "coverKey": "library/covers/372-book-cover.jpg",
+      "coverBytes": 276520
+    },
+    {
+      "id": "lib-mwf6vtgo-1d102e",
+      "sortNo": 372,
+      "title": "如何绘制带有故事感的背景角色插画",
+      "author": "[日]うた坊",
+      "intro": "原名《ストーリーが伝わる背景つきキャラクターイラストの描き方》，画师うた坊(chicken_utk)的一本插画教程，清晰度一般，特典包含绘制视频和PSD文件，PSD文件推荐使用CLIP STUDIO PAINT打开。",
+      "pageCount": 82,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/373-book.pdf",
+      "pdfBytes": 148498415,
+      "coverKey": "library/covers/373-book-cover.jpg",
+      "coverBytes": 73059
+    },
+    {
+      "id": "lib-mwf6vvch-17aa34",
+      "sortNo": 373,
+      "title": "你会变得更好！斋藤直葵式插画终极技法辞典",
+      "author": "[日] さいとうなおき（齋藤 直葵）",
+      "intro": "原名《あなたはもっと上手くなる! さいとうなおき式イラスト仕上げプロ技事典》，日本插画师齋藤直葵(斋藤直葵)的一本漫画教程。",
+      "pageCount": 200,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 2
+        },
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "「仕上げ」って、何？",
+          "page": 7
+        },
+        {
+          "title": "CONTENTS",
+          "page": 11
+        },
+        {
+          "title": "この本の見方",
+          "page": 13
+        },
+        {
+          "title": "CHAPTER 1 キャラクターの顔に魅力が感じられない",
+          "page": 14
+        },
+        {
+          "title": "キャラクターの顔はズバリ“髪”と“目”がポイント",
+          "page": 15
+        },
+        {
+          "title": "風や動きに連動する髪の流れが躍動感を演出",
+          "page": 17
+        },
+        {
+          "title": "髪は面で明るい・暗いを塗り分ける",
+          "page": 19
+        },
+        {
+          "title": "髪は上下で色を変えるとさりげない立体感に",
+          "page": 20
+        },
+        {
+          "title": "毛先の細かい情報がニュアンスを追加してくれる",
+          "page": 21
+        },
+        {
+          "title": "ハイライトに命をかければ見栄えは必ず上がる！",
+          "page": 23
+        },
+        {
+          "title": "頭頂部＋左右どちらかに強い光を入れる",
+          "page": 27
+        },
+        {
+          "title": "前髪ライン削除＋肌色グラデで目力＆さらさら感アップ！",
+          "page": 28
+        },
+        {
+          "title": "リッチ感がほしければ髪にボリュームをもたせて！",
+          "page": 29
+        },
+        {
+          "title": "線が多いor少ないで迫力orやわらかさにつながる",
+          "page": 30
+        },
+        {
+          "title": "目まわりの印象をキャラクターの印象に合わせよう！",
+          "page": 31
+        },
+        {
+          "title": "目線は見ている人に合わせると共感を呼びやすい／目頭・目尻に赤味をプラス",
+          "page": 35
+        },
+        {
+          "title": "コントラストは目の中にも油断せずつけて！",
+          "page": 36
+        },
+        {
+          "title": "まつ毛に明暗をつけると立体感が生まれる！／まつ毛に面や線で光を入れると印象的に",
+          "page": 37
+        },
+        {
+          "title": "目を印象的にするコントラストはまつ毛と虹彩でもつけられる／眉毛はぼかして描くと質感につながる",
+          "page": 38
+        },
+        {
+          "title": "口の開閉は印象を大きく左右する",
+          "page": 39
+        },
+        {
+          "title": "唇に白いツヤと影を置くと質感＆セクシーさに／濃い部分＝力の入る部分を意識すると自然な口に",
+          "page": 40
+        },
+        {
+          "title": "COLUMN 01 パーツの違和感はどこから来る？",
+          "page": 41
+        },
+        {
+          "title": "CHAPTER 2 キャラクターの全体像が見栄えしない",
+          "page": 42
+        },
+        {
+          "title": "映えるキャラクターのポーズを描くには、絶対に「写真」を撮ってください！",
+          "page": 43
+        },
+        {
+          "title": "目と目・肩と肩・腰と腰をつないだ線でコントラポストを意識",
+          "page": 45
+        },
+        {
+          "title": "顔と腕は向き逆・ひねりが鉄則！",
+          "page": 47
+        },
+        {
+          "title": "平行・垂直・三角・シンメトリーは避ける",
+          "page": 49
+        },
+        {
+          "title": "動きは顔の少しの傾きで演出できる／画面に対して正面ではなく斜めに体を入れる",
+          "page": 50
+        },
+        {
+          "title": "ポーズの違和感は“感情”と“ポーズ”の不一致から生まれる",
+          "page": 51
+        },
+        {
+          "title": "見栄えさせたいならバストアップで見せていけ！",
+          "page": 52
+        },
+        {
+          "title": "“Zの法則”を意識した画面配置",
+          "page": 53
+        },
+        {
+          "title": "“線で表現する部分”と“陰影で表現する部分”を意識",
+          "page": 55
+        },
+        {
+          "title": "ネガティブシェイプを横断するポジティブシェイプを入れる",
+          "page": 56
+        },
+        {
+          "title": "首の太さは顔ではなく体に対して確認する",
+          "page": 57
+        },
+        {
+          "title": "服の模様などを入れて密度を上げる／服を含めたシルエットを乱す",
+          "page": 58
+        },
+        {
+          "title": "COLUMN 02 理屈と気持ち、どっちを信じるべき？",
+          "page": 59
+        },
+        {
+          "title": "CHAPTER 3 一番見てほしい場所に視線が向かない",
+          "page": 60
+        },
+        {
+          "title": "“視線誘導”のないイラストはどこに目を向けていいのか分からない絵になる",
+          "page": 61
+        },
+        {
+          "title": "見てほしい／見てほしくない部分のコントラストを調整",
+          "page": 63
+        },
+        {
+          "title": "見てほしい部分の中でもコントラストを陰影で強める",
+          "page": 65
+        },
+        {
+          "title": "見てほしいものの後ろは色トレスで主張を減らす",
+          "page": 67
+        },
+        {
+          "title": "見てほしい部分に光を当てて明るさを強調",
+          "page": 68
+        },
+        {
+          "title": "顔まわりに彩度が高い境界を入れる",
+          "page": 69
+        },
+        {
+          "title": "背景を暗く＋輪郭発光で全体が力強くなる",
+          "page": 70
+        },
+        {
+          "title": "見てほしくない部分の色のぶつかり合いを減らす",
+          "page": 71
+        },
+        {
+          "title": "背景に粗密があればキャラクターは自然に目立つ",
+          "page": 73
+        },
+        {
+          "title": "見る範囲を限定する視線誘導術",
+          "page": 75
+        },
+        {
+          "title": "ぼかしで見せたいものへピントを合わせる",
+          "page": 77
+        },
+        {
+          "title": "“見せたい部分にカメラを寄せる”がトリミングの鉄則！",
+          "page": 79
+        },
+        {
+          "title": "脇役＝小物の主張は減らすべし",
+          "page": 80
+        },
+        {
+          "title": "見てほしい部分の線を太らせる＋ハイライトで強調",
+          "page": 81
+        },
+        {
+          "title": "ハッチングで見せたい部分の解像度を高める／視線を向ける必要がない部分は描き飛ばす",
+          "page": 82
+        },
+        {
+          "title": "目立たせたいところを囲うようなエフェクトを入れる",
+          "page": 83
+        },
+        {
+          "title": "COLUMN 03 ちょっとした部分、記号化していない？",
+          "page": 85
+        },
+        {
+          "title": "CHAPTER 4 奥行きや立体感、広がりが感じられない",
+          "page": 86
+        },
+        {
+          "title": "理論から学ばないでまずは違和感が出てくるまで描いてみて！",
+          "page": 87
+        },
+        {
+          "title": "思いきって手を大きくすればあっという間に遠近感に！",
+          "page": 89
+        },
+        {
+          "title": "手は顔の前にあることで空気感を作れる",
+          "page": 91
+        },
+        {
+          "title": "小物にもハイライトを入れると全体の厚みが出る",
+          "page": 92
+        },
+        {
+          "title": "上の面・下の面を強調できる構図＝あおり、俯瞰にする",
+          "page": 93
+        },
+        {
+          "title": "小物の大きさコントロールで遠近感を感じさせる",
+          "page": 94
+        },
+        {
+          "title": "顔をあえて目立つ場所から外すと時間や空間の表現に",
+          "page": 95
+        },
+        {
+          "title": "目線の先を空けることで空間の演出に",
+          "page": 97
+        },
+        {
+          "title": "近景・中景・遠景で明るさを変えて距離感を作る",
+          "page": 98
+        },
+        {
+          "title": "手前＝明るい／奥・下の面＝暗いと塗り分ける",
+          "page": 99
+        },
+        {
+          "title": "反射光を積極的に拾うと厚みが出る",
+          "page": 101
+        },
+        {
+          "title": "後ろの影をぼかすと手前に質量が生まれる",
+          "page": 102
+        },
+        {
+          "title": "エフェクトで前後感を出す",
+          "page": 103
+        },
+        {
+          "title": "裏側を鮮やかな色にして空気感を含ませる",
+          "page": 105
+        },
+        {
+          "title": "空気遠近法を意識して色を選ぶ",
+          "page": 107
+        },
+        {
+          "title": "背景色のグラデーションだけでも奥行きは演出できる",
+          "page": 109
+        },
+        {
+          "title": "COLUMN 04 絵を描く時に妥協はしない！",
+          "page": 111
+        },
+        {
+          "title": "CHAPTER 5 背景が上手くいかない",
+          "page": 112
+        },
+        {
+          "title": "背景は“キャラクターの現実感”を担保する超重要な演出になる！",
+          "page": 113
+        },
+        {
+          "title": "キャラクター以外描きたくない！ ずぼら背景 白画面＋リムライト背景",
+          "page": 115
+        },
+        {
+          "title": "ピントズラし背景",
+          "page": 116
+        },
+        {
+          "title": "2色で視線誘導背景",
+          "page": 117
+        },
+        {
+          "title": "ベタ塗り＋射し込む光背景",
+          "page": 118
+        },
+        {
+          "title": "上下色違い＋パーティクル背景",
+          "page": 119
+        },
+        {
+          "title": "コンクリ壁＋影背景",
+          "page": 120
+        },
+        {
+          "title": "ステンドグラス背景",
+          "page": 121
+        },
+        {
+          "title": "ロゴ背景",
+          "page": 122
+        },
+        {
+          "title": "図形＋グラデーション背景",
+          "page": 123
+        },
+        {
+          "title": "オーラ＋グラデーション背景",
+          "page": 124
+        },
+        {
+          "title": "空気の流れ＋グラデーション背景",
+          "page": 125
+        },
+        {
+          "title": "暗闇＋光背景",
+          "page": 126
+        },
+        {
+          "title": "顔に向けて集中線グラデーション背景",
+          "page": 127
+        },
+        {
+          "title": "画面ヒビ割れ背景",
+          "page": 128
+        },
+        {
+          "title": "四角変形＋小物背景",
+          "page": 129
+        },
+        {
+          "title": "足元に四角囲み＋草木背景",
+          "page": 130
+        },
+        {
+          "title": "四角＋白抜き風景背景",
+          "page": 131
+        },
+        {
+          "title": "四角＋関連小物背景",
+          "page": 132
+        },
+        {
+          "title": "シチュエーション別 かんたん背景 3色で水中と泡を描く海背景",
+          "page": 133
+        },
+        {
+          "title": "空気遠近法で木を描く森背景",
+          "page": 135
+        },
+        {
+          "title": "入道雲で青空背景",
+          "page": 137
+        },
+        {
+          "title": "射し込む光で雰囲気を作る曇り空背景",
+          "page": 138
+        },
+        {
+          "title": "エモさを強制的に引き出す夕焼け背景",
+          "page": 139
+        },
+        {
+          "title": "星で光をちりばめる夜空背景",
+          "page": 140
+        },
+        {
+          "title": "窓から射し込む光の背景",
+          "page": 141
+        },
+        {
+          "title": "華やかな舞台背景",
+          "page": 143
+        },
+        {
+          "title": "映り込みガラス背景",
+          "page": 145
+        },
+        {
+          "title": "結露窓で心情を表す背景",
+          "page": 147
+        },
+        {
+          "title": "COLUMN 05 本を捨ててとりあえず描いてみよう！",
+          "page": 149
+        },
+        {
+          "title": "CHAPTER 6 エフェクトがパッとしない",
+          "page": 150
+        },
+        {
+          "title": "エフェクトを描く際にルールはないが“前提”をしっかり覚えておいて！",
+          "page": 151
+        },
+        {
+          "title": "エフェクトの発生源と流れを意識",
+          "page": 153
+        },
+        {
+          "title": "エフェクトの位置や量に粗密をつける",
+          "page": 155
+        },
+        {
+          "title": "エフェクトにも明暗をつける",
+          "page": 157
+        },
+        {
+          "title": "簡単！ エフェクトの描き方",
+          "page": 159
+        },
+        {
+          "title": "エフェクトの背景に影を入れると視線誘導に／発生源の武器や小物を白くしてエフェクト発光",
+          "page": 163
+        },
+        {
+          "title": "エフェクト集中線は大小つけて入れると粗密も◎",
+          "page": 164
+        },
+        {
+          "title": "パーティクルを使い分けて密度アップ＆視線誘導！",
+          "page": 165
+        },
+        {
+          "title": "あえて顔まわりにパーティクルを入れれば視線誘導に",
+          "page": 167
+        },
+        {
+          "title": "CHAPTER 7 色彩・光と影がきれいに演出できない",
+          "page": 168
+        },
+        {
+          "title": "色彩・陰影は“色数”と“塊の意識”を大切にすればかなりよくなる！",
+          "page": 169
+        },
+        {
+          "title": "彩度を上げずに補色対比できれいに見せる",
+          "page": 171
+        },
+        {
+          "title": "全体を暗くしたいなら黒ではなく寒色を使う／影の色は寒色・暖色を使い分けてイメージをコントロール",
+          "page": 173
+        },
+        {
+          "title": "首の後ろの髪を明るくすると顔が際立つ／体や小物に差し色を追加する",
+          "page": 174
+        },
+        {
+          "title": "黒が潰れる時は光を当てれば印象がアップする",
+          "page": 175
+        },
+        {
+          "title": "光はグラデーションではなく色面に直接色を乗せる",
+          "page": 176
+        },
+        {
+          "title": "画面がくすんだら画面の下から反射光を入れる",
+          "page": 177
+        },
+        {
+          "title": "リムライトを2色入れると華やかに",
+          "page": 178
+        },
+        {
+          "title": "奥のパーツは後ろからのリムライトを大切に／逆光＋ハードライトレイヤーでエモみを演出",
+          "page": 179
+        },
+        {
+          "title": "ぼかした木漏れ日はキャラクターを引き立たせる",
+          "page": 180
+        },
+        {
+          "title": "ソフトライトレイヤーで光を乗せてざくざく削るといい質感に",
+          "page": 181
+        },
+        {
+          "title": "光と影の間に彩度を上げた色を追加して強調",
+          "page": 182
+        },
+        {
+          "title": "透明感の演出に影＋発光＋ハイライト",
+          "page": 183
+        },
+        {
+          "title": "明暗差がある部分のシルエットで完成度が上がる",
+          "page": 185
+        },
+        {
+          "title": "布と金属の陰影を変えると画面に質感が生まれる／影にへこみを作ると単調さを払拭できる",
+          "page": 186
+        },
+        {
+          "title": "色収差で画面に情報を追加する",
+          "page": 187
+        },
+        {
+          "title": "グラデーションマップで簡単に全体の印象を操作",
+          "page": 189
+        },
+        {
+          "title": "最後にトーンカーブで色味を調整できる",
+          "page": 191
+        },
+        {
+          "title": "この本を手に取ってくれた皆さんへ",
+          "page": 193
+        },
+        {
+          "title": "●この本を購入したあなたへの特典",
+          "page": 195
+        },
+        {
+          "title": "奥付",
+          "page": 199
+        }
+      ],
+      "pdfKey": "library/books/374-book.pdf",
+      "pdfBytes": 86320426,
+      "coverKey": "library/covers/374-book-cover.jpg",
+      "coverBytes": 344953
+    },
+    {
+      "id": "lib-mwf6wbvz-b7799f",
+      "sortNo": 374,
+      "title": "漫画基础素描 轻重表现篇",
+      "author": "[日]林晃",
+      "intro": "原名《マンガの基礎デッサン　重さ・軽さの表現編》，一本表现“轻”与“重”的漫画教程。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/375-book.pdf",
+      "pdfBytes": 71794131,
+      "coverKey": "library/covers/375-book-cover.jpg",
+      "coverBytes": 224340
+    },
+    {
+      "id": "lib-mwf77q6p-b092d3",
+      "sortNo": 375,
+      "title": "兽人姿势集",
+      "author": "山羊 ヤマ 、 むらき 、 ひつじロボ 、 マダカン \n、 yow 、 涼森 、 きしべ 、 樹下次郎 、 ゆずぽこ 、\n 森北 ささな 、 いとひろ 、 マボ 、 どり 、 石村怜治",
+      "intro": "原名《獣人ポーズ集》，多位画师联合推出的一本furry系教程，日文/英文双版本，日本版分辨率很低，附带了一个4倍分辨率的版本(效果很差，建议直接看英文版)，英文名《The Ultimate Guide to Drawing Manga Action Furries: Create Your Own Anthropomorphic Fantasy Characters: Lessons from 14 Leading Japanese Illustrators (With Over 1,000 Illustrations)》。",
+      "pageCount": 440,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/376-book.pdf",
+      "pdfBytes": 962877025,
+      "coverKey": "library/covers/376-book-cover.jpg",
+      "coverBytes": 241555
+    },
+    {
+      "id": "lib-mwf6yzqk-cece36",
+      "sortNo": 376,
+      "title": "CLIP STUDIO PAINT PRO/EX 数码绘的眼睛百科全书 创造42种独特的上色风格",
+      "author": "[日]株式会社レミック,Az、彩渡まい、カンミ缶、采葉しき、さとうぽて、\n鈴穂ほたる、能登ケイ、haru、春海にむ、ぷちむー、magako",
+      "intro": "原名《デジタルイラストの「瞳」描き方事典 CLIP STUDIO PAINT PRO/EXで描く！ 個性を創る彩色スタイル42》，多位日本画师联合推出的眼睛绘制教程，对应CLIP STUDIO PAINT PRO/EX。",
+      "pageCount": 196,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 2
+        },
+        {
+          "title": "はじめに",
+          "page": 6
+        },
+        {
+          "title": "目次",
+          "page": 7
+        },
+        {
+          "title": "本書の使い方",
+          "page": 11
+        },
+        {
+          "title": "イラストレーター紹介・使用ブラシ一覧",
+          "page": 15
+        },
+        {
+          "title": "CLIP STUDIO PAINTの使い方",
+          "page": 19
+        },
+        {
+          "title": "Chapter１ 目の基本",
+          "page": 24
+        },
+        {
+          "title": "目の構造",
+          "page": 25
+        },
+        {
+          "title": "目の形",
+          "page": 27
+        },
+        {
+          "title": "目の位置",
+          "page": 29
+        },
+        {
+          "title": "眉毛の描き方",
+          "page": 31
+        },
+        {
+          "title": "まつげの描き方",
+          "page": 33
+        },
+        {
+          "title": "目を上手く描くコツ",
+          "page": 34
+        },
+        {
+          "title": "Chapter２ シンプルスタイル",
+          "page": 36
+        },
+        {
+          "title": "01 マーカーペンの瞳",
+          "page": 37
+        },
+        {
+          "title": "02 グラデーションの瞳",
+          "page": 39
+        },
+        {
+          "title": "03 ガラス玉の瞳",
+          "page": 43
+        },
+        {
+          "title": "04 ちびキャラの瞳",
+          "page": 47
+        },
+        {
+          "title": "05 ツヤ感のある瞳",
+          "page": 48
+        },
+        {
+          "title": "06 きらめく瞳",
+          "page": 51
+        },
+        {
+          "title": "07 きらめくちびキャラの瞳",
+          "page": 55
+        },
+        {
+          "title": "実践例08 アナログな瞳",
+          "page": 57
+        },
+        {
+          "title": "実践例09 澄んだ瞳",
+          "page": 61
+        },
+        {
+          "title": "Chapter３ キラキラスタイル",
+          "page": 66
+        },
+        {
+          "title": "10 鮮やかな瞳",
+          "page": 67
+        },
+        {
+          "title": "11 深みのある瞳",
+          "page": 71
+        },
+        {
+          "title": "12 プリズムな瞳",
+          "page": 75
+        },
+        {
+          "title": "13 花咲く瞳",
+          "page": 79
+        },
+        {
+          "title": "14 炎が輝く瞳",
+          "page": 83
+        },
+        {
+          "title": "15 水中世界の瞳",
+          "page": 87
+        },
+        {
+          "title": "16 ブラシ塗りの瞳",
+          "page": 91
+        },
+        {
+          "title": "実践例17 逆光でも輝く瞳",
+          "page": 95
+        },
+        {
+          "title": "Chapter４ ふわふわスタイル",
+          "page": 100
+        },
+        {
+          "title": "18 ふんわりした瞳",
+          "page": 101
+        },
+        {
+          "title": "19 にじんだ瞳",
+          "page": 103
+        },
+        {
+          "title": "20 ゆめかわな瞳",
+          "page": 107
+        },
+        {
+          "title": "実践例21 柔らかな瞳",
+          "page": 109
+        },
+        {
+          "title": "実践例22 水彩塗りの瞳",
+          "page": 113
+        },
+        {
+          "title": "Chapter５ ディープスタイル",
+          "page": 118
+        },
+        {
+          "title": "23 宝石のような瞳",
+          "page": 119
+        },
+        {
+          "title": "24 奥行きのある瞳",
+          "page": 121
+        },
+        {
+          "title": "25 狂気がにじむ瞳",
+          "page": 123
+        },
+        {
+          "title": "26 虚ろな瞳",
+          "page": 125
+        },
+        {
+          "title": "27 憂いをおびた瞳",
+          "page": 129
+        },
+        {
+          "title": "28 病んだ瞳",
+          "page": 131
+        },
+        {
+          "title": "実践例29 厚塗りの瞳",
+          "page": 133
+        },
+        {
+          "title": "Chapter６ モチーフスタイル",
+          "page": 138
+        },
+        {
+          "title": "30 ハートの瞳",
+          "page": 139
+        },
+        {
+          "title": "31 星の瞳",
+          "page": 143
+        },
+        {
+          "title": "32 チョコレートの瞳",
+          "page": 147
+        },
+        {
+          "title": "33 フルーツの瞳",
+          "page": 151
+        },
+        {
+          "title": "34 青空の瞳",
+          "page": 155
+        },
+        {
+          "title": "35 夕焼け空の瞳",
+          "page": 159
+        },
+        {
+          "title": "36 夜空の瞳",
+          "page": 163
+        },
+        {
+          "title": "37 猫の瞳",
+          "page": 167
+        },
+        {
+          "title": "38 ヒツジの瞳",
+          "page": 169
+        },
+        {
+          "title": "39 スチームパンクの瞳",
+          "page": 173
+        },
+        {
+          "title": "実践例40 若葉の瞳",
+          "page": 175
+        },
+        {
+          "title": "Chapter７ スペシャルスタイル",
+          "page": 180
+        },
+        {
+          "title": "41 恋する瞳",
+          "page": 181
+        },
+        {
+          "title": "42 ゴージャスな瞳",
+          "page": 187
+        },
+        {
+          "title": "索引",
+          "page": 194
+        },
+        {
+          "title": "奥付",
+          "page": 195
+        }
+      ],
+      "pdfKey": "library/books/377-book.pdf",
+      "pdfBytes": 124404725,
+      "coverKey": "library/covers/377-book-cover.jpg",
+      "coverBytes": 297241
+    },
+    {
+      "id": "lib-mwf6yovr-06241e",
+      "sortNo": 377,
+      "title": "只要掌握一点人体解剖学,就能画出令人惊叹的人物画",
+      "author": "[日]みにまる(minimaru)",
+      "intro": "原名《ちょこっと人体解剖学で圧倒的にうまく描けるキャラクターデッサン》，日本画师みにまる(minimaru)的一本人物绘制教程。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 2
+        },
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "CONTENTS",
+          "page": 6
+        },
+        {
+          "title": "[１章] 基本の人体構造を知る ちょこっと解剖学",
+          "page": 8
+        },
+        {
+          "title": "01 解剖学を知るメリット",
+          "page": 9
+        },
+        {
+          "title": "02 基本の人体比率",
+          "page": 11
+        },
+        {
+          "title": "03 全身のランドマーク",
+          "page": 13
+        },
+        {
+          "title": "04 全身の筋肉",
+          "page": 27
+        },
+        {
+          "title": "[2章] 準備編 初心者におすすめの練習法",
+          "page": 40
+        },
+        {
+          "title": "01 クロッキーのすすめ",
+          "page": 41
+        },
+        {
+          "title": "02 いろいろな描き方を知る",
+          "page": 47
+        },
+        {
+          "title": "03 きれいな線を描くためには？",
+          "page": 54
+        },
+        {
+          "title": "04 箱を描けるようになろう",
+          "page": 56
+        },
+        {
+          "title": "05 円柱に置き換えて描こう",
+          "page": 63
+        },
+        {
+          "title": "[3章] 実践編 初心者でもわかる人体の描き方",
+          "page": 66
+        },
+        {
+          "title": "01 見るべきは「自分の描いた線」",
+          "page": 67
+        },
+        {
+          "title": "02 人体の描き方",
+          "page": 69
+        },
+        {
+          "title": "[4章] 実践編 パーツごとに学ぶ顔、体、服の描き方",
+          "page": 98
+        },
+        {
+          "title": "01 顔の描き方",
+          "page": 99
+        },
+        {
+          "title": "02 手の描き方",
+          "page": 143
+        },
+        {
+          "title": "03 足の描き方",
+          "page": 160
+        },
+        {
+          "title": "04 服のシワの描き方",
+          "page": 178
+        },
+        {
+          "title": "奥付",
+          "page": 195
+        }
+      ],
+      "pdfKey": "library/books/378-book.pdf",
+      "pdfBytes": 76505458,
+      "coverKey": "library/covers/378-book-cover.jpg",
+      "coverBytes": 309319
+    },
+    {
+      "id": "lib-mwf73k3n-fd0748",
+      "sortNo": 378,
+      "title": "艺用3D头颈解剖书",
+      "author": "Uldis Zarins",
+      "intro": "原名《Form Of The Head And Neck》，一本硬核的解剖参考书，会有一些可能令人不适骨骼和肌肉表现。",
+      "pageCount": 224,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/379-book.pdf",
+      "pdfBytes": 237403909,
+      "coverKey": "library/covers/379-book-cover.jpg",
+      "coverBytes": 123914
+    },
+    {
+      "id": "lib-mwf71s3i-f6a24a",
+      "sortNo": 379,
+      "title": "TACO亲授！大幅提高绘画水平只需要掌握390 个人体绘画技巧",
+      "author": "[韩]TACO",
+      "intro": "原名《TACO直伝！知っているだけで劇的に上達する 人体ドローイングのコツ390》，韩国画师타코작가(taco、taco1704)的一本人物绘制教程。",
+      "pageCount": 436,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/380-book.pdf",
+      "pdfBytes": 101974172,
+      "coverKey": "library/covers/380-book-cover.jpg",
+      "coverBytes": 252441
     }
   ]
 }
