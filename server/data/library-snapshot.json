@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T13:21:01.995Z",
+  "generatedAt": "2026-11-13T13:27:10.381Z",
   "source": "huimeng_library.books",
-  "total": 246,
+  "total": 256,
   "areas": {
-    "paint": 230,
+    "paint": 240,
     "ref": 16
   },
   "books": [
@@ -10177,6 +10177,696 @@
       "pdfBytes": 48606925,
       "coverKey": "library/covers/250-book-cover.jpg",
       "coverBytes": 274988
+    },
+    {
+      "id": "lib-mwf0bmfz-cadc83",
+      "sortNo": 250,
+      "title": "日本漫画大师讲座02 林晃×角丸圆讲漫画服饰造型",
+      "author": "",
+      "intro": "",
+      "pageCount": 194,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/251-book.pdf",
+      "pdfBytes": 73347591,
+      "coverKey": "library/covers/251-book-cover.jpg",
+      "coverBytes": 235527
+    },
+    {
+      "id": "lib-mwf0bhbf-45c840",
+      "sortNo": 251,
+      "title": "日本漫画大师讲座01 林晃×角丸圆讲美少女画法",
+      "author": "",
+      "intro": "",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/252-book.pdf",
+      "pdfBytes": 38821957,
+      "coverKey": "library/covers/252-book-cover.jpg",
+      "coverBytes": 220947
+    },
+    {
+      "id": "lib-mwf0ck8w-7311a7",
+      "sortNo": 252,
+      "title": "SSBOOK超人气绘师精讲教程 水彩零基础篇",
+      "author": "",
+      "intro": "",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/253-book.pdf",
+      "pdfBytes": 175564681,
+      "coverKey": "library/covers/253-book-cover.jpg",
+      "coverBytes": 307225
+    },
+    {
+      "id": "lib-mwf0cgw1-6a291b",
+      "sortNo": 253,
+      "title": "日本超级漫画课堂 透视技法入门",
+      "author": "",
+      "intro": "",
+      "pageCount": 136,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "1",
+          "page": 10
+        },
+        {
+          "title": "2",
+          "page": 11
+        },
+        {
+          "title": "3",
+          "page": 12
+        },
+        {
+          "title": "4",
+          "page": 13
+        },
+        {
+          "title": "5",
+          "page": 14
+        },
+        {
+          "title": "6",
+          "page": 15
+        },
+        {
+          "title": "7",
+          "page": 16
+        },
+        {
+          "title": "第1章 掌握PERS的基本知识",
+          "page": 17
+        },
+        {
+          "title": "PERS的问与答",
+          "page": 17
+        },
+        {
+          "title": "什么是PERS？",
+          "page": 17
+        },
+        {
+          "title": "不了解PERS就不能画出好作品吗？",
+          "page": 19
+        },
+        {
+          "title": "透视的程度应该如何确定？",
+          "page": 21
+        },
+        {
+          "title": "所有的画中，都存在PERS吗？",
+          "page": 23
+        },
+        {
+          "title": "掌握本书内容后，能够画出怎样的作品呢？",
+          "page": 25
+        },
+        {
+          "title": "视平线",
+          "page": 27
+        },
+        {
+          "title": "寻找地平线的方法",
+          "page": 29
+        },
+        {
+          "title": "视平线高度不同所呈现的3种不同风景",
+          "page": 30
+        },
+        {
+          "title": "一点透视图",
+          "page": 31
+        },
+        {
+          "title": "透视线与消失点",
+          "page": 33
+        },
+        {
+          "title": "不同高度的一点透视图",
+          "page": 35
+        },
+        {
+          "title": "什么样的图是一点透视图呢？",
+          "page": 37
+        },
+        {
+          "title": "两点透视图",
+          "page": 39
+        },
+        {
+          "title": "同时存在2个消失点的两点透视图",
+          "page": 41
+        },
+        {
+          "title": "不同高度的两点透视效果图",
+          "page": 43
+        },
+        {
+          "title": "什么样的图是两点透视图呢？",
+          "page": 45
+        },
+        {
+          "title": "所有两点透视图均须满足的基本条件",
+          "page": 47
+        },
+        {
+          "title": "三点透视图",
+          "page": 49
+        },
+        {
+          "title": "第三个消失点",
+          "page": 51
+        },
+        {
+          "title": "不同高度的三点透视效果图",
+          "page": 52
+        },
+        {
+          "title": "三点透视图的绘画要点",
+          "page": 53
+        },
+        {
+          "title": "什么样的图是三点透视图呢？",
+          "page": 55
+        },
+        {
+          "title": "专栏 特殊表现方法",
+          "page": 57
+        },
+        {
+          "title": "第2章 PERS的应用技巧",
+          "page": 59
+        },
+        {
+          "title": "各种立体图形的画法",
+          "page": 59
+        },
+        {
+          "title": "残缺箱子的画法",
+          "page": 59
+        },
+        {
+          "title": "叠加不同角度箱子的画法",
+          "page": 61
+        },
+        {
+          "title": "角度改变时，消失点也会产生相应的变化",
+          "page": 62
+        },
+        {
+          "title": "分割",
+          "page": 63
+        },
+        {
+          "title": "二等分割法",
+          "page": 63
+        },
+        {
+          "title": "三等分割法",
+          "page": 64
+        },
+        {
+          "title": "通过分割画法绘制楼层",
+          "page": 65
+        },
+        {
+          "title": "通过分割画法绘制台阶",
+          "page": 67
+        },
+        {
+          "title": "增殖",
+          "page": 69
+        },
+        {
+          "title": "墙面的增殖方法",
+          "page": 69
+        },
+        {
+          "title": "一点透视图中地面的增殖方法",
+          "page": 71
+        },
+        {
+          "title": "两点透视图中地面的增殖方法",
+          "page": 72
+        },
+        {
+          "title": "斜面",
+          "page": 73
+        },
+        {
+          "title": "通过分割法画出物体的斜面",
+          "page": 73
+        },
+        {
+          "title": "用消失点绘制斜面的方法",
+          "page": 74
+        },
+        {
+          "title": "斜面的两点透视图画法",
+          "page": 75
+        },
+        {
+          "title": "台阶的增殖、斜面画法",
+          "page": 77
+        },
+        {
+          "title": "圆形",
+          "page": 79
+        },
+        {
+          "title": "在箱子表面上画圆的方法",
+          "page": 79
+        },
+        {
+          "title": "地面圆形的画法",
+          "page": 81
+        },
+        {
+          "title": "开门或关门等，门产生旋转时的画法",
+          "page": 82
+        },
+        {
+          "title": "整栋房子的画法",
+          "page": 83
+        },
+        {
+          "title": "方形顶",
+          "page": 84
+        },
+        {
+          "title": "四坡屋顶",
+          "page": 85
+        },
+        {
+          "title": "双坡屋顶",
+          "page": 86
+        },
+        {
+          "title": "对屋顶进行装饰",
+          "page": 87
+        },
+        {
+          "title": "屋顶阁楼的画法",
+          "page": 88
+        },
+        {
+          "title": "专栏 灵活运用各种资料",
+          "page": 89
+        },
+        {
+          "title": "第3章 熟练掌握透视画法的技巧",
+          "page": 91
+        },
+        {
+          "title": "学会从不同位置进行观察",
+          "page": 91
+        },
+        {
+          "title": "从平面角度进行考虑",
+          "page": 91
+        },
+        {
+          "title": "适当改变观察位置",
+          "page": 93
+        },
+        {
+          "title": "从左右不同方向进行观察",
+          "page": 94
+        },
+        {
+          "title": "从上下不同位置进行观察",
+          "page": 95
+        },
+        {
+          "title": "进一步抬高视平线",
+          "page": 96
+        },
+        {
+          "title": "比例平衡（事物与人）",
+          "page": 97
+        },
+        {
+          "title": "以人的尺寸为标准",
+          "page": 97
+        },
+        {
+          "title": "街道中常见的景物",
+          "page": 98
+        },
+        {
+          "title": "便利店前方",
+          "page": 99
+        },
+        {
+          "title": "站台",
+          "page": 100
+        },
+        {
+          "title": "透视平衡（事物与人）",
+          "page": 101
+        },
+        {
+          "title": "寻找画面中不协调之处的方法",
+          "page": 101
+        },
+        {
+          "title": "添加要素的方法",
+          "page": 103
+        },
+        {
+          "title": "道路上常见的事物",
+          "page": 103
+        },
+        {
+          "title": "提供外卖服务的餐馆",
+          "page": 105
+        },
+        {
+          "title": "儿童公园",
+          "page": 107
+        },
+        {
+          "title": "人物的画法",
+          "page": 109
+        },
+        {
+          "title": "同一画面中包含很多人物时",
+          "page": 111
+        },
+        {
+          "title": "更简单的画法",
+          "page": 112
+        },
+        {
+          "title": "特殊构图的处理方法",
+          "page": 113
+        },
+        {
+          "title": "添加人物的方法",
+          "page": 115
+        },
+        {
+          "title": "地铁出入口附近",
+          "page": 116
+        },
+        {
+          "title": "阳台上",
+          "page": 117
+        },
+        {
+          "title": "车站检票口",
+          "page": 118
+        },
+        {
+          "title": "屋顶",
+          "page": 119
+        },
+        {
+          "title": "专栏 更自然地突出人物、事物特征的方法",
+          "page": 121
+        },
+        {
+          "title": "第4章 场景练习",
+          "page": 123
+        },
+        {
+          "title": "地铁与桥",
+          "page": 123
+        },
+        {
+          "title": "市中心的高楼与怪兽",
+          "page": 125
+        },
+        {
+          "title": "拱形结构的建筑物",
+          "page": 127
+        },
+        {
+          "title": "车站的某个场景",
+          "page": 129
+        },
+        {
+          "title": "位于台阶之上的寺院大门",
+          "page": 131
+        },
+        {
+          "title": "弯曲的小巷",
+          "page": 133
+        }
+      ],
+      "pdfKey": "library/books/254-book.pdf",
+      "pdfBytes": 26014920,
+      "coverKey": "library/covers/254-book-cover.jpg",
+      "coverBytes": 234971
+    },
+    {
+      "id": "lib-mwf0cijq-7857cf",
+      "sortNo": 254,
+      "title": "日本超级漫画课堂 人物素描与写实",
+      "author": "",
+      "intro": "",
+      "pageCount": 181,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "1",
+          "page": 7
+        },
+        {
+          "title": "2",
+          "page": 8
+        },
+        {
+          "title": "3",
+          "page": 9
+        },
+        {
+          "title": "4",
+          "page": 10
+        },
+        {
+          "title": "5",
+          "page": 11
+        },
+        {
+          "title": "第1章 了解人体构造——为了更真实地描绘人体",
+          "page": 12
+        },
+        {
+          "title": "Part 01 基础8头身图的平衡感",
+          "page": 12
+        },
+        {
+          "title": "Part 02 三分法的男性比例",
+          "page": 13
+        },
+        {
+          "title": "Part 03 三分法的男女差异",
+          "page": 18
+        },
+        {
+          "title": "Part 04 三分法的女性比例",
+          "page": 19
+        },
+        {
+          "title": "Part 05 头部的平衡感",
+          "page": 25
+        },
+        {
+          "title": "Part 06 男性头部的画法",
+          "page": 26
+        },
+        {
+          "title": "Part 07 女性头部的画法",
+          "page": 28
+        },
+        {
+          "title": "Part 08 先画面部的方法",
+          "page": 30
+        },
+        {
+          "title": "Part 09 头部骨骼与肌肉的结构",
+          "page": 32
+        },
+        {
+          "title": "Part 10 注意牙齿的画法",
+          "page": 37
+        },
+        {
+          "title": "Part 11 头部的脂肪与松弛的结构",
+          "page": 38
+        },
+        {
+          "title": "Part 12 手臂肌肉的结构",
+          "page": 42
+        },
+        {
+          "title": "Part 13 手臂骨骼与肌肉的结构",
+          "page": 45
+        },
+        {
+          "title": "Part 14 画肘部的要点",
+          "page": 49
+        },
+        {
+          "title": "Part 15 锁骨和胸锁乳突肌的结构",
+          "page": 55
+        },
+        {
+          "title": "Part 16 肩胛骨的结构",
+          "page": 60
+        },
+        {
+          "title": "Part 17 腿部的结构",
+          "page": 79
+        },
+        {
+          "title": "Part 18 肌肉功能一览表",
+          "page": 87
+        },
+        {
+          "title": "Part 19 手的结构",
+          "page": 88
+        },
+        {
+          "title": "Part 20 耳朵的画法",
+          "page": 96
+        },
+        {
+          "title": "Part 21 褶皱的构造",
+          "page": 97
+        },
+        {
+          "title": "Part 22 通过想象作画",
+          "page": 107
+        },
+        {
+          "title": "Part 23 表现动作画面的重点",
+          "page": 111
+        },
+        {
+          "title": "Part 24 练习题",
+          "page": 126
+        },
+        {
+          "title": "Part 25 写给想成为动画作者的人",
+          "page": 128
+        },
+        {
+          "title": "第2章 写实素描的画面构成",
+          "page": 130
+        },
+        {
+          "title": "Part 01 能够使画面平衡的黄金分割点",
+          "page": 130
+        },
+        {
+          "title": "Part 02 给人联想的“可能性空间”",
+          "page": 133
+        },
+        {
+          "title": "Part 03 电视剧以镜头为中心",
+          "page": 135
+        },
+        {
+          "title": "Part 04 通过写实了解镜头的特征",
+          "page": 138
+        },
+        {
+          "title": "Part 05 对相机位置的思考",
+          "page": 141
+        },
+        {
+          "title": "Part 06 特写画法的正误",
+          "page": 145
+        },
+        {
+          "title": "Part 07 一点透视的景深压缩画法",
+          "page": 150
+        },
+        {
+          "title": "Part 08 路径画法的正误",
+          "page": 154
+        }
+      ],
+      "pdfKey": "library/books/255-book.pdf",
+      "pdfBytes": 26633918,
+      "coverKey": "library/covers/255-book-cover.jpg",
+      "coverBytes": 165711
+    },
+    {
+      "id": "lib-mwf0dom6-49abea",
+      "sortNo": 255,
+      "title": "日本超级漫画课堂 机器人的画法",
+      "author": "",
+      "intro": "",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/256-book.pdf",
+      "pdfBytes": 50985262,
+      "coverKey": "library/covers/256-book-cover.jpg",
+      "coverBytes": 258705
+    },
+    {
+      "id": "lib-mwf0ds6s-637a7d",
+      "sortNo": 256,
+      "title": "日本超级漫画课堂 萌少女的画法",
+      "author": "",
+      "intro": "",
+      "pageCount": 181,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/257-book.pdf",
+      "pdfBytes": 59711074,
+      "coverKey": "library/covers/257-book-cover.jpg",
+      "coverBytes": 283792
+    },
+    {
+      "id": "lib-mwf0dpzm-3b3ebf",
+      "sortNo": 257,
+      "title": "日本超级漫画课堂 可爱女孩子的画法",
+      "author": "",
+      "intro": "",
+      "pageCount": 181,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/258-book.pdf",
+      "pdfBytes": 39262111,
+      "coverKey": "library/covers/258-book-cover.jpg",
+      "coverBytes": 169583
+    },
+    {
+      "id": "lib-mwf0ei34-01d386",
+      "sortNo": 258,
+      "title": "日本超级漫画课堂 描绘女孩子的日常生活",
+      "author": "",
+      "intro": "",
+      "pageCount": 211,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/259-book.pdf",
+      "pdfBytes": 45673320,
+      "coverKey": "library/covers/259-book-cover.jpg",
+      "coverBytes": 180664
+    },
+    {
+      "id": "lib-mwf0ejlz-a22439",
+      "sortNo": 259,
+      "title": "动漫人物服装设计与表现技法",
+      "author": "",
+      "intro": "",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/260-book.pdf",
+      "pdfBytes": 41524018,
+      "coverKey": "library/covers/260-book-cover.jpg",
+      "coverBytes": 286402
     }
   ]
 }
