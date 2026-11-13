@@ -8127,6 +8127,17 @@ body.hm-light .hm-page-empty {
 
 .desk-info small { font-size: 9.5px; color: #7b8ea4; }
 
+/* 卡面耗时：底部区域水平居中 */
+.desk-elapsed {
+  flex: none;
+  text-align: center;
+  padding: 0 10px 8px;
+  margin-top: -2px;
+  font-size: 9.5px;
+  color: #7b8ea4;
+  line-height: 1.2;
+}
+
 .desk-acts {
   flex: none;
   display: flex;
@@ -65970,7 +65981,8 @@ window.HMChat = (function () {
 
   var CARD_W = 200;
   var CARD_H = 240;
-  var DESK_INFO_H = 72; /* 标题 + 副标题 + 操作按钮的固定高度 */
+  var DESK_INFO_H = 44;       /* 标题 + 耗时行的固定高度 */
+  var DESK_INFO_H_PLAIN = 30; /* 只有标题时的高度 */
   var GAP = 14;
   var PAD = 12;
 
@@ -65978,7 +65990,8 @@ window.HMChat = (function () {
      保证卡片不超出 200×240 的格位、不压到邻卡 */
   function deskCardSize(work) {
     var maxW = cardWidth();
-    var maxThumbH = CARD_H - DESK_INFO_H;
+    var infoH = (work && work.elapsed > 0) ? DESK_INFO_H : DESK_INFO_H_PLAIN;
+    var maxThumbH = CARD_H - infoH;
     var aw = Number(work && work.width) || 0;
     var ah = Number(work && work.height) || 0;
     if (!(aw > 0 && ah > 0)) return { w: maxW, h: CARD_H };
@@ -65989,7 +66002,7 @@ window.HMChat = (function () {
       thumbH = maxThumbH;
       thumbW = maxThumbH * ratio;
     }
-    return { w: Math.round(thumbW), h: Math.round(thumbH) + DESK_INFO_H };
+    return { w: Math.round(thumbW), h: Math.round(thumbH) + infoH };
   }
 
   /* ---------------- 数据 ---------------- */
@@ -66894,17 +66907,13 @@ window.HMChat = (function () {
   function deskCardHtmlInner(work) {
     var name = workName(work);
     var isFailed = !!(work.failed || work.ok === false);
-    var meta = [work.modelName || 'AI', (work.width && work.height) ? work.width + '×' + work.height : ''];
-    if (work.type === 'video' && work.duration) meta.push(work.duration + 's');
-    if (work.elapsed && work.elapsed > 0) meta.push('耗时 ' + work.elapsed.toFixed(1) + 's');
+    /* 卡面只保留标题与耗时；AI 标识、风格名、尺寸等仍保留在作品数据里，只是不渲染 */
+    var elapsedHtml = (work.elapsed && work.elapsed > 0)
+      ? '<div class="desk-elapsed">耗时 ' + work.elapsed.toFixed(1) + 's</div>' : '';
     return '<div class="desk-thumb">' + mediaHtml(work, 'desk') +
             '<span class="desk-badge">' + (isFailed ? '生成失败' : '已完成') + '</span></div>' +
-      '<div class="desk-info"><strong>' + esc(name) + '</strong><small>' + esc(meta.filter(Boolean).join(' · ')) + '</small></div>' +
-      '<div class="desk-acts">' +
-      '<button data-dact="preview" title="预览">◉</button>' +
-      '<button data-dact="download" title="' + (isFailed ? '无可下载的图片' : '下载') + '"' + (isFailed ? ' disabled' : '') + '>↓</button>' +
-      '<button data-dact="delete" title="删除">✕</button>' +
-      '</div>' +
+      '<div class="desk-info"><strong>' + esc(name) + '</strong></div>' +
+      elapsedHtml +
       '<span class="desk-check" aria-hidden="true"></span>';
   }
 
