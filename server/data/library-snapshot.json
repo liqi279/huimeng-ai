@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T16:53:50.786Z",
+  "generatedAt": "2026-11-13T17:05:29.531Z",
   "source": "huimeng_library.books",
-  "total": 382,
+  "total": 391,
   "areas": {
-    "paint": 366,
+    "paint": 375,
     "ref": 16
   },
   "books": [
@@ -18277,6 +18277,533 @@
       "pdfBytes": 20296558,
       "coverKey": "library/covers/390-book-cover.jpg",
       "coverBytes": 222772
+    },
+    {
+      "id": "lib-mwf7xeux-38d723",
+      "sortNo": 390,
+      "title": "大家的插画教室",
+      "author": "[日] 中村佑介",
+      "intro": "原名《みんなのイラスト教室》，日本插画师中村佑介的一本插画教程，文字向。",
+      "pageCount": 132,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/391-book.pdf",
+      "pdfBytes": 76683876,
+      "coverKey": "library/covers/391-book-cover.jpg",
+      "coverBytes": 293831
+    },
+    {
+      "id": "lib-mwf858t4-d73c4a",
+      "sortNo": 391,
+      "title": "最强的数码插图\"角色绘制\"百科全书 CSP的68种高质量技法",
+      "author": "[日] 株式会社レミック",
+      "intro": "原名《デジタルイラストの「キャラ塗り」最強事典 CLIP STUDIO PAINT PROEXで描く！紙面解説と動画でわかる良質テク68》，多位画师“ Aちき、鏑木康隆、神岡ちろる、くるみつ、さいね、ずみちり、PJ.ぽてち、べっこ、みっ君、吉田ヨシツギ”合作推出的一本CSP角色绘制教程，有图文讲解和视频讲解，随书附带clip源文件和笔刷(有WINDOWS&MACOS和IPAD&IPHONE双版本可选)。",
+      "pageCount": 226,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/392-book.pdf",
+      "pdfBytes": 456636044,
+      "coverKey": "library/covers/392-book-cover.jpg",
+      "coverBytes": 355152
+    },
+    {
+      "id": "lib-mwf843tn-7c2542",
+      "sortNo": 392,
+      "title": "数码插图绘制 \"线稿 \"的百科全书 使用CSP绘制线稿！",
+      "author": "[日] 株式会社レミック",
+      "intro": "原名《ジタルイラストの「線画」描き方事典 CLIP STUDIO PAINT PRO/EXで描く！ 線にこだわる作画テクニック93》，多位画师“うみぼうず、FBC、gs、朱里、しわ、チェリ子、梵辛、牧茶、モカ、らうと”合作推出的一本CSP线稿教程，93种以线条为重点的绘画技巧。随书附带clip/PSD线稿源文件和笔刷。",
+      "pageCount": 202,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/393-book.pdf",
+      "pdfBytes": 396665359,
+      "coverKey": "library/covers/393-book-cover.jpg",
+      "coverBytes": 328030
+    },
+    {
+      "id": "lib-mwf85atu-7c9caa",
+      "sortNo": 393,
+      "title": "完全掌握专业画家的技法 真.人物绘制精进术",
+      "author": "[日] サイドランチ",
+      "intro": "原名《プロ絵師の技を完全マスター 真・キャラ塗り上達術 完全版 CLIP STUDIO PAINT PRO/EX/iPad 対応》，多位画师“comeo、ウラシマ、カオミン、きのこ姫、コマ、saraki、しんいし智歩、すざく、ぶし、獅戸うめ柴”合作推出的一本CSP教程，随书附带clip源文件。",
+      "pageCount": 232,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/394-book.pdf",
+      "pdfBytes": 364289802,
+      "coverKey": "library/covers/394-book-cover.jpg",
+      "coverBytes": 354206
+    },
+    {
+      "id": "lib-mwf85cb9-d5a32c",
+      "sortNo": 394,
+      "title": "从人气画师的作品中了解色彩搭配的奥秘",
+      "author": "[日] 稲葉隆",
+      "intro": "原名《人気絵師の作品から学ぶ配色のヒミツ》，带你了解10位人气画师“藤ちょこ、カオミン、POKImari、塚本穴骨、佐倉おりこ、秋赤音、嘔吐えぐち、水溜鳥、庭春樹、丸紅茜”的色彩搭配秘密，理论书，清晰度一般，不影响观看",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/395-book.pdf",
+      "pdfBytes": 34334041,
+      "coverKey": "library/covers/395-book-cover.jpg",
+      "coverBytes": 131246
+    },
+    {
+      "id": "lib-mwf86w0s-95315d",
+      "sortNo": 395,
+      "title": "实战CLIP STUDIO PAINT 人物绘画教室",
+      "author": "[日] hana、yow、藤森しき、二反田こな、鷹氏シミ、うすくち、ねむりねむ、電Q",
+      "intro": "原名《CLIP STUDIO PAINTで実践 わかる! キャラ塗りの教室》，多位画师“hana、yow、藤森しき、二反田こな、鷹氏シミ、うすくち、ねむりねむ、電Q”合作推出的一本CSP教程，随书附带clip源文件。",
+      "pageCount": 227,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 2
+        },
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "目次",
+          "page": 6
+        },
+        {
+          "title": "本書の使い方",
+          "page": 9
+        },
+        {
+          "title": "特典ファイルのダウンロード方法",
+          "page": 10
+        },
+        {
+          "title": "01 アニメ塗り hana",
+          "page": 11
+        },
+        {
+          "title": "線画",
+          "page": 12
+        },
+        {
+          "title": "彩色の前に",
+          "page": 13
+        },
+        {
+          "title": "STEP 1 肌",
+          "page": 14
+        },
+        {
+          "title": "STEP 2 髪",
+          "page": 17
+        },
+        {
+          "title": "STEP 3 スカート・リボン",
+          "page": 20
+        },
+        {
+          "title": "STEP 4 白部分＆タイツ",
+          "page": 23
+        },
+        {
+          "title": "STEP 5 王冠（金属部分）",
+          "page": 26
+        },
+        {
+          "title": "STEP 6 スカートの内側",
+          "page": 27
+        },
+        {
+          "title": "STEP 7 背景",
+          "page": 30
+        },
+        {
+          "title": "COLUMN 星空の描き方",
+          "page": 32
+        },
+        {
+          "title": "STEP 8 仕上げ",
+          "page": 33
+        },
+        {
+          "title": "02 リッチアニメ塗り yow",
+          "page": 37
+        },
+        {
+          "title": "線画",
+          "page": 38
+        },
+        {
+          "title": "彩色の前に",
+          "page": 39
+        },
+        {
+          "title": "STEP 1 肌（体毛）",
+          "page": 41
+        },
+        {
+          "title": "STEP 2 髪（たてがみ）",
+          "page": 45
+        },
+        {
+          "title": "STEP 3 目・鼻・爪",
+          "page": 47
+        },
+        {
+          "title": "STEP 4 金属",
+          "page": 49
+        },
+        {
+          "title": "STEP 5 衣装",
+          "page": 52
+        },
+        {
+          "title": "STEP 6 装飾",
+          "page": 55
+        },
+        {
+          "title": "STEP 7 ライティング",
+          "page": 57
+        },
+        {
+          "title": "STEP 8 背景",
+          "page": 59
+        },
+        {
+          "title": "STEP 9 仕上げ",
+          "page": 62
+        },
+        {
+          "title": "03 ブラシ＋厚塗り 藤森しき",
+          "page": 67
+        },
+        {
+          "title": "線画",
+          "page": 68
+        },
+        {
+          "title": "彩色の前に",
+          "page": 69
+        },
+        {
+          "title": "STEP 1 小物",
+          "page": 70
+        },
+        {
+          "title": "STEP 2 背景",
+          "page": 75
+        },
+        {
+          "title": "STEP 3 肌",
+          "page": 81
+        },
+        {
+          "title": "STEP 4 瞳",
+          "page": 84
+        },
+        {
+          "title": "STEP 5 炎",
+          "page": 87
+        },
+        {
+          "title": "STEP 6 髪",
+          "page": 89
+        },
+        {
+          "title": "STEP 7 服・帽子・アクセサリー",
+          "page": 91
+        },
+        {
+          "title": "STEP 8 仕上げ",
+          "page": 94
+        },
+        {
+          "title": "04 GtC塗り 二反田こな",
+          "page": 97
+        },
+        {
+          "title": "ラフ",
+          "page": 98
+        },
+        {
+          "title": "彩色の前に",
+          "page": 99
+        },
+        {
+          "title": "STEP 1 陰影",
+          "page": 101
+        },
+        {
+          "title": "STEP 2 ベースカラー",
+          "page": 107
+        },
+        {
+          "title": "STEP 3 色付け",
+          "page": 112
+        },
+        {
+          "title": "STEP 4 空気感",
+          "page": 116
+        },
+        {
+          "title": "STEP 5 反射光",
+          "page": 118
+        },
+        {
+          "title": "STEP 6 ハイライト",
+          "page": 119
+        },
+        {
+          "title": "STEP 7 線画調整",
+          "page": 122
+        },
+        {
+          "title": "STEP 8 瞳の加筆",
+          "page": 123
+        },
+        {
+          "title": "STEP 9 髪ハイライト",
+          "page": 128
+        },
+        {
+          "title": "STEP 10 ディティール",
+          "page": 131
+        },
+        {
+          "title": "STEP 11 背景",
+          "page": 132
+        },
+        {
+          "title": "STEP 12 仕上げ",
+          "page": 135
+        },
+        {
+          "title": "05 厚塗り 鷹氏シミ",
+          "page": 137
+        },
+        {
+          "title": "ラフ",
+          "page": 138
+        },
+        {
+          "title": "仮塗り+背景ラフ",
+          "page": 139
+        },
+        {
+          "title": "STEP 1 人物・ネコ下塗り",
+          "page": 140
+        },
+        {
+          "title": "STEP 2 人物・ネコ描き込み",
+          "page": 141
+        },
+        {
+          "title": "COLUMN 髪、瞳、まつ毛の描き方",
+          "page": 143
+        },
+        {
+          "title": "STEP 3 手前背景",
+          "page": 146
+        },
+        {
+          "title": "STEP 4 背景",
+          "page": 148
+        },
+        {
+          "title": "STEP 5 陰影",
+          "page": 150
+        },
+        {
+          "title": "STEP 6 仕上げ",
+          "page": 154
+        },
+        {
+          "title": "06 リアル厚塗り うすくち",
+          "page": 157
+        },
+        {
+          "title": "ラフ",
+          "page": 158
+        },
+        {
+          "title": "カラーラフ",
+          "page": 159
+        },
+        {
+          "title": "STEP 1 顔",
+          "page": 161
+        },
+        {
+          "title": "STEP 2 髪",
+          "page": 163
+        },
+        {
+          "title": "STEP 3 着物",
+          "page": 166
+        },
+        {
+          "title": "STEP 4 和傘",
+          "page": 170
+        },
+        {
+          "title": "STEP 5 背景",
+          "page": 172
+        },
+        {
+          "title": "STEP 6 仕上げ",
+          "page": 174
+        },
+        {
+          "title": "07 ギャルゲ塗り ねむりねむ",
+          "page": 177
+        },
+        {
+          "title": "線画",
+          "page": 178
+        },
+        {
+          "title": "彩色の前に",
+          "page": 179
+        },
+        {
+          "title": "STEP 1 瞳",
+          "page": 179
+        },
+        {
+          "title": "STEP 2 肌",
+          "page": 182
+        },
+        {
+          "title": "STEP 3 髪",
+          "page": 186
+        },
+        {
+          "title": "STEP 4 服・イチゴ・アクセサリー",
+          "page": 189
+        },
+        {
+          "title": "STEP 5 加工",
+          "page": 194
+        },
+        {
+          "title": "STEP 6 背景",
+          "page": 196
+        },
+        {
+          "title": "STEP 7 仕上げ",
+          "page": 200
+        },
+        {
+          "title": "08 レトロ塗り 電Q",
+          "page": 203
+        },
+        {
+          "title": "線画",
+          "page": 204
+        },
+        {
+          "title": "彩色の前に",
+          "page": 205
+        },
+        {
+          "title": "STEP 1 葉っぱ",
+          "page": 207
+        },
+        {
+          "title": "COLUMN 簡単に縁取りできる境界効果",
+          "page": 208
+        },
+        {
+          "title": "STEP 2 背景",
+          "page": 209
+        },
+        {
+          "title": "STEP 3 壁・柱",
+          "page": 210
+        },
+        {
+          "title": "COLUMN 白ではトーンはつくれない",
+          "page": 214
+        },
+        {
+          "title": "STEP 4 キャラクター",
+          "page": 215
+        },
+        {
+          "title": "STEP 5 ライト",
+          "page": 217
+        },
+        {
+          "title": "STEP 6 木",
+          "page": 218
+        },
+        {
+          "title": "STEP 7 コウモリ",
+          "page": 222
+        },
+        {
+          "title": "COLUMN レイヤーカラーについて",
+          "page": 224
+        },
+        {
+          "title": "STEP 8 細部",
+          "page": 225
+        },
+        {
+          "title": "参加イラストレーターリンク先一覧",
+          "page": 226
+        },
+        {
+          "title": "奥付",
+          "page": 227
+        }
+      ],
+      "pdfKey": "library/books/396-book.pdf",
+      "pdfBytes": 98473190,
+      "coverKey": "library/covers/396-book-cover.jpg",
+      "coverBytes": 305131
+    },
+    {
+      "id": "lib-mwf86o3s-a90cd8",
+      "sortNo": 396,
+      "title": "360°美少女素描入门",
+      "author": "[日] COSMIC MOOK",
+      "intro": "原名《360°美少女デッサン入門》，360度展示美少女的日常生活，不错的参考教程，清晰度一般，不影响观看。",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/397-book.pdf",
+      "pdfBytes": 35406142,
+      "coverKey": "library/covers/397-book-cover.jpg",
+      "coverBytes": 226849
+    },
+    {
+      "id": "lib-mwf86fno-0e1ca7",
+      "sortNo": 398,
+      "title": "Q版人物的画法 画\"小可爱\"的基础和表现技巧",
+      "author": "[日] 夢ノ内千春",
+      "intro": "原名《ミニキャラの描き方「ちまっとかわいい」を描く基本＆表現テクニック》，日本画师夢ノ内(yume335、夢ノ内千春)推出的一本超萌Q版漫画教程。",
+      "pageCount": 186,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/399-book.pdf",
+      "pdfBytes": 41181828,
+      "coverKey": "library/covers/399-book-cover.jpg",
+      "coverBytes": 74470
+    },
+    {
+      "id": "lib-mwf8718b-6dba9e",
+      "sortNo": 399,
+      "title": "超简单!”慎本流“漫画人物的绘制教程",
+      "author": "[日] 慎本真",
+      "intro": "原名《描けるようになりたい！なら読んでみて。超かんたん！しんもと流マンガキャラの描き方》，日本漫画家慎本真推出的一本充满个人特色的漫画教程，图片不是很清晰，不影响观看。",
+      "pageCount": 194,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/400-book.pdf",
+      "pdfBytes": 41159590,
+      "coverKey": "library/covers/400-book-cover.jpg",
+      "coverBytes": 326214
     }
   ]
 }
