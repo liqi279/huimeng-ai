@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T15:47:49.111Z",
+  "generatedAt": "2026-11-13T16:08:36.781Z",
   "source": "huimeng_library.books",
-  "total": 336,
+  "total": 345,
   "areas": {
-    "paint": 320,
+    "paint": 329,
     "ref": 16
   },
   "books": [
@@ -15178,6 +15178,303 @@
       "pdfBytes": 116114764,
       "coverKey": "library/covers/340-book-cover.jpg",
       "coverBytes": 134664
+    },
+    {
+      "id": "lib-mwf5jx5u-d093e9",
+      "sortNo": 340,
+      "title": "一幅画讲故事 视觉叙事全攻略",
+      "author": "[日] 砂糖ふくろう 大津卓也",
+      "intro": "原名《一枚の絵でストーリーを伝える方法 ビジュアルストーリーテリングの基礎から応用まで》，一本教学如何提升画面表现力、构图技巧、角色情感表达，以及创作具有故事性的插画或漫画的教程，清晰度一般，不影响观看。",
+      "pageCount": 176,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/341-book.pdf",
+      "pdfBytes": 22725111,
+      "coverKey": "library/covers/341-book-cover.jpg",
+      "coverBytes": 309045
+    },
+    {
+      "id": "lib-mwf5juyr-6c1e65",
+      "sortNo": 341,
+      "title": "动态速写入门 服装表现与形体简化",
+      "author": "[日] 砂糖ふくろう",
+      "intro": "原名《はじめてのジェスチャードローイング 着衣とビッグシェイプ》，一本教学如何在速写中表现穿衣人物，并通过简化形体(big shape)来提升画面的表现力的教程，清晰度一般，不影响观看。",
+      "pageCount": 168,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/342-book.pdf",
+      "pdfBytes": 36021385,
+      "coverKey": "library/covers/342-book-cover.jpg",
+      "coverBytes": 177759
+    },
+    {
+      "id": "lib-mwf5q8l7-0d3ce7",
+      "sortNo": 342,
+      "title": "恋爱感构图技法",
+      "author": "[日] 黒なまこ、塩かずのこ、なかむら、ゆがー、日向あずり",
+      "intro": "原名《ガチ恋構図の描き方》，多位人气画师合作推出的一本令人一见钟情的恋爱感构图绘制教程。",
+      "pageCount": 141,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/343-book.pdf",
+      "pdfBytes": 377728047,
+      "coverKey": "library/covers/343-book-cover.jpg",
+      "coverBytes": 306719
+    },
+    {
+      "id": "lib-mwf5l0sh-208ac4",
+      "sortNo": 344,
+      "title": "Advanced Animation",
+      "author": "[美] Preston Blair",
+      "intro": "原名《Advanced Animation: Learn How to Draw Animated Cartoons》，美国动画大师Preston Blair的一本卡通角色绘制和动画动作设计教程，收录了一些作者参与过的经典动画角色的图例教程，如猫和老鼠等等",
+      "pageCount": 41,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/345-book.pdf",
+      "pdfBytes": 15385210,
+      "coverKey": "library/covers/345-book-cover.jpg",
+      "coverBytes": 241082
+    },
+    {
+      "id": "lib-mwf5l2ga-574880",
+      "sortNo": 345,
+      "title": "艺术家姿势全书",
+      "author": "Ken Goldman、Stephanie Goldman",
+      "intro": "原名《The Complete Book of Poses for Artists》，一本包含500个人体姿势的参考书。",
+      "pageCount": 243,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Cover",
+          "page": 1
+        },
+        {
+          "title": "Half Title",
+          "page": 5
+        },
+        {
+          "title": "Title",
+          "page": 3
+        },
+        {
+          "title": "Copyright",
+          "page": 4
+        },
+        {
+          "title": "Table Of Contents",
+          "page": 6
+        },
+        {
+          "title": "Introduction",
+          "page": 9
+        },
+        {
+          "title": "Tools & Materials",
+          "page": 10
+        },
+        {
+          "title": "Part I: Techniques",
+          "page": 13
+        },
+        {
+          "title": "Basic Drawing Techniques",
+          "page": 14
+        },
+        {
+          "title": "Form & Value",
+          "page": 17
+        },
+        {
+          "title": "People in Perspective",
+          "page": 18
+        },
+        {
+          "title": "Portraiture Basics",
+          "page": 20
+        },
+        {
+          "title": "Learning to “See”",
+          "page": 22
+        },
+        {
+          "title": "Basic Anatomy",
+          "page": 24
+        },
+        {
+          "title": "Adult Head & Facial Anatomy",
+          "page": 34
+        },
+        {
+          "title": "Adult Facial Features",
+          "page": 37
+        },
+        {
+          "title": "Child Head & Facial Proportions",
+          "page": 38
+        },
+        {
+          "title": "Child Body Proportions",
+          "page": 42
+        },
+        {
+          "title": "Part II: Basic Poses",
+          "page": 45
+        },
+        {
+          "title": "Standing Poses",
+          "page": 46
+        },
+        {
+          "title": "Casual Standing Positions",
+          "page": 76
+        },
+        {
+          "title": "Sitting Poses",
+          "page": 90
+        },
+        {
+          "title": "Posing Children",
+          "page": 112
+        },
+        {
+          "title": "Using Hands to Express Mood",
+          "page": 119
+        },
+        {
+          "title": "Reclining Poses",
+          "page": 126
+        },
+        {
+          "title": "Taking Artistic Liberties",
+          "page": 136
+        },
+        {
+          "title": "Part III: Dynamic Poses",
+          "page": 143
+        },
+        {
+          "title": "Introduction to Movement & Balance",
+          "page": 144
+        },
+        {
+          "title": "Bodies in Motion",
+          "page": 146
+        },
+        {
+          "title": "Sports Figures",
+          "page": 152
+        },
+        {
+          "title": "Children in Action",
+          "page": 172
+        },
+        {
+          "title": "Part IV: Expressive Poses",
+          "page": 183
+        },
+        {
+          "title": "Capturing the Details",
+          "page": 184
+        },
+        {
+          "title": "Rendering Mood & Emotion",
+          "page": 204
+        },
+        {
+          "title": "Part V: Compositions",
+          "page": 221
+        },
+        {
+          "title": "Composing with Purpose",
+          "page": 222
+        },
+        {
+          "title": "About the Artists",
+          "page": 242
+        }
+      ],
+      "pdfKey": "library/books/346-book.pdf",
+      "pdfBytes": 51833003,
+      "coverKey": "library/covers/346-book-cover.jpg",
+      "coverBytes": 167288
+    },
+    {
+      "id": "lib-mwf5xu6k-d9bab0",
+      "sortNo": 346,
+      "title": "漫画分镜教室 日本资深漫画家教你如何让作品更加令人着迷！",
+      "author": "[日] 深谷陽 東京ネームタンク",
+      "intro": "原名《もっと魅せる・面白くする 魂に響く 漫画コマワリ教室》，日本漫画家深谷阳的一本硬核漫画分镜教程，双页版本，从右往左读。",
+      "pageCount": 155,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/347-book.pdf",
+      "pdfBytes": 1044772536,
+      "coverKey": "library/covers/347-book-cover.jpg",
+      "coverBytes": 359513
+    },
+    {
+      "id": "lib-mwf5mazd-df0dee",
+      "sortNo": 347,
+      "title": "从赤身到穿衣 理解衣服的画法的换装姿势集",
+      "author": "[日] 人体パーツ素材集制作部",
+      "intro": "原名《「裸体&着衣」で服の描き方がわかる着せ替えポーズ集》，一本衣服绘制参考教程，清晰度一般，不包含光盘内容。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/348-book.pdf",
+      "pdfBytes": 35025537,
+      "coverKey": "library/covers/348-book-cover.jpg",
+      "coverBytes": 275491
+    },
+    {
+      "id": "lib-mwf5pxa8-a14067",
+      "sortNo": 348,
+      "title": "京都アニメーション版(京都动画作画手册)2册合集",
+      "author": "京都动画制作公司，京阿尼",
+      "intro": "京阿尼十多年前推出的两册动画教程《京都アニメーション版 作画の手引き(作画手册)》和《京都アニメーション版 仕上げ・撮影の手引き(上色与摄影指南)》，2册原版日文，附带1册汉化(京都アニメーション版 作画の手引き)。",
+      "pageCount": 259,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "作画の手引き",
+          "page": 1
+        },
+        {
+          "title": "仕上げ・撮影の手引き",
+          "page": 86
+        }
+      ],
+      "pdfKey": "library/books/349-book.pdf",
+      "pdfBytes": 140664855,
+      "coverKey": "library/covers/349-book-cover.jpg",
+      "coverBytes": 188745
+    },
+    {
+      "id": "lib-mwf5tscf-e140b7",
+      "sortNo": 349,
+      "title": "与插画相融合的质感秘诀",
+      "author": "[日]江川あきら",
+      "intro": "原名《イラストに馴染む 質感の極意》，一本关于“质感”的绘制教程，附带特典内容(不包含特典视频)。",
+      "pageCount": 201,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[漫画教程][江川あきら]イラストに馴染む 質感の極意",
+          "page": 1
+        },
+        {
+          "title": "AKIRAEGWA▼BrushSETについて",
+          "page": 196
+        },
+        {
+          "title": "AKIRAEGWA特別編集版",
+          "page": 199
+        }
+      ],
+      "pdfKey": "library/books/350-book.pdf",
+      "pdfBytes": 230788854,
+      "coverKey": "library/covers/350-book-cover.jpg",
+      "coverBytes": 301649
     }
   ]
 }
