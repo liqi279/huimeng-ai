@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T12:59:55.573Z",
+  "generatedAt": "2026-11-13T13:09:35.278Z",
   "source": "huimeng_library.books",
-  "total": 217,
+  "total": 226,
   "areas": {
-    "paint": 201,
+    "paint": 210,
     "ref": 16
   },
   "books": [
@@ -8635,6 +8635,798 @@
       "pdfBytes": 25266624,
       "coverKey": "library/covers/221-book-cover.jpg",
       "coverBytes": 208726
+    },
+    {
+      "id": "lib-mweznfab-836a43",
+      "sortNo": 221,
+      "title": "漫画高手速成系列 激漫第3部 男性人物的绘画技巧与造型",
+      "author": "",
+      "intro": "",
+      "pageCount": 115,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/222-book.pdf",
+      "pdfBytes": 24696713,
+      "coverKey": "library/covers/222-book-cover.jpg",
+      "coverBytes": 210645
+    },
+    {
+      "id": "lib-mweznit5-a4a97a",
+      "sortNo": 222,
+      "title": "漫画高手速成系列 激漫第2部 完美掌握画笔的使用方法",
+      "author": "",
+      "intro": "",
+      "pageCount": 117,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "寄语：本书的使用方法",
+          "page": 3
+        },
+        {
+          "title": "第一步 准备绘画工具",
+          "page": 7
+        },
+        {
+          "title": "准备工具",
+          "page": 9
+        },
+        {
+          "title": "如何购买绘画工具",
+          "page": 10
+        },
+        {
+          "title": "蘸水笔",
+          "page": 11
+        },
+        {
+          "title": "画纸",
+          "page": 12
+        },
+        {
+          "title": "墨水",
+          "page": 13
+        },
+        {
+          "title": "尺子",
+          "page": 14
+        },
+        {
+          "title": "绘画时的坐姿",
+          "page": 15
+        },
+        {
+          "title": "第二步 描线",
+          "page": 17
+        },
+        {
+          "title": "CHAPTER01 平行线",
+          "page": 19
+        },
+        {
+          "title": "CHAPTER02 粗细分明的线",
+          "page": 20
+        },
+        {
+          "title": "CHAPTER03 S形线",
+          "page": 21
+        },
+        {
+          "title": "CHAPTER04 不同粗细的线",
+          "page": 23
+        },
+        {
+          "title": "CHAPTER05 圆圈",
+          "page": 25
+        },
+        {
+          "title": "CHAPTER06 渐细线",
+          "page": 27
+        },
+        {
+          "title": "CHAPTER07 横向长线",
+          "page": 29
+        },
+        {
+          "title": "CHAPTER08 纵向长线",
+          "page": 31
+        },
+        {
+          "title": "CHAPTER09 快速画平行线（1）",
+          "page": 33
+        },
+        {
+          "title": "CHAPTER10 快速画平行线（2）",
+          "page": 35
+        },
+        {
+          "title": "练习题",
+          "page": 37
+        },
+        {
+          "title": "第二步的总结",
+          "page": 38
+        },
+        {
+          "title": "第三步 用尺子画线",
+          "page": 39
+        },
+        {
+          "title": "尺子的使用方法",
+          "page": 41
+        },
+        {
+          "title": "CHAPTER11 用直尺画线",
+          "page": 43
+        },
+        {
+          "title": "CHAPTER12 用直尺快速画线",
+          "page": 45
+        },
+        {
+          "title": "CHAPTER13 用直尺画中粗线",
+          "page": 47
+        },
+        {
+          "title": "CHAPTER14 速度线",
+          "page": 49
+        },
+        {
+          "title": "CHAPTER15 集中线（1）",
+          "page": 51
+        },
+        {
+          "title": "CHAPTER16 集中线（2）",
+          "page": 53
+        },
+        {
+          "title": "CHAPTER17 花式集中线",
+          "page": 55
+        },
+        {
+          "title": "CHAPTER18 用云尺画线",
+          "page": 59
+        },
+        {
+          "title": "CHAPTER19 用云尺画中粗线",
+          "page": 61
+        },
+        {
+          "title": "CHAPTER20 用云尺画速度线",
+          "page": 63
+        },
+        {
+          "title": "CHAPTER21 用云尺画集中线",
+          "page": 65
+        },
+        {
+          "title": "练习题",
+          "page": 67
+        },
+        {
+          "title": "第四步 效果及笔触",
+          "page": 73
+        },
+        {
+          "title": "蘸水笔的特点",
+          "page": 75
+        },
+        {
+          "title": "CHAPTER22 手打网（1）",
+          "page": 77
+        },
+        {
+          "title": "CHAPTER23 手打网（2）",
+          "page": 81
+        },
+        {
+          "title": "CHAPTER24 蛇形线",
+          "page": 85
+        },
+        {
+          "title": "CHAPTER25 描点",
+          "page": 89
+        },
+        {
+          "title": "CHAPTER26 背景效果",
+          "page": 91
+        },
+        {
+          "title": "CHAPTER27 笔尖",
+          "page": 95
+        },
+        {
+          "title": "CHAPTER28 在具体描画中掌握笔尖的特点",
+          "page": 99
+        },
+        {
+          "title": "练习题",
+          "page": 103
+        },
+        {
+          "title": "综合题",
+          "page": 107
+        }
+      ],
+      "pdfKey": "library/books/223-book.pdf",
+      "pdfBytes": 32805987,
+      "coverKey": "library/covers/223-book-cover.jpg",
+      "coverBytes": 319315
+    },
+    {
+      "id": "lib-mweznh5f-56fdd9",
+      "sortNo": 223,
+      "title": "漫画高手速成系列 激漫第1部 简单十步！教您学会画漫画",
+      "author": "",
+      "intro": "",
+      "pageCount": 114,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/224-book.pdf",
+      "pdfBytes": 49167292,
+      "coverKey": "library/covers/224-book-cover.jpg",
+      "coverBytes": 227307
+    },
+    {
+      "id": "lib-mwezoop0-88ce7c",
+      "sortNo": 224,
+      "title": "别怕画不好 15位绘师教你零基础画角色",
+      "author": "",
+      "intro": "",
+      "pageCount": 205,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/225-book.pdf",
+      "pdfBytes": 37139458,
+      "coverKey": "library/covers/225-book-cover.jpg",
+      "coverBytes": 179173
+    },
+    {
+      "id": "lib-mwezpajr-16743f",
+      "sortNo": 225,
+      "title": "日本漫画大师讲座27 二次元萌系少年绘",
+      "author": "",
+      "intro": "",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/226-book.pdf",
+      "pdfBytes": 88444319,
+      "coverKey": "library/covers/226-book-cover.jpg",
+      "coverBytes": 265950
+    },
+    {
+      "id": "lib-mwezp3fv-653a42",
+      "sortNo": 226,
+      "title": "日本漫画大师讲座26 打造100%正装男神",
+      "author": "",
+      "intro": "",
+      "pageCount": 166,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/227-book.pdf",
+      "pdfBytes": 49835640,
+      "coverKey": "library/covers/227-book-cover.jpg",
+      "coverBytes": 250626
+    },
+    {
+      "id": "lib-mwezpc79-e67a37",
+      "sortNo": 227,
+      "title": "日本漫画大师讲座25 和风人物绘画表现",
+      "author": "",
+      "intro": "",
+      "pageCount": 165,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/228-book.pdf",
+      "pdfBytes": 28552911,
+      "coverKey": "library/covers/228-book-cover.jpg",
+      "coverBytes": 227673
+    },
+    {
+      "id": "lib-mwezq1ja-9855ba",
+      "sortNo": 228,
+      "title": "日本漫画大师讲座24 零基础学画美少女88技",
+      "author": "",
+      "intro": "",
+      "pageCount": 185,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "插画",
+          "page": 8
+        },
+        {
+          "title": "阅读本书之前①",
+          "page": 17
+        },
+        {
+          "title": "阅读本书之前②",
+          "page": 19
+        },
+        {
+          "title": "第1章 “基础立体模特”是指什么？",
+          "page": 24
+        },
+        {
+          "title": "头身",
+          "page": 25
+        },
+        {
+          "title": "技巧01 把握头身的比例",
+          "page": 25
+        },
+        {
+          "title": "全身的比例",
+          "page": 27
+        },
+        {
+          "title": "技巧02 把各部位的比例都记住",
+          "page": 27
+        },
+        {
+          "title": "描绘结构图",
+          "page": 28
+        },
+        {
+          "title": "技巧03 不管是什么样的插画，都要从结构图开始绘制",
+          "page": 28
+        },
+        {
+          "title": "技巧04 手脚的大小一定要和面部进行比较！",
+          "page": 28
+        },
+        {
+          "title": "技巧05 从结构图开始就用立体部件来构思！",
+          "page": 29
+        },
+        {
+          "title": "技巧06 没有结构图就无法描绘动感的姿势",
+          "page": 31
+        },
+        {
+          "title": "基础立体模特",
+          "page": 35
+        },
+        {
+          "title": "技巧07 记住理想的结构图和基础立体模特吧",
+          "page": 35
+        },
+        {
+          "title": "技巧08 在头身比相同时，使用不同的变形技巧",
+          "page": 40
+        },
+        {
+          "title": "第2章 描绘出头部的立体感",
+          "page": 42
+        },
+        {
+          "title": "描绘头部",
+          "page": 43
+        },
+        {
+          "title": "描绘轮廓",
+          "page": 46
+        },
+        {
+          "title": "技巧09 要把头部的纵深画长",
+          "page": 46
+        },
+        {
+          "title": "技巧10 耳朵位于脖子、头顶的线条上",
+          "page": 46
+        },
+        {
+          "title": "技巧11 不要让下颚收缩过度",
+          "page": 47
+        },
+        {
+          "title": "描绘眼睛",
+          "page": 51
+        },
+        {
+          "title": "技巧12 就算是写实性的形状，线条也要足够少！",
+          "page": 52
+        },
+        {
+          "title": "技巧13 就算是下垂眼，内侧的眼睛也会变成吊梢眼",
+          "page": 53
+        },
+        {
+          "title": "技巧14 眼睛和睫毛之间的空隙很重要！",
+          "page": 54
+        },
+        {
+          "title": "技巧15 掌握轮廓中断的眼睛的表现方法！",
+          "page": 54
+        },
+        {
+          "title": "技巧16 不要给斜侧面面部的双眼添加远近感！",
+          "page": 55
+        },
+        {
+          "title": "技巧17 手办式的眼睛也可以运用立体表现",
+          "page": 57
+        },
+        {
+          "title": "描绘眉毛",
+          "page": 58
+        },
+        {
+          "title": "技巧18 掌握了基础构造后再给眉毛添加变化！",
+          "page": 58
+        },
+        {
+          "title": "描绘耳朵",
+          "page": 59
+        },
+        {
+          "title": "描绘鼻子",
+          "page": 60
+        },
+        {
+          "title": "技巧19 鼻子是正中线！",
+          "page": 60
+        },
+        {
+          "title": "技巧20 从正面的鼻子开始确定！",
+          "page": 62
+        },
+        {
+          "title": "描绘嘴巴",
+          "page": 65
+        },
+        {
+          "title": "技巧21 牙齿的宽度是固定的！",
+          "page": 66
+        },
+        {
+          "title": "技巧22 注意到牙齿的纵深，就能准确地描绘嘴巴！",
+          "page": 67
+        },
+        {
+          "title": "技巧23 只有下颚会以耳朵下方为基点活动！",
+          "page": 68
+        },
+        {
+          "title": "技巧24 嘴巴的关键部分——嘴角很重要！",
+          "page": 69
+        },
+        {
+          "title": "技巧25 在侧面和斜侧面面部中，嘴唇的正中线的内侧很重要！",
+          "page": 70
+        },
+        {
+          "title": "技巧26 具备吸引力的侧脸不是真正的正侧面",
+          "page": 70
+        },
+        {
+          "title": "描绘头发",
+          "page": 71
+        },
+        {
+          "title": "技巧27 连同分区一起来构思",
+          "page": 71
+        },
+        {
+          "title": "技巧28 给额头部分留出足够的空间来",
+          "page": 72
+        },
+        {
+          "title": "技巧29 划分出发绺，从发根画到发梢",
+          "page": 73
+        },
+        {
+          "title": "技巧30 通过顶部来控制发量和轮廓！",
+          "page": 74
+        },
+        {
+          "title": "技巧31 双马尾的分缝处是大大的Z字形！这时要使用中间有所中断的不规则线条",
+          "page": 75
+        },
+        {
+          "title": "技巧32 在左右不对称的情况下，我们要考虑从两侧开始描绘",
+          "page": 76
+        },
+        {
+          "title": "技巧33 所谓的立体表现，就是可以从各种不同角度描绘出正确的立体形态来！",
+          "page": 76
+        },
+        {
+          "title": "技巧34 螺旋卷感觉上就像是接发",
+          "page": 77
+        },
+        {
+          "title": "技巧35 让发梢不规则地散开",
+          "page": 79
+        },
+        {
+          "title": "技巧36 魔法的曲线",
+          "page": 79
+        },
+        {
+          "title": "技巧37 在决定发型时，全身的比例很重要！",
+          "page": 83
+        },
+        {
+          "title": "第3章 描绘出身体的立体感",
+          "page": 84
+        },
+        {
+          "title": "躯干",
+          "page": 85
+        },
+        {
+          "title": "技巧38 要把脖子当成是日式火锅中葱段的形状！",
+          "page": 85
+        },
+        {
+          "title": "技巧39 脖子上有V字形的肌肉！",
+          "page": 86
+        },
+        {
+          "title": "技巧40 脖子要位于两耳的正中央",
+          "page": 87
+        },
+        {
+          "title": "技巧41 对于整体轮廓来说，肋骨非常重要！",
+          "page": 88
+        },
+        {
+          "title": "技巧42 肩部和胸部是相连的",
+          "page": 91
+        },
+        {
+          "title": "技巧43 腋下的部分一定会变细",
+          "page": 92
+        },
+        {
+          "title": "技巧44 乳房要朝着外侧！",
+          "page": 93
+        },
+        {
+          "title": "技巧45 乳房朝下的时候，形状看起来最匀称！",
+          "page": 94
+        },
+        {
+          "title": "技巧46 用立体方式来描绘乳房",
+          "page": 94
+        },
+        {
+          "title": "技巧47 使用正中线来转动身体",
+          "page": 99
+        },
+        {
+          "title": "技巧48 前屈、向后挺身时存在弯曲的关键点",
+          "page": 101
+        },
+        {
+          "title": "手臂／手部",
+          "page": 103
+        },
+        {
+          "title": "技巧49 如果扭转手腕的话，上臂的形状也会改变",
+          "page": 105
+        },
+        {
+          "title": "技巧50 熟练使用肱桡肌！",
+          "page": 106
+        },
+        {
+          "title": "技巧51 手臂的构造和锁链一样",
+          "page": 107
+        },
+        {
+          "title": "技巧52 构思时把手指“取下来”",
+          "page": 110
+        },
+        {
+          "title": "技巧53 手心的手指根部没有关节！",
+          "page": 110
+        },
+        {
+          "title": "技巧54 在手指的关节中描绘圆球",
+          "page": 111
+        },
+        {
+          "title": "技巧55 握拳时不要让手指并列成一排！",
+          "page": 112
+        },
+        {
+          "title": "技巧56 握拳时要注意缝隙！",
+          "page": 112
+        },
+        {
+          "title": "腿部／脚部",
+          "page": 115
+        },
+        {
+          "title": "技巧57 膝盖是折叠尺",
+          "page": 117
+        },
+        {
+          "title": "技巧58 要记住把脚趾画成“拇指朝前、其他四个脚趾向下”！",
+          "page": 120
+        },
+        {
+          "title": "技巧59 描绘脚趾时，略微外翻的拇指比较美丽",
+          "page": 121
+        },
+        {
+          "title": "技巧60 脚腕可动领域的最大限度是30°！",
+          "page": 123
+        },
+        {
+          "title": "第4章 透视和人体 仰视和俯视的描绘方法",
+          "page": 126
+        },
+        {
+          "title": "面部的仰视和俯视",
+          "page": 127
+        },
+        {
+          "title": "技巧61 耳朵的位置不会变动",
+          "page": 127
+        },
+        {
+          "title": "技巧62 仰视时，鼻梁会缩短，眼睛和眉毛的距离会变大",
+          "page": 128
+        },
+        {
+          "title": "技巧63 俯视时，鼻梁会伸展开，眼睛和眉毛的距离会变小",
+          "page": 128
+        },
+        {
+          "title": "描绘仰视的面部",
+          "page": 129
+        },
+        {
+          "title": "技巧64 比起眼睛来，要先画鼻子",
+          "page": 129
+        },
+        {
+          "title": "技巧65 在斜侧面的面部中，切实地降低靠里面的眼睛",
+          "page": 130
+        },
+        {
+          "title": "技巧66 为了让人物张大嘴巴，要通过四个面来构思面部",
+          "page": 131
+        },
+        {
+          "title": "技巧67 最大限度地看不到下颚底部的便利轮廓！",
+          "page": 133
+        },
+        {
+          "title": "技巧68 既然要展现下颚，那么重要的就是空间",
+          "page": 134
+        },
+        {
+          "title": "技巧69 检查牙齿的纵深！",
+          "page": 135
+        },
+        {
+          "title": "描绘俯视的面部",
+          "page": 136
+        },
+        {
+          "title": "技巧70 不能单独把面部器官集中到下面去",
+          "page": 136
+        },
+        {
+          "title": "技巧71 画出辅助线，让轮廓和面部器官联动",
+          "page": 137
+        },
+        {
+          "title": "技巧72 在斜侧面面部中，切实地提高靠里面的眼睛",
+          "page": 138
+        },
+        {
+          "title": "技巧73 美少女不能是鹰钩鼻！",
+          "page": 140
+        },
+        {
+          "title": "技巧74 嘴巴是从轮廓独立出来的拱形",
+          "page": 141
+        },
+        {
+          "title": "技巧75 重要的不是嘴唇，而是牙齿的位置",
+          "page": 142
+        },
+        {
+          "title": "技巧76 前发就算遮盖到了眼睛也没关系！",
+          "page": 143
+        },
+        {
+          "title": "全身的仰视和俯视",
+          "page": 144
+        },
+        {
+          "title": "技巧77 要意识到视平线和消失点",
+          "page": 145
+        },
+        {
+          "title": "技巧78 注意圆形切片的角度！",
+          "page": 146
+        },
+        {
+          "title": "技巧79 画出透视线，调整结构图中的毛病",
+          "page": 147
+        },
+        {
+          "title": "描绘仰视的全身",
+          "page": 149
+        },
+        {
+          "title": "技巧80 首先确定肩部的角度",
+          "page": 149
+        },
+        {
+          "title": "技巧81 通过肋骨圆顶来推测女性胸部的形状",
+          "page": 151
+        },
+        {
+          "title": "技巧82 胸部通过透视线和肩部联动",
+          "page": 152
+        },
+        {
+          "title": "技巧83 使用平行线来描绘脚底",
+          "page": 155
+        },
+        {
+          "title": "描绘俯视的全身",
+          "page": 157
+        },
+        {
+          "title": "技巧84 不能没有脖子！",
+          "page": 157
+        },
+        {
+          "title": "技巧85 不能没有腰部曲线！",
+          "page": 158
+        },
+        {
+          "title": "技巧86 用长方体作为测量仪器，掌握不同部位的距离",
+          "page": 159
+        },
+        {
+          "title": "技巧87 不要让脚部太小",
+          "page": 161
+        },
+        {
+          "title": "技巧88 缩短靠里面的腿部",
+          "page": 162
+        },
+        {
+          "title": "多技并用，提高画功",
+          "page": 164
+        },
+        {
+          "title": "第5章 插画的绘制过程",
+          "page": 170
+        },
+        {
+          "title": "画师介绍",
+          "page": 182
+        }
+      ],
+      "pdfKey": "library/books/229-book.pdf",
+      "pdfBytes": 35675535,
+      "coverKey": "library/covers/229-book-cover.jpg",
+      "coverBytes": 303088
+    },
+    {
+      "id": "lib-mwezqbga-d2da54",
+      "sortNo": 229,
+      "title": "日本漫画大师讲座23 萌系美少女性格 情感表现",
+      "author": "",
+      "intro": "",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/230-book.pdf",
+      "pdfBytes": 84859803,
+      "coverKey": "library/covers/230-book-cover.jpg",
+      "coverBytes": 324214
     }
   ]
 }
