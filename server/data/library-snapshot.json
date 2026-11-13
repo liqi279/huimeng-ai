@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T13:43:59.583Z",
+  "generatedAt": "2026-11-13T13:49:36.212Z",
   "source": "huimeng_library.books",
-  "total": 286,
+  "total": 296,
   "areas": {
-    "paint": 270,
+    "paint": 280,
     "ref": 16
   },
   "books": [
@@ -12856,6 +12856,788 @@
       "pdfBytes": 36804971,
       "coverKey": "library/covers/290-book-cover.jpg",
       "coverBytes": 202354
+    },
+    {
+      "id": "lib-mwf141sn-dc952b",
+      "sortNo": 290,
+      "title": "透视图技法 漫画讲解光影与上色",
+      "author": "",
+      "intro": "",
+      "pageCount": 134,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/291-book.pdf",
+      "pdfBytes": 43694956,
+      "coverKey": "library/covers/291-book-cover.jpg",
+      "coverBytes": 289373
+    },
+    {
+      "id": "lib-mwf143pa-cdaad5",
+      "sortNo": 291,
+      "title": "我是漫画家！超质感漫画背景表现技法",
+      "author": "",
+      "intro": "",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/292-book.pdf",
+      "pdfBytes": 46247939,
+      "coverKey": "library/covers/292-book-cover.jpg",
+      "coverBytes": 236057
+    },
+    {
+      "id": "lib-mwf13zvb-86499c",
+      "sortNo": 292,
+      "title": "超级漫画创作技法图解教程 漫画人物画法入门",
+      "author": "",
+      "intro": "",
+      "pageCount": 197,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "绘制漫画所需要的工具",
+          "page": 9
+        },
+        {
+          "title": "本书的使用方法",
+          "page": 11
+        },
+        {
+          "title": "写给读者的话",
+          "page": 13
+        },
+        {
+          "title": "第1章 面部的画法",
+          "page": 15
+        },
+        {
+          "title": "人物的绘画方法1",
+          "page": 15
+        },
+        {
+          "title": "女性面部特写的画法",
+          "page": 15
+        },
+        {
+          "title": "4格漫画剧场1",
+          "page": 17
+        },
+        {
+          "title": "绘制面部的诀窍",
+          "page": 17
+        },
+        {
+          "title": "第1课 女性面部的画法",
+          "page": 19
+        },
+        {
+          "title": "第2课 男性面部的画法",
+          "page": 21
+        },
+        {
+          "title": "第3课 侧面、正侧面面部的画法",
+          "page": 23
+        },
+        {
+          "title": "第4课 仰视、俯视面部的画法",
+          "page": 25
+        },
+        {
+          "title": "4格漫画剧场2",
+          "page": 27
+        },
+        {
+          "title": "用漫画手法表现的部位",
+          "page": 27
+        },
+        {
+          "title": "第5课鼻子的画法",
+          "page": 29
+        },
+        {
+          "title": "第6课 眼睛的画法",
+          "page": 31
+        },
+        {
+          "title": "第7课 眉毛的画法",
+          "page": 33
+        },
+        {
+          "title": "第8课 嘴巴的画法",
+          "page": 34
+        },
+        {
+          "title": "第9课 耳朵的画法",
+          "page": 35
+        },
+        {
+          "title": "第10课 头发的画法",
+          "page": 37
+        },
+        {
+          "title": "4格漫画剧场3",
+          "page": 39
+        },
+        {
+          "title": "人物设定与表情的不同画法",
+          "page": 39
+        },
+        {
+          "title": "第1类 天真烂漫的野丫头",
+          "page": 43
+        },
+        {
+          "title": "第2类 惹人怜爱的淑女",
+          "page": 45
+        },
+        {
+          "title": "第3类 演技出众的“小恶魔”",
+          "page": 47
+        },
+        {
+          "title": "第4类 善于照顾人的“小清新”",
+          "page": 49
+        },
+        {
+          "title": "第5类 好胜而又腼腆的“两面派”",
+          "page": 51
+        },
+        {
+          "title": "第6类 运动全能型校草",
+          "page": 53
+        },
+        {
+          "title": "第7类 自信、脑子聪明的公子哥",
+          "page": 55
+        },
+        {
+          "title": "第8类 爱哭的柔弱美少年",
+          "page": 57
+        },
+        {
+          "title": "专栏1 使用漫符",
+          "page": 59
+        },
+        {
+          "title": "第2章 身体的画法",
+          "page": 61
+        },
+        {
+          "title": "人物的绘画方法2",
+          "page": 61
+        },
+        {
+          "title": "女性身体的画法",
+          "page": 61
+        },
+        {
+          "title": "4格漫画剧场4",
+          "page": 63
+        },
+        {
+          "title": "身体的画法与不同体型的画法",
+          "page": 63
+        },
+        {
+          "title": "第1课 女性身体的画法",
+          "page": 65
+        },
+        {
+          "title": "第2课 男性身体的画法",
+          "page": 69
+        },
+        {
+          "title": "第3课 身体正侧面、侧面的画法",
+          "page": 73
+        },
+        {
+          "title": "第4课 仰视、俯视身体的画法",
+          "page": 77
+        },
+        {
+          "title": "第5课 不同体型的画法",
+          "page": 81
+        },
+        {
+          "title": "4格漫画剧场5",
+          "page": 83
+        },
+        {
+          "title": "男女的不同画法",
+          "page": 83
+        },
+        {
+          "title": "第6课 男女身体基本平衡的差异",
+          "page": 85
+        },
+        {
+          "title": "第7课 男女身体部位的差异",
+          "page": 87
+        },
+        {
+          "title": "4格漫画剧场6",
+          "page": 91
+        },
+        {
+          "title": "为人物添加姿势",
+          "page": 91
+        },
+        {
+          "title": "了解关节的活动",
+          "page": 93
+        },
+        {
+          "title": "动作1 站姿",
+          "page": 97
+        },
+        {
+          "title": "动作2 坐姿",
+          "page": 105
+        },
+        {
+          "title": "动作3 躺卧",
+          "page": 113
+        },
+        {
+          "title": "动作4 基本活动",
+          "page": 117
+        },
+        {
+          "title": "专栏2 使用效果线",
+          "page": 127
+        },
+        {
+          "title": "第3章 衣服的画法",
+          "page": 129
+        },
+        {
+          "title": "专业漫画家的绘制过程",
+          "page": 129
+        },
+        {
+          "title": "女性服装的画法",
+          "page": 129
+        },
+        {
+          "title": "衣服1 水手服",
+          "page": 133
+        },
+        {
+          "title": "衣服2 小西装（女性）",
+          "page": 139
+        },
+        {
+          "title": "更多女高中生人物的画法",
+          "page": 151
+        },
+        {
+          "title": "小外套的搭配方式",
+          "page": 151
+        },
+        {
+          "title": "衣服3 小西装（男性）",
+          "page": 153
+        },
+        {
+          "title": "衣服4 中山装",
+          "page": 157
+        },
+        {
+          "title": "衣服5 白大褂",
+          "page": 159
+        },
+        {
+          "title": "衣服6 正装（女性）",
+          "page": 161
+        },
+        {
+          "title": "衣服7 正装（男性）",
+          "page": 165
+        },
+        {
+          "title": "衣服8 便装（女性）",
+          "page": 171
+        },
+        {
+          "title": "衣服9 便装（情侣）",
+          "page": 175
+        },
+        {
+          "title": "衣服10 便装（男性）",
+          "page": 179
+        },
+        {
+          "title": "衣服11 家居服（睡衣）",
+          "page": 185
+        },
+        {
+          "title": "衣服12 浴衣",
+          "page": 189
+        },
+        {
+          "title": "衣服13 女仆装",
+          "page": 191
+        }
+      ],
+      "pdfKey": "library/books/293-book.pdf",
+      "pdfBytes": 32657653,
+      "coverKey": "library/covers/293-book-cover.jpg",
+      "coverBytes": 212186
+    },
+    {
+      "id": "lib-mwf16vwx-a0bb99",
+      "sortNo": 293,
+      "title": "超级漫画创作技法图解教程 动态人物衣褶的画法",
+      "author": "",
+      "intro": "",
+      "pageCount": 198,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/294-book.pdf",
+      "pdfBytes": 148443529,
+      "coverKey": "library/covers/294-book-cover.jpg",
+      "coverBytes": 285258
+    },
+    {
+      "id": "lib-mwf15e5e-bfa4b3",
+      "sortNo": 294,
+      "title": "超级漫画创作技法图解教程 动漫人物的设定与上色技巧",
+      "author": "",
+      "intro": "",
+      "pageCount": 166,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/295-book.pdf",
+      "pdfBytes": 55288242,
+      "coverKey": "library/covers/295-book-cover.jpg",
+      "coverBytes": 246773
+    },
+    {
+      "id": "lib-mwf1592h-0ecc51",
+      "sortNo": 295,
+      "title": "超级漫画创作技法图解教程 从人物写真学习人物画法",
+      "author": "",
+      "intro": "",
+      "pageCount": 166,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "本书使用方法",
+          "page": 11
+        },
+        {
+          "title": "第1章 漫画素描的基本技巧",
+          "page": 13
+        },
+        {
+          "title": "什么是漫画素描？",
+          "page": 13
+        },
+        {
+          "title": "最佳头身的绘制方法",
+          "page": 15
+        },
+        {
+          "title": "不同头身人物的不同画法",
+          "page": 17
+        },
+        {
+          "title": "掌握肌肉的构成",
+          "page": 19
+        },
+        {
+          "title": "区别轮廓线的不同画法",
+          "page": 23
+        },
+        {
+          "title": "不同体格人物的不同线条表现方法",
+          "page": 24
+        },
+        {
+          "title": "男女不同的表现方法",
+          "page": 25
+        },
+        {
+          "title": "画出人物身体的立体感",
+          "page": 27
+        },
+        {
+          "title": "仰视和俯视角度的不同画法",
+          "page": 29
+        },
+        {
+          "title": "专栏 关于提高画功",
+          "page": 31
+        },
+        {
+          "title": "第2章 静止人物的画法",
+          "page": 33
+        },
+        {
+          "title": "站立姿势",
+          "page": 33
+        },
+        {
+          "title": "站立——基本画法",
+          "page": 35
+        },
+        {
+          "title": "站立——仰视与俯视",
+          "page": 39
+        },
+        {
+          "title": "站立——男性",
+          "page": 43
+        },
+        {
+          "title": "各种站立姿势的画法",
+          "page": 45
+        },
+        {
+          "title": "前蹲、后仰",
+          "page": 53
+        },
+        {
+          "title": "重心的确定方法",
+          "page": 55
+        },
+        {
+          "title": "重心的移动",
+          "page": 57
+        },
+        {
+          "title": "倚靠动作",
+          "page": 60
+        },
+        {
+          "title": "肩部的运动变化",
+          "page": 61
+        },
+        {
+          "title": "单臂上举",
+          "page": 63
+        },
+        {
+          "title": "双手抱头",
+          "page": 65
+        },
+        {
+          "title": "两臂前伸",
+          "page": 67
+        },
+        {
+          "title": "坐姿",
+          "page": 69
+        },
+        {
+          "title": "坐在椅子上",
+          "page": 71
+        },
+        {
+          "title": "其他坐姿的画法",
+          "page": 73
+        },
+        {
+          "title": "席地而坐",
+          "page": 75
+        },
+        {
+          "title": "各种不同坐姿",
+          "page": 78
+        },
+        {
+          "title": "卧姿",
+          "page": 79
+        },
+        {
+          "title": "各种不同卧姿的画法",
+          "page": 81
+        },
+        {
+          "title": "专栏 人物和透视效果的关系",
+          "page": 83
+        },
+        {
+          "title": "第3章 动态人物的画法",
+          "page": 85
+        },
+        {
+          "title": "行走",
+          "page": 85
+        },
+        {
+          "title": "行走——基本动作",
+          "page": 87
+        },
+        {
+          "title": "行走动作的俯视图",
+          "page": 89
+        },
+        {
+          "title": "行走动作的仰视图",
+          "page": 91
+        },
+        {
+          "title": "跑步",
+          "page": 93
+        },
+        {
+          "title": "跑步——基本动作",
+          "page": 95
+        },
+        {
+          "title": "各种不同的跑步姿势",
+          "page": 97
+        },
+        {
+          "title": "跳跃",
+          "page": 99
+        },
+        {
+          "title": "跳跃——竖直向上跳起",
+          "page": 101
+        },
+        {
+          "title": "踢腿",
+          "page": 103
+        },
+        {
+          "title": "各种不同的踢腿姿势",
+          "page": 105
+        },
+        {
+          "title": "出拳",
+          "page": 107
+        },
+        {
+          "title": "各种不同的出拳姿势",
+          "page": 109
+        },
+        {
+          "title": "专栏 漫画作为表现手段的作用",
+          "page": 111
+        },
+        {
+          "title": "第4章 日常动作的画法",
+          "page": 113
+        },
+        {
+          "title": "表现人物感情的动作",
+          "page": 113
+        },
+        {
+          "title": "大笑",
+          "page": 113
+        },
+        {
+          "title": "哭泣",
+          "page": 115
+        },
+        {
+          "title": "生气",
+          "page": 117
+        },
+        {
+          "title": "兴奋",
+          "page": 118
+        },
+        {
+          "title": "日常生活中的身体动作",
+          "page": 119
+        },
+        {
+          "title": "换衣服",
+          "page": 119
+        },
+        {
+          "title": "戴、摘眼镜动作",
+          "page": 123
+        },
+        {
+          "title": "喝水",
+          "page": 125
+        },
+        {
+          "title": "推与拉",
+          "page": 126
+        },
+        {
+          "title": "上台阶",
+          "page": 127
+        },
+        {
+          "title": "下台阶",
+          "page": 129
+        },
+        {
+          "title": "搬重物",
+          "page": 131
+        },
+        {
+          "title": "道歉",
+          "page": 132
+        },
+        {
+          "title": "读书",
+          "page": 133
+        },
+        {
+          "title": "使用手机",
+          "page": 134
+        },
+        {
+          "title": "梳头发",
+          "page": 135
+        },
+        {
+          "title": "无意识动作",
+          "page": 136
+        },
+        {
+          "title": "专栏 将画画看作自己的本职工作",
+          "page": 137
+        },
+        {
+          "title": "第5章 衣服的画法",
+          "page": 139
+        },
+        {
+          "title": "人物衣服的画法",
+          "page": 139
+        },
+        {
+          "title": "女性制服的画法",
+          "page": 141
+        },
+        {
+          "title": "手臂弯曲",
+          "page": 142
+        },
+        {
+          "title": "女性坐姿",
+          "page": 143
+        },
+        {
+          "title": "女性行走",
+          "page": 145
+        },
+        {
+          "title": "水手服的画法",
+          "page": 146
+        },
+        {
+          "title": "男性制服的画法",
+          "page": 147
+        },
+        {
+          "title": "双手抱胸",
+          "page": 148
+        },
+        {
+          "title": "男性坐姿",
+          "page": 149
+        },
+        {
+          "title": "男性行走",
+          "page": 150
+        },
+        {
+          "title": "女性便服的画法",
+          "page": 151
+        },
+        {
+          "title": "宽松T恤＋超短裙",
+          "page": 151
+        },
+        {
+          "title": "T恤＋牛仔裤",
+          "page": 153
+        },
+        {
+          "title": "连衣裙",
+          "page": 155
+        },
+        {
+          "title": "男性便服的画法",
+          "page": 157
+        },
+        {
+          "title": "衬衫＋牛仔裤",
+          "page": 157
+        },
+        {
+          "title": "长袖T恤＋短裤",
+          "page": 158
+        },
+        {
+          "title": "开衫＋棉布裤",
+          "page": 158
+        },
+        {
+          "title": "着色的方法",
+          "page": 159
+        }
+      ],
+      "pdfKey": "library/books/296-book.pdf",
+      "pdfBytes": 31600229,
+      "coverKey": "library/covers/296-book-cover.jpg",
+      "coverBytes": 209012
+    },
+    {
+      "id": "lib-mwf16u6n-ff2648",
+      "sortNo": 296,
+      "title": "超级漫画创作技法图解教程 从人体解剖学习人物画法",
+      "author": "",
+      "intro": "",
+      "pageCount": 198,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/297-book.pdf",
+      "pdfBytes": 78477765,
+      "coverKey": "library/covers/297-book-cover.jpg",
+      "coverBytes": 223409
+    },
+    {
+      "id": "lib-mwf16pp9-ef830f",
+      "sortNo": 297,
+      "title": "当COPIC马克笔遇见萌美少女",
+      "author": "",
+      "intro": "",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/298-book.pdf",
+      "pdfBytes": 37148856,
+      "coverKey": "library/covers/298-book-cover.jpg",
+      "coverBytes": 385628
+    },
+    {
+      "id": "lib-mwf17oa7-cb85a0",
+      "sortNo": 298,
+      "title": "加藤春日X碧风羽 马克笔日本绘画大师讲座",
+      "author": "",
+      "intro": "",
+      "pageCount": 264,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/299-book.pdf",
+      "pdfBytes": 79785764,
+      "coverKey": "library/covers/299-book-cover.jpg",
+      "coverBytes": 283401
+    },
+    {
+      "id": "lib-mwf17jw8-892de9",
+      "sortNo": 299,
+      "title": "一学就会·日本漫画名家学堂 漫画速成25诀窍",
+      "author": "",
+      "intro": "",
+      "pageCount": 131,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/300-book.pdf",
+      "pdfBytes": 28792201,
+      "coverKey": "library/covers/300-book-cover.jpg",
+      "coverBytes": 320907
     }
   ]
 }
