@@ -28754,6 +28754,22 @@ function renderRef() {
         '<span class="hm-ref-tag">图' + (idx + 1) + '</span>' +
         check;
 
+      /* 旧版本把 preview 存成了 1:1 裁切图：加载后若比例与原图不符，
+         回退到完整 dataUrl，保证宽度按原图比例、不裁切。 */
+      var cellImg = cell.querySelector('img');
+      if (cellImg) {
+        cellImg.addEventListener('load', function () {
+          var refW = Number(ref.width) || 0;
+          var refH = Number(ref.height) || 0;
+          if (!refW || !refH || !cellImg.naturalWidth || !cellImg.naturalHeight) return;
+          var want = refW / refH;
+          var got = cellImg.naturalWidth / cellImg.naturalHeight;
+          if (Math.abs(got - want) > want * 0.02 && ref.dataUrl && cellImg.getAttribute('src') !== ref.dataUrl) {
+            cellImg.src = ref.dataUrl;
+          }
+        });
+      }
+
       /* 事件：选择模式下点击 cell = toggle 选中；否则点击 = 打开全屏 */
       cell.addEventListener('click', function (ev) {
         if (_refSelectMode) {
@@ -29238,11 +29254,15 @@ async function pickRefFile(file) {
     var side = Math.min(width, height);
     tCtx.drawImage(canvas, (width - side) / 2, (height - side) / 2, side, side, 0, 0, 48, 48);
 
-    /* 高清预览：参考图网格最大显示 128px，用 384px 源（3x）保证放大不糊 */
+    /* 高清预览：长边 384px（网格最大 256px 时够清晰）。
+       必须保留原图比例，不能裁成 1:1，否则网格宽度会跟着预览图变成正方形。 */
+    var pScale = Math.min(1, 384 / Math.max(width, height));
+    var pWidth = Math.max(1, Math.round(width * pScale));
+    var pHeight = Math.max(1, Math.round(height * pScale));
     var pCanvas = document.createElement('canvas');
-    pCanvas.width = 384;
-    pCanvas.height = 384;
-    pCanvas.getContext('2d').drawImage(canvas, (width - side) / 2, (height - side) / 2, side, side, 0, 0, 384, 384);
+    pCanvas.width = pWidth;
+    pCanvas.height = pHeight;
+    pCanvas.getContext('2d').drawImage(canvas, 0, 0, pWidth, pHeight);
 
     var arr = currentRefs();
     arr.push({
