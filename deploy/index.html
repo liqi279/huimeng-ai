@@ -4038,11 +4038,16 @@ body.hm-resizing * {
   height: 27px;
   padding-left: 12px;
   flex-shrink: 0; /* 固定 tabs 高度，不被压缩 */
+  max-width: 100%;
+  overflow-x: auto; /* 口袋过多时横向滚动，绝不换行错位 */
+  scrollbar-width: none;
 }
+.hm-tabs::-webkit-scrollbar { display: none; }
 
 .hm-tab {
   height: 25px;
   min-width: 40px;
+  max-width: 132px;
   padding: 0 10px;
   border-radius: 6px 6px 0 0;
   border: 1px solid transparent;
@@ -4051,8 +4056,31 @@ body.hm-resizing * {
   color: #7f93aa;
   font-size: 11px;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
   transition: color 0.18s ease, background 0.18s ease;
 }
+.hm-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-tab-del {
+  display: none;
+  flex: 0 0 auto;
+  color: rgba(148, 163, 184, 0.9);
+  font-size: 12px;
+  line-height: 1;
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+.hm-tab:hover .hm-tab-del,
+.hm-tab.is-active .hm-tab-del { display: inline-block; }
+.hm-tab-del:hover { color: #fda4af; background: rgba(251, 113, 133, 0.15); }
 
 .hm-tab:hover {
   color: #cfe4f7;
@@ -8020,6 +8048,13 @@ body.hm-light .hm-page-empty {
   display: block;
   object-fit: cover;
   pointer-events: none;
+}
+
+/* 桌面作品卡：缩略图按作品原比例完整显示，不裁切不拉伸 */
+.desk-thumb .desk-media-inner img,
+.desk-thumb .desk-media-inner video {
+  object-fit: contain;
+  background: #0a1320;
 }
 
 .desk-media-inner.is-audio,
@@ -24972,7 +25007,7 @@ body.dv-open .hm-page {
                 </div>
                 <div class="hm-slider" title="参考主体强度">
                   <svg class="hm-slider-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 19h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="8" y="8" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-                  <input type="range" id="refWeightSlider" min="0" max="100" step="5" value="70">
+                  <input type="range" id="refWeightSlider" min="0" max="200" step="5" value="70">
                   <span id="refWeightLabel" class="hm-slider-val">70%</span>
                 </div>
               </div>
@@ -27246,7 +27281,8 @@ const state = {
   translationCache: new Map(),
   refImages: [],                      // 兼容旧 key（单个 tab 的遗留）
   tabRefs: [[]],                      // 每个 prompt tab 独立的参考图 [{dataUrl,width,height,weight,name}]
-  tabRefWeights: [70],                // 每个 tab 全局参考主体强度
+  tabRefWeights: [70],                // 每个 tab 全局参考主体强度（0~200）
+  promptNames: [''],                  // 每个口袋的自定义名称，空字符串回退为编号
   fontSize: 13,
   refWeight: 70,
   prompts: ['', ''],
@@ -27268,6 +27304,9 @@ const state = {
 function ensureTabSlots() {
   while (state.tabRefs.length < state.prompts.length) state.tabRefs.push([]);
   while (state.tabRefWeights.length < state.prompts.length) state.tabRefWeights.push(70);
+  if (!Array.isArray(state.promptNames)) state.promptNames = [];
+  while (state.promptNames.length < state.prompts.length) state.promptNames.push('');
+  if (state.promptNames.length > state.prompts.length) state.promptNames.length = state.prompts.length;
 }
 ensureTabSlots();
 /* 迁移遗留：旧版全局 state.refImages 放进 tab 0 */
@@ -27301,11 +27340,12 @@ function setCurrentTabRefWeight(v) {
   state.refWeight = v; /* 兼容旧字段 */
 }
 
-/* 参考主体强度 → 参考图卡片边长（px）：0% = 32、70% = 80、100% = 128，分段线性 */
+/* 参考主体强度 → 参考图卡片边长（px）：0% = 32、70% = 80、100% = 128、200% = 256，分段线性 */
 function refWeightToCellSize(v) {
-  v = Math.max(0, Math.min(100, Number(v) || 0));
+  v = Math.max(0, Math.min(200, Number(v) || 0));
   if (v <= 70) return 32 + (48 / 70) * v;
-  return 80 + (48 / 30) * (v - 70);
+  if (v <= 100) return 80 + (48 / 30) * (v - 70);
+  return 128 + (128 / 100) * (v - 100);
 }
 /* 按钮上直接显示当前两个值，不必打开浮层 */
 function updateSliderBtn() {
@@ -27360,7 +27400,7 @@ function applyRefPreviewScale(v) {
 function applyRefWeightUI(v) {
   v = Number(v);
   if (!isFinite(v)) v = 70;
-  v = Math.max(0, Math.min(100, Math.round(v)));
+  v = Math.max(0, Math.min(200, Math.round(v)));
   var slider = document.getElementById('refWeightSlider');
   var label = document.getElementById('refWeightLabel');
   if (label) label.textContent = v + '%';
@@ -27421,6 +27461,7 @@ function composerSnapshot() {
   if (els.promptInput) state.prompts[state.activePrompt] = els.promptInput.value || '';
   return {
     prompts: state.prompts.slice(),
+    names: state.promptNames.slice(),
     refs: state.tabRefs.map(function (arr) { return (arr || []).slice(); }),
     weights: state.tabRefWeights.slice(),
     active: state.activePrompt
@@ -27432,6 +27473,7 @@ function saveComposer() {
   var snap = composerSnapshot();
   var entry = {
     prompts: snap.prompts,
+    names: snap.names,
     refs: snap.refs,
     weights: snap.weights,
     active: snap.active
@@ -27469,10 +27511,13 @@ function applyComposer(data) {
   var prompts = (data && Array.isArray(data.prompts) && data.prompts.length) ? data.prompts.slice() : ['', ''];
   var refs = (data && Array.isArray(data.refs)) ? data.refs.slice() : [];
   var weights = (data && Array.isArray(data.weights)) ? data.weights.slice() : [];
+  var names = (data && Array.isArray(data.names)) ? data.names.slice() : [];
   while (refs.length < prompts.length) refs.push([]);
   while (weights.length < prompts.length) weights.push(70);
+  while (names.length < prompts.length) names.push('');
   state.prompts = prompts;
   state.tabPrompts = prompts;
+  state.promptNames = names.slice(0, prompts.length);
   state.tabRefs = refs;
   state.tabRefWeights = weights;
   state.activePrompt = Math.min(Math.max(Number(data && data.active) || 0, 0), prompts.length - 1);
@@ -28141,19 +28186,50 @@ function syncModelUI() {
 
 const COUNT_OPTIONS = [1, 2, 4];
 
-/* 描述多标签：1 / 2 / +，每个标签保存一份草稿 */
+/* 描述多标签（口袋）：可增删、可重命名，数量上限按参考主体区域当前宽度动态计算 */
+function promptTabAreaWidth() {
+  var drop = document.getElementById('refDrop');
+  var w = drop && !drop.hidden ? drop.clientWidth : 0;
+  if (!w) {
+    var comp = document.getElementById('composer');
+    w = comp ? comp.clientWidth - 24 : 360;
+  }
+  return Math.max(160, Math.floor(w));
+}
+function promptTabMaxCount() {
+  /* 单个口袋约 50px（40 最小宽 + 内边距），加号 30px，间距 4px；
+     按参考主体区域可用宽度算，至少 1 个，最多 12 个。 */
+  var w = promptTabAreaWidth();
+  return Math.max(1, Math.min(12, Math.floor((w + 4) / 60)));
+}
+function promptTabLabel(index) {
+  var name = (state.promptNames && state.promptNames[index]) || '';
+  name = String(name).trim();
+  return name || String(index + 1);
+}
 function renderPromptTabs() {
   if (!els.promptTabs || !els.addPromptTab) return;
+  ensureTabSlots();
   els.promptTabs.querySelectorAll('.hm-tab[data-tab]').forEach(function (node) { node.remove(); });
   state.prompts.forEach(function (_, index) {
     const btn = document.createElement('button');
     btn.className = 'hm-tab' + (index === state.activePrompt ? ' is-active' : '');
     btn.dataset.tab = String(index);
-    btn.textContent = String(index + 1);
-    btn.setAttribute('aria-label', '描述 ' + (index + 1));
+    btn.title = (state.promptNames[index] || '口袋 ' + (index + 1)) + '（双击重命名）';
+    btn.setAttribute('aria-label', '口袋 ' + promptTabLabel(index));
+    var label = document.createElement('span');
+    label.className = 'hm-tab-label';
+    label.textContent = promptTabLabel(index);
+    var del = document.createElement('span');
+    del.className = 'hm-tab-del';
+    del.dataset.del = String(index);
+    del.title = '删除这个口袋';
+    del.textContent = '×';
+    btn.appendChild(label);
+    btn.appendChild(del);
     els.promptTabs.insertBefore(btn, els.addPromptTab);
   });
-  els.addPromptTab.hidden = state.prompts.length >= 5;
+  els.addPromptTab.hidden = state.prompts.length >= promptTabMaxCount();
 }
 
 function switchPromptTab(index) {
@@ -28170,12 +28246,54 @@ function switchPromptTab(index) {
   scheduleComposerSave();
 }
 
+/* 删除口袋：编号自动顺延，选中态落到相邻口袋；至少保留一个 */
+function deletePromptTab(index) {
+  ensureTabSlots();
+  if (index < 0 || index >= state.prompts.length) return;
+  state.prompts[state.activePrompt] = els.promptInput.value || '';
+  if (state.prompts.length <= 1) {
+    state.prompts = [''];
+    state.promptNames = [''];
+    state.tabRefs = [[]];
+    state.tabRefWeights = [70];
+    state.activePrompt = 0;
+  } else {
+    state.prompts.splice(index, 1);
+    state.promptNames.splice(index, 1);
+    state.tabRefs.splice(index, 1);
+    state.tabRefWeights.splice(index, 1);
+    if (state.activePrompt > index) state.activePrompt -= 1;
+    else if (state.activePrompt === index) state.activePrompt = Math.min(index, state.prompts.length - 1);
+  }
+  state.tabPrompts = state.prompts;
+  ensureTabSlots();
+  els.promptInput.value = state.prompts[state.activePrompt] || '';
+  renderPromptTabs();
+  renderRef();
+  applyRefWeightUI(currentTabRefWeight());
+  updateCharCount();
+  scheduleComposerSave();
+}
+
+/* 双击口袋重命名；空名字回退为编号 */
+function renamePromptTab(index) {
+  ensureTabSlots();
+  if (index < 0 || index >= state.prompts.length) return;
+  var cur = state.promptNames[index] || '';
+  var input = window.prompt('口袋名称（留空则显示编号 ' + (index + 1) + '）', cur);
+  if (input === null) return;
+  state.promptNames[index] = String(input).trim().slice(0, 12);
+  renderPromptTabs();
+  scheduleComposerSave();
+}
+
 /* 新增 tab 时也要同步 refs 插槽 */
 function addPromptTab() {
-  if (state.prompts.length >= 5) return;
+  if (state.prompts.length >= promptTabMaxCount()) return;
   ensureTabSlots();
   state.prompts[state.activePrompt] = els.promptInput.value;
   state.prompts.push('');
+  state.promptNames.push('');
   state.tabRefs.push([]);
   state.tabRefWeights.push(70);
   state.activePrompt = state.prompts.length - 1;
@@ -28186,6 +28304,22 @@ function addPromptTab() {
   updateCharCount();
   scheduleComposerSave();
   els.promptInput.focus();
+}
+
+/* 窗口变窄/缩放字号/拖拽 composer 后，按参考主体区域宽度重算口袋上限 */
+var _promptTabResizeTimer = 0;
+function schedulePromptTabLimitRefresh() {
+  if (_promptTabResizeTimer) clearTimeout(_promptTabResizeTimer);
+  _promptTabResizeTimer = setTimeout(function () {
+    _promptTabResizeTimer = 0;
+    renderPromptTabs();
+  }, 120);
+}
+window.addEventListener('resize', schedulePromptTabLimitRefresh);
+if (window.ResizeObserver) {
+  var _promptTabRO = new ResizeObserver(schedulePromptTabLimitRefresh);
+  var _composerEl = document.getElementById('composer');
+  if (_composerEl) _promptTabRO.observe(_composerEl);
 }
 
 /* 档位图标：1K/2K 柱状，4K 与自定义用板状 */
@@ -32000,8 +32134,21 @@ function bindEvents() {
         addPromptTab();
         return;
       }
+      const del = event.target.closest('[data-del]');
+      if (del) {
+        event.stopPropagation();
+        deletePromptTab(Number(del.dataset.del));
+        return;
+      }
       const tab = event.target.closest('[data-tab]');
       if (tab) switchPromptTab(Number(tab.dataset.tab));
+    });
+    els.promptTabs.addEventListener('dblclick', function (event) {
+      const tab = event.target.closest('[data-tab]');
+      if (tab) {
+        event.preventDefault();
+        renamePromptTab(Number(tab.dataset.tab));
+      }
     });
   }
 
@@ -65803,8 +65950,27 @@ window.HMChat = (function () {
 
   var CARD_W = 200;
   var CARD_H = 240;
+  var DESK_INFO_H = 72; /* 标题 + 副标题 + 操作按钮的固定高度 */
   var GAP = 14;
   var PAD = 12;
+
+  /* 作品卡尺寸：按原图长宽比缩放到格位可用空间内，取宽高上限后等比收缩，
+     保证卡片不超出 200×240 的格位、不压到邻卡 */
+  function deskCardSize(work) {
+    var maxW = cardWidth();
+    var maxThumbH = CARD_H - DESK_INFO_H;
+    var aw = Number(work && work.width) || 0;
+    var ah = Number(work && work.height) || 0;
+    if (!(aw > 0 && ah > 0)) return { w: maxW, h: CARD_H };
+    var ratio = aw / ah;
+    var thumbW = maxW;
+    var thumbH = maxW / ratio;
+    if (thumbH > maxThumbH) {
+      thumbH = maxThumbH;
+      thumbW = maxThumbH * ratio;
+    }
+    return { w: Math.round(thumbW), h: Math.round(thumbH) + DESK_INFO_H };
+  }
 
   /* ---------------- 数据 ---------------- */
   var desk = {
@@ -66698,7 +66864,9 @@ window.HMChat = (function () {
   }
 
   function deskCardHtml(work) {
-    return '<article class="desk-card" data-work="' + esc(work.id) + '" data-type="' + esc(work.type || 'image') + '">' +
+    var size = deskCardSize(work);
+    return '<article class="desk-card" data-work="' + esc(work.id) + '" data-type="' + esc(work.type || 'image') +
+      '" style="width:' + size.w + 'px;height:' + size.h + 'px">' +
       deskCardHtmlInner(work) +
       '</article>';
   }
@@ -66844,6 +67012,9 @@ window.HMChat = (function () {
         grid.appendChild(existing);
       }
       existing.innerHTML = deskCardHtmlInner(w);
+      var sz = deskCardSize(w);
+      existing.style.width = sz.w + 'px';
+      existing.style.height = sz.h + 'px';
       existing.classList.toggle('is-failed', !!(w.failed || w.ok === false));
       placeCard(existing, w.id, idx, grid, occupied);
       idx += 1;
