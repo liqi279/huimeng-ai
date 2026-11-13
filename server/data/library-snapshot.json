@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T17:05:29.531Z",
+  "generatedAt": "2026-11-13T18:34:23.261Z",
   "source": "huimeng_library.books",
-  "total": 391,
+  "total": 401,
   "areas": {
-    "paint": 375,
+    "paint": 385,
     "ref": 16
   },
   "books": [
@@ -18804,6 +18804,175 @@
       "pdfBytes": 41159590,
       "coverKey": "library/covers/400-book-cover.jpg",
       "coverBytes": 326214
+    },
+    {
+      "id": "lib-mwfapqmv-09282c",
+      "sortNo": 401,
+      "title": "数码绘漫画的技巧 2nd update",
+      "author": "[日] comico編集部",
+      "intro": "原名《デジタル漫画のテクニック 2nd update》，一本使用CLIP STUDIO PAINT(CSP)绘制长条漫画的教程。",
+      "pageCount": 249,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/402-book.pdf",
+      "pdfBytes": 110395006,
+      "coverKey": "library/covers/402-book-cover.jpg",
+      "coverBytes": 219971
+    },
+    {
+      "id": "lib-mwfap140-fc3ced",
+      "sortNo": 402,
+      "title": "有趣的笔记本、日记、手帐的轻速写",
+      "author": "[日]corekiyo/スギタメグ",
+      "intro": "原名《ノート・日記・手帳が楽しくなる ゆるスケッチ》，简笔画教程。",
+      "pageCount": 113,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/403-book.pdf",
+      "pdfBytes": 24284095,
+      "coverKey": "library/covers/403-book-cover.jpg",
+      "coverBytes": 244207
+    },
+    {
+      "id": "lib-mwfaozfl-88f693",
+      "sortNo": 403,
+      "title": "初次的人物插图课",
+      "author": "[日] 岩崎宏",
+      "intro": "原名《はじめての人物イラストレッスン帳》，一本人物绘制教程。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/404-book.pdf",
+      "pdfBytes": 33064649,
+      "coverKey": "library/covers/404-book-cover.jpg",
+      "coverBytes": 184879
+    },
+    {
+      "id": "lib-mwfaqzku-90ed5b",
+      "sortNo": 405,
+      "title": "幻想速写 动画&漫画",
+      "author": "3dtotal Publishing",
+      "intro": "原名《Sketching from the Imagination: Anime & Manga》，50位画师合作推出的一本漫画教程，俄文版本，可以当画集收藏。",
+      "pageCount": 323,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/406-book.pdf",
+      "pdfBytes": 78734120,
+      "coverKey": "library/covers/406-book-cover.jpg",
+      "coverBytes": 265192
+    },
+    {
+      "id": "lib-mwfaq59t-51081e",
+      "sortNo": 406,
+      "title": "Sketch with Asia：Asia Ladowska的漫画风格艺术和教程",
+      "author": "Asia Ladowska、3dtotal Publishing",
+      "intro": "原名《Sketch with Asia: Manga-inspired Art and Tutorials by Asia Ladowska》，英国画师Asia Ladowska的一本漫画教程，俄文版本，当画集看也挺精美的。",
+      "pageCount": 170,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/407-book.pdf",
+      "pdfBytes": 34806950,
+      "coverKey": "library/covers/407-book-cover.jpg",
+      "coverBytes": 171420
+    },
+    {
+      "id": "lib-mwfb4z8z-00f99b",
+      "sortNo": 407,
+      "title": "艺术家大师系列 色彩和光线",
+      "author": "3dtotal Publishing",
+      "intro": "原名《Artists’ Master Series: Color and Light》，一本比较硬核的色彩与光线的教程，日文名《色と光マスターガイド イラスト上達のための理論と実践》。",
+      "pageCount": 384,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/408-book.pdf",
+      "pdfBytes": 970278761,
+      "coverKey": "library/covers/408-book-cover.jpg",
+      "coverBytes": 276030
+    },
+    {
+      "id": "lib-mwfat67h-efd012",
+      "sortNo": 408,
+      "title": "从基础到实践全网罗 背景的画法",
+      "author": "[日] 高原 さと",
+      "intro": "原名《基礎から実践まで全網羅 背景の描き方》，一本背景绘制教程，使用的是PHOTOSHOP CC2019，附带了笔刷、PSD源文件、视频等等特典内容。",
+      "pageCount": 260,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/409-book.pdf",
+      "pdfBytes": 115322035,
+      "coverKey": "library/covers/409-book-cover.jpg",
+      "coverBytes": 305719
+    },
+    {
+      "id": "lib-mwfb3udn-a6e046",
+      "sortNo": 409,
+      "title": "吉田誠治作品集&パース徹底テクニック",
+      "author": "日本插画师吉田誠治(Yoshida Seiji、吉田诚治)",
+      "intro": "日本插画师吉田誠治(Yoshida Seiji、吉田诚治)的画集+透视教程，分辨率不高，文字不是很清晰，附带一个2倍分辨率的版本，拼合了部分能完美拼合的图片。",
+      "pageCount": 296,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/410-book.pdf",
+      "pdfBytes": 722149117,
+      "coverKey": "library/covers/410-book-cover.jpg",
+      "coverBytes": 138834
+    },
+    {
+      "id": "lib-mwfavsz3-e9a74a",
+      "sortNo": 410,
+      "title": "插图“光与色彩”的解构新书",
+      "author": "[日] ダテナオト",
+      "intro": "原名《イラスト<光と色彩>解体新書》，漫画进阶教程，一本讲解光线和配色的教程，清晰度一般。",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/411-book.pdf",
+      "pdfBytes": 95216726,
+      "coverKey": "library/covers/411-book-cover.jpg",
+      "coverBytes": 193652
+    },
+    {
+      "id": "lib-mwfax40o-d843c0",
+      "sortNo": 411,
+      "title": "Mitch Leeuwe简易绘画入门系列7册合集",
+      "author": "人气画师Mitch Leeuwe",
+      "intro": "人气画师Mitch Leeuwe的一套简易的绘画入门教程，涵盖了：角色组合、服装、面部表情、头像、道具、车辆、背景等等主题，有6册分辨率不高，不影响观看。",
+      "pageCount": 232,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to create a portfolio",
+          "page": 1
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw clothing",
+          "page": 50
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw facial expressions",
+          "page": 88
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw heads",
+          "page": 112
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw props",
+          "page": 144
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw Vehicles",
+          "page": 173
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How To Paint Backgrounds",
+          "page": 205
+        }
+      ],
+      "pdfKey": "library/books/412-book.pdf",
+      "pdfBytes": 43489048,
+      "coverKey": "library/covers/412-book-cover.jpg",
+      "coverBytes": 139317
     }
   ]
 }
