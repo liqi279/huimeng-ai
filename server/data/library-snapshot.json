@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T13:32:34.112Z",
+  "generatedAt": "2026-11-13T13:38:51.701Z",
   "source": "huimeng_library.books",
-  "total": 266,
+  "total": 276,
   "areas": {
-    "paint": 250,
+    "paint": 260,
     "ref": 16
   },
   "books": [
@@ -11904,6 +11904,818 @@
       "pdfBytes": 62826282,
       "coverKey": "library/covers/270-book-cover.jpg",
       "coverBytes": 187110
+    },
+    {
+      "id": "lib-mwf0pwbn-6d3c75",
+      "sortNo": 270,
+      "title": "日本漫画名家CG课堂1 水上香的漫画CG技巧",
+      "author": "",
+      "intro": "",
+      "pageCount": 184,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "第一章 从草图到线稿完成",
+          "page": 15
+        },
+        {
+          "title": "草图的绘制",
+          "page": 16
+        },
+        {
+          "title": "底稿的绘制1",
+          "page": 20
+        },
+        {
+          "title": "底稿的绘制2",
+          "page": 22
+        },
+        {
+          "title": "主线的绘制",
+          "page": 24
+        },
+        {
+          "title": "外套的绘制",
+          "page": 27
+        },
+        {
+          "title": "裙子的绘制",
+          "page": 29
+        },
+        {
+          "title": "手部的绘制",
+          "page": 33
+        },
+        {
+          "title": "眼球的绘制",
+          "page": 34
+        },
+        {
+          "title": "调整脸部平衡",
+          "page": 35
+        },
+        {
+          "title": "腿的绘制",
+          "page": 36
+        },
+        {
+          "title": "鞋的绘制",
+          "page": 39
+        },
+        {
+          "title": "头发的绘制",
+          "page": 41
+        },
+        {
+          "title": "小提琴箱的绘制",
+          "page": 44
+        },
+        {
+          "title": "裙边的绘制",
+          "page": 47
+        },
+        {
+          "title": "站立少女的绘制",
+          "page": 52
+        },
+        {
+          "title": "下半身的绘制",
+          "page": 55
+        },
+        {
+          "title": "手和头部的绘制",
+          "page": 59
+        },
+        {
+          "title": "第二章 使用SAI进行着色",
+          "page": 65
+        },
+        {
+          "title": "图层的合并及线稿的着色",
+          "page": 66
+        },
+        {
+          "title": "外套的着色",
+          "page": 69
+        },
+        {
+          "title": "裙子的着色",
+          "page": 73
+        },
+        {
+          "title": "连衣裙、贝雷帽和头发的着色",
+          "page": 76
+        },
+        {
+          "title": "脸部的着色",
+          "page": 82
+        },
+        {
+          "title": "在外套上添加阴影",
+          "page": 94
+        },
+        {
+          "title": "头发的着色",
+          "page": 99
+        },
+        {
+          "title": "裙子的着色",
+          "page": 106
+        },
+        {
+          "title": "袜子的着色",
+          "page": 109
+        },
+        {
+          "title": "鞋和小提琴箱的着色",
+          "page": 115
+        },
+        {
+          "title": "花边的着色",
+          "page": 121
+        },
+        {
+          "title": "发带和领带的着色",
+          "page": 124
+        },
+        {
+          "title": "眼球的着色",
+          "page": 126
+        },
+        {
+          "title": "外套的最后加工",
+          "page": 133
+        },
+        {
+          "title": "各部分的最后加工",
+          "page": 137
+        },
+        {
+          "title": "使用Photoshop进行最后加工",
+          "page": 141
+        },
+        {
+          "title": "第三章 使用SAI和Painter进行着色",
+          "page": 149
+        },
+        {
+          "title": "使用SAI对线稿进行着色",
+          "page": 150
+        },
+        {
+          "title": "天空的着色",
+          "page": 154
+        },
+        {
+          "title": "古迹的着色",
+          "page": 159
+        },
+        {
+          "title": "脸部的着色",
+          "page": 164
+        },
+        {
+          "title": "衬衫的着色",
+          "page": 168
+        },
+        {
+          "title": "头发的着色",
+          "page": 170
+        },
+        {
+          "title": "大提琴的着色",
+          "page": 174
+        },
+        {
+          "title": "小提琴的着色",
+          "page": 177
+        },
+        {
+          "title": "眼球的着色",
+          "page": 179
+        },
+        {
+          "title": "十字架图案和其他部分的着色",
+          "page": 182
+        },
+        {
+          "title": "裙子颜色的变更",
+          "page": 1
+        },
+        {
+          "title": "花边花纹的着色",
+          "page": 1
+        },
+        {
+          "title": "为裙子和头发增加高光及阴影",
+          "page": 1
+        },
+        {
+          "title": "花纹的添加及使用Photoshop完成最后的加工",
+          "page": 1
+        },
+        {
+          "title": "第四章 彩色画及线稿画廊",
+          "page": 1
+        }
+      ],
+      "pdfKey": "library/books/271-book.pdf",
+      "pdfBytes": 54864445,
+      "coverKey": "library/covers/271-book-cover.jpg",
+      "coverBytes": 332742
+    },
+    {
+      "id": "lib-mwf0q0bf-26645f",
+      "sortNo": 271,
+      "title": "漫画+日本人气绘师乙女创作全攻略",
+      "author": "",
+      "intro": "",
+      "pageCount": 213,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/272-book.pdf",
+      "pdfBytes": 49348548,
+      "coverKey": "library/covers/272-book-cover.jpg",
+      "coverBytes": 366921
+    },
+    {
+      "id": "lib-mwf0prpz-8e9467",
+      "sortNo": 272,
+      "title": "漫画+萌系美少女人气绘师的15堂必修课",
+      "author": "",
+      "intro": "",
+      "pageCount": 157,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Part01白味噌的描绘方法＆人物插画的基础知识",
+          "page": 11
+        },
+        {
+          "title": "Chapter 01从草图到底稿",
+          "page": 13
+        },
+        {
+          "title": "Chapter 02选择颜色＆上色",
+          "page": 21
+        },
+        {
+          "title": "Chapter 03如何描绘人物的身体？",
+          "page": 29
+        },
+        {
+          "title": "Chapter 04面部是人物形象的灵魂！",
+          "page": 37
+        },
+        {
+          "title": "Chapter 05通过“版块划分”简化头发的描绘",
+          "page": 45
+        },
+        {
+          "title": "Part02再加把劲儿！提高人物魅力的技巧",
+          "page": 53
+        },
+        {
+          "title": "Chapter 06攻略服装的褶皱和阴影！",
+          "page": 55
+        },
+        {
+          "title": "Chapter 07通过表情＆举止来表达感情",
+          "page": 63
+        },
+        {
+          "title": "Chapter 08最强的魅力点就是“兽耳”",
+          "page": 71
+        },
+        {
+          "title": "Chapter 09强调可爱感！描绘Q版人物",
+          "page": 79
+        },
+        {
+          "title": "Chapter 10通过构图和姿势来组织画面",
+          "page": 87
+        },
+        {
+          "title": "Part03将个性＆品味化为形状！人物设计的构思方法",
+          "page": 95
+        },
+        {
+          "title": "Chapter 11设计奇幻风格的服装",
+          "page": 97
+        },
+        {
+          "title": "Chapter 12描绘魔法系人物",
+          "page": 105
+        },
+        {
+          "title": "Chapter 13描绘科幻机械系少女",
+          "page": 113
+        },
+        {
+          "title": "Chapter 14通过帽子或兜帽表现神秘的氛围！",
+          "page": 121
+        },
+        {
+          "title": "Chapter 15萌系插画的制作过程",
+          "page": 129
+        },
+        {
+          "title": "涂鸦画廊",
+          "page": 137
+        }
+      ],
+      "pdfKey": "library/books/273-book.pdf",
+      "pdfBytes": 30662471,
+      "coverKey": "library/covers/273-book-cover.jpg",
+      "coverBytes": 277455
+    },
+    {
+      "id": "lib-mwf0qx21-34aead",
+      "sortNo": 273,
+      "title": "漫画+萌系美少女漫画技法全攻略",
+      "author": "",
+      "intro": "",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/274-book.pdf",
+      "pdfBytes": 37666038,
+      "coverKey": "library/covers/274-book-cover.jpg",
+      "coverBytes": 363382
+    },
+    {
+      "id": "lib-mwf0qyz9-7acc4c",
+      "sortNo": 274,
+      "title": "漫画+超质感CG漫画背景表现技法",
+      "author": "",
+      "intro": "",
+      "pageCount": 183,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/275-book.pdf",
+      "pdfBytes": 41863707,
+      "coverKey": "library/covers/275-book-cover.jpg",
+      "coverBytes": 253741
+    },
+    {
+      "id": "lib-mwf0tzvf-793038",
+      "sortNo": 275,
+      "title": "漫画+超人气CG漫画背景创作技法 SAI×Photoshop",
+      "author": "",
+      "intro": "",
+      "pageCount": 183,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/276-book.pdf",
+      "pdfBytes": 254638009,
+      "coverKey": "library/covers/276-book-cover.jpg",
+      "coverBytes": 221629
+    },
+    {
+      "id": "lib-mwf0sweq-7a84ca",
+      "sortNo": 276,
+      "title": "漫画+超级绘师CG漫画绘制全攻略",
+      "author": "",
+      "intro": "",
+      "pageCount": 215,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "关于DVD-ROM",
+          "page": 12
+        },
+        {
+          "title": "CHAPTER 01 用数码工具绘制插画基础篇",
+          "page": 14
+        },
+        {
+          "title": "用SAI＆Photoshop绘制插画",
+          "page": 16
+        },
+        {
+          "title": "绘制插画的基本流程",
+          "page": 18
+        },
+        {
+          "title": "绘制数码插画必备物品",
+          "page": 20
+        },
+        {
+          "title": "插画工具的基本用法",
+          "page": 24
+        },
+        {
+          "title": "了解SAI的基础知识",
+          "page": 26
+        },
+        {
+          "title": "了解Photoshop的基础知识",
+          "page": 32
+        },
+        {
+          "title": "Photoshop Elements",
+          "page": 38
+        },
+        {
+          "title": "SAI与Photoshop的区别",
+          "page": 40
+        },
+        {
+          "title": "CHAPTER 02 专业画师们的图层技巧里克篇",
+          "page": 42
+        },
+        {
+          "title": "利用背景和小物品表现画面的层次",
+          "page": 44
+        },
+        {
+          "title": "为精致华丽的衣服上色",
+          "page": 58
+        },
+        {
+          "title": "人物与写真式背景的融合",
+          "page": 74
+        },
+        {
+          "title": "CHAPTER 03 专业画师们的图层技巧四十八篇",
+          "page": 88
+        },
+        {
+          "title": "背景技巧",
+          "page": 90
+        },
+        {
+          "title": "采用照片背景的插画",
+          "page": 114
+        },
+        {
+          "title": "富有柔和色彩的插画",
+          "page": 134
+        },
+        {
+          "title": "CHAPTER 04 专业大师们的图层技巧但马美一篇",
+          "page": 152
+        },
+        {
+          "title": "冒险游戏及新式着色法",
+          "page": 154
+        },
+        {
+          "title": "对比鲜明的动漫风格色彩",
+          "page": 170
+        },
+        {
+          "title": "CG风和动漫风相结合的色彩",
+          "page": 186
+        },
+        {
+          "title": "CHAPTER 05 APPENDIX篇",
+          "page": 206
+        },
+        {
+          "title": "追加SAI的材质",
+          "page": 208
+        },
+        {
+          "title": "载入Photoshop画笔",
+          "page": 209
+        },
+        {
+          "title": "快速蒙版",
+          "page": 210
+        },
+        {
+          "title": "分辨率dpi",
+          "page": 210
+        },
+        {
+          "title": "配色",
+          "page": 211
+        },
+        {
+          "title": "RGB模式和CMYK模式",
+          "page": 211
+        },
+        {
+          "title": "巧用自由素材",
+          "page": 212
+        },
+        {
+          "title": "将自己拍摄的照片作为素材时的注意事项",
+          "page": 212
+        },
+        {
+          "title": "电脑运行太慢的解决方法",
+          "page": 213
+        },
+        {
+          "title": "定期清理内存",
+          "page": 213
+        },
+        {
+          "title": "按步骤保存文件",
+          "page": 214
+        },
+        {
+          "title": "数位板的设置",
+          "page": 214
+        },
+        {
+          "title": "推荐Web网站",
+          "page": 215
+        },
+        {
+          "title": "人体的绘制方法",
+          "page": 111
+        },
+        {
+          "title": "巧用数码相机",
+          "page": 131
+        }
+      ],
+      "pdfKey": "library/books/277-book.pdf",
+      "pdfBytes": 65711418,
+      "coverKey": "library/covers/277-book-cover.jpg",
+      "coverBytes": 287804
+    },
+    {
+      "id": "lib-mwf0sjip-ad9f01",
+      "sortNo": 277,
+      "title": "漫画+超动感游戏插画角色设计",
+      "author": "",
+      "intro": "",
+      "pageCount": 311,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/278-book.pdf",
+      "pdfBytes": 54828868,
+      "coverKey": "library/covers/278-book-cover.jpg",
+      "coverBytes": 326304
+    },
+    {
+      "id": "lib-mwf0to7c-955d0f",
+      "sortNo": 278,
+      "title": "漫画+81位绘师教你角色创作",
+      "author": "",
+      "intro": "",
+      "pageCount": 231,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "PART 1 绘制角色原型",
+          "page": 17
+        },
+        {
+          "title": "TIPS 001 如何将面部画得自然",
+          "page": 17
+        },
+        {
+          "title": "TIPS 002 设定角色，绘制不同的面部",
+          "page": 19
+        },
+        {
+          "title": "TIPS 003 面部的变形与夸张",
+          "page": 21
+        },
+        {
+          "title": "TIPS 004 尝试绘制Q版角色",
+          "page": 23
+        },
+        {
+          "title": "TIPS 005 生动表情的表现技巧",
+          "page": 27
+        },
+        {
+          "title": "TIPS 006 刻画手部，表现角色",
+          "page": 29
+        },
+        {
+          "title": "TIPS 007 如何画出漂亮的身姿",
+          "page": 33
+        },
+        {
+          "title": "TIPS 008 描绘日常生活中的自然动作",
+          "page": 37
+        },
+        {
+          "title": "TIPS 009 绘制展现女性魅力的姿势",
+          "page": 39
+        },
+        {
+          "title": "TIPS 010 用动作表现性格差异",
+          "page": 41
+        },
+        {
+          "title": "TIPS 011 使用辅助线来描绘角色的外形",
+          "page": 44
+        },
+        {
+          "title": "CHECK！ 游戏角色插画制作——绘制“偶像美少女角色”",
+          "page": 48
+        },
+        {
+          "title": "PART 2 设计角色",
+          "page": 59
+        },
+        {
+          "title": "TIPS 012 考虑角色所处的时代背景",
+          "page": 59
+        },
+        {
+          "title": "TIPS 013 绘制生动的西洋魔幻角色",
+          "page": 63
+        },
+        {
+          "title": "TIPS 014 绘制魔法世界中的生动角色",
+          "page": 67
+        },
+        {
+          "title": "TIPS 015 生动绘制少女游戏角色",
+          "page": 71
+        },
+        {
+          "title": "TIPS 016 生动绘制肌肉型角色",
+          "page": 75
+        },
+        {
+          "title": "TIPS 017 使用小物件来表现角色",
+          "page": 78
+        },
+        {
+          "title": "TIPS 018 思考怪物的造型",
+          "page": 81
+        },
+        {
+          "title": "TIPS 019 如何表现游戏角色的升级",
+          "page": 85
+        },
+        {
+          "title": "TIPS 020 绘制拟人化的角色",
+          "page": 88
+        },
+        {
+          "title": "TIPS 021 按照说明书设定角色",
+          "page": 93
+        },
+        {
+          "title": "TIPS 022 绘制版权插图的技巧",
+          "page": 97
+        },
+        {
+          "title": "TIPS 023 提高线稿的质量",
+          "page": 100
+        },
+        {
+          "title": "TIPS 024 用线稿表现立体感",
+          "page": 104
+        },
+        {
+          "title": "TIPS 025 绘制出容易上色的线稿",
+          "page": 108
+        },
+        {
+          "title": "TIPS 026 使用Illustrator绘制角色",
+          "page": 112
+        },
+        {
+          "title": "TIPS 027 游戏角色插画制作——绘制“机械美少女角色”",
+          "page": 116
+        },
+        {
+          "title": "PART 3 掌握配色和上色方法",
+          "page": 127
+        },
+        {
+          "title": "TIPS 027 了解色相、饱和度、明度等色彩基础知识",
+          "page": 127
+        },
+        {
+          "title": "TIPS 028 掌握配色的基础知识",
+          "page": 131
+        },
+        {
+          "title": "TIPS 029 了解角色的性格属性与配色的关系",
+          "page": 134
+        },
+        {
+          "title": "TIPS 030 让人感到亲切的配色方法",
+          "page": 136
+        },
+        {
+          "title": "TIPS 031 男性化的配色方法",
+          "page": 139
+        },
+        {
+          "title": "TIPS 032 颜色和空间感的表现方法",
+          "page": 142
+        },
+        {
+          "title": "TIPS 033 好好掌握具有代表性的上色方法",
+          "page": 144
+        },
+        {
+          "title": "TIPS 034 上色与质感表现——皮肤",
+          "page": 150
+        },
+        {
+          "title": "TIPS 035 上色与质感表现——头发",
+          "page": 155
+        },
+        {
+          "title": "TIPS 036 上色与质感表现——不同材质",
+          "page": 159
+        },
+        {
+          "title": "TIPS 037 上色与立体感表现",
+          "page": 164
+        },
+        {
+          "title": "TIPS 038 通过上色来表现女孩子的特质",
+          "page": 167
+        },
+        {
+          "title": "TIPS 039 运用图案素材",
+          "page": 173
+        },
+        {
+          "title": "CHECK ！ 游戏角色插画制作——绘制“Q版战国美少女”",
+          "page": 175
+        },
+        {
+          "title": "PART 4 提升画面整体效果",
+          "page": 185
+        },
+        {
+          "title": "TIPS 040 特效表现基础",
+          "page": 185
+        },
+        {
+          "title": "TIPS 041 各种特效表现",
+          "page": 187
+        },
+        {
+          "title": "TIPS 042 让角色更加生动的构图方法",
+          "page": 191
+        },
+        {
+          "title": "TIPS 043 提升插画的丰富度",
+          "page": 195
+        },
+        {
+          "title": "TIPS 044 注意画面的疏密构成",
+          "page": 197
+        },
+        {
+          "title": "TIPS 045 画出让角色更加醒目的背景",
+          "page": 199
+        },
+        {
+          "title": "TIPS 046 背景简化法",
+          "page": 201
+        },
+        {
+          "title": "TIPS 047 高效的背景绘制技巧",
+          "page": 206
+        },
+        {
+          "title": "TIPS 048 完成度较高的上色秘诀",
+          "page": 208
+        },
+        {
+          "title": "TIPS 049 插画润色技巧",
+          "page": 212
+        },
+        {
+          "title": "TIPS 050 提高工作效率的图层整理术",
+          "page": 216
+        },
+        {
+          "title": "CHECK ！ 游戏角色插画制作——绘制“魔幻男性角色”",
+          "page": 218
+        },
+        {
+          "title": "作者·插画师简介",
+          "page": 227
+        }
+      ],
+      "pdfKey": "library/books/279-book.pdf",
+      "pdfBytes": 33652602,
+      "coverKey": "library/covers/279-book-cover.jpg",
+      "coverBytes": 306459
+    },
+    {
+      "id": "lib-mwf0twg3-684550",
+      "sortNo": 279,
+      "title": "日本人气漫画师的新漫画课堂6 脚本创作与人物设定的技法",
+      "author": "",
+      "intro": "",
+      "pageCount": 150,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/280-book.pdf",
+      "pdfBytes": 38040184,
+      "coverKey": "library/covers/280-book-cover.jpg",
+      "coverBytes": 260610
     }
   ]
 }
