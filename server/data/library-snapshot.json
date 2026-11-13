@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T13:09:35.278Z",
+  "generatedAt": "2026-11-13T13:15:01.077Z",
   "source": "huimeng_library.books",
-  "total": 226,
+  "total": 236,
   "areas": {
-    "paint": 210,
+    "paint": 220,
     "ref": 16
   },
   "books": [
@@ -9427,6 +9427,616 @@
       "pdfBytes": 84859803,
       "coverKey": "library/covers/230-book-cover.jpg",
       "coverBytes": 324214
+    },
+    {
+      "id": "lib-mwezwco4-d79d80",
+      "sortNo": 230,
+      "title": "日本漫画大师讲座22 如何生动表现角色心情",
+      "author": "",
+      "intro": "",
+      "pageCount": 197,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/231-book.pdf",
+      "pdfBytes": 38698537,
+      "coverKey": "library/covers/231-book-cover.jpg",
+      "coverBytes": 244573
+    },
+    {
+      "id": "lib-mwezwyej-b4e4b3",
+      "sortNo": 231,
+      "title": "日本漫画大师讲座21 萌系美少女的138个绘画法则",
+      "author": "",
+      "intro": "",
+      "pageCount": 182,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/232-book.pdf",
+      "pdfBytes": 78380871,
+      "coverKey": "library/covers/232-book-cover.jpg",
+      "coverBytes": 274099
+    },
+    {
+      "id": "lib-mwezwzty-dcff71",
+      "sortNo": 232,
+      "title": "日本漫画大师讲座20 金田工房×角丸圆讲萌系人物组合造型",
+      "author": "",
+      "intro": "",
+      "pageCount": 173,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/233-book.pdf",
+      "pdfBytes": 77804063,
+      "coverKey": "library/covers/233-book-cover.jpg",
+      "coverBytes": 212965
+    },
+    {
+      "id": "lib-mwezx1f7-179030",
+      "sortNo": 233,
+      "title": "日本漫画大师讲座19 萌系萝莉美少女基础画法",
+      "author": "",
+      "intro": "",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/234-book.pdf",
+      "pdfBytes": 33057338,
+      "coverKey": "library/covers/234-book-cover.jpg",
+      "coverBytes": 207961
+    },
+    {
+      "id": "lib-mwezxuxl-038872",
+      "sortNo": 234,
+      "title": "日本漫画大师讲座18 金田工房×角丸圆讲美少女组合造型",
+      "author": "",
+      "intro": "",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/235-book.pdf",
+      "pdfBytes": 38607690,
+      "coverKey": "library/covers/235-book-cover.jpg",
+      "coverBytes": 188476
+    },
+    {
+      "id": "lib-mwezxwi5-a9d6da",
+      "sortNo": 235,
+      "title": "日本漫画大师讲座17 伊原达矢×角丸圆讲美少女体态造型",
+      "author": "",
+      "intro": "",
+      "pageCount": 182,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "第1章 利用轮廓把握身体的整体平衡",
+          "page": 12
+        },
+        {
+          "title": "01绘制美少女形象的要点",
+          "page": 13
+        },
+        {
+          "title": "02凸显身材与时装",
+          "page": 15
+        },
+        {
+          "title": "03不同头身比例美少女的身体平衡",
+          "page": 17
+        },
+        {
+          "title": "04手臂的长度及可活动范围",
+          "page": 22
+        },
+        {
+          "title": "05腿、膝盖和脚踝的平衡",
+          "page": 31
+        },
+        {
+          "title": "例外婴儿的身体平衡比",
+          "page": 32
+        },
+        {
+          "title": "06腿的长度及可活动范围",
+          "page": 33
+        },
+        {
+          "title": "07女性化的轮廓线",
+          "page": 51
+        },
+        {
+          "title": "08仰视、俯视角度的人体平衡",
+          "page": 55
+        },
+        {
+          "title": "09用骨骼基准图设计的基本动作",
+          "page": 63
+        },
+        {
+          "title": "10以骨骼基准图画不同头身人物的范例",
+          "page": 77
+        },
+        {
+          "title": "人体平衡结构一览表",
+          "page": 85
+        },
+        {
+          "title": "第2章 利用正中线来把握人体的平衡",
+          "page": 86
+        },
+        {
+          "title": "01正中线是什么？",
+          "page": 87
+        },
+        {
+          "title": "02用衣架来理解肩膀和锁骨的位置",
+          "page": 97
+        },
+        {
+          "title": "03用衣架来理解肋骨的位置",
+          "page": 99
+        },
+        {
+          "title": "04胸部",
+          "page": 101
+        },
+        {
+          "title": "05后背",
+          "page": 103
+        },
+        {
+          "title": "06腰部",
+          "page": 105
+        },
+        {
+          "title": "07臀部",
+          "page": 109
+        },
+        {
+          "title": "08身体的倾斜",
+          "page": 111
+        },
+        {
+          "title": "09身体的扭转",
+          "page": 115
+        },
+        {
+          "title": "10倾斜＋扭转",
+          "page": 119
+        },
+        {
+          "title": "11男性、女性的身体平衡",
+          "page": 125
+        },
+        {
+          "title": "第3章 用“模块”的概念来把握女性的身体特征",
+          "page": 126
+        },
+        {
+          "title": "01模块",
+          "page": 127
+        },
+        {
+          "title": "02胸部的模块表现",
+          "page": 129
+        },
+        {
+          "title": "03腰部的模块表现",
+          "page": 132
+        },
+        {
+          "title": "04臀部的模块表现",
+          "page": 135
+        },
+        {
+          "title": "05腿部的模块表现",
+          "page": 138
+        },
+        {
+          "title": "06脚的模块表现",
+          "page": 141
+        },
+        {
+          "title": "07手的模块表现",
+          "page": 143
+        },
+        {
+          "title": "08手臂的模块表现",
+          "page": 144
+        },
+        {
+          "title": "09头部、颈部的立体衔接",
+          "page": 145
+        },
+        {
+          "title": "10头发的模块表现",
+          "page": 147
+        },
+        {
+          "title": "11颈部与肋骨的连接",
+          "page": 149
+        },
+        {
+          "title": "阴影的模块表现",
+          "page": 151
+        },
+        {
+          "title": "线条的力度影响绘制的效果",
+          "page": 153
+        },
+        {
+          "title": "第4章 魅力姿势的表现",
+          "page": 154
+        },
+        {
+          "title": "01立体地把握整个身体",
+          "page": 155
+        },
+        {
+          "title": "02绘制有魅力的姿势",
+          "page": 157
+        },
+        {
+          "title": "不可改变的人体平衡",
+          "page": 181
+        },
+        {
+          "title": "插画作者的介绍",
+          "page": 182
+        }
+      ],
+      "pdfKey": "library/books/236-book.pdf",
+      "pdfBytes": 25990396,
+      "coverKey": "library/covers/236-book-cover.jpg",
+      "coverBytes": 258563
+    },
+    {
+      "id": "lib-mwezxzbt-0ffd69",
+      "sortNo": 236,
+      "title": "日本漫画大师讲座16 男子个性动态素描",
+      "author": "",
+      "intro": "",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "本书的目的",
+          "page": 8
+        },
+        {
+          "title": "阶段1什么是临摹素描？",
+          "page": 9
+        },
+        {
+          "title": "阶段2其一什么是变形素描？",
+          "page": 10
+        },
+        {
+          "title": "阶段2其二什么是漫画素描？",
+          "page": 11
+        },
+        {
+          "title": "阶段3动态素描是什么？",
+          "page": 12
+        },
+        {
+          "title": "描绘时的姿势",
+          "page": 13
+        },
+        {
+          "title": "第1章 描绘临摹素描",
+          "page": 14
+        },
+        {
+          "title": "在开始描绘临摹素描之前",
+          "page": 15
+        },
+        {
+          "title": "临摹素描的关键点",
+          "page": 17
+        },
+        {
+          "title": "临摹素描中必要的线条练习",
+          "page": 19
+        },
+        {
+          "title": "如果想要完成立体式的临摹素描的话",
+          "page": 21
+        },
+        {
+          "title": "临摹素描的实践课程",
+          "page": 27
+        },
+        {
+          "title": "站立姿势的正面角度",
+          "page": 27
+        },
+        {
+          "title": "站立姿势的斜侧面角度",
+          "page": 33
+        },
+        {
+          "title": "站立姿势的侧面角度",
+          "page": 39
+        },
+        {
+          "title": "站立姿势的应用",
+          "page": 45
+        },
+        {
+          "title": "临摹素描的实践课程",
+          "page": 49
+        },
+        {
+          "title": "特写的正面角度",
+          "page": 49
+        },
+        {
+          "title": "特写的斜侧面角度",
+          "page": 51
+        },
+        {
+          "title": "特写的侧面角度",
+          "page": 53
+        },
+        {
+          "title": "通过临摹喜欢的插图来进行学习",
+          "page": 55
+        },
+        {
+          "title": "绘制临摹素描时的“三不主义”",
+          "page": 57
+        },
+        {
+          "title": "第2章 描绘变形素描",
+          "page": 58
+        },
+        {
+          "title": "在开始描绘变形素描之前",
+          "page": 59
+        },
+        {
+          "title": "人体的基础知识",
+          "page": 61
+        },
+        {
+          "title": "变形素描的实践课程",
+          "page": 65
+        },
+        {
+          "title": "站立姿势的正面角度",
+          "page": 65
+        },
+        {
+          "title": "站立姿势的斜侧面角度",
+          "page": 67
+        },
+        {
+          "title": "站立姿势的侧面角度",
+          "page": 69
+        },
+        {
+          "title": "关于衣服的褶皱",
+          "page": 73
+        },
+        {
+          "title": "在开始描绘半身像的变形素描之前",
+          "page": 79
+        },
+        {
+          "title": "通过块面来掌握变形素描",
+          "page": 81
+        },
+        {
+          "title": "半身像的正面角度",
+          "page": 81
+        },
+        {
+          "title": "半身像的斜侧面角度",
+          "page": 83
+        },
+        {
+          "title": "半身像的侧面角度",
+          "page": 85
+        },
+        {
+          "title": "变形素描的实践课程",
+          "page": 87
+        },
+        {
+          "title": "特写的正面角度",
+          "page": 87
+        },
+        {
+          "title": "特写的斜侧面角度",
+          "page": 89
+        },
+        {
+          "title": "特写的侧面角度",
+          "page": 91
+        },
+        {
+          "title": "注重线条，注重道具",
+          "page": 93
+        },
+        {
+          "title": "第3章 用漫画素描来描绘身体",
+          "page": 96
+        },
+        {
+          "title": "在开始描绘漫画素描之前…就算把人物的腹肌分成12块也不是不可以！",
+          "page": 97
+        },
+        {
+          "title": "从骨骼和肌肉到“可用的素描人偶”",
+          "page": 101
+        },
+        {
+          "title": "尝试让素描人偶变得更加简单",
+          "page": 105
+        },
+        {
+          "title": "漫画素描的实践课程",
+          "page": 107
+        },
+        {
+          "title": "站立姿势的动态状态",
+          "page": 107
+        },
+        {
+          "title": "弯腰下蹲姿势的动态状态",
+          "page": 111
+        },
+        {
+          "title": "通过1、2、3来展现“动态”的漫画素描",
+          "page": 113
+        },
+        {
+          "title": "第4章 用漫画素描来描绘脸部",
+          "page": 138
+        },
+        {
+          "title": "在开始进行脸部的漫画素描之前……嘴巴的形状可以创造出各种不同的脸部表情",
+          "page": 139
+        },
+        {
+          "title": "漫画素描的实践课程",
+          "page": 141
+        },
+        {
+          "title": "拳击的右直拳的场景①",
+          "page": 141
+        },
+        {
+          "title": "拳击的右直拳的场景②",
+          "page": 143
+        },
+        {
+          "title": "拳击的右直拳的场景③",
+          "page": 145
+        },
+        {
+          "title": "漫画素描的实践课程",
+          "page": 147
+        },
+        {
+          "title": "投掷的场景①",
+          "page": 147
+        },
+        {
+          "title": "投掷的场景②",
+          "page": 149
+        },
+        {
+          "title": "投掷的场景③",
+          "page": 151
+        },
+        {
+          "title": "漫画素描的实践课程",
+          "page": 153
+        },
+        {
+          "title": "跳跃的场景①",
+          "page": 153
+        },
+        {
+          "title": "跳跃的场景②",
+          "page": 155
+        },
+        {
+          "title": "跳跃的场景③",
+          "page": 157
+        },
+        {
+          "title": "第5章 描绘动态素描",
+          "page": 160
+        },
+        {
+          "title": "在开始描绘动态素描之前……就算让脸上的五官超出实际可动范围也没什么关系吧！",
+          "page": 161
+        },
+        {
+          "title": "动态素描的实践课程人物脸部的伸展",
+          "page": 163
+        },
+        {
+          "title": "用夸大透视来描绘动态素描",
+          "page": 167
+        },
+        {
+          "title": "使用了扭曲的动态素描",
+          "page": 169
+        },
+        {
+          "title": "动态素描的实践课程",
+          "page": 171
+        },
+        {
+          "title": "1飞踢",
+          "page": 171
+        },
+        {
+          "title": "2攻击的动作",
+          "page": 173
+        },
+        {
+          "title": "3踢球的动作",
+          "page": 175
+        },
+        {
+          "title": "4飞起的动作",
+          "page": 177
+        },
+        {
+          "title": "5利用飘拂",
+          "page": 179
+        }
+      ],
+      "pdfKey": "library/books/237-book.pdf",
+      "pdfBytes": 46180010,
+      "coverKey": "library/covers/237-book-cover.jpg",
+      "coverBytes": 255926
+    },
+    {
+      "id": "lib-mwezyzt8-55a7a3",
+      "sortNo": 237,
+      "title": "日本漫画大师讲座15 萌系萝莉美少女综合表现",
+      "author": "",
+      "intro": "",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/238-book.pdf",
+      "pdfBytes": 40522033,
+      "coverKey": "library/covers/238-book-cover.jpg",
+      "coverBytes": 218296
+    },
+    {
+      "id": "lib-mwezyy9p-67ec85",
+      "sortNo": 238,
+      "title": "日本漫画大师讲座14 萌系萝莉少女动作和构图",
+      "author": "",
+      "intro": "",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/239-book.pdf",
+      "pdfBytes": 40076886,
+      "coverKey": "library/covers/239-book-cover.jpg",
+      "coverBytes": 195967
+    },
+    {
+      "id": "lib-mwezz23c-0a0850",
+      "sortNo": 239,
+      "title": "日本漫画大师讲座13 萌系萝莉美少女服饰造型",
+      "author": "",
+      "intro": "",
+      "pageCount": 182,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/240-book.pdf",
+      "pdfBytes": 46167847,
+      "coverKey": "library/covers/240-book-cover.jpg",
+      "coverBytes": 220441
     }
   ]
 }
