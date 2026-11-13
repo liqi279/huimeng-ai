@@ -20181,7 +20181,7 @@ body.dv-open .hm-page {
 
 </style>
 <script>window.HM_LIBRARY_SEED = {"version":1,"updatedAt":"2026-11-05","note":"绘梦图书馆 · 书籍种子数据（已清空，保留变量与结构）。","books":[]};</script>
-<script>window.HM_BUILD = "20261113071021-5ec0689";</script>
+<script>window.HM_BUILD = "20261113085647-5ec0689";</script>
 </head>
 <body data-view="create">
 <script>
@@ -25921,12 +25921,15 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
     try {
       var token = authToken();
+      var method = opts.method || 'GET';
       var init = {
-        method: opts.method || 'GET',
+        method: method,
         headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}, opts.headers || {}),
         signal: controller.signal
       };
-      if (opts.body !== undefined) {
+      /* GET/HEAD 不允许带 body（浏览器会直接抛 TypeError），null 也视为无体 */
+      var hasBody = opts.body !== undefined && opts.body !== null && method !== 'GET' && method !== 'HEAD';
+      if (hasBody) {
         init.headers['Content-Type'] = 'application/json';
         init.body = JSON.stringify(opts.body);
       }
@@ -55140,13 +55143,16 @@ window.HMChat = (function () {
       var token = localStorage.getItem('hm.token');
       if (token) headers.Authorization = 'Bearer ' + token;
     } catch (err) {}
-    if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+    var method = opts.method || 'GET';
+    /* GET/HEAD 不允许带 body，null 也视为无体 */
+    var hasBody = opts.body !== undefined && opts.body !== null && method !== 'GET' && method !== 'HEAD';
+    if (hasBody) headers['Content-Type'] = 'application/json';
 
     return fetch(apiUrl(path), {
-      method: opts.method || 'GET',
+      method: method,
       headers: headers,
       signal: controller.signal,
-      body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
+      body: hasBody ? JSON.stringify(opts.body) : undefined
     }).then(function (res) {
       return res.text().then(function (raw) {
         var data = null;
@@ -71139,7 +71145,9 @@ window.HMChat = (function () {
       headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
       signal: controller.signal
     };
-    if (body !== undefined) {
+    /* GET/HEAD 不允许带 body（浏览器会直接抛 TypeError）；body 传 null 时同样视为无体 */
+    var hasBody = body !== undefined && body !== null && method !== 'GET' && method !== 'HEAD';
+    if (hasBody) {
       init.headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(body);
     }

@@ -6371,7 +6371,9 @@
       headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
       signal: controller.signal
     };
-    if (body !== undefined) {
+    /* GET/HEAD 不允许带 body（浏览器会直接抛 TypeError）；body 传 null 时同样视为无体 */
+    var hasBody = body !== undefined && body !== null && method !== 'GET' && method !== 'HEAD';
+    if (hasBody) {
       init.headers['Content-Type'] = 'application/json';
       init.body = JSON.stringify(body);
     }

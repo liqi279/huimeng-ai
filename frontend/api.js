@@ -97,12 +97,15 @@
 
     try {
       var token = authToken();
+      var method = opts.method || 'GET';
       var init = {
-        method: opts.method || 'GET',
+        method: method,
         headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}, opts.headers || {}),
         signal: controller.signal
       };
-      if (opts.body !== undefined) {
+      /* GET/HEAD 不允许带 body（浏览器会直接抛 TypeError），null 也视为无体 */
+      var hasBody = opts.body !== undefined && opts.body !== null && method !== 'GET' && method !== 'HEAD';
+      if (hasBody) {
         init.headers['Content-Type'] = 'application/json';
         init.body = JSON.stringify(opts.body);
       }

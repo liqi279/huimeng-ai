@@ -118,13 +118,16 @@
       var token = localStorage.getItem('hm.token');
       if (token) headers.Authorization = 'Bearer ' + token;
     } catch (err) {}
-    if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+    var method = opts.method || 'GET';
+    /* GET/HEAD 不允许带 body，null 也视为无体 */
+    var hasBody = opts.body !== undefined && opts.body !== null && method !== 'GET' && method !== 'HEAD';
+    if (hasBody) headers['Content-Type'] = 'application/json';
 
     return fetch(apiUrl(path), {
-      method: opts.method || 'GET',
+      method: method,
       headers: headers,
       signal: controller.signal,
-      body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
+      body: hasBody ? JSON.stringify(opts.body) : undefined
     }).then(function (res) {
       return res.text().then(function (raw) {
         var data = null;
