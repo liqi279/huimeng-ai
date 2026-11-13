@@ -250,6 +250,28 @@ async function getAsset(assetId) {
   return null;
 }
 
+/* 批量取资产：文件模式没有全局索引，只遍历一次用户目录把所有命中项收齐 */
+async function getAssets(assetIds) {
+  const ids = Array.from(new Set((assetIds || []).filter(Boolean)));
+  const out = {};
+  if (!ids.length) return out;
+  const want = Object.create(null);
+  ids.forEach((id) => { want[id] = true; });
+  const root = path.join(config.DATA_DIR, 'users');
+  let dirs = [];
+  try { dirs = await fsp.readdir(root); } catch (e) { return out; }
+  for (const dir of dirs) {
+    const data = await readStore(dir);
+    Object.keys(data.assets).forEach((id) => {
+      if (!want[id] || out[id]) return;
+      const asset = data.assets[id];
+      if (asset && !asset.deleted) out[id] = asset;
+    });
+    if (Object.keys(out).length >= ids.length) break;
+  }
+  return out;
+}
+
 function removeAsset(userId, assetId) {
   return enqueue(async () => {
     const store = await readStore(userId);
@@ -319,6 +341,7 @@ module.exports = {
   putDoc,
   saveAsset,
   getAsset,
+  getAssets,
   removeAsset,
   listAssets,
   usage,

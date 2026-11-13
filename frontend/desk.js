@@ -142,11 +142,11 @@
   }
 
   function syncServer() {
-    if (!api || !api.online || !api.getDesk) return;
-    api.getDesk().then(function (d) {
-      if (!d || typeof d !== 'object') return;
+    if (!api || !api.online || !api.getDesk) return Promise.resolve(false);
+    return api.getDesk().then(function (d) {
+      if (!d || typeof d !== 'object') return true;
       var remote = d.desk || d;
-      if (!remote || !Array.isArray(remote.folders)) return;
+      if (!remote || !Array.isArray(remote.folders)) return true;
       var remoteTime = Number(remote.updatedAt) || 0;
       if (remoteTime > desk.updatedAt) {
         desk.folders = remote.folders;
@@ -161,7 +161,8 @@
       } else if (desk.updatedAt) {
         persistNow();
       }
-    }).catch(function () {});
+      return true;
+    }).catch(function () { return false; });
   }
 
   /* 登录即见：登录后直接返回「拉回云端桌面布局」的 Promise，
@@ -3203,8 +3204,13 @@
     hookOnView();
     renderPanel();
     renderDesktop();
-    setTimeout(syncServer, 1200);
-    setTimeout(syncServer, 4200);
+    /* 原先固定 1.2s / 4.2s 各拉一次桌面（两次请求）。
+       改成一次调用：失败时才在 3 秒后补一次，正常情况只打一次。 */
+    setTimeout(function () {
+      syncServer().then(function (ok) {
+        if (!ok) setTimeout(syncServer, 3000);
+      });
+    }, 1200);
     setTimeout(function () {
       renderPanel();
       if (deskDirty && document.body.getAttribute('data-view') === 'create') renderDesktop();

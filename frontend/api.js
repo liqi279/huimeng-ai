@@ -3,8 +3,8 @@
 /* =============================================================
  * 绘梦 · 后端 API 客户端（前后端分离）
  * 默认使用同源 /api；也可用 ?api= 指定后端地址，例如：
- *   GitHub Pages 默认指向 Render 后端：
- *     https://huimeng-ai-backend.onrender.com/api
+ *   GitHub Pages 默认指向腾讯云 SCF（函数 URL）：
+ *     https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api
  *   本地开发可覆盖为本地后端：
  *     ?api=https://localhost:8443/api   （首次需访问 https://localhost:8443 信任自签证书）
  *     ?api=http://localhost:8787/api    （Chrome 允许 localhost 混合内容，其他浏览器可能拦截）
@@ -19,10 +19,10 @@
     override = new URLSearchParams(location.search).get('api') || '';
   } catch (err) { override = ''; }
 
-  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向 Render 后端，
+  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向腾讯云 SCF 函数 URL，
    * 本地运行时仍走同源 /api。可用 ?api= 覆盖。 */
   var isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(location.hostname);
-  var autoBase = isLocalHost ? '/api' : 'https://huimeng-ai-backend.onrender.com/api';
+  var autoBase = isLocalHost ? '/api' : 'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api';
 
   var base = String(override || (META && META.content) || autoBase).replace(/\/+$/, '');
   var origin = '';
@@ -140,7 +140,7 @@
   };
 
   /* 探测后端；返回是否可用 */
-  api.ping = async function () {
+  async function doPing() {
     if (typeof location !== 'undefined' && location.protocol === 'file:') {
       api.checked = true;
       api.online = false;
@@ -162,6 +162,25 @@
       } catch (err) { api.config = null; }
     }
     return api.online;
+  }
+
+  /* 首屏 app.js 与 ui.js 会各探测一次：进行中的请求共用同一个 Promise，
+     5 秒内的重复调用直接复用结果，少打一次 /health + /config。
+     失败不缓存——下一次调用仍会真正重试。 */
+  var pingInFlight = null;
+  var pingAt = 0;
+  api.ping = function () {
+    if (pingInFlight) return pingInFlight;
+    if (api.checked && pingAt && Date.now() - pingAt < 5000) return Promise.resolve(api.online);
+    pingInFlight = doPing().then(function (online) {
+      pingInFlight = null;
+      pingAt = Date.now();
+      return online;
+    }, function (err) {
+      pingInFlight = null;
+      throw err;
+    });
+    return pingInFlight;
   };
 
   api.hasServerKey = function () {

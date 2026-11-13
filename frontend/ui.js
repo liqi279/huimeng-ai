@@ -6347,6 +6347,63 @@
   window.HMOUA = { enter: enter };
 })();
 
+/* ========================================================================
+ * 原画「图层面板」导入：纯前端最小实现
+ * ---------------------------------------------------------------
+ * 该面板目前是静态外观（不参与画布渲染）。这里只做：
+ *   点「导入」→ 选一张本地图片 → 在图层列表顶部插入一行（显示文件名与缩略图）。
+ * 不接后端、不写入任何数据、不影响画布。
+ * ===================================================================== */
+(function bindOuaLayerImport() {
+  function init() {
+    var btn = document.getElementById('ouaLyrImportBtn');
+    var input = document.getElementById('ouaLyrImportInput');
+    var list = document.getElementById('ouaLyrList');
+    if (!btn || !input || !list) return;
+
+    function updateCount() {
+      var count = document.getElementById('ouaLyrCount');
+      if (count) count.textContent = String(list.querySelectorAll('.hm-oua-lyr-row').length);
+    }
+
+    btn.addEventListener('click', function () {
+      input.value = '';
+      input.click();
+    });
+
+    input.addEventListener('change', function () {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      if (!/^image\//.test(file.type)) {
+        if (typeof toast === 'function') toast('请选择图片文件', 'info');
+        return;
+      }
+      var url = URL.createObjectURL(file);
+      var row = document.createElement('div');
+      row.className = 'hm-oua-lyr-row';
+      row.innerHTML =
+        '<button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">' +
+        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/><circle cx="8" cy="8" r="1.9"/></svg>' +
+        '</button>' +
+        '<span class="hm-oua-lyr-thumb is-imported"><i></i></span>' +
+        '<span class="hm-oua-lyr-name"></span>' +
+        '<button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">' +
+        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><rect x="4" y="7" width="8" height="6.2" rx="1.2"/><path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/></svg>' +
+        '</button>';
+      row.querySelector('.hm-oua-lyr-name').textContent = file.name;
+      row.querySelector('.hm-oua-lyr-thumb > i').style.backgroundImage = 'url("' + url + '")';
+      var active = list.querySelector('.hm-oua-lyr-row.is-active');
+      if (active) active.classList.remove('is-active');
+      row.classList.add('is-active');
+      list.insertBefore(row, list.firstChild);
+      updateCount();
+      if (typeof toast === 'function') toast('已导入图层：' + file.name, 'success');
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
 
 
 /* ========================================================================

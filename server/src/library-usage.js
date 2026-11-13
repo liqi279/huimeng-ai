@@ -14,7 +14,7 @@ const objectStore = require('./object-store');
 
 const PREFIX = 'library/';
 const LIMIT_LABEL = '500G';
-const TTL_MS = Math.max(5000, Number(process.env.LIBRARY_USAGE_TTL_MS) || 90000);
+const TTL_MS = Math.max(60000, Number(process.env.LIBRARY_USAGE_TTL_MS) || 600000);
 
 let cachedAt = 0;
 let cachedBytes = null;
@@ -54,10 +54,16 @@ async function load() {
   }
 }
 
-async function get() {
+async function get(opts) {
+  /* allowCompute=false 只用已有缓存：/health 是最高频接口，
+     不能每次都 list 整个桶（对象多时既慢又费请求/流量）。 */
+  const allowCompute = !opts || opts.allowCompute !== false;
   const fresh = cachedAt && Date.now() - cachedAt < TTL_MS;
   if (fresh) {
     return { usedBytes: cachedBytes, limitLabel: LIMIT_LABEL, usedHuman: human(cachedBytes), cached: true, ageMs: Date.now() - cachedAt, error: lastError };
+  }
+  if (!allowCompute) {
+    return { usedBytes: cachedBytes, limitLabel: LIMIT_LABEL, usedHuman: human(cachedBytes), cached: true, ageMs: cachedAt ? Date.now() - cachedAt : 0, error: lastError };
   }
   if (!inFlight) inFlight = load();
   const result = await inFlight;
@@ -65,8 +71,8 @@ async function get() {
 }
 
 /* 路由侧直接用：把 usedBytes/limitLabel/usedHuman 合并进 store 对象 */
-async function stats() {
-  const u = await get();
+async function stats(opts) {
+  const u = await get(opts);
   return {
     usedBytes: u.usedBytes,
     limitLabel: u.limitLabel,

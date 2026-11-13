@@ -19,10 +19,11 @@ router.get('/health', async (req, res) => {
   }
   /* 图书馆库状态：degraded=true 表示 MySQL 连不上、正在按退避重试，
      此时书目只来自本机种子数据，写入会被拒绝（不会静默落 /tmp）。
-     usedBytes 放在 library 下：COS library/ 前缀对象大小之和（90s 缓存）。 */
+     usedBytes 只读缓存（不再每次 health 都 list 整个 COS 桶），
+     需要刷新时由 /api/library/stats 或 /api/library/books 触发。 */
   let libraryStatus = null;
   try {
-    libraryStatus = Object.assign({}, library.state(), await libraryUsage.stats());
+    libraryStatus = Object.assign({}, library.state(), await libraryUsage.stats({ allowCompute: false }));
   } catch (err) {
     libraryStatus = { error: err && err.message };
   }

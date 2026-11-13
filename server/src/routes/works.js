@@ -19,14 +19,31 @@ const router = express.Router();
 
 const INLINE_THUMB_LIMIT = 120 * 1024;
 
-async function wrapWork(row, req) {
+async function wrapWork(row, req, urlMap) {
   var out = Object.assign({}, row.data || {}, {
     id: row.id,
     _rev: row.rev,
     _updatedAt: row.updatedAt,
   });
-  /* 资产 URL 带时效签名（COS 直链 3600s），每次返回重新签发，避免本地缓存的旧链接过期后图片打不开 */
-  if (out._assetId) out.url = await userData.assetPublicUrl(out._assetId, req);
+  /* 资产 URL 用对象存储签名直链（长签名，实例内复用同一 URL，浏览器可缓存）。
+     urlMap 是整页一次批量查出来的；缺失时退回单条查询，避免批量失败导致图片不显示。 */
+  if (out._assetId) {
+    var hit = urlMap && urlMap[out._assetId];
+    if (hit && hit.url) {
+      out.url = hit.url;
+      out.thumb = hit.thumb || '';
+    } else {
+      out.url = await userData.assetPublicUrl(out._assetId, req);
+      out.thumb = '';
+    }
+  }
+  /* 历史数据里可能存了内联 base64 缩略图：不再塞进响应体（单页最坏能到十几 MB）。
+     只影响响应，不改数据库里的原始数据；若这条作品没有可用的原图地址，
+     则保留缩略图，避免旧作品在网格里变成空白。 */
+  if (typeof out.thumb === 'string' && out.thumb.indexOf('data:') === 0 &&
+      out.url && out.url.indexOf('data:') !== 0) {
+    out.thumb = '';
+  }
   return out;
 }
 
@@ -69,8 +86,17 @@ router.get('/works', authOptional, wrap(async (req, res) => {
   const since = Number(req.query.since) || 0;
   const limit = Math.max(1, Math.min(Number(req.query.limit) || 200, 500));
   const page = await userData.listChanges(userId, { since, limit });
+  /* 整页一次批量取资产，避免每件作品一次查询（N+1）；失败时降级为逐条查询 */
+  const assetIds = page.items.map(function (row) { return row.data && row.data._assetId; }).filter(Boolean);
+  let urlMap = {};
+  try {
+    urlMap = await userData.assetsPublicUrls(assetIds, req);
+  } catch (err) {
+    console.warn('[works] 批量取资产失败，退回逐条签名：' + (err && err.message));
+    urlMap = {};
+  }
   res.json({
-    items: await Promise.all(page.items.map(function (row) { return wrapWork(row, req); })),
+    items: await Promise.all(page.items.map(function (row) { return wrapWork(row, req, urlMap); })),
     deleted: page.deleted,
     cursor: page.cursor,
     hasMore: page.hasMore,

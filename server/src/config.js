@@ -164,6 +164,14 @@ module.exports = {
   OSS_ENDPOINT,
   OSS_PUBLIC_BASE,
   STORAGE_URL_TTL,
+  /* 封面/作品图的签名有效期与浏览器缓存头：签名越久、URL 越稳定，浏览器缓存才越容易命中。
+     签名有效期上限 7 天（COS 限制）；ASSET_CACHE_CONTROL 会作为响应头随签名交给 COS 回给浏览器。 */
+  ASSET_URL_TTL: Math.min(Number(env('ASSET_URL_TTL', '604800')) || 604800, 604800),
+  ASSET_CACHE_CONTROL: env('ASSET_CACHE_CONTROL', 'public, max-age=604800'),
+  /* 对象存储图片处理参数（可选，默认空=不处理）。
+     留空的原因：桶未开通图片处理时带参数会直接 4xx，封面/作品图会裂；
+     确认桶支持后再配置，例如 COS：imageMogr2/thumbnail/520x/quality/80 */
+  ASSET_THUMB_QUERY: env('ASSET_THUMB_QUERY', ''),
 
   /* ---------- 兼容旧变量名（图书馆 PDF 直传 / 桶安全配置仍在用） ----------
      未单独配置 S3_* 时自动沿用 OSS_*，避免两套配置漏填。 */
@@ -202,6 +210,9 @@ module.exports = {
   USER_ASSET_MAX_BYTES: Number(env('USER_ASSET_MAX_BYTES', String(10 * 1024 * 1024))),
   USER_STORAGE_MAX_BYTES: Number(env('USER_STORAGE_MAX_BYTES', String(2 * 1024 * 1024 * 1024))),
   USER_DOC_MAX_BYTES: Number(env('USER_DOC_MAX_BYTES', String(5 * 1024 * 1024))),
+  /* 服务器 Key 的每日生成额度（0 = 不限）。只拦异常高频，正常用户默认够用。 */
+  GEN_DAILY_LIMIT: Number(env('GEN_DAILY_LIMIT', '300')),
+
   /* 删除墓碑保留天数（便于其他设备同步到删除） */
   USER_TOMBSTONE_DAYS: Number(env('USER_TOMBSTONE_DAYS', '30')),
   FRONTEND_DIR: process.env.FRONTEND_DIR

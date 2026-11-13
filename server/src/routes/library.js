@@ -39,13 +39,24 @@ function retargetBook(item, origin) {
   if (next.pdfUrl) next.pdfUrl = retarget(next.pdfUrl, origin);
   if (next.coverUrl) {
     next.coverUrl = retarget(next.coverUrl, origin);
-    /* 封面改走对象存储签名直链：SCF 网关会给代理响应再补一条
-       Content-Type: application/json，浏览器取第一条 → <img> 解码失败、封面空白。
-       直链由 COS 直接返回单一 image/* 响应头，且桶已配 CORS。 */
+    /* 封面地址：配了公开域名（CDN/公开读）就给 520px 缩略图，URL 稳定、可长缓存；
+       私有桶退回签名直链——签名在实例内复用（object-store 的 URL 缓存），
+       不再每次列表都签出不同 URL，浏览器缓存才有机会命中。
+       封面改直链还因为 SCF 网关会给代理响应补 content-type: json，<img> 会解码失败。 */
     try {
       const key = keyFromUrl(next.coverUrl);
-      const signed = key ? objectStore.presignGet(key, 3600) : '';
-      if (signed) next.coverUrl = signed;
+      let url = '';
+      if (key) {
+        const pub = objectStore.publicUrl(key);
+        if (pub && config.ASSET_THUMB_QUERY && /\.(jpe?g|png|webp)$/i.test(key)) {
+          url = pub + '?' + config.ASSET_THUMB_QUERY;
+        } else {
+          url = objectStore.presignGet(key, config.ASSET_URL_TTL, {
+            responseCacheControl: config.ASSET_CACHE_CONTROL,
+          });
+        }
+      }
+      if (url) next.coverUrl = url;
     } catch (err) {
       /* 存储不可用时保留原地址，不影响书目返回 */
     }

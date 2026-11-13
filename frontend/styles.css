@@ -4150,7 +4150,8 @@ body.hm-resizing * {
 .hm-ref-cell {
   position: relative;
   flex: 0 0 auto;
-  width: 52px;
+  /* 宽度交给图片原始比例决定，高度固定一行高，避免统一压成正方形 */
+  width: auto;
   height: 52px;
   border-radius: 6px;
   overflow: hidden;
@@ -4167,9 +4168,11 @@ body.hm-resizing * {
 }
 
 .hm-ref-cell img {
-  width: 100%;
+  /* 按原图宽高比显示整张图：不裁切、不拉伸；超宽图限宽防止撑破一行 */
+  width: auto;
   height: 100%;
-  object-fit: cover;
+  max-width: 120px;
+  object-fit: contain;
   display: block;
 }
 
@@ -4238,6 +4241,8 @@ body.hm-resizing * {
 
 /* 添加槽位 */
 .hm-ref-add {
+  width: 52px;
+  height: 52px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4271,17 +4276,18 @@ body.hm-resizing * {
 
 /* ========== 每张参考图独立的主体强度 slider ========== */
 /* per-ref slider 已移除，底部全局 refWeightSlider 负责控制 */
-/* ref cell 恢复为紧凑小方格，hover 加轻微放大 */
+/* ref cell 保持一行高度，宽度跟随图片原始比例（不再强制正方格），hover 加轻微放大 */
 .hm-ref-cell {
-  width: 52px;
+  width: auto;
   height: 52px;
   overflow: visible;
   position: relative;
 }
 .hm-ref-cell img {
-  width: 100%;
+  width: auto;
   height: 100%;
-  object-fit: cover;
+  max-width: 120px;
+  object-fit: contain;
   display: block;
   border-radius: 6px;
   /* 参考主体强度滑块会实时改这里的 transform：锚点居中 + 轻微过渡让拖动连续不跳 */
@@ -14252,6 +14258,15 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 .hm-oua-lyr-thumb[data-kind="bg"] > i {
   background: linear-gradient(155deg, #2b4b6d 0%, #5d86a8 58%, #a9c6da 100%);
 }
+.hm-oua-lyr-thumb[data-kind="base"] > i {
+  background: #ffffff;
+}
+.hm-oua-lyr-thumb.is-imported > i {
+  inset: 0;
+  border-radius: 0;
+  background-size: cover;
+  background-position: center;
+}
 
 .hm-oua-lyr-name {
   flex: 1;
@@ -14308,6 +14323,15 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 .hm-oua-lyr-fbtn svg { width: 15px; height: 15px; }
+/* 带文字的底部按钮（导入）：高度/配色与图标按钮一致，宽度自适应文字 */
+.hm-oua-lyr-fbtn.is-text {
+  width: auto;
+  padding: 0 8px;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1;
+}
+.hm-oua-lyr-fbtn.is-text svg { width: 14px; height: 14px; }
 .hm-oua-lyr-fbtn:hover {
   color: #eef1f7;
   background: rgba(255, 255, 255, 0.08);

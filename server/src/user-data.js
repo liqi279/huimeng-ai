@@ -129,6 +129,54 @@ async function assetPublicUrl(assetId, req) {
     '?t=' + signAssetToken(assetId);
 }
 
+/* 单个资产的对外地址：优先对象存储直链（长签名 + 长缓存头，实例内复用同一 URL）。
+   配了公开域名时再附可选的图片处理参数（ASSET_THUMB_QUERY），否则回原图，避免桶未开处理能力时裂图。 */
+function assetUrls(asset, req) {
+  const key = asset && asset.objectKey;
+  const direct = key ? objectStore.presignGet(key, config.ASSET_URL_TTL, {
+    responseCacheControl: config.ASSET_CACHE_CONTROL,
+  }) : '';
+  const pub = key ? objectStore.publicUrl(key) : '';
+  if (direct) {
+    const thumbQuery = config.ASSET_THUMB_QUERY;
+    return {
+      url: direct,
+      thumb: (pub && thumbQuery) ? pub + '?' + thumbQuery : direct,
+    };
+  }
+  return {
+    url: publicBase(req) + '/user-data/assets/' + encodeURIComponent(asset.id) +
+      '?t=' + signAssetToken(asset.id),
+    thumb: '',
+  };
+}
+
+/* 批量取资产（一条查询），供作品列表一次算完所有 URL，去掉 N+1 */
+function getAssets(assetIds) {
+  const ids = Array.from(new Set((assetIds || []).filter(Boolean)));
+  if (!ids.length) return Promise.resolve({});
+  if (typeof impl().getAssets === 'function') return impl().getAssets(ids);
+  return Promise.all(ids.map(function (id) {
+    return impl().getAsset(id).then(function (asset) { return [id, asset]; }, function () { return [id, null]; });
+  })).then(function (pairs) {
+    const out = {};
+    pairs.forEach(function (pair) { if (pair[1]) out[pair[0]] = pair[1]; });
+    return out;
+  });
+}
+
+async function assetsPublicUrls(assetIds, req) {
+  const ids = Array.from(new Set((assetIds || []).filter(Boolean)));
+  if (!ids.length) return {};
+  const assets = await getAssets(ids);
+  const out = {};
+  ids.forEach(function (id) {
+    const asset = assets[id];
+    if (asset) out[id] = assetUrls(asset, req);
+  });
+  return out;
+}
+
 function assetTokenSecret() {
   return config.TOKEN_SECRET;
 }
@@ -243,6 +291,8 @@ module.exports = {
   getState,
   exportAll,
   assetPublicUrl,
+  assetsPublicUrls,
+  getAssets,
   signAssetToken,
   verifyAssetToken,
   objectStore,

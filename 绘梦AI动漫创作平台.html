@@ -4158,7 +4158,8 @@ body.hm-resizing * {
 .hm-ref-cell {
   position: relative;
   flex: 0 0 auto;
-  width: 52px;
+  /* 宽度交给图片原始比例决定，高度固定一行高，避免统一压成正方形 */
+  width: auto;
   height: 52px;
   border-radius: 6px;
   overflow: hidden;
@@ -4175,9 +4176,11 @@ body.hm-resizing * {
 }
 
 .hm-ref-cell img {
-  width: 100%;
+  /* 按原图宽高比显示整张图：不裁切、不拉伸；超宽图限宽防止撑破一行 */
+  width: auto;
   height: 100%;
-  object-fit: cover;
+  max-width: 120px;
+  object-fit: contain;
   display: block;
 }
 
@@ -4246,6 +4249,8 @@ body.hm-resizing * {
 
 /* 添加槽位 */
 .hm-ref-add {
+  width: 52px;
+  height: 52px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4279,17 +4284,18 @@ body.hm-resizing * {
 
 /* ========== 每张参考图独立的主体强度 slider ========== */
 /* per-ref slider 已移除，底部全局 refWeightSlider 负责控制 */
-/* ref cell 恢复为紧凑小方格，hover 加轻微放大 */
+/* ref cell 保持一行高度，宽度跟随图片原始比例（不再强制正方格），hover 加轻微放大 */
 .hm-ref-cell {
-  width: 52px;
+  width: auto;
   height: 52px;
   overflow: visible;
   position: relative;
 }
 .hm-ref-cell img {
-  width: 100%;
+  width: auto;
   height: 100%;
-  object-fit: cover;
+  max-width: 120px;
+  object-fit: contain;
   display: block;
   border-radius: 6px;
   /* 参考主体强度滑块会实时改这里的 transform：锚点居中 + 轻微过渡让拖动连续不跳 */
@@ -14260,6 +14266,15 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
 .hm-oua-lyr-thumb[data-kind="bg"] > i {
   background: linear-gradient(155deg, #2b4b6d 0%, #5d86a8 58%, #a9c6da 100%);
 }
+.hm-oua-lyr-thumb[data-kind="base"] > i {
+  background: #ffffff;
+}
+.hm-oua-lyr-thumb.is-imported > i {
+  inset: 0;
+  border-radius: 0;
+  background-size: cover;
+  background-position: center;
+}
 
 .hm-oua-lyr-name {
   flex: 1;
@@ -14316,6 +14331,15 @@ textarea#artContent:focus, textarea#artNotes:focus { border-color: rgba(139, 92,
   transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 .hm-oua-lyr-fbtn svg { width: 15px; height: 15px; }
+/* 带文字的底部按钮（导入）：高度/配色与图标按钮一致，宽度自适应文字 */
+.hm-oua-lyr-fbtn.is-text {
+  width: auto;
+  padding: 0 8px;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1;
+}
+.hm-oua-lyr-fbtn.is-text svg { width: 14px; height: 14px; }
 .hm-oua-lyr-fbtn:hover {
   color: #eef1f7;
   background: rgba(255, 255, 255, 0.08);
@@ -19165,7 +19189,7 @@ body.dv-open .hm-page {
 
 </style>
 <script>window.HM_LIBRARY_SEED = {"version":1,"updatedAt":"2026-11-05","note":"绘梦图书馆 · 书籍种子数据（已清空，保留变量与结构）。","books":[]};</script>
-<script>window.HM_BUILD = "20261110104139-cc8ecb2";</script>
+<script>window.HM_BUILD = "20261113052952-5ec0689";</script>
 </head>
 <body data-view="create">
 <script>
@@ -22577,7 +22601,7 @@ body.dv-open .hm-page {
           </svg>
         </span>
         <span class="hm-oua-lyr-head-title">图层</span>
-        <span class="hm-oua-lyr-head-count">6</span>
+        <span class="hm-oua-lyr-head-count" id="ouaLyrCount">1</span>
         <span class="hm-oua-lyr-fold" aria-hidden="true">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="m4 6.5 4 4 4-4"/>
@@ -22608,25 +22632,8 @@ body.dv-open .hm-page {
           </div>
         </div>
 
-        <!-- 图层列表（自上而下 = 画布自上而下） -->
-        <div class="hm-oua-lyr-list">
-          <div class="hm-oua-lyr-row">
-            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
-                <circle cx="8" cy="8" r="1.9"/>
-              </svg>
-            </button>
-            <span class="hm-oua-lyr-thumb" data-kind="hl"><i></i></span>
-            <span class="hm-oua-lyr-name">高光</span>
-            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
-                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
-              </svg>
-            </button>
-          </div>
-
+        <!-- 图层列表（自上而下 = 画布自上而下）：只保留最底层白底 -->
+        <div class="hm-oua-lyr-list" id="ouaLyrList">
           <div class="hm-oua-lyr-row is-active">
             <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
@@ -22634,81 +22641,8 @@ body.dv-open .hm-page {
                 <circle cx="8" cy="8" r="1.9"/>
               </svg>
             </button>
-            <span class="hm-oua-lyr-thumb" data-kind="skin"><i></i></span>
-            <span class="hm-oua-lyr-name">上色 · 肌肤</span>
-            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
-                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="hm-oua-lyr-row is-locked">
-            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
-                <circle cx="8" cy="8" r="1.9"/>
-              </svg>
-            </button>
-            <span class="hm-oua-lyr-thumb" data-kind="line"><i></i></span>
-            <span class="hm-oua-lyr-name">线稿</span>
-            <button class="hm-oua-lyr-lock is-locked" type="button" title="解锁图层" aria-label="解锁图层">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
-                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="hm-oua-lyr-row is-group">
-            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏组" aria-label="显示 / 隐藏组">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
-                <circle cx="8" cy="8" r="1.9"/>
-              </svg>
-            </button>
-            <span class="hm-oua-lyr-caret" aria-hidden="true">▾</span>
-            <span class="hm-oua-lyr-folder" aria-hidden="true">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <path d="M1.8 5h3.5L6.7 6.3h7.5v6.5H1.8z"/>
-              </svg>
-            </span>
-            <span class="hm-oua-lyr-name">角色 A</span>
-            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定组" aria-label="锁定组">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
-                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="hm-oua-lyr-row is-child">
-            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
-                <circle cx="8" cy="8" r="1.9"/>
-              </svg>
-            </button>
-            <span class="hm-oua-lyr-thumb" data-kind="face"><i></i></span>
-            <span class="hm-oua-lyr-name">脸</span>
-            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
-                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="hm-oua-lyr-row is-off">
-            <button class="hm-oua-lyr-eye is-off" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
-                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
-                <circle cx="8" cy="8" r="1.9"/>
-              </svg>
-            </button>
-            <span class="hm-oua-lyr-thumb" data-kind="bg"><i></i></span>
-            <span class="hm-oua-lyr-name">背景</span>
+            <span class="hm-oua-lyr-thumb" data-kind="base"><i></i></span>
+            <span class="hm-oua-lyr-name">白底</span>
             <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
                 <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
@@ -22720,6 +22654,14 @@ body.dv-open .hm-page {
 
         <!-- 底部操作条 -->
         <div class="hm-oua-lyr-foot">
+          <button class="hm-oua-lyr-fbtn is-text" id="ouaLyrImportBtn" type="button" title="导入本地图片为新图层" aria-label="导入图片">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2.2v7.1M5.3 6.8 8 9.5l2.7-2.7"/>
+              <path d="M2.4 11.1v2.2h11.2v-2.2"/>
+            </svg>
+            <span>导入</span>
+          </button>
+          <input id="ouaLyrImportInput" type="file" accept="image/*" hidden>
           <button class="hm-oua-lyr-fbtn" type="button" title="新建图层" aria-label="新建图层">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
               <path d="M3.2 1.9h6.1l3.5 3.5v8.7H3.2z"/>
@@ -23798,8 +23740,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 /* =============================================================
  * 绘梦 · 后端 API 客户端（前后端分离）
  * 默认使用同源 /api；也可用 ?api= 指定后端地址，例如：
- *   GitHub Pages 默认指向 Render 后端：
- *     https://huimeng-ai-backend.onrender.com/api
+ *   GitHub Pages 默认指向腾讯云 SCF（函数 URL）：
+ *     https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api
  *   本地开发可覆盖为本地后端：
  *     ?api=https://localhost:8443/api   （首次需访问 https://localhost:8443 信任自签证书）
  *     ?api=http://localhost:8787/api    （Chrome 允许 localhost 混合内容，其他浏览器可能拦截）
@@ -23814,10 +23756,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     override = new URLSearchParams(location.search).get('api') || '';
   } catch (err) { override = ''; }
 
-  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向 Render 后端，
+  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向腾讯云 SCF 函数 URL，
    * 本地运行时仍走同源 /api。可用 ?api= 覆盖。 */
   var isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(location.hostname);
-  var autoBase = isLocalHost ? '/api' : 'https://huimeng-ai-backend.onrender.com/api';
+  var autoBase = isLocalHost ? '/api' : 'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api';
 
   var base = String(override || (META && META.content) || autoBase).replace(/\/+$/, '');
   var origin = '';
@@ -23935,7 +23877,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   };
 
   /* 探测后端；返回是否可用 */
-  api.ping = async function () {
+  async function doPing() {
     if (typeof location !== 'undefined' && location.protocol === 'file:') {
       api.checked = true;
       api.online = false;
@@ -23957,6 +23899,25 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       } catch (err) { api.config = null; }
     }
     return api.online;
+  }
+
+  /* 首屏 app.js 与 ui.js 会各探测一次：进行中的请求共用同一个 Promise，
+     5 秒内的重复调用直接复用结果，少打一次 /health + /config。
+     失败不缓存——下一次调用仍会真正重试。 */
+  var pingInFlight = null;
+  var pingAt = 0;
+  api.ping = function () {
+    if (pingInFlight) return pingInFlight;
+    if (api.checked && pingAt && Date.now() - pingAt < 5000) return Promise.resolve(api.online);
+    pingInFlight = doPing().then(function (online) {
+      pingInFlight = null;
+      pingAt = Date.now();
+      return online;
+    }, function (err) {
+      pingInFlight = null;
+      throw err;
+    });
+    return pingInFlight;
   };
 
   api.hasServerKey = function () {
@@ -30725,11 +30686,27 @@ async function authBoot() {
 
     setTimeout(function () { toast('暂时无法连接后端，正在自动重试…', 'warn'); }, 500);
 
-    /* 后台每 5 秒重试 me()，成功后自动恢复 */
-    var bgCount = 0;
-    var bgTimer = setInterval(function () {
-      bgCount++;
-      if (bgCount > 60) { clearInterval(bgTimer); return; }
+    /* 后台重试：5s → 30s → 5min 指数退避（原来是固定每 5 秒、最多 60 次）。
+       410/402/503 是服务端明确的「不可用/欠费」，继续打也没有意义，直接停止并给出明确文案。
+       停止重试不会清理任何本地作品与登录态。 */
+    var RETRY_DELAYS = [5000, 30000, 300000];
+    var retryAttempt = 0;
+    var retryStopped = false;
+
+    function fatalBackendStatus(err) {
+      var status = Number((err && err.status) || 0);
+      return status === 410 || status === 402 || status === 503;
+    }
+
+    function scheduleRetry() {
+      if (retryStopped) return;
+      var delay = RETRY_DELAYS[Math.min(retryAttempt, RETRY_DELAYS.length - 1)];
+      retryAttempt += 1;
+      setTimeout(runRetry, delay);
+    }
+
+    function runRetry() {
+      if (retryStopped) return;
       api.me().then(function (me) {
         window.HMApp.user = me.user;
         try { saveJSON('hm.user', me.user); } catch (e) {}
@@ -30747,10 +30724,23 @@ async function authBoot() {
           renderWorks();
         }
         updateUserUI();
+        retryStopped = true;
         toast('后端已恢复连接 ✅', 'success');
-        clearInterval(bgTimer);
-      }).catch(function () { /* 继续等 */ });
-    }, 5000);
+      }).catch(function (err) {
+        if (fatalBackendStatus(err)) {
+          retryStopped = true;
+          var code = Number(err.status);
+          console.warn('[authBoot] 后端返回 ' + code + '，停止自动重试');
+          toast(code === 503
+            ? '后端服务暂不可用（HTTP 503），已停止自动重试；请稍后刷新页面或联系管理员'
+            : '后端服务已停用（HTTP ' + code + '），已停止自动重试；恢复云函数/充值后再刷新页面', 'warn', 15000);
+          return;
+        }
+        scheduleRetry();
+      });
+    }
+
+    scheduleRetry();
   }
 }
 
@@ -62008,6 +61998,63 @@ window.HMChat = (function () {
   window.HMOUA = { enter: enter };
 })();
 
+/* ========================================================================
+ * 原画「图层面板」导入：纯前端最小实现
+ * ---------------------------------------------------------------
+ * 该面板目前是静态外观（不参与画布渲染）。这里只做：
+ *   点「导入」→ 选一张本地图片 → 在图层列表顶部插入一行（显示文件名与缩略图）。
+ * 不接后端、不写入任何数据、不影响画布。
+ * ===================================================================== */
+(function bindOuaLayerImport() {
+  function init() {
+    var btn = document.getElementById('ouaLyrImportBtn');
+    var input = document.getElementById('ouaLyrImportInput');
+    var list = document.getElementById('ouaLyrList');
+    if (!btn || !input || !list) return;
+
+    function updateCount() {
+      var count = document.getElementById('ouaLyrCount');
+      if (count) count.textContent = String(list.querySelectorAll('.hm-oua-lyr-row').length);
+    }
+
+    btn.addEventListener('click', function () {
+      input.value = '';
+      input.click();
+    });
+
+    input.addEventListener('change', function () {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      if (!/^image\//.test(file.type)) {
+        if (typeof toast === 'function') toast('请选择图片文件', 'info');
+        return;
+      }
+      var url = URL.createObjectURL(file);
+      var row = document.createElement('div');
+      row.className = 'hm-oua-lyr-row';
+      row.innerHTML =
+        '<button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">' +
+        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/><circle cx="8" cy="8" r="1.9"/></svg>' +
+        '</button>' +
+        '<span class="hm-oua-lyr-thumb is-imported"><i></i></span>' +
+        '<span class="hm-oua-lyr-name"></span>' +
+        '<button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">' +
+        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><rect x="4" y="7" width="8" height="6.2" rx="1.2"/><path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/></svg>' +
+        '</button>';
+      row.querySelector('.hm-oua-lyr-name').textContent = file.name;
+      row.querySelector('.hm-oua-lyr-thumb > i').style.backgroundImage = 'url("' + url + '")';
+      var active = list.querySelector('.hm-oua-lyr-row.is-active');
+      if (active) active.classList.remove('is-active');
+      row.classList.add('is-active');
+      list.insertBefore(row, list.firstChild);
+      updateCount();
+      if (typeof toast === 'function') toast('已导入图层：' + file.name, 'success');
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
 
 
 /* ========================================================================
@@ -62923,11 +62970,11 @@ window.HMChat = (function () {
   }
 
   function syncServer() {
-    if (!api || !api.online || !api.getDesk) return;
-    api.getDesk().then(function (d) {
-      if (!d || typeof d !== 'object') return;
+    if (!api || !api.online || !api.getDesk) return Promise.resolve(false);
+    return api.getDesk().then(function (d) {
+      if (!d || typeof d !== 'object') return true;
       var remote = d.desk || d;
-      if (!remote || !Array.isArray(remote.folders)) return;
+      if (!remote || !Array.isArray(remote.folders)) return true;
       var remoteTime = Number(remote.updatedAt) || 0;
       if (remoteTime > desk.updatedAt) {
         desk.folders = remote.folders;
@@ -62942,7 +62989,8 @@ window.HMChat = (function () {
       } else if (desk.updatedAt) {
         persistNow();
       }
-    }).catch(function () {});
+      return true;
+    }).catch(function () { return false; });
   }
 
   /* 登录即见：登录后直接返回「拉回云端桌面布局」的 Promise，
@@ -65984,8 +66032,13 @@ window.HMChat = (function () {
     hookOnView();
     renderPanel();
     renderDesktop();
-    setTimeout(syncServer, 1200);
-    setTimeout(syncServer, 4200);
+    /* 原先固定 1.2s / 4.2s 各拉一次桌面（两次请求）。
+       改成一次调用：失败时才在 3 秒后补一次，正常情况只打一次。 */
+    setTimeout(function () {
+      syncServer().then(function (ok) {
+        if (!ok) setTimeout(syncServer, 3000);
+      });
+    }, 1200);
     setTimeout(function () {
       renderPanel();
       if (deskDirty && document.body.getAttribute('data-view') === 'create') renderDesktop();

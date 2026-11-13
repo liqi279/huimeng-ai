@@ -77,17 +77,45 @@ async function sumPrefixBytes(prefix) {
   return objects.reduce((sum, o) => sum + (Number(o.size) || 0), 0);
 }
 
-/* 预签名 GET：私有桶 + 时效；配置了公开域名则直接给公开直链 */
+/* 预签名 GET：私有桶 + 时效；配置了公开域名则直接给公开直链。
+   URL 复用：同一实例内对同一对象复用同一签名 URL（默认复用 6 小时），
+   让浏览器/中间缓存能真正命中；否则每次列表都签出新 URL，缓存必然失效。 */
+const SIGN_CACHE_TTL_MS = 6 * 3600 * 1000;
+const SIGN_CACHE_MAX = 5000;
+const signedUrlCache = new Map();
+
 function presignGet(objectKey, ttlSec, opts) {
   const extra = opts || {};
   const direct = storage.publicUrl(objectKey);
   if (direct) return direct;
-  return storage.signatureUrl(objectKey, {
+  const ttl = Math.min(Math.max(Number(ttlSec) || config.STORAGE_URL_TTL, 60), 604800);
+  const process = extra.process || '';
+  const disposition = extra.responseContentDisposition || '';
+  /* 只有明确传了 responseCacheControl 才加：PDF 等私有文件不加长缓存头 */
+  const cacheControl = extra.responseCacheControl || '';
+  /* process / disposition 会影响签名内容，必须一起做缓存键 */
+  const cacheKey = objectKey + '|' + process + '|' + disposition + '|' + cacheControl;
+  const now = Date.now();
+  const hit = signedUrlCache.get(cacheKey);
+  if (hit && hit.exp > now) return hit.url;
+
+  const url = storage.signatureUrl(objectKey, {
     method: 'GET',
-    ttl: ttlSec || config.STORAGE_URL_TTL,
-    contentDisposition: extra.responseContentDisposition,
-    process: extra.process,
+    ttl,
+    contentDisposition: disposition,
+    process,
+    responseCacheControl: cacheControl,
   });
+  if (url) {
+    if (signedUrlCache.size >= SIGN_CACHE_MAX) signedUrlCache.clear();
+    signedUrlCache.set(cacheKey, { url, exp: now + Math.min(ttl * 1000 - 30000, SIGN_CACHE_TTL_MS) });
+  }
+  return url;
+}
+
+/* 公开域名（CDN/公开读）直链；未配置时返回 null */
+function publicUrl(objectKey) {
+  return storage.publicUrl(objectKey);
 }
 
 /* 预签名 PUT：浏览器/本机直传大文件（如 83MB PDF），字节不经过 Render。
@@ -275,6 +303,7 @@ module.exports = {
   sumPrefixBytes,
   presignGet,
   presignPut,
+  publicUrl,
   putBucketCors,
   ensureBucketReferer,
   ensureBucketSecurity,

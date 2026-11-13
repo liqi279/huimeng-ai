@@ -311,6 +311,29 @@ async function getAsset(assetId) {
   };
 }
 
+/* 批量取资产：作品列表逐条查会变成 N+1（200 件 = 201 条 SQL），这里一次 IN 查完 */
+async function getAssets(assetIds) {
+  const ids = Array.from(new Set((assetIds || []).filter(Boolean)));
+  if (!ids.length) return {};
+  const placeholders = ids.map(() => '?').join(',');
+  const [rows] = await q('SELECT * FROM user_assets WHERE id IN (' + placeholders + ')', ids);
+  const out = {};
+  rows.forEach((r) => {
+    out[r.id] = {
+      id: r.id,
+      userId: r.user_id,
+      workId: r.work_id,
+      objectKey: r.object_key,
+      mime: r.mime,
+      bytes: Number(r.bytes) || 0,
+      sha256: r.sha256,
+      deleted: Number(r.deleted) === 1,
+      createdAt: Number(r.created_at) || 0,
+    };
+  });
+  return out;
+}
+
 async function removeAsset(userId, assetId) {
   const asset = await getAsset(assetId);
   if (!asset || asset.userId !== userId) return null;
@@ -407,6 +430,7 @@ module.exports = {
   putDoc,
   saveAsset,
   getAsset,
+  getAssets,
   removeAsset,
   listAssets,
   usage,

@@ -5955,11 +5955,27 @@ async function authBoot() {
 
     setTimeout(function () { toast('暂时无法连接后端，正在自动重试…', 'warn'); }, 500);
 
-    /* 后台每 5 秒重试 me()，成功后自动恢复 */
-    var bgCount = 0;
-    var bgTimer = setInterval(function () {
-      bgCount++;
-      if (bgCount > 60) { clearInterval(bgTimer); return; }
+    /* 后台重试：5s → 30s → 5min 指数退避（原来是固定每 5 秒、最多 60 次）。
+       410/402/503 是服务端明确的「不可用/欠费」，继续打也没有意义，直接停止并给出明确文案。
+       停止重试不会清理任何本地作品与登录态。 */
+    var RETRY_DELAYS = [5000, 30000, 300000];
+    var retryAttempt = 0;
+    var retryStopped = false;
+
+    function fatalBackendStatus(err) {
+      var status = Number((err && err.status) || 0);
+      return status === 410 || status === 402 || status === 503;
+    }
+
+    function scheduleRetry() {
+      if (retryStopped) return;
+      var delay = RETRY_DELAYS[Math.min(retryAttempt, RETRY_DELAYS.length - 1)];
+      retryAttempt += 1;
+      setTimeout(runRetry, delay);
+    }
+
+    function runRetry() {
+      if (retryStopped) return;
       api.me().then(function (me) {
         window.HMApp.user = me.user;
         try { saveJSON('hm.user', me.user); } catch (e) {}
@@ -5977,10 +5993,23 @@ async function authBoot() {
           renderWorks();
         }
         updateUserUI();
+        retryStopped = true;
         toast('后端已恢复连接 ✅', 'success');
-        clearInterval(bgTimer);
-      }).catch(function () { /* 继续等 */ });
-    }, 5000);
+      }).catch(function (err) {
+        if (fatalBackendStatus(err)) {
+          retryStopped = true;
+          var code = Number(err.status);
+          console.warn('[authBoot] 后端返回 ' + code + '，停止自动重试');
+          toast(code === 503
+            ? '后端服务暂不可用（HTTP 503），已停止自动重试；请稍后刷新页面或联系管理员'
+            : '后端服务已停用（HTTP ' + code + '），已停止自动重试；恢复云函数/充值后再刷新页面', 'warn', 15000);
+          return;
+        }
+        scheduleRetry();
+      });
+    }
+
+    scheduleRetry();
   }
 }
 

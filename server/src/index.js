@@ -198,16 +198,11 @@ const ready = store.ensureDirs()
       });
     }
 
-    /* 对象存储桶级配置（CORS / 防盗链）幂等初始化：
-       pdf.js 从 GitHub Pages 直连 OSS 分段读 PDF 需要 CORS，失败只记日志，绝不影响启动。
-       手动重跑入口：POST /api/library/admin/bucket-security（管理员）。 */
+    /* 对象存储桶级配置（CORS / 防盗链）不再在冷启动时执行：
+       每次冷启动都写一遍桶既拖慢启动又白费请求。
+       需要变更时调用 POST /api/library/admin/bucket-security（管理员）显式执行。 */
     try {
       objectStore.init();
-      objectStore.ensureBucketSecurity()
-        .then((result) => {
-          if (!result.ok) console.warn('[init] 桶配置未完全生效：' + JSON.stringify(result));
-        })
-        .catch((err) => console.error('[init] 桶配置初始化异常：' + (err && err.message)));
     } catch (err) {
       console.error('[init] 桶配置初始化异常：' + (err && err.message));
     }

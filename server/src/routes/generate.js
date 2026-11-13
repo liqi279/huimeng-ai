@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const crypto = require('crypto');
 const config = require('../config');
 const catalog = require('../catalog');
 const mediaStore = require('../media-store');
@@ -29,6 +30,39 @@ const MAX_REF_COUNT = 10;
 const IMAGE_TIMEOUT = 120000;
 const VIDEO_TIMEOUT = 120000;
 const AUDIO_TIMEOUT = 60000;
+
+/* ---------------- 服务器 Key 每日额度 ----------------
+   用户没带自己的 Key 时，生成走平台在 RayinAPI 的余额。
+   这里按「登录 token（有则用）/ IP + 日期」计数，默认 300 次/天，只拦异常高频；
+   正常用户一天几乎用不到 300 次。GEN_DAILY_LIMIT=0 可完全关闭。
+   说明：计数在 SCF 实例内存中，实例回收会清零，属于「防误刷」而不是严格风控。 */
+const serverKeyQuota = new Map();
+
+function quotaIdentity(req) {
+  const auth = String((req.headers && req.headers.authorization) || '');
+  if (auth) return 't:' + crypto.createHash('sha256').update(auth).digest('hex').slice(0, 16);
+  const fwd = String((req.headers && req.headers['x-forwarded-for']) || '');
+  const ip = (fwd.split(',')[0] || '').trim() || req.ip || 'unknown';
+  return 'ip:' + ip;
+}
+
+function enforceServerKeyQuota(req) {
+  const limit = Number(config.GEN_DAILY_LIMIT) || 0;
+  if (limit <= 0) return;
+  const day = new Date().toISOString().slice(0, 10);
+  const key = quotaIdentity(req) + '|' + day;
+  const used = serverKeyQuota.get(key) || 0;
+  if (used >= limit) {
+    throw jsonError(429, '今日免费生成额度已用完（' + limit + ' 次）',
+      '额度每天自动恢复；在「接入设置」填入自己的 API Key 可不受此限制');
+  }
+  serverKeyQuota.set(key, used + 1);
+  if (serverKeyQuota.size > 5000) {
+    for (const k of Array.from(serverKeyQuota.keys())) {
+      if (k.indexOf('|' + day) < 0) serverKeyQuota.delete(k);
+    }
+  }
+}
 
 const RATIO_SIZE = {
   '1:1': [1024, 1024],
@@ -1010,6 +1044,13 @@ router.post('/generate', wrap(async (req, res) => {
   const body = req.body || {};
   const mode = body.mode;
   assert(['image', 'video', 'audio'].includes(mode), 400, '未知生成模式', 'mode 仅支持 image / video / audio');
+
+  /* 没带自己的 Key → 会消耗平台 Key，按天限额防刷 */
+  const rayinInput = body.rayin && typeof body.rayin === 'object' && !Array.isArray(body.rayin) ? body.rayin : {};
+  const userKey = typeof rayinInput.key === 'string' ? rayinInput.key.trim() : '';
+  if (!userKey && (config.OPENAI_KEY || config.GEMINI_KEY || config.RAYIN_KEY)) {
+    enforceServerKeyQuota(req);
+  }
 
   const started = Date.now();
   if (mode === 'image') {

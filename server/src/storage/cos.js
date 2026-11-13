@@ -154,6 +154,10 @@ function signatureUrl(key, opts) {
   if (method === 'GET' && options.contentDisposition) {
     query['response-content-disposition'] = String(options.contentDisposition);
   }
+  /* 让 COS 直接回长缓存头，浏览器第二次访问不再回源（配合稳定 URL 才生效） */
+  if (method === 'GET' && options.responseCacheControl) {
+    query['response-cache-control'] = String(options.responseCacheControl);
+  }
   if (method === 'GET' && options.process) {
     /* OSS 的 image/resize,... 语法在 COS 等价于 imageMogr2 */
     query['imageMogr2'] = String(options.process).replace(/^image\//, '');
