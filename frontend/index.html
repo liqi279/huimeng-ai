@@ -652,6 +652,9 @@
         <button type="button" class="lib-btn lib-btn-gold" id="libAddBtn">＋ 新增书籍</button>
         <button type="button" class="lib-btn" id="libFavBtn">★ 我的收藏</button>
         <button type="button" class="lib-btn" id="libHistoryBtn">↺ 阅读历史</button>
+        <button type="button" class="lib-btn lib-ocr-btn" id="libOcrBtn" aria-expanded="false" aria-controls="libOcrDock" title="识别并翻译当前页 / 上传图片">
+          <span class="lib-ocr-glyph" aria-hidden="true">文</span>识别翻译
+        </button>
       </div>
     </header>
 
@@ -668,6 +671,79 @@
 
     <div class="lib-open-layer" id="libOpenLayer" hidden></div>
     <section class="lib-detail" id="libDetail" hidden></section>
+    <aside class="lib-ocr-dock" id="libOcrDock" hidden aria-label="OCR 识别与翻译">
+      <div class="lib-ocr-head">
+        <span class="lib-ocr-badge" aria-hidden="true">文</span>
+        <div class="lib-ocr-title">
+          <b>识别翻译</b>
+          <small>OCR · 日本語 / English → 中文</small>
+        </div>
+        <button type="button" class="lib-ocr-x" id="libOcrClose" aria-label="关闭识别翻译">×</button>
+      </div>
+
+      <div class="lib-ocr-langs">
+        <label class="lib-ocr-lang">
+          <span>识别</span>
+          <select id="libOcrFrom">
+            <option value="auto" selected>自动</option>
+            <option value="jpn">日文</option>
+            <option value="eng">英文</option>
+            <option value="chi_sim">中文</option>
+          </select>
+        </label>
+        <button type="button" class="lib-ocr-swap" id="libOcrSwap" title="互换翻译方向" aria-label="互换翻译方向">⇄</button>
+        <label class="lib-ocr-lang">
+          <span>译为</span>
+          <select id="libOcrTo">
+            <option value="zh-CN">中文</option>
+            <option value="en">英文</option>
+            <option value="ja">日文</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="lib-ocr-tabs" role="tablist" aria-label="图片输入方式">
+        <button type="button" class="lib-ocr-tab is-on" id="libOcrTabPage" data-ocr-tab="page" role="tab" aria-selected="true">当前阅读页</button>
+        <button type="button" class="lib-ocr-tab" id="libOcrTabImage" data-ocr-tab="image" role="tab" aria-selected="false">上传 / 粘贴图片</button>
+        <input type="file" id="libOcrFile" accept="image/*" hidden>
+      </div>
+
+      <div class="lib-ocr-drop" id="libOcrDrop" hidden>
+        <span class="lib-ocr-drop-icon" aria-hidden="true">＋</span>
+        <p>拖入、选择图片，或直接 <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴截图</p>
+        <div class="lib-ocr-drop-actions">
+          <button type="button" class="lib-ocr-btn-ghost" id="libOcrPick">选择图片</button>
+          <span class="lib-ocr-filename" id="libOcrFilename"></span>
+        </div>
+      </div>
+
+      <div class="lib-ocr-runrow">
+        <button type="button" class="lib-ocr-run" id="libOcrRun">识别当前页</button>
+        <span class="lib-ocr-hint" id="libOcrHint">首次识别需下载约 2–3MB 模型</span>
+      </div>
+
+      <div class="lib-ocr-status" id="libOcrStatus" hidden></div>
+
+      <div class="lib-ocr-results" id="libOcrResults">
+        <section class="lib-ocr-card">
+          <div class="lib-ocr-card-head">
+            <span>原文</span>
+            <button type="button" class="lib-ocr-copy" data-ocr-copy="src" disabled>复制</button>
+          </div>
+          <pre class="lib-ocr-text" id="libOcrSrc">识别结果会显示在这里。</pre>
+        </section>
+        <section class="lib-ocr-card">
+          <div class="lib-ocr-card-head">
+            <span>中文译文</span>
+            <button type="button" class="lib-ocr-copy" data-ocr-copy="dst" disabled>复制</button>
+          </div>
+          <pre class="lib-ocr-text is-dst" id="libOcrDst">译文会显示在这里。</pre>
+        </section>
+      </div>
+
+      <footer class="lib-ocr-foot">tesseract.js（浏览器内识别） · 翻译：后端代理，失败时直连兜底</footer>
+    </aside>
+
     <section class="lib-reader" id="libReader" hidden></section>
     <div class="lib-modal" id="libModal" hidden></div>
   </main>
@@ -3178,19 +3254,345 @@
     </div>
   </main>
 
-  <!-- ============ Layout 版面（功能预留，仅占位） ============ -->
-  <main class="hm-page" id="view-layout" hidden>
-    <div class="hm-page-head">
-      <div>
-        <h2>Layout 版面</h2>
-        <p>场景版面与镜头构图设计</p>
+  <!-- ============ Layout（样式预览 · 静态壳，照搬原画骨架，暂未接入） ============ -->
+  <main class="hm-page hm-oua-page" id="view-layout" hidden>
+    <div class="oua-workbench">
+      <!-- 上：传统二维动画摄影框 -->
+      <section class="oua-stage" aria-label="摄影框">
+        <div class="oua-stage-bar">
+          <div class="oua-stage-title">
+            <span class="oua-stage-dot" aria-hidden="true"></span>
+            <b>構図紙</b>
+            <span>CAMERA FRAME</span>
+          </div>
+          <div class="oua-stage-meta">
+            <span class="oua-chip">FIELD 12</span>
+            <span class="oua-chip">SAFE 90%</span>
+            <span class="oua-chip is-accent">样式预览 · 暂未接入</span>
+          </div>
+        </div>
+
+        <div class="oua-stage-body">
+          <div class="oua-paper">
+            <!-- 定位孔带：空心圆 / 长孔 / 实心圆 交替，圆孔两侧带圆角短横条 -->
+            <div class="oua-pegstrip" data-peg="3" aria-hidden="true">
+              <span class="oua-peg is-ring"></span>
+              <span class="oua-peg is-slot"></span>
+              <span class="oua-peg is-dot"></span>
+              <span class="oua-peg is-slot"></span>
+              <span class="oua-peg is-ring"></span>
+            </div>
+
+            <div class="oua-frame" data-oua-frame-wrap>
+              <!-- 画面挂载区：由独立画布模块接管，此处仅预留结构，不引用任何外部脚本 -->
+              <div class="oua-frame-mount" data-oua-mount aria-label="摄影框画面"></div>
+              <div class="oua-frame-guides" aria-hidden="true">
+                <i class="oua-guide is-v"></i>
+                <i class="oua-guide is-h"></i>
+                <i class="oua-guide is-safe"></i>
+                <i class="oua-crop is-tl"></i>
+                <i class="oua-crop is-tr"></i>
+                <i class="oua-crop is-bl"></i>
+                <i class="oua-crop is-br"></i>
+              </div>
+            </div>
+
+            <span class="oua-paper-code is-c" aria-hidden="true">C-</span>
+            <span class="oua-paper-code is-time" aria-hidden="true">TIME（   +   ）</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 下：Premiere 风格轨道区 -->
+      <section class="oua-tl" aria-label="时间轴">
+        <div class="oua-tl-bar">
+          <div class="oua-tl-transport" aria-hidden="true">
+            <span class="oua-tl-btn is-step"></span>
+            <span class="oua-tl-btn is-play"></span>
+            <span class="oua-tl-btn is-step is-next"></span>
+            <span class="oua-tl-tc">00:00:00:00</span>
+          </div>
+          <div class="oua-tl-info" aria-hidden="true">
+            <span>序列 01</span>
+            <span class="oua-tl-dot"></span>
+            <span>25 fps</span>
+            <span class="oua-tl-zoom"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+
+        <div class="oua-tl-body">
+          <div class="oua-tl-heads">
+            <div class="oua-tl-heads-top"><span>轨道</span><span>V / A</span></div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v is-alt" data-oua-track-head="V2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a" data-oua-track-head="A2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="oua-tl-canvas">
+            <div class="oua-ruler" aria-hidden="true">
+              <div class="oua-ruler-row">
+                <span class="oua-ruler-label">00:00</span>
+                <span class="oua-ruler-label">00:02</span>
+                <span class="oua-ruler-label">00:04</span>
+                <span class="oua-ruler-label">00:06</span>
+                <span class="oua-ruler-label">00:08</span>
+                <span class="oua-ruler-label">00:10</span>
+                <span class="oua-ruler-label">00:12</span>
+                <span class="oua-ruler-label">00:14</span>
+                <span class="oua-ruler-label">00:16</span>
+              </div>
+            </div>
+
+            <div class="oua-tl-rows">
+              <!-- 轨道数据行挂载点 -->
+              <div class="oua-track-row" data-oua-track-row="V3"></div>
+              <div class="oua-track-row" data-oua-track-row="V2"></div>
+              <div class="oua-track-row" data-oua-track-row="V1"></div>
+              <div class="oua-track-row" data-oua-track-row="A1"></div>
+              <div class="oua-track-row" data-oua-track-row="A2"></div>
+              <div class="oua-track-row" data-oua-track-row="A3"></div>
+            </div>
+
+            <div class="oua-playhead" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ 图层面板（对照 Photoshop「图层」面板 · 本期仅静态外观） ============ -->
+    <details class="hm-oua-layers" id="layoutLayersPanel" open>
+      <summary class="hm-oua-lyr-head">
+        <span class="hm-oua-lyr-head-ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+            <path d="M8 2.3 14 5.1 8 7.9 2 5.1z"/>
+            <path d="M2 8.5 8 11.3 14 8.5"/>
+          </svg>
+        </span>
+        <span class="hm-oua-lyr-head-title">图层</span>
+        <span class="hm-oua-lyr-head-count">6</span>
+        <span class="hm-oua-lyr-fold" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m4 6.5 4 4 4-4"/>
+          </svg>
+        </span>
+      </summary>
+
+      <div class="hm-oua-lyr-body">
+        <!-- 混合模式 / 不透明度 -->
+        <div class="hm-oua-lyr-props">
+          <div class="hm-oua-lyr-prop-row">
+            <span class="hm-oua-lyr-label">混合模式</span>
+            <select class="hm-oua-lyr-select" aria-label="混合模式">
+              <option selected>正常</option>
+              <option>溶解</option>
+              <option>正片叠底</option>
+              <option>滤色</option>
+              <option>叠加</option>
+              <option>柔光</option>
+              <option>颜色减淡</option>
+              <option>线性加深</option>
+            </select>
+          </div>
+          <div class="hm-oua-lyr-prop-row hm-oua-lyr-opacity">
+            <span class="hm-oua-lyr-label">不透明度</span>
+            <input class="hm-oua-lyr-range" type="range" min="0" max="100" value="100" aria-label="不透明度">
+            <span class="hm-oua-lyr-num">100%</span>
+          </div>
+        </div>
+
+        <!-- 图层列表（自上而下 = 画布自上而下） -->
+        <div class="hm-oua-lyr-list">
+          <div class="hm-oua-lyr-row">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="hl"><i></i></span>
+            <span class="hm-oua-lyr-name">高光</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-active">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="skin"><i></i></span>
+            <span class="hm-oua-lyr-name">上色 · 肌肤</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-locked">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="line"><i></i></span>
+            <span class="hm-oua-lyr-name">线稿</span>
+            <button class="hm-oua-lyr-lock is-locked" type="button" title="解锁图层" aria-label="解锁图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-group">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏组" aria-label="显示 / 隐藏组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-caret" aria-hidden="true">▾</span>
+            <span class="hm-oua-lyr-folder" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.8 5h3.5L6.7 6.3h7.5v6.5H1.8z"/>
+              </svg>
+            </span>
+            <span class="hm-oua-lyr-name">角色 A</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定组" aria-label="锁定组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-child">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="face"><i></i></span>
+            <span class="hm-oua-lyr-name">脸</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-off">
+            <button class="hm-oua-lyr-eye is-off" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="bg"><i></i></span>
+            <span class="hm-oua-lyr-name">背景</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 底部操作条 -->
+        <div class="hm-oua-lyr-foot">
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建图层" aria-label="新建图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M3.2 1.9h6.1l3.5 3.5v8.7H3.2z"/>
+              <path d="M8 6.9v4.2M5.9 9h4.2"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建组" aria-label="新建组">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M1.8 4.8h3.4l1.4 1.3h7.6v7.2H1.8z"/>
+              <path d="M8 7.5v3.3M6.35 9.15h3.3"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="复制图层" aria-label="复制图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="5.7" y="2.2" width="8.1" height="9.3" rx="1.1"/>
+              <rect x="2.2" y="4.5" width="8.1" height="9.3" rx="1.1"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="向下合并" aria-label="向下合并">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="2.4" y="9.7" width="11.2" height="4" rx="1"/>
+              <path d="M8 2.1v5.5M5.6 5.2 8 7.6l2.4-2.4"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn is-danger" type="button" title="删除图层" aria-label="删除图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.9 4.8h10.2M6.2 4.8V3.3h3.6v1.5M4.4 4.8l.7 8.6h5.8l.7-8.6"/>
+              <path d="M6.7 7.1v4M9.3 7.1v4"/>
+            </svg>
+          </button>
+        </div>
       </div>
-    </div>
-    <div class="hm-page-empty">
-      <div class="hm-page-empty-icon">▦</div>
-      <h3>功能预留</h3>
-      <p>Layout 模块尚未开放，后续会在这里提供版面设计与镜头构图工具。</p>
-    </div>
+    </details>
   </main>
 
   <!-- ============ 剪辑（功能预留，仅占位） ============ -->
@@ -3206,6 +3608,347 @@
       <h3>功能预留</h3>
       <p>剪辑模块尚未开放，后续会在这里提供时间线剪辑、片段与字幕工具。</p>
     </div>
+  </main>
+
+  <!-- ============ 背景（样式预览 · 静态壳，照搬原画骨架，暂未接入） ============ -->
+  <main class="hm-page hm-oua-page" id="view-bg" hidden>
+    <div class="oua-workbench">
+      <!-- 上：传统二维动画摄影框 -->
+      <section class="oua-stage" aria-label="摄影框">
+        <div class="oua-stage-bar">
+          <div class="oua-stage-title">
+            <span class="oua-stage-dot" aria-hidden="true"></span>
+            <b>構図紙</b>
+            <span>CAMERA FRAME</span>
+          </div>
+          <div class="oua-stage-meta">
+            <span class="oua-chip">FIELD 12</span>
+            <span class="oua-chip">SAFE 90%</span>
+            <span class="oua-chip is-accent">样式预览 · 暂未接入</span>
+          </div>
+        </div>
+
+        <div class="oua-stage-body">
+          <div class="oua-paper">
+            <!-- 定位孔带：空心圆 / 长孔 / 实心圆 交替，圆孔两侧带圆角短横条 -->
+            <div class="oua-pegstrip" data-peg="3" aria-hidden="true">
+              <span class="oua-peg is-ring"></span>
+              <span class="oua-peg is-slot"></span>
+              <span class="oua-peg is-dot"></span>
+              <span class="oua-peg is-slot"></span>
+              <span class="oua-peg is-ring"></span>
+            </div>
+
+            <div class="oua-frame" data-oua-frame-wrap>
+              <!-- 画面挂载区：由独立画布模块接管，此处仅预留结构，不引用任何外部脚本 -->
+              <div class="oua-frame-mount" data-oua-mount aria-label="摄影框画面"></div>
+              <div class="oua-frame-guides" aria-hidden="true">
+                <i class="oua-guide is-v"></i>
+                <i class="oua-guide is-h"></i>
+                <i class="oua-guide is-safe"></i>
+                <i class="oua-crop is-tl"></i>
+                <i class="oua-crop is-tr"></i>
+                <i class="oua-crop is-bl"></i>
+                <i class="oua-crop is-br"></i>
+              </div>
+            </div>
+
+            <span class="oua-paper-code is-c" aria-hidden="true">C-</span>
+            <span class="oua-paper-code is-time" aria-hidden="true">TIME（   +   ）</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 下：Premiere 风格轨道区 -->
+      <section class="oua-tl" aria-label="时间轴">
+        <div class="oua-tl-bar">
+          <div class="oua-tl-transport" aria-hidden="true">
+            <span class="oua-tl-btn is-step"></span>
+            <span class="oua-tl-btn is-play"></span>
+            <span class="oua-tl-btn is-step is-next"></span>
+            <span class="oua-tl-tc">00:00:00:00</span>
+          </div>
+          <div class="oua-tl-info" aria-hidden="true">
+            <span>序列 01</span>
+            <span class="oua-tl-dot"></span>
+            <span>25 fps</span>
+            <span class="oua-tl-zoom"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+
+        <div class="oua-tl-body">
+          <div class="oua-tl-heads">
+            <div class="oua-tl-heads-top"><span>轨道</span><span>V / A</span></div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v is-alt" data-oua-track-head="V2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a" data-oua-track-head="A2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="oua-tl-canvas">
+            <div class="oua-ruler" aria-hidden="true">
+              <div class="oua-ruler-row">
+                <span class="oua-ruler-label">00:00</span>
+                <span class="oua-ruler-label">00:02</span>
+                <span class="oua-ruler-label">00:04</span>
+                <span class="oua-ruler-label">00:06</span>
+                <span class="oua-ruler-label">00:08</span>
+                <span class="oua-ruler-label">00:10</span>
+                <span class="oua-ruler-label">00:12</span>
+                <span class="oua-ruler-label">00:14</span>
+                <span class="oua-ruler-label">00:16</span>
+              </div>
+            </div>
+
+            <div class="oua-tl-rows">
+              <!-- 轨道数据行挂载点 -->
+              <div class="oua-track-row" data-oua-track-row="V3"></div>
+              <div class="oua-track-row" data-oua-track-row="V2"></div>
+              <div class="oua-track-row" data-oua-track-row="V1"></div>
+              <div class="oua-track-row" data-oua-track-row="A1"></div>
+              <div class="oua-track-row" data-oua-track-row="A2"></div>
+              <div class="oua-track-row" data-oua-track-row="A3"></div>
+            </div>
+
+            <div class="oua-playhead" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ 图层面板（对照 Photoshop「图层」面板 · 本期仅静态外观） ============ -->
+    <details class="hm-oua-layers" id="bgLayersPanel" open>
+      <summary class="hm-oua-lyr-head">
+        <span class="hm-oua-lyr-head-ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+            <path d="M8 2.3 14 5.1 8 7.9 2 5.1z"/>
+            <path d="M2 8.5 8 11.3 14 8.5"/>
+          </svg>
+        </span>
+        <span class="hm-oua-lyr-head-title">图层</span>
+        <span class="hm-oua-lyr-head-count">6</span>
+        <span class="hm-oua-lyr-fold" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m4 6.5 4 4 4-4"/>
+          </svg>
+        </span>
+      </summary>
+
+      <div class="hm-oua-lyr-body">
+        <!-- 混合模式 / 不透明度 -->
+        <div class="hm-oua-lyr-props">
+          <div class="hm-oua-lyr-prop-row">
+            <span class="hm-oua-lyr-label">混合模式</span>
+            <select class="hm-oua-lyr-select" aria-label="混合模式">
+              <option selected>正常</option>
+              <option>溶解</option>
+              <option>正片叠底</option>
+              <option>滤色</option>
+              <option>叠加</option>
+              <option>柔光</option>
+              <option>颜色减淡</option>
+              <option>线性加深</option>
+            </select>
+          </div>
+          <div class="hm-oua-lyr-prop-row hm-oua-lyr-opacity">
+            <span class="hm-oua-lyr-label">不透明度</span>
+            <input class="hm-oua-lyr-range" type="range" min="0" max="100" value="100" aria-label="不透明度">
+            <span class="hm-oua-lyr-num">100%</span>
+          </div>
+        </div>
+
+        <!-- 图层列表（自上而下 = 画布自上而下） -->
+        <div class="hm-oua-lyr-list">
+          <div class="hm-oua-lyr-row">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="hl"><i></i></span>
+            <span class="hm-oua-lyr-name">高光</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-active">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="skin"><i></i></span>
+            <span class="hm-oua-lyr-name">上色 · 肌肤</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-locked">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="line"><i></i></span>
+            <span class="hm-oua-lyr-name">线稿</span>
+            <button class="hm-oua-lyr-lock is-locked" type="button" title="解锁图层" aria-label="解锁图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-group">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏组" aria-label="显示 / 隐藏组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-caret" aria-hidden="true">▾</span>
+            <span class="hm-oua-lyr-folder" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.8 5h3.5L6.7 6.3h7.5v6.5H1.8z"/>
+              </svg>
+            </span>
+            <span class="hm-oua-lyr-name">角色 A</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定组" aria-label="锁定组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-child">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="face"><i></i></span>
+            <span class="hm-oua-lyr-name">脸</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-off">
+            <button class="hm-oua-lyr-eye is-off" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="bg"><i></i></span>
+            <span class="hm-oua-lyr-name">背景</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 底部操作条 -->
+        <div class="hm-oua-lyr-foot">
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建图层" aria-label="新建图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M3.2 1.9h6.1l3.5 3.5v8.7H3.2z"/>
+              <path d="M8 6.9v4.2M5.9 9h4.2"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建组" aria-label="新建组">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M1.8 4.8h3.4l1.4 1.3h7.6v7.2H1.8z"/>
+              <path d="M8 7.5v3.3M6.35 9.15h3.3"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="复制图层" aria-label="复制图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="5.7" y="2.2" width="8.1" height="9.3" rx="1.1"/>
+              <rect x="2.2" y="4.5" width="8.1" height="9.3" rx="1.1"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="向下合并" aria-label="向下合并">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="2.4" y="9.7" width="11.2" height="4" rx="1"/>
+              <path d="M8 2.1v5.5M5.6 5.2 8 7.6l2.4-2.4"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn is-danger" type="button" title="删除图层" aria-label="删除图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.9 4.8h10.2M6.2 4.8V3.3h3.6v1.5M4.4 4.8l.7 8.6h5.8l.7-8.6"/>
+              <path d="M6.7 7.1v4M9.3 7.1v4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </details>
   </main>
 
   <!-- ============ 原画（Original Animation） ============ -->
@@ -3407,6 +4150,170 @@
         <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
       </div>
     </section>
+
+    <div class="oua-workbench">
+      <!-- 尺寸选择栏：派系 → 纸型 + 画框 + 定位孔，另加 Field 档位（仅【原画】启用） -->
+      <div class="oua-sizebar" role="group" aria-label="尺寸选择">
+        <div class="oua-sizebar-lead"><i aria-hidden="true"></i>尺寸</div>
+        <label class="oua-sizebar-item"><span>派系</span><select data-oua-size="faction" aria-label="派系"></select></label>
+        <label class="oua-sizebar-item"><span>纸型</span><select data-oua-size="paper" aria-label="纸型"></select></label>
+        <label class="oua-sizebar-item"><span>画框</span><select data-oua-size="frame" aria-label="画框比例"></select></label>
+        <label class="oua-sizebar-item"><span>定位孔</span><select data-oua-size="peg" aria-label="定位孔类型"></select></label>
+        <label class="oua-sizebar-item"><span>Field</span><select data-oua-size="field" aria-label="Field 档位"></select></label>
+        <button type="button" class="oua-sizebar-reset" data-oua-size="reset">重置</button>
+      </div>
+
+      <!-- 上：传统二维动画摄影框 -->
+      <section class="oua-stage" aria-label="摄影框">
+        <div class="oua-stage-bar">
+          <div class="oua-stage-title">
+            <span class="oua-stage-dot" aria-hidden="true"></span>
+            <b>構図紙</b>
+            <span>CAMERA FRAME</span>
+          </div>
+          <div class="oua-stage-meta">
+            <span class="oua-chip" data-oua-chip="paper">B4 257×364</span>
+            <span class="oua-chip" data-oua-chip="field">FIELD 12 · 304.8×228.6mm</span>
+            <span class="oua-chip is-accent" data-oua-chip="frame">4:3</span>
+            <span class="oua-chip is-accent" data-oua-chip="override" hidden>已改</span>
+            <button type="button" class="oua-chip oua-chip-btn" data-oua-box-reset title="安全框 / 扫描框恢复默认">框线重置</button>
+          </div>
+        </div>
+
+        <div class="oua-stage-body">
+          <div class="oua-paper">
+            <!-- 定位孔带：空心圆 / 长孔 / 实心圆 交替，圆孔两侧带圆角短横条 -->
+            <div class="oua-pegstrip" data-peg="3" aria-hidden="true">
+              <span class="oua-peg is-ring"></span>
+              <span class="oua-peg is-slot"></span>
+              <span class="oua-peg is-dot"></span>
+              <span class="oua-peg is-slot"></span>
+              <span class="oua-peg is-ring"></span>
+            </div>
+
+            <div class="oua-frame" data-oua-frame-wrap>
+              <!-- 画面挂载区：由独立画布模块接管，此处仅预留结构，不引用任何外部脚本 -->
+              <div class="oua-frame-mount" data-oua-mount aria-label="摄影框画面"></div>
+              <div class="oua-frame-guides" aria-hidden="true">
+                <i class="oua-guide is-v"></i>
+                <i class="oua-guide is-h"></i>
+                <i class="oua-guide is-safe"></i>
+                <i class="oua-crop is-tl"></i>
+                <i class="oua-crop is-tr"></i>
+                <i class="oua-crop is-bl"></i>
+                <i class="oua-crop is-br"></i>
+              </div>
+            </div>
+
+            <span class="oua-paper-code is-c" aria-hidden="true">C-</span>
+            <span class="oua-paper-code is-time" aria-hidden="true">TIME（   +   ）</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 下：Premiere 风格轨道区 -->
+      <section class="oua-tl" aria-label="时间轴">
+        <div class="oua-tl-bar">
+          <div class="oua-tl-transport" aria-hidden="true">
+            <span class="oua-tl-btn is-step"></span>
+            <span class="oua-tl-btn is-play"></span>
+            <span class="oua-tl-btn is-step is-next"></span>
+            <span class="oua-tl-tc">00:00:00:00</span>
+          </div>
+          <div class="oua-tl-info" aria-hidden="true">
+            <span>序列 01</span>
+            <span class="oua-tl-dot"></span>
+            <span>25 fps</span>
+            <span class="oua-tl-zoom"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+
+        <div class="oua-tl-body">
+          <div class="oua-tl-heads">
+            <div class="oua-tl-heads-top"><span>轨道</span><span>V / A</span></div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v is-alt" data-oua-track-head="V2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-v" data-oua-track-head="V1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">V1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-eye"></span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A1">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A1</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a" data-oua-track-head="A2">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A2</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+            <div class="oua-tl-head is-a is-alt" data-oua-track-head="A3">
+              <span class="oua-tl-twist" aria-hidden="true">▾</span>
+              <span class="oua-tl-name">A3</span>
+              <span class="oua-tl-tools" aria-hidden="true">
+                <span class="oua-tool is-letter">M</span>
+                <span class="oua-tool is-letter">S</span>
+                <span class="oua-tool is-lock"></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="oua-tl-canvas">
+            <div class="oua-ruler" aria-hidden="true">
+              <div class="oua-ruler-row">
+                <span class="oua-ruler-label">00:00</span>
+                <span class="oua-ruler-label">00:02</span>
+                <span class="oua-ruler-label">00:04</span>
+                <span class="oua-ruler-label">00:06</span>
+                <span class="oua-ruler-label">00:08</span>
+                <span class="oua-ruler-label">00:10</span>
+                <span class="oua-ruler-label">00:12</span>
+                <span class="oua-ruler-label">00:14</span>
+                <span class="oua-ruler-label">00:16</span>
+              </div>
+            </div>
+
+            <div class="oua-tl-rows">
+              <!-- 轨道数据行挂载点 -->
+              <div class="oua-track-row" data-oua-track-row="V3"></div>
+              <div class="oua-track-row" data-oua-track-row="V2"></div>
+              <div class="oua-track-row" data-oua-track-row="V1"></div>
+              <div class="oua-track-row" data-oua-track-row="A1"></div>
+              <div class="oua-track-row" data-oua-track-row="A2"></div>
+              <div class="oua-track-row" data-oua-track-row="A3"></div>
+            </div>
+
+            <div class="oua-playhead" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <!-- ============ 图层面板（对照 Photoshop「图层」面板 · 本期仅静态外观） ============ -->
     <details class="hm-oua-layers" id="ouaLayersPanel" open>
@@ -3654,6 +4561,194 @@
         <button class="hm-pill hm-pill-primary" disabled>已自动保存</button>
       </div>
     </section>
+
+    <!-- ============ 图层面板（对照 Photoshop「图层」面板 · 本期仅静态外观） ============ -->
+    <details class="hm-oua-layers" id="animLayersPanel" open>
+      <summary class="hm-oua-lyr-head">
+        <span class="hm-oua-lyr-head-ico" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+            <path d="M8 2.3 14 5.1 8 7.9 2 5.1z"/>
+            <path d="M2 8.5 8 11.3 14 8.5"/>
+          </svg>
+        </span>
+        <span class="hm-oua-lyr-head-title">图层</span>
+        <span class="hm-oua-lyr-head-count">6</span>
+        <span class="hm-oua-lyr-fold" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m4 6.5 4 4 4-4"/>
+          </svg>
+        </span>
+      </summary>
+
+      <div class="hm-oua-lyr-body">
+        <!-- 混合模式 / 不透明度 -->
+        <div class="hm-oua-lyr-props">
+          <div class="hm-oua-lyr-prop-row">
+            <span class="hm-oua-lyr-label">混合模式</span>
+            <select class="hm-oua-lyr-select" aria-label="混合模式">
+              <option selected>正常</option>
+              <option>溶解</option>
+              <option>正片叠底</option>
+              <option>滤色</option>
+              <option>叠加</option>
+              <option>柔光</option>
+              <option>颜色减淡</option>
+              <option>线性加深</option>
+            </select>
+          </div>
+          <div class="hm-oua-lyr-prop-row hm-oua-lyr-opacity">
+            <span class="hm-oua-lyr-label">不透明度</span>
+            <input class="hm-oua-lyr-range" type="range" min="0" max="100" value="100" aria-label="不透明度">
+            <span class="hm-oua-lyr-num">100%</span>
+          </div>
+        </div>
+
+        <!-- 图层列表（自上而下 = 画布自上而下） -->
+        <div class="hm-oua-lyr-list">
+          <div class="hm-oua-lyr-row">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="hl"><i></i></span>
+            <span class="hm-oua-lyr-name">高光</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-active">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="skin"><i></i></span>
+            <span class="hm-oua-lyr-name">上色 · 肌肤</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-locked">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="line"><i></i></span>
+            <span class="hm-oua-lyr-name">线稿</span>
+            <button class="hm-oua-lyr-lock is-locked" type="button" title="解锁图层" aria-label="解锁图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-group">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏组" aria-label="显示 / 隐藏组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-caret" aria-hidden="true">▾</span>
+            <span class="hm-oua-lyr-folder" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.8 5h3.5L6.7 6.3h7.5v6.5H1.8z"/>
+              </svg>
+            </span>
+            <span class="hm-oua-lyr-name">角色 A</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定组" aria-label="锁定组">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-child">
+            <button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="face"><i></i></span>
+            <span class="hm-oua-lyr-name">脸</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="hm-oua-lyr-row is-off">
+            <button class="hm-oua-lyr-eye is-off" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/>
+                <circle cx="8" cy="8" r="1.9"/>
+              </svg>
+            </button>
+            <span class="hm-oua-lyr-thumb" data-kind="bg"><i></i></span>
+            <span class="hm-oua-lyr-name">背景</span>
+            <button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+                <rect x="4" y="7" width="8" height="6.2" rx="1.2"/>
+                <path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 底部操作条 -->
+        <div class="hm-oua-lyr-foot">
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建图层" aria-label="新建图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M3.2 1.9h6.1l3.5 3.5v8.7H3.2z"/>
+              <path d="M8 6.9v4.2M5.9 9h4.2"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="新建组" aria-label="新建组">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <path d="M1.8 4.8h3.4l1.4 1.3h7.6v7.2H1.8z"/>
+              <path d="M8 7.5v3.3M6.35 9.15h3.3"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="复制图层" aria-label="复制图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="5.7" y="2.2" width="8.1" height="9.3" rx="1.1"/>
+              <rect x="2.2" y="4.5" width="8.1" height="9.3" rx="1.1"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn" type="button" title="向下合并" aria-label="向下合并">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+              <rect x="2.4" y="9.7" width="11.2" height="4" rx="1"/>
+              <path d="M8 2.1v5.5M5.6 5.2 8 7.6l2.4-2.4"/>
+            </svg>
+          </button>
+          <button class="hm-oua-lyr-fbtn is-danger" type="button" title="删除图层" aria-label="删除图层">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.9 4.8h10.2M6.2 4.8V3.3h3.6v1.5M4.4 4.8l.7 8.6h5.8l.7-8.6"/>
+              <path d="M6.7 7.1v4M9.3 7.1v4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </details>
+
   </main>
 
   <style id="hmAccountAdminCss">
