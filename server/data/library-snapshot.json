@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T16:44:32.145Z",
+  "generatedAt": "2026-11-13T16:53:50.786Z",
   "source": "huimeng_library.books",
-  "total": 375,
+  "total": 382,
   "areas": {
-    "paint": 359,
+    "paint": 366,
     "ref": 16
   },
   "books": [
@@ -17257,6 +17257,1026 @@
       "pdfBytes": 101974172,
       "coverKey": "library/covers/380-book-cover.jpg",
       "coverBytes": 252441
+    },
+    {
+      "id": "lib-mwf7n59q-d5fd89",
+      "sortNo": 380,
+      "title": "TACO亲授！解决各种问题的160个人物绘制技巧",
+      "author": "[韩]TACO",
+      "intro": "原名《TACO直伝！あらゆる悩みを解決する キャラ作画のコツ160》，韩国画师타코작가(taco、taco1704)的一本人物绘制教程。",
+      "pageCount": 738,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/381-book.pdf",
+      "pdfBytes": 179871055,
+      "coverKey": "library/covers/381-book-cover.jpg",
+      "coverBytes": 334013
+    },
+    {
+      "id": "lib-mwf7l9rn-47e522",
+      "sortNo": 381,
+      "title": "人物绘制50个要点完整指南 让你不用参考就能画",
+      "author": "[日]ながさわとろ",
+      "intro": "原名《描きテク!完全解説 モチーフを見なくても描ける 人物デッサン50のポイント!: 漫画・アニメーションの人物画が上達する!》，一本漫画人物绘制的教程。",
+      "pageCount": 196,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "（表紙）",
+          "page": 2
+        },
+        {
+          "title": "カラー作例 岡谷",
+          "page": 4
+        },
+        {
+          "title": "カラーメイキング 杉谷エコ編",
+          "page": 5
+        },
+        {
+          "title": "カラーメイキング 三原しらゆき編",
+          "page": 7
+        },
+        {
+          "title": "カラーメイキング 天神うめまる編",
+          "page": 9
+        },
+        {
+          "title": "カラー作例 藤沢涼生",
+          "page": 11
+        },
+        {
+          "title": "はじめに",
+          "page": 13
+        },
+        {
+          "title": "イントロダクション",
+          "page": 14
+        },
+        {
+          "title": "目次",
+          "page": 20
+        },
+        {
+          "title": "第１章 その体はつながっていますか？",
+          "page": 24
+        },
+        {
+          "title": "01 全体のつながりを考える",
+          "page": 25
+        },
+        {
+          "title": "02 人体を単純化・図形化する",
+          "page": 29
+        },
+        {
+          "title": "基本のアタリ「人体モデル」",
+          "page": 30
+        },
+        {
+          "title": "アナトミー〈美術解剖学〉の必要性",
+          "page": 35
+        },
+        {
+          "title": "03 人体モデルに筋肉を盛る",
+          "page": 37
+        },
+        {
+          "title": "胸部と腰部の間には何があるのか？",
+          "page": 38
+        },
+        {
+          "title": "腰部",
+          "page": 39
+        },
+        {
+          "title": "腰と脚のつながり",
+          "page": 41
+        },
+        {
+          "title": "人体モデルの「腕」に筋肉をのせていく",
+          "page": 43
+        },
+        {
+          "title": "ランドマークを詳しく",
+          "page": 46
+        },
+        {
+          "title": "04 全身のつながり",
+          "page": 48
+        },
+        {
+          "title": "側面",
+          "page": 48
+        },
+        {
+          "title": "背面",
+          "page": 51
+        },
+        {
+          "title": "筋肉の知識を実際に使ってみよう",
+          "page": 53
+        },
+        {
+          "title": "05 立体として人体をとらえる",
+          "page": 55
+        },
+        {
+          "title": "ラッピングとエッジを使って立体感を表現してみる",
+          "page": 59
+        },
+        {
+          "title": "第２章 いつもの手くせで描く好みの顔……その顔に一度チェックを入れてみませんか？",
+          "page": 60
+        },
+        {
+          "title": "01 頭部",
+          "page": 61
+        },
+        {
+          "title": "頭部を描くために必要な知識",
+          "page": 62
+        },
+        {
+          "title": "02 顔のバリエーションのつくり方",
+          "page": 64
+        },
+        {
+          "title": "①健康的な若い女性の丸顔",
+          "page": 64
+        },
+        {
+          "title": "②中年男のいかつい顔",
+          "page": 65
+        },
+        {
+          "title": "③やせた男の陰気な顔",
+          "page": 66
+        },
+        {
+          "title": "骨格で考えるアオリとフカン",
+          "page": 72
+        },
+        {
+          "title": "03 各パーツ（目・鼻・口）の描き方",
+          "page": 75
+        },
+        {
+          "title": "正面顔の場合",
+          "page": 75
+        },
+        {
+          "title": "斜め45°の顔の場合",
+          "page": 77
+        },
+        {
+          "title": "横顔の場合",
+          "page": 78
+        },
+        {
+          "title": "アオリの顔の場合",
+          "page": 79
+        },
+        {
+          "title": "フカンの顔の場合",
+          "page": 80
+        },
+        {
+          "title": "04 欧米人とアジア人（骨格の違い）",
+          "page": 83
+        },
+        {
+          "title": "違い①眉ラインの高さ",
+          "page": 84
+        },
+        {
+          "title": "違い②鼻の高さ",
+          "page": 85
+        },
+        {
+          "title": "違い③頬骨の高さ",
+          "page": 85
+        },
+        {
+          "title": "漫画・アニメの美男美女",
+          "page": 87
+        },
+        {
+          "title": "第３章 肩まわりが理解できれば上半身のポーズは思いのまま！",
+          "page": 88
+        },
+        {
+          "title": "01 首（頭と胴がつながらない）",
+          "page": 89
+        },
+        {
+          "title": "正面顔の作例",
+          "page": 89
+        },
+        {
+          "title": "側面の作例",
+          "page": 95
+        },
+        {
+          "title": "背面の作例",
+          "page": 97
+        },
+        {
+          "title": "首がなくなる……？問題",
+          "page": 101
+        },
+        {
+          "title": "02 肩まわり",
+          "page": 103
+        },
+        {
+          "title": "肩まわりの構造——骨格編",
+          "page": 104
+        },
+        {
+          "title": "肩まわりの構造——筋肉編",
+          "page": 105
+        },
+        {
+          "title": "肩まわりのランドマーク",
+          "page": 106
+        },
+        {
+          "title": "03 体幹・腕",
+          "page": 109
+        },
+        {
+          "title": "体幹のいびつな形が腕の見え方に影響する",
+          "page": 109
+        },
+        {
+          "title": "腕の動きと体幹の変化",
+          "page": 112
+        },
+        {
+          "title": "腕を後ろに大きく引くポーズ",
+          "page": 113
+        },
+        {
+          "title": "腕を前に突き出す",
+          "page": 115
+        },
+        {
+          "title": "マッチョポーズで体幹が湾曲",
+          "page": 116
+        },
+        {
+          "title": "04 バンザイポーズ／両手を上げる",
+          "page": 117
+        },
+        {
+          "title": "腕を上げたときの筋肉の形状変化",
+          "page": 119
+        },
+        {
+          "title": "ワキの下はどう描けばいいの？",
+          "page": 121
+        },
+        {
+          "title": "バンザイポーズ：側面",
+          "page": 123
+        },
+        {
+          "title": "バンザイポーズ：背面",
+          "page": 124
+        },
+        {
+          "title": "太って見えるのはなぜ？",
+          "page": 125
+        },
+        {
+          "title": "バンザイポーズのまとめ",
+          "page": 126
+        },
+        {
+          "title": "腕のポーズ集",
+          "page": 127
+        },
+        {
+          "title": "第４章 脚が主役になるポーズ",
+          "page": 128
+        },
+        {
+          "title": "01 美しい脚を描く",
+          "page": 129
+        },
+        {
+          "title": "正面側の脚のポイント",
+          "page": 130
+        },
+        {
+          "title": "背面側の脚のポイント",
+          "page": 131
+        },
+        {
+          "title": "02 座りポーズ／椅子",
+          "page": 133
+        },
+        {
+          "title": "人物を椅子に座らせる方法",
+          "page": 134
+        },
+        {
+          "title": "03 座りポーズ／床",
+          "page": 143
+        },
+        {
+          "title": "「あぐら」とはどんなポーズ？",
+          "page": 144
+        },
+        {
+          "title": "床に後ろ手をつくポーズ",
+          "page": 147
+        },
+        {
+          "title": "04 キックポーズ（蹴りのポーズ）",
+          "page": 152
+        },
+        {
+          "title": "キックポーズ①",
+          "page": 152
+        },
+        {
+          "title": "キックポーズの基本型",
+          "page": 154
+        },
+        {
+          "title": "基本形を応用する",
+          "page": 155
+        },
+        {
+          "title": "キックポーズ②",
+          "page": 157
+        },
+        {
+          "title": "同一ポーズをさまざまなアングルで描く",
+          "page": 159
+        },
+        {
+          "title": "第５章 モチーフを見なくても描ける知識はモチーフを見たときにこそ発揮される！",
+          "page": 160
+        },
+        {
+          "title": "01 モチーフを見て描く",
+          "page": 161
+        },
+        {
+          "title": "写真をトレースして描く",
+          "page": 161
+        },
+        {
+          "title": "人物を見て描く",
+          "page": 163
+        },
+        {
+          "title": "02 ムーブマン（躍動感）を表現する",
+          "page": 167
+        },
+        {
+          "title": "03 デフォルメで動きを表現する",
+          "page": 171
+        },
+        {
+          "title": "動きを切り取る①",
+          "page": 171
+        },
+        {
+          "title": "動きを切り取る②",
+          "page": 173
+        },
+        {
+          "title": "ラフでポーズを考える",
+          "page": 175
+        },
+        {
+          "title": "人体モデルのパーツを積み重ねる",
+          "page": 176
+        },
+        {
+          "title": "04 さまざまなポーズを描く",
+          "page": 177
+        },
+        {
+          "title": "おじぎを側面から見る",
+          "page": 178
+        },
+        {
+          "title": "腕を組むポーズ+アオリ",
+          "page": 179
+        },
+        {
+          "title": "ひねりポーズ",
+          "page": 180
+        },
+        {
+          "title": "寝ポーズ",
+          "page": 183
+        },
+        {
+          "title": "50のポイントまとめ",
+          "page": 191
+        },
+        {
+          "title": "主要参考文献",
+          "page": 193
+        },
+        {
+          "title": "イラストレーター紹介",
+          "page": 194
+        }
+      ],
+      "pdfKey": "library/books/382-book.pdf",
+      "pdfBytes": 66220761,
+      "coverKey": "library/covers/382-book-cover.jpg",
+      "coverBytes": 221503
+    },
+    {
+      "id": "lib-mwf7lc5b-e94a11",
+      "sortNo": 382,
+      "title": "数码插画的\"姿势\"百科全书",
+      "author": "[日]ダテナオト",
+      "intro": "原名《デジタルイラストの「ポーズ」見つかる事典 使えるしぐさ・姿勢・動きのアイデア480》，一本对应CLIP STUDIO PAINT的姿势参考教程，附带的了3D模型clip特典文件。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 2
+        },
+        {
+          "title": "はじめに",
+          "page": 6
+        },
+        {
+          "title": "目次",
+          "page": 7
+        },
+        {
+          "title": "本書の読み方",
+          "page": 10
+        },
+        {
+          "title": "PART０ ポーズの基本",
+          "page": 12
+        },
+        {
+          "title": "ポーズの考え方",
+          "page": 13
+        },
+        {
+          "title": "構図の考え方",
+          "page": 15
+        },
+        {
+          "title": "アングル",
+          "page": 17
+        },
+        {
+          "title": "3Dデッサン人形",
+          "page": 18
+        },
+        {
+          "title": "PART１ 手で魅せるポーズ",
+          "page": 22
+        },
+        {
+          "title": "片手出し",
+          "page": 23
+        },
+        {
+          "title": "両手出し",
+          "page": 25
+        },
+        {
+          "title": "指さし",
+          "page": 27
+        },
+        {
+          "title": "投げキッス",
+          "page": 29
+        },
+        {
+          "title": "ピース",
+          "page": 31
+        },
+        {
+          "title": "あいさつ",
+          "page": 33
+        },
+        {
+          "title": "お嬢様笑い",
+          "page": 35
+        },
+        {
+          "title": "頬杖",
+          "page": 36
+        },
+        {
+          "title": "くちびるに指",
+          "page": 37
+        },
+        {
+          "title": "ガッツポーズ",
+          "page": 39
+        },
+        {
+          "title": "思案",
+          "page": 41
+        },
+        {
+          "title": "指ピストル",
+          "page": 43
+        },
+        {
+          "title": "しくしく",
+          "page": 45
+        },
+        {
+          "title": "あっかんべー",
+          "page": 46
+        },
+        {
+          "title": "遠くを見る",
+          "page": 47
+        },
+        {
+          "title": "照れ",
+          "page": 48
+        },
+        {
+          "title": "頭支え",
+          "page": 49
+        },
+        {
+          "title": "指クイ",
+          "page": 50
+        },
+        {
+          "title": "ケモノの手",
+          "page": 51
+        },
+        {
+          "title": "まかせろ",
+          "page": 53
+        },
+        {
+          "title": "敬礼",
+          "page": 54
+        },
+        {
+          "title": "ハート",
+          "page": 55
+        },
+        {
+          "title": "祈り",
+          "page": 56
+        },
+        {
+          "title": "手をあわせる",
+          "page": 57
+        },
+        {
+          "title": "あご囲み",
+          "page": 58
+        },
+        {
+          "title": "びっくり",
+          "page": 59
+        },
+        {
+          "title": "お手上げ",
+          "page": 60
+        },
+        {
+          "title": "腕組み",
+          "page": 61
+        },
+        {
+          "title": "耳ふさぎ",
+          "page": 62
+        },
+        {
+          "title": "バスト抱え",
+          "page": 63
+        },
+        {
+          "title": "セルフ抱き",
+          "page": 64
+        },
+        {
+          "title": "髪いじり",
+          "page": 65
+        },
+        {
+          "title": "耳に髪かけ",
+          "page": 66
+        },
+        {
+          "title": "髪かきあげ",
+          "page": 67
+        },
+        {
+          "title": "髪結び",
+          "page": 68
+        },
+        {
+          "title": "顔を覆う",
+          "page": 69
+        },
+        {
+          "title": "口ぬぐい",
+          "page": 70
+        },
+        {
+          "title": "いじいじ",
+          "page": 71
+        },
+        {
+          "title": "PART２ 全身で伝えるポーズ",
+          "page": 72
+        },
+        {
+          "title": "モデル立ち",
+          "page": 73
+        },
+        {
+          "title": "仁王立ち",
+          "page": 74
+        },
+        {
+          "title": "振り返り",
+          "page": 75
+        },
+        {
+          "title": "脇見せ",
+          "page": 77
+        },
+        {
+          "title": "「く」の字立ち",
+          "page": 78
+        },
+        {
+          "title": "片足立ち",
+          "page": 79
+        },
+        {
+          "title": "膝立ち",
+          "page": 81
+        },
+        {
+          "title": "ひざまずき",
+          "page": 83
+        },
+        {
+          "title": "よつん這い",
+          "page": 84
+        },
+        {
+          "title": "仰向け",
+          "page": 85
+        },
+        {
+          "title": "のけぞり",
+          "page": 86
+        },
+        {
+          "title": "腹ばい",
+          "page": 87
+        },
+        {
+          "title": "横寝",
+          "page": 88
+        },
+        {
+          "title": "胎児の寝姿",
+          "page": 89
+        },
+        {
+          "title": "あぐら",
+          "page": 90
+        },
+        {
+          "title": "しゃがみ",
+          "page": 91
+        },
+        {
+          "title": "腰かけ",
+          "page": 93
+        },
+        {
+          "title": "脚組み",
+          "page": 95
+        },
+        {
+          "title": "横座り",
+          "page": 96
+        },
+        {
+          "title": "ぺたん座り",
+          "page": 97
+        },
+        {
+          "title": "三角座り",
+          "page": 98
+        },
+        {
+          "title": "足投げ出し",
+          "page": 99
+        },
+        {
+          "title": "立て膝",
+          "page": 100
+        },
+        {
+          "title": "歩き",
+          "page": 101
+        },
+        {
+          "title": "ダッシュ",
+          "page": 103
+        },
+        {
+          "title": "ずっこけ",
+          "page": 104
+        },
+        {
+          "title": "ジャンプ",
+          "page": 105
+        },
+        {
+          "title": "着地",
+          "page": 107
+        },
+        {
+          "title": "ダンス",
+          "page": 108
+        },
+        {
+          "title": "浮遊",
+          "page": 109
+        },
+        {
+          "title": "ファイティングポーズ",
+          "page": 111
+        },
+        {
+          "title": "パンチ",
+          "page": 113
+        },
+        {
+          "title": "キック",
+          "page": 115
+        },
+        {
+          "title": "よりかかり",
+          "page": 117
+        },
+        {
+          "title": "ストレッチ",
+          "page": 119
+        },
+        {
+          "title": "エアロビクス",
+          "page": 120
+        },
+        {
+          "title": "寝起き",
+          "page": 121
+        },
+        {
+          "title": "バレエ",
+          "page": 122
+        },
+        {
+          "title": "マッスル",
+          "page": 123
+        },
+        {
+          "title": "PART３ アイテムを使うポーズ",
+          "page": 124
+        },
+        {
+          "title": "メガネ",
+          "page": 125
+        },
+        {
+          "title": "ネクタイ",
+          "page": 127
+        },
+        {
+          "title": "帽子",
+          "page": 128
+        },
+        {
+          "title": "ジャケット",
+          "page": 129
+        },
+        {
+          "title": "スカート",
+          "page": 131
+        },
+        {
+          "title": "リボン",
+          "page": 133
+        },
+        {
+          "title": "手袋",
+          "page": 134
+        },
+        {
+          "title": "靴",
+          "page": 135
+        },
+        {
+          "title": "ショーツ",
+          "page": 136
+        },
+        {
+          "title": "口紅",
+          "page": 137
+        },
+        {
+          "title": "エプロン",
+          "page": 138
+        },
+        {
+          "title": "本",
+          "page": 139
+        },
+        {
+          "title": "花束",
+          "page": 140
+        },
+        {
+          "title": "スマートフォン",
+          "page": 141
+        },
+        {
+          "title": "カメラ",
+          "page": 142
+        },
+        {
+          "title": "バッグ",
+          "page": 143
+        },
+        {
+          "title": "傘",
+          "page": 145
+        },
+        {
+          "title": "学校の椅子と机",
+          "page": 147
+        },
+        {
+          "title": "椅子",
+          "page": 150
+        },
+        {
+          "title": "剣",
+          "page": 151
+        },
+        {
+          "title": "日本刀",
+          "page": 153
+        },
+        {
+          "title": "銃",
+          "page": 155
+        },
+        {
+          "title": "弓",
+          "page": 158
+        },
+        {
+          "title": "長柄の武器",
+          "page": 159
+        },
+        {
+          "title": "魔法のステッキ",
+          "page": 161
+        },
+        {
+          "title": "ムチ",
+          "page": 162
+        },
+        {
+          "title": "食べ物",
+          "page": 163
+        },
+        {
+          "title": "飲み物",
+          "page": 165
+        },
+        {
+          "title": "タバコ",
+          "page": 167
+        },
+        {
+          "title": "手錠",
+          "page": 168
+        },
+        {
+          "title": "仮面",
+          "page": 169
+        },
+        {
+          "title": "拡声器",
+          "page": 170
+        },
+        {
+          "title": "指揮棒",
+          "page": 171
+        },
+        {
+          "title": "ヘッドホン",
+          "page": 172
+        },
+        {
+          "title": "ギターとベース",
+          "page": 173
+        },
+        {
+          "title": "ボーカルマイク",
+          "page": 175
+        },
+        {
+          "title": "索引",
+          "page": 177
+        },
+        {
+          "title": "イラストレーター紹介",
+          "page": 178
+        },
+        {
+          "title": "奥付",
+          "page": 179
+        }
+      ],
+      "pdfKey": "library/books/383-book.pdf",
+      "pdfBytes": 79130655,
+      "coverKey": "library/covers/383-book-cover.jpg",
+      "coverBytes": 305057
+    },
+    {
+      "id": "lib-mwf7q7bz-528c15",
+      "sortNo": 386,
+      "title": "动画的基础知识大百科",
+      "author": "[日] 神村幸子",
+      "intro": "原名《アニメーションの基礎知識大百科》，一本介绍动画的制作过程和用语的书籍，非拆扫，2009年初版。",
+      "pageCount": 227,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/387-book.pdf",
+      "pdfBytes": 230924123,
+      "coverKey": "library/covers/387-book-cover.jpg",
+      "coverBytes": 139245
+    },
+    {
+      "id": "lib-mwf7pgdo-a33f4e",
+      "sortNo": 387,
+      "title": "思考方式改变画风",
+      "author": "[日]ダテナオト",
+      "intro": "原名《考え方で絵は変わる ~イラストスキル向上のためのダテ式思考法~》，一本思考如何提高绘画技巧的书，文字向，不包含特典内容。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/388-book.pdf",
+      "pdfBytes": 162875095,
+      "coverKey": "library/covers/388-book-cover.jpg",
+      "coverBytes": 228507
+    },
+    {
+      "id": "lib-mwf7s51f-4ce32e",
+      "sortNo": 388,
+      "title": "美少女画法大全",
+      "author": "[日]林晃",
+      "intro": "原名《女の子の描き方大全》，合并了林晃的四本漫画教程： 《マンガの基礎デッサン 女のコキャラ編》、《マンガの基礎デッサン セクシーキャラ編》、《マンガの基礎デッサン 女のココスチューム編》、《マンガキャラクター図鑑 女のコ編》的超大本美少女漫画教程。",
+      "pageCount": 448,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/389-book.pdf",
+      "pdfBytes": 408505064,
+      "coverKey": "library/covers/389-book-cover.jpg",
+      "coverBytes": 194766
+    },
+    {
+      "id": "lib-mwf7qc4e-76d276",
+      "sortNo": 389,
+      "title": "Art Tips Collection by Miyuli",
+      "author": "Miyuli",
+      "intro": "原名《Art Tips Collection by Miyuli》，画师Miyuli(miyuliart)的一本人体绘制要点教程。",
+      "pageCount": 56,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/390-book.pdf",
+      "pdfBytes": 20296558,
+      "coverKey": "library/covers/390-book-cover.jpg",
+      "coverBytes": 222772
     }
   ]
 }
