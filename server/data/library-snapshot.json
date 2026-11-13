@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-12T18:01:10.135Z",
+  "generatedAt": "2026-11-13T12:37:41.827Z",
   "source": "huimeng_library.books",
-  "total": 147,
+  "total": 197,
   "areas": {
-    "paint": 131,
+    "paint": 181,
     "ref": 16
   },
   "books": [
@@ -6263,6 +6263,2098 @@
       "pdfBytes": 55833468,
       "coverKey": "library/covers/150-whitlatch-animal-picturebook-cover.jpg",
       "coverBytes": 176145
+    },
+    {
+      "id": "lib-mwdvf9sy-8102ba",
+      "sortNo": 150,
+      "title": "幻想速写：全球 50 位天才画家的私房创作手稿",
+      "author": "",
+      "intro": "五十位画家的速写与构思手稿，展示幻想题材从草图到成稿的思路。",
+      "pageCount": 325,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/151-fantasy-sketchbook-50-artists.pdf",
+      "pdfBytes": 79389678,
+      "coverKey": "library/covers/151-fantasy-sketchbook-50-artists-cover.jpg",
+      "coverBytes": 263467
+    },
+    {
+      "id": "lib-mwdvyrij-42c25c",
+      "sortNo": 151,
+      "title": "幻想艺术创作技法系列：史诗战斗场景绘画教程",
+      "author": "",
+      "intro": "史诗战斗场景：构图、光影与人群调度，画出有规模的战斗画面。",
+      "pageCount": 133,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/152-epic-battle-scenes.pdf",
+      "pdfBytes": 122019379,
+      "coverKey": "library/covers/152-epic-battle-scenes-cover.jpg",
+      "coverBytes": 269664
+    },
+    {
+      "id": "lib-mwdv62bf-76207e",
+      "sortNo": 152,
+      "title": "幻想艺术创作技法系列：科幻风格绘画教程",
+      "author": "",
+      "intro": "科幻风格绘制：机械、场景与未来氛围的数码画法。",
+      "pageCount": 133,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/153-sci-fi-style-drawing.pdf",
+      "pdfBytes": 34258947,
+      "coverKey": "library/covers/153-sci-fi-style-drawing-cover.jpg",
+      "coverBytes": 156235
+    },
+    {
+      "id": "lib-mwdv9qg2-143d02",
+      "sortNo": 153,
+      "title": "幻想艺术创作技法系列：幻想艺术手绘教程",
+      "author": "",
+      "intro": "幻想艺术手绘：铅笔起稿到上色的传统媒材表现。",
+      "pageCount": 135,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/154-fantasy-art-handdrawn.pdf",
+      "pdfBytes": 42794611,
+      "coverKey": "library/covers/154-fantasy-art-handdrawn-cover.jpg",
+      "coverBytes": 189551
+    },
+    {
+      "id": "lib-mwdvblwi-62c5bf",
+      "sortNo": 154,
+      "title": "幻想艺术创作技法系列：幻想艺术 CG 游戏教程",
+      "author": "",
+      "intro": "游戏美术方向的 CG 幻想创作：概念设定与成品绘制。",
+      "pageCount": 131,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/155-fantasy-cg-game-art.pdf",
+      "pdfBytes": 63805489,
+      "coverKey": "library/covers/155-fantasy-cg-game-art-cover.jpg",
+      "coverBytes": 271227
+    },
+    {
+      "id": "lib-mwdv8cz1-888a8f",
+      "sortNo": 155,
+      "title": "幻想艺术创作技法系列：幻想角色动态造型与解剖",
+      "author": "",
+      "intro": "幻想角色动态与解剖：把真实结构改造成可信的异种体型。",
+      "pageCount": 165,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/156-fantasy-character-anatomy.pdf",
+      "pdfBytes": 40659679,
+      "coverKey": "library/covers/156-fantasy-character-anatomy-cover.jpg",
+      "coverBytes": 142095
+    },
+    {
+      "id": "lib-mwdvdvnb-e051ad",
+      "sortNo": 156,
+      "title": "设计师圣经：人体的机理",
+      "author": "",
+      "intro": "人体机理详解：骨骼、肌肉与运动结构，面向设计与绘画的解剖参考。",
+      "pageCount": 205,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/157-human-body-mechanics.pdf",
+      "pdfBytes": 75217900,
+      "coverKey": "library/covers/157-human-body-mechanics-cover.jpg",
+      "coverBytes": 151692
+    },
+    {
+      "id": "lib-mwdv2uoj-faab7c",
+      "sortNo": 157,
+      "title": "日本漫画手绘技法经典教程 17：动画制作基础",
+      "author": "",
+      "intro": "动画制作基础：原画、中割与时间轴，理解动作的分解。",
+      "pageCount": 133,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/158-anime-production-basics.pdf",
+      "pdfBytes": 25487578,
+      "coverKey": "library/covers/158-anime-production-basics-cover.jpg",
+      "coverBytes": 317150
+    },
+    {
+      "id": "lib-mwdv4pvx-4c62c3",
+      "sortNo": 158,
+      "title": "日本漫画手绘技法经典教程 16：漫画技法的应用",
+      "author": "",
+      "intro": "漫画技法应用：把基础技法组合成完整页面与短篇。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/159-manga-technique-application.pdf",
+      "pdfBytes": 30338032,
+      "coverKey": "library/covers/159-manga-technique-application-cover.jpg",
+      "coverBytes": 277063
+    },
+    {
+      "id": "lib-mwdv3otq-52a64a",
+      "sortNo": 159,
+      "title": "日本漫画手绘技法经典教程 15：背景的处理技巧",
+      "author": "",
+      "intro": "背景处理：透视、质感与简化，让人物与场景贴合。",
+      "pageCount": 120,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/160-background-handling.pdf",
+      "pdfBytes": 26858031,
+      "coverKey": "library/covers/160-background-handling-cover.jpg",
+      "coverBytes": 206427
+    },
+    {
+      "id": "lib-mwdv6463-ad4bea",
+      "sortNo": 160,
+      "title": "日本漫画手绘技法经典教程 14：透视的画法",
+      "author": "",
+      "intro": "透视画法：一点到三点透视与人物在空间中的定位。",
+      "pageCount": 135,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/161-perspective-drawing.pdf",
+      "pdfBytes": 33237456,
+      "coverKey": "library/covers/161-perspective-drawing-cover.jpg",
+      "coverBytes": 345545
+    },
+    {
+      "id": "lib-mwdv5rv0-5e0bc1",
+      "sortNo": 161,
+      "title": "日本漫画手绘技法经典教程 13：机器人的画法",
+      "author": "",
+      "intro": "机器人画法：结构分件、关节与透视表现。",
+      "pageCount": 129,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/162-robot-drawing.pdf",
+      "pdfBytes": 33112996,
+      "coverKey": "library/covers/162-robot-drawing-cover.jpg",
+      "coverBytes": 283896
+    },
+    {
+      "id": "lib-mwdv4nso-071730",
+      "sortNo": 162,
+      "title": "日本漫画手绘技法经典教程 12：机械的画法",
+      "author": "",
+      "intro": "机械画法：载具与设备的结构、材质与光影。",
+      "pageCount": 128,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/163-machine-drawing.pdf",
+      "pdfBytes": 28570841,
+      "coverKey": "library/covers/163-machine-drawing-cover.jpg",
+      "coverBytes": 302543
+    },
+    {
+      "id": "lib-mwdv79rc-0c87c6",
+      "sortNo": 163,
+      "title": "日本漫画手绘技法经典教程 11：动物的画法",
+      "author": "",
+      "intro": "动物画法：骨骼体态、毛发与动态的漫画化处理。",
+      "pageCount": 143,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/164-anime-animal-drawing.pdf",
+      "pdfBytes": 39595876,
+      "coverKey": "library/covers/164-anime-animal-drawing-cover.jpg",
+      "coverBytes": 266688
+    },
+    {
+      "id": "lib-mwdv2r7h-8e0d6d",
+      "sortNo": 164,
+      "title": "日本漫画手绘技法经典教程 10：人物角色的画法",
+      "author": "",
+      "intro": "人物角色画法：从设定到成稿的完整流程。",
+      "pageCount": 113,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/165-character-drawing-classic.pdf",
+      "pdfBytes": 25094710,
+      "coverKey": "library/covers/165-character-drawing-classic-cover.jpg",
+      "coverBytes": 325190
+    },
+    {
+      "id": "lib-mwdv56su-47d219",
+      "sortNo": 165,
+      "title": "日本漫画手绘技法经典教程 09：衣服的画法",
+      "author": "",
+      "intro": "衣服画法：褶皱规律、材质与身体贴合。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "开始之前",
+          "page": 7
+        },
+        {
+          "title": "从模型开始",
+          "page": 8
+        },
+        {
+          "title": "要注意衣服上的褶皱",
+          "page": 9
+        },
+        {
+          "title": "表现立体感的基本方法",
+          "page": 10
+        },
+        {
+          "title": "受重力影响的褶皱",
+          "page": 11
+        },
+        {
+          "title": "衣服的线条",
+          "page": 12
+        },
+        {
+          "title": "第1章 内衣",
+          "page": 14
+        },
+        {
+          "title": "内衣",
+          "page": 14
+        },
+        {
+          "title": "男式内衣",
+          "page": 14
+        },
+        {
+          "title": "男式内裤",
+          "page": 16
+        },
+        {
+          "title": "女式内衣",
+          "page": 18
+        },
+        {
+          "title": "女式内裤",
+          "page": 21
+        },
+        {
+          "title": "A罩杯内衣",
+          "page": 22
+        },
+        {
+          "title": "B罩杯内衣",
+          "page": 23
+        },
+        {
+          "title": "续·B罩杯内衣",
+          "page": 24
+        },
+        {
+          "title": "普通型内裤",
+          "page": 25
+        },
+        {
+          "title": "比基尼型内裤",
+          "page": 26
+        },
+        {
+          "title": "A罩杯内衣与比基尼型内裤—从下往上看",
+          "page": 27
+        },
+        {
+          "title": "A罩杯内衣与比基尼型内裤—从上往下看",
+          "page": 28
+        },
+        {
+          "title": "B罩杯内衣与普通型内裤—从下往上看",
+          "page": 29
+        },
+        {
+          "title": "续·B罩杯内衣与普通型内裤—从下往上看",
+          "page": 30
+        },
+        {
+          "title": "B罩杯内衣与普通型内裤—从上往下看",
+          "page": 31
+        },
+        {
+          "title": "体育型内衣",
+          "page": 32
+        },
+        {
+          "title": "女式贴身内衣",
+          "page": 33
+        },
+        {
+          "title": "穿着T恤衫直立",
+          "page": 41
+        },
+        {
+          "title": "穿着T恤衫直立—从下往上看",
+          "page": 42
+        },
+        {
+          "title": "穿着T恤衫正坐",
+          "page": 43
+        },
+        {
+          "title": "穿着T恤衫双腿在身体前弯曲",
+          "page": 44
+        },
+        {
+          "title": "穿着T恤衫双腿在身体前伸开",
+          "page": 46
+        },
+        {
+          "title": "穿着T恤衫盘腿坐下",
+          "page": 48
+        },
+        {
+          "title": "穿着T恤衫单膝跪地",
+          "page": 49
+        },
+        {
+          "title": "续·穿着T恤衫单膝跪地",
+          "page": 50
+        },
+        {
+          "title": "穿着T恤衫坐在椅子上",
+          "page": 51
+        },
+        {
+          "title": "穿着T恤衫交叉双腿坐在椅子上",
+          "page": 52
+        },
+        {
+          "title": "第2章 休闲服与长裙",
+          "page": 54
+        },
+        {
+          "title": "休闲服与长裙",
+          "page": 54
+        },
+        {
+          "title": "圆领衫",
+          "page": 56
+        },
+        {
+          "title": "圆领衫—从上往下看",
+          "page": 57
+        },
+        {
+          "title": "双手抱臂",
+          "page": 58
+        },
+        {
+          "title": "双手抱臂—从上往下看",
+          "page": 59
+        },
+        {
+          "title": "身体向侧面弯曲",
+          "page": 60
+        },
+        {
+          "title": "身体向侧面弯曲—从上往下看",
+          "page": 62
+        },
+        {
+          "title": "续·身体向侧面弯曲—从上边看",
+          "page": 63
+        },
+        {
+          "title": "扭动身体",
+          "page": 64
+        },
+        {
+          "title": "扭动身体—从上往下看",
+          "page": 65
+        },
+        {
+          "title": "捡拾东西",
+          "page": 66
+        },
+        {
+          "title": "捡拾东西—从上往下看",
+          "page": 68
+        },
+        {
+          "title": "身体后仰",
+          "page": 70
+        },
+        {
+          "title": "身体后仰—从上往下看",
+          "page": 71
+        },
+        {
+          "title": "正坐",
+          "page": 72
+        },
+        {
+          "title": "双腿在身体前弯曲",
+          "page": 73
+        },
+        {
+          "title": "双腿伸直",
+          "page": 75
+        },
+        {
+          "title": "膝盖弯曲的坐姿",
+          "page": 76
+        },
+        {
+          "title": "单膝跪地",
+          "page": 77
+        },
+        {
+          "title": "穿、脱上衣—从前边看",
+          "page": 79
+        },
+        {
+          "title": "穿、脱上衣—从侧面看",
+          "page": 81
+        },
+        {
+          "title": "穿、脱上衣—从后边看",
+          "page": 83
+        },
+        {
+          "title": "坐在椅子上",
+          "page": 85
+        },
+        {
+          "title": "交叉双腿坐在椅子上",
+          "page": 86
+        },
+        {
+          "title": "四肢着地",
+          "page": 88
+        },
+        {
+          "title": "第3章 夹克衫、牛仔裤与T恤衫",
+          "page": 90
+        },
+        {
+          "title": "夹克衫",
+          "page": 90
+        },
+        {
+          "title": "服装的质感",
+          "page": 96
+        },
+        {
+          "title": "牛仔裤",
+          "page": 98
+        },
+        {
+          "title": "直立—系好夹克衫",
+          "page": 100
+        },
+        {
+          "title": "直立—敞开夹克衫",
+          "page": 101
+        },
+        {
+          "title": "直立—系好夹克衫—从下往上看",
+          "page": 102
+        },
+        {
+          "title": "直立—敞开夹克衫—从下往上看",
+          "page": 103
+        },
+        {
+          "title": "举起一只手臂—系好夹克衫—从左前方看",
+          "page": 104
+        },
+        {
+          "title": "举起一只手臂—敞开夹克衫—从左前方看",
+          "page": 105
+        },
+        {
+          "title": "从侧面举起手臂—系好夹克衫—从前边看",
+          "page": 106
+        },
+        {
+          "title": "从侧面举起手臂—敞开夹克衫—从前边看",
+          "page": 107
+        },
+        {
+          "title": "从侧面举起手臂—敞开夹克衫—从后边看",
+          "page": 108
+        },
+        {
+          "title": "从侧面举起手臂—系好夹克衫—从右后方看",
+          "page": 109
+        },
+        {
+          "title": "从侧面举起手臂—敞开夹克衫—从右前方看",
+          "page": 110
+        },
+        {
+          "title": "举起双手—系好夹克衫",
+          "page": 111
+        },
+        {
+          "title": "举起双手—敞开夹克衫",
+          "page": 112
+        },
+        {
+          "title": "捡拾东西—系好夹克衫",
+          "page": 113
+        },
+        {
+          "title": "扭转身体—系好夹克衫",
+          "page": 114
+        },
+        {
+          "title": "扭转身体—敞开夹克衫",
+          "page": 115
+        },
+        {
+          "title": "扭转身体—系好夹克衫—从下往上看",
+          "page": 116
+        },
+        {
+          "title": "扭转身体—敞开夹克衫—从下往上看",
+          "page": 117
+        },
+        {
+          "title": "身体向侧面弯曲—系好夹克衫",
+          "page": 118
+        },
+        {
+          "title": "身体后仰—系好夹克衫—从上往下看",
+          "page": 120
+        },
+        {
+          "title": "身体后仰—敞开夹克衫",
+          "page": 121
+        },
+        {
+          "title": "坐在椅子上",
+          "page": 122
+        },
+        {
+          "title": "双腿交叉坐在椅子上",
+          "page": 123
+        },
+        {
+          "title": "盘腿坐下",
+          "page": 124
+        },
+        {
+          "title": "膝盖并拢坐下",
+          "page": 125
+        },
+        {
+          "title": "四肢着地并向后看—敞开夹克衫",
+          "page": 126
+        },
+        {
+          "title": "穿、脱夹克衫",
+          "page": 128
+        },
+        {
+          "title": "续·穿、脱夹克衫",
+          "page": 130
+        }
+      ],
+      "pdfKey": "library/books/166-clothing-drawing-classic.pdf",
+      "pdfBytes": 32837933,
+      "coverKey": "library/covers/166-clothing-drawing-classic-cover.jpg",
+      "coverBytes": 264521
+    },
+    {
+      "id": "lib-mwdva7lg-6d62e4",
+      "sortNo": 166,
+      "title": "日本漫画手绘技法经典教程 08：双人体组合画法",
+      "author": "",
+      "intro": "双人组合：互动姿势、遮挡关系与画面平衡。",
+      "pageCount": 121,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/167-two-figure-composition.pdf",
+      "pdfBytes": 46576996,
+      "coverKey": "library/covers/167-two-figure-composition-cover.jpg",
+      "coverBytes": 260241
+    },
+    {
+      "id": "lib-mwdv6xm0-a7fe0b",
+      "sortNo": 167,
+      "title": "日本漫画手绘技法经典教程 07：成熟女孩的画法",
+      "author": "",
+      "intro": "成熟女性角色：体型、气质与服饰的表现。",
+      "pageCount": 128,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "第1章 弧形与曲线",
+          "page": 7
+        },
+        {
+          "title": "弧形与曲线的表现技法",
+          "page": 7
+        },
+        {
+          "title": "不应该在女性身体上运用直线",
+          "page": 9
+        },
+        {
+          "title": "用阴影来表现整体的空间感",
+          "page": 11
+        },
+        {
+          "title": "局部与角度",
+          "page": 13
+        },
+        {
+          "title": "成人与孩子的区别－1－＜正面站立的姿势＞",
+          "page": 19
+        },
+        {
+          "title": "第2章 透明衣料与身体的描绘",
+          "page": 21
+        },
+        {
+          "title": "透明效果的描绘",
+          "page": 21
+        },
+        {
+          "title": "衣物质地的贴身效果",
+          "page": 33
+        },
+        {
+          "title": "特殊时装的褶皱与光泽的描绘",
+          "page": 43
+        },
+        {
+          "title": "成人与孩子的区别－2－＜背后的姿态＞",
+          "page": 59
+        },
+        {
+          "title": "第3章 强调局部魅力",
+          "page": 62
+        },
+        {
+          "title": "女性身体的魅力点",
+          "page": 62
+        },
+        {
+          "title": "脸部的魅力",
+          "page": 63
+        },
+        {
+          "title": "颈部的魅力",
+          "page": 65
+        },
+        {
+          "title": "肩部与手臂的魅力",
+          "page": 67
+        },
+        {
+          "title": "手的魅力",
+          "page": 69
+        },
+        {
+          "title": "背脊的魅力",
+          "page": 71
+        },
+        {
+          "title": "胸部的魅力",
+          "page": 73
+        },
+        {
+          "title": "腹部的魅力",
+          "page": 77
+        },
+        {
+          "title": "腰部的魅力",
+          "page": 79
+        },
+        {
+          "title": "臀部与下肢的魅力",
+          "page": 81
+        },
+        {
+          "title": "足部与足尖的魅力",
+          "page": 85
+        },
+        {
+          "title": "头发的魅力",
+          "page": 87
+        },
+        {
+          "title": "成人与孩子的区别－3－＜坐姿＞",
+          "page": 89
+        },
+        {
+          "title": "第4章 颇具魅力的姿态",
+          "page": 91
+        },
+        {
+          "title": "叉腿坐姿",
+          "page": 91
+        },
+        {
+          "title": "上下楼梯的姿态",
+          "page": 93
+        },
+        {
+          "title": "跨越与跳跃",
+          "page": 95
+        },
+        {
+          "title": "穿长筒丝袜的姿态",
+          "page": 99
+        },
+        {
+          "title": "脱下长棉袜的姿态",
+          "page": 101
+        },
+        {
+          "title": "穿连身泳衣的姿态",
+          "page": 103
+        },
+        {
+          "title": "穿学生装的姿态",
+          "page": 105
+        },
+        {
+          "title": "化妆修饰的过程",
+          "page": 107
+        },
+        {
+          "title": "女性的内衣",
+          "page": 111
+        },
+        {
+          "title": "脱下的衣服",
+          "page": 113
+        },
+        {
+          "title": "就寝的状态",
+          "page": 114
+        },
+        {
+          "title": "咬与叼的姿态",
+          "page": 115
+        },
+        {
+          "title": "亲吻的姿态",
+          "page": 117
+        },
+        {
+          "title": "成人与孩子的区别－4－＜对比＞",
+          "page": 119
+        },
+        {
+          "title": "第5章 漫画家的描绘技巧",
+          "page": 121
+        },
+        {
+          "title": "年轻女性－君羽空梦",
+          "page": 121
+        },
+        {
+          "title": "野性女孩－萩月光",
+          "page": 123
+        },
+        {
+          "title": "性感姐妹－船堀齐晃",
+          "page": 125
+        },
+        {
+          "title": "甜美的夜色－吉田创",
+          "page": 127
+        }
+      ],
+      "pdfKey": "library/books/168-mature-girl-drawing.pdf",
+      "pdfBytes": 34687456,
+      "coverKey": "library/covers/168-mature-girl-drawing-cover.jpg",
+      "coverBytes": 345326
+    },
+    {
+      "id": "lib-mwdv4rl8-b30c0a",
+      "sortNo": 168,
+      "title": "日本漫画手绘技法经典教程 06：世界美少女的画法",
+      "author": "",
+      "intro": "世界各地美少女：五官、发型与服饰的地域差异。",
+      "pageCount": 128,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/169-world-bishojo-classic.pdf",
+      "pdfBytes": 30218418,
+      "coverKey": "library/covers/169-world-bishojo-classic-cover.jpg",
+      "coverBytes": 327534
+    },
+    {
+      "id": "lib-mwdvzo39-cb29a3",
+      "sortNo": 169,
+      "title": "日本漫画手绘技法经典教程 05：美少女的画法（繁体版）",
+      "author": "",
+      "intro": "美少女画法：脸部、身材与服饰的基础训练（繁体版）。",
+      "pageCount": 127,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/170-bishojo-classic-tw.pdf",
+      "pdfBytes": 152693231,
+      "coverKey": "library/covers/170-bishojo-classic-tw-cover.jpg",
+      "coverBytes": 224997
+    },
+    {
+      "id": "lib-mwdv1z3t-47da38",
+      "sortNo": 170,
+      "title": "日本漫画手绘技法经典教程 04：女孩子的画法",
+      "author": "",
+      "intro": "女孩子画法：头身比例、表情与日常动作。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/171-girl-drawing-classic.pdf",
+      "pdfBytes": 20256485,
+      "coverKey": "library/covers/171-girl-drawing-classic-cover.jpg",
+      "coverBytes": 246548
+    },
+    {
+      "id": "lib-mwdv20qr-3f6cc3",
+      "sortNo": 171,
+      "title": "日本漫画手绘技法经典教程 03：男孩子的画法",
+      "author": "",
+      "intro": "男孩子画法：体型、五官与动作气质。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/172-boy-drawing-classic.pdf",
+      "pdfBytes": 23463958,
+      "coverKey": "library/covers/172-boy-drawing-classic-cover.jpg",
+      "coverBytes": 189465
+    },
+    {
+      "id": "lib-mwdv3lcx-c8ef36",
+      "sortNo": 172,
+      "title": "日本漫画手绘技法经典教程 02：人物身体的画法",
+      "author": "",
+      "intro": "人物身体画法：比例、关节与肌肉的简化。",
+      "pageCount": 133,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/173-body-drawing-classic.pdf",
+      "pdfBytes": 26562175,
+      "coverKey": "library/covers/173-body-drawing-classic-cover.jpg",
+      "coverBytes": 235459
+    },
+    {
+      "id": "lib-mwdv3rby-df009b",
+      "sortNo": 173,
+      "title": "日本漫画手绘技法经典教程 01：绘画基础",
+      "author": "",
+      "intro": "系列第一册：线条、形状与明暗的绘画基础。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/174-drawing-basics-classic.pdf",
+      "pdfBytes": 26993496,
+      "coverKey": "library/covers/174-drawing-basics-classic-cover.jpg",
+      "coverBytes": 245877
+    },
+    {
+      "id": "lib-mwdvc62x-558d11",
+      "sortNo": 174,
+      "title": "超级漫画技法加强版 No.1：美少女的画法",
+      "author": "",
+      "intro": "美少女画法加强版：更细致的脸部、身体与上色示范。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/175-bishojo-advanced.pdf",
+      "pdfBytes": 67094634,
+      "coverKey": "library/covers/175-bishojo-advanced-cover.jpg",
+      "coverBytes": 171294
+    },
+    {
+      "id": "lib-mwdvejog-ac4e46",
+      "sortNo": 175,
+      "title": "CG 漫画实战技法：青春校园",
+      "author": "",
+      "intro": "校园题材 CG 实战：场景、角色与氛围的完整制作。",
+      "pageCount": 210,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/176-cg-campus-scene.pdf",
+      "pdfBytes": 76680291,
+      "coverKey": "library/covers/176-cg-campus-scene-cover.jpg",
+      "coverBytes": 200363
+    },
+    {
+      "id": "lib-mwdvcx55-f6972e",
+      "sortNo": 176,
+      "title": "CG 绘画实战技法：剑与魔法世界",
+      "author": "",
+      "intro": "剑与魔法世界：奇幻场景与角色的 CG 绘制流程。",
+      "pageCount": 210,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/177-cg-sword-magic.pdf",
+      "pdfBytes": 73646969,
+      "coverKey": "library/covers/177-cg-sword-magic-cover.jpg",
+      "coverBytes": 215436
+    },
+    {
+      "id": "lib-mwdv6ves-6c0ef0",
+      "sortNo": 177,
+      "title": "漫画人物 CG 技巧提升版 5：人物角色篇",
+      "author": "",
+      "intro": "人物角色 CG 提升：上色、光影与细节刻画。",
+      "pageCount": 150,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "SAI＆PhotoshoP图层及其功能简介",
+          "page": 14
+        },
+        {
+          "title": "Photoshop的图层面板",
+          "page": 16
+        },
+        {
+          "title": "SAI的画板",
+          "page": 16
+        },
+        {
+          "title": "Photoshop图层功能介绍",
+          "page": 17
+        },
+        {
+          "title": "SAI主要图层功能介绍",
+          "page": 18
+        },
+        {
+          "title": "图层在不同模式下的效果差异",
+          "page": 19
+        },
+        {
+          "title": "PART 1步美",
+          "page": 25
+        },
+        {
+          "title": "工程1绘制线稿，创建上色图层",
+          "page": 27
+        },
+        {
+          "title": "工程2为人物和背景上底色",
+          "page": 31
+        },
+        {
+          "title": "工程3背景上色与阴影绘制",
+          "page": 35
+        },
+        {
+          "title": "工程4为人物绘制阴影",
+          "page": 39
+        },
+        {
+          "title": "工程5添加高光质感",
+          "page": 45
+        },
+        {
+          "title": "PART2 龙姐",
+          "page": 47
+        },
+        {
+          "title": "工程1创建部分图层，上底色",
+          "page": 49
+        },
+        {
+          "title": "工程2协调画面色调",
+          "page": 52
+        },
+        {
+          "title": "工程3绘制被子上的花纹",
+          "page": 53
+        },
+        {
+          "title": "工程4绘制榻榻米的纹路",
+          "page": 57
+        },
+        {
+          "title": "工程5绘制木地板并进行合成",
+          "page": 59
+        },
+        {
+          "title": "工程6绘制房间墙壁上的污渍",
+          "page": 61
+        },
+        {
+          "title": "工程7绘制烟雾和光照效果",
+          "page": 63
+        },
+        {
+          "title": "工程8细节处的修整",
+          "page": 65
+        },
+        {
+          "title": "工程9通过调整图层改变画面的色调",
+          "page": 66
+        },
+        {
+          "title": "工程10对人物的头发进行修整",
+          "page": 67
+        },
+        {
+          "title": "PART3 黑黑黑",
+          "page": 69
+        },
+        {
+          "title": "工程1绘制草稿，创建线稿图层",
+          "page": 71
+        },
+        {
+          "title": "工程2上底色",
+          "page": 72
+        },
+        {
+          "title": "工程3绘制背景，突出流水的动感",
+          "page": 74
+        },
+        {
+          "title": "工程4绘制石砖的细节",
+          "page": 77
+        },
+        {
+          "title": "工程5绘制天空的细节，对画面进行调整",
+          "page": 79
+        },
+        {
+          "title": "工程6绘制人物的细节",
+          "page": 80
+        },
+        {
+          "title": "工程7最终调整",
+          "page": 86
+        },
+        {
+          "title": "PART4 仿学",
+          "page": 87
+        },
+        {
+          "title": "工程1用扫描仪扫描底稿",
+          "page": 89
+        },
+        {
+          "title": "工程2新建阿尔法通道",
+          "page": 91
+        },
+        {
+          "title": "工程3新建图层后为各个部分上色",
+          "page": 94
+        },
+        {
+          "title": "工程4一边观察实物的照片一边上色",
+          "page": 100
+        },
+        {
+          "title": "工程5绘制插图背景",
+          "page": 101
+        },
+        {
+          "title": "工程6调整画面平衡",
+          "page": 103
+        },
+        {
+          "title": "工程7为人物的服装添加花纹",
+          "page": 105
+        },
+        {
+          "title": "工程8调整颜色，使画面更加平衡",
+          "page": 106
+        },
+        {
+          "title": "工程9继续对画面进行调整，提高画面平衡性",
+          "page": 107
+        },
+        {
+          "title": "工程10绘制书中内容",
+          "page": 109
+        },
+        {
+          "title": "工程11为人物的眼睛和头发添加反光效果",
+          "page": 110
+        },
+        {
+          "title": "工程12润色修饰",
+          "page": 111
+        },
+        {
+          "title": "PART5 臼田宽",
+          "page": 113
+        },
+        {
+          "title": "工程1从绘制底稿到细化人物线条",
+          "page": 115
+        },
+        {
+          "title": "工程2配合透视效果绘制画面背景",
+          "page": 122
+        },
+        {
+          "title": "工程3制作特效元件，完成整体效果",
+          "page": 127
+        },
+        {
+          "title": "PART6 御山吕毘",
+          "page": 131
+        },
+        {
+          "title": "工程1为画面各部分单独建立图层绘制线稿",
+          "page": 133
+        },
+        {
+          "title": "工程2确定各部分轮廓并上色",
+          "page": 137
+        },
+        {
+          "title": "工程3绘制细部的细节",
+          "page": 147
+        },
+        {
+          "title": "工程4使用扩散滤镜完成画面最终效果",
+          "page": 149
+        }
+      ],
+      "pdfKey": "library/books/178-cg-characters-5.pdf",
+      "pdfBytes": 34618668,
+      "coverKey": "library/covers/178-cg-characters-5-cover.jpg",
+      "coverBytes": 297069
+    },
+    {
+      "id": "lib-mwdv8ipf-64ec08",
+      "sortNo": 178,
+      "title": "漫画人物 CG 技巧提升版 4：机械篇",
+      "author": "",
+      "intro": "机械题材 CG：金属质感、结构与光效。",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/179-cg-machines-4.pdf",
+      "pdfBytes": 41531936,
+      "coverKey": "library/covers/179-cg-machines-4-cover.jpg",
+      "coverBytes": 258934
+    },
+    {
+      "id": "lib-mwdv8go0-3e70ab",
+      "sortNo": 179,
+      "title": "漫画人物 CG 技巧提升版 3：校园美少女",
+      "author": "",
+      "intro": "校园美少女 CG：制服、肤色与场景光。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/180-cg-school-girls-3.pdf",
+      "pdfBytes": 41879840,
+      "coverKey": "library/covers/180-cg-school-girls-3-cover.jpg",
+      "coverBytes": 241613
+    },
+    {
+      "id": "lib-mwdv8lip-78c793",
+      "sortNo": 180,
+      "title": "漫画人物 CG 技巧提升版 2",
+      "author": "",
+      "intro": "CG 技巧提升第二册：角色表现与后期处理。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "充分展现角色魅力的绘制方法",
+          "page": 10
+        },
+        {
+          "title": "使用数码技术绘制角色①",
+          "page": 11
+        },
+        {
+          "title": "根据场景设定绘制草图",
+          "page": 11
+        },
+        {
+          "title": "使用数码技术绘制角色②",
+          "page": 12
+        },
+        {
+          "title": "不同软件中钢笔工具的精度差",
+          "page": 12
+        },
+        {
+          "title": "使用数码技术绘制角色③",
+          "page": 13
+        },
+        {
+          "title": "使用数码工具绘制角色表情分镜线稿",
+          "page": 13
+        },
+        {
+          "title": "使用数码技术绘制角色④",
+          "page": 15
+        },
+        {
+          "title": "缩小数据尺寸",
+          "page": 15
+        },
+        {
+          "title": "绘制男性角色和女性角色①",
+          "page": 16
+        },
+        {
+          "title": "在线稿中体现出男女角色的特点",
+          "page": 16
+        },
+        {
+          "title": "绘制男性角色和女性角色②",
+          "page": 17
+        },
+        {
+          "title": "男女角色肤色的不同",
+          "page": 17
+        },
+        {
+          "title": "根据用途选择不同的笔刷①",
+          "page": 18
+        },
+        {
+          "title": "根据“笔刷”工具的特点选择笔刷",
+          "page": 18
+        },
+        {
+          "title": "根据用途选择不同的笔刷②",
+          "page": 19
+        },
+        {
+          "title": "绘制头发的高光色",
+          "page": 19
+        },
+        {
+          "title": "根据用途选择不同的笔刷③",
+          "page": 20
+        },
+        {
+          "title": "绘制圆柱形的乐器",
+          "page": 20
+        },
+        {
+          "title": "掌握快捷键简化操作",
+          "page": 21
+        },
+        {
+          "title": "掌握Photoshop的快捷键",
+          "page": 21
+        },
+        {
+          "title": "根据角色安排改变服装的设置",
+          "page": 22
+        },
+        {
+          "title": "不同场景下角色的服装设计",
+          "page": 22
+        },
+        {
+          "title": "绘制服装纹理①",
+          "page": 25
+        },
+        {
+          "title": "轻松绘制服装纹理",
+          "page": 25
+        },
+        {
+          "title": "绘制服装纹理②",
+          "page": 26
+        },
+        {
+          "title": "绘制迷彩纹理",
+          "page": 26
+        },
+        {
+          "title": "绘制服装纹理③",
+          "page": 28
+        },
+        {
+          "title": "给服装加上装饰物",
+          "page": 28
+        },
+        {
+          "title": "手绘线稿①",
+          "page": 30
+        },
+        {
+          "title": "用铅笔绘制出自然生动的线条",
+          "page": 30
+        },
+        {
+          "title": "手绘线稿②",
+          "page": 31
+        },
+        {
+          "title": "通过计算机清稿",
+          "page": 31
+        },
+        {
+          "title": "绘制耽美主义风格的女性角色①",
+          "page": 32
+        },
+        {
+          "title": "设计出能够尽显女性美的构图",
+          "page": 32
+        },
+        {
+          "title": "绘制耽美主义风格的女性角色②",
+          "page": 34
+        },
+        {
+          "title": "若隐若现的性感",
+          "page": 34
+        },
+        {
+          "title": "绘制耽美主义风格的女性角色③",
+          "page": 37
+        },
+        {
+          "title": "能够体现角色性感的符号",
+          "page": 37
+        },
+        {
+          "title": "绘制耽美主义风格的女性角色④",
+          "page": 38
+        },
+        {
+          "title": "绘制出优美的服装褶皱",
+          "page": 38
+        },
+        {
+          "title": "绘制耽美主义风格的女性角色⑤",
+          "page": 40
+        },
+        {
+          "title": "西洋画风的上色方法",
+          "page": 40
+        },
+        {
+          "title": "烘托角色的效果①",
+          "page": 42
+        },
+        {
+          "title": "增加一些小饰物来提升角色魅力",
+          "page": 42
+        },
+        {
+          "title": "烘托角色的效果②",
+          "page": 44
+        },
+        {
+          "title": "给角色加上翅膀",
+          "page": 44
+        },
+        {
+          "title": "烘托角色的效果③",
+          "page": 46
+        },
+        {
+          "title": "绘制复古风格的背景",
+          "page": 46
+        },
+        {
+          "title": "上色与色彩的搭配技巧",
+          "page": 48
+        },
+        {
+          "title": "配色设计①",
+          "page": 49
+        },
+        {
+          "title": "完美配色的三色原则",
+          "page": 49
+        },
+        {
+          "title": "配色设计②",
+          "page": 50
+        },
+        {
+          "title": "沉静氛围的配色方法",
+          "page": 50
+        },
+        {
+          "title": "配色设计③",
+          "page": 52
+        },
+        {
+          "title": "巧妙配色增添画面魅力",
+          "page": 52
+        },
+        {
+          "title": "上色用草图",
+          "page": 54
+        },
+        {
+          "title": "在上色之前通过草图把握整体画面效果",
+          "page": 54
+        },
+        {
+          "title": "肌肤的上色方法①",
+          "page": 55
+        },
+        {
+          "title": "使用手绘技巧给肌肤上色",
+          "page": 55
+        },
+        {
+          "title": "肌肤的上色方法②",
+          "page": 57
+        },
+        {
+          "title": "重点绘制特殊的细节部分",
+          "page": 57
+        },
+        {
+          "title": "肌肤的上色方法③",
+          "page": 58
+        },
+        {
+          "title": "绘制在强光照耀下的肌肤",
+          "page": 58
+        },
+        {
+          "title": "头发的绘制方法①",
+          "page": 60
+        },
+        {
+          "title": "沿着头发的线条上色",
+          "page": 60
+        },
+        {
+          "title": "头发的绘制方法②",
+          "page": 63
+        },
+        {
+          "title": "绘制受到强光照耀的头发部分",
+          "page": 63
+        },
+        {
+          "title": "眼睛的上色方法①",
+          "page": 65
+        },
+        {
+          "title": "绘制清澈的眼眸",
+          "page": 65
+        },
+        {
+          "title": "眼睛的上色方法②",
+          "page": 67
+        },
+        {
+          "title": "绘制与眼部相关的各个部位",
+          "page": 67
+        },
+        {
+          "title": "嘴部的上色方法",
+          "page": 68
+        },
+        {
+          "title": "给张开的嘴巴上色",
+          "page": 68
+        },
+        {
+          "title": "衣服与首饰的绘制方法①",
+          "page": 70
+        },
+        {
+          "title": "绘制柔软的棉制衣服的线稿",
+          "page": 70
+        },
+        {
+          "title": "衣服与首饰的绘制方法②",
+          "page": 71
+        },
+        {
+          "title": "柔软的棉制衣服的上色方法",
+          "page": 71
+        },
+        {
+          "title": "衣服与首饰的绘制方法③",
+          "page": 73
+        },
+        {
+          "title": "有光泽感的物件的上色方法",
+          "page": 73
+        },
+        {
+          "title": "衣服与首饰的绘制方法④",
+          "page": 76
+        },
+        {
+          "title": "绘制有光泽感的金属物体",
+          "page": 76
+        },
+        {
+          "title": "使用图案素材绘制衣服的花纹①",
+          "page": 78
+        },
+        {
+          "title": "使用素材库中丰富的图案绘制衣服花纹",
+          "page": 78
+        },
+        {
+          "title": "使用图案素材绘制衣服的花纹②",
+          "page": 80
+        },
+        {
+          "title": "使用画纸材质绘制背景",
+          "page": 80
+        },
+        {
+          "title": "风景的绘制技巧",
+          "page": 82
+        },
+        {
+          "title": "绘制树影斑驳的风景①",
+          "page": 83
+        },
+        {
+          "title": "绘制效果草图，决定整体色调",
+          "page": 83
+        },
+        {
+          "title": "绘制树影斑驳的风景②",
+          "page": 84
+        },
+        {
+          "title": "带有纵深感的远景的绘制方法",
+          "page": 84
+        },
+        {
+          "title": "绘制树影斑驳的风景③利用草原颜色的色差来表现远近关系",
+          "page": 86
+        },
+        {
+          "title": "绘制树影斑驳的风景④",
+          "page": 88
+        },
+        {
+          "title": "绘制形成树荫的树干部分",
+          "page": 88
+        },
+        {
+          "title": "绘制树影斑驳的风景⑤",
+          "page": 90
+        },
+        {
+          "title": "绘制透过枝叶照在地面上的阳光",
+          "page": 90
+        },
+        {
+          "title": "绘制树影斑驳的风景⑥",
+          "page": 92
+        },
+        {
+          "title": "给位于树荫下的角色上色",
+          "page": 92
+        },
+        {
+          "title": "绘制树影斑驳的风景⑦",
+          "page": 95
+        },
+        {
+          "title": "利用小物件调整背景平衡感",
+          "page": 95
+        },
+        {
+          "title": "绘制树影斑驳的风景⑧",
+          "page": 97
+        },
+        {
+          "title": "绘制射入树林的阳光并调整光线状态",
+          "page": 97
+        },
+        {
+          "title": "绘制晚霞满天的天空①",
+          "page": 99
+        },
+        {
+          "title": "强调主体，确定构图",
+          "page": 99
+        },
+        {
+          "title": "绘制晚霞满天的天空②",
+          "page": 100
+        },
+        {
+          "title": "借用参考线确保构图平衡",
+          "page": 100
+        },
+        {
+          "title": "绘制晚霞满天的天空③",
+          "page": 101
+        },
+        {
+          "title": "绘制晚霞",
+          "page": 101
+        },
+        {
+          "title": "绘制晚霞满天的天空④",
+          "page": 103
+        },
+        {
+          "title": "绘制飞机划过天空的特殊效果",
+          "page": 103
+        },
+        {
+          "title": "绘制晚霞满天的天空⑤",
+          "page": 104
+        },
+        {
+          "title": "绘制远景中的建筑物",
+          "page": 104
+        },
+        {
+          "title": "绘制晚霞满天的天空⑥",
+          "page": 106
+        },
+        {
+          "title": "绘制土坡的台阶突出透视感",
+          "page": 106
+        },
+        {
+          "title": "绘制晚霞满天的天空⑦",
+          "page": 107
+        },
+        {
+          "title": "绘制土坡上的小草",
+          "page": 107
+        },
+        {
+          "title": "绘制晚霞满天的天空⑧",
+          "page": 108
+        },
+        {
+          "title": "根据夕阳的意境给角色上色",
+          "page": 108
+        },
+        {
+          "title": "绘制晚霞满天的天空⑨",
+          "page": 111
+        },
+        {
+          "title": "增添近处的小物件调整画面平衡感",
+          "page": 111
+        },
+        {
+          "title": "星空的绘制方法",
+          "page": 112
+        },
+        {
+          "title": "绘制点缀在夜空的小星星",
+          "page": 112
+        },
+        {
+          "title": "机械类物体的绘制方法",
+          "page": 114
+        },
+        {
+          "title": "金属物体的表面处理①",
+          "page": 115
+        },
+        {
+          "title": "在平面上加入颜色渐变体现质感的变化",
+          "page": 115
+        },
+        {
+          "title": "金属物体的表面处理②",
+          "page": 116
+        },
+        {
+          "title": "通过环境光表现金属质感",
+          "page": 116
+        },
+        {
+          "title": "物体各个部分的质感表现①",
+          "page": 119
+        },
+        {
+          "title": "金属和树脂材料的质感表现手法",
+          "page": 119
+        },
+        {
+          "title": "物体各个部分的质感表现②",
+          "page": 121
+        },
+        {
+          "title": "通过夸张变形的手法表现材料质感",
+          "page": 121
+        },
+        {
+          "title": "提升金属质感的表现手法①",
+          "page": 122
+        },
+        {
+          "title": "绘制出映射在车身上的图像",
+          "page": 122
+        },
+        {
+          "title": "提升金属质感的表现手法②",
+          "page": 124
+        },
+        {
+          "title": "突出金属的边缘部分",
+          "page": 124
+        },
+        {
+          "title": "提升金属质感的表现手法③",
+          "page": 125
+        },
+        {
+          "title": "映入棒状不锈钢部分的影像",
+          "page": 125
+        },
+        {
+          "title": "配合环境光上阴影色",
+          "page": 126
+        },
+        {
+          "title": "绘制手绘效果的自然色彩渐变",
+          "page": 126
+        },
+        {
+          "title": "可以隐藏细节部分的上色方法①",
+          "page": 128
+        },
+        {
+          "title": "给机械部分上色使其不显得过于繁琐",
+          "page": 128
+        },
+        {
+          "title": "可以隐藏细节部分的上色方法②",
+          "page": 130
+        },
+        {
+          "title": "上色时要勇于忽略细节部分",
+          "page": 130
+        },
+        {
+          "title": "营造画面柔和感",
+          "page": 131
+        },
+        {
+          "title": "通过光的散射效果营造出画面的柔和氛围",
+          "page": 131
+        },
+        {
+          "title": "整理画面强调主题①",
+          "page": 133
+        },
+        {
+          "title": "有意识的突出角色",
+          "page": 133
+        },
+        {
+          "title": "整理画面强调主题②",
+          "page": 135
+        },
+        {
+          "title": "使用模糊处理增加透视效果",
+          "page": 135
+        },
+        {
+          "title": "使用3D软件绘制机械类物体草图①",
+          "page": 138
+        },
+        {
+          "title": "绘制机械类物体的立体草图",
+          "page": 138
+        },
+        {
+          "title": "使用3D软件绘制机械类物体草图②",
+          "page": 140
+        },
+        {
+          "title": "通过“关节”组合绘制出各种姿势的机械物体",
+          "page": 140
+        },
+        {
+          "title": "使用3D软件绘制机械类物体草图③",
+          "page": 141
+        },
+        {
+          "title": "使用相机设定功能可以任意变换图像角度",
+          "page": 141
+        },
+        {
+          "title": "使用3D软件绘制机械类物体草图④",
+          "page": 142
+        },
+        {
+          "title": "以立方体图像为参考绘制草图",
+          "page": 142
+        }
+      ],
+      "pdfKey": "library/books/181-cg-techniques-2.pdf",
+      "pdfBytes": 42586447,
+      "coverKey": "library/covers/181-cg-techniques-2-cover.jpg",
+      "coverBytes": 285009
+    },
+    {
+      "id": "lib-mwdvav20-96a96c",
+      "sortNo": 181,
+      "title": "漫画人物 CG 技巧提升版",
+      "author": "",
+      "intro": "CG 技巧提升第一册：从线稿到完成的上色流程。",
+      "pageCount": 162,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/182-cg-techniques-1.pdf",
+      "pdfBytes": 59279331,
+      "coverKey": "library/covers/182-cg-techniques-1-cover.jpg",
+      "coverBytes": 222458
+    },
+    {
+      "id": "lib-mwdv5pwk-e28730",
+      "sortNo": 182,
+      "title": "漫画技法终极向导 升级版 6：完美人物篇",
+      "author": "",
+      "intro": "完美人物：比例、五官与整体协调的打磨。",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/183-ultimate-guide-6.pdf",
+      "pdfBytes": 32978964,
+      "coverKey": "library/covers/183-ultimate-guide-6-cover.jpg",
+      "coverBytes": 236164
+    },
+    {
+      "id": "lib-mwdv3t01-b993d7",
+      "sortNo": 183,
+      "title": "漫画技法终极向导 升级版 5：魄力人物的表现篇",
+      "author": "",
+      "intro": "魄力人物：夸张、构图与冲击力的表现。",
+      "pageCount": 150,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/184-ultimate-guide-5.pdf",
+      "pdfBytes": 27728460,
+      "coverKey": "library/covers/184-ultimate-guide-5-cover.jpg",
+      "coverBytes": 233905
+    },
+    {
+      "id": "lib-mwdv2yr5-852274",
+      "sortNo": 184,
+      "title": "漫画技法终极向导 升级版 4：活动人物绘画技巧篇",
+      "author": "",
+      "intro": "活动人物：跑跳打斗的动作绘制技巧。",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/185-ultimate-guide-4.pdf",
+      "pdfBytes": 26311881,
+      "coverKey": "library/covers/185-ultimate-guide-4-cover.jpg",
+      "coverBytes": 267176
+    },
+    {
+      "id": "lib-mwdv2wr5-e803f5",
+      "sortNo": 185,
+      "title": "漫画技法终极向导 升级版 3：描绘绝妙人物的秘诀篇",
+      "author": "",
+      "intro": "绝妙人物：让角色出彩的造型与细节秘诀。",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/186-ultimate-guide-3.pdf",
+      "pdfBytes": 26232940,
+      "coverKey": "library/covers/186-ultimate-guide-3-cover.jpg",
+      "coverBytes": 237186
+    },
+    {
+      "id": "lib-mwdv24xu-8539b9",
+      "sortNo": 186,
+      "title": "漫画技法终极向导 升级版 2：人物和画材的基础篇",
+      "author": "",
+      "intro": "人物与画材基础：工具准备与基本形体训练。",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/187-ultimate-guide-2.pdf",
+      "pdfBytes": 24777060,
+      "coverKey": "library/covers/187-ultimate-guide-2-cover.jpg",
+      "coverBytes": 246575
+    },
+    {
+      "id": "lib-mwdv4frk-6e3ff8",
+      "sortNo": 187,
+      "title": "漫画技法终极向导 升级版 1：简单基础篇",
+      "author": "",
+      "intro": "简单基础：从线条到角色的入门练习。",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/188-ultimate-guide-1.pdf",
+      "pdfBytes": 28060972,
+      "coverKey": "library/covers/188-ultimate-guide-1-cover.jpg",
+      "coverBytes": 234338
+    },
+    {
+      "id": "lib-mwdv7837-a52cbf",
+      "sortNo": 188,
+      "title": "Hobby JAPAN 漫画课堂：机器人画法快速入门篇",
+      "author": "",
+      "intro": "机器人快速入门：分件、透视与动作设定。",
+      "pageCount": 181,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/189-hobby-japan-robot.pdf",
+      "pdfBytes": 37527481,
+      "coverKey": "library/covers/189-hobby-japan-robot-cover.jpg",
+      "coverBytes": 328410
+    },
+    {
+      "id": "lib-mwdveuc2-7add5d",
+      "sortNo": 189,
+      "title": "漫画达人！可爱女孩子的画法",
+      "author": "",
+      "intro": "可爱女孩子画法：萌系比例、表情与服饰。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/190-manga-tatsujin-cute-girls.pdf",
+      "pdfBytes": 78509359,
+      "coverKey": "library/covers/190-manga-tatsujin-cute-girls-cover.jpg",
+      "coverBytes": 298393
+    },
+    {
+      "id": "lib-mwdva360-b5765c",
+      "sortNo": 190,
+      "title": "漫画达人！漫画的背景与透视",
+      "author": "",
+      "intro": "背景与透视：场景构图、消失点与人物融合。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/191-manga-tatsujin-background.pdf",
+      "pdfBytes": 51527825,
+      "coverKey": "library/covers/191-manga-tatsujin-background-cover.jpg",
+      "coverBytes": 198914
+    },
+    {
+      "id": "lib-mwdvyxh3-6d1286",
+      "sortNo": 191,
+      "title": "漫画达人！漫画人物的绘画技法与描红",
+      "author": "",
+      "intro": "人物技法与描红：跟着范例练习线条与造型。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/192-manga-tatsujin-tracing.pdf",
+      "pdfBytes": 148540758,
+      "coverKey": "library/covers/192-manga-tatsujin-tracing-cover.jpg",
+      "coverBytes": 243911
+    },
+    {
+      "id": "lib-mwdvilt5-72d4a3",
+      "sortNo": 192,
+      "title": "超级漫画一本通",
+      "author": "",
+      "intro": "漫画综合教程：人物、场景、分镜与上色一本通。",
+      "pageCount": 174,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/193-super-manga-all-in-one.pdf",
+      "pdfBytes": 118646200,
+      "coverKey": "library/covers/193-super-manga-all-in-one-cover.jpg",
+      "coverBytes": 197852
+    },
+    {
+      "id": "lib-mwdw0y19-e4bdb9",
+      "sortNo": 193,
+      "title": "新世纪卡通漫画技法 5：分镜头表现篇",
+      "author": "",
+      "intro": "分镜头表现：镜头语言、构图与叙事节奏。",
+      "pageCount": 264,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/194-new-century-manga-5.pdf",
+      "pdfBytes": 216816215,
+      "coverKey": "library/covers/194-new-century-manga-5-cover.jpg",
+      "coverBytes": 330601
+    },
+    {
+      "id": "lib-mwdvjakv-7430d7",
+      "sortNo": 194,
+      "title": "新世纪卡通漫画技法 4：色彩篇",
+      "author": "",
+      "intro": "色彩篇：配色思路、光影与画面气氛。",
+      "pageCount": 230,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/195-new-century-manga-4.pdf",
+      "pdfBytes": 121058909,
+      "coverKey": "library/covers/195-new-century-manga-4-cover.jpg",
+      "coverBytes": 349634
+    },
+    {
+      "id": "lib-mwdvhr7b-cf9172",
+      "sortNo": 195,
+      "title": "新世纪卡通漫画技法 3：角色篇",
+      "author": "",
+      "intro": "角色篇：设定、造型与个性表达。",
+      "pageCount": 219,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/196-new-century-manga-3.pdf",
+      "pdfBytes": 104410125,
+      "coverKey": "library/covers/196-new-century-manga-3-cover.jpg",
+      "coverBytes": 376437
+    },
+    {
+      "id": "lib-mwdvgxds-c20c75",
+      "sortNo": 196,
+      "title": "新世纪卡通漫画技法 2：构图篇",
+      "author": "",
+      "intro": "构图篇：画面组织、视线引导与平衡。",
+      "pageCount": 167,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/197-new-century-manga-2.pdf",
+      "pdfBytes": 104180558,
+      "coverKey": "library/covers/197-new-century-manga-2-cover.jpg",
+      "coverBytes": 323542
+    },
+    {
+      "id": "lib-mwdvchz6-c49dbe",
+      "sortNo": 197,
+      "title": "新世纪卡通漫画技法 1：光影篇",
+      "author": "",
+      "intro": "光影篇：光源、明暗与立体感的基础。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/198-new-century-manga-1.pdf",
+      "pdfBytes": 72195709,
+      "coverKey": "library/covers/198-new-century-manga-1-cover.jpg",
+      "coverBytes": 161577
+    },
+    {
+      "id": "lib-mwdv22eg-2d6825",
+      "sortNo": 198,
+      "title": "跟林晃学漫画：人物的画法与描红 3 魅力线条篇",
+      "author": "",
+      "intro": "魅力线条：线条的轻重、节奏与表现力。",
+      "pageCount": 98,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/199-hayashi-line-art.pdf",
+      "pdfBytes": 20702765,
+      "coverKey": "library/covers/199-hayashi-line-art-cover.jpg",
+      "coverBytes": 194943
+    },
+    {
+      "id": "lib-mwdvwlac-027810",
+      "sortNo": 199,
+      "title": "跟林晃学漫画：人物的画法与描红 2 生动角色篇",
+      "author": "",
+      "intro": "生动角色：姿态、表情与角色魅力的画法。",
+      "pageCount": 98,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/200-hayashi-lively-characters.pdf",
+      "pdfBytes": 23400185,
+      "coverKey": "library/covers/200-hayashi-lively-characters-cover.jpg",
+      "coverBytes": 108393
     }
   ]
 }
