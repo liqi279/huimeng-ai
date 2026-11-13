@@ -4162,7 +4162,7 @@ body.hm-resizing * {
 .hm-ref-cell {
   position: relative;
   flex: 0 0 auto;
-  width: 52px;
+  width: auto;
   height: 52px;
   border-radius: 6px;
   overflow: hidden;
@@ -4179,9 +4179,9 @@ body.hm-resizing * {
 }
 
 .hm-ref-cell img {
-  width: 100%;
+  width: auto;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
@@ -4285,16 +4285,20 @@ body.hm-resizing * {
 /* per-ref slider 已移除，底部全局 refWeightSlider 负责控制 */
 /* ref cell 尺寸由底部全局 refWeightSlider 控制（--hm-ref-size），整块区域一起缩放 */
 .hm-ref-cell {
-  width: var(--hm-ref-size, 52px);
+  width: auto;
   height: var(--hm-ref-size, 52px);
   overflow: visible;
   position: relative;
   transition: width 90ms linear, height 90ms linear;
 }
+/* 添加槽位没有原图比例，保持与高度同宽的正方形 */
+.hm-ref-cell.hm-ref-add {
+  width: var(--hm-ref-size, 52px);
+}
 .hm-ref-cell img {
-  width: 100%;
+  width: auto;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   border-radius: 6px;
   transform-origin: 50% 50%;
