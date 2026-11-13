@@ -55347,6 +55347,21 @@ window.HMChat = (function () {
     return api && api.fileUrl ? api.fileUrl(value) : value;
   }
 
+  /* 封面缩略图（COS imageMogr2）加载失败时，回退到 /cover-url 取原图，只重试一次。
+     服务端始终保留原图，这里只换地址，不删不改任何数据。 */
+  function coverFallback(img) {
+    if (!img || img.getAttribute('data-cover-fb')) return;
+    var id = img.getAttribute('data-cover-id');
+    if (!id) return;
+    img.setAttribute('data-cover-fb', '1');
+    fetch(apiUrl('/library/books/' + encodeURIComponent(id) + '/cover-url'))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.url) img.src = d.url; })
+      .catch(function () {});
+  }
+  window.HM = window.HM || {};
+  window.HM.coverFallback = coverFallback;
+
   /* 封面地址是否仍可直接使用：
      - 迁移前旧域名会被改写到 SCF /api/library/file/ 代理，该代理对文件响应不可用
      - /api/library/file/ 代理地址（网关会塞 application/json + attachment，图片必坏）
@@ -55763,7 +55778,7 @@ window.HMChat = (function () {
       + '<span class="lib-book-cover-brand">绘梦藏书</span>'
       + '</span>'
       + (b.coverUrl
-        ? '<img class="lib-book-cover-img" src="' + esc(mediaFile(b.coverUrl)) + '" alt="' + esc(b.title) + '" loading="lazy">'
+        ? '<img class="lib-book-cover-img" src="' + esc(mediaFile(b.coverUrl)) + '" alt="' + esc(b.title) + '" loading="lazy" data-cover-id="' + esc(b.id) + '" onerror="window.HM&&window.HM.coverFallback&&window.HM.coverFallback(this)">'
         : '')
       + '</span>'
       + '<span class="lib-book-edge"></span>'

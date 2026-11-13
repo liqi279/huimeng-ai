@@ -2,15 +2,16 @@
 'use strict';
 
 /* =============================================================
- * 前端一键发布：GitHub Pages 一份 + 腾讯云 CloudBase 一份（默认双写）
+ * 前端一键发布：主入口 GitHub Pages，CloudBase 仅按需同步
  * -------------------------------------------------------------
- *   node server/scripts/web-deploy.js                 前置比对 → 需要时推 GitHub → 传 CloudBase → 双侧核对
+ *   node server/scripts/web-deploy.js                 前置比对 → 需要时推 GitHub（默认不同步 CloudBase）
+ *   node server/scripts/web-deploy.js --cloudbase     同时同步 CloudBase 备用入口
  *   node server/scripts/web-deploy.js --skip-github   只发腾讯云（跳过 GitHub）
- *   node server/scripts/web-deploy.js --no-cloudbase  只走 GitHub，不同步 CloudBase
  *   node server/scripts/web-deploy.js --check-only    只校验，不推送、不上传
  *
- * 长期规则：前端每次提交 GitHub 后必须同时同步 CloudBase，两边保持同一份（字节数 + sha256 一致）。
- * CloudBase 失败会单独以 FAIL 报出，但 GitHub 那次提交仍算成功，两者不混为一个失败状态。
+ * 主入口固定 GitHub Pages（gzip + 10 分钟浏览器缓存，实测 1.06MB）；
+ * CloudBase 默认域名是 4MB 无缓存 + 测试域名风险提示，只保留为备用入口，
+ * 日常发布不再双写，避免每次访问都回源 4MB。
  *
  * 托管地址（COS 桶默认域名直读，实测内联打开、HTTPS、免备案）：
  *   https://<bucket>.cos.<region>.myqcloud.com/index.html
@@ -79,8 +80,9 @@ const skipGithub = args.includes('--skip-github');
 const pushFlag = !skipGithub;
 const checkOnly = args.includes('--check-only');
 const mirror = args.includes('--cos-mirror');
-/* 默认同步 CloudBase；只有显式 --no-cloudbase 才跳过 */
-const cloudbase = !args.includes('--no-cloudbase');
+/* 主入口固定 GitHub Pages：默认只发 GitHub；
+   CloudBase 作为备用入口，只有显式 --cloudbase 时才同步（避免无缓存 4MB 反复回源）。 */
+const cloudbase = args.includes('--cloudbase');
 
 const OK = [];
 const BAD = [];
