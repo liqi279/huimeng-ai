@@ -1,7 +1,5 @@
 name: Deploy to GitHub Pages
 
-# 每次 push 到 main 都在 CI 里重新构建前端产物再发布，
-# 不再直接上传仓库里那份 deploy/，避免本地忘记构建导致线上是旧页面。
 on:
   push:
     branches: [main]
@@ -17,46 +15,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Build frontend bundle
-        run: node scripts/build-deploy.js
-
-      - name: Verify build output
-        run: |
-          set -e
-          test -f deploy/index.html
-          test -s deploy/index.html
-          grep -q 'window.HM_BUILD' deploy/index.html
-          echo "deploy/index.html: $(wc -c < deploy/index.html) B"
-          echo "HM_BUILD: $(grep -o 'window.HM_BUILD = \"[^\"]*\"' deploy/index.html | head -n1)"
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: deploy
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: deploy
+
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
