@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-14T07:01:15.759Z",
+  "generatedAt": "2026-11-14T08:17:39.947Z",
   "source": "huimeng_library.books",
-  "total": 453,
+  "total": 497,
   "areas": {
-    "paint": 437,
+    "paint": 481,
     "ref": 16
   },
   "books": [
@@ -18,8 +18,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw819v2a-001-kawaii.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw80yetl-001-kawaii-cover.jpg",
-      "coverBytes": 601836
+      "coverKey": "api/library/file/library/covers/mw80yetl-001-kawaii-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw86nrb0-363dff",
@@ -32,8 +32,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw86menn-002-mini-chara.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw86m7g0-002-mini-chara-cover.jpg",
-      "coverBytes": 888273
+      "coverKey": "api/library/file/library/covers/mw86m7g0-002-mini-chara-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw97y0mu-d5ff0e",
@@ -46,8 +46,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw97uyyt-003-momoko.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw97uyjw-003-momoko-cover.jpg",
-      "coverBytes": 100807
+      "coverKey": "api/library/file/library/covers/mw97uyjw-003-momoko-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9882jp-5ee852",
@@ -97,8 +97,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw985riv-004-qiansui-pixel.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw985qu5-004-qiansui-cover.jpg",
-      "coverBytes": 82552
+      "coverKey": "api/library/file/library/covers/mw985qu5-004-qiansui-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9a8pu5-763209",
@@ -111,8 +111,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw9a5uhb-005-pixel-bg.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
-      "coverBytes": 148947
+      "coverKey": "api/library/file/library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9ak57x-423ad7",
@@ -162,8 +162,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw9ahk53-006-girls-pose-9vol.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw9ahcng-006-girls-pose-cover.jpg",
-      "coverBytes": 89670
+      "coverKey": "api/library/file/library/covers/mw9ahcng-006-girls-pose-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9bj5qo-f39210",
@@ -193,8 +193,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw9bhcmo-007-dress-pose-4vol.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
-      "coverBytes": 99073
+      "coverKey": "api/library/file/library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9bovcf-c4aa7a",
@@ -228,8 +228,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw9bn7yf-008-boys-pose-5vol.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
-      "coverBytes": 202662
+      "coverKey": "api/library/file/library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9ler9s-e9679b",
@@ -242,8 +242,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw9leg53-009-paint-income.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw9lecyl-009-paint-income-cover.jpg",
-      "coverBytes": 455437
+      "coverKey": "api/library/file/library/covers/mw9lecyl-009-paint-income-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9mgki5-4f1173",
@@ -256,8 +256,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw9mfr0i-010-sai-paint-tech.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
-      "coverBytes": 773362
+      "coverKey": "api/library/file/library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9mna4r-02d065",
@@ -287,8 +287,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw9mlkok-011-fantasy-tech.pdf",
       "pdfBytes": null,
-      "coverKey": "library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
-      "coverBytes": 1645914
+      "coverKey": "api/library/file/library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwaz6plf-33b5a3",
@@ -21434,6 +21434,20 @@
       "coverBytes": 226829
     },
     {
+      "id": "lib-mwg235qs-3ffbda",
+      "sortNo": 457,
+      "title": "角色设计师",
+      "author": "21 Draw",
+      "intro": "原名《21 Draw: The Character Designer》，一本欧美卡通向的角色设计教程。",
+      "pageCount": 194,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/458-book.pdf",
+      "pdfBytes": 216413248,
+      "coverKey": "library/covers/458-book-cover.jpg",
+      "coverBytes": 190067
+    },
+    {
       "id": "lib-mwg1ze05-4f2521",
       "sortNo": 458,
       "title": "向100位著名艺术家学习角色设计",
@@ -21476,6 +21490,67 @@
       "coverBytes": 179884
     },
     {
+      "id": "lib-mwg23yyc-2a27cb",
+      "sortNo": 461,
+      "title": "插画家的手绘人物画：从记忆中掌握绘画艺术",
+      "author": "David H. Ross",
+      "intro": "原名《Freehand Figure Drawing for Illustrators: Mastering the Art of Drawing from Memory》，一本人物绘制参考教程。",
+      "pageCount": 597,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/462-book.pdf",
+      "pdfBytes": 168634523,
+      "coverKey": "library/covers/462-book-cover.jpg",
+      "coverBytes": 116511
+    },
+    {
+      "id": "lib-mwg24i15-170952",
+      "sortNo": 462,
+      "title": "Mitch Leeuwe简易绘画入门系列8册合集",
+      "author": "Mitch Leeuwe",
+      "intro": "人气画师Mitch Leeuwe的一套简易的绘画入门教程，涵盖了：动物、拟人化动物、背景、人物、透视、海洋动物、数码绘等等的入门教程。",
+      "pageCount": 410,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw animal characters",
+          "page": 1
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw anthropomorphic characters",
+          "page": 59
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw backgrounds",
+          "page": 116
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw characters",
+          "page": 193
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw in perspective",
+          "page": 249
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to draw sea creatures",
+          "page": 298
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to Learn Digital Painting",
+          "page": 333
+        },
+        {
+          "title": "[绘画教程][Mitch Leeuwe]How to start figure drawing",
+          "page": 380
+        }
+      ],
+      "pdfKey": "library/books/463-book.pdf",
+      "pdfBytes": 217692417,
+      "coverKey": "library/covers/463-book-cover.jpg",
+      "coverBytes": 132964
+    },
+    {
       "id": "lib-mwg1si2k-dc8cf1",
       "sortNo": 467,
       "title": "萌之绘的教科书 增补修订版+汉化版",
@@ -21502,6 +21577,2639 @@
       "pdfBytes": 197848073,
       "coverKey": "library/covers/491-book-cover.jpg",
       "coverBytes": 321694
+    },
+    {
+      "id": "lib-mwg2gc0k-677636",
+      "sortNo": 500,
+      "title": "简易的光影与色彩",
+      "author": "[韩] 박리노(Rinotuna)",
+      "intro": "原名《친절한 빛과 색》，画师Rinotuna的一本漫画教程，韩文版。",
+      "pageCount": 190,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/501-book.pdf",
+      "pdfBytes": 159618771,
+      "coverKey": "library/covers/501-book-cover.jpg",
+      "coverBytes": 229409
+    },
+    {
+      "id": "lib-mwg2ha9m-eff6f9",
+      "sortNo": 501,
+      "title": "简易的动态绘画",
+      "author": "[韩] 박리노(Rinotuna)",
+      "intro": "原名《다이나믹 드로잉》，画师Rinotuna的一本很简单的漫画入门教程，韩文版。",
+      "pageCount": 220,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "다이나믹 드로잉 (박리노)\\",
+          "page": 1
+        },
+        {
+          "title": "~~0090.jpg",
+          "page": 1
+        },
+        {
+          "title": "1110001.jpg",
+          "page": 2
+        },
+        {
+          "title": "1110002.jpg",
+          "page": 3
+        },
+        {
+          "title": "1110003.jpg",
+          "page": 4
+        },
+        {
+          "title": "1110004.jpg",
+          "page": 5
+        },
+        {
+          "title": "1110005.jpg",
+          "page": 6
+        },
+        {
+          "title": "1110006.jpg",
+          "page": 7
+        },
+        {
+          "title": "1110007.jpg",
+          "page": 8
+        },
+        {
+          "title": "1110008.jpg",
+          "page": 9
+        },
+        {
+          "title": "1110009.jpg",
+          "page": 10
+        },
+        {
+          "title": "1110010.jpg",
+          "page": 11
+        },
+        {
+          "title": "1110011.jpg",
+          "page": 12
+        },
+        {
+          "title": "1110012.jpg",
+          "page": 13
+        },
+        {
+          "title": "1110013.jpg",
+          "page": 14
+        },
+        {
+          "title": "1110014.jpg",
+          "page": 15
+        },
+        {
+          "title": "1110015.jpg",
+          "page": 16
+        },
+        {
+          "title": "1110016.jpg",
+          "page": 17
+        },
+        {
+          "title": "1110017.jpg",
+          "page": 18
+        },
+        {
+          "title": "1110018.jpg",
+          "page": 19
+        },
+        {
+          "title": "1110019.jpg",
+          "page": 20
+        },
+        {
+          "title": "1110020.jpg",
+          "page": 21
+        },
+        {
+          "title": "1110021.jpg",
+          "page": 22
+        },
+        {
+          "title": "1110022.jpg",
+          "page": 23
+        },
+        {
+          "title": "1110023.jpg",
+          "page": 24
+        },
+        {
+          "title": "1110024.jpg",
+          "page": 25
+        },
+        {
+          "title": "1110025.jpg",
+          "page": 26
+        },
+        {
+          "title": "1110026.jpg",
+          "page": 27
+        },
+        {
+          "title": "1110027.jpg",
+          "page": 28
+        },
+        {
+          "title": "1110028.jpg",
+          "page": 29
+        },
+        {
+          "title": "1110029.jpg",
+          "page": 30
+        },
+        {
+          "title": "1110030.jpg",
+          "page": 31
+        },
+        {
+          "title": "1110031.jpg",
+          "page": 32
+        },
+        {
+          "title": "1110032.jpg",
+          "page": 33
+        },
+        {
+          "title": "1110033.jpg",
+          "page": 34
+        },
+        {
+          "title": "1110034.jpg",
+          "page": 35
+        },
+        {
+          "title": "1110035.jpg",
+          "page": 36
+        },
+        {
+          "title": "1110036.jpg",
+          "page": 37
+        },
+        {
+          "title": "1110037.jpg",
+          "page": 38
+        },
+        {
+          "title": "1110038.jpg",
+          "page": 39
+        },
+        {
+          "title": "1110039.jpg",
+          "page": 40
+        },
+        {
+          "title": "1110040.jpg",
+          "page": 41
+        },
+        {
+          "title": "1110041.jpg",
+          "page": 42
+        },
+        {
+          "title": "1110042.jpg",
+          "page": 43
+        },
+        {
+          "title": "1110043.jpg",
+          "page": 44
+        },
+        {
+          "title": "1110044.jpg",
+          "page": 45
+        },
+        {
+          "title": "1110045.jpg",
+          "page": 46
+        },
+        {
+          "title": "1110046.jpg",
+          "page": 47
+        },
+        {
+          "title": "1110047.jpg",
+          "page": 48
+        },
+        {
+          "title": "1110048.jpg",
+          "page": 49
+        },
+        {
+          "title": "1110049.jpg",
+          "page": 50
+        },
+        {
+          "title": "1110050.jpg",
+          "page": 51
+        },
+        {
+          "title": "1110051.jpg",
+          "page": 52
+        },
+        {
+          "title": "1110052.jpg",
+          "page": 53
+        },
+        {
+          "title": "1110053.jpg",
+          "page": 54
+        },
+        {
+          "title": "1110054.jpg",
+          "page": 55
+        },
+        {
+          "title": "1110055.jpg",
+          "page": 56
+        },
+        {
+          "title": "1110056.jpg",
+          "page": 57
+        },
+        {
+          "title": "1110057.jpg",
+          "page": 58
+        },
+        {
+          "title": "1110058.jpg",
+          "page": 59
+        },
+        {
+          "title": "1110059.jpg",
+          "page": 60
+        },
+        {
+          "title": "1110060.jpg",
+          "page": 61
+        },
+        {
+          "title": "1110061.jpg",
+          "page": 62
+        },
+        {
+          "title": "1110062.jpg",
+          "page": 63
+        },
+        {
+          "title": "1110063.jpg",
+          "page": 64
+        },
+        {
+          "title": "1110064.jpg",
+          "page": 65
+        },
+        {
+          "title": "1110065.jpg",
+          "page": 66
+        },
+        {
+          "title": "1110066.jpg",
+          "page": 67
+        },
+        {
+          "title": "1110067.jpg",
+          "page": 68
+        },
+        {
+          "title": "1110068.jpg",
+          "page": 69
+        },
+        {
+          "title": "1110069.jpg",
+          "page": 70
+        },
+        {
+          "title": "1110070.jpg",
+          "page": 71
+        },
+        {
+          "title": "1110071.jpg",
+          "page": 72
+        },
+        {
+          "title": "1110072.jpg",
+          "page": 73
+        },
+        {
+          "title": "1110073.jpg",
+          "page": 74
+        },
+        {
+          "title": "1110074.jpg",
+          "page": 75
+        },
+        {
+          "title": "1110075.jpg",
+          "page": 76
+        },
+        {
+          "title": "1110076.jpg",
+          "page": 77
+        },
+        {
+          "title": "1110077.jpg",
+          "page": 78
+        },
+        {
+          "title": "1110078.jpg",
+          "page": 79
+        },
+        {
+          "title": "1110079.jpg",
+          "page": 80
+        },
+        {
+          "title": "1110080.jpg",
+          "page": 81
+        },
+        {
+          "title": "1110081.jpg",
+          "page": 82
+        },
+        {
+          "title": "1110082.jpg",
+          "page": 83
+        },
+        {
+          "title": "1110083.jpg",
+          "page": 84
+        },
+        {
+          "title": "1110084.jpg",
+          "page": 85
+        },
+        {
+          "title": "1110085.jpg",
+          "page": 86
+        },
+        {
+          "title": "1110086.jpg",
+          "page": 87
+        },
+        {
+          "title": "1110087.jpg",
+          "page": 88
+        },
+        {
+          "title": "1110088.jpg",
+          "page": 89
+        },
+        {
+          "title": "1110089.jpg",
+          "page": 90
+        },
+        {
+          "title": "1110090.jpg",
+          "page": 91
+        },
+        {
+          "title": "1110091.jpg",
+          "page": 92
+        },
+        {
+          "title": "1110092.jpg",
+          "page": 93
+        },
+        {
+          "title": "1110093.jpg",
+          "page": 94
+        },
+        {
+          "title": "1110094.jpg",
+          "page": 95
+        },
+        {
+          "title": "1110095.jpg",
+          "page": 96
+        },
+        {
+          "title": "1110096.jpg",
+          "page": 97
+        },
+        {
+          "title": "1110097.jpg",
+          "page": 98
+        },
+        {
+          "title": "1110098.jpg",
+          "page": 99
+        },
+        {
+          "title": "1110099.jpg",
+          "page": 100
+        },
+        {
+          "title": "1110100.jpg",
+          "page": 101
+        },
+        {
+          "title": "1110101.jpg",
+          "page": 102
+        },
+        {
+          "title": "1110102.jpg",
+          "page": 103
+        },
+        {
+          "title": "1110103.jpg",
+          "page": 104
+        },
+        {
+          "title": "1110104.jpg",
+          "page": 105
+        },
+        {
+          "title": "1110105.jpg",
+          "page": 106
+        },
+        {
+          "title": "1110106.jpg",
+          "page": 107
+        },
+        {
+          "title": "1110107.jpg",
+          "page": 108
+        },
+        {
+          "title": "1110108.jpg",
+          "page": 109
+        },
+        {
+          "title": "1110109.jpg",
+          "page": 110
+        },
+        {
+          "title": "1110110.jpg",
+          "page": 111
+        },
+        {
+          "title": "1110111.jpg",
+          "page": 112
+        },
+        {
+          "title": "1110112.jpg",
+          "page": 113
+        },
+        {
+          "title": "1110113.jpg",
+          "page": 114
+        },
+        {
+          "title": "1110114.jpg",
+          "page": 115
+        },
+        {
+          "title": "1110115.jpg",
+          "page": 116
+        },
+        {
+          "title": "1110116.jpg",
+          "page": 117
+        },
+        {
+          "title": "1110117.jpg",
+          "page": 118
+        },
+        {
+          "title": "1110118.jpg",
+          "page": 119
+        },
+        {
+          "title": "1110119.jpg",
+          "page": 120
+        },
+        {
+          "title": "1110120.jpg",
+          "page": 121
+        },
+        {
+          "title": "1110121.jpg",
+          "page": 122
+        },
+        {
+          "title": "1110122.jpg",
+          "page": 123
+        },
+        {
+          "title": "1110123.jpg",
+          "page": 124
+        },
+        {
+          "title": "1110124.jpg",
+          "page": 125
+        },
+        {
+          "title": "1110125.jpg",
+          "page": 126
+        },
+        {
+          "title": "1110126.jpg",
+          "page": 127
+        },
+        {
+          "title": "1110127.jpg",
+          "page": 128
+        },
+        {
+          "title": "1110128.jpg",
+          "page": 129
+        },
+        {
+          "title": "1110129.jpg",
+          "page": 130
+        },
+        {
+          "title": "1110130.jpg",
+          "page": 131
+        },
+        {
+          "title": "1110131.jpg",
+          "page": 132
+        },
+        {
+          "title": "1110132.jpg",
+          "page": 133
+        },
+        {
+          "title": "1110133.jpg",
+          "page": 134
+        },
+        {
+          "title": "1110134.jpg",
+          "page": 135
+        },
+        {
+          "title": "1110135.jpg",
+          "page": 136
+        },
+        {
+          "title": "1110136.jpg",
+          "page": 137
+        },
+        {
+          "title": "1110137.jpg",
+          "page": 138
+        },
+        {
+          "title": "1110138.jpg",
+          "page": 139
+        },
+        {
+          "title": "1110139.jpg",
+          "page": 140
+        },
+        {
+          "title": "1110140.jpg",
+          "page": 141
+        },
+        {
+          "title": "1110141.jpg",
+          "page": 142
+        },
+        {
+          "title": "1110142.jpg",
+          "page": 143
+        },
+        {
+          "title": "1110143.jpg",
+          "page": 144
+        },
+        {
+          "title": "1110144.jpg",
+          "page": 145
+        },
+        {
+          "title": "1110145.jpg",
+          "page": 146
+        },
+        {
+          "title": "1110146.jpg",
+          "page": 147
+        },
+        {
+          "title": "1110147.jpg",
+          "page": 148
+        },
+        {
+          "title": "1110148.jpg",
+          "page": 149
+        },
+        {
+          "title": "1110149.jpg",
+          "page": 150
+        },
+        {
+          "title": "1110150.jpg",
+          "page": 151
+        },
+        {
+          "title": "1110151.jpg",
+          "page": 152
+        },
+        {
+          "title": "1110152.jpg",
+          "page": 153
+        },
+        {
+          "title": "1110153.jpg",
+          "page": 154
+        },
+        {
+          "title": "1110154.jpg",
+          "page": 155
+        },
+        {
+          "title": "1110155.jpg",
+          "page": 156
+        },
+        {
+          "title": "1110156.jpg",
+          "page": 157
+        },
+        {
+          "title": "1110157.jpg",
+          "page": 158
+        },
+        {
+          "title": "1110158.jpg",
+          "page": 159
+        },
+        {
+          "title": "1110159.jpg",
+          "page": 160
+        },
+        {
+          "title": "1110160.jpg",
+          "page": 161
+        },
+        {
+          "title": "1110161.jpg",
+          "page": 162
+        },
+        {
+          "title": "1110162.jpg",
+          "page": 163
+        },
+        {
+          "title": "1110163.jpg",
+          "page": 164
+        },
+        {
+          "title": "1110164.jpg",
+          "page": 165
+        },
+        {
+          "title": "1110165.jpg",
+          "page": 166
+        },
+        {
+          "title": "1110166.jpg",
+          "page": 167
+        },
+        {
+          "title": "1110167.jpg",
+          "page": 168
+        },
+        {
+          "title": "1110168.jpg",
+          "page": 169
+        },
+        {
+          "title": "1110169.jpg",
+          "page": 170
+        },
+        {
+          "title": "1110170.jpg",
+          "page": 171
+        },
+        {
+          "title": "1110171.jpg",
+          "page": 172
+        },
+        {
+          "title": "1110172.jpg",
+          "page": 173
+        },
+        {
+          "title": "1110173.jpg",
+          "page": 174
+        },
+        {
+          "title": "1110174.jpg",
+          "page": 175
+        },
+        {
+          "title": "1110175.jpg",
+          "page": 176
+        },
+        {
+          "title": "1110176.jpg",
+          "page": 177
+        },
+        {
+          "title": "1110177.jpg",
+          "page": 178
+        },
+        {
+          "title": "1110178.jpg",
+          "page": 179
+        },
+        {
+          "title": "1110179.jpg",
+          "page": 180
+        },
+        {
+          "title": "1110180.jpg",
+          "page": 181
+        },
+        {
+          "title": "1110181.jpg",
+          "page": 182
+        },
+        {
+          "title": "1110182.jpg",
+          "page": 183
+        },
+        {
+          "title": "1110183.jpg",
+          "page": 184
+        },
+        {
+          "title": "1110184.jpg",
+          "page": 185
+        },
+        {
+          "title": "1110185.jpg",
+          "page": 186
+        },
+        {
+          "title": "1110186.jpg",
+          "page": 187
+        },
+        {
+          "title": "1110187.jpg",
+          "page": 188
+        },
+        {
+          "title": "1110188.jpg",
+          "page": 189
+        },
+        {
+          "title": "1110189.jpg",
+          "page": 190
+        },
+        {
+          "title": "1110190.jpg",
+          "page": 191
+        },
+        {
+          "title": "1110191.jpg",
+          "page": 192
+        },
+        {
+          "title": "1110192.jpg",
+          "page": 193
+        },
+        {
+          "title": "1110193.jpg",
+          "page": 194
+        },
+        {
+          "title": "1110194.jpg",
+          "page": 195
+        },
+        {
+          "title": "1110195.jpg",
+          "page": 196
+        },
+        {
+          "title": "1110196.jpg",
+          "page": 197
+        },
+        {
+          "title": "1110197.jpg",
+          "page": 198
+        },
+        {
+          "title": "1110198.jpg",
+          "page": 199
+        },
+        {
+          "title": "1110199.jpg",
+          "page": 200
+        },
+        {
+          "title": "1110200.jpg",
+          "page": 201
+        },
+        {
+          "title": "1110201.jpg",
+          "page": 202
+        },
+        {
+          "title": "1110202.jpg",
+          "page": 203
+        },
+        {
+          "title": "1110203.jpg",
+          "page": 204
+        },
+        {
+          "title": "1110204.jpg",
+          "page": 205
+        },
+        {
+          "title": "1110205.jpg",
+          "page": 206
+        },
+        {
+          "title": "1110206.jpg",
+          "page": 207
+        },
+        {
+          "title": "1110207.jpg",
+          "page": 208
+        },
+        {
+          "title": "1110208.jpg",
+          "page": 209
+        },
+        {
+          "title": "1110209.jpg",
+          "page": 210
+        },
+        {
+          "title": "1110210.jpg",
+          "page": 211
+        },
+        {
+          "title": "1110211.jpg",
+          "page": 212
+        },
+        {
+          "title": "1110212.jpg",
+          "page": 213
+        },
+        {
+          "title": "1110213.jpg",
+          "page": 214
+        },
+        {
+          "title": "1110214.jpg",
+          "page": 215
+        },
+        {
+          "title": "1110215.jpg",
+          "page": 216
+        },
+        {
+          "title": "1110216.jpg",
+          "page": 217
+        },
+        {
+          "title": "1110217.jpg",
+          "page": 218
+        },
+        {
+          "title": "1110218.jpg",
+          "page": 219
+        },
+        {
+          "title": "z.jpg",
+          "page": 220
+        }
+      ],
+      "pdfKey": "library/books/502-book.pdf",
+      "pdfBytes": 94223499,
+      "coverKey": "library/covers/502-book-cover.jpg",
+      "coverBytes": 217143
+    },
+    {
+      "id": "lib-mwg2hsff-df7f5d",
+      "sortNo": 502,
+      "title": "素描中的美术解剖学",
+      "author": "加藤公太",
+      "intro": "原名《スケッチで学ぶ美術解剖学》，一本比较硬核的人体结构参考教程。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/503-book.pdf",
+      "pdfBytes": 39789919,
+      "coverKey": "library/covers/503-book-cover.jpg",
+      "coverBytes": 285452
+    },
+    {
+      "id": "lib-mwg2iexc-383b05",
+      "sortNo": 503,
+      "title": "用CLIP STUDIO PAINT绘画 数字漫画的基本课程",
+      "author": "[日] 瀬尾浩史",
+      "intro": "原名《CLIP STUDIO PAINTで描く！デジタルコミック基礎講座 メイキングで学ぶデジタル時代のマンガ制作術》，一本CSP漫画绘制入门教程。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/504-book.pdf",
+      "pdfBytes": 63226094,
+      "coverKey": "library/covers/504-book-cover.jpg",
+      "coverBytes": 252407
+    },
+    {
+      "id": "lib-mwg2iv81-974306",
+      "sortNo": 504,
+      "title": "从CLIP STUDIO PAINT PRO开始",
+      "author": "[日] 24",
+      "intro": "原名《CLIP STUDIO PAINT PROからはじめよう!》，一本CSP入门教程，对应Windows&Mac版本，附带源文件。",
+      "pageCount": 193,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/505-book.pdf",
+      "pdfBytes": 41957115,
+      "coverKey": "library/covers/505-book-cover.jpg",
+      "coverBytes": 247265
+    },
+    {
+      "id": "lib-mwg2jbx6-cbf82b",
+      "sortNo": 505,
+      "title": "动画作画的原理-让你的角色栩栩如生",
+      "author": "[日] 尾澤直志(尾泽直志)",
+      "intro": "原名《アニメ作画のしくみ―キャラに命を吹き込もう!》，日本动画大师尾澤直志(尾泽直志)的一本动画作画教程。",
+      "pageCount": 225,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/506-book.pdf",
+      "pdfBytes": 45903062,
+      "coverKey": "library/covers/506-book-cover.jpg",
+      "coverBytes": 103947
+    },
+    {
+      "id": "lib-mwg2l1jd-831b3c",
+      "sortNo": 506,
+      "title": "塑造角色!少女插画样本帖 多角度篇",
+      "author": "[日] 尾澤直志(尾泽直志)",
+      "intro": "原名《キャラクターをつくろう! 少女イラスト見本帖 マルチアングル編》，日本动画大师尾澤直志(尾泽直志)的一本漫画教程，大量的角色姿势参考图。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/507-book.pdf",
+      "pdfBytes": 198472104,
+      "coverKey": "library/covers/507-book-cover.jpg",
+      "coverBytes": 284127
+    },
+    {
+      "id": "lib-mwg2mcfb-7b0e3a",
+      "sortNo": 507,
+      "title": "你可以画得更可爱!美少女角色设计",
+      "author": "[日] ユニバーサル・パブリシング",
+      "intro": "原名《よりかわいく描ける！ 女の子キャラデッサン》，一本女性角色专题的漫画教程。",
+      "pageCount": 168,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/508-book.pdf",
+      "pdfBytes": 155842753,
+      "coverKey": "library/covers/508-book-cover.jpg",
+      "coverBytes": 240232
+    },
+    {
+      "id": "lib-mwg2nct9-cc760b",
+      "sortNo": 508,
+      "title": "画好人物插图的诀窍 从100位画师那里收集的200个想法和技巧",
+      "author": "[日] サイドランチ",
+      "intro": "原名《キャライラストを上手く描くためのノウハウ図鑑 絵師100人に聞いて集めた考え方とテクニック200》，一本漫画人物绘制教程。",
+      "pageCount": 219,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/509-book.pdf",
+      "pdfBytes": 96159910,
+      "coverKey": "library/covers/509-book-cover.jpg",
+      "coverBytes": 224643
+    },
+    {
+      "id": "lib-mwg2nvbr-fdc42f",
+      "sortNo": 509,
+      "title": "无版权限制的背景插图素材集 森林篇+荒野篇",
+      "author": "[日] 佐藤敦弘",
+      "intro": "原名《版権フリー背景イラスト素材集》系列两本合集，一套背景素材，不包含DVD文件。",
+      "pageCount": 50,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/510-book.pdf",
+      "pdfBytes": 19228922,
+      "coverKey": "library/covers/510-book-cover.jpg",
+      "coverBytes": 424880
+    },
+    {
+      "id": "lib-mwg2t0s7-b37b50",
+      "sortNo": 510,
+      "title": "どうしま倾授衣服的画法 让人兴奋的绘画风格",
+      "author": "[日] どうしま",
+      "intro": "原名《どうしまが本気で教える「服」の塗り方フェチが芽生える作画流儀》，日本画师どうしま的一本服饰绘画教程，使用软件CLIP STUDIO PAINT PRO / EX。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/511-book.pdf",
+      "pdfBytes": 248043359,
+      "coverKey": "library/covers/511-book-cover.jpg",
+      "coverBytes": 235245
+    },
+    {
+      "id": "lib-mwg2u3j8-ef1959",
+      "sortNo": 511,
+      "title": "用CLIP STUDIO PAINT绘制漫画！少年、少女&纵向阅读完全解说",
+      "author": "[日] パルプライド",
+      "intro": "原名《CLIP STUDIO PAINTでマンガを描く！　少年・少女＆タテ読みマンガを完全解説！》，一本以制作漫画为主的CSP教程，对应“CLIP STUDIO PAINT PRO/EX”",
+      "pageCount": 212,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/512-book.pdf",
+      "pdfBytes": 119639082,
+      "coverKey": "library/covers/512-book-cover.jpg",
+      "coverBytes": 285697
+    },
+    {
+      "id": "lib-mwg2v07g-df8b7c",
+      "sortNo": 512,
+      "title": "CLIP STUDIO PAINT数字漫画&插图道场",
+      "author": "[日] サイドランチ",
+      "intro": "原名《クリスタ デジタルマンガ&イラスト道場》，一本以制作漫画为主的CSP教程，对应“CLIP STUDIO PAINT PRO/EX”",
+      "pageCount": 259,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/513-book.pdf",
+      "pdfBytes": 97388465,
+      "coverKey": "library/covers/513-book-cover.jpg",
+      "coverBytes": 257344
+    },
+    {
+      "id": "lib-mwg2wwah-6a5215",
+      "sortNo": 513,
+      "title": "如何画能看清动作和皱纹的衣服 从衣服的构造到角度不同的画法",
+      "author": "[日] らびまる 雲雪",
+      "intro": "原名《動きとシワがよくわかる 衣服の描き方図鑑 服の仕組みから角度別の描き方まで》，一本关于衣服褶皱的绘制教程书。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/514-book.pdf",
+      "pdfBytes": 228729111,
+      "coverKey": "library/covers/514-book-cover.jpg",
+      "coverBytes": 213642
+    },
+    {
+      "id": "lib-mwg2xj0y-09db32",
+      "sortNo": 514,
+      "title": "360°任何角度都可以完美掌握！漫画角色脸、发型、表情入门",
+      "author": "[日] 中村仁聴",
+      "intro": "原名《360°どんな角度もカンペキマスター！　マンガキャラ顔・髪型・表情入門》，一本以真人为实例的脸部、发型、表情入门教程。",
+      "pageCount": 227,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "COVER",
+          "page": 2
+        },
+        {
+          "title": "電子書籍について",
+          "page": 3
+        },
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "もくじ",
+          "page": 6
+        },
+        {
+          "title": "本書の特長と見方",
+          "page": 11
+        },
+        {
+          "title": "【Part1】「顔」を描くための基本とコツ",
+          "page": 14
+        },
+        {
+          "title": "［Lesson01］顔の骨格を知ろう",
+          "page": 15
+        },
+        {
+          "title": "正面の骨格図",
+          "page": 15
+        },
+        {
+          "title": "後ろの骨格図",
+          "page": 15
+        },
+        {
+          "title": "側面の骨格図",
+          "page": 16
+        },
+        {
+          "title": "男女の骨格の違い",
+          "page": 16
+        },
+        {
+          "title": "［Lesson02］表情を作る顔の筋肉",
+          "page": 17
+        },
+        {
+          "title": "筋肉の部位を知ろう",
+          "page": 17
+        },
+        {
+          "title": "筋肉と顔パーツの関係",
+          "page": 18
+        },
+        {
+          "title": "［Lesson03］「リアル」をデフォルメする",
+          "page": 19
+        },
+        {
+          "title": "パーツの変化",
+          "page": 19
+        },
+        {
+          "title": "顔のバランスとイラスト化",
+          "page": 20
+        },
+        {
+          "title": "さまざまな顔のバランス",
+          "page": 20
+        },
+        {
+          "title": "［Lesson04］男女の顔の描き分け",
+          "page": 21
+        },
+        {
+          "title": "男女の違いと特徴",
+          "page": 21
+        },
+        {
+          "title": "ユニセックスなキャラ",
+          "page": 22
+        },
+        {
+          "title": "［Lesson05］首の軸と動き方を知ろう",
+          "page": 23
+        },
+        {
+          "title": "首の軸を知る",
+          "page": 23
+        },
+        {
+          "title": "自然な首の動き",
+          "page": 24
+        },
+        {
+          "title": "［Lesson06］アタリのとり方",
+          "page": 25
+        },
+        {
+          "title": "アタリとは",
+          "page": 25
+        },
+        {
+          "title": "アタリをとるときの注意点",
+          "page": 25
+        },
+        {
+          "title": "写真からアタリをとる",
+          "page": 26
+        },
+        {
+          "title": "プロセスで確認（女性）",
+          "page": 27
+        },
+        {
+          "title": "プロセスで確認（男性）",
+          "page": 28
+        },
+        {
+          "title": "アタリの「目の線」を変える",
+          "page": 29
+        },
+        {
+          "title": "アタリの「正中線」を変える",
+          "page": 30
+        },
+        {
+          "title": "［Lesson07］ななめ顔の描き方",
+          "page": 31
+        },
+        {
+          "title": "顔のパーツが左右非対称",
+          "page": 31
+        },
+        {
+          "title": "十字線をずらして角度をつける",
+          "page": 31
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 32
+        },
+        {
+          "title": "［Lesson08］横顔の描き方",
+          "page": 33
+        },
+        {
+          "title": "顔の凹凸を描く",
+          "page": 33
+        },
+        {
+          "title": "口を開けたイラストを描く",
+          "page": 33
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 34
+        },
+        {
+          "title": "目高（女性）",
+          "page": 35
+        },
+        {
+          "title": "目高（男性）",
+          "page": 36
+        },
+        {
+          "title": "［Lesson09］アオリを描こう",
+          "page": 37
+        },
+        {
+          "title": "目のラインは上にカーブ",
+          "page": 37
+        },
+        {
+          "title": "「箱」でパーツをとらえる",
+          "page": 38
+        },
+        {
+          "title": "目とまゆのカーブ",
+          "page": 38
+        },
+        {
+          "title": "プロセスで確認（女性）",
+          "page": 39
+        },
+        {
+          "title": "プロセスで確認（男性）",
+          "page": 40
+        },
+        {
+          "title": "アオリ（女性）",
+          "page": 41
+        },
+        {
+          "title": "アオリ（男性）",
+          "page": 42
+        },
+        {
+          "title": "［Lesson10］極端なアオリを描こう",
+          "page": 43
+        },
+        {
+          "title": "アタリのとり方",
+          "page": 43
+        },
+        {
+          "title": "あご裏の描き方",
+          "page": 43
+        },
+        {
+          "title": "極端なアオリ（女性）",
+          "page": 44
+        },
+        {
+          "title": "［Lesson11］フカンを描こう",
+          "page": 45
+        },
+        {
+          "title": "目のラインは下にカーブ",
+          "page": 45
+        },
+        {
+          "title": "「箱」でパーツをとらえる",
+          "page": 46
+        },
+        {
+          "title": "目とまゆのカーブ",
+          "page": 46
+        },
+        {
+          "title": "プロセスで確認（女性）",
+          "page": 47
+        },
+        {
+          "title": "プロセスで確認（男性）",
+          "page": 48
+        },
+        {
+          "title": "フカン（女性）",
+          "page": 49
+        },
+        {
+          "title": "フカン（男性）",
+          "page": 50
+        },
+        {
+          "title": "［Lesson12］極端なフカンを描こう",
+          "page": 51
+        },
+        {
+          "title": "アタリのとり方",
+          "page": 51
+        },
+        {
+          "title": "頭頂部を基点に描く",
+          "page": 51
+        },
+        {
+          "title": "極端なフカン（男性）",
+          "page": 52
+        },
+        {
+          "title": "［Lesson13］目とまゆの描き方",
+          "page": 53
+        },
+        {
+          "title": "目とまゆの構造",
+          "page": 53
+        },
+        {
+          "title": "プロセスで描こう",
+          "page": 53
+        },
+        {
+          "title": "視線と目の動き",
+          "page": 54
+        },
+        {
+          "title": "感情表現",
+          "page": 55
+        },
+        {
+          "title": "目を閉じる",
+          "page": 55
+        },
+        {
+          "title": "目の種類",
+          "page": 56
+        },
+        {
+          "title": "［Lesson14］口とあごの描き方",
+          "page": 57
+        },
+        {
+          "title": "口とあごの構造",
+          "page": 57
+        },
+        {
+          "title": "デフォルメして描こう",
+          "page": 57
+        },
+        {
+          "title": "歯の描き方",
+          "page": 58
+        },
+        {
+          "title": "舌の描き方",
+          "page": 58
+        },
+        {
+          "title": "話すときの口の形",
+          "page": 59
+        },
+        {
+          "title": "角度による口の表現",
+          "page": 60
+        },
+        {
+          "title": "［Lesson15］耳の描き方",
+          "page": 61
+        },
+        {
+          "title": "耳の構造を知ろう",
+          "page": 61
+        },
+        {
+          "title": "耳の形の変化を確認",
+          "page": 62
+        },
+        {
+          "title": "［Lesson16］顔のりんかく（女性）",
+          "page": 63
+        },
+        {
+          "title": "体型による違い",
+          "page": 63
+        },
+        {
+          "title": "りんかくの種類を知ろう",
+          "page": 64
+        },
+        {
+          "title": "［Lesson17］顔のりんかく（男性）",
+          "page": 65
+        },
+        {
+          "title": "体型による違い",
+          "page": 65
+        },
+        {
+          "title": "りんかくの種類を知ろう",
+          "page": 66
+        },
+        {
+          "title": "［Lesson18］年齢による変化（幼児?小学生）",
+          "page": 67
+        },
+        {
+          "title": "顔のサイズと重心",
+          "page": 67
+        },
+        {
+          "title": "幼児のポイント",
+          "page": 68
+        },
+        {
+          "title": "小学生のポイント",
+          "page": 68
+        },
+        {
+          "title": "［Lesson19］年齢による変化（中学生?高校生",
+          "page": 69
+        },
+        {
+          "title": "男女の性差が大きくなる",
+          "page": 69
+        },
+        {
+          "title": "中学生のポイント",
+          "page": 70
+        },
+        {
+          "title": "高校生のポイント中学生にくらべてさらに面長に。りんかくやパーツ",
+          "page": 70
+        },
+        {
+          "title": "［Lesson20］年齢による変化（老人）",
+          "page": 71
+        },
+        {
+          "title": "初老のポイント",
+          "page": 72
+        },
+        {
+          "title": "老人のポイント",
+          "page": 72
+        },
+        {
+          "title": "影で立体感を出そう",
+          "page": 73
+        },
+        {
+          "title": "シェードとシャドウ",
+          "page": 73
+        },
+        {
+          "title": "シェードのつく位置",
+          "page": 73
+        },
+        {
+          "title": "［Lesson21］光源の位置",
+          "page": 74
+        },
+        {
+          "title": "《360°デッサン早見表》目高",
+          "page": 75
+        },
+        {
+          "title": "【Part２】「髪型」を描くための基本とコツ",
+          "page": 76
+        },
+        {
+          "title": "［Lesson1］頭部と髪型の解剖",
+          "page": 77
+        },
+        {
+          "title": "頭の部位の分類",
+          "page": 77
+        },
+        {
+          "title": "［Lesson2］毛流れを考える",
+          "page": 79
+        },
+        {
+          "title": "矢印で毛流れを考える",
+          "page": 79
+        },
+        {
+          "title": "［Lesson3］毛束の表現方法",
+          "page": 81
+        },
+        {
+          "title": "毛束で変わる絵柄の印象",
+          "page": 81
+        },
+        {
+          "title": "髪型別の毛束のとらえ方",
+          "page": 81
+        },
+        {
+          "title": "［Lesson4］毛先の表現方法",
+          "page": 83
+        },
+        {
+          "title": "毛先の動きの種類",
+          "page": 83
+        },
+        {
+          "title": "［Lesson5］ショートヘアの描き方",
+          "page": 85
+        },
+        {
+          "title": "アタリから完成までの流れ",
+          "page": 85
+        },
+        {
+          "title": "［Lesson6］角度別ショートヘア",
+          "page": 87
+        },
+        {
+          "title": "目高（男性）",
+          "page": 87
+        },
+        {
+          "title": "目高（女性）",
+          "page": 88
+        },
+        {
+          "title": "アオリ（男性）",
+          "page": 89
+        },
+        {
+          "title": "アオリ（女性）",
+          "page": 90
+        },
+        {
+          "title": "フカン（男性）",
+          "page": 91
+        },
+        {
+          "title": "フカン（女性）",
+          "page": 92
+        },
+        {
+          "title": "女性のショートヘア",
+          "page": 93
+        },
+        {
+          "title": "男性のショートヘア",
+          "page": 95
+        },
+        {
+          "title": "［Lesson7］ロングヘアの描き方",
+          "page": 97
+        },
+        {
+          "title": "アタリから完成までの流れ",
+          "page": 97
+        },
+        {
+          "title": "［Lesson8］角度別ロングヘア",
+          "page": 99
+        },
+        {
+          "title": "目高（男性）",
+          "page": 99
+        },
+        {
+          "title": "目高（女性）",
+          "page": 100
+        },
+        {
+          "title": "アオリ（男性）",
+          "page": 101
+        },
+        {
+          "title": "アオリ（女性）",
+          "page": 102
+        },
+        {
+          "title": "フカン（男性）",
+          "page": 103
+        },
+        {
+          "title": "フカン（女性）",
+          "page": 104
+        },
+        {
+          "title": "女性のロングヘア",
+          "page": 105
+        },
+        {
+          "title": "男性のロングヘア",
+          "page": 107
+        },
+        {
+          "title": "［Lesson9］三つ編み・編み込み",
+          "page": 109
+        },
+        {
+          "title": "三つ編みの描き方",
+          "page": 109
+        },
+        {
+          "title": "三つ編みの構造",
+          "page": 109
+        },
+        {
+          "title": "編み込みの描き",
+          "page": 110
+        },
+        {
+          "title": "編み込みの構造",
+          "page": 110
+        },
+        {
+          "title": "［Lesson10］ツーブロック・刈り上げ",
+          "page": 111
+        },
+        {
+          "title": "ツーブロック",
+          "page": 111
+        },
+        {
+          "title": "いろいろな髪型",
+          "page": 112
+        },
+        {
+          "title": "［Lesson11］かぶりものと頭の関係",
+          "page": 113
+        },
+        {
+          "title": "キャップの描き方",
+          "page": 113
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 113
+        },
+        {
+          "title": "ハットの描き方",
+          "page": 114
+        },
+        {
+          "title": "フードの描き",
+          "page": 114
+        },
+        {
+          "title": "［Lesson12］アクセサリーと髪の表現",
+          "page": 115
+        },
+        {
+          "title": "ヘアアクセサリーの表現",
+          "page": 115
+        },
+        {
+          "title": "動作にともなう髪の動き",
+          "page": 117
+        },
+        {
+          "title": "［Lesson13］なびく髪の動き",
+          "page": 117
+        },
+        {
+          "title": "流れる髪の動き",
+          "page": 117
+        },
+        {
+          "title": "たわむ髪の動き",
+          "page": 118
+        },
+        {
+          "title": "乱れる髪の動き",
+          "page": 118
+        },
+        {
+          "title": "浮く髪の動き",
+          "page": 118
+        },
+        {
+          "title": "［Lesson14］「風」による髪の動き",
+          "page": 119
+        },
+        {
+          "title": "風の強さによる髪の変化",
+          "page": 119
+        },
+        {
+          "title": "長さ別で見る風の当たり方",
+          "page": 120
+        },
+        {
+          "title": "ドライヤーと髪の動き",
+          "page": 121
+        },
+        {
+          "title": "飛ばされたときの髪の動き",
+          "page": 122
+        },
+        {
+          "title": "［Lesson15］「空中」での髪の動き",
+          "page": 123
+        },
+        {
+          "title": "ジャンプの髪の動き",
+          "page": 123
+        },
+        {
+          "title": "落下の髪の動き",
+          "page": 124
+        },
+        {
+          "title": "［Lesson16］「水」による髪の動き",
+          "page": 125
+        },
+        {
+          "title": "水中の髪の動き",
+          "page": 125
+        },
+        {
+          "title": "ぬれた髪の動き",
+          "page": 126
+        },
+        {
+          "title": "シャンプーの髪の動き",
+          "page": 126
+        },
+        {
+          "title": "［Lesson17］さまざまな髪の動き",
+          "page": 127
+        },
+        {
+          "title": "接触したときの髪の動き",
+          "page": 127
+        },
+        {
+          "title": "手や肩に触れた髪の動き",
+          "page": 128
+        },
+        {
+          "title": "振り向くときの髪の動き",
+          "page": 128
+        },
+        {
+          "title": "《360°デッサン早見表》アオリ",
+          "page": 129
+        },
+        {
+          "title": "【Part３】「表情」を描くための基本とコツ",
+          "page": 130
+        },
+        {
+          "title": "［Lesson1］表情と筋肉の関係性",
+          "page": 131
+        },
+        {
+          "title": "基本の４つの表情",
+          "page": 131
+        },
+        {
+          "title": "表情を作る筋肉パーツ",
+          "page": 132
+        },
+        {
+          "title": "［Lesson2］表情の作り方「喜」女性編",
+          "page": 133
+        },
+        {
+          "title": "「喜び」の表現",
+          "page": 133
+        },
+        {
+          "title": "「喜」の度合いとポイント",
+          "page": 134
+        },
+        {
+          "title": "［Lesson3］表情の作り方「喜」男性編",
+          "page": 135
+        },
+        {
+          "title": "「喜び」の表現",
+          "page": 135
+        },
+        {
+          "title": "「喜」の度合いとポイント",
+          "page": 136
+        },
+        {
+          "title": "［Lesson4］アングル別「喜」の表情",
+          "page": 137
+        },
+        {
+          "title": "女性の「喜」の表情",
+          "page": 137
+        },
+        {
+          "title": "男性の「喜」の表情",
+          "page": 138
+        },
+        {
+          "title": "［Lesson5］表情の作り方「怒」女性編",
+          "page": 139
+        },
+        {
+          "title": "「怒り」の表現",
+          "page": 139
+        },
+        {
+          "title": "「怒」の度合いとポイント",
+          "page": 140
+        },
+        {
+          "title": "［Lesson6］表情の作り方「怒」男性編",
+          "page": 141
+        },
+        {
+          "title": "「怒り」の表現",
+          "page": 141
+        },
+        {
+          "title": "「怒」の度合いとポイント",
+          "page": 142
+        },
+        {
+          "title": "［Lesson7］アングル別「怒」の表情",
+          "page": 143
+        },
+        {
+          "title": "女性の「怒」の表情",
+          "page": 143
+        },
+        {
+          "title": "男性の「怒」の表情",
+          "page": 144
+        },
+        {
+          "title": "［Lesson8］表情の作り方「哀」女性編",
+          "page": 145
+        },
+        {
+          "title": "「哀しみ」の表現",
+          "page": 145
+        },
+        {
+          "title": "「哀」の度合いとポイント",
+          "page": 146
+        },
+        {
+          "title": "［Lesson9］表情の作り方「哀」男性編",
+          "page": 147
+        },
+        {
+          "title": "「哀しみ」の表現",
+          "page": 147
+        },
+        {
+          "title": "「哀」の度合いとポイント",
+          "page": 148
+        },
+        {
+          "title": "［Lesson10］アングル別「哀」の表情",
+          "page": 149
+        },
+        {
+          "title": "女性の「哀」の表情",
+          "page": 149
+        },
+        {
+          "title": "男性の「哀」の表情",
+          "page": 150
+        },
+        {
+          "title": "［Lesson11］表情の作り方「楽」女性",
+          "page": 151
+        },
+        {
+          "title": "「楽しみ」の表現",
+          "page": 151
+        },
+        {
+          "title": "「楽」の度合いとポイント",
+          "page": 152
+        },
+        {
+          "title": "［Lesson12］表情の作り方「楽」男性編",
+          "page": 153
+        },
+        {
+          "title": "「楽しみ」の表現",
+          "page": 153
+        },
+        {
+          "title": "「楽」の度合いとポイント",
+          "page": 154
+        },
+        {
+          "title": "［Lesson13］アングル別「楽」の表情",
+          "page": 155
+        },
+        {
+          "title": "女性の「楽」の表情",
+          "page": 155
+        },
+        {
+          "title": "男性の「楽」の表情",
+          "page": 156
+        },
+        {
+          "title": "［Lesson14］顔のパーツの組み合わせ",
+          "page": 157
+        },
+        {
+          "title": "部位の変換で生まれる表情",
+          "page": 157
+        },
+        {
+          "title": "［Lesson15］気温による表情の変化",
+          "page": 159
+        },
+        {
+          "title": "暑さで変わる表情",
+          "page": 159
+        },
+        {
+          "title": "寒さで変わる表情",
+          "page": 160
+        },
+        {
+          "title": "［Lesson16］体調による表情の変化",
+          "page": 161
+        },
+        {
+          "title": "体調変化は表情でわかる",
+          "page": 161
+        },
+        {
+          "title": "マンガ的に感情表現する",
+          "page": 163
+        },
+        {
+          "title": "［Lesson17］影を使った表現のしかた",
+          "page": 163
+        },
+        {
+          "title": "オーバーな表現のしかた",
+          "page": 164
+        },
+        {
+          "title": "［Lesson18］感情の輪で表現を広げる",
+          "page": 165
+        },
+        {
+          "title": "感情の輪とは？",
+          "page": 165
+        },
+        {
+          "title": "感情の輪の基本的な感情",
+          "page": 166
+        },
+        {
+          "title": "［Lesson19］「喜び」「信頼」の表現",
+          "page": 167
+        },
+        {
+          "title": "喜びと信頼で生まれる表情",
+          "page": 167
+        },
+        {
+          "title": "［Lesson20］「心配」「驚き」の表現",
+          "page": 169
+        },
+        {
+          "title": "心配と驚きで生まれる表情",
+          "page": 169
+        },
+        {
+          "title": "［Lesson21］「悲しみ」「嫌悪」の表現",
+          "page": 171
+        },
+        {
+          "title": "悲しみと嫌悪で生まれる表情",
+          "page": 171
+        },
+        {
+          "title": "［Lesson22］「怒り」「期待」の表現",
+          "page": 173
+        },
+        {
+          "title": "怒りと期待で生まれる表情",
+          "page": 173
+        },
+        {
+          "title": "［Lesson23］感情×セリフの表現",
+          "page": 175
+        },
+        {
+          "title": "セリフに置き換えて表現",
+          "page": 175
+        },
+        {
+          "title": "《360°デッサン早見表》フカン",
+          "page": 177
+        },
+        {
+          "title": "【Part４】さまざまなキャラと顔の表現",
+          "page": 178
+        },
+        {
+          "title": "［Lesson1］タイプ別青少年（少女・少年）編",
+          "page": 179
+        },
+        {
+          "title": "清楚タイプ",
+          "page": 179
+        },
+        {
+          "title": "アクティブタイプ",
+          "page": 180
+        },
+        {
+          "title": "病みタイプ",
+          "page": 181
+        },
+        {
+          "title": "マイペースタイプ",
+          "page": 182
+        },
+        {
+          "title": "さわやかタイプ",
+          "page": 183
+        },
+        {
+          "title": "体育会タイプ",
+          "page": 184
+        },
+        {
+          "title": "気弱タイプ",
+          "page": 185
+        },
+        {
+          "title": "お調子者タイプ",
+          "page": 186
+        },
+        {
+          "title": "おっちょこちょいタイプ",
+          "page": 187
+        },
+        {
+          "title": "優等生タイプ",
+          "page": 188
+        },
+        {
+          "title": "お姫様タイプ",
+          "page": 189
+        },
+        {
+          "title": "ボーイッシュタイプ",
+          "page": 190
+        },
+        {
+          "title": "ナルシストタイプ",
+          "page": 191
+        },
+        {
+          "title": "インテリタイプ",
+          "page": 192
+        },
+        {
+          "title": "小動物タイプ",
+          "page": 193
+        },
+        {
+          "title": "ヤンチャタイプ",
+          "page": 194
+        },
+        {
+          "title": "［Lesson2］タイプ別青年・成人編",
+          "page": 195
+        },
+        {
+          "title": "ゆるふわお嬢様タイプ",
+          "page": 195
+        },
+        {
+          "title": "艶やかタイプ",
+          "page": 196
+        },
+        {
+          "title": "お高いタイプ",
+          "page": 197
+        },
+        {
+          "title": "サブカルタイプ",
+          "page": 198
+        },
+        {
+          "title": "クールタイプ",
+          "page": 199
+        },
+        {
+          "title": "自由奔放タイプ",
+          "page": 200
+        },
+        {
+          "title": "純朴・癒やしタイプ",
+          "page": 201
+        },
+        {
+          "title": "オラオラタイプ",
+          "page": 202
+        },
+        {
+          "title": "ふんわりタイプ",
+          "page": 203
+        },
+        {
+          "title": "甘え上手タイプ",
+          "page": 204
+        },
+        {
+          "title": "サッパリタイプ",
+          "page": 205
+        },
+        {
+          "title": "ギャルタイプ",
+          "page": 206
+        },
+        {
+          "title": "お坊ちゃんタイプ",
+          "page": 207
+        },
+        {
+          "title": "ナヨナヨタイプ",
+          "page": 208
+        },
+        {
+          "title": "フェミニンタイプ",
+          "page": 209
+        },
+        {
+          "title": "硬派タイプ",
+          "page": 210
+        },
+        {
+          "title": "［Lesson3］タイプ別その他の世代",
+          "page": 211
+        },
+        {
+          "title": "妹系タイプ",
+          "page": 211
+        },
+        {
+          "title": "弟系タイプ",
+          "page": 212
+        },
+        {
+          "title": "お姉さんタイプ",
+          "page": 213
+        },
+        {
+          "title": "お兄さんタイプ",
+          "page": 214
+        },
+        {
+          "title": "エレガントタイプ",
+          "page": 215
+        },
+        {
+          "title": "ダンディタイプ",
+          "page": 216
+        },
+        {
+          "title": "おばちゃんタイプ",
+          "page": 217
+        },
+        {
+          "title": "おっちゃんタイプ",
+          "page": 218
+        },
+        {
+          "title": "PTA 会長タイプ",
+          "page": 219
+        },
+        {
+          "title": "熱血教師タイプ",
+          "page": 220
+        },
+        {
+          "title": "おばあさんタイプ",
+          "page": 221
+        },
+        {
+          "title": "おじいさんタイプ",
+          "page": 222
+        },
+        {
+          "title": "いじわるばあさんタイプ",
+          "page": 223
+        },
+        {
+          "title": "がんこじじいタイプ",
+          "page": 224
+        },
+        {
+          "title": "◎イラストレーター紹介",
+          "page": 225
+        },
+        {
+          "title": "奥付",
+          "page": 227
+        }
+      ],
+      "pdfKey": "library/books/515-book.pdf",
+      "pdfBytes": 62313477,
+      "coverKey": "library/covers/515-book-cover.jpg",
+      "coverBytes": 301750
+    },
+    {
+      "id": "lib-mwg3jkc7-39cebb",
+      "sortNo": 515,
+      "title": "滴溜溜姿势目录DVD-ROM 和服女性+和服男性",
+      "author": "[日] マール社編集部",
+      "intro": "《ぐるぐるポーズカタログDVD-ROM》系列，第二张与第三张光盘，分别是“和服の女性”与“和服の男性”的内容，可以通过网页控制三个视角与多个方向的人物姿势，推荐在电脑使用，解压文件后打开“index.html”文件即可。",
+      "pageCount": 7132,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[漫画教程][マール社編集部]ぐるぐるポーズカタログDVD-ROM2 和服の女性",
+          "page": 1
+        },
+        {
+          "title": "[漫画教程][マール社編集部]ぐるぐるポーズカタログDVD-ROM3 和服の男性",
+          "page": 3772
+        }
+      ],
+      "pdfKey": "library/books/516-book.pdf",
+      "pdfBytes": 2488040349,
+      "coverKey": "library/covers/516-book-cover.jpg",
+      "coverBytes": 43924
+    },
+    {
+      "id": "lib-mwg3kjmf-8e1b9a",
+      "sortNo": 516,
+      "title": "CLIP STUDIO PAINT笔刷素材集 从云到街道排列、质感",
+      "author": "[日] ゾウノセ, 角丸つぶら",
+      "intro": "原名《CLIP STUDIO PAINTブラシ素材集 雲から街並み、質感まで》，一本CSP的笔刷素材教程，光盘里附带了笔刷及使用视频。适用于：CLIP STUDIO PAINT PRO / EX , Windows 版 / macOS 版 / iPad 版 。",
+      "pageCount": 162,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/517-book.pdf",
+      "pdfBytes": 91820354,
+      "coverKey": "library/covers/517-book-cover.jpg",
+      "coverBytes": 261019
+    },
+    {
+      "id": "lib-mwg3lji8-856b55",
+      "sortNo": 517,
+      "title": "让角色更生动！漫画故事讲座",
+      "author": "[日] 田中裕久",
+      "intro": "原名《キャラクターを動かす！マンガストーリー講座》，一本讲解漫画创作思路的教程",
+      "pageCount": 175,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/518-book.pdf",
+      "pdfBytes": 111952235,
+      "coverKey": "library/covers/518-book-cover.jpg",
+      "coverBytes": 340981
+    },
+    {
+      "id": "lib-mwg3n44x-e9ec2d",
+      "sortNo": 518,
+      "title": "同人志可用！美少女插画配色书",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《同人誌でもすぐ使える！ 美少女イラストの配色がわかる本》，一人一图，80位人气画师亲授配色方案。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/519-book.pdf",
+      "pdfBytes": 168117954,
+      "coverKey": "library/covers/519-book-cover.jpg",
+      "coverBytes": 348968
+    },
+    {
+      "id": "lib-mwg3pifr-006f69",
+      "sortNo": 519,
+      "title": "枪和刀格斗姿势图鉴",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《描ける! 銃&ナイフ格闘ポーズ スタイル図鑑》，一本图鉴类教程，可供参考的真人刀和枪械格斗姿势图例。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/520-book.pdf",
+      "pdfBytes": 280130827,
+      "coverKey": "library/covers/520-book-cover.jpg",
+      "coverBytes": 270960
+    },
+    {
+      "id": "lib-mwg3r0dg-00dfa3",
+      "sortNo": 520,
+      "title": "大胆姿势的画法",
+      "author": "[日] えびも 角丸つぶら",
+      "intro": "原名《大胆なポーズの描き方》，一本讲解漫画角色姿势绘制教程。",
+      "pageCount": 174,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/521-book.pdf",
+      "pdfBytes": 79127479,
+      "coverKey": "library/covers/521-book-cover.jpg",
+      "coverBytes": 260653
+    },
+    {
+      "id": "lib-mwg3smns-d193be",
+      "sortNo": 521,
+      "title": "漫画角色姿势法则",
+      "author": "[日] 伊原達矢",
+      "intro": "原名《絵になるキャラポーズの法則 コントラポストを応用した画期的なポーズの基本》，一本讲解漫画角色姿势绘制要点的教程。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/522-book.pdf",
+      "pdfBytes": 194965538,
+      "coverKey": "library/covers/522-book-cover.jpg",
+      "coverBytes": 321310
+    },
+    {
+      "id": "lib-mwg3udjm-de51c8",
+      "sortNo": 522,
+      "title": "Paryi倾授头发的画法 注重发型的风格",
+      "author": "[日] Paryi",
+      "intro": "原名《Paryiが全力で教える「髪」の描き方 ヘアスタイルにこだわる作画流儀》，日本画师paryi的头发教程，附带CLIP STUDIO PAINT PRO/EX用的笔刷和源文件",
+      "pageCount": 155,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/523-book.pdf",
+      "pdfBytes": 202143138,
+      "coverKey": "library/covers/523-book-cover.jpg",
+      "coverBytes": 260034
+    },
+    {
+      "id": "lib-mwg3w8dn-b49e2c",
+      "sortNo": 523,
+      "title": "漫画角色的食物资料集",
+      "author": "[日] アミューズメントメディア総合学院",
+      "intro": "原名《マンガキャラの食べ物資料集》，一本专门针对描绘漫画角色吃东西教程。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/524-book.pdf",
+      "pdfBytes": 220623962,
+      "coverKey": "library/covers/524-book-cover.jpg",
+      "coverBytes": 265658
+    },
+    {
+      "id": "lib-mwg3y80z-d7c5d2",
+      "sortNo": 524,
+      "title": "吉田彻10分钟描绘女性270 制服篇",
+      "author": "[日] 吉田徹（吉田彻）",
+      "intro": "原名《吉田徹10分で女性を描くコツ270 制服編》，日本动画师吉田徹（吉田彻）的一本漫画教程，每一张图片都有绘制要点说明，临摹佳品。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/525-book.pdf",
+      "pdfBytes": 245740786,
+      "coverKey": "library/covers/525-book-cover.jpg",
+      "coverBytes": 200476
+    },
+    {
+      "id": "lib-mwg41dcm-d11a69",
+      "sortNo": 525,
+      "title": "明亮眼睛的画法",
+      "author": "[日] 玄光社",
+      "intro": "原名《かがやく瞳の描き方》，多位画师联合推出的一本教程，教你画出明亮的眼睛，“超描けるシリーズ”系列，“きらめく瞳の描き方”第二作。参与画师：お久しぶり、ミモザ、美和野らぐ、舞、Aちき、河童豆、ゆめみつき 、にま、秘色、きう、回る酸素、八三、sone、藤実なんな。",
+      "pageCount": 152,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/526-book.pdf",
+      "pdfBytes": 352104795,
+      "coverKey": "library/covers/526-book-cover.jpg",
+      "coverBytes": 193168
+    },
+    {
+      "id": "lib-mwg437t0-8ac931",
+      "sortNo": 526,
+      "title": "吉田彻10分钟描绘女性250",
+      "author": "[日] 吉田徹（吉田彻）",
+      "intro": "原名《吉田徹10分で女性を描くコツ250》，日本动画师吉田徹（吉田彻）的一本漫画教程，每一张图片都有绘制要点说明，临摹佳品。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/527-book.pdf",
+      "pdfBytes": 221758022,
+      "coverKey": "library/covers/527-book-cover.jpg",
+      "coverBytes": 195569
+    },
+    {
+      "id": "lib-mwg45fb0-95361c",
+      "sortNo": 527,
+      "title": "制服女孩的练习册",
+      "author": "[日] やとみ",
+      "intro": "原名《制服女子キャラ 描き込みドリル》，日本画师やとみ的一本制服美少女教程，有大量的练习图可供临摹。",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/528-book.pdf",
+      "pdfBytes": 276011057,
+      "coverKey": "library/covers/528-book-cover.jpg",
+      "coverBytes": 271337
+    },
+    {
+      "id": "lib-mwg487pn-aecd14",
+      "sortNo": 528,
+      "title": "稍微有点H的服装画法",
+      "author": "[日] tyone",
+      "intro": "原名《ちょっぴりHなコスチュームの描き方》，日本画师tyone的一本比较sexy的服饰教程（其实更像是服装图鉴），“超描けるシリーズ”系列。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/529-book.pdf",
+      "pdfBytes": 350509463,
+      "coverKey": "library/covers/529-book-cover.jpg",
+      "coverBytes": 270876
+    },
+    {
+      "id": "lib-mwg492z0-8d3c01",
+      "sortNo": 529,
+      "title": "超入门 就要这样画-衣服皱褶的画法教科书",
+      "author": "[日] 春輝",
+      "intro": "原名《超入門 これなら描ける!服のシワの描き方の教科書》，一本以真人照片作为参考的衣服绘画教程，非常实用。",
+      "pageCount": 196,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/530-book.pdf",
+      "pdfBytes": 83436748,
+      "coverKey": "library/covers/530-book-cover.jpg",
+      "coverBytes": 277168
+    },
+    {
+      "id": "lib-mwg4airy-7e77d5",
+      "sortNo": 530,
+      "title": "漫画手枪步枪战斗姿势集",
+      "author": "[日] アームズマガジン編集部",
+      "intro": "原名《マンガのための拳銃＆ライフル戦闘ポーズ集》，一本战斗姿势集，大量的参考图例。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/531-book.pdf",
+      "pdfBytes": 36768527,
+      "coverKey": "library/covers/531-book-cover.jpg",
+      "coverBytes": 253758
+    },
+    {
+      "id": "lib-mwg4b8yl-26555b",
+      "sortNo": 531,
+      "title": "妙趣横生的漫画插图DX",
+      "author": "[日] ミラクルまんがイラスト研究会",
+      "intro": "原名《ミラクルハッピー プロ技マスター! まんがイラストDX》，一本非常可爱的少女漫风格漫画教程，助你画出闪闪亮亮的少女漫风格插图。",
+      "pageCount": 289,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/532-book.pdf",
+      "pdfBytes": 74650624,
+      "coverKey": "library/covers/532-book-cover.jpg",
+      "coverBytes": 388696
+    },
+    {
+      "id": "lib-mwg4daun-32e150",
+      "sortNo": 532,
+      "title": "漫画人物的发型资料集",
+      "author": "[日] アミューズメントメディア総合学院",
+      "intro": "原名《マンガキャラの髪型資料集》，收录约60种常见的漫画角色发型图鉴，有多种角度可供参考",
+      "pageCount": 133,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/533-book.pdf",
+      "pdfBytes": 248073385,
+      "coverKey": "library/covers/533-book-cover.jpg",
+      "coverBytes": 236197
+    },
+    {
+      "id": "lib-mwg4e5l4-5ed32e",
+      "sortNo": 533,
+      "title": "姿势与动作的画法 性感角色篇",
+      "author": "[日] kyachi",
+      "intro": "原名《動きのあるポーズの描き方 セクシーキャラクター編》，P站画师kyachi(白詰千佳)推出的一本女性角色绘制专题教程，“超描けるシリーズ”系列中的一本。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/534-book.pdf",
+      "pdfBytes": 93812711,
+      "coverKey": "library/covers/534-book-cover.jpg",
+      "coverBytes": 241447
+    },
+    {
+      "id": "lib-mwg4f8dl-9f8f4b",
+      "sortNo": 534,
+      "title": "蒸汽朋克世界的画法",
+      "author": "[日] 株式会社サイドランチ",
+      "intro": "原名《スチームパンク世界の描き方》，一本“蒸汽朋克”主题的绘画教程。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/535-book.pdf",
+      "pdfBytes": 118934950,
+      "coverKey": "library/covers/535-book-cover.jpg",
+      "coverBytes": 288402
+    },
+    {
+      "id": "lib-mwg4fxu1-1ce615",
+      "sortNo": 535,
+      "title": "姿势与动作的画法 东方Project篇 东方描技帖",
+      "author": "[日] kyachi、ゾウノセ",
+      "intro": "原名《動きのあるポーズの描き方 東方Project編 東方描技帖》，P站画师kyachi(白詰千佳)与ゾウノセ合作推出的一本东方人物画法教程。",
+      "pageCount": 172,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/536-book.pdf",
+      "pdfBytes": 72342781,
+      "coverKey": "library/covers/536-book-cover.jpg",
+      "coverBytes": 345980
+    },
+    {
+      "id": "lib-mwg4gh84-57850f",
+      "sortNo": 536,
+      "title": "90天提高画技讲座",
+      "author": "[日] ダテナオト",
+      "intro": "原名《ダテ式おえかき塾 90日間で変わる画力向上講座》，比较综合的漫画教程。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/537-book.pdf",
+      "pdfBytes": 51267420,
+      "coverKey": "library/covers/537-book-cover.jpg",
+      "coverBytes": 117110
+    },
+    {
+      "id": "lib-mwg4h0ji-c9f48a",
+      "sortNo": 537,
+      "title": "通过照片图解理解脖子、肩膀、手腕的画法",
+      "author": "[日] 糸井邦夫",
+      "intro": "原名《写真と図解でよくわかる 首・肩・腕の描き方》，一本通过真人照片理解人体画法的教程。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/538-book.pdf",
+      "pdfBytes": 47565583,
+      "coverKey": "library/covers/538-book-cover.jpg",
+      "coverBytes": 241150
+    },
+    {
+      "id": "lib-mwg4hplq-2c36d5",
+      "sortNo": 538,
+      "title": "想要画好不能做的事 无懈可击的插图改进法",
+      "author": "[日] さいとうなおき（齋藤 直葵）",
+      "intro": "原名《うまく描くの禁止 ツラくないイラスト上達法》，日本插画师齋藤直葵(斋藤直葵)的一本插图改进指南，偏文字向。",
+      "pageCount": 227,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/539-book.pdf",
+      "pdfBytes": 69117420,
+      "coverKey": "library/covers/539-book-cover.jpg",
+      "coverBytes": 285458
+    },
+    {
+      "id": "lib-mwg4ivgy-af1b40",
+      "sortNo": 539,
+      "title": "RockHe Kim的人体解剖绘画课",
+      "author": "[韩] RockHe Kim",
+      "intro": "原名《김락희의 인체 드로잉》，韩国漫画家RockHe Kim的人体动态结构绘画教学。\n*中文名《艺用动态解剖》",
+      "pageCount": 381,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/540-book.pdf",
+      "pdfBytes": 133470936,
+      "coverKey": "library/covers/540-book-cover.jpg",
+      "coverBytes": 81148
+    },
+    {
+      "id": "lib-mwg4mdaw-7ff9b2",
+      "sortNo": 540,
+      "title": "Krita使用教程",
+      "author": "[日] 小平淳一、パルプライド",
+      "intro": "原名《Kritaでデジタルペイントマスター》，免费绘画软件Krita的入门教程。",
+      "pageCount": 197,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/541-book.pdf",
+      "pdfBytes": 194692678,
+      "coverKey": "library/covers/541-book-cover.jpg",
+      "coverBytes": 280506
     }
   ]
 }
