@@ -1,0 +1,34 @@
+{
+  "createdAt": "2026-11-14T07:01:16.246Z",
+  "backend": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com",
+  "source": "public-api",
+  "worksCount": 0,
+  "booksCount": 453,
+  "fileCount": 4,
+  "totalBytes": 600011,
+  "files": [
+    {
+      "relativePath": "desk.json",
+      "bytes": 114,
+      "sha256": "a48cec5e2ea70422cd2d48488c217fdd13119f0be288a49823047d6dca545353"
+    },
+    {
+      "relativePath": "library-snapshot.json",
+      "bytes": 598770,
+      "sha256": "1ee822f1139befbdcf2fde6dabb9a7a02c29520c653865e9adfd8b284f28a3be"
+    },
+    {
+      "relativePath": "README_恢复说明.md",
+      "bytes": 1054,
+      "sha256": "3a580144e0e2826e77f1f9b8e41cfc1eeae5fa4ad20c0ef2fd28980d773786fa"
+    },
+    {
+      "relativePath": "works.json",
+      "bytes": 73,
+      "sha256": "622eac15e87fbae2155779a424e088aa86ad9599644281269a01bb9c9f093d3a"
+    }
+  ],
+  "gaps": [
+    "accounts.json 未导出（admin 登录 401）"
+  ]
+}
