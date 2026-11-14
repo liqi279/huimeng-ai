@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-13T18:57:29.304Z",
+  "generatedAt": "2026-11-14T06:40:19.387Z",
   "source": "huimeng_library.books",
-  "total": 411,
+  "total": 431,
   "areas": {
-    "paint": 395,
+    "paint": 415,
     "ref": 16
   },
   "books": [
@@ -19113,6 +19113,671 @@
       "pdfBytes": 320757159,
       "coverKey": "library/covers/422-book-cover.jpg",
       "coverBytes": 273481
+    },
+    {
+      "id": "lib-mwfchekb-a79db4",
+      "sortNo": 422,
+      "title": "如何画宝可梦(如何画宠物、动物)",
+      "author": "Alban Ray、Gianluca Lubrano",
+      "intro": "原名《How To Draw Pokemon: The Best Pokemon Drawing Book For Kids With Step-By-Step Guides To Drawing 50 Pokemon》，一本精灵宝可梦(口袋妖怪、宠物小精灵)的简笔画教程，共50例，主要是1代和2代的精灵。",
+      "pageCount": 52,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/423-book.pdf",
+      "pdfBytes": 20281369,
+      "coverKey": "library/covers/423-book-cover.jpg",
+      "coverBytes": 238649
+    },
+    {
+      "id": "lib-mwfcijen-7cadb8",
+      "sortNo": 423,
+      "title": "画出最好的插图 有魅力的角色脸的画法",
+      "author": "[日] サイドランチ",
+      "intro": "原名《最高のイラストを作り出す! 魅力的な「キャラ顔」の描き方》，多位画师(エイチ, 月森フユカ, 玄米, 吉村拓哉, 逆月酒乱, 山上七生, クマつき, くろでこ, 桓田楠末, 保志乃シホ)合作推出的一本漫画教程，附带特典文件(一张多角度的头部参考图，多种格式)。",
+      "pageCount": 208,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/424-book.pdf",
+      "pdfBytes": 109393445,
+      "coverKey": "library/covers/424-book-cover.jpg",
+      "coverBytes": 254996
+    },
+    {
+      "id": "lib-mwfchh40-44b21f",
+      "sortNo": 424,
+      "title": "谁都能学的背景教程",
+      "author": "[日] sasami",
+      "intro": "原名《だれにでも描けるようになる背景講座メイキング》，一本PHOTOSHOP背景画教程。",
+      "pageCount": 45,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/425-book.pdf",
+      "pdfBytes": 22454532,
+      "coverKey": "library/covers/425-book-cover.jpg",
+      "coverBytes": 195734
+    },
+    {
+      "id": "lib-mwfcjg32-21e93d",
+      "sortNo": 425,
+      "title": "漫画讲解背景的画法",
+      "author": "[日] 沼原望",
+      "intro": "原名《背景描きかた漫画》，日本漫画家沼原望以漫画的方式讲解背景的画法。",
+      "pageCount": 78,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/426-book.pdf",
+      "pdfBytes": 74518479,
+      "coverKey": "library/covers/426-book-cover.jpg",
+      "coverBytes": 377036
+    },
+    {
+      "id": "lib-mwfckg8x-d94263",
+      "sortNo": 426,
+      "title": "完全掌握专业画家的技法 CSP操作术 决定版",
+      "author": "[日] サイドランチ",
+      "intro": "原名《プロ絵師の技を完全マスター クリスタ 操作術 決定版》，多位画师(和音、kuratch!、じろー、すざく、めぐむ、渡辺ナベシ)合作推出的一本CSP上色教程，对应CLIP STUDIO PAINT PRO/EX/iPad版本，特典附带clip格式源文件。",
+      "pageCount": 208,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/427-book.pdf",
+      "pdfBytes": 139986386,
+      "coverKey": "library/covers/427-book-cover.jpg",
+      "coverBytes": 284835
+    },
+    {
+      "id": "lib-mwfcke9k-b3bada",
+      "sortNo": 427,
+      "title": "学习结构和动作并提高 肌肉提高基础课",
+      "author": "[日] 頼兼和男",
+      "intro": "原名《構造と動きを学んで上達！筋肉の描き方 基本レッスン》，一本比较硬核人体动作绘制教程，“超描けるシリーズ”系列的一本。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/428-book.pdf",
+      "pdfBytes": 79567919,
+      "coverKey": "library/covers/428-book-cover.jpg",
+      "coverBytes": 183305
+    },
+    {
+      "id": "lib-mwfcm4cu-bdefb0",
+      "sortNo": 428,
+      "title": "幻想风景的画法 CLIP STUDIO PAINT PRO中表现空气感的技巧",
+      "author": "[日] ゾウノセ、角丸つぶら",
+      "intro": "原名《ファンタジー風景の描き方 CLIP STUDIO PAINT PROで空気感を表現するテクニック》，画师ゾウノセ与角丸つぶら(角丸圆)合作推出的一本CSP上色教程，附带特典文件，主要范例用的笔刷(SUT格式)和PSD文件等等。",
+      "pageCount": 166,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/429-book.pdf",
+      "pdfBytes": 115296933,
+      "coverKey": "library/covers/429-book-cover.jpg",
+      "coverBytes": 257314
+    },
+    {
+      "id": "lib-mwfcn7i3-d7de33",
+      "sortNo": 429,
+      "title": "东方幻想风景的画法 CLIP STUDIO PAINT PRO/EX有空气感的背景&角色的融合方法",
+      "author": "[日] ゾウノセ、藤ちょこ、角丸つぶら",
+      "intro": "原名《東洋ファンタジー風景の描き方 CLIP STUDIO PAINT PRO/EX 空気感のある背景＆キャラのなじませ方》，多位画师ゾウノセ、藤ちょこ(藤原)、角丸つぶら(角丸圆)合作推出的一本CSP上色教程。附带特典文件，主要范例用的笔刷(SUT格式)、素材、PSD文件等等。",
+      "pageCount": 167,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/430-book.pdf",
+      "pdfBytes": 143748651,
+      "coverKey": "library/covers/430-book-cover.jpg",
+      "coverBytes": 303998
+    },
+    {
+      "id": "lib-mwfcms0j-4c416e",
+      "sortNo": 430,
+      "title": "塑造角色魅力 美少女插画x皮肤、头发、眼睛、衣服的质感表现",
+      "author": "[日] フカヒレ、咲良ゆき、ひたきゆう、るいせんと、白井秀実",
+      "intro": "原名《キャラ魅せメイキング 美少女イラスト×肌・髪・瞳・服の質感表現》，多位画师(フカヒレ、咲良ゆき、ひたきゆう、るいせんと、白井秀実)合作推出的一本以CSP(CLIP STUDIO PAINT EX/PRO)为主的上色教程（有一个例子是PS+SAI），附带随书的PSD文件。",
+      "pageCount": 177,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/431-book.pdf",
+      "pdfBytes": 104204510,
+      "coverKey": "library/covers/431-book-cover.jpg",
+      "coverBytes": 212686
+    },
+    {
+      "id": "lib-mwfcnxj1-7270c7",
+      "sortNo": 431,
+      "title": "360°任何角度都可以完美掌握！漫画角色动作、姿势",
+      "author": "[日] YANAMi",
+      "intro": "原名《360°どんな角度もカンペキマスター！マンガキャラ 動作・ポーズ100》，一本以真人为实例的动作、姿势教程，有一些CP互动的实例。",
+      "pageCount": 226,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/432-book.pdf",
+      "pdfBytes": 152668946,
+      "coverKey": "library/covers/432-book-cover.jpg",
+      "coverBytes": 305587
+    },
+    {
+      "id": "lib-mwg16tse-761aa9",
+      "sortNo": 432,
+      "title": "让你顺利入门绘画的教程书",
+      "author": "[日]よー清水",
+      "intro": "原名《絵がふつうに上手くなる本 はじめの一歩×上手い絵の技術×安定して稼ぐ秘訣》，画师よー清水的一本漫画教程，文字向，原始分辨率很低，附带一个2倍分辨率的版本。",
+      "pageCount": 374,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/433-book.pdf",
+      "pdfBytes": 318568461,
+      "coverKey": "library/covers/433-book-cover.jpg",
+      "coverBytes": 238684
+    },
+    {
+      "id": "lib-mwg14gfh-52756e",
+      "sortNo": 433,
+      "title": "动态圣经",
+      "author": "Peter Han",
+      "intro": "原名《Dynamic Bible》，画师Peter Han的一本绘画教程，主要是一些植物、昆虫、器械、车辆等等的绘制教程，PDF是单页的版本。",
+      "pageCount": 116,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/434-book.pdf",
+      "pdfBytes": 183655270,
+      "coverKey": "library/covers/434-book-cover.jpg",
+      "coverBytes": 27102
+    },
+    {
+      "id": "lib-mwg10n2p-b9002f",
+      "sortNo": 434,
+      "title": "卡哇伊小猫 绘制75只猫咪的光彩形象",
+      "author": "Olive Yong",
+      "intro": "原名《Kawaii Kitties: Learn How to Draw 75 Cats in All Their Glory》，“Kawaii Doodle”系列的一本，简笔画小猫教程，附带原生epub的版本。",
+      "pageCount": 440,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Cover",
+          "page": 2
+        },
+        {
+          "title": "Title Page",
+          "page": 3
+        },
+        {
+          "title": "Contents",
+          "page": 5
+        },
+        {
+          "title": "Hi!",
+          "page": 7
+        },
+        {
+          "title": "What Is Kawaii?",
+          "page": 9
+        },
+        {
+          "title": "How to Use This Book",
+          "page": 10
+        },
+        {
+          "title": "Tools",
+          "page": 11
+        },
+        {
+          "title": "Drawing Your Kitties",
+          "page": 13
+        },
+        {
+          "title": "Adding Facial Expressions",
+          "page": 19
+        },
+        {
+          "title": "Coloring Your Kitties",
+          "page": 22
+        },
+        {
+          "title": "Playtime",
+          "page": 25
+        },
+        {
+          "title": "The Baller",
+          "page": 27
+        },
+        {
+          "title": "The Pouncer",
+          "page": 32
+        },
+        {
+          "title": "The Mouser",
+          "page": 37
+        },
+        {
+          "title": "The Chaser",
+          "page": 43
+        },
+        {
+          "title": "The Kicker",
+          "page": 51
+        },
+        {
+          "title": "The Chewer",
+          "page": 58
+        },
+        {
+          "title": "The Swatter",
+          "page": 63
+        },
+        {
+          "title": "The Communicator",
+          "page": 70
+        },
+        {
+          "title": "The Observer",
+          "page": 77
+        },
+        {
+          "title": "The Runner",
+          "page": 81
+        },
+        {
+          "title": "Daily Activities",
+          "page": 85
+        },
+        {
+          "title": "The Lounger",
+          "page": 86
+        },
+        {
+          "title": "The Wanderer",
+          "page": 89
+        },
+        {
+          "title": "The Good Eater",
+          "page": 93
+        },
+        {
+          "title": "The Daydreamer",
+          "page": 98
+        },
+        {
+          "title": "The Roller-Arounder",
+          "page": 102
+        },
+        {
+          "title": "The Box Tester",
+          "page": 106
+        },
+        {
+          "title": "The Strutter",
+          "page": 110
+        },
+        {
+          "title": "The Crybaby",
+          "page": 114
+        },
+        {
+          "title": "The Snoozer",
+          "page": 118
+        },
+        {
+          "title": "The Show-Off",
+          "page": 122
+        },
+        {
+          "title": "The Troublemaker",
+          "page": 126
+        },
+        {
+          "title": "The Snacker",
+          "page": 129
+        },
+        {
+          "title": "The Belly Flopper",
+          "page": 135
+        },
+        {
+          "title": "The Lover",
+          "page": 137
+        },
+        {
+          "title": "The Giver",
+          "page": 140
+        },
+        {
+          "title": "The Grump",
+          "page": 146
+        },
+        {
+          "title": "The Stretcher",
+          "page": 149
+        },
+        {
+          "title": "The Dozer",
+          "page": 152
+        },
+        {
+          "title": "Being Curious",
+          "page": 159
+        },
+        {
+          "title": "The Explorer",
+          "page": 160
+        },
+        {
+          "title": "The Nature Lover",
+          "page": 166
+        },
+        {
+          "title": "The Investigator",
+          "page": 176
+        },
+        {
+          "title": "The Foodie",
+          "page": 180
+        },
+        {
+          "title": "The Student",
+          "page": 184
+        },
+        {
+          "title": "The Spelunker",
+          "page": 189
+        },
+        {
+          "title": "The Fisher",
+          "page": 196
+        },
+        {
+          "title": "Playing Dress-Up",
+          "page": 202
+        },
+        {
+          "title": "The Catosaurus",
+          "page": 203
+        },
+        {
+          "title": "The Bunny Kitty",
+          "page": 209
+        },
+        {
+          "title": "The Bumble Cat",
+          "page": 216
+        },
+        {
+          "title": "The Honey Cat",
+          "page": 222
+        },
+        {
+          "title": "The Unimeow",
+          "page": 231
+        },
+        {
+          "title": "The Angel Cat",
+          "page": 237
+        },
+        {
+          "title": "The Accountcat",
+          "page": 242
+        },
+        {
+          "title": "The Holiday Kitty",
+          "page": 248
+        },
+        {
+          "title": "The Squitty",
+          "page": 257
+        },
+        {
+          "title": "The Lucky Cat",
+          "page": 263
+        },
+        {
+          "title": "The Mermeow",
+          "page": 269
+        },
+        {
+          "title": "The Devil Cat",
+          "page": 274
+        },
+        {
+          "title": "The Cheerkitty",
+          "page": 280
+        },
+        {
+          "title": "Sharing the Love",
+          "page": 285
+        },
+        {
+          "title": "The Huggers",
+          "page": 286
+        },
+        {
+          "title": "The Large-Hearted",
+          "page": 291
+        },
+        {
+          "title": "The Snugglers",
+          "page": 295
+        },
+        {
+          "title": "The Playmates",
+          "page": 300
+        },
+        {
+          "title": "The Admirer",
+          "page": 306
+        },
+        {
+          "title": "The Besties",
+          "page": 310
+        },
+        {
+          "title": "The Family",
+          "page": 314
+        },
+        {
+          "title": "Discovering Breeds",
+          "page": 320
+        },
+        {
+          "title": "The Siamese",
+          "page": 321
+        },
+        {
+          "title": "The Sphynx",
+          "page": 330
+        },
+        {
+          "title": "The Norwegian Forest",
+          "page": 337
+        },
+        {
+          "title": "The European Shorthair",
+          "page": 342
+        },
+        {
+          "title": "The Russian Blue",
+          "page": 346
+        },
+        {
+          "title": "The American Shorthair",
+          "page": 351
+        },
+        {
+          "title": "The Japanese Bobtail",
+          "page": 355
+        },
+        {
+          "title": "The Snowshoe",
+          "page": 359
+        },
+        {
+          "title": "The Ragdoll",
+          "page": 364
+        },
+        {
+          "title": "The Bengal",
+          "page": 371
+        },
+        {
+          "title": "The Scottish Fold",
+          "page": 379
+        },
+        {
+          "title": "Bon Appétit",
+          "page": 382
+        },
+        {
+          "title": "Kitty Cheeseburger",
+          "page": 383
+        },
+        {
+          "title": "Kitty-Side Up",
+          "page": 388
+        },
+        {
+          "title": "Corn Cat",
+          "page": 391
+        },
+        {
+          "title": "Kitty Macaron",
+          "page": 395
+        },
+        {
+          "title": "Kitty Crepe",
+          "page": 398
+        },
+        {
+          "title": "Catuccino",
+          "page": 403
+        },
+        {
+          "title": "Kitty Cone",
+          "page": 408
+        },
+        {
+          "title": "Catgo",
+          "page": 414
+        },
+        {
+          "title": "Kitty Roll",
+          "page": 420
+        },
+        {
+          "title": "Cupcat",
+          "page": 426
+        },
+        {
+          "title": "About the Author",
+          "page": 437
+        },
+        {
+          "title": "Dedication",
+          "page": 438
+        },
+        {
+          "title": "Copyright",
+          "page": 439
+        }
+      ],
+      "pdfKey": "library/books/435-book.pdf",
+      "pdfBytes": 8012162,
+      "coverKey": "library/covers/435-book-cover.jpg",
+      "coverBytes": 249802
+    },
+    {
+      "id": "lib-mwg1571g-4b9c3e",
+      "sortNo": 435,
+      "title": "植物线描200例",
+      "author": "Peggy Dean",
+      "intro": "原名《Botanical Line Drawing: 200 Step-by-Step Flowers, Leaves, Cacti, Succulents, and Other Items Found in Nature》，一本很实用的植物简笔画教程，分步骤教画自然界常见的花、叶、多肉植物等等的植物，附带epub格式版本(封面略有不同)。",
+      "pageCount": 216,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/436-book.pdf",
+      "pdfBytes": 205277843,
+      "coverKey": "library/covers/436-book-cover.jpg",
+      "coverBytes": 251572
+    },
+    {
+      "id": "lib-mwg15rbg-fb76f1",
+      "sortNo": 436,
+      "title": "用数码绘制！“刀剑+姿势”插图的严肃讲座",
+      "author": "[日]夏生",
+      "intro": "原名《デジタルで描く！「刀剣＋ポーズ」イラスト真剣講座　キャラクターに命を吹き込む、動き・表情・シーンの秘伝技》，一本持到剑姿势的绘制教程，动作、表情和场景的绘制秘密技巧，使人物栩栩如生，清晰度一般，但是不影响观看。",
+      "pageCount": 171,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/437-book.pdf",
+      "pdfBytes": 37701547,
+      "coverKey": "library/covers/437-book-cover.jpg",
+      "coverBytes": 219761
+    },
+    {
+      "id": "lib-mwg16ntu-6c0ab9",
+      "sortNo": 438,
+      "title": "漫画入门圣经 绘制动作场景与人物",
+      "author": "[日]Shikata Shiyomi（シカタ シヨミ）",
+      "intro": "原名《How to Create Manga: Drawing Action Scenes and Characters: The Ultimate Bible for Beginning Artists (With Over 600 Illustrations)》，《デジタルイラストの「構図・ポーズ」事典　キャラクターを引き立てる絵作りの秘訣40》的英文版本，构图教程。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/439-book.pdf",
+      "pdfBytes": 53529182,
+      "coverKey": "library/covers/439-book-cover.jpg",
+      "coverBytes": 212756
+    },
+    {
+      "id": "lib-mwg16rn6-55a651",
+      "sortNo": 439,
+      "title": "漫画入门圣经 绘制服装与服饰",
+      "author": "Studio Hard Deluxe",
+      "intro": "原名《How to Create Manga: Drawing Clothing and Accessories: The Ultimate Bible for Beginning Artists (With Over 900 Illustrations)》，一本服饰绘制教程。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/440-book.pdf",
+      "pdfBytes": 49712380,
+      "coverKey": "library/covers/440-book-cover.jpg",
+      "coverBytes": 233965
+    },
+    {
+      "id": "lib-mwg17dkx-688a5b",
+      "sortNo": 440,
+      "title": "动画特效作画技巧",
+      "author": "[日] 小澤和則(小泽和则)",
+      "intro": "原名《アニメーションのエフェクト作画テクニック》，日本动画制作人小澤和則(小泽和则)的一本动画特效（如火、水、风、光、爆炸、破坏）等等常见特效的作画教程。",
+      "pageCount": 198,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/441-book.pdf",
+      "pdfBytes": 24268180,
+      "coverKey": "library/covers/441-book-cover.jpg",
+      "coverBytes": 158844
+    },
+    {
+      "id": "lib-mwg18dbp-d7ce39",
+      "sortNo": 441,
+      "title": "姿势和构图的法则",
+      "author": "[日]YANAMi、佐藤竜太郎",
+      "intro": "原名《ポーズと構図の法則》，一本实用的构图参考教程。",
+      "pageCount": 160,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/442-book.pdf",
+      "pdfBytes": 74325753,
+      "coverKey": "library/covers/442-book-cover.jpg",
+      "coverBytes": 284853
+    },
+    {
+      "id": "lib-mwg1934o-4635f4",
+      "sortNo": 442,
+      "title": "用彩铅绘制东方插图 从Q版角色开始",
+      "author": "[日]粗茶、角丸つぶら(角丸圆)",
+      "intro": "原名《色えんぴつで描く東方イラストテクニック ミニキャラから始めるイラストメイキング》，画师粗茶的一本超萌东方角色彩铅绘制教程。",
+      "pageCount": 159,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/443-book.pdf",
+      "pdfBytes": 196965281,
+      "coverKey": "library/covers/443-book-cover.jpg",
+      "coverBytes": 278615
     }
   ]
 }
