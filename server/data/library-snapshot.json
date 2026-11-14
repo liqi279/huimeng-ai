@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-14T06:40:19.387Z",
+  "generatedAt": "2026-11-14T06:55:14.874Z",
   "source": "huimeng_library.books",
-  "total": 431,
+  "total": 446,
   "areas": {
-    "paint": 415,
+    "paint": 430,
     "ref": 16
   },
   "books": [
@@ -18806,6 +18806,29 @@
       "coverBytes": 326214
     },
     {
+      "id": "lib-mwg1qyze-e66a96",
+      "sortNo": 400,
+      "title": "50 Fantasy Vehicles&50 Robots Draw and Paint",
+      "author": "美国插画师、概念设计师Keith Thompson(基斯·汤普森)",
+      "intro": "美国插画师、概念设计师Keith Thompson(基斯·汤普森)的“交通工具”和\"机器人\"的设计绘制教程，科幻+奇幻风格，收录了英文和中文双版本。\n原名《50 Fantasy Vehicles to Draw & Paint Create Awe-Inspiring Crafts for Comics, Computer Games, and Graphic Novels》、《50 Robots to Draw and Paint Create Fantastic Robot Characters for Comic Books, Computer Games, and Graphic》。",
+      "pageCount": 197,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "奇幻卡通创作技法 交通工具设定篇",
+          "page": 1
+        },
+        {
+          "title": "奇幻卡通创作技法 机器人绘制篇",
+          "page": 131
+        }
+      ],
+      "pdfKey": "library/books/401-book.pdf",
+      "pdfBytes": 72732172,
+      "coverKey": "library/covers/401-book-cover.jpg",
+      "coverBytes": 221727
+    },
+    {
       "id": "lib-mwfapqmv-09282c",
       "sortNo": 401,
       "title": "数码绘漫画的技巧 2nd update",
@@ -18846,6 +18869,20 @@
       "pdfBytes": 33064649,
       "coverKey": "library/covers/404-book-cover.jpg",
       "coverBytes": 184879
+    },
+    {
+      "id": "lib-mwg1r3hw-2e98ac",
+      "sortNo": 404,
+      "title": "动漫数码上色指南",
+      "author": "[日]桜井輝子(Teruko Sakurai、樱井辉子)",
+      "intro": "原名《Anime & Manga Digital Coloring Guide: Choose the Colors That Bring Your Drawings to Life! - With over 1000 Color Combinations(キャラの魅力を最大限に引き出す！マンガキャラ配色の教科書)》，一本配色参考教程，英文/日文双版本，自行选择。",
+      "pageCount": 196,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/405-book.pdf",
+      "pdfBytes": 96348123,
+      "coverKey": "library/covers/405-book-cover.jpg",
+      "coverBytes": 218877
     },
     {
       "id": "lib-mwfaqzku-90ed5b",
@@ -19710,6 +19747,20 @@
       "coverBytes": 219761
     },
     {
+      "id": "lib-mwg1r0ui-4392ff",
+      "sortNo": 437,
+      "title": "漫画入门圣经 绘制面部表情",
+      "author": "NextCreator Henshubu",
+      "intro": "原名《How to Create Manga: Drawing Facial Expressions: The Ultimate Bible for Beginning Artists (With Over 1,250 Illustrations)》，《デジタルイラストの「表情」描き方事典》的英文版本，表情教程，原生epub版本，转换的PDF和图片比较零碎，建议直接观看epub版。",
+      "pageCount": 273,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/438-book.pdf",
+      "pdfBytes": 62740179,
+      "coverKey": "library/covers/438-book-cover.jpg",
+      "coverBytes": 214450
+    },
+    {
       "id": "lib-mwg16ntu-6c0ab9",
       "sortNo": 438,
       "title": "漫画入门圣经 绘制动作场景与人物",
@@ -19778,6 +19829,1283 @@
       "pdfBytes": 196965281,
       "coverKey": "library/covers/443-book-cover.jpg",
       "coverBytes": 278615
+    },
+    {
+      "id": "lib-mwg1fpsq-0c5deb",
+      "sortNo": 443,
+      "title": "从漫画中学习背景的画法 房间 家具 建筑物篇",
+      "author": "[日]木寺良一",
+      "intro": "原名《マンガでわかるキラとマリアの背景が描きたい! 部屋・家具・建物編》，一本以漫画形式教学的场景绘制教程。",
+      "pageCount": 131,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/444-book.pdf",
+      "pdfBytes": 37456812,
+      "coverKey": "library/covers/444-book-cover.jpg",
+      "coverBytes": 324724
+    },
+    {
+      "id": "lib-mwg1iyp0-647d3e",
+      "sortNo": 444,
+      "title": "SUITS DRAWING BOOK 2021【一本西装绘画教程】",
+      "author": "[日]砂糖ふくろう",
+      "intro": "原名《SUITS DRAWING BOOK 2021》，推特画师砂糖ふくろう(hakubi8888)的一本西装绘画教程。",
+      "pageCount": 54,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/445-book.pdf",
+      "pdfBytes": 262227200,
+      "coverKey": "library/covers/445-book-cover.jpg",
+      "coverBytes": 163150
+    },
+    {
+      "id": "lib-mwg1fj4w-ac16bd",
+      "sortNo": 445,
+      "title": "创造属于自己的动漫角色",
+      "author": "[韩]TB Choi",
+      "intro": "原名《Design Your Own Anime and Manga Characters: Step-by-Step Lessons for Creating and Drawing Unique Characters - Learn Anatomy, Poses, Expressions, Costumes, and More》，韩国画师TB Choi的漫画教程，学习解剖、姿势、表情、服装等内容。",
+      "pageCount": 271,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Cover",
+          "page": 2
+        },
+        {
+          "title": "Title",
+          "page": 3
+        },
+        {
+          "title": "Contents",
+          "page": 4
+        },
+        {
+          "title": "Introduction",
+          "page": 8
+        },
+        {
+          "title": "1 Constructing a Character",
+          "page": 9
+        },
+        {
+          "title": "The Basics of Line",
+          "page": 10
+        },
+        {
+          "title": "Human Skeleton",
+          "page": 13
+        },
+        {
+          "title": "Muscles",
+          "page": 15
+        },
+        {
+          "title": "Bone and Fat",
+          "page": 21
+        },
+        {
+          "title": "Basic Human Proportions",
+          "page": 23
+        },
+        {
+          "title": "Skull",
+          "page": 26
+        },
+        {
+          "title": "Mouth",
+          "page": 35
+        },
+        {
+          "title": "Eyes",
+          "page": 39
+        },
+        {
+          "title": "Ears",
+          "page": 42
+        },
+        {
+          "title": "Nose",
+          "page": 45
+        },
+        {
+          "title": "Arms",
+          "page": 48
+        },
+        {
+          "title": "Hands",
+          "page": 60
+        },
+        {
+          "title": "Legs",
+          "page": 70
+        },
+        {
+          "title": "Feet",
+          "page": 76
+        },
+        {
+          "title": "2 Simplifying Forms for Gestures & Poses",
+          "page": 81
+        },
+        {
+          "title": "The Basics of Poses and Gestures",
+          "page": 82
+        },
+        {
+          "title": "Exploring Different Angles",
+          "page": 90
+        },
+        {
+          "title": "How a Pose Can Support a Story",
+          "page": 93
+        },
+        {
+          "title": "How to Draw Breasts (on Female and Male Characters)",
+          "page": 95
+        },
+        {
+          "title": "Adjusting Body Shape to Fit a Character",
+          "page": 105
+        },
+        {
+          "title": "Silhouettes",
+          "page": 123
+        },
+        {
+          "title": "3 Drawing Hair, Clothing & Accessories",
+          "page": 125
+        },
+        {
+          "title": "Draping and Folds",
+          "page": 126
+        },
+        {
+          "title": "Folds and Movement",
+          "page": 145
+        },
+        {
+          "title": "Proportion and Clothing for Youth",
+          "page": 162
+        },
+        {
+          "title": "How Hair Frames the Head and Face",
+          "page": 165
+        },
+        {
+          "title": "Drawing Hats",
+          "page": 176
+        },
+        {
+          "title": "Drawing Glasses",
+          "page": 182
+        },
+        {
+          "title": "4 Conveying Dimension, Emotion & Character",
+          "page": 185
+        },
+        {
+          "title": "Putting It All Together",
+          "page": 193
+        },
+        {
+          "title": "Basic Facial Structures",
+          "page": 195
+        },
+        {
+          "title": "Face Shapes",
+          "page": 201
+        },
+        {
+          "title": "Drawing Faces from Different Angles",
+          "page": 205
+        },
+        {
+          "title": "Emotion and Expression",
+          "page": 209
+        },
+        {
+          "title": "Gestures That Enhance Emotion and Story",
+          "page": 216
+        },
+        {
+          "title": "Creating a Character’s Backstory",
+          "page": 225
+        },
+        {
+          "title": "5 Pets, Chibis & Sidekicks",
+          "page": 229
+        },
+        {
+          "title": "Pets with Personality",
+          "page": 230
+        },
+        {
+          "title": "Chibi Characters",
+          "page": 236
+        },
+        {
+          "title": "Kemonomimi and Anthros",
+          "page": 244
+        },
+        {
+          "title": "6 Exercise: Design & Draw a Character",
+          "page": 252
+        },
+        {
+          "title": "Drawing a Friend",
+          "page": 253
+        },
+        {
+          "title": "About the Author",
+          "page": 263
+        },
+        {
+          "title": "Index",
+          "page": 264
+        },
+        {
+          "title": "Copyright",
+          "page": 268
+        }
+      ],
+      "pdfKey": "library/books/446-book.pdf",
+      "pdfBytes": 15409742,
+      "coverKey": "library/covers/446-book-cover.jpg",
+      "coverBytes": 274130
+    },
+    {
+      "id": "lib-mwg1gksz-d4092f",
+      "sortNo": 446,
+      "title": "一步一步学习卡通酷车的画法",
+      "author": "Jack Keely",
+      "intro": "原名《Cool Cars / Cartooning: Learn the Art of Cartooning, Step by Step》，一本卡通汽车绘制教程，内容不多。",
+      "pageCount": 34,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/447-book.pdf",
+      "pdfBytes": 24319260,
+      "coverKey": "library/covers/447-book-cover.jpg",
+      "coverBytes": 226179
+    },
+    {
+      "id": "lib-mwg1gt7t-029cb3",
+      "sortNo": 447,
+      "title": "简易汽车的画法",
+      "author": "Tim Rugendyke",
+      "intro": "原名《How To Draw Cars Fast and Easy》，一本汽车绘制教程。",
+      "pageCount": 159,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/448-book.pdf",
+      "pdfBytes": 27539162,
+      "coverKey": "library/covers/448-book-cover.jpg",
+      "coverBytes": 171620
+    },
+    {
+      "id": "lib-mwg1ioug-5d47a0",
+      "sortNo": 448,
+      "title": "绘制奇幻风景和城市景观",
+      "author": "Rob Alexander/Martin McKenna",
+      "intro": "原名《Drawing & Painting Fantasy Landscapes & Cityscapes: Create your own mythical cities, planets, and lost worlds》，一本场景绘画教程，绘制自己的神话城市、行星和失落的世界。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "FRONT COVER",
+          "page": 1
+        },
+        {
+          "title": "COPYRIGHT",
+          "page": 5
+        },
+        {
+          "title": "INTRODUCTION",
+          "page": 7
+        },
+        {
+          "title": "CHAPTER 1 BASICS OF ART",
+          "page": 8
+        },
+        {
+          "title": "PENCILS AND INK",
+          "page": 9
+        },
+        {
+          "title": "WATERCOLOR",
+          "page": 11
+        },
+        {
+          "title": "ACRYLIC PAINT",
+          "page": 13
+        },
+        {
+          "title": "OIL PAINT",
+          "page": 15
+        },
+        {
+          "title": "WORKING DIGITALLY",
+          "page": 17
+        },
+        {
+          "title": "INSPIRATION",
+          "page": 19
+        },
+        {
+          "title": "USING REFERENCE",
+          "page": 21
+        },
+        {
+          "title": "SKETCHING",
+          "page": 23
+        },
+        {
+          "title": "USING ROUGHS",
+          "page": 25
+        },
+        {
+          "title": "COMPOSITION",
+          "page": 27
+        },
+        {
+          "title": "VALUE, LIGHT, AND SHADOW",
+          "page": 31
+        },
+        {
+          "title": "COLOR THEORY",
+          "page": 35
+        },
+        {
+          "title": "BASIC PERSPECTIVE",
+          "page": 39
+        },
+        {
+          "title": "ARCHITECTURAL DETAILS",
+          "page": 45
+        },
+        {
+          "title": "DISTANCE, DEPTH, AND SCALE",
+          "page": 47
+        },
+        {
+          "title": "MOOD AND DRAMA",
+          "page": 49
+        },
+        {
+          "title": "SEASONAL VARIATIONS",
+          "page": 51
+        },
+        {
+          "title": "WEATHER AND TIME OF DAY",
+          "page": 53
+        },
+        {
+          "title": "CHAPTER 2 ELEMENTS OF LANDSCAPE",
+          "page": 58
+        },
+        {
+          "title": "SKIES AND CLOUDS",
+          "page": 59
+        },
+        {
+          "title": "MOUNTAINS AND CAVES",
+          "page": 61
+        },
+        {
+          "title": "FORESTS, TREES, FOLIAGE",
+          "page": 63
+        },
+        {
+          "title": "SAND AND SNOW",
+          "page": 65
+        },
+        {
+          "title": "WATER AND REFLECTIONS",
+          "page": 67
+        },
+        {
+          "title": "CHAPTER 3 CREATING FANTASY REALMS",
+          "page": 70
+        },
+        {
+          "title": "ANCIENT CITY",
+          "page": 71
+        },
+        {
+          "title": "CITY OF THE FUTURE",
+          "page": 75
+        },
+        {
+          "title": "AQUA CITY",
+          "page": 77
+        },
+        {
+          "title": "FOREST CITY",
+          "page": 81
+        },
+        {
+          "title": "SUBTERRANEAN CITY",
+          "page": 85
+        },
+        {
+          "title": "ANCIENT PLACES",
+          "page": 87
+        },
+        {
+          "title": "FOREST SETTING",
+          "page": 91
+        },
+        {
+          "title": "SAVANNAH",
+          "page": 93
+        },
+        {
+          "title": "MOUNTAIN RANGE",
+          "page": 97
+        },
+        {
+          "title": "SEASCAPE",
+          "page": 99
+        },
+        {
+          "title": "WATER WORLD",
+          "page": 101
+        },
+        {
+          "title": "DREAM LANDSCAPE",
+          "page": 105
+        },
+        {
+          "title": "AT THE END OF IT ALL",
+          "page": 107
+        },
+        {
+          "title": "CHAPTER 4 GALLERY",
+          "page": 110
+        },
+        {
+          "title": "A LAND OF GIANTS",
+          "page": 111
+        },
+        {
+          "title": "CITIES OF MYSTERY",
+          "page": 113
+        },
+        {
+          "title": "NIGHTLANDS",
+          "page": 114
+        },
+        {
+          "title": "CITY DEPTHS",
+          "page": 115
+        },
+        {
+          "title": "DESERTS OF ICE AND SAND",
+          "page": 117
+        },
+        {
+          "title": "PLANES OF UNREALITY",
+          "page": 119
+        },
+        {
+          "title": "VISTAS OF RUINS",
+          "page": 120
+        },
+        {
+          "title": "STRANGELY FAMILIAR",
+          "page": 121
+        },
+        {
+          "title": "WATERY DOMAINS",
+          "page": 122
+        },
+        {
+          "title": "TOWERING FANTASY",
+          "page": 123
+        },
+        {
+          "title": "FANTASTIC VIEWPOINTS",
+          "page": 125
+        },
+        {
+          "title": "INDEX",
+          "page": 127
+        },
+        {
+          "title": "CREDITS",
+          "page": 129
+        },
+        {
+          "title": "BACK COVER",
+          "page": 130
+        }
+      ],
+      "pdfKey": "library/books/449-book.pdf",
+      "pdfBytes": 61004052,
+      "coverKey": "library/covers/449-book-cover.jpg",
+      "coverBytes": 227306
+    },
+    {
+      "id": "lib-mwg1iqoq-c9279f",
+      "sortNo": 449,
+      "title": "卡哇伊涂鸦 绘制来自世界各地的超可爱物品",
+      "author": "Pic Candle/Zainab Khan",
+      "intro": "原名《Kawaii Doodle Cuties: Sketching Super-Cute Stuff from Around the World》，“Kawaii Doodle”系列第三册，一本很可爱的简笔画绘制教程。这类教程语言是什么其实都不重要了^^。",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Cover",
+          "page": 1
+        },
+        {
+          "title": "Title",
+          "page": 3
+        },
+        {
+          "title": "Copyright",
+          "page": 4
+        },
+        {
+          "title": "Contents",
+          "page": 5
+        },
+        {
+          "title": "Hi!",
+          "page": 8
+        },
+        {
+          "title": "What Is Kawaii?",
+          "page": 8
+        },
+        {
+          "title": "How to Use This Book",
+          "page": 9
+        },
+        {
+          "title": "Tools",
+          "page": 9
+        },
+        {
+          "title": "Tips & Tricks",
+          "page": 10
+        },
+        {
+          "title": "Doodle Directory",
+          "page": 12
+        },
+        {
+          "title": "Adorable Food",
+          "page": 15
+        },
+        {
+          "title": "Macaron",
+          "page": 16
+        },
+        {
+          "title": "Kiwifruit",
+          "page": 17
+        },
+        {
+          "title": "Pizza",
+          "page": 18
+        },
+        {
+          "title": "Yogurt",
+          "page": 19
+        },
+        {
+          "title": "Crêpe",
+          "page": 20
+        },
+        {
+          "title": "Chocolates",
+          "page": 21
+        },
+        {
+          "title": "Pretzel",
+          "page": 22
+        },
+        {
+          "title": "Satay",
+          "page": 23
+        },
+        {
+          "title": "Meatballs",
+          "page": 24
+        },
+        {
+          "title": "Tamales",
+          "page": 25
+        },
+        {
+          "title": "Dumplings",
+          "page": 26
+        },
+        {
+          "title": "Halo-Halo",
+          "page": 28
+        },
+        {
+          "title": "Ramen",
+          "page": 30
+        },
+        {
+          "title": "Get Inspired",
+          "page": 32
+        },
+        {
+          "title": "Precious Nature & Natural Wonders",
+          "page": 35
+        },
+        {
+          "title": "Mount Kilimanjaro",
+          "page": 36
+        },
+        {
+          "title": "Shamrock",
+          "page": 37
+        },
+        {
+          "title": "Tulip",
+          "page": 38
+        },
+        {
+          "title": "Sunflower",
+          "page": 39
+        },
+        {
+          "title": "Maple Leaf",
+          "page": 40
+        },
+        {
+          "title": "Orchid",
+          "page": 41
+        },
+        {
+          "title": "Cherry Blossom",
+          "page": 42
+        },
+        {
+          "title": "Volcano",
+          "page": 43
+        },
+        {
+          "title": "Bamboo",
+          "page": 44
+        },
+        {
+          "title": "Great Barrier Reef",
+          "page": 46
+        },
+        {
+          "title": "Get Inspired",
+          "page": 48
+        },
+        {
+          "title": "Enchanting Architecture & Monuments",
+          "page": 51
+        },
+        {
+          "title": "Great Pyramid of Giza",
+          "page": 52
+        },
+        {
+          "title": "Yurt",
+          "page": 53
+        },
+        {
+          "title": "Windmill",
+          "page": 54
+        },
+        {
+          "title": "Rondavel",
+          "page": 55
+        },
+        {
+          "title": "Eiffel Tower",
+          "page": 56
+        },
+        {
+          "title": "Thatched-Roof Cottage",
+          "page": 57
+        },
+        {
+          "title": "Tikal",
+          "page": 58
+        },
+        {
+          "title": "Taj Mahal",
+          "page": 60
+        },
+        {
+          "title": "Tiny Colorful Homes",
+          "page": 62
+        },
+        {
+          "title": "Sydney Opera House",
+          "page": 64
+        },
+        {
+          "title": "Statue of Liberty",
+          "page": 66
+        },
+        {
+          "title": "Brandenburg Gate",
+          "page": 68
+        },
+        {
+          "title": "Get Inspired",
+          "page": 70
+        },
+        {
+          "title": "Lovable Animals & Birds",
+          "page": 73
+        },
+        {
+          "title": "Penguin",
+          "page": 74
+        },
+        {
+          "title": "Sheep",
+          "page": 75
+        },
+        {
+          "title": "Giant Panda",
+          "page": 76
+        },
+        {
+          "title": "Koala",
+          "page": 78
+        },
+        {
+          "title": "Toucan",
+          "page": 80
+        },
+        {
+          "title": "Flamingo",
+          "page": 82
+        },
+        {
+          "title": "Get Inspired",
+          "page": 84
+        },
+        {
+          "title": "Charming Transportation",
+          "page": 87
+        },
+        {
+          "title": "Felucca",
+          "page": 88
+        },
+        {
+          "title": "Hot-Air Balloon",
+          "page": 89
+        },
+        {
+          "title": "Gondola",
+          "page": 90
+        },
+        {
+          "title": "Double-Decker Bus",
+          "page": 91
+        },
+        {
+          "title": "Toboggan",
+          "page": 92
+        },
+        {
+          "title": "Wings of Tatev",
+          "page": 93
+        },
+        {
+          "title": "Tuk Tuk",
+          "page": 94
+        },
+        {
+          "title": "Totora Boat",
+          "page": 96
+        },
+        {
+          "title": "Vintage Car",
+          "page": 98
+        },
+        {
+          "title": "Get Inspired",
+          "page": 100
+        },
+        {
+          "title": "Fetching Fashion",
+          "page": 103
+        },
+        {
+          "title": "Beret",
+          "page": 104
+        },
+        {
+          "title": "Fez",
+          "page": 105
+        },
+        {
+          "title": "Poncho",
+          "page": 106
+        },
+        {
+          "title": "K-pop Skirt",
+          "page": 107
+        },
+        {
+          "title": "Ushanka",
+          "page": 108
+        },
+        {
+          "title": "Cowboy Hat",
+          "page": 109
+        },
+        {
+          "title": "Non La",
+          "page": 110
+        },
+        {
+          "title": "Sombrero & Serape",
+          "page": 111
+        },
+        {
+          "title": "Kimono",
+          "page": 112
+        },
+        {
+          "title": "Get Inspired",
+          "page": 114
+        },
+        {
+          "title": "Everyday Cute",
+          "page": 117
+        },
+        {
+          "title": "Chopsticks",
+          "page": 118
+        },
+        {
+          "title": "Hockey Stick & Puck",
+          "page": 119
+        },
+        {
+          "title": "Telephone Box",
+          "page": 120
+        },
+        {
+          "title": "Yoga",
+          "page": 121
+        },
+        {
+          "title": "Lego Bricks",
+          "page": 122
+        },
+        {
+          "title": "Floating Lantern",
+          "page": 123
+        },
+        {
+          "title": "Dallah",
+          "page": 124
+        },
+        {
+          "title": "Matryoshka Doll",
+          "page": 126
+        },
+        {
+          "title": "Get Inspired",
+          "page": 128
+        },
+        {
+          "title": "Fun Time!",
+          "page": 131
+        },
+        {
+          "title": "Search-&-Find Puzzles",
+          "page": 132
+        },
+        {
+          "title": "Search-&-Find Puzzle Answers!",
+          "page": 144
+        }
+      ],
+      "pdfKey": "library/books/450-book.pdf",
+      "pdfBytes": 86036742,
+      "coverKey": "library/covers/450-book-cover.jpg",
+      "coverBytes": 198995
+    },
+    {
+      "id": "lib-mwg1jmn5-652877",
+      "sortNo": 450,
+      "title": "动画师速写:运动中人物的素描集 女主角篇",
+      "author": "[日] 羽山淳一",
+      "intro": "原名《アニメーターズ・スケッチ 動きのある人物スケッチ集 —ヒロインキャラクター編—》，日本画师羽山淳一的一本漫画速写参考教程，非常实用。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/451-book.pdf",
+      "pdfBytes": 49990983,
+      "coverKey": "library/covers/451-book-cover.jpg",
+      "coverBytes": 166341
+    },
+    {
+      "id": "lib-mwg1l2u5-ba8183",
+      "sortNo": 451,
+      "title": "增加角色插画的姿态和表情的技巧",
+      "author": "[日] カリマリカ(CARIMARICA)",
+      "intro": "原名《キャラクターイラストの引き出しを増やす ポーズと表情の演出テクニック》，日本画师カリマリカ(CARIMARICA)的一本漫画人物教程。",
+      "pageCount": 212,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "カバー",
+          "page": 2
+        },
+        {
+          "title": "表紙",
+          "page": 4
+        },
+        {
+          "title": "目次",
+          "page": 5
+        },
+        {
+          "title": "CHAPTER 01 キャラクターイラストの基本知識",
+          "page": 8
+        },
+        {
+          "title": "01 魅力的なキャラクターイラストとは？",
+          "page": 9
+        },
+        {
+          "title": "02 ポーズと表情の演出がキャラクター性を生み出す",
+          "page": 11
+        },
+        {
+          "title": "03 描き方ステップ",
+          "page": 13
+        },
+        {
+          "title": "04 人物を描くための基本知識",
+          "page": 15
+        },
+        {
+          "title": "CHAPTER 02 キャラクターが持つ特徴を把握しよう",
+          "page": 20
+        },
+        {
+          "title": "01 描きたいキャラクターの人物像を把握しよう",
+          "page": 21
+        },
+        {
+          "title": "02 キャラクター作例 元気",
+          "page": 23
+        },
+        {
+          "title": "03 キャラクター作例 天真爛漫",
+          "page": 25
+        },
+        {
+          "title": "04 キャラクター作例 真面目",
+          "page": 27
+        },
+        {
+          "title": "05 キャラクター作例 クール",
+          "page": 29
+        },
+        {
+          "title": "06 キャラクター作例 頑張り屋",
+          "page": 31
+        },
+        {
+          "title": "07 キャラクター作例 清楚",
+          "page": 33
+        },
+        {
+          "title": "08 キャラクター作例 無垢",
+          "page": 35
+        },
+        {
+          "title": "09 キャラクター作例 恥ずかしがり屋",
+          "page": 37
+        },
+        {
+          "title": "10 キャラクター作例 根暗",
+          "page": 39
+        },
+        {
+          "title": "11 キャラクター作例 自信家",
+          "page": 41
+        },
+        {
+          "title": "12 キャラクター作例 王者",
+          "page": 43
+        },
+        {
+          "title": "13 キャラクター作例 飄々",
+          "page": 45
+        },
+        {
+          "title": "14 キャラクター作例 ミステリアス",
+          "page": 47
+        },
+        {
+          "title": "15 キャラクター作例 小悪魔",
+          "page": 49
+        },
+        {
+          "title": "16 キャラクター作例 セクシー",
+          "page": 51
+        },
+        {
+          "title": "17 キャラクター作例 ツンデレ",
+          "page": 53
+        },
+        {
+          "title": "18 キャラクター作例 ヤンデレ",
+          "page": 55
+        },
+        {
+          "title": "19 キャラクター作例 クレイジー",
+          "page": 57
+        },
+        {
+          "title": "COLUMN キャラクターイラストの引き出しを増やすために意識していること",
+          "page": 59
+        },
+        {
+          "title": "CHAPTER 03 「ポーズの演出」でキャラクター性を伝える",
+          "page": 60
+        },
+        {
+          "title": "01 キャラクター性に合うポーズを作ろう",
+          "page": 61
+        },
+        {
+          "title": "02 ポーズの作り方 PART1【行動】",
+          "page": 62
+        },
+        {
+          "title": "03 ポーズの作り方 PART2【キャラクター性】",
+          "page": 66
+        },
+        {
+          "title": "04 複数のポーズをかけ合わせてみよう",
+          "page": 67
+        },
+        {
+          "title": "05 ポーズの演出 性別イメージ（男性らしい<=>女性らしい）",
+          "page": 70
+        },
+        {
+          "title": "06 ポーズの演出 自己顕示欲（目立ちたがり<=>引っ込み思案）",
+          "page": 76
+        },
+        {
+          "title": "07 ポーズの演出 自制心（自由奔放<=>規律重視）",
+          "page": 81
+        },
+        {
+          "title": "08 ポーズの演出 器用さ（器用<=>不器用）",
+          "page": 85
+        },
+        {
+          "title": "09 ポーズの演出 態度（偉そう<=>へりくだる）",
+          "page": 89
+        },
+        {
+          "title": "10 ポーズの演出 秘密（明け透け<=>秘密主義）",
+          "page": 93
+        },
+        {
+          "title": "11 ポーズの演出 気力（強気<=>弱気）",
+          "page": 98
+        },
+        {
+          "title": "12 ポーズの演出 危機管理能力（警戒心<=>無防備）",
+          "page": 105
+        },
+        {
+          "title": "13 ポーズの演出 緊張感（余裕<=>緊張）",
+          "page": 112
+        },
+        {
+          "title": "14 ポーズの演出 状況把握（冷静<=>動揺）",
+          "page": 117
+        },
+        {
+          "title": "15 ポーズの演出 力加減（全力<=>省エネ）",
+          "page": 122
+        },
+        {
+          "title": "16 ポーズの演出 対象への興味・執着（興味津々<=>無関心）",
+          "page": 128
+        },
+        {
+          "title": "COLUMN アシンメトリーを使いこなそう",
+          "page": 133
+        },
+        {
+          "title": "CHAPTER 04 「表情の演出」でキャラクター性を伝える",
+          "page": 134
+        },
+        {
+          "title": "01 表情を自在に描き分けよう",
+          "page": 135
+        },
+        {
+          "title": "02 表情の作り方 PART1【眉と口】",
+          "page": 136
+        },
+        {
+          "title": "03 表情の作り方 PART2【目もと】",
+          "page": 138
+        },
+        {
+          "title": "04 表情の作り方 PART3【生理現象】",
+          "page": 140
+        },
+        {
+          "title": "05 複数の表情をかけ合わせてみよう",
+          "page": 141
+        },
+        {
+          "title": "06 相乗効果とギャップ、どちらを狙う？",
+          "page": 144
+        },
+        {
+          "title": "07 表情の演出 無表情（平静）",
+          "page": 145
+        },
+        {
+          "title": "08 表情の演出 友好的",
+          "page": 148
+        },
+        {
+          "title": "09 表情の演出 満足感",
+          "page": 153
+        },
+        {
+          "title": "10 表情の演出 困惑",
+          "page": 158
+        },
+        {
+          "title": "11 表情の演出 羞恥心",
+          "page": 163
+        },
+        {
+          "title": "12 表情の演出 悲しみ",
+          "page": 168
+        },
+        {
+          "title": "13 表情の演出 嫌悪感",
+          "page": 173
+        },
+        {
+          "title": "14 表情の演出 怒り",
+          "page": 178
+        },
+        {
+          "title": "15 表情の演出 驚き",
+          "page": 182
+        },
+        {
+          "title": "16 表情の演出 無気力",
+          "page": 185
+        },
+        {
+          "title": "17 表情の演出 決意",
+          "page": 188
+        },
+        {
+          "title": "18 表情の演出 たくらみ",
+          "page": 192
+        },
+        {
+          "title": "19 表情の演出 疑心",
+          "page": 196
+        },
+        {
+          "title": "CHAPTER 05 表紙イラスト メイキング",
+          "page": 200
+        },
+        {
+          "title": "01 メイキングで教えるポーズと表情の作り方",
+          "page": 202
+        },
+        {
+          "title": "奥付",
+          "page": 211
+        }
+      ],
+      "pdfKey": "library/books/452-book.pdf",
+      "pdfBytes": 133016507,
+      "coverKey": "library/covers/452-book-cover.jpg",
+      "coverBytes": 320489
+    },
+    {
+      "id": "lib-mwg1l0pt-67e0d4",
+      "sortNo": 452,
+      "title": "Poses for Artists(艺用姿势参考集) 1-5",
+      "author": "",
+      "intro": "非常实用的人体姿势参考，有各种人体体块的表现，几乎没有文字，纯图集，部分图片不太清晰，但是不影响参考。\n*该教程有一些裸露、骨骼、骷髅的直接表现，不适应的同学谨慎下载。Poses for Artists Volume 1 Dynamic and Sitting Poses（动态和坐姿）\nPoses for Artists Volume 2 Standing Poses（站立姿势）\nPoses for Artists Volume 3 Fighting and Various Poses （战斗和各种姿势）\nPoses for Artists Volume 4 Couples Poses （情侣互动姿势）\nPoses for Artists Volume 5 Hands, Skulls, Pin-ups & Various Poses （手、头骨、海报和各种姿势）",
+      "pageCount": 731,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Poses for Artists Volume 1 Dynamic and Sitting Poses",
+          "page": 1
+        },
+        {
+          "title": "Poses for Artists Volume 2 Standing Poses",
+          "page": 101
+        },
+        {
+          "title": "Poses for Artists Volume 3 Fighting and Various Poses",
+          "page": 244
+        },
+        {
+          "title": "Poses for Artists Volume 4 Couples Poses",
+          "page": 423
+        },
+        {
+          "title": "Poses for Artists Volume 5 Hands, Skulls, Pin-ups & Various Poses",
+          "page": 536
+        }
+      ],
+      "pdfKey": "library/books/453-book.pdf",
+      "pdfBytes": 105805715,
+      "coverKey": "library/covers/453-book-cover.jpg",
+      "coverBytes": 173070
+    },
+    {
+      "id": "lib-mwg1si2k-dc8cf1",
+      "sortNo": 467,
+      "title": "萌之绘的教科书 增补修订版+汉化版",
+      "author": "[日] refeia",
+      "intro": "原名《萌え絵の教科書 増補改訂版》，来自画师refeia的一本萌系漫画教程，使用工具是photoshop和clip studo paint，汉化版本是初版的内容，相比起改订版少了一个教学例子。",
+      "pageCount": 129,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/468-book.pdf",
+      "pdfBytes": 85163277,
+      "coverKey": "library/covers/468-book-cover.jpg",
+      "coverBytes": 231520
+    },
+    {
+      "id": "lib-mwg1tbci-6ef209",
+      "sortNo": 490,
+      "title": "Space Drawing: Perspective",
+      "author": "",
+      "intro": "原名《공간드로잉+투시편（Space Drawing: Perspective）》，一本非常生动的透视教程，韩文+英文两版",
+      "pageCount": 228,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/491-book.pdf",
+      "pdfBytes": 197848073,
+      "coverKey": "library/covers/491-book-cover.jpg",
+      "coverBytes": 321694
     }
   ]
 }
