@@ -71594,10 +71594,12 @@ window.HMChat = (function () {
     if (!App || !base) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
     var root = apiBaseNormalize(base).base;
     if (!root) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
-    /* OpenAI 兼容平台都挂在 /v1 下：只填到域名时补上，避免 /models 404 */
-    if (!/\/v\d+[a-z]*$/i.test(root)) root = root.replace(/\/+$/, '') + '/v1';
-    var headers = key ? { 'Authorization': 'Bearer ' + key } : {};
+    /* 地址形态决定调用方式：/v1beta、/v1alpha → Gemini 原生；其余 → OpenAI 兼容 */
+    var native = /\/v\d+(alpha|beta)\d*$/i.test(root);
+    if (!native && !/\/v\d+[a-z]*$/i.test(root)) root = root.replace(/\/+$/, '') + '/v1';
+    var headers = key ? (native ? { 'x-goog-api-key': key } : { 'Authorization': 'Bearer ' + key }) : {};
     var want = String(model || '').trim();
+    var modeLabel = native ? 'Gemini 原生接口' : 'OpenAI 兼容接口';
 
     function fetchT(url, opts, ms) {
       return new Promise(function (resolve) {
@@ -71620,38 +71622,52 @@ window.HMChat = (function () {
         return { ok: false, msg: '密钥无效或没有权限（HTTP ' + r.status + '）：请核对 API Key' };
       }
       if (!r.ok) {
-        return { ok: false, msg: '接口地址不对或不可用（HTTP ' + r.status + '）：' + apiProbeText(r.status, r.text) };
+        return { ok: false, msg: modeLabel + '地址不可用（HTTP ' + r.status + '）：' + apiProbeText(r.status, r.text) };
       }
       var ids = [];
       try {
         var j = JSON.parse(r.text);
-        ids = ((j && (j.data || j.models)) || []).map(function (m) { return (m && (m.id || m.name)) || ''; }).filter(Boolean);
+        ids = ((j && (j.data || j.models)) || []).map(function (m) {
+          return String((m && (m.id || m.name)) || '').replace(/^models\//, '');
+        }).filter(Boolean);
       } catch (e) { ids = []; }
 
-      if (want && ids.length && ids.indexOf(want) < 0) {
+      if (!want) return { ok: false, msg: '密钥/地址正常，但这条配置还没有模型 ID' };
+      if (ids.length && ids.indexOf(want) < 0) {
         var imgs = ids.filter(isImageModelId);
         return {
           ok: false,
           msg: '密钥/地址正常，但模型「' + want + '」不在该账号清单里' +
-            (imgs.length ? '；可用图像模型：' + imgs.slice(0, 8).join('、') : '')
+            (imgs.length ? '；可用图像模型：' + imgs.slice(0, 8).join('、') : '；清单里没有图像模型')
         };
       }
-      if (!want || !isImageModelId(want)) {
-        return { ok: true, msg: '连接成功 · ' + ids.length + ' 个模型（未做真实出图校验）' };
+      /* 文字模型：地址与密钥都对，但这条通道不能出图，不能给绿灯 */
+      if (!isImageModelId(want)) {
+        return {
+          ok: false,
+          msg: '密钥有效（' + modeLabel + '），但模型「' + want + '」是文字模型，不能生成图片；出图请改用 GPT-image 配置（模型 gpt-image-2.5-flare）'
+        };
       }
-      /* 真实最小出图：GPT-image 走 /images/generations，Banana 走 /chat/completions */
+      /* 真实最小出图：原生走 :generateContent，兼容走 /images/generations 或 /chat/completions */
       var isBanana = engine === 'banana';
-      var req = isBanana
-        ? fetchT(root + '/chat/completions', {
+      var postHeaders = Object.assign({ 'Content-Type': 'application/json' }, headers);
+      var req = native
+        ? fetchT(root + '/models/' + encodeURIComponent(want) + ':generateContent', {
           method: 'POST',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
-          body: JSON.stringify({ model: want, messages: [{ role: 'user', content: [{ type: 'text', text: 'ping' }] }] })
+          headers: postHeaders,
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }] })
         }, 90000)
-        : fetchT(root + '/images/generations', {
-          method: 'POST',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
-          body: JSON.stringify({ model: want, prompt: 'ping', n: 1, size: '1024x1024' })
-        }, 90000);
+        : (isBanana
+          ? fetchT(root + '/chat/completions', {
+            method: 'POST',
+            headers: postHeaders,
+            body: JSON.stringify({ model: want, messages: [{ role: 'user', content: [{ type: 'text', text: 'ping' }] }] })
+          }, 90000)
+          : fetchT(root + '/images/generations', {
+            method: 'POST',
+            headers: postHeaders,
+            body: JSON.stringify({ model: want, prompt: 'ping', n: 1, size: '1024x1024' })
+          }, 90000));
 
       return req.then(function (g) {
         if (g.timeout) return { ok: false, msg: '地址/密钥正常，但真实出图超时（>90s）' };
@@ -71659,7 +71675,7 @@ window.HMChat = (function () {
           var m = apiProbeText(404, g.text);
           var geminiModel = engine === 'banana' || /^gemini/i.test(want);
           if (geminiModel || /not supported by any configured account|no available (account|channel)/i.test(m)) {
-            return { ok: false, msg: '密钥有效，但该分组不支持 Gemini 图像（模型「' + want + '」）；请改用 GPT-image 配置（模型 gpt-image-2.5-flare，走 /images/generations）' };
+            return { ok: false, msg: '密钥有效，但该分组未承接 Gemini 图像（模型「' + want + '」）；请改用 GPT-image 配置（模型 gpt-image-2.5-flare，走 /images/generations）' };
           }
           return { ok: false, msg: '密钥有效，但模型「' + want + '」不可用：' + m };
         }
@@ -71670,14 +71686,26 @@ window.HMChat = (function () {
         var bytes = 0;
         try {
           var d = JSON.parse(g.text);
-          var first = (d && d.data && d.data[0]) || (d && d.choices && d.choices[0] && d.choices[0].message) || {};
-          var b64 = first.b64_json;
-          if (!b64 && typeof first.content === 'string') {
-            var mm = /data:image\/[^;]+;base64,([A-Za-z0-9+/=\r\n]+)/.exec(first.content);
-            if (mm) b64 = mm[1];
+          if (native) {
+            var parts = (d && d.candidates && d.candidates[0] && d.candidates[0].content
+              && d.candidates[0].content.parts) || [];
+            for (var i = 0; i < parts.length; i++) {
+              var inline = parts[i].inlineData || parts[i].inline_data;
+              if (inline && inline.data) {
+                bytes = Math.floor(String(inline.data).replace(/\s+/g, '').length * 3 / 4);
+                break;
+              }
+            }
+          } else {
+            var first = (d && d.data && d.data[0]) || (d && d.choices && d.choices[0] && d.choices[0].message) || {};
+            var b64 = first.b64_json;
+            if (!b64 && typeof first.content === 'string') {
+              var mm = /data:image\/[^;]+;base64,([A-Za-z0-9+/=\r\n]+)/.exec(first.content);
+              if (mm) b64 = mm[1];
+            }
+            if (b64) bytes = Math.floor(b64.replace(/\s+/g, '').length * 3 / 4);
+            else if (first.url || (d && d.data && d.data[0] && d.data[0].url)) bytes = -1;
           }
-          if (b64) bytes = Math.floor(b64.replace(/\s+/g, '').length * 3 / 4);
-          else if (first.url || (d && d.data && d.data[0] && d.data[0].url)) bytes = -1;
         } catch (e) { bytes = 0; }
         if (!bytes) return { ok: false, msg: '接口返回 200 但没有拿到图片内容：请检查模型是否支持该端点' };
         return { ok: true, msg: '可用 · 实测出图成功' + (bytes > 0 ? '（约 ' + Math.round(bytes / 1024) + ' KB）' : '') };
