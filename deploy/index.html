@@ -30157,8 +30157,28 @@ async function generateOne(job, prompt) {
     } catch (err) {
       /* 后端已返回明确错误（err.message 非空）→ 直接展示给用户，不 fallback */
       if (err && err.message) {
-        /* 如果后端没有 hint，补一个通用 fallback hint */
-        if (!err.hint && !err.offline) err.hint = err.hint || '请稍后重试或更换模型/接入设置';
+        /* 模型名不存在：先用这条配置的真实模型清单自愈一次，再重试（只试一次） */
+        if (!job._modelHeal && (job.engine === 'banana' || job.engine === 'gpt-image') && isModelNameError(err.message)) {
+          job._modelHeal = true;
+          var healedModel = await healImageModel(job.engine);
+          if (healedModel) {
+            job.channelModel = healedModel;
+            const healedRemote = await runBackendImage(job, prompt);
+            const healedElapsed = (Date.now() - job.startedAt) / 1000;
+            markJobDone(job, healedRemote.url, healedRemote.seed, healedElapsed);
+            return;
+          }
+        }
+        /* 如果后端没有 hint，按错误类型补一条能落地的提示（明确该改哪个字段） */
+        if (!err.hint && !err.offline) {
+          if (isModelNameError(err.message)) {
+            err.hint = '这是「模型名」问题，不是尺寸问题：请在「接入设置」把模型名改成上游真实存在的图像模型 ID。';
+          } else if (isSizeUnsupportedError(err.message)) {
+            err.hint = '这是「尺寸」问题，不是模型名问题：请在尺寸 / 比例里换一个更小的值。';
+          } else {
+            err.hint = '请稍后重试或更换模型/接入设置';
+          }
+        }
         markJobError(job, err);
         throw err;
       }
@@ -30268,6 +30288,96 @@ async function runBackendImage(job, prompt) {
     url: window.HM.api.mediaUrl ? window.HM.api.mediaUrl(item.url) : item.url,
     seed: item.seed || job.seed
   };
+}
+
+/* ---------------- 模型名自愈 ----------------
+ * 上游报 Model "x" is not found 时，用这条接入配置自己的 Key 拉一次真实模型清单，
+ * 只在清单里挑同类图像模型改写配置并重试；清单拉不到就只给提示，绝不凭名字猜。
+ * 改写同时落到本机（anidream.api.v1）与云端 /docs/api（不只是界面显示）。 */
+var IMAGE_MODEL_PREFERENCE = {
+  banana: ['gemini-3.1-flash-image', 'gemini-2.5-flash-image', 'gemini-3-pro-image', 'gemini-3.1-flash-lite-image'],
+  'gpt-image': ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1']
+};
+
+function rankImageModels(ids, engine) {
+  var pool = (ids || []).filter(function (id) { return /image|imagen/i.test(String(id)); });
+  var family = engine === 'banana' ? /^gemini/i : /^gpt-image/i;
+  var prefer = IMAGE_MODEL_PREFERENCE[engine] || [];
+  var out = [];
+  prefer.forEach(function (id) { if (pool.indexOf(id) >= 0 && out.indexOf(id) < 0) out.push(id); });
+  pool.forEach(function (id) { if (family.test(id) && out.indexOf(id) < 0) out.push(id); });
+  pool.forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); });
+  return out;
+}
+
+async function fetchImageModelIds() {
+  var cfg = rayinCfg();
+  var base = normalizeBase(cfg.base);
+  var key = String(cfg.key || '').trim();
+  var ids = [];
+  try {
+    if (window.HM && HM.api && HM.api.models) {
+      var res = await HM.api.models({ base: base, key: key });
+      if (res && Array.isArray(res.ids)) ids = res.ids;
+    }
+  } catch (e) { ids = []; }
+  if (!ids.length && key) {
+    /* 后端不可用时用同一条 Key 直连（「测试连接」已证明该平台允许跨域） */
+    try {
+      var r = await fetch(base + '/models', { headers: { Authorization: 'Bearer ' + key } });
+      if (r.ok) {
+        var data = await r.json();
+        ids = (data.data || data.models || []).map(function (m) { return m && (m.id || m.name); }).filter(Boolean);
+      }
+    } catch (e2) {}
+  }
+  return ids;
+}
+
+/* 把修正后的模型名写进本机配置 + 云端文档（先拉最新文档再合并，避免覆盖别的配置） */
+function adoptImageModel(used, engine) {
+  var isBanana = engine === 'banana';
+  var id = isBanana ? '__rayin__:banana' : '__rayin__:gpt-image';
+  state.channelModel = used;
+  state.api = Object.assign({}, state.api || RAYIN_DEFAULT);
+  if (isBanana) state.api.bananaModel = used;
+  else state.api.gptModel = used;
+  try { localStorage.setItem(LS_API, JSON.stringify(state.api)); } catch (e) {}
+  try { persistPrefs(); } catch (e) {}
+  var pull = (window.HMSync && window.HMSync.pullApi) ? window.HMSync.pullApi() : Promise.resolve(null);
+  return pull.catch(function () { return null; }).then(function (cloud) {
+    var doc = cloud || loadJSON('anidream.api.v1', {}) || {};
+    doc.providers = doc.providers || {};
+    doc.providers[id] = Object.assign({}, doc.providers[id] || {}, { model: used });
+    if (isBanana) doc.bananaModel = used;
+    else doc.gptModel = used;
+    doc.updatedAt = Date.now();
+    try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
+    var push = window.HMSync && window.HMSync.pushApi;
+    if (!push) return { cloud: false, reason: '云同步模块未加载' };
+    return push(doc).then(function () { return { cloud: true }; });
+  });
+}
+
+async function healImageModel(engine) {
+  var ids = await fetchImageModelIds();
+  var ranked = rankImageModels(ids, engine);
+  var cfg = state.api || {};
+  var current = String((engine === 'banana' ? cfg.bananaModel : cfg.gptModel) || state.channelModel || '');
+  var next = ranked.filter(function (id) { return id !== current; })[0] || '';
+  if (!next) return '';
+  var saved = { cloud: false, reason: '未知原因' };
+  try {
+    saved = await adoptImageModel(next, engine);
+    toast(saved && saved.cloud
+      ? ('模型名已改为「' + next + '」（上游真实可用），已同步云端')
+      : ('模型名已改为「' + next + '」（本机已保存；云端未同步：' + ((saved && saved.reason) || '网络异常') + '）'),
+      saved && saved.cloud ? 'success' : 'error', 6000);
+  } catch (err) {
+    toast('模型名已在本机改为「' + next + '」，云端保存失败：' + ((err && err.message) || '网络异常'), 'error', 6000);
+  }
+  try { syncEngineUI(); } catch (e) {}
+  return next;
 }
 
 async function runEngine(engine, job, prompt) {
@@ -30626,14 +30736,61 @@ async function runRayinBanana(job, prompt) {
   return { url: url, seed: job.seed };
 }
 
+/* ---------------- 生图失败归因：模型名 vs 尺寸 ----------------
+ * 上游 404「Model "x" is not found」和「尺寸不支持」是两类完全不同的错误：
+ *   前者要改「接入设置 → 模型名」，后者要改「尺寸 / 比例」。
+ * 这里统一识别，避免把上游原文直接甩给用户，也避免两类问题互相误导。 */
+function isModelNameError(text) {
+  var s = String(text || '');
+  return /model\s*"?[A-Za-z0-9._:\-\/]*"?\s*(is\s*)?not\s*found/i.test(s) ||
+    /model_not_found|模型不存在|无可用渠道|no available channel|model.*not.*exist/i.test(s);
+}
+
+function isSizeUnsupportedError(text) {
+  var s = String(text || '');
+  if (!/(尺寸|分辨率|size|resolution|dimension|aspect)/i.test(s)) return false;
+  return /(不支持|超出|过大|not\s*support|unsupported|invalid|too\s*(large|big)|exceed|out\s*of\s*range)/i.test(s);
+}
+
+function modelNameFromText(text) {
+  var s = String(text || '');
+  var m = /Model\s+"([^"]+)"/i.exec(s) ||
+    /模型不存在\s*[:：]\s*([A-Za-z0-9._:\-\/]+)/.exec(s) ||
+    /模型\s*"([^"]+)"/.exec(s);
+  return m ? m[1] : '';
+}
+
+function sizeFromText(text) {
+  var m = /(\d{2,5})\s*[x×*]\s*(\d{2,5})/i.exec(String(text || ''));
+  return m ? (m[1] + '×' + m[2]) : '';
+}
+
 function errorText(err) {
   /* 优先后端透传的中文主错误 err.message，否则再走 friendlyError 规则 */
-  if (err && err.message) return String(err.message);
-  return friendlyError(err);
+  var message = (err && err.message) ? String(err.message) : friendlyError(err);
+  var code = (err && err.code) || '';
+  if (code === 'model_not_found' || isModelNameError(message)) {
+    var name = modelNameFromText(message);
+    return name ? ('模型不存在：' + name) : '模型不存在（该模型名在上游不可用）';
+  }
+  if (code === 'size_unsupported' || isSizeUnsupportedError(message)) {
+    var size = sizeFromText(message);
+    return '该模型不支持此尺寸' + (size ? '：' + size : '');
+  }
+  return message;
 }
 
 function errorHint(err) {
-  return (err && err.hint) ? String(err.hint) : '';
+  if (err && err.hint) return String(err.hint);
+  var message = String((err && err.message) || '');
+  var code = (err && err.code) || '';
+  if (code === 'model_not_found' || isModelNameError(message)) {
+    return '这是「模型名」问题，不是尺寸问题：请在「接入设置」把这条配置的模型名改成上游真实存在的图像模型 ID。';
+  }
+  if (code === 'size_unsupported' || isSizeUnsupportedError(message)) {
+    return '这是「尺寸」问题，不是模型名问题：请在尺寸 / 比例里换一个更小的值。';
+  }
+  return '';
 }
 
 function friendlyError(err) {
