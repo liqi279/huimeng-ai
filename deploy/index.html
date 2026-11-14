@@ -27327,7 +27327,6 @@ const state = {
  * 带版本标记，之后用户在模型菜单里手动选回 Gemini 不会被反复覆盖。 */
 if (storedPrefs.rayinChannel !== 'gpt-image-2.5') {
   if (state.engine === 'banana') state.engine = 'gpt-image';
-  if (state.engine === 'gpt-image') state.channelModel = 'gpt-image-2.5-flare';
   if (!state.api.gptModel || /^gemini-/.test(state.api.gptModel)) state.api.gptModel = 'gpt-image-2.5-flare';
   storedPrefs.rayinChannel = 'gpt-image-2.5';
   try {
@@ -27337,6 +27336,14 @@ if (storedPrefs.rayinChannel !== 'gpt-image-2.5') {
     })));
   } catch (e) {}
   try { localStorage.setItem(LS_API, JSON.stringify(state.api)); } catch (e) {}
+}
+/* 引擎与模型名必须自洽：gpt-image 端点只认 gpt-image*，banana 只认 gemini*。
+ * 历史配置里常见 engine 已切、channelModel 还是旧通道的模型名，会 404。 */
+if (state.engine === 'gpt-image' && !/^gpt-image/i.test(state.channelModel || '')) {
+  state.channelModel = state.api.gptModel || 'gpt-image-2.5-flare';
+}
+if (state.engine === 'banana' && !/^gemini/i.test(state.channelModel || '')) {
+  state.channelModel = state.api.bananaModel || 'gemini-3.1-flash-image';
 }
 
 /* ========== tab 状态辅助器 ==========
@@ -30298,8 +30305,16 @@ async function runBackendImage(job, prompt) {
     payload.model = cfg.model;
     payload.provider = { id: cfg.id, base: cfg.base, key: cfg.key, model: cfg.model };
   } else if (job.engine === 'banana' || job.engine === 'gpt-image') {
-    /* RayinAI — 前端选的真实模型 ID 必须传给后端覆盖默认值 */
-    if (state.channelModel) payload.model = state.channelModel;
+    /* RayinAI — 前端选的真实模型 ID 必须传给后端覆盖默认值。
+     * 但通道与模型必须匹配：gpt-image 端点只认 gpt-image*，banana 只认 gemini*，
+     * 否则会把旧通道的模型名发过去直接 404。 */
+    var picked = String(state.channelModel || '');
+    if (job.engine === 'gpt-image') {
+      payload.model = /^gpt-image/i.test(picked) ? picked : (rayinCfg().gptModel || 'gpt-image-2.5-flare');
+    } else {
+      payload.model = /^gemini/i.test(picked) ? picked : (rayinCfg().bananaModel || 'gemini-3.1-flash-image');
+    }
+    if (payload.model !== picked) state.channelModel = payload.model;
   }
 
   const data = await window.HM.api.generate(payload, 180000);
@@ -71437,7 +71452,21 @@ window.HMChat = (function () {
         nextProvider.series = isBanana ? 'Gemini Banana' : 'GPT-image';
         nextProvider.name = 'RayinAPI';
         doc.providers[id] = nextProvider;
-        try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(prefs.rayin)); } catch (e) {}
+        /* 切通道必须同时换模型：只改 engine 会把旧通道的模型名发到新端点（404）。
+         * 同时把运行时 state.api 补全，避免本地存储被覆盖成只剩 {base,key}。 */
+        var nextApi = Object.assign({}, App.state.api || {}, {
+          base: p.base,
+          key: rayinKey
+        });
+        if (isBanana) nextApi.bananaModel = p.model;
+        else nextApi.gptModel = p.model;
+        App.state.api = nextApi;
+        if (p.enabled) {
+          App.state.channelModel = p.model;
+          prefs.engine = isBanana ? 'banana' : 'gpt-image';
+          prefs.channelModel = p.model;
+        }
+        try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(nextApi)); } catch (e) {}
       } else {
         providers[id] = { base: p.base, key: nextProvider.key, model: p.model };
         if (p.enabled) App.state.providerId = id;
