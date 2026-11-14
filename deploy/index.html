@@ -15444,6 +15444,17 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 /* 卡片 body 输入 */
 .hm-api-card-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 11px; }
 .hm-api-field { display: flex; flex-direction: column; gap: 4px; }
+/* 这条接入配置覆盖的模型名：弱于正文的小字，单行超出省略，title 给全量 */
+.hm-api-model-names {
+  margin-top: -5px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(180, 175, 205, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
 .hm-api-field span {
   font-size: 11px; font-weight: 500; color: rgba(200, 195, 220, 0.6);
   letter-spacing: 0.03em;
@@ -71262,7 +71273,22 @@ window.HMChat = (function () {
         if (cloud && gotKey != null && String(gotKey) !== expectKey) {
           throw new Error('云端未保存 API Key，请重试');
         }
-        return res;
+        /* 再主动 GET 一次 /docs/api，确认这条记录真的能读回来，而不是只看写入返回 200 */
+        var verify = (window.HMSync && window.HMSync.pullApi)
+          ? window.HMSync.pullApi().catch(function () { return null; })
+          : Promise.resolve(null);
+        return verify.then(function () {
+          var after = getApiDoc();
+          var rec = (after.providers && after.providers[id]) || null;
+          if (!rec) throw new Error('云端回读失败：没有找到这条接入记录');
+          if (String(rec.key || '') !== expectKey) throw new Error('云端回读失败：API Key 不一致');
+          if (p.model && String(rec.model || '') !== String(p.model)) throw new Error('云端回读失败：模型名不一致');
+          /* 保存成功后刷新同步面板：连接状态、最近同步时间一起更新 */
+          if (window.HMSync && window.HMSync.refreshPanel) {
+            try { window.HMSync.refreshPanel(); } catch (e) {}
+          }
+          return res;
+        });
       }).catch(function (err) {
         err.localSaved = true;
         throw err;
@@ -71380,6 +71406,7 @@ window.HMChat = (function () {
           '</div></label>' +
         '<label class="hm-api-field"><span>' + (p.isRayin ? (p.rayinVariant === 'banana' ? 'Gemini Banana 模型' : 'GPT-image 模型') : '默认模型 ID') + '</span>' +
           '<input class="hm-api-input" data-ik="model" value="' + hmEsc(p.model) + '" placeholder="..."></label>' +
+        apiModelNamesHtml(p) +
       '</div>' +
       '<div class="hm-api-card-foot">' +
         '<div class="hm-api-foot-left">' +
@@ -71398,6 +71425,31 @@ window.HMChat = (function () {
         '</div>' +
       '</div>' +
     '</div>';
+  }
+
+  /* 这条配置绑定的模型名（展示用）：优先取该系列下的目录模型，其次取已填的模型 ID。
+     不写入数据，只用于卡片下方那行小字。 */
+  function apiModelNames(p) {
+    var names = [];
+    function add(v) {
+      var s = String(v == null ? '' : v).trim();
+      if (s && names.indexOf(s) < 0) names.push(s);
+    }
+    (p.models || []).forEach(function (m) {
+      var id = String(m.id || m.model || '').trim();
+      var series = String(m.series || m.group || '').trim();
+      if (p.series && series && series !== p.series) return;
+      add(id || m.name);
+    });
+    add(p.model);
+    add(p.model2);
+    return names;
+  }
+  function apiModelNamesHtml(p) {
+    var names = apiModelNames(p);
+    if (!names.length) return '';
+    var full = names.join('、');
+    return '<div class="hm-api-model-names" title="' + hmEsc(full) + '">' + hmEsc(full) + '</div>';
   }
 
   function apiSectionControlsHtml(providers, supported) {
@@ -71472,6 +71524,24 @@ window.HMChat = (function () {
   function renderApiPanel(body) {
     var App = window.HMApp;
     if (!body || !App) return;
+    /* 模型名小字实时跟随输入：改模型 ID 时不用等保存/重渲染 */
+    if (!body._hmModelLineBound) {
+      body._hmModelLineBound = true;
+      body.addEventListener('input', function (e) {
+        var el = e.target;
+        if (!el || el.getAttribute('data-ik') !== 'model') return;
+        var card = el.closest('.hm-api-card');
+        if (!card) return;
+        var line = card.querySelector('.hm-api-model-names');
+        if (!line) return;
+        var v = String(el.value || '').trim();
+        if (!v) return;
+        var parts = (line.textContent || '').split('、').filter(Boolean);
+        if (parts.indexOf(v) < 0) parts.push(v);
+        line.textContent = parts.join('、');
+        line.title = parts.join('、');
+      });
+    }
     var providers = getProviders();
     var total = providers.length;
     var enabledCount = providers.filter(function (p) { return p.enabled; }).length;
