@@ -26786,7 +26786,7 @@ const ENGINES = [
 const RAYIN_DEFAULT = {
   base: 'https://www.rayinai.com/v1',
   key: '',
-  gptModel: 'gemini-3-pro-image',
+  gptModel: 'gpt-image-2.5-flare',
   bananaModel: 'gemini-3.1-flash-image'
 };
 
@@ -27257,7 +27257,7 @@ var initWorksKey = initUser && initUser.id ? ('anidream.works.v1.' + initUser.id
 const storedWorks = loadJSON(initWorksKey, []);
 const storedApi = loadJSON(LS_API, {}) || {};
 /* 历史错误模型 ID 迁移：gpt-image-1 / 伪别名 gpt-image-2-all 等 → 官方 gpt-image-2 */
-if (!storedApi.gptModel || /gpt-image-2-all|gpt-image-lite/.test(storedApi.gptModel)) {
+if (!storedApi.gptModel || /gpt-image-2-all|gpt-image-lite|^gemini-/.test(storedApi.gptModel)) {
   storedApi.gptModel = RAYIN_DEFAULT.gptModel;
 } else if (storedApi.gptModel === 'gpt-image-1') {
   storedApi.gptModel = 'gpt-image-1';
@@ -27320,6 +27320,24 @@ const state = {
   audioFormat: 'wav',
   sampleRate: 48000
 };
+
+/* 出图通道迁移（一次性）：Gemini 图像在当前 Key 分组下没有账号承接
+ * （chat/completions 返回 404 not supported by any configured account），
+ * 统一切到 GPT-image 的可用模型 gpt-image-2.5-flare（/images/generations）。
+ * 带版本标记，之后用户在模型菜单里手动选回 Gemini 不会被反复覆盖。 */
+if (storedPrefs.rayinChannel !== 'gpt-image-2.5') {
+  if (state.engine === 'banana') state.engine = 'gpt-image';
+  if (state.engine === 'gpt-image') state.channelModel = 'gpt-image-2.5-flare';
+  if (!state.api.gptModel || /^gemini-/.test(state.api.gptModel)) state.api.gptModel = 'gpt-image-2.5-flare';
+  storedPrefs.rayinChannel = 'gpt-image-2.5';
+  try {
+    localStorage.setItem(LS_PREFS, JSON.stringify(Object.assign({}, storedPrefs, {
+      engine: state.engine,
+      channelModel: state.channelModel
+    })));
+  } catch (e) {}
+  try { localStorage.setItem(LS_API, JSON.stringify(state.api)); } catch (e) {}
+}
 
 /* ========== tab 状态辅助器 ==========
  * 每个 prompt tab 独立的 refs + refWeight。
@@ -30158,7 +30176,8 @@ async function generateOne(job, prompt) {
       /* 后端已返回明确错误（err.message 非空）→ 直接展示给用户，不 fallback */
       if (err && err.message) {
         /* 模型名不存在：先用这条配置的真实模型清单自愈一次，再重试（只试一次） */
-        if (!job._modelHeal && (job.engine === 'banana' || job.engine === 'gpt-image') && isModelNameError(err.message)) {
+        if (!job._modelHeal && (job.engine === 'banana' || job.engine === 'gpt-image')
+            && !isGroupUnavailableError(err.message) && isModelNameError(err.message)) {
           job._modelHeal = true;
           var healedModel = await healImageModel(job.engine);
           if (healedModel) {
@@ -30171,7 +30190,10 @@ async function generateOne(job, prompt) {
         }
         /* 如果后端没有 hint，按错误类型补一条能落地的提示（明确该改哪个字段） */
         if (!err.hint && !err.offline) {
-          if (isModelNameError(err.message)) {
+          if (isGroupUnavailableError(err.message)) {
+            /* 分组级 404：换 Gemini 名字没用，直接指向 GPT-image 配置 */
+            err.hint = '这是分组 / 账号问题，不是模型名拼错：请在「接入设置」改用 GPT-image 那条配置（模型 gpt-image-2.5-flare，走 /images/generations）。';
+          } else if (isModelNameError(err.message)) {
             err.hint = '这是「模型名」问题，不是尺寸问题：请在「接入设置」把模型名改成上游真实存在的图像模型 ID。';
           } else if (isSizeUnsupportedError(err.message)) {
             err.hint = '这是「尺寸」问题，不是模型名问题：请在尺寸 / 比例里换一个更小的值。';
@@ -30746,6 +30768,13 @@ function isModelNameError(text) {
     /model_not_found|模型不存在|无可用渠道|no available channel|model.*not.*exist/i.test(s);
 }
 
+function isGroupUnavailableError(text) {
+  var s = String(text || '');
+  return /not\s*supported\s*by\s*any\s*configured\s*account/i.test(s) ||
+    /no\s*available\s*(account|channel)/i.test(s) ||
+    /该分组|分组下|分组内/.test(s);
+}
+
 function isSizeUnsupportedError(text) {
   var s = String(text || '');
   if (!/(尺寸|分辨率|size|resolution|dimension|aspect)/i.test(s)) return false;
@@ -30769,6 +30798,10 @@ function errorText(err) {
   /* 优先后端透传的中文主错误 err.message，否则再走 friendlyError 规则 */
   var message = (err && err.message) ? String(err.message) : friendlyError(err);
   var code = (err && err.code) || '';
+  if (code === 'group_unavailable' || isGroupUnavailableError(message)) {
+    var blocked = modelNameFromText(message);
+    return '该分组不支持 Gemini 图像' + (blocked ? '：' + blocked : '') + '，请改用 GPT-image 配置';
+  }
   if (code === 'model_not_found' || isModelNameError(message)) {
     var name = modelNameFromText(message);
     return name ? ('模型不存在：' + name) : '模型不存在（该模型名在上游不可用）';
@@ -30784,6 +30817,9 @@ function errorHint(err) {
   if (err && err.hint) return String(err.hint);
   var message = String((err && err.message) || '');
   var code = (err && err.code) || '';
+  if (code === 'group_unavailable' || isGroupUnavailableError(message)) {
+    return '这是分组 / 账号问题，不是模型名拼错：请在「接入设置」改用 GPT-image 那条配置（模型 gpt-image-2.5-flare，走 /images/generations）。';
+  }
   if (code === 'model_not_found' || isModelNameError(message)) {
     return '这是「模型名」问题，不是尺寸问题：请在「接入设置」把这条配置的模型名改成上游真实存在的图像模型 ID。';
   }
@@ -71106,7 +71142,7 @@ window.HMChat = (function () {
       var gpt = Object.assign({}, oldGpt);
       gpt.name = 'RayinAPI'; gpt.platform = '__rayin__'; gpt.series = 'GPT-image'; gpt.engine = 'gpt-image';
       gpt.base = oldGpt.base || rb; gpt.key = oldGpt.key || rk;
-      gpt.model = oldGpt.model || doc.gptModel || 'gpt-image-2'; gpt.model2 = '';
+      gpt.model = oldGpt.model || doc.gptModel || 'gpt-image-2.5-flare'; gpt.model2 = '';
       doc.providers['__rayin__:gpt-image'] = gpt;
       var ban = Object.assign({}, oldBan);
       ban.name = 'RayinAPI'; ban.platform = '__rayin__'; ban.series = 'Gemini Banana'; ban.engine = 'banana';
@@ -71233,7 +71269,7 @@ window.HMChat = (function () {
       series: 'GPT-image',
       base: gptRec.base || 'https://www.rayinai.com/v1',
       key: gptRec.key || '',
-      model: gptRec.model || doc.gptModel || prefs.gptModel || 'gpt-image-2',
+      model: gptRec.model || doc.gptModel || prefs.gptModel || 'gpt-image-2.5-flare',
       models: rayinModels.filter(function (m) { return m.engine === 'gpt-image'; }),
       enabled: ((App.state && App.state.engine) || 'gpt-image') === 'gpt-image',
       isRayin: true,
@@ -71488,34 +71524,111 @@ window.HMChat = (function () {
     renderApiPanel(document.getElementById('adminBody'));
   }
 
-  /* 简单 ping 测试（用 models endpoint 或 /v1/models） */
-  function testApi(id, base, key) {
+  /* 连接测试：不再只验证「地址 + 密钥」，而是分三层判断真实可用性
+   *   1) /models 401/403/网络失败        → 密钥或地址不对（红）
+   *   2) 模型不在账号清单里              → 模型不可用（红，给出可用图像模型）
+   *   3) 真实发一次最小出图请求          → 分组/通道不可用也拦得住（红）
+   * 只有真正拿到图片字节才显示绿色「可用」。 */
+  function apiProbeText(status, body) {
+    var msg = '';
+    try {
+      var j = JSON.parse(body);
+      msg = (j && j.error && (j.error.message || j.error.type)) || '';
+    } catch (e) { msg = String(body || '').slice(0, 120); }
+    return msg || ('HTTP ' + status);
+  }
+
+  function isImageModelId(id) { return /image|imagen|dall|flux|seedream|banana/i.test(String(id || '')); }
+
+  function testApi(id, base, key, model, engine) {
     var App = window.HMApp;
     if (!App || !base) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
-    var url = base.replace(/\/+$/, '') + '/models';
+    var root = base.replace(/\/+$/, '');
     var headers = key ? { 'Authorization': 'Bearer ' + key } : {};
-    return new Promise(function (resolve) {
-      var timeout = setTimeout(function () { resolve({ ok: false, msg: '请求超时' }); }, 8000);
-      fetch(url, { method: 'GET', headers: headers })
-        .then(function (r) {
-          clearTimeout(timeout);
-          if (r.ok) return r.json();
+    var want = String(model || '').trim();
+
+    function fetchT(url, opts, ms) {
+      return new Promise(function (resolve) {
+        var timer = setTimeout(function () { resolve({ timeout: true }); }, ms);
+        fetch(url, opts).then(function (r) {
           return r.text().then(function (txt) {
-            try { var j = JSON.parse(txt); resolve({ ok: false, msg: (j && j.error && j.error.message) || ('HTTP ' + r.status) }); }
-            catch (e) { resolve({ ok: false, msg: 'HTTP ' + r.status }); }
+            clearTimeout(timer);
+            resolve({ status: r.status, ok: r.ok, text: txt });
           });
-        })
-        .then(function (data) {
-          if (Array.isArray(data.data) && data.data.length) {
-            resolve({ ok: true, msg: '连接成功 · ' + data.data.length + ' 个模型' });
-          } else {
-            resolve({ ok: true, msg: '连接成功' });
-          }
-        })
-        .catch(function (err) {
-          clearTimeout(timeout);
-          resolve({ ok: false, msg: err.message || '网络错误' });
+        }).catch(function (err) {
+          clearTimeout(timer);
+          resolve({ status: 0, ok: false, text: (err && err.message) || '网络错误' });
         });
+      });
+    }
+
+    return fetchT(root + '/models', { method: 'GET', headers: headers }, 12000).then(function (r) {
+      if (r.timeout) return { ok: false, msg: '请求超时：地址不可达' };
+      if (r.status === 401 || r.status === 403) {
+        return { ok: false, msg: '密钥无效或没有权限（HTTP ' + r.status + '）：请核对 API Key' };
+      }
+      if (!r.ok) {
+        return { ok: false, msg: '接口地址不对或不可用（HTTP ' + r.status + '）：' + apiProbeText(r.status, r.text) };
+      }
+      var ids = [];
+      try {
+        var j = JSON.parse(r.text);
+        ids = ((j && (j.data || j.models)) || []).map(function (m) { return (m && (m.id || m.name)) || ''; }).filter(Boolean);
+      } catch (e) { ids = []; }
+
+      if (want && ids.length && ids.indexOf(want) < 0) {
+        var imgs = ids.filter(isImageModelId);
+        return {
+          ok: false,
+          msg: '密钥/地址正常，但模型「' + want + '」不在该账号清单里' +
+            (imgs.length ? '；可用图像模型：' + imgs.slice(0, 8).join('、') : '')
+        };
+      }
+      if (!want || !isImageModelId(want)) {
+        return { ok: true, msg: '连接成功 · ' + ids.length + ' 个模型（未做真实出图校验）' };
+      }
+      /* 真实最小出图：GPT-image 走 /images/generations，Banana 走 /chat/completions */
+      var isBanana = engine === 'banana';
+      var req = isBanana
+        ? fetchT(root + '/chat/completions', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+          body: JSON.stringify({ model: want, messages: [{ role: 'user', content: [{ type: 'text', text: 'ping' }] }] })
+        }, 90000)
+        : fetchT(root + '/images/generations', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+          body: JSON.stringify({ model: want, prompt: 'ping', n: 1, size: '1024x1024' })
+        }, 90000);
+
+      return req.then(function (g) {
+        if (g.timeout) return { ok: false, msg: '地址/密钥正常，但真实出图超时（>90s）' };
+        if (g.status === 404) {
+          var m = apiProbeText(404, g.text);
+          if (/not supported by any configured account|no available (account|channel)/i.test(m)) {
+            return { ok: false, msg: '密钥有效，但该分组没有账号承接模型「' + want + '」；请改用 GPT-image 配置（模型 gpt-image-2.5-flare）' };
+          }
+          return { ok: false, msg: '密钥有效，但模型「' + want + '」不可用：' + m };
+        }
+        if (g.status === 401 || g.status === 403) {
+          return { ok: false, msg: '密钥无效或没有出图权限（HTTP ' + g.status + '）' };
+        }
+        if (!g.ok) return { ok: false, msg: '真实出图失败（HTTP ' + g.status + '）：' + apiProbeText(g.status, g.text) };
+        var bytes = 0;
+        try {
+          var d = JSON.parse(g.text);
+          var first = (d && d.data && d.data[0]) || (d && d.choices && d.choices[0] && d.choices[0].message) || {};
+          var b64 = first.b64_json;
+          if (!b64 && typeof first.content === 'string') {
+            var mm = /data:image\/[^;]+;base64,([A-Za-z0-9+/=\r\n]+)/.exec(first.content);
+            if (mm) b64 = mm[1];
+          }
+          if (b64) bytes = Math.floor(b64.replace(/\s+/g, '').length * 3 / 4);
+          else if (first.url || (d && d.data && d.data[0] && d.data[0].url)) bytes = -1;
+        } catch (e) { bytes = 0; }
+        if (!bytes) return { ok: false, msg: '接口返回 200 但没有拿到图片内容：请检查模型是否支持该端点' };
+        return { ok: true, msg: '可用 · 实测出图成功' + (bytes > 0 ? '（约 ' + Math.round(bytes / 1024) + ' KB）' : '') };
+      });
     });
   }
 
@@ -71576,7 +71689,7 @@ window.HMChat = (function () {
           '<div class="hm-api-foot-msg" data-msg></div>' +
         '</div>' +
         '<div class="hm-api-foot-btns">' +
-          '<button class="hm-api-btn hm-api-btn-ghost" data-test>测试连接</button>' +
+          '<button class="hm-api-btn hm-api-btn-ghost" data-test title="会真实生成 1 张 1024 图校验模型/分组是否可出图（按量计费）">测试连接</button>' +
           '<button class="hm-api-btn hm-api-btn-primary" data-save>保存</button>' +
           (!p.preset && !p.isRayin ? '<button class="hm-api-btn hm-api-btn-danger" data-del>删除</button>' : '') +
         '</div>' +
@@ -72071,7 +72184,8 @@ window.HMChat = (function () {
 
     var base = p.base;
     var key = p.key;
-    testApi(id, base, key).then(function (res) {
+    var engine = p.rayinVariant === 'banana' ? 'banana' : (p.rayinVariant === 'gpt' ? 'gpt-image' : ((p.preset && p.preset.engine) || ''));
+    testApi(id, base, key, p.model, engine).then(function (res) {
       apiTestState[id] = res.ok ? 'ok' : 'fail';
       var c = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-msg]');
       if (c) { c.textContent = res.msg; c.className = 'hm-api-foot-msg ' + (res.ok ? 'is-ok' : 'is-bad'); }
@@ -72079,7 +72193,7 @@ window.HMChat = (function () {
       var stateEl = document.querySelector('.hm-api-card[data-api="' + id + '"] .hm-api-state');
       if (stateEl) {
         stateEl.className = 'hm-api-state is-' + (res.ok ? 'ok' : 'bad');
-        stateEl.textContent = (res.ok ? '● 在线' : '● 离线');
+        stateEl.textContent = (res.ok ? '● 可用' : '● 不可用');
       }
     });
   }
@@ -72089,7 +72203,7 @@ window.HMChat = (function () {
   window.HMCloudReload.api = function () { resetApiDoc(); };
 
   /* 全局暴露 */
-  window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin };
+  window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin, testApi: testApi };
 })();
 
 
