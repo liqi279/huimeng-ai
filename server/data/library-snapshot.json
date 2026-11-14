@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-14T06:55:14.874Z",
+  "generatedAt": "2026-11-14T07:01:15.759Z",
   "source": "huimeng_library.books",
-  "total": 446,
+  "total": 453,
   "areas": {
-    "paint": 430,
+    "paint": 437,
     "ref": 16
   },
   "books": [
@@ -18,8 +18,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw819v2a-001-kawaii.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw80yetl-001-kawaii-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw80yetl-001-kawaii-cover.jpg",
+      "coverBytes": 601836
     },
     {
       "id": "lib-mw86nrb0-363dff",
@@ -32,8 +32,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw86menn-002-mini-chara.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw86m7g0-002-mini-chara-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw86m7g0-002-mini-chara-cover.jpg",
+      "coverBytes": 888273
     },
     {
       "id": "lib-mw97y0mu-d5ff0e",
@@ -46,8 +46,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw97uyyt-003-momoko.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw97uyjw-003-momoko-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw97uyjw-003-momoko-cover.jpg",
+      "coverBytes": 100807
     },
     {
       "id": "lib-mw9882jp-5ee852",
@@ -97,8 +97,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw985riv-004-qiansui-pixel.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw985qu5-004-qiansui-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw985qu5-004-qiansui-cover.jpg",
+      "coverBytes": 82552
     },
     {
       "id": "lib-mw9a8pu5-763209",
@@ -111,8 +111,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw9a5uhb-005-pixel-bg.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
+      "coverBytes": 148947
     },
     {
       "id": "lib-mw9ak57x-423ad7",
@@ -162,8 +162,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw9ahk53-006-girls-pose-9vol.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9ahcng-006-girls-pose-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw9ahcng-006-girls-pose-cover.jpg",
+      "coverBytes": 89670
     },
     {
       "id": "lib-mw9bj5qo-f39210",
@@ -193,8 +193,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw9bhcmo-007-dress-pose-4vol.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
+      "coverBytes": 99073
     },
     {
       "id": "lib-mw9bovcf-c4aa7a",
@@ -228,8 +228,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw9bn7yf-008-boys-pose-5vol.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
+      "coverBytes": 202662
     },
     {
       "id": "lib-mw9ler9s-e9679b",
@@ -242,8 +242,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw9leg53-009-paint-income.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9lecyl-009-paint-income-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw9lecyl-009-paint-income-cover.jpg",
+      "coverBytes": 455437
     },
     {
       "id": "lib-mw9mgki5-4f1173",
@@ -256,8 +256,8 @@
       "toc": [],
       "pdfKey": "api/library/file/library/books/mw9mfr0i-010-sai-paint-tech.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
+      "coverBytes": 773362
     },
     {
       "id": "lib-mw9mna4r-02d065",
@@ -287,8 +287,8 @@
       ],
       "pdfKey": "api/library/file/library/books/mw9mlkok-011-fantasy-tech.pdf",
       "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
-      "coverBytes": null
+      "coverKey": "library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
+      "coverBytes": 1645914
     },
     {
       "id": "lib-mwaz6plf-33b5a3",
@@ -21078,6 +21078,402 @@
       "pdfBytes": 105805715,
       "coverKey": "library/covers/453-book-cover.jpg",
       "coverBytes": 173070
+    },
+    {
+      "id": "lib-mwg1ycd5-d84f34",
+      "sortNo": 453,
+      "title": "如何画出帅气的身材",
+      "author": "[韩] ダビ(BABI)",
+      "intro": "原名《ハンサムボディの描き方》，一本韩风男性角色的绘制教程。",
+      "pageCount": 140,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/454-book.pdf",
+      "pdfBytes": 36125173,
+      "coverKey": "library/covers/454-book-cover.jpg",
+      "coverBytes": 204091
+    },
+    {
+      "id": "lib-mwg1ya5l-ed7b29",
+      "sortNo": 454,
+      "title": "yoai的动漫美术教室",
+      "author": "Yoai",
+      "intro": "原名《Anime Art Class: A Complete Course in Drawing Manga Cuties》，INS画师yoai(yoaihime)一本漫画教程，教你画出可爱的动漫角色，附带了epub格式。",
+      "pageCount": 305,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Cover",
+          "page": 2
+        },
+        {
+          "title": "Title Page",
+          "page": 3
+        },
+        {
+          "title": "Contents",
+          "page": 4
+        },
+        {
+          "title": "Introduction",
+          "page": 7
+        },
+        {
+          "title": "Materials",
+          "page": 10
+        },
+        {
+          "title": "Anime Basics",
+          "page": 19
+        },
+        {
+          "title": "Bodies",
+          "page": 19
+        },
+        {
+          "title": "Facial Features",
+          "page": 29
+        },
+        {
+          "title": "Hair",
+          "page": 43
+        },
+        {
+          "title": "Clothes and Shoes",
+          "page": 46
+        },
+        {
+          "title": "Anime Techniques",
+          "page": 54
+        },
+        {
+          "title": "Pencil Sketching and Shading",
+          "page": 54
+        },
+        {
+          "title": "Inking Line Art",
+          "page": 56
+        },
+        {
+          "title": "Adding Base Color",
+          "page": 58
+        },
+        {
+          "title": "Shading",
+          "page": 59
+        },
+        {
+          "title": "Blending",
+          "page": 65
+        },
+        {
+          "title": "Making a Gradient",
+          "page": 68
+        },
+        {
+          "title": "Fixing Mistakes",
+          "page": 69
+        },
+        {
+          "title": "Have Fun and Stay Healthy!",
+          "page": 71
+        },
+        {
+          "title": "Tutorials",
+          "page": 73
+        },
+        {
+          "title": "Pencil Sketching",
+          "page": 73
+        },
+        {
+          "title": "Inking",
+          "page": 87
+        },
+        {
+          "title": "Coloring with Colored Pencils",
+          "page": 118
+        },
+        {
+          "title": "Coloring with Markers",
+          "page": 150
+        },
+        {
+          "title": "Coloring with Watercolors",
+          "page": 240
+        },
+        {
+          "title": "Inspiration Gallery & Coloring Pages",
+          "page": 268
+        },
+        {
+          "title": "Color Combinations",
+          "page": 268
+        },
+        {
+          "title": "Eyes",
+          "page": 284
+        },
+        {
+          "title": "Hairstyles",
+          "page": 285
+        },
+        {
+          "title": "Clothes",
+          "page": 288
+        },
+        {
+          "title": "Accessories",
+          "page": 292
+        },
+        {
+          "title": "Poses",
+          "page": 295
+        },
+        {
+          "title": "Dedication",
+          "page": 303
+        },
+        {
+          "title": "Copyright",
+          "page": 304
+        }
+      ],
+      "pdfKey": "library/books/455-book.pdf",
+      "pdfBytes": 17427236,
+      "coverKey": "library/covers/455-book-cover.jpg",
+      "coverBytes": 305504
+    },
+    {
+      "id": "lib-mwg1yeil-9fd11f",
+      "sortNo": 455,
+      "title": "yoai的Q版美术教室",
+      "author": "Yoai",
+      "intro": "原名《Chibi Art Class: A Complete Course in Drawing Chibi Cuties and Beasties - Includes 19 step-by-step tutorials! 》，INS画师yoai(yoaihime)一本简单的Q版入门教程，附带了epub格式。",
+      "pageCount": 344,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Introduction",
+          "page": 5
+        },
+        {
+          "title": "Materials",
+          "page": 10
+        },
+        {
+          "title": "PART I: Chibi Basics",
+          "page": 17
+        },
+        {
+          "title": "Sketching Your Chibis",
+          "page": 18
+        },
+        {
+          "title": "Bodies",
+          "page": 18
+        },
+        {
+          "title": "Facial Features",
+          "page": 30
+        },
+        {
+          "title": "Hair",
+          "page": 49
+        },
+        {
+          "title": "Clothing",
+          "page": 58
+        },
+        {
+          "title": "Props and Backgrounds",
+          "page": 72
+        },
+        {
+          "title": "Shading Basics",
+          "page": 80
+        },
+        {
+          "title": "Coloring Your Chibis",
+          "page": 87
+        },
+        {
+          "title": "Practice Chibis",
+          "page": 93
+        },
+        {
+          "title": "PART 2: Chibi Cuties",
+          "page": 117
+        },
+        {
+          "title": "Jamie",
+          "page": 118
+        },
+        {
+          "title": "Phoebe",
+          "page": 131
+        },
+        {
+          "title": "Spring",
+          "page": 144
+        },
+        {
+          "title": "Abel",
+          "page": 157
+        },
+        {
+          "title": "Mother",
+          "page": 168
+        },
+        {
+          "title": "Father",
+          "page": 181
+        },
+        {
+          "title": "Jules",
+          "page": 194
+        },
+        {
+          "title": "Audrey",
+          "page": 205
+        },
+        {
+          "title": "Stefan",
+          "page": 216
+        },
+        {
+          "title": "Oliver",
+          "page": 227
+        },
+        {
+          "title": "Ember",
+          "page": 239
+        },
+        {
+          "title": "Desiree",
+          "page": 251
+        },
+        {
+          "title": "PART 3: Chibi Beasties",
+          "page": 262
+        },
+        {
+          "title": "Kit",
+          "page": 264
+        },
+        {
+          "title": "Goldie",
+          "page": 275
+        },
+        {
+          "title": "Cotton",
+          "page": 286
+        },
+        {
+          "title": "Devin",
+          "page": 297
+        },
+        {
+          "title": "Dot",
+          "page": 308
+        },
+        {
+          "title": "PART 4: Inspiration Gallery",
+          "page": 319
+        },
+        {
+          "title": "Eyes",
+          "page": 320
+        },
+        {
+          "title": "Hairstyles",
+          "page": 323
+        },
+        {
+          "title": "Clothing",
+          "page": 327
+        },
+        {
+          "title": "Props and Accessories",
+          "page": 330
+        },
+        {
+          "title": "Ears and Tails",
+          "page": 335
+        },
+        {
+          "title": "PART 5: Practice and Coloring Pages",
+          "page": 338
+        },
+        {
+          "title": "Draw Your Own",
+          "page": 338
+        },
+        {
+          "title": "Color Your Own",
+          "page": 340
+        }
+      ],
+      "pdfKey": "library/books/456-book.pdf",
+      "pdfBytes": 22574517,
+      "coverKey": "library/covers/456-book-cover.jpg",
+      "coverBytes": 207447
+    },
+    {
+      "id": "lib-mwg1zfqr-8bb123",
+      "sortNo": 456,
+      "title": "Procreate数字绘画的初学者指南 如何在iPad上进行艺术创作",
+      "author": "3dtotal Publishing",
+      "intro": "原名《Beginner's Guide to Digital Painting in Procreate: How to Create Art on an iPad®》，一本欧美卡通向的Procreate入门教程。",
+      "pageCount": 219,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/457-book.pdf",
+      "pdfBytes": 45862481,
+      "coverKey": "library/covers/457-book-cover.jpg",
+      "coverBytes": 226829
+    },
+    {
+      "id": "lib-mwg1ze05-4f2521",
+      "sortNo": 458,
+      "title": "向100位著名艺术家学习角色设计",
+      "author": "21 Draw",
+      "intro": "原名《21 Draw: Learn From 100 Famous Artists》，一本欧美卡通向的角色参考教程，由100位曾为迪士尼、漫威、皮克斯、梦工厂等公司工作的著名艺术家绘制角色设计参考，文字内容不多，比起教程更像是画集",
+      "pageCount": 251,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/459-book.pdf",
+      "pdfBytes": 23527121,
+      "coverKey": "library/covers/459-book-cover.jpg",
+      "coverBytes": 205674
+    },
+    {
+      "id": "lib-mwg21fsm-074fd8",
+      "sortNo": 459,
+      "title": "如何画人物:人物和姿势的分解教程",
+      "author": "Jeff Mellem",
+      "intro": "原名《How to Draw People: Step-by-Step Lessons for Figures and Poses》，一本人物绘制参考教程，附带了epud版本。",
+      "pageCount": 323,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/460-book.pdf",
+      "pdfBytes": 95082871,
+      "coverKey": "library/covers/460-book-cover.jpg",
+      "coverBytes": 150425
+    },
+    {
+      "id": "lib-mwg20fkz-aa9df6",
+      "sortNo": 460,
+      "title": "像素画超入门 Aseprite v1.2.8使用入门",
+      "author": "[日] 折原黒鵜",
+      "intro": "原名《打てる！ドット絵超入門: Aseprite v1.2.8を使って描く！》，一本像素画软件“Aseprite”的使用教程，对应版本是v1.2.8。",
+      "pageCount": 74,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/461-book.pdf",
+      "pdfBytes": 16110546,
+      "coverKey": "library/covers/461-book-cover.jpg",
+      "coverBytes": 179884
     },
     {
       "id": "lib-mwg1si2k-dc8cf1",
