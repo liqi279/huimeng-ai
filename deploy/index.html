@@ -30489,6 +30489,7 @@ function normalizeBase(value) {
   /* 误把具体端点当根地址（/v1/models、/v1/chat/completions…）时先剥掉，
    * 否则拼接会变成 /v1/models/models，上游会把 models 当成模型名 */
   const base = String(value || RAYIN_DEFAULT.base).trim()
+    .replace(/^[`'"“”‘’\s]+|[`'"“”‘’\s]+$/g, '')
     .replace(/\/+$/, '')
     .replace(/\/(models|chat\/completions|completions|responses|images\/generations|images\/edits|images\/variations|embeddings)$/i, '')
     .replace(/\/+$/, '');
@@ -71571,8 +71572,9 @@ window.HMChat = (function () {
    * 上游会把 models 当成模型名报 404。这里统一剥到 API 根地址。 */
   var API_ENDPOINT_TAIL = /\/(models|chat\/completions|completions|responses|images\/generations|images\/edits|images\/variations|embeddings)\/?$/i;
   function apiBaseNormalize(raw) {
-    var s = String(raw || '').trim().replace(/\/+$/, '');
-    var stripped = s.replace(API_ENDPOINT_TAIL, '').replace(/\/+$/, '');
+    /* 容忍从文档复制的格式：反引号 / 引号 / 全角引号 / 首尾空格，以及多余结尾斜杠 */
+    var s = String(raw || '').trim().replace(/^[`'"“”‘’\s]+|[`'"“”‘’\s]+$/g, '');
+    var stripped = s.replace(/\/+$/, '').replace(API_ENDPOINT_TAIL, '').replace(/\/+$/, '');
     return { base: stripped, changed: stripped !== s };
   }
 
@@ -71592,6 +71594,8 @@ window.HMChat = (function () {
     if (!App || !base) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
     var root = apiBaseNormalize(base).base;
     if (!root) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
+    /* OpenAI 兼容平台都挂在 /v1 下：只填到域名时补上，避免 /models 404 */
+    if (!/\/v\d+[a-z]*$/i.test(root)) root = root.replace(/\/+$/, '') + '/v1';
     var headers = key ? { 'Authorization': 'Bearer ' + key } : {};
     var want = String(model || '').trim();
 
