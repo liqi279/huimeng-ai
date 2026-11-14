@@ -15247,7 +15247,9 @@ body[data-season="winter"] .hm-rail-item { color: var(--text-2); }
  * 环境粒子（常驻）
  * ================================================================== */
 .hm-season-ambient {
-  position: fixed; inset: 0; z-index: 3;
+  /* 主题背景层：必须压在桌面卡片下面（卡片 z-index 从 1 起），
+     放 -1 保证即便与卡片同层的旧数据也不会盖住卡片；仍可透过半透明画板看到粒子 */
+  position: fixed; inset: 0; z-index: -1;
   width: 100%; height: 100%;
   pointer-events: none; opacity: 0.5;
   mix-blend-mode: screen;
@@ -15309,8 +15311,8 @@ body.hm-light[data-season="summer"] .hm-rail, body.hm-light[data-season="summer"
 body.hm-light[data-season="autumn"] .hm-rail, body.hm-light[data-season="autumn"] .hm-top { background: #fffaf4; }
 body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"] .hm-top { background: #f8fbfe; }
 
-/* 环境粒子层级：仅高于 body 背景(0)，低于所有操作主体(30/40/60) */
-.hm-season-ambient { z-index: 1; opacity: 0.42; }
+/* 环境粒子层级：低于 body 背景之上的所有内容（卡片/浮窗/菜单/大图），只当背景光效 */
+.hm-season-ambient { z-index: -1; opacity: 0.42; }
 
 /* ==========================================================
  * API接入管理（设置页顶 Tab）
@@ -27233,7 +27235,7 @@ function fileNameFor(item) {
     String(date.getDate()).padStart(2, '0') +
     '_' + String(date.getHours()).padStart(2, '0') +
     String(date.getMinutes()).padStart(2, '0');
-  return '绘梦_' + safeName(item.modelName || 'ANIME') + '_' + stamp + '_' + (item.seed || Date.now());
+  return '绘梦_' + safeName(item.title || item.prompt || item.modelName || '作品') + '_' + stamp + '_' + (item.seed || Date.now());
 }
 
 /* ---------------- 初始化状态 ---------------- */
@@ -27992,6 +27994,20 @@ function tmPickDay(ms) {
   tm.month = new Date(day.getFullYear(), day.getMonth(), 1);
   if (tm.field === 'start') tm.field = 'end';
   tmSync();
+  tmCommitLive();
+}
+
+function tmCommitLive() {
+  const d = tm.draft;
+  if (d.start && d.end && d.start > d.end) return; /* 起止顺序不合法时先不应用 */
+  tm.applied = {
+    quick: d.quick,
+    start: d.quick === 'all' ? 0 : d.start,
+    end: d.quick === 'all' ? 0 : d.end
+  };
+  tmSave();
+  if (els.worksSortText) els.worksSortText.textContent = tmText();
+  renderWorks(); /* 选中即刷新列表，弹窗保持打开可继续调整 */
 }
 
 function tmApply() {
@@ -28044,6 +28060,7 @@ function tmBind() {
         tm.field = 'start';
       }
       tmSync();
+      tmCommitLive();
     });
   }
 
@@ -31429,6 +31446,10 @@ async function makeThumb(url) {
 }
 
 /* ---------------- 下载 ---------------- */
+/* 下载原图：一律取回二进制后用 Blob 保存，页面不跳转、不打开新标签页。
+   - 保存的是原始字节，不做格式转换/二次压缩
+   - 跨域（COS 签名链接）若被 CORS 拦截，直接给出失败提示，不退回「打开新地址」
+   - 同名文件由浏览器自动追加 (1)/(2)，不会静默覆盖 */
 async function downloadImage(url, filename) {
   if (!url) {
     toast('图片地址不可用', 'error');
@@ -31436,36 +31457,29 @@ async function downloadImage(url, filename) {
   }
 
   try {
-    const res = await fetch(url, { mode: 'cors' });
+    const res = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
     const blob = await res.blob();
-    let finalBlob = blob;
-    let ext = 'jpg';
-    if (blob.type.indexOf('webp') >= 0) ext = 'webp';
-    else if (blob.type.indexOf('png') >= 0) ext = 'png';
-    else if (blob.type.indexOf('mp4') >= 0) ext = 'mp4';
-    else if (blob.type.indexOf('webm') >= 0) ext = 'webm';
-    else if (blob.type.indexOf('wav') >= 0) ext = 'wav';
-    else if (blob.type.indexOf('mpeg') >= 0 || blob.type.indexOf('mp3') >= 0) ext = 'mp3';
-    else if (/^(video|audio)\//.test(blob.type)) ext = 'bin';
 
-    try {
-      if (blob.type.indexOf('image/') === 0 && window.createImageBitmap && blob.type.indexOf('png') < 0) {
-        const bitmap = await createImageBitmap(blob);
-        const canvas = document.createElement('canvas');
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
-        canvas.getContext('2d').drawImage(bitmap, 0, 0);
-        const png = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/png'); });
-        if (png) {
-          finalBlob = png;
-          ext = 'png';
-        }
-      }
-    } catch (err) { /* 保留原始格式 */ }
+    /* 扩展名：优先取 MIME，其次取 URL 后缀，最后兜底 jpg；只影响文件名，不改内容 */
+    let ext = '';
+    const type = (blob.type || '').toLowerCase();
+    if (type.indexOf('image/jpeg') === 0) ext = 'jpg';
+    else if (type.indexOf('image/png') === 0) ext = 'png';
+    else if (type.indexOf('image/webp') === 0) ext = 'webp';
+    else if (type.indexOf('image/gif') === 0) ext = 'gif';
+    else if (type.indexOf('video/mp4') === 0) ext = 'mp4';
+    else if (type.indexOf('video/webm') === 0) ext = 'webm';
+    else if (type.indexOf('audio/mpeg') === 0 || type.indexOf('audio/mp3') === 0) ext = 'mp3';
+    else if (type.indexOf('audio/wav') === 0) ext = 'wav';
+    if (!ext) {
+      const m = String(url).split('?')[0].match(/\.([a-z0-9]{2,5})$/i);
+      if (m) ext = m[1].toLowerCase();
+    }
+    if (!ext) ext = 'jpg';
 
-    const objectUrl = URL.createObjectURL(finalBlob);
+    const objectUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = objectUrl;
     a.download = filename + '.' + ext;
@@ -31474,12 +31488,10 @@ async function downloadImage(url, filename) {
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 8000);
 
-    toast((ext === 'png' ? 'PNG' : ext.toUpperCase()) + ' 原图已开始下载', 'success');
+    toast(ext.toUpperCase() + ' 原图已开始下载', 'success');
   } catch (err) {
-    try {
-      window.open(url, '_blank', 'noopener');
-    } catch (e) { /* 忽略弹窗失败 */ }
-    toast('已打开原图，可右键另存为', 'info');
+    /* 失败就明确报错：绝不回退到打开新标签页/跳转地址 */
+    toast('下载失败：原图读取被拦截（多为跨域限制），请刷新后重试', 'error', 6000);
   }
 }
 
@@ -31645,6 +31657,7 @@ function openLightbox(item) {
     els.lbImage.classList.remove('no-anim');
     els.lbImage.draggable = false;
   }
+  lbApply(); /* 打开即 100%：先把缩放标签/变换归位，不等图片加载 */
 
   if (isFailed) {
     els.lbImage.style.display = 'none';
@@ -31663,8 +31676,7 @@ function openLightbox(item) {
       if (item.thumb && els.lbImage.src !== item.thumb) els.lbImage.src = item.thumb;
     };
     els.lbImage.onload = function () {
-      lbFit(); // 自动适应窗口
-      lbApply();
+      lbReset(); /* 每次打开都从 100% 起，不再按窗口大小自适应缩小 */
     };
   } else {
     els.lbImage.style.display = 'none';
@@ -32003,17 +32015,62 @@ function reuseJob(job) {
      否则切换标签/刷新后提示词会丢失 */
   els.promptInput.dispatchEvent(new Event('input', { bubbles: true }));
   updateCharCount();
-  /* 恢复参考主体素材：作品里存的是 [{dataUrl,width,height,weight,name}]，
-     旧版可能是纯 dataUrl 字符串数组，这里做兼容归一化 */
-  var refs = job.refImages;
-  if (Array.isArray(refs) && refs.length > 0) {
-    var normalized = refs.map(function (r) {
-      if (typeof r === 'string') return { dataUrl: r, width: 1024, height: 1024, weight: 70, name: '参考图' };
-      return Object.assign({ width: 1024, height: 1024, weight: 70, name: '参考图' }, r);
+  /* 恢复参考主体素材。
+     兼容三种历史来源：
+       1) 旧版直接把 base64 存在作品里：job.refImages（对象数组）或 job.refs（字符串数组）
+       2) 新版把原图迁到 IndexedDB：job.id + ':refs'（作业里只留 refsBlob 标记）
+       3) 输入框/口袋草稿：cmp:<key>（由 composer 自己持久化，这里不覆盖）
+     顺序保持原样；单张坏数据只跳过该张并明确提示，不会把整块清空。 */
+  function applyJobRefs(rawRefs) {
+    var list = Array.isArray(rawRefs) ? rawRefs : [];
+    var normalized = [];
+    var missing = [];
+    list.forEach(function (r, i) {
+      var item = (typeof r === 'string') ? { dataUrl: r } : (r || {});
+      var src = item.dataUrl || item.preview || item.thumb;
+      if (!src) { missing.push(i + 1); return; }
+      normalized.push({
+        dataUrl: item.dataUrl || src,
+        preview: item.preview || src,
+        thumb: item.thumb || src,
+        width: Number(item.width) || 1024,
+        height: Number(item.height) || 1024,
+        weight: typeof item.weight === 'number' ? item.weight : 70,
+        name: item.name || ('参考图 ' + (i + 1))
+      });
     });
+    if (!normalized.length) {
+      toast('该作品的参考图已失效，未能恢复', 'error');
+      return;
+    }
     if (typeof setCurrentRefs === 'function') setCurrentRefs(normalized);
-    else { ensureTabSlots(); state.tabRefs[state.activePrompt] = normalized; }
+    else { ensureTabSlots(); state.tabRefs[state.activePrompt] = normalized; state.refImages = normalized.slice(); }
     if (typeof renderRef === 'function') renderRef();
+    /* 全局强度：同一组图当时是同一档，取共同值还原 slider */
+    var firstWeight = normalized[0].weight;
+    var sameWeight = normalized.every(function (n) { return n.weight === firstWeight; });
+    if (sameWeight && typeof setCurrentTabRefWeight === 'function') {
+      setCurrentTabRefWeight(firstWeight);
+      if (typeof applyRefWeightUI === 'function') applyRefWeightUI(firstWeight);
+    }
+    /* 立刻写回当前口袋，刷新后仍在 */
+    if (window.HMComposer && typeof window.HMComposer.save === 'function') window.HMComposer.save();
+    if (missing.length) toast('第 ' + missing.join('、') + ' 张参考图未能恢复（原数据已丢失）', 'error', 6000);
+  }
+
+  var refs = job.refImages || job.refs;
+  if (Array.isArray(refs) && refs.length > 0) {
+    applyJobRefs(refs);
+  } else if (window.indexedDB && job.id) {
+    /* 新格式：原图在 IndexedDB 的 <workId>:refs */
+    idbGetBlob(job.id + ':refs').then(function (raw) {
+      var parsed = null;
+      if (raw) { try { parsed = JSON.parse(raw); } catch (e) { parsed = null; } }
+      if (Array.isArray(parsed) && parsed.length) applyJobRefs(parsed);
+      else toast('该作品没有可恢复的参考图', 'info');
+    }).catch(function () {
+      toast('参考图读取失败，请刷新后重试', 'error');
+    });
   }
   /* 作品没有参考图（旧版作品未存 refImages）→ 不清空当前参考图，
      避免用户已有的参考素材被误删；@ 引用与当前参考图自然对应 */
@@ -32213,7 +32270,16 @@ function bindEvents() {
       event.stopPropagation();
       return;
     }
-    if (!event.target.closest('.hm-menu')) closeAllMenus();
+    /* 弹窗内的点击常会触发重绘（如日历格子被整体替换），冒泡到 document 时
+       event.target 已脱离 .hm-menu，closest() 会误判为“外部点击”而收起面板。
+       这里用 composedPath()（派发瞬间固定的路径）判断，保证弹窗内操作不自动关闭。 */
+    var inMenu = false;
+    if (typeof event.composedPath === 'function') {
+      inMenu = event.composedPath().some(function (n) {
+        return n && n.classList && n.classList.contains('hm-menu');
+      });
+    }
+    if (!inMenu && !(event.target.closest && event.target.closest('.hm-menu'))) closeAllMenus();
   });
 
   if (els.modelMenu) {
@@ -66581,8 +66647,11 @@ window.HMChat = (function () {
       '<span class="hm-proj-txt"><strong>个人空间</strong><small>' + total + ' 项</small></span>' +
       '<span class="hm-proj-lock">⌾</span>' +
       '</button>';
+    /* 新建入口跟随当前所在位置：选中了某个项目/文件夹就建它的子文件夹，否则建在根目录 */
+    var curFolder = view.activeFolder ? desk.folders.find(function (f) { return f.id === view.activeFolder; }) : null;
     html += '<button class="hm-proj-row is-new" data-proj="new">' +
-      '<span class="hm-proj-ico">＋</span><span class="hm-proj-txt"><strong>新建文件夹</strong><small>在根目录创建新项目</small></span>' +
+      '<span class="hm-proj-ico">＋</span><span class="hm-proj-txt"><strong>' + (curFolder ? '新建子文件夹' : '新建文件夹') + '</strong><small>' +
+      (curFolder ? '在「' + esc(curFolder.name) + '」下新建' : '在根目录创建新项目') + '</small></span>' +
       '</button>';
     html += '</div>';
 
@@ -66654,21 +66723,24 @@ window.HMChat = (function () {
     value = (value || '').trim();
     var inline = view.inline;
     view.inline = null;
-    if (!value || !inline) { renderPanel(); return; }
+    if (!inline) { renderPanel(); return; }
     if (inline.isNew) {
-      /* 同级去重 */
+      /* 名称为空/只有空格 → 用默认名，同级重名顺延，绝不覆盖已有文件夹 */
       var parentId = inline.parentId || null;
       var siblings = desk.folders.filter(function (f) { return (f.parentId || null) === parentId; });
       var names = siblings.map(function (f) { return f.name; });
-      var name = value;
+      var base = value || '新建文件夹';
+      var name = base;
       var idx = 2;
-      while (names.indexOf(name) >= 0) { name = value + ' ' + idx; idx++; }
+      while (names.indexOf(name) >= 0) { name = base + ' ' + idx; idx++; }
       var folder = { id: 'f' + A.uid(), name: name, parentId: parentId, createdAt: Date.now() };
       desk.folders.unshift(folder);
+      if (parentId) view.expanded[parentId] = true;
       persistNow();
       A.toast('已创建文件夹「' + name + '」', 'success');
     } else {
-      /* 重命名 */
+      /* 重命名：空名字视为取消，不把已有文件夹改成空名 */
+      if (!value) { renderPanel(); return; }
       var target = desk.folders.find(function (f) { return f.id === inline.rowId; });
       if (target) {
         target.name = value;
@@ -66700,15 +66772,19 @@ window.HMChat = (function () {
       parentName = parent ? parent.name : null;
     }
     askName(parentName ? '在「' + parentName + '」下新建子文件夹' : '新建文件夹', name, function (value) {
-      if (!value) return;
-      var folder = { id: 'f' + A.uid(), name: value, parentId: parentId || null, createdAt: Date.now() };
+      /* 输入为空 → 用默认名；重名 → 同级顺延，绝不覆盖 */
+      var base = String(value || '').trim() || '新建文件夹';
+      var finalName = base;
+      var dup = 2;
+      while (names.indexOf(finalName) >= 0) { finalName = base + ' ' + dup; dup++; }
+      var folder = { id: 'f' + A.uid(), name: finalName, parentId: parentId || null, createdAt: Date.now() };
       desk.folders.unshift(folder);
       /* 自动展开父节点，让新子文件夹可见 */
       if (parentId) view.expanded[parentId] = true;
       persistNow();
       renderPanel();
       if (cb) cb(folder);
-      A.toast('已创建文件夹「' + value + '」' + (parentName ? '（在「' + parentName + '」下）' : ''), 'success');
+      A.toast('已创建文件夹「' + finalName + '」' + (parentName ? '（在「' + parentName + '」下）' : ''), 'success');
     });
   }
 
@@ -66911,7 +66987,7 @@ window.HMChat = (function () {
     var elapsedHtml = (work.elapsed && work.elapsed > 0)
       ? '<div class="desk-elapsed">耗时 ' + work.elapsed.toFixed(1) + 's</div>' : '';
     return '<div class="desk-thumb">' + mediaHtml(work, 'desk') +
-            '<span class="desk-badge">' + (isFailed ? '生成失败' : '已完成') + '</span></div>' +
+            (isFailed ? '<span class="desk-badge">生成失败</span>' : '') + '</div>' +
       '<div class="desk-info"><strong>' + esc(name) + '</strong></div>' +
       elapsedHtml +
       '<span class="desk-check" aria-hidden="true"></span>';
@@ -67206,6 +67282,9 @@ window.HMChat = (function () {
     /* 若用户一直在底部附近，自动滚到底部跟随最新生成的图 */
     var distFromBottom = grid.scrollHeight - grid.scrollTop - grid.clientHeight;
     if (distFromBottom < 240) grid.scrollTop = grid.scrollHeight;
+
+    /* 叠放浮窗是桌面里的常驻浮层：重排/增删后补回原位置，只有 ✕ 或组被移空才关闭 */
+    if (!view.activeFolder) { try { renderOpenStackPanels(); } catch (e) {} }
   }
 
   function syncJobs() {
@@ -67389,8 +67468,9 @@ window.HMChat = (function () {
     var maxLeft = grid.clientWidth - cardW - 4;
 
     if (!card) {
-      /* 空白处按下 → 框选 */
-      if (event.target !== grid && !event.target.closest('.hm-canvas')) return;
+      /* 空白处按下 → 框选。主题背景/装饰/纹理层都算空白：
+         只要不是卡片本体、叠放浮窗或菜单，就允许起框，避免背景层吃掉鼠标事件 */
+      if (event.target.closest('.folder-card[data-stack], .stack-panel, .desk-context-menu, .hm-menu, .desk-sel-bar')) return;
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) clearSelection();
       var rect = grid.getBoundingClientRect();
       marquee = {
@@ -67608,17 +67688,21 @@ window.HMChat = (function () {
     var visibleBottom = visibleTop + grid.clientHeight;
     if (cy < visibleTop + 30) grid.scrollTop = Math.max(0, cy - 80);
     else if (cy > visibleBottom - 30) grid.scrollTop = Math.min(grid.scrollHeight, cy - grid.clientHeight + 80);
-    /* 实时判断哪些卡片被框住 */
+    /* 实时判断哪些卡片被框住（矩形与卡片相交即命中，四个方向拖动都一样） */
     var allCards = grid.querySelectorAll('.desk-card, .folder-card, .result-card.is-desk-job[data-job]');
     allCards.forEach(function (c) {
+      /* 叠放浮窗里的图片不参与框选 */
+      if (c.closest('.stack-panel')) return;
       var l = c.offsetLeft, t = c.offsetTop, r = l + c.offsetWidth, b = t + c.offsetHeight;
       var hit = l < x + w && r > x && t < y + h && b > y;
+      var k = c.hasAttribute('data-job') ? 'job:' + c.dataset.job : (c.classList.contains('folder-card') ? c.dataset.folder : c.dataset.work);
       if (hit) {
-        var k = c.hasAttribute('data-job') ? 'job:' + c.dataset.job : (c.classList.contains('folder-card') ? c.dataset.folder : c.dataset.work);
         view.selected[k] = true;
+        /* 立刻落到 DOM：拖动过程中就能看到和单击选中同一套 is-selected 高亮 */
+        c.classList.add('is-selected');
       } else if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
-        var k2 = c.hasAttribute('data-job') ? 'job:' + c.dataset.job : (c.classList.contains('folder-card') ? c.dataset.folder : c.dataset.work);
-        delete view.selected[k2];
+        delete view.selected[k];
+        c.classList.remove('is-selected');
       }
     });
     syncSelection();
@@ -67842,49 +67926,89 @@ window.HMChat = (function () {
     return state.works.filter(function (w) { return st.memberIds.indexOf(w.id) >= 0; });
   }
 
-  function closeStackPanel() {
-    var panel = byId('stackPanel');
-    if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
-    view.stackOpen = null;
-    view.stackSel = {};
+  /* 叠放浮窗：每组一个独立浮窗，可同时打开、互不覆盖。
+     只有点该浮窗的 ✕、或该组图片被移空时才关闭；点桌面空白/别的卡片/别的叠放都不收起。 */
+  function stackOpenMap() {
+    if (!view.stackOpen || typeof view.stackOpen !== 'object') view.stackOpen = {};
+    return view.stackOpen;
+  }
+  function stackSelOf(id) {
+    if (!view.stackSel || typeof view.stackSel !== 'object') view.stackSel = {};
+    if (!view.stackSel[id] || typeof view.stackSel[id] !== 'object') view.stackSel[id] = {};
+    return view.stackSel[id];
+  }
+  function stackPanelEl(id) { return byId('stackPanel-' + id); }
+
+  function closeStackPanel(id) {
+    var map = stackOpenMap();
+    var ids = id ? [id] : Object.keys(map);
+    ids.forEach(function (sid) {
+      var panel = stackPanelEl(sid);
+      if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+      delete map[sid];
+      if (view.stackSel) delete view.stackSel[sid];
+    });
   }
 
   function openStackPanel(id) {
     var st = desk.stacks.find(function (s) { return s.id === id; });
     if (!st) return;
-    view.stackOpen = id;
-    view.stackSel = {};
-    renderStackPanel();
+    stackOpenMap()[id] = true;
+    stackSelOf(id); /* 这组自己的选中集合；不影响其它叠放浮窗 */
+    renderStackPanel(id);
   }
 
-  function renderStackPanel() {
-    var st = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
-    if (!st) { closeStackPanel(); return; }
+  /* 桌面重排/整理/缩放后统一把还开着的浮窗补回来（节点被重建时不会丢） */
+  function renderOpenStackPanels() {
+    var map = stackOpenMap();
+    Object.keys(map).forEach(function (sid) {
+      if (!desk.stacks.some(function (s) { return s.id === sid; })) { closeStackPanel(sid); return; }
+      if (view.activeFolder) return;
+      try { renderStackPanel(sid); } catch (e) {}
+    });
+  }
+
+  function renderStackPanel(id) {
+    id = id || '';
+    if (!id) return;
+    var st = desk.stacks.find(function (s) { return s.id === id; });
+    if (!st) { closeStackPanel(id); return; }
+    if (!stackOpenMap()[id]) return;
     var grid = byId('resultGrid');
     if (!grid) return;
-    var panel = byId('stackPanel');
+    var panel = stackPanelEl(id);
+    var hadPanel = !!panel;
+    var keepLeft = hadPanel ? panel.style.left : '';
+    var keepTop = hadPanel ? panel.style.top : '';
     if (!panel) {
       panel = document.createElement('div');
-      panel.id = 'stackPanel';
+      panel.id = 'stackPanel-' + id;
       panel.className = 'stack-panel';
+      panel.dataset.stackId = id;
       grid.appendChild(panel);
     }
+    var sel = stackSelOf(id);
     var items = stackMembers(st);
     var cells = items.map(function (w) {
       var ts = w.elapsed ? ('耗时 ' + Number(w.elapsed).toFixed(1) + 's') : '';
-      return '<button type="button" class="sp-cell' + (view.stackSel[w.id] ? ' is-selected' : '') + '" data-sp="' + esc(w.id) + '">' +
+      return '<button type="button" class="sp-cell' + (sel[w.id] ? ' is-selected' : '') + '" data-sp="' + esc(w.id) + '">' +
         '<img src="' + esc(w.thumb || w.url || '') + '" alt="" draggable="false">' +
         '<strong>' + esc(w.prompt || workName(w)) + '</strong>' +
         (ts ? '<small>' + esc(ts) + '</small>' : '') +
         '</button>';
     }).join('');
-    panel.innerHTML =
-      '<div class="stack-panel-head"><span>▣</span><strong>' + esc(st.name || '叠放') + '</strong>' +
-        '<span class="stack-panel-count">' + st.memberIds.length + '</span>' +
-        '<button type="button" class="stack-panel-close" title="关闭">✕</button></div>' +
-      '<div class="stack-panel-body">' + (cells || '<div class="folder-grid-empty">空</div>') + '</div>' +
-      '<div class="stack-panel-foot"><span class="sp-sel"></span>' +
-        '<button type="button" class="sp-remove" hidden>→ 移出</button></div>';
+    /* 内容没变就不重建 DOM：拖浮窗/选图过程中节点被替换会让浮窗闪一下或拖动中断 */
+    var sig = (st.name || '') + '|' + st.memberIds.join(',');
+    if (panel._hmSig !== sig) {
+      panel._hmSig = sig;
+      panel.innerHTML =
+        '<div class="stack-panel-head"><span>▣</span><strong>' + esc(st.name || '叠放') + '</strong>' +
+          '<span class="stack-panel-count">' + st.memberIds.length + '</span>' +
+          '<button type="button" class="stack-panel-close" title="关闭">✕</button></div>' +
+        '<div class="stack-panel-body">' + (cells || '<div class="folder-grid-empty">空</div>') + '</div>' +
+        '<div class="stack-panel-foot"><span class="sp-sel"></span>' +
+          '<button type="button" class="sp-remove" hidden>→ 移出</button></div>';
+    }
 
     /* 尺寸跟内容走：1 项 1 列、2–4 项 2 列、5 项以上 3 列；宽度/高度都有上限，
        窄窗口下按桌面宽度收，缩略图跟着列宽自适应（不会一张图占满浮窗）。 */
@@ -67932,6 +68056,11 @@ window.HMChat = (function () {
         y = Math.max(minY, (grid.clientHeight - ph) / 2);
       }
     }
+    /* 已经显示的浮窗保持当前位置（点别处、重排、整理都不跳），只做边界收拢 */
+    if (hadPanel && keepLeft && keepTop) {
+      x = parseInt(keepLeft, 10) || 0;
+      y = parseInt(keepTop, 10) || 0;
+    }
     panel.style.left = Math.min(maxX, Math.max(minX, x)) + 'px';
     panel.style.top = Math.min(maxY, Math.max(minY, y)) + 'px';
 
@@ -67942,20 +68071,22 @@ window.HMChat = (function () {
     if (!panel._hmStackBound) {
       panel._hmStackBound = true;
       panel.addEventListener('click', function (event) {
-        if (event.target.closest('.stack-panel-close')) { closeStackPanel(); return; }
+        var sid = panel.dataset.stackId;
+        if (event.target.closest('.stack-panel-close')) { closeStackPanel(sid); return; }
         var cell = event.target.closest('.sp-cell[data-sp]');
         if (cell) {
           var wid = cell.dataset.sp;
-          if (view.stackSel[wid]) delete view.stackSel[wid];
-          else view.stackSel[wid] = true;
+          var s = stackSelOf(sid);
+          if (s[wid]) delete s[wid];
+          else s[wid] = true;
           /* 只更新选中态，不重建 DOM：否则双击的第二下会落到新节点上，dblclick 永远不触发 */
-          cell.classList.toggle('is-selected', !!view.stackSel[wid]);
-          var stNow = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+          cell.classList.toggle('is-selected', !!s[wid]);
+          var stNow = desk.stacks.find(function (x) { return x.id === sid; });
           if (stNow) updateStackFoot(stNow);
           return;
         }
         if (event.target.closest('.sp-remove')) {
-          removeSelectedFromStack();
+          removeSelectedFromStack(sid);
         }
       });
       panel.addEventListener('dblclick', function (event) {
@@ -67965,16 +68096,18 @@ window.HMChat = (function () {
         if (work) A.openLightbox(work);
       });
       panel.addEventListener('contextmenu', function (event) {
+        var sid = panel.dataset.stackId;
         var cell = event.target.closest('.sp-cell[data-sp]');
         if (!cell) return;
         event.preventDefault();
         event.stopPropagation();
-        view.stackSel = {};
-        view.stackSel[cell.dataset.sp] = true;
+        var s = stackSelOf(sid);
+        Object.keys(s).forEach(function (k) { delete s[k]; });
+        s[cell.dataset.sp] = true;
         Array.prototype.forEach.call(panel.querySelectorAll('.sp-cell'), function (c) {
           c.classList.toggle('is-selected', c === cell);
         });
-        var stNow = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+        var stNow = desk.stacks.find(function (x) { return x.id === sid; });
         if (stNow) updateStackFoot(stNow);
         var work = findWork(cell.dataset.sp);
         if (work) openWorkMenu(work, event.clientX, event.clientY);
@@ -68004,7 +68137,8 @@ window.HMChat = (function () {
         function up() {
           document.removeEventListener('pointermove', move);
           document.removeEventListener('pointerup', up);
-          var st2 = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+          var sid = panel.dataset.stackId;
+          var st2 = desk.stacks.find(function (x) { return x.id === sid; });
           if (st2) {
             /* 只有用户真的拖过才记住该组坐标；下次打开优先贴卡，贴不下再用这里 */
             st2.panel = { x: parseInt(panel.style.left, 10) || 0, y: parseInt(panel.style.top, 10) || 0, userSet: true };
@@ -68019,9 +68153,11 @@ window.HMChat = (function () {
   }
 
   function updateStackFoot(st) {
-    var panel = byId('stackPanel');
+    if (!st) return;
+    var panel = stackPanelEl(st.id);
     if (!panel) return;
-    var ids = Object.keys(view.stackSel || {});
+    var sel = stackSelOf(st.id);
+    var ids = Object.keys(sel);
     var label = panel.querySelector('.sp-sel');
     var btn = panel.querySelector('.sp-remove');
     if (ids.length) {
@@ -68036,25 +68172,26 @@ window.HMChat = (function () {
       btn.hidden = true;
     }
     Array.prototype.forEach.call(panel.querySelectorAll('.sp-cell'), function (cell) {
-      cell.classList.toggle('is-selected', !!view.stackSel[cell.dataset.sp]);
+      cell.classList.toggle('is-selected', !!sel[cell.dataset.sp]);
     });
   }
 
-  function removeSelectedFromStack() {
-    var st = desk.stacks.find(function (s) { return s.id === view.stackOpen; });
+  function removeSelectedFromStack(stackId) {
+    var st = desk.stacks.find(function (s) { return s.id === (stackId || ''); });
     if (!st) return;
-    var ids = Object.keys(view.stackSel || {});
+    var sel = stackSelOf(st.id);
+    var ids = Object.keys(sel);
     if (!ids.length) return;
     st.memberIds = st.memberIds.filter(function (id) { return ids.indexOf(id) < 0; });
     ids.forEach(function (id) { delete desk.positions[id]; });
     var empty = !st.memberIds.length;
     if (empty) desk.stacks = desk.stacks.filter(function (s) { return s.id !== st.id; });
     else st.name = '叠放 (' + st.memberIds.length + ')';
-    view.stackSel = {};
+    delete view.stackSel[st.id];
     persistNow();
     renderDesktop();
-    if (empty) closeStackPanel();
-    else renderStackPanel();
+    if (empty) closeStackPanel(st.id);
+    else renderStackPanel(st.id);
     A.toast('已移出 ' + ids.length + ' 张，回到桌面', 'success');
   }
 
@@ -68650,12 +68787,18 @@ window.HMChat = (function () {
       else openPanel();
     }, true);
 
-    /* 点击面板外部关闭 */
+    /* 点击面板外部关闭。注意：面板内的点击常会触发 renderPanel() 重建 DOM，
+       冒泡到 document 时 event.target 已经脱离 #projPanel，closest() 会误判为“外部”。
+       用 composedPath()（派发瞬间固定的路径）判断才可靠。 */
     document.addEventListener('click', function (event) {
       var panel = byId('projPanel');
       if (!panel || panel.hidden) return;
-      if (event.target.closest('#projPanel')) return;
-      if (event.target.closest('.modal') || event.target.closest('.hm-ctx')) return;
+      var inPanel = false;
+      if (typeof event.composedPath === 'function') {
+        inPanel = event.composedPath().some(function (n) { return n && n.id === 'projPanel'; });
+      }
+      if (inPanel || (event.target.closest && event.target.closest('#projPanel'))) return;
+      if (event.target.closest && (event.target.closest('.modal') || event.target.closest('.hm-ctx'))) return;
       closePanel();
     });
 
@@ -68665,7 +68808,8 @@ window.HMChat = (function () {
     var newBtn = byId('projNewBtn');
     if (newBtn) {
       newBtn.addEventListener('click', function () {
-        newFolder(function () { renderDesktop(); });
+        /* 跟随当前位置：选中了项目就建它的子文件夹 */
+        newFolder(view.activeFolder || null, function () { renderDesktop(); });
       });
     }
 
@@ -68813,7 +68957,7 @@ window.HMChat = (function () {
           renderPanel();
           renderDesktop();
         } else if (action === 'new') {
-          startInlineCreate(null);
+          startInlineCreate(view.activeFolder || null);
         }
       });
 
@@ -69113,8 +69257,8 @@ window.HMChat = (function () {
     window.addEventListener('resize', function () {
       setDockVar();
       if (document.body.getAttribute('data-view') === 'create') renderDesktop();
-      /* 浮窗按内容/桌面宽度算尺寸，窗口变窄时要重新收一次 */
-      if (view.stackOpen) { try { renderStackPanel(); } catch (e) {} }
+      /* 浮窗按内容/桌面宽度算尺寸，窗口变窄时要重新收一次（多组各自独立） */
+      try { renderOpenStackPanels(); } catch (e) {}
     });
 
     /* 选择工具条 */
