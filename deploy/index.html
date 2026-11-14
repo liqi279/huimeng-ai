@@ -30486,7 +30486,12 @@ function rayinBase() {
 }
 
 function normalizeBase(value) {
-  const base = String(value || RAYIN_DEFAULT.base).trim().replace(/\/+$/, '');
+  /* 误把具体端点当根地址（/v1/models、/v1/chat/completions…）时先剥掉，
+   * 否则拼接会变成 /v1/models/models，上游会把 models 当成模型名 */
+  const base = String(value || RAYIN_DEFAULT.base).trim()
+    .replace(/\/+$/, '')
+    .replace(/\/(models|chat\/completions|completions|responses|images\/generations|images\/edits|images\/variations|embeddings)$/i, '')
+    .replace(/\/+$/, '');
   return /\/v\d+[a-z]*$/i.test(base) ? base : base + '/v1';
 }
 
@@ -71405,6 +71410,9 @@ window.HMChat = (function () {
   function saveApiCard(p) {
     var App = window.HMApp;
     if (!App) return Promise.reject(new Error('应用未就绪'));
+    /* 接口地址归一化：误填 /models、/chat/completions 等端点时剥到根地址再存 */
+    var nb = apiBaseNormalize(p.base);
+    p.base = nb.base;
     var id = p.id;
     var name = String(p.name || '').trim() || id;
     /* 保存前先拉云端最新文档：本机缓存可能过期，直接 push 会把云端类型/计费/Key 覆盖成空 */
@@ -71558,6 +71566,16 @@ window.HMChat = (function () {
    *   2) 模型不在账号清单里              → 模型不可用（红，给出可用图像模型）
    *   3) 真实发一次最小出图请求          → 分组/通道不可用也拦得住（红）
    * 只有真正拿到图片字节才显示绿色「可用」。 */
+  /* 接口地址归一化：用户常把具体端点（/models、/chat/completions、
+   * /images/generations…）当根地址填进来，直接拼会变成 /v1/models/models，
+   * 上游会把 models 当成模型名报 404。这里统一剥到 API 根地址。 */
+  var API_ENDPOINT_TAIL = /\/(models|chat\/completions|completions|responses|images\/generations|images\/edits|images\/variations|embeddings)\/?$/i;
+  function apiBaseNormalize(raw) {
+    var s = String(raw || '').trim().replace(/\/+$/, '');
+    var stripped = s.replace(API_ENDPOINT_TAIL, '').replace(/\/+$/, '');
+    return { base: stripped, changed: stripped !== s };
+  }
+
   function apiProbeText(status, body) {
     var msg = '';
     try {
@@ -71572,7 +71590,8 @@ window.HMChat = (function () {
   function testApi(id, base, key, model, engine) {
     var App = window.HMApp;
     if (!App || !base) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
-    var root = base.replace(/\/+$/, '');
+    var root = apiBaseNormalize(base).base;
+    if (!root) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
     var headers = key ? { 'Authorization': 'Bearer ' + key } : {};
     var want = String(model || '').trim();
 
@@ -71634,8 +71653,9 @@ window.HMChat = (function () {
         if (g.timeout) return { ok: false, msg: '地址/密钥正常，但真实出图超时（>90s）' };
         if (g.status === 404) {
           var m = apiProbeText(404, g.text);
-          if (/not supported by any configured account|no available (account|channel)/i.test(m)) {
-            return { ok: false, msg: '密钥有效，但该分组没有账号承接模型「' + want + '」；请改用 GPT-image 配置（模型 gpt-image-2.5-flare）' };
+          var geminiModel = engine === 'banana' || /^gemini/i.test(want);
+          if (geminiModel || /not supported by any configured account|no available (account|channel)/i.test(m)) {
+            return { ok: false, msg: '密钥有效，但该分组不支持 Gemini 图像（模型「' + want + '」）；请改用 GPT-image 配置（模型 gpt-image-2.5-flare，走 /images/generations）' };
           }
           return { ok: false, msg: '密钥有效，但模型「' + want + '」不可用：' + m };
         }
@@ -71664,6 +71684,8 @@ window.HMChat = (function () {
   function apiCardHtml(p) {
     var state = apiTestState[p.id] || '';
     var stateHtml = '';
+    var nb = apiBaseNormalize(p.base || '');
+    var baseHint = nb.changed ? ('将自动使用根地址：' + nb.base + '（已去掉端点后缀）') : '';
     if (state === 'loading') stateHtml = '<span class="hm-api-state is-testing"><i></i>测试中…</span>';
     else if (state === 'ok') stateHtml = '<span class="hm-api-state is-ok">● 在线</span>';
     else if (state === 'fail') stateHtml = '<span class="hm-api-state is-bad">● 离线</span>';
@@ -71697,7 +71719,8 @@ window.HMChat = (function () {
       '<div class="hm-api-card-body">' +
         nameField +
         '<label class="hm-api-field"><span>接口地址</span>' +
-          '<input class="hm-api-input" data-ik="base" value="' + hmEsc(p.base) + '" placeholder="https://.../v1"></label>' +
+          '<input class="hm-api-input" data-ik="base" value="' + hmEsc(p.base) + '" placeholder="https://.../v1">' +
+          '<small data-base-hint style="display:block;margin-top:4px;font-size:11px;color:#fbbf24;">' + hmEsc(baseHint) + '</small></label>' +
         '<label class="hm-api-field"><span>API Key</span>' +
           '<div class="hm-api-key-row">' +
             '<input class="hm-api-input" data-ik="key" type="' + (p._showKey ? 'text' : 'password') + '" value="' + hmEsc(p.key) + '" placeholder="sk-...">' +
@@ -71828,7 +71851,17 @@ window.HMChat = (function () {
       body._hmModelLineBound = true;
       body.addEventListener('input', function (e) {
         var el = e.target;
-        if (!el || el.getAttribute('data-ik') !== 'model') return;
+        var ik = el && el.getAttribute ? el.getAttribute('data-ik') : '';
+        if (ik === 'base') {
+          var card0 = el.closest('.hm-api-card');
+          var hint0 = card0 && card0.querySelector('[data-base-hint]');
+          if (hint0) {
+            var n0 = apiBaseNormalize(el.value);
+            hint0.textContent = n0.changed ? ('将自动使用根地址：' + n0.base + '（已去掉端点后缀）') : '';
+          }
+          return;
+        }
+        if (ik !== 'model') return;
         var card = el.closest('.hm-api-card');
         if (!card) return;
         var line = card.querySelector('.hm-api-model-names');
@@ -71839,6 +71872,16 @@ window.HMChat = (function () {
         if (parts.indexOf(v) < 0) parts.push(v);
         line.textContent = parts.join('、');
         line.title = parts.join('、');
+      });
+      body.addEventListener('change', function (e) {
+        var el = e.target;
+        if (!el || el.getAttribute('data-ik') !== 'base') return;
+        var n = apiBaseNormalize(el.value);
+        if (!n.changed) return;
+        el.value = n.base;
+        var card = el.closest('.hm-api-card');
+        var hint = card && card.querySelector('[data-base-hint]');
+        if (hint) hint.textContent = '已自动归一化为根地址：' + n.base;
       });
     }
     var providers = getProviders();
@@ -72213,6 +72256,14 @@ window.HMChat = (function () {
 
     var base = p.base;
     var key = p.key;
+    var nbTest = apiBaseNormalize(base);
+    if (nbTest.changed) {
+      base = nbTest.base;
+      var baseInput = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-ik="base"]');
+      if (baseInput) baseInput.value = base;
+      var baseHintEl = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-base-hint]');
+      if (baseHintEl) baseHintEl.textContent = '已自动归一化为根地址：' + base;
+    }
     var engine = p.rayinVariant === 'banana' ? 'banana' : (p.rayinVariant === 'gpt' ? 'gpt-image' : ((p.preset && p.preset.engine) || ''));
     testApi(id, base, key, p.model, engine).then(function (res) {
       apiTestState[id] = res.ok ? 'ok' : 'fail';
