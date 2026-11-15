@@ -33,6 +33,7 @@ const ouaRoutes = require('./routes/oua');
 const animationRoutes = require('./routes/animation');
 const ollamaRoutes = require('./routes/ollama');
 const libraryRoutes = require('./routes/library');
+const imageProxyRoutes = require('./routes/image-proxy');
 const objectStore = require('./object-store');
 const storage = require('./storage');
 
@@ -89,6 +90,8 @@ app.use('/api', ouaRoutes);
    与 oua/art 的「路由内自带前缀」不同，这里按实际路径单独挂载。 */
 app.use('/api/animation', animationRoutes);
 app.use('/api', libraryRoutes);
+/* 鍥剧墖浠ｅ彇锛堝弬鑰冧富浣撳尯璺ㄥ煙鍏滃簳锛夛細蹇呴』鏃╀簬 /api 404 鍏滃簳 */
+app.use('/api', imageProxyRoutes);
 
 app.use('/api', (req, res) => {
   res.status(404).json({
