@@ -23,6 +23,7 @@ const {
 
 const router = express.Router();
 const edgetts = require('../edgetts');
+const callLog = require('../call-log');
 
 const MAX_PROMPT_CHARS = 1800;
 const MAX_REF_BYTES = 10 * 1024 * 1024;
@@ -1053,19 +1054,36 @@ router.post('/generate', wrap(async (req, res) => {
   }
 
   const started = Date.now();
-  if (mode === 'image') {
-    const items = await generateImages(body);
-    res.json({ items, elapsed: Date.now() - started });
-    return;
+  /* 调用日志上下文：成功/失败都落一条到 MySQL（写失败不影响主流程） */
+  const logBase = callLog.describe(req, body);
+  try {
+    let items;
+    if (mode === 'image') {
+      items = await generateImages(body);
+    } else if (mode === 'video') {
+      items = await generateVideo(body);
+    } else {
+      const result = await generateAudio(body);
+      items = result.items;
+    }
+    const elapsed = Date.now() - started;
+    await callLog.record(Object.assign({}, logBase, {
+      status: 'success',
+      httpStatus: 200,
+      durationMs: elapsed,
+      responseSummary: callLog.summarizeItems(items),
+    }));
+    res.json({ items, elapsed });
+  } catch (err) {
+    const elapsed = Date.now() - started;
+    await callLog.record(Object.assign({}, logBase, {
+      status: 'failed',
+      httpStatus: Number(err && (err.status || err.statusCode)) || 500,
+      durationMs: elapsed,
+      error: (err && err.message) || '生成失败',
+    }));
+    throw err;
   }
-  if (mode === 'video') {
-    const items = await generateVideo(body);
-    res.json({ items, elapsed: Date.now() - started });
-    return;
-  }
-
-  const result = await generateAudio(body);
-  res.json({ items: result.items, elapsed: Date.now() - started });
 }));
 
 module.exports = router;

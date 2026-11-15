@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { authRequired, adminOnly } = require('../auth');
 const store = require('../store');
+const callLog = require('../call-log');
 
 function wrap(fn) {
   return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -145,31 +146,37 @@ router.get('/admin/ranking', authRequired, adminOnly, wrap(async (req, res) => {
   res.json({ rows });
 }));
 
-/* 调用日志 —— 表格 */
+/* 调用日志 —— 真实数据（MySQL call_logs 表）
+   参数：from/to（毫秒或 ISO）、status（success/failed 或 成功/失败）、model、user、q、page、pageSize
+   返回：{ rows, total, page, pageSize, pages }，按时间倒序 */
+router.get('/admin/call-logs', authRequired, adminOnly, wrap(async (req, res) => {
+  const data = await callLog.query(req.query || {});
+  res.json(data);
+}));
+
+/* 兼容旧管理台：/admin/logs 返回同一份真实数据，字段沿用旧表格结构 */
 router.get('/admin/logs', authRequired, adminOnly, wrap(async (req, res) => {
-  const accounts = mockAccounts();
-  const modelKeys = Object.keys(MODELS);
-  const total = 25;
-  const rows = [];
-  for (let i = 0; i < total; i++) {
-    const mKey = modelKeys[i % modelKeys.length];
-    const acc = accounts[i % accounts.length];
-    const created = new Date(Date.now() - i * 86400000 * 0.7 - Math.random() * 86400000 * 0.5);
-    rows.push({
-      id: 'log_' + (1000 + i),
-      account: acc.name,
-      model: MODELS[mKey].label,
-      modelKey: mKey,
-      taskId: 'task-' + Math.random().toString(36).slice(2, 18),
-      duration: +(Math.random() * 12 + 0.8).toFixed(1),
-      status: Math.random() > 0.12 ? '成功' : (Math.random() > 0.5 ? '重试中' : '失败'),
-      cost: +(Math.random() * 2.5 + 0.02).toFixed(3),
-      tokens: Math.round(Math.random() * 4000 + 200),
-      createdAt: created.toISOString(),
-      responseCode: Math.random() > 0.12 ? 200 : (Math.random() > 0.5 ? 429 : 500),
-    });
-  }
-  res.json({ rows });
+  const data = await callLog.query(Object.assign({}, req.query || {}, { pageSize: req.query.pageSize || req.query.limit || 25 }));
+  res.json({
+    rows: data.rows.map((r) => ({
+      id: r.id,
+      account: r.account,
+      model: r.model || r.engine || r.mode || '未知模型',
+      modelKey: r.modelKey,
+      taskId: r.requestId || ('log-' + r.id),
+      duration: r.duration,
+      status: r.status === 'success' ? '成功' : '失败',
+      cost: r.cost,
+      tokens: r.tokens,
+      createdAt: r.time,
+      responseCode: r.responseCode,
+      error: r.error,
+    })),
+    total: data.total,
+    page: data.page,
+    pageSize: data.pageSize,
+    pages: data.pages,
+  });
 }));
 
 /* 账号管理 */
