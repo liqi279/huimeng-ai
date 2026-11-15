@@ -18835,6 +18835,40 @@ a.lib-btn {
   color: #e6cea6;
   font-size: 11.5px;
   font-family: inherit;
+  /* 原生下拉列表跟随页面深色外观，避免灰底灰字 */
+  color-scheme: dark;
+}
+
+.lib-panel-tools select option {
+  background-color: #101c2b;
+  color: #f0dfbd;
+}
+
+.lib-panel-tools select option:checked {
+  background-color: #24405c;
+  color: #ffffff;
+}
+
+.lib-panel-tools select option:hover {
+  background-color: #1b2f45;
+  color: #ffffff;
+}
+
+[data-theme="light"] .lib-panel-tools select {
+  background: #fffaf0;
+  color: #4a3a22;
+  border-color: rgba(120, 90, 30, 0.28);
+  color-scheme: light;
+}
+
+[data-theme="light"] .lib-panel-tools select option {
+  background-color: #fffaf0;
+  color: #3a2c16;
+}
+
+[data-theme="light"] .lib-panel-tools select option:checked {
+  background-color: #f6e3bc;
+  color: #241a08;
 }
 
 .lib-panel-tools button {
