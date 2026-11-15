@@ -4376,10 +4376,6 @@ body.hm-resizing * {
   pointer-events: none;
   z-index: 2;
   letter-spacing: 0.02em;
-  max-width: calc(100% - 6px);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 /* 选择模式：勾选框 */
@@ -29073,12 +29069,11 @@ function renderRef() {
           '</div>'
         : '';
 
-      /* 参考图名称直接沿用图片文件名（去掉扩展名），没有名字时才退回「图N」 */
-      var refName = String(ref.name || '').replace(/\.[^.]+$/, '').trim();
-      var refLabel = refName ? refName.slice(0, 12) : ('图' + (idx + 1));
+      /* 角标保持「图N」序号；上传文件名只放进悬停提示，不顶替角标 */
+      var refFileName = String(ref.name || '').trim();
       cell.innerHTML =
-        '<img alt="' + esc(refName || ('图' + (idx + 1))) + '" src="' + (ref.preview || ref.dataUrl || ref.thumb) + '">' +
-        '<span class="hm-ref-tag" title="' + esc(ref.name || refLabel) + '">' + esc(refLabel) + '</span>' +
+        '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.preview || ref.dataUrl || ref.thumb) + '">' +
+        '<span class="hm-ref-tag"' + (refFileName ? ' title="' + esc(refFileName) + '"' : '') + '>图' + (idx + 1) + '</span>' +
         check;
 
       /* 旧版本把 preview 存成了 1:1 裁切图：加载后若比例与原图不符，
