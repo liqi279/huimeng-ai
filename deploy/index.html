@@ -20546,12 +20546,6 @@ body.dv-open .hm-page {
         <input id="modelSearch" type="search" placeholder="搜索..." autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true" readonly>
       </label>
 
-      <div class="hm-slider" title="精细度（FLUX.1 有效）">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18l6-6 3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="15" r="1.6" fill="currentColor"/></svg>
-        <input type="range" id="stepsRange" min="4" max="12" step="1" value="8" aria-label="精细度">
-        <span class="hm-slider-val" id="stepsLabel">8</span>
-      </div>
-
       <button class="hm-text-btn" id="resetCanvas" title="清空当前画布">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>整理</span>
@@ -28408,7 +28402,7 @@ function toggleCustomRow() {
 
 function syncSettingsUI() {
   els.seedInput.value = String(state.seed);
-  els.stepsRange.value = String(state.steps);
+  if (els.stepsRange) els.stepsRange.value = String(state.steps);
   updateStepsUI();
   const countIndex = COUNT_OPTIONS.indexOf(state.count);
   if (els.countValue) els.countValue.textContent = String(state.count);
@@ -29414,6 +29408,7 @@ document.addEventListener('dragstart', function (ev) {
 function updateStepsUI() {
   const value = state.steps;
   const label = value <= 5 ? '极速' : value <= 8 ? '标准' : '精细';
+  if (!els.stepsLabel || !els.stepsRange) return;
   els.stepsLabel.textContent = String(value);
   els.stepsRange.title = '精细度：' + label + ' · ' + value + ' 步';
   const p = ((value - 4) / 8) * 100;
@@ -33096,11 +33091,13 @@ function bindEvents() {
     persistPrefs();
   });
 
-  els.stepsRange.addEventListener('input', function () {
-    state.steps = Number(els.stepsRange.value);
-    updateStepsUI();
-    persistPrefs();
-  });
+  if (els.stepsRange) {
+    els.stepsRange.addEventListener('input', function () {
+      state.steps = Number(els.stepsRange.value);
+      updateStepsUI();
+      persistPrefs();
+    });
+  }
 
   els.translateToggle.addEventListener('click', function () {
     state.translate = !state.translate;
