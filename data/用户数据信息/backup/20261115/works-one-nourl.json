@@ -1,0 +1,38 @@
+{
+    "fetchedAt":  1794751290182,
+    "source":  "/api/works",
+    "items":  [
+                  {
+                      "_assetBytes":  63511,
+                      "_assetId":  "as_2ed0e59c65915ca0df050995",
+                      "_localBlobKept":  true,
+                      "_pendingUpload":  true,
+                      "_rev":  13,
+                      "_updatedAt":  1794749813212,
+                      "blob":  true,
+                      "channelModel":  "flux",
+                      "createdAt":  1794730572057,
+                      "duration":  0,
+                      "elapsed":  1.307,
+                      "enPrompt":  "vampire, silver-haired, girl, female, gothic, castle, dark, red roses, moonlight, ornate detail, night, anime illustration",
+                      "engine":  "flux",
+                      "height":  1536,
+                      "id":  "0li3f7t18r98",
+                      "modelId":  "hoshino",
+                      "modelName":  "星野动漫",
+                      "ok":  true,
+                      "prompt":  "暗黑哥特城堡中的银发吸血鬼少女，红玫瑰，月光，华丽细节",
+                      "ratioId":  "16:9",
+                      "rawUrl":  "https://image.pollinations.ai/prompt/vampire%2C%20silver-haired%2C%20girl%2C%20female%2C%20gothic%2C%20castle%2C%20dark%2C%20red%20roses%2C%20moonlight%2C%20ornate%20detail%2C%20night%2C%20anime%20illustration?width=2688\u0026height=1536\u0026seed=783411937\u0026model=sana\u0026nologo=true",
+                      "refImages":  [
+
+                                    ],
+                      "scaleId":  "2k",
+                      "seed":  783411937,
+                      "steps":  4,
+                      "thumbBlob":  true,
+                      "type":  "image",
+                      "width":  2688
+                  }
+              ]
+}
