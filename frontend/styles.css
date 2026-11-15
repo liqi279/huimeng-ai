@@ -4444,6 +4444,73 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 .hm-ref-select-delete { background: rgba(251, 113, 133, 0.28) !important; border-color: rgba(251, 113, 133, 0.5) !important; }
 .hm-ref-select-clear { background: rgba(100, 116, 139, 0.3) !important; border-color: rgba(255, 255, 255, 0.2) !important; }
 
+/* ========== hover 浮层：大图预览 + 查看/@主体（图三） ========== */
+.hm-ref-hover {
+  position: fixed;
+  z-index: 900;
+  width: 140px;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: hmRefHoverIn 0.14s ease both;
+  pointer-events: auto;
+}
+@keyframes hmRefHoverIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.hm-ref-hover img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 5px;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
+}
+.hm-ref-hover-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.hm-ref-hover-actions button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 0;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease;
+  line-height: 1;
+}
+.hm-ref-hover-actions button svg {
+  width: 11px;
+  height: 11px;
+}
+.hm-ref-hover-view:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: rgba(56, 189, 248, 0.55);
+  color: #bae6fd;
+  transform: translateY(-1px);
+}
+.hm-ref-hover-at:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: #a5b4fc;
+  transform: translateY(-1px);
+}
+
 /* ========== 参考图 cell 内操作图标：查看 / @主体（仅 hover 显示，上下排列） ========== */
 .hm-ref-cell-ops {
   position: absolute;
