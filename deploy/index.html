@@ -16170,6 +16170,8 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   color: rgba(230, 240, 255, 0.85);
   box-shadow: none;
   cursor: pointer;
+  /* 必须压在大图 lightbox / 各种遮罩之上，否则打开大图后侧栏按钮被盖住看不见 */
+  z-index: 10020;
   transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, color 0.2s ease;
 }
 
