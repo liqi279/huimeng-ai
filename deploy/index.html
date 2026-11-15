@@ -18796,6 +18796,49 @@ a.lib-btn {
   gap: 4px;
 }
 
+/* 阅读历史：时间段筛选 / 一键清空 / 保留规则小字 */
+.lib-panel-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px 0;
+}
+
+.lib-panel-tools select {
+  flex: 1;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  background: rgba(0, 0, 0, 0.25);
+  color: #e6cea6;
+  font-size: 11.5px;
+  font-family: inherit;
+}
+
+.lib-panel-tools button {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e6b8a6;
+  font-size: 11.5px;
+}
+
+.lib-panel-tools button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.lib-panel-hint {
+  margin: 8px 14px 0;
+  font-size: 10.5px;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: rgba(230, 206, 166, 0.5);
+}
+
 .lib-panel-item {
   display: flex;
   align-items: center;
@@ -56029,6 +56072,7 @@ window.HMChat = (function () {
       });
       state.fav = cached.fav || {};
       state.hist = cached.hist || [];
+      pruneHistory(true);
       state.booted = true;
       state.loading = false;
       markShelf();
@@ -56050,6 +56094,7 @@ window.HMChat = (function () {
       state.fav = loadFavLocal();
       state.hist = loadHistLocal();
     }).then(function () {
+      pruneHistory(true);
       state.booted = true;
       state.loading = false;
       markShelf();
@@ -56163,6 +56208,63 @@ window.HMChat = (function () {
       if (state.hist[i].bookId === id) return Number(state.hist[i].lastPage) || 0;
     }
     return 0;
+  }
+
+  /* ---------------- 阅读历史：保留一周 / 时间筛选 / 清空 ----------------
+   * 记录时间统一取 openedAt（本机与后端 /library/history 都用这个字段）。
+   * 超过 7 天的记录在读取时回收，并把回收结果写回本机存储（顺带更新远端快照），
+   * 不需要用户手动操作；清空后的历史用 clearedAt 水位挡住后端回流的旧记录。 */
+  var HIST_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
+  var HIST_CLEARED_KEY = 'anidream.library.histcleared.v1';
+  var histFilter = 'all';
+
+  function histTime(h) {
+    return Number(h && (h.openedAt || h.updatedAt || h.at)) || 0;
+  }
+
+  function histClearedAt() {
+    try { return Number(localStorage.getItem(HIST_CLEARED_KEY)) || 0; } catch (e) { return 0; }
+  }
+
+  function pruneHistory(silent) {
+    var now = Date.now();
+    var cleared = histClearedAt();
+    var before = state.hist.length;
+    state.hist = state.hist.filter(function (h) {
+      var ts = histTime(h);
+      if (cleared && ts && ts <= cleared) return false;
+      if (!ts) return true;          /* 没有时间戳的旧记录不误删 */
+      return (now - ts) <= HIST_KEEP_MS;
+    });
+    if (state.hist.length === before) return;
+    try { writeJSON(LS.hist, state.hist); } catch (e) {}
+    if (state.mode === 'remote') { try { saveRemoteMeta(); } catch (e) {} }
+    if (!silent) toast('已清理超过一周的阅读历史', 'info');
+  }
+
+  function clearHistory() {
+    try { localStorage.setItem(HIST_CLEARED_KEY, String(Date.now())); } catch (e) {}
+    state.hist = [];
+    try { writeJSON(LS.hist, []); } catch (e) {}
+    if (state.mode === 'remote') { try { saveRemoteMeta(); } catch (e) {} }
+    showPanel('hist');
+    toast('阅读历史已清空', 'success');
+  }
+
+  function histInRange(h) {
+    if (histFilter === 'all') return true;
+    var ts = histTime(h);
+    if (!ts) return false;
+    var now = Date.now();
+    if (histFilter === 'today') {
+      var a = new Date(ts);
+      var b = new Date(now);
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+    var span = histFilter === '3d' ? 3 * 86400000
+      : histFilter === '7d' ? 7 * 86400000
+      : histFilter === '30d' ? 30 * 86400000 : 0;
+    return span ? (now - ts) <= span : true;
   }
 
   /* ---------------- 书架渲染 ---------------- */
@@ -57606,15 +57708,40 @@ window.HMChat = (function () {
   function showPanel(kind) {
     if (!els.modal) return;
     var title = kind === 'fav' ? '我的收藏' : '阅读历史';
-    var list = kind === 'fav'
-      ? state.books.filter(function (b) { return isFavorite(b.id); })
-      : state.hist.map(function (h) { return h.book || byId(h.bookId); }).filter(Boolean);
+    if (kind === 'hist') pruneHistory(true);
+    var list;
+    var tools = '';
+    var hint = '';
+    var emptyText;
+    if (kind === 'fav') {
+      list = state.books.filter(function (b) { return isFavorite(b.id); });
+      emptyText = '还没有收藏的书籍，打开一本书点击「收藏」吧。';
+    } else {
+      list = state.hist.filter(histInRange)
+        .map(function (h) { return h.book || byId(h.bookId); })
+        .filter(Boolean);
+      emptyText = state.hist.length
+        ? '这个时间段内没有阅读记录，换个时间范围试试。'
+        : '还没有阅读记录，去书架翻开一本书。';
+      tools = '<div class="lib-panel-tools">'
+        + '<select data-hist-range aria-label="按时间段筛选阅读历史">'
+        + '<option value="all">全部时间</option>'
+        + '<option value="today">今天</option>'
+        + '<option value="3d">最近 3 天</option>'
+        + '<option value="7d">最近 7 天</option>'
+        + '<option value="30d">最近 30 天</option>'
+        + '</select>'
+        + '<button type="button" data-hist-clear>清空历史</button>'
+        + '</div>'
+        + '<p class="lib-panel-hint">默认仅保留最近一周的阅读记录，超过 7 天会自动删除。</p>';
+    }
 
     els.modal.hidden = false;
     els.modal.innerHTML = '<div class="lib-modal-mask" data-mask></div>'
       + '<div class="lib-modal-card lib-panel">'
       + '<div class="lib-modal-head"><h3>' + title + '</h3>'
       + '<button type="button" class="lib-modal-close" data-close>×</button></div>'
+      + tools
       + (list.length ? '<div class="lib-panel-list">' + list.map(function (b) {
         var p = progressOf(b.id);
         var sub = kind === 'fav'
@@ -57625,12 +57752,28 @@ window.HMChat = (function () {
           + '<span class="lib-panel-text"><b>' + esc(b.title) + '</b><small>' + sub + '</small></span>'
           + '<span class="lib-panel-go">打开 →</span></button>';
       }).join('') + '</div>'
-        : '<div class="lib-panel-empty">' + (kind === 'fav' ? '还没有收藏的书籍，打开一本书点击「收藏」吧。' : '还没有阅读记录，去书架翻开一本书。') + '</div>')
+        : '<div class="lib-panel-empty">' + emptyText + '</div>')
       + '</div>';
 
     els.modal.querySelectorAll('[data-close], [data-mask]').forEach(function (el) {
       el.addEventListener('click', closeModal);
     });
+    var rangeSel = els.modal.querySelector('[data-hist-range]');
+    if (rangeSel) {
+      rangeSel.value = histFilter;
+      rangeSel.addEventListener('change', function () {
+        histFilter = rangeSel.value || 'all';
+        showPanel('hist');
+      });
+    }
+    var clearBtn = els.modal.querySelector('[data-hist-clear]');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (!state.hist.length) { toast('还没有阅读记录可清空', 'info'); return; }
+        if (window.confirm && !window.confirm('确定清空全部阅读历史？清空后不可恢复。')) return;
+        clearHistory();
+      });
+    }
     els.modal.querySelectorAll('[data-open]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var id = btn.getAttribute('data-open');
