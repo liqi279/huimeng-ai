@@ -4062,25 +4062,44 @@ body.hm-resizing * {
   gap: 4px;
   white-space: nowrap;
   overflow: hidden;
+  position: relative;
   transition: color 0.18s ease, background 0.18s ease;
 }
 .hm-tab-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: center;
 }
+/* 删除叉号：默认不占位（绝对定位浮在口袋右上角），只在 hover/键盘聚焦时浮现，
+   不会把口袋名挤偏；触屏无 hover 时保持可见可点，避免删不掉 */
 .hm-tab-del {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
   display: none;
-  flex: 0 0 auto;
-  color: rgba(148, 163, 184, 0.9);
-  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid rgba(251, 113, 133, 0.45);
+  background: rgba(15, 25, 38, 0.96);
+  color: #fecdd3;
+  font-size: 10px;
   line-height: 1;
-  padding: 1px 2px;
-  border-radius: 3px;
+  padding: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  z-index: 3;
 }
 .hm-tab:hover .hm-tab-del,
-.hm-tab.is-active .hm-tab-del { display: inline-block; }
-.hm-tab-del:hover { color: #fda4af; background: rgba(251, 113, 133, 0.15); }
+.hm-tab:focus-visible .hm-tab-del { display: inline-flex; }
+.hm-tab-del:hover { color: #fff; background: rgba(251, 113, 133, 0.35); }
+
+@media (hover: none) {
+  .hm-tab .hm-tab-del { display: inline-flex; }
+}
 
 .hm-tab:hover {
   color: #cfe4f7;
@@ -32535,6 +32554,7 @@ function bindEvents() {
       if (tab) switchPromptTab(Number(tab.dataset.tab));
     });
     els.promptTabs.addEventListener('dblclick', function (event) {
+      if (event.target.closest('[data-del]')) return; /* 双击叉号不触发重命名 */
       const tab = event.target.closest('[data-tab]');
       if (tab) {
         event.preventDefault();
