@@ -4376,6 +4376,10 @@ body.hm-resizing * {
   pointer-events: none;
   z-index: 2;
   letter-spacing: 0.02em;
+  max-width: calc(100% - 6px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 选择模式：勾选框 */
@@ -25290,7 +25294,7 @@ body.dv-open .hm-page {
 
           <!-- 滑动调节：按钮 + 浮层（图一样式双行） -->
           <div class="hm-slider-wrap" id="sliderWrap">
-            <button type="button" class="hm-slider-btn" id="sliderBtn" aria-haspopup="true" aria-expanded="false" title="字号 / 参考主体强度">
+            <button type="button" class="hm-slider-btn" id="sliderBtn" aria-haspopup="true" aria-expanded="false" title="字号 / 参考图缩放">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="7" r="2.3" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="17" r="2.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
               <span id="sliderBtnText">13 · 70%</span>
             </button>
@@ -25301,7 +25305,7 @@ body.dv-open .hm-page {
                   <input type="range" id="fontSizeSlider" min="10" max="22" step="1" value="13">
                   <span id="fontSizeLabel" class="hm-slider-val">13</span>
                 </div>
-                <div class="hm-slider" title="参考主体强度">
+                <div class="hm-slider" title="参考图缩放">
                   <svg class="hm-slider-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14M5 19h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="8" y="8" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
                   <input type="range" id="refWeightSlider" min="0" max="200" step="5" value="70">
                   <span id="refWeightLabel" class="hm-slider-val">70%</span>
@@ -28961,7 +28965,7 @@ function syncRefNote() {
     els.refNote.textContent = '当前描述 · 支持多参考图 · 提示词中用 @1 @2 @3 等引用（最多 ' + REF_MAX_COUNT + ' 张）';
     els.refNote.classList.remove('is-warn');
   } else {
-    els.refNote.textContent = '当前描述已添加 ' + count + ' 张参考图 · 每张图下方可调节主体强度 · 用 @1~@' + count + ' 在提示词中指定';
+    els.refNote.textContent = '当前描述已添加 ' + count + ' 张参考图 · 拖动滑块可整体缩放参考图 · 用 @1~@' + count + ' 在提示词中指定';
     els.refNote.classList.remove('is-warn');
   }
 }
@@ -29066,9 +29070,12 @@ function renderRef() {
           '</div>'
         : '';
 
+      /* 参考图名称直接沿用图片文件名（去掉扩展名），没有名字时才退回「图N」 */
+      var refName = String(ref.name || '').replace(/\.[^.]+$/, '').trim();
+      var refLabel = refName ? refName.slice(0, 12) : ('图' + (idx + 1));
       cell.innerHTML =
-        '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.preview || ref.dataUrl || ref.thumb) + '">' +
-        '<span class="hm-ref-tag">图' + (idx + 1) + '</span>' +
+        '<img alt="' + esc(refName || ('图' + (idx + 1))) + '" src="' + (ref.preview || ref.dataUrl || ref.thumb) + '">' +
+        '<span class="hm-ref-tag" title="' + esc(ref.name || refLabel) + '">' + esc(refLabel) + '</span>' +
         check;
 
       /* 旧版本把 preview 存成了 1:1 裁切图：加载后若比例与原图不符，
