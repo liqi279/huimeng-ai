@@ -4452,71 +4452,58 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 .hm-ref-select-delete { background: rgba(251, 113, 133, 0.28) !important; border-color: rgba(251, 113, 133, 0.5) !important; }
 .hm-ref-select-clear { background: rgba(100, 116, 139, 0.3) !important; border-color: rgba(255, 255, 255, 0.2) !important; }
 
-/* ========== hover 浮层：大图预览 + 查看/@主体（图三） ========== */
-.hm-ref-hover {
-  position: fixed;
-  z-index: 900;
-  width: 140px;
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  border-radius: 8px;
-  padding: 6px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  animation: hmRefHoverIn 0.14s ease both;
-  pointer-events: auto;
-}
-@keyframes hmRefHoverIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-.hm-ref-hover img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 5px;
-  display: block;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #000;
-}
-.hm-ref-hover-actions {
+/* ========== 参考图 cell 内操作图标：查看 / @主体（仅 hover 显示，上下排列） ========== */
+.hm-ref-cell-ops {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   display: flex;
-  gap: 4px;
-  margin-top: 6px;
-}
-.hm-ref-hover-actions button {
-  flex: 1;
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 4px 0;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
+  gap: 4px;
+  border-radius: 6px;
+  background: rgba(2, 6, 23, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.hm-ref-cell:hover .hm-ref-cell-ops {
+  opacity: 1;
+  pointer-events: auto;
+}
+.hm-ref-cell-ops button {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(15, 23, 42, 0.82);
   color: #e2e8f0;
   cursor: pointer;
-  transition: background 0.12s ease, transform 0.12s ease;
-  line-height: 1;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
 }
-.hm-ref-hover-actions button svg {
-  width: 11px;
-  height: 11px;
+.hm-ref-cell-ops button svg {
+  width: 12px;
+  height: 12px;
 }
-.hm-ref-hover-view:hover {
-  background: rgba(56, 189, 248, 0.22);
-  border-color: rgba(56, 189, 248, 0.55);
+.hm-ref-cell-ops .hm-ref-op-view:hover {
+  background: rgba(56, 189, 248, 0.35);
+  border-color: rgba(56, 189, 248, 0.8);
   color: #bae6fd;
-  transform: translateY(-1px);
+  transform: scale(1.12);
 }
-.hm-ref-hover-at:hover {
-  background: rgba(99, 102, 241, 0.25);
-  border-color: rgba(99, 102, 241, 0.6);
+.hm-ref-cell-ops .hm-ref-op-at:hover {
+  background: rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.85);
   color: #a5b4fc;
-  transform: translateY(-1px);
+  transform: scale(1.12);
+}
+/* 选择素材模式下不显示操作图标，避免与勾选框冲突 */
+body[data-ref-select="1"] .hm-ref-cell-ops {
+  display: none;
 }
 
 /* ========== 全屏查看 modal（图一） ========== */
@@ -20181,7 +20168,7 @@ body.dv-open .hm-page {
 
 </style>
 <script>window.HM_LIBRARY_SEED = {"version":1,"updatedAt":"2026-11-05","note":"绘梦图书馆 · 书籍种子数据（已清空，保留变量与结构）。","books":[]};</script>
-<script>window.HM_BUILD = "20261113085647-5ec0689";</script>
+<script>window.HM_BUILD = "20261115172717-719b000";</script>
 </head>
 <body data-view="create">
 <script>
@@ -25739,25 +25726,10 @@ body.dv-open .hm-page {
     </div>
   </div>
 
-  <!-- ===== 注意：以下两个组件放在 body 直接子元素，不能放 composer 内 =====
+  <!-- ===== 注意：全屏查看组件放在 body 直接子元素，不能放 composer 内 =====
        因为 .hm-composer 有 backdrop-filter，会强制成为 containing block，
        导致 position:fixed 元素降级为相对于 composer 定位而非视口。
-       另外必须放在所有 <script> 之前，否则 app.js 的 bindEls() 取到 null（预览/浮层失效）。 -->
-
-  <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
-  <div class="hm-ref-hover" id="refHover" hidden>
-    <img alt="预览">
-    <div class="hm-ref-hover-actions">
-      <button type="button" class="hm-ref-hover-view" title="全屏查看">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        查看
-      </button>
-      <button type="button" class="hm-ref-hover-at" title="@主体">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-        @主体
-      </button>
-    </div>
-  </div>
+       另外必须放在所有 <script> 之前，否则 app.js 的 bindEls() 取到 null。 -->
 
   <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
   <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
@@ -27571,7 +27543,6 @@ function bindEls() {
   els.refSelectCancel = document.getElementById('refSelectCancel');
   els.refSelectDelete = document.getElementById('refSelectDelete');
   els.refSelectClear = document.getElementById('refSelectClear');
-  els.refHover = document.getElementById('refHover');
   els.refFullscreen = document.getElementById('refFullscreen');
   els.refFsImg = document.getElementById('refFsImg');
   els.refFsIdx = document.getElementById('refFsIdx');
@@ -28577,33 +28548,6 @@ function closeRefFullscreen() {
   if (els.refFullscreen) els.refFullscreen.hidden = true;
 }
 
-/* ========== hover 浮层 ========== */
-var _refHoverIdx = -1;
-var _refHoverEnterTimer = 0;
-function showRefHover(idx, anchorEl) {
-  var list = currentRefs();
-  if (!list[idx] || _refSelectMode) return;
-  _refHoverIdx = idx;
-  if (!els.refHover) return;
-  els.refHover.querySelector('img').src = list[idx].dataUrl;
-  els.refHover.hidden = false;
-  /* 位置：anchorEl 右侧或下侧，避免超出视口 */
-  var r = anchorEl.getBoundingClientRect();
-  var hoverW = 140, hoverH = 156;
-  var top = r.bottom + 6;
-  var left = r.left;
-  if (top + hoverH > window.innerHeight) top = r.top - hoverH - 6;
-  if (left + hoverW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - hoverW - 8);
-  if (left < 8) left = 8;
-  els.refHover.style.top = top + 'px';
-  els.refHover.style.left = left + 'px';
-}
-function hideRefHover() {
-  if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
-  _refHoverIdx = -1;
-  if (els.refHover) els.refHover.hidden = true;
-}
-
 /* ========== renderRef（完全重写） ========== */
 function renderRef() {
   var list = currentRefs();
@@ -28627,6 +28571,14 @@ function renderRef() {
       cell.innerHTML =
         '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.thumb || ref.dataUrl) + '">' +
         '<span class="hm-ref-tag">图' + (idx + 1) + '</span>' +
+        '<div class="hm-ref-cell-ops">' +
+          '<button type="button" class="hm-ref-op-view" title="查看大图" aria-label="查看大图">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '</button>' +
+          '<button type="button" class="hm-ref-op-at" title="@主体" aria-label="@主体">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>' +
+          '</button>' +
+        '</div>' +
         check;
 
       /* 事件：选择模式下点击 cell = toggle 选中；否则点击 = 打开全屏 */
@@ -28639,22 +28591,15 @@ function renderRef() {
         openRefFullscreen(idx);
       });
 
-      /* hover 浮层（非选择模式才显示）：鼠标enter 延迟一点避免闪烁 */
-      if (!_refSelectMode) {
-        cell.addEventListener('mouseenter', function () {
-          if (_refHoverEnterTimer) clearTimeout(_refHoverEnterTimer);
-          _refHoverEnterTimer = setTimeout(function () {
-            showRefHover(idx, cell);
-          }, 120);
-        });
-        cell.addEventListener('mouseleave', function () {
-          if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
-          /* 延迟隐藏，让用户能移到浮层上 */
-          setTimeout(function () {
-            if (_refHoverIdx === idx && els.refHover && !els.refHover.matches(':hover')) hideRefHover();
-          }, 180);
-        });
-      }
+      /* cell 内上下排列的操作图标：查看 / @主体（仅 hover 显示，见 CSS） */
+      cell.querySelector('.hm-ref-op-view').addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        openRefFullscreen(idx);
+      });
+      cell.querySelector('.hm-ref-op-at').addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        insertPromptAt('@' + (idx + 1) + ' ');
+      });
 
       els.refGrid.appendChild(cell);
     });
@@ -28834,7 +28779,6 @@ function removeRefAt(idx) {
   });
   _refSelectedSet = nextSel;
   if (_refFsIdx === idx) closeRefFullscreen();
-  hideRefHover();
   renderRef();
   toast('已删除参考图 #' + (idx + 1), 'info');
 }
@@ -28843,7 +28787,6 @@ function clearRefImages() {
   setCurrentRefs([]);
   els.refInput.value = '';
   _refSelectedSet = {};
-  hideRefHover();
   closeRefFullscreen();
   renderRef();
 }
@@ -32134,33 +32077,6 @@ function bindEvents() {
     if (!currentRefs().length) return;
     if (confirm('确定要清空所有参考图吗？')) { clearRefImages(); exitRefSelectMode(); toast('已清空所有参考图', 'info'); }
   });
-
-  /* === hover 浮层按钮 === */
-  if (els.refHover) {
-    els.refHover.addEventListener('click', function (ev) {
-      var viewBtn = ev.target.closest('.hm-ref-hover-view');
-      if (viewBtn) {
-        ev.stopPropagation();
-        if (_refHoverIdx >= 0) openRefFullscreen(_refHoverIdx);
-        hideRefHover();
-        return;
-      }
-      var atBtn = ev.target.closest('.hm-ref-hover-at');
-      if (atBtn) {
-        ev.stopPropagation();
-        if (_refHoverIdx >= 0) insertPromptAt('@' + (_refHoverIdx + 1) + ' ');
-        hideRefHover();
-        return;
-      }
-    });
-    /* 浮层自己 hover 时不要收起 */
-    els.refHover.addEventListener('mouseenter', function () {
-      if (_refHoverEnterTimer) { clearTimeout(_refHoverEnterTimer); _refHoverEnterTimer = 0; }
-    });
-    els.refHover.addEventListener('mouseleave', function () {
-      hideRefHover();
-    });
-  }
 
   /* === 全屏查看控制 === */
   if (els.refFsClose) els.refFsClose.addEventListener('click', closeRefFullscreen);

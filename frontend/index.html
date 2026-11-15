@@ -5564,25 +5564,10 @@
     </div>
   </div>
 
-  <!-- ===== 注意：以下两个组件放在 body 直接子元素，不能放 composer 内 =====
+  <!-- ===== 注意：全屏查看组件放在 body 直接子元素，不能放 composer 内 =====
        因为 .hm-composer 有 backdrop-filter，会强制成为 containing block，
        导致 position:fixed 元素降级为相对于 composer 定位而非视口。
-       另外必须放在所有 <script> 之前，否则 app.js 的 bindEls() 取到 null（预览/浮层失效）。 -->
-
-  <!-- hover 浮层：大图预览 + 查看/@主体/删除（图三） -->
-  <div class="hm-ref-hover" id="refHover" hidden>
-    <img alt="预览">
-    <div class="hm-ref-hover-actions">
-      <button type="button" class="hm-ref-hover-view" title="全屏查看">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        查看
-      </button>
-      <button type="button" class="hm-ref-hover-at" title="@主体">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8v5a4 4 0 0 1-8 0" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-        @主体
-      </button>
-    </div>
-  </div>
+       另外必须放在所有 <script> 之前，否则 app.js 的 bindEls() 取到 null。 -->
 
   <!-- 全屏查看 modal（图一：黑底 + 控制条） -->
   <div class="hm-ref-fullscreen" id="refFullscreen" hidden>
