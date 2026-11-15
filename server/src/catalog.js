@@ -61,41 +61,6 @@ const RAYIN_MODELS = [
     desc: 'GPT Image 2.5 Sunburst 细节增强版，画面锐利、纹理丰富。',
     tags: ['GPT', 'Sunburst', '细节'],
   },
-
-  /* ============ Gemini 图像模型（Key 2 · Gemini） ============ */
-  {
-    id: 'gemini-3-pro-image',
-    engine: 'banana',
-    keyGroup: 'gemini',
-    model: 'gemini-3-pro-image',
-    name: 'Nano Banana Pro',
-    badge: 'Gemini · Pro',
-    hint: '最高质量 · 精细渲染 · 多图理解',
-    desc: 'Gemini 3 Pro 图像版，最强生图模型，支持多图参考和精细渲染。',
-    tags: ['Gemini', 'Pro', '高质量'],
-  },
-  {
-    id: 'gemini-3.1-flash-image',
-    engine: 'banana',
-    keyGroup: 'gemini',
-    model: 'gemini-3.1-flash-image',
-    name: 'Nano Banana 2',
-    badge: 'Gemini · Flash',
-    hint: '速度最快 · 平衡质量',
-    desc: 'Gemini 3.1 Flash 图像版，速度最快，平衡质量与速度。',
-    tags: ['Gemini', 'Flash', '快速'],
-  },
-  {
-    id: 'gemini-3.1-flash-lite-image',
-    engine: 'banana',
-    keyGroup: 'gemini',
-    model: 'gemini-3.1-flash-lite-image',
-    name: 'Nano Banana 2 Lite',
-    badge: 'Gemini · Lite',
-    hint: '最轻量 · 秒级响应',
-    desc: 'Gemini 3.1 Flash Lite 图像版，最轻量，秒级响应。',
-    tags: ['Gemini', 'Lite', '极速'],
-  },
 ];
 
 /* 动漫 LoRA 风格包：把 LoRA 触发词写进提示词，兼容所有通道 */
