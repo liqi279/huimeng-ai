@@ -1,16 +1,11 @@
 -- =============================================================
 -- 绘梦 · 调用日志表（真实落库）
--- 库：huimeng_library（与图书馆同库，字符集 utf8mb4）
--- 可重复执行：全部语句均为 IF NOT EXISTS，不会报错、不会丢数据
--- 导入：mysql -u root -p < call-logs.sql
+-- 说明：表建在服务端 MYSQL_URL 连接串指向的库（当前线上为 huimeng_users），
+--       与账号/作品库同库；本脚本不含 CREATE DATABASE / USE，可在任意库执行。
+-- 可重复执行：CREATE TABLE IF NOT EXISTS，不会报错、不会丢数据
+-- 导入：mysql -u <user> -p <db> < call-logs.sql
 -- SCF 运行时也会在首次写入时自动执行同一份建表语句（见 src/call-log.js）
 -- =============================================================
-
-CREATE DATABASE IF NOT EXISTS huimeng_library
-  DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_unicode_ci;
-
-USE huimeng_library;
 
 CREATE TABLE IF NOT EXISTS `call_logs` (
   `id`                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
