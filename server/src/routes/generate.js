@@ -3,6 +3,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const config = require('../config');
+const appConfig = require('../app-config');
 const catalog = require('../catalog');
 const mediaStore = require('../media-store');
 const {
@@ -135,21 +136,23 @@ function readRefImages(value) {
   });
 }
 
-function resolveRayin(input) {
+async function resolveRayin(input) {
   const rayin = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
   /* 两套 key 共存：
    *   openaiKey  → engine=gpt-image → /images/generations
    *   geminiKey  → engine=banana   → /chat/completions
-   * 前端可传 rayin.key 覆盖（单 key 兼容老版），否则用后端默认 */
+   * 前端可传 rayin.key 覆盖（单 key 兼容老版），否则用后端默认：
+   * 环境变量优先，其次 app_config 表（跨设备共享），最后内置默认。 */
   const userKey = typeof rayin.key === 'string' && rayin.key.trim() ? rayin.key.trim() : '';
+  const fallback = userKey ? null : await appConfig.getGemini();
   return {
-    base: normalizeBase(rayin.base),
+    base: normalizeBase(rayin.base || (fallback && fallback.base)),
     openaiKey: userKey || config.OPENAI_KEY,
-    geminiKey: userKey || config.GEMINI_KEY,
+    geminiKey: userKey || config.GEMINI_KEY || (fallback && fallback.key) || '',
     gptModel: typeof rayin.gptModel === 'string' && rayin.gptModel.trim() ? rayin.gptModel.trim() : config.GPT_MODEL,
     bananaModel: typeof rayin.bananaModel === 'string' && rayin.bananaModel.trim()
       ? rayin.bananaModel.trim()
-      : config.BANANA_MODEL,
+      : (fallback && fallback.model) || config.BANANA_MODEL,
   };
 }
 
@@ -481,7 +484,7 @@ async function generateImages(body) {
   const steps = readSteps(body.steps);
   const seedInput = readSeed(body.seed);
   const refs = readRefImages(body.refImages);
-  const rayin = resolveRayin(body.rayin);
+  const rayin = await resolveRayin(body.rayin);
 
   const lora = catalog.findLora(body.style);
   const styled = applyStyle(prompt, lora);
@@ -906,7 +909,7 @@ async function generateAudio(body) {
       audioBuffer = result.audio;
     } catch (err) {
       /* Edge-TTS 失败时，给出友好提示；同时如果用户配置了 RayinAPI Key，可选降级 */
-      const rayin = resolveRayin(body.rayin);
+      const rayin = await resolveRayin(body.rayin);
       if (rayin.key) {
         try {
           audioBuffer = await generateAudioViaRayin({
@@ -934,7 +937,7 @@ async function generateAudio(body) {
   }
 
   /* === 付费引擎：RayinAPI === */
-  const rayin = resolveRayin(body.rayin);
+  const rayin = await resolveRayin(body.rayin);
   requireKey(rayin.key);
   const voice = typeof body.voice === 'string' && body.voice.trim() ? body.voice.trim() : 'alloy';
   const format = body.format === 'wav' ? 'wav' : 'mp3';

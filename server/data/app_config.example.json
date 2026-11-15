@@ -1,0 +1,5 @@
+{
+  "gemini.baseUrl": "https://www.rayinai.com",
+  "gemini.apiKey": "",
+  "gemini.defaultModel": "gemini-3.1-flash-image"
+}

@@ -76,12 +76,26 @@ const OBJECT_STORE_BACKEND =
   ({ s3: 'oss', oss: 'oss', local: 'local', auto: 'auto' })[LEGACY_OBJECT_STORE] || 'auto';
 const STORAGE_BACKEND = env('STORAGE_BACKEND', '') || OBJECT_STORE_BACKEND;
 
+/* Gemini / Rayin 别名：兼容 GOOGLE_GEMINI_BASE_URL、GEMINI_API_KEY、GEMINI_MODEL */
+function aliasBaseUrl(raw) {
+  const value = String(raw || '').trim().replace(/\/+$/, '');
+  if (!value) return '';
+  return /\/v\d+(beta)?$/i.test(value) ? value : value + '/v1';
+}
+const GEMINI_BASE_ENV = aliasBaseUrl(
+  env('RAYIN_BASE', env('GOOGLE_GEMINI_BASE_URL', ''))
+);
+const GEMINI_KEY_ENV = env('GEMINI_KEY', env('GEMINI_API_KEY', ''));
+/* GEMINI_MODEL 只在它是图像模型时才作为生图默认值；纯文本模型忽略 */
+const GEMINI_MODEL_ENV = env('GEMINI_MODEL', '');
+const GEMINI_IMAGE_MODEL_ENV = /image/i.test(GEMINI_MODEL_ENV) ? GEMINI_MODEL_ENV : '';
+
 module.exports = {
   PORT: Number(env('PORT', '8787')),
   HTTPS_PORT: Number(env('HTTPS_PORT', '8443')),
   HTTPS: env('HTTPS', 'auto'), /* 'on' | 'off' | 'auto' */
   /* RayinAI 代理 —— 两套 key，共用同一个 base URL */
-  RAYIN_BASE: env('RAYIN_BASE', 'https://www.rayinai.com/v1'),
+  RAYIN_BASE: GEMINI_BASE_ENV || 'https://www.rayinai.com/v1',
 
   /* Key 1: OpenAI 图像模型 —— 走 /images/generations
      用户账号下可用图像模型:
@@ -93,14 +107,15 @@ module.exports = {
   /* Key 2: Gemini 图像模型 —— 走 /chat/completions
      用户账号下可用图像模型:
      gemini-3-pro-image / gemini-3.1-flash-image / gemini-3.1-flash-lite-image */
-  GEMINI_KEY: env('GEMINI_KEY', ''),
+  GEMINI_KEY: GEMINI_KEY_ENV,
 
-  /* 向后兼容别名（未单独配置时沿用 GEMINI_KEY，避免两处不一致） */
-  RAYIN_KEY: env('RAYIN_KEY', env('GEMINI_KEY', '')),
+  /* 向后兼容别名（未单独配置时沿用 GEMINI_KEY / GEMINI_API_KEY，避免两处不一致） */
+  RAYIN_KEY: env('RAYIN_KEY', GEMINI_KEY_ENV),
 
   /* 默认模型（可被前端 payload.model 覆盖） */
   GPT_MODEL: env('GPT_MODEL', 'gpt-image-2.5-flare'),
-  BANANA_MODEL: env('BANANA_MODEL', 'gemini-3.1-flash-image'),
+  BANANA_MODEL: env('BANANA_MODEL', GEMINI_IMAGE_MODEL_ENV || 'gemini-3.1-flash-image'),
+  GEMINI_MODEL: GEMINI_MODEL_ENV,
   VIDEO_MODEL: env('VIDEO_MODEL', 'sora-2'),
   AUDIO_MODEL: env('AUDIO_MODEL', 'tts-1'),
   RAYIN_VIDEO_PATH: env('RAYIN_VIDEO_PATH', '/videos/generations'),
