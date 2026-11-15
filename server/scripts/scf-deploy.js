@@ -8,6 +8,8 @@
  *   node server/scripts/scf-deploy.js
  *   node server/scripts/scf-deploy.js --skip-pack     # 复用 dist 里已有 zip
  *   node server/scripts/scf-deploy.js --check-only    # 只跑五步自检
+ *   node server/scripts/scf-deploy.js --prune-only     # 只演练快照清理（只打印不删）
+ *   node server/scripts/scf-deploy.js --prune-dry-run  # 正常发布，但清理只打印不删
  *
  * 回滚（默认最近一次快照；也可指定 key 或文件名）：
  *   node server/scripts/scf-deploy.js --rollback
@@ -39,7 +41,10 @@ const CFG = {
   region: process.env.COS_REGION || 'ap-guangzhou',
   objectKey: process.env.SCF_CODE_KEY || 'scf/huimeng-scf.zip',
   releasePrefix: 'scf/releases/',
-  keepReleases: Number(process.env.SCF_KEEP_RELEASES || 6),
+  keepReleases: (function () {
+    const n = Number(process.env.SCF_KEEP_RELEASES || 3);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 3;
+  })(),
   secretId: process.env.COS_SECRET_ID || process.env.S3_ACCESS_KEY_ID || '',
   secretKey: process.env.COS_SECRET_KEY || process.env.S3_SECRET_ACCESS_KEY || '',
   namespace: process.env.SCF_NAMESPACE || 'default',
@@ -51,6 +56,8 @@ const CFG = {
 const args = process.argv.slice(2);
 const skipPack = args.includes('--skip-pack');
 const checkOnly = args.includes('--check-only');
+const pruneDry = args.includes('--prune-dry-run');
+const pruneOnly = args.includes('--prune-only');
 const rollbackIdx = args.indexOf('--rollback');
 const isRollback = rollbackIdx >= 0;
 const rollbackTarget = isRollback ? (args[rollbackIdx + 1] && !args[rollbackIdx + 1].startsWith('-') ? args[rollbackIdx + 1] : '') : '';
@@ -150,6 +157,58 @@ async function listReleases() {
     .filter((o) => /\.zip$/i.test(o.Key))
     .map((o) => ({ key: o.Key, size: Number(o.Size), mtime: o.LastModified, etag: String(o.ETag || '').replace(/"/g, '') }))
     .sort((a, b) => String(b.key).localeCompare(String(a.key)));
+}
+
+/* ---------- 3.5 清理历史快照：只保留最近 3 个（按文件名时间戳） ----------
+   规则：本次刚生成的快照 + 时间戳最新的其余包，凑够 keepCount；
+        时间戳解析失败的一律排到末尾，绝不会因为解析异常被当成“最新”而误删当前包。
+        删除失败只告警，不中断部署。 */
+function tsOf(key) {
+  const m = /(\d{8}-\d{6})\.zip$/i.exec(String(key));
+  return m ? m[1] : '';
+}
+
+async function pruneReleases(keepKey, keepCount, dryRun) {
+  let list;
+  try {
+    list = await listReleases();
+  } catch (err) {
+    log('prune', '列出快照失败，跳过清理（不影响部署）：' + err.message);
+    return;
+  }
+  const sorted = list.slice().sort((a, b) => {
+    const ta = tsOf(a.key);
+    const tb = tsOf(b.key);
+    if (ta && tb) return tb.localeCompare(ta);
+    if (ta) return -1;
+    if (tb) return 1;
+    return String(b.key).localeCompare(String(a.key));
+  });
+  const keep = [];
+  if (keepKey) keep.push(keepKey);
+  for (const o of sorted) {
+    if (keep.length >= keepCount) break;
+    if (keep.indexOf(o.key) >= 0) continue;
+    keep.push(o.key);
+  }
+  const drop = sorted.filter((o) => keep.indexOf(o.key) < 0);
+  log('prune', '保留 ' + keep.length + ' 个：' + (keep.length ? keep.join(', ') : '(无)'));
+  log('prune', (dryRun ? '待删除 ' : '删除 ') + drop.length + ' 个：' +
+    (drop.length ? drop.map((o) => o.key + '(' + bytes(o.size) + ')').join(', ') : '(无)'));
+  if (dryRun || !drop.length) return;
+  const cos = cosClient();
+  let failed = 0;
+  for (const o of drop) {
+    try {
+      await new Promise((resolve, reject) => {
+        cos.deleteObject({ Bucket: CFG.bucket, Region: CFG.region, Key: o.key }, (err) => (err ? reject(err) : resolve()));
+      });
+    } catch (err) {
+      failed += 1;
+      log('prune', '删除失败（忽略，不中断部署）' + o.key + '：' + err.message);
+    }
+  }
+  log('prune', '清理完成 删除=' + (drop.length - failed) + ' 失败=' + failed);
 }
 
 /* ---------- 4. TC3 调 SCF ---------- */
@@ -416,16 +475,16 @@ async function doDeploy() {
   }
 
   const list = await listReleases();
-  if (list.length > CFG.keepReleases) {
-    log('snapshot', '保留策略：现有 ' + list.length + ' 份快照，超过 ' + CFG.keepReleases + ' 份。可手动清理较早的：');
-    for (const o of list.slice(CFG.keepReleases)) log('snapshot', '  待清理 ' + o.key + ' ' + bytes(o.size) + ' ' + o.mtime);
-  }
+  log('snapshot', '当前快照 ' + list.length + ' 份，保留策略 ' + CFG.keepReleases + ' 份（上传成功后自动清理）');
 
   /* 2) 打包 + 上传 */
   pack();
   const local = fs.readFileSync(ZIP);
   log('pack', bytes(local.length) + ' md5=' + md5(local));
   await uploadCode();
+
+  /* 3) 上传成功后清理历史快照（只保留最近 3 个，保护本次快照） */
+  await pruneReleases(snap.key, CFG.keepReleases, pruneDry);
 
   /* 3) 更新函数 + 轮询 */
   try {
@@ -451,9 +510,19 @@ async function doDeploy() {
 }
 
 (async () => {
-  if (!CFG.secretId || !CFG.secretKey) throw new Error('缺少 COS_SECRET_ID/COS_SECRET_KEY（或 S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY）环境变量');
+  /* 密钥只从环境变量读：缺失时明确报错退出，绝不回落到任何内置值 */
+  const missingEnv = [];
+  if (!String(CFG.secretId || '').trim()) missingEnv.push('COS_SECRET_ID（或 S3_ACCESS_KEY_ID）');
+  if (!String(CFG.secretKey || '').trim()) missingEnv.push('COS_SECRET_KEY（或 S3_SECRET_ACCESS_KEY）');
+  if (missingEnv.length) {
+    throw new Error('缺少环境变量：' + missingEnv.join('、') + '。请先在终端注入后再运行（脚本不读取任何硬编码密钥）。');
+  }
   fs.mkdirSync(BACKUP_ROOT, { recursive: true });
 
+  if (pruneOnly) {
+    await pruneReleases('', CFG.keepReleases, true);
+    return;
+  }
   if (checkOnly) {
     const ok = await selfCheck();
     log('done', '仅自检，结果=' + (ok ? 'SUCCESS' : 'FAILED'));
