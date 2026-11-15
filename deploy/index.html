@@ -4218,18 +4218,89 @@ body.hm-resizing * {
   flex: 0 0 auto;
   width: auto;
   height: 52px;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 0;
   background: rgba(0, 0, 0, 0.25);
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .hm-ref-cell:hover {
-  border-color: rgba(56, 189, 248, 0.75);
+  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.65);
   transform: scale(1.05);
   z-index: 2;
+}
+
+/* 参考体格内浮层：序号(左上) / ×(右上) / 查看+@(中央竖排) / 分类(左下) */
+.hm-ref-x,
+.hm-ref-tool {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 12, 22, 0.72);
+  color: #f4f1ff;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.hm-ref-x {
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+  z-index: 4;
+}
+.hm-ref-x:hover {
+  background: rgba(251, 113, 133, 0.75);
+  border-color: rgba(251, 113, 133, 0.9);
+}
+.hm-ref-tools {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 3;
+}
+.hm-ref-tool {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+.hm-ref-tool svg {
+  width: 13px;
+  height: 13px;
+}
+.hm-ref-tool:hover {
+  background: rgba(139, 92, 246, 0.82);
+  border-color: rgba(196, 181, 253, 0.9);
+}
+.hm-ref-cat {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  max-width: calc(100% - 8px);
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(37, 99, 235, 0.86);
+  color: #fff;
+  font-size: 8.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 3;
 }
 
 .hm-ref-cell img {
@@ -4363,18 +4434,19 @@ body.hm-resizing * {
 /* ========== 参考图单元格左上角标签 图1/图2/... ========== */
 .hm-ref-tag {
   position: absolute;
-  top: 0;
-  left: 0;
-  padding: 1px 5px 1px 6px;
-  border-radius: 5px 0 5px 0;
-  background: rgba(99, 102, 241, 0.92);
+  top: 4px;
+  left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(8, 12, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: #fff;
   font-size: 9px;
-  font-weight: 700;
-  line-height: 1.5;
+  font-weight: 600;
+  line-height: 1.6;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
   letter-spacing: 0.02em;
 }
 
@@ -29016,10 +29088,29 @@ function renderRef() {
 
       /* 角标保持「图N」序号；上传文件名只放进悬停提示，不顶替角标 */
       var refFileName = String(ref.name || '').trim();
+      var refCat = String(ref.category || ref.tag || '资产').trim() || '资产';
       cell.innerHTML =
         '<img alt="参考图 ' + (idx + 1) + '" src="' + (ref.preview || ref.dataUrl || ref.thumb) + '">' +
-        '<span class="hm-ref-tag"' + (refFileName ? ' title="' + esc(refFileName) + '"' : '') + '>图' + (idx + 1) + '</span>' +
+        '<span class="hm-ref-tag"' + (refFileName ? ' title="' + esc(refFileName) + '"' : '') + '>图片' + (idx + 1) + '</span>' +
+        '<span class="hm-ref-cat">' + esc(refCat) + '</span>' +
+        '<div class="hm-ref-tools">' +
+          '<button type="button" class="hm-ref-tool" data-ref-act="view" title="查看大图" aria-label="查看大图">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>' +
+          '</button>' +
+          '<button type="button" class="hm-ref-tool" data-ref-act="mention" title="在提示词中引用" aria-label="在提示词中引用">@</button>' +
+        '</div>' +
+        '<button type="button" class="hm-ref-x" data-ref-act="del" title="删除这张参考图" aria-label="删除">×</button>' +
         check;
+
+      cell.querySelectorAll('[data-ref-act]').forEach(function (btn) {
+        btn.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          var act = btn.dataset.refAct;
+          if (act === 'del') removeRefAt(idx);
+          else if (act === 'view') openRefFullscreen(idx);
+          else if (act === 'mention') insertPromptAt('图' + (idx + 1) + ' ');
+        });
+      });
 
       /* 旧版本把 preview 存成了 1:1 裁切图：加载后若比例与原图不符，
          回退到完整 dataUrl，保证宽度按原图比例、不裁切。 */
