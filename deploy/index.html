@@ -20451,6 +20451,53 @@ body.dv-open .hm-page {
 .hm-td-code { font-family: "SF Mono", Consolas, monospace; color: #64748b; font-size: 11px; }
 .hm-td-status { font-weight: 600; }
 
+/* ============ 调用日志 · 真实接口筛选 / 分页 ============ */
+.hm-log-toolbar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin: 0 0 14px; padding: 12px;
+  border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.34);
+}
+.hm-log-toolbar label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: #8fa3bd;
+}
+.hm-log-toolbar input,
+.hm-log-toolbar select {
+  height: 30px; padding: 0 9px; border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(0, 0, 0, 0.28); color: #e2e8f0;
+  font-size: 12px; font-family: inherit; color-scheme: dark;
+}
+.hm-log-toolbar input { min-width: 108px; }
+.hm-log-toolbar input::placeholder { color: #5b6b82; }
+.hm-log-btn {
+  height: 30px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.1); color: #cbd5e1;
+  font-size: 12px; font-family: inherit; cursor: pointer;
+}
+.hm-log-btn:hover { border-color: rgba(147, 197, 253, 0.55); color: #fff; }
+.hm-log-btn.is-primary { border-color: rgba(96, 165, 250, 0.55); background: rgba(96, 165, 250, 0.18); color: #dbeafe; }
+.hm-log-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+.hm-log-pager {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 12px 2px 0; font-size: 12px; color: #8fa3bd;
+}
+.hm-log-state {
+  display: inline-flex; align-items: center; padding: 1px 7px;
+  border-radius: 6px; font-size: 11px; font-weight: 600;
+}
+.hm-log-state.is-success { background: rgba(16, 185, 129, 0.14); color: #34d399; }
+.hm-log-state.is-failed { background: rgba(239, 68, 68, 0.14); color: #f87171; }
+.hm-log-err-text {
+  display: block; max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+  color: #f87171; font-size: 10.5px; white-space: nowrap;
+}
+.hm-log-src { margin-left: 6px; font-size: 10.5px; color: #5b6b82; }
+.hm-log-hint { color: #8fa3bd; font-size: 12.5px; }
+.hm-log-err-actions { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+
 /* ============ 账号卡片 ============ */
 .hm-admin-account-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -71197,6 +71244,44 @@ window.HMChat = (function () {
       }
     });
 
+    /* 调用日志：筛选 / 分页 / 401 重新登录 / 失败重试（事件委托，表格重绘后依然有效） */
+    page.addEventListener('click', function (e) {
+      if (e.target.closest('[data-logsubmit]')) {
+        readLogFilters();
+        logState.page = 1;
+        renderLogsPage(document.getElementById('adminBody'));
+        return;
+      }
+      if (e.target.closest('[data-logreset]')) {
+        logState.status = ''; logState.model = ''; logState.user = ''; logState.q = '';
+        logState.from = ''; logState.to = ''; logState.page = 1;
+        renderLogsPage(document.getElementById('adminBody'));
+        return;
+      }
+      if (e.target.closest('[data-logretry]')) { loadCallLogs(); return; }
+      if (e.target.closest('[data-logsignin]')) {
+        if (window.showLogin) window.showLogin();
+        else HM.toast && HM.toast('请点击右上角头像登录管理员账号', 'info');
+        return;
+      }
+      var pgBtn = e.target.closest('[data-logpage]');
+      if (pgBtn && !pgBtn.disabled) {
+        var dir = pgBtn.dataset.logpage;
+        if (dir === 'prev' && logState.page > 1) logState.page -= 1;
+        else if (dir === 'next' && logState.page < logState.pages) logState.page += 1;
+        else return;
+        loadCallLogs();
+      }
+    });
+    page.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      if (!e.target.closest || !e.target.closest('.hm-log-toolbar')) return;
+      e.preventDefault();
+      readLogFilters();
+      logState.page = 1;
+      renderLogsPage(document.getElementById('adminBody'));
+    });
+
     /* 新注册申请提醒弹框 */
     var noticeModal = document.getElementById('hmApplyNoticeModal');
     var noticeLater = document.getElementById('hmApplyNoticeLater');
@@ -71342,12 +71427,12 @@ window.HMChat = (function () {
     var body = document.getElementById('adminBody');
     if (!body) return;
     var seq = ++loadSeq;
+    if (tab === 'logs') { renderLogsPage(body); return; }
     body.innerHTML = '<div class="hm-admin-loading"><span>加载中…</span></div>';
 
     var apiMap = {
       overview: HM.api.admin.overview,
       ranking:  HM.api.admin.ranking,
-      logs:     HM.api.admin.logs,
       usage:    HM.api.admin.logs,
       accounts: function () { return HM.api.listUsers(); },
       projects: HM.api.admin.projects,
@@ -71359,7 +71444,7 @@ window.HMChat = (function () {
       if (seq !== loadSeq || currentTopTab !== 'admin') return;
       body.innerHTML = '';
       var renderers = { overview: renderOverview, ranking: renderRanking,
-                        logs: renderLogs, usage: renderUsageLogs,
+                        usage: renderUsageLogs,
                         accounts: renderAccounts, projects: renderProjects };
       if (renderers[tab]) renderers[tab](data, body);
     }).catch(function (err) {
@@ -71573,40 +71658,230 @@ window.HMChat = (function () {
     ].join('');
   }
 
-  /* ============ 调用日志 ============ */
-  function renderLogs(data, body) {
-    var rows = data.rows || [];
-    var statusColor = { '成功': '#10b981', '失败': '#ef4444', '重试中': '#ef4444' };
-    body.innerHTML = [
-      '<div class="hm-admin-panel hm-admin-panel-wide">',
-        '<div class="hm-admin-panel-head"><h3>调用日志</h3><span>' + rows.length + ' 条记录</span></div>',
-        '<div class="hm-admin-log-table-wrap">',
-          '<table class="hm-admin-log-table">',
-            '<thead><tr>' +
-              '<th>时间</th><th>账号</th><th>模型</th><th>任务 ID</th>' +
-              '<th>耗时</th><th>状态</th><th>Token</th><th>响应码</th><th>费用</th>' +
-            '</tr></thead>',
-            '<tbody>' +
-              rows.map(function (x) {
-                var t = new Date(x.createdAt);
-                var timeStr = t.toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-').replace('T', ' ').slice(0, 19);
-                return '<tr>' +
-                  '<td class="hm-td-time">' + timeStr + '</td>' +
-                  '<td class="hm-td-acc">' + x.account + '</td>' +
-                  '<td class="hm-td-model">' + x.model + '</td>' +
-                  '<td class="hm-td-code">' + x.taskId + '</td>' +
-                  '<td>' + x.duration + 's</td>' +
-                  '<td><span class="hm-td-status" style="color:' + statusColor[x.status] + '">' + x.status + '</span></td>' +
-                  '<td>' + fmt(x.tokens) + '</td>' +
-                  '<td class="hm-td-code">' + x.responseCode + '</td>' +
-                  '<td>¥' + x.cost + '</td>' +
-                '</tr>';
-              }).join(''),
-            '</tbody>',
-          '</table>',
-        '</div>',
-      '</div>',
-    ].join('');
+  /* ============ 调用日志（真实接口 /admin/call-logs，兼容 /admin/logs） ============ */
+  var logState = {
+    page: 1, pageSize: 50, status: '', model: '', user: '', q: '', from: '', to: '',
+    rows: [], total: 0, pages: 1, source: '', seq: 0
+  };
+
+  function logStatusOf(raw) {
+    var s = String(raw == null ? '' : raw).toLowerCase();
+    if (s === 'success' || s === 'ok' || s === '成功') return 'success';
+    if (s === 'failed' || s === 'fail' || s === 'error' || s === '失败') return 'failed';
+    return 'other';
+  }
+
+  function logTimeText(v) {
+    if (v == null || v === '') return '—';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    function p(n) { return n < 10 ? '0' + n : String(n); }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  function normalizeLogRow(x) {
+    x = x || {};
+    var raw = x.status != null ? x.status : x.state;
+    var dur = x.duration != null ? Number(x.duration)
+      : (x.latency != null ? Number(x.latency) : null);
+    var durText = '—';
+    if (dur != null && !isNaN(dur)) {
+      durText = dur >= 1000 ? (dur / 1000).toFixed(1) + 's' : (Math.round(dur * 10) / 10) + 's';
+    }
+    var tokens = x.tokens != null ? Number(x.tokens) : (x.totalTokens != null ? Number(x.totalTokens) : null);
+    var code = x.responseCode != null && x.responseCode !== '' ? x.responseCode
+      : (x.statusCode != null ? x.statusCode : '');
+    return {
+      rawStatus: raw == null ? '' : String(raw),
+      status: logStatusOf(raw),
+      timeText: logTimeText(x.createdAt || x.created_at || x.time || x.timestamp),
+      user: x.user || x.username || x.account || x.userId || x.accountId || '—',
+      model: x.model || x.modelName || x.modelKey || '—',
+      modelKey: x.modelKey || '',
+      taskId: x.taskId || x.task_id || x.jobId || x.id || '—',
+      durationText: durText,
+      tokensText: tokens == null || isNaN(tokens) ? '—' : fmt(tokens),
+      codeText: code === '' ? '—' : String(code),
+      costText: (Number(x.cost) || 0).toFixed(2),
+      error: x.error || x.errorMsg || x.errorMessage || ''
+    };
+  }
+
+  function logQueryString() {
+    var p = [];
+    if (logState.from) p.push('from=' + encodeURIComponent(logState.from));
+    if (logState.to) p.push('to=' + encodeURIComponent(logState.to));
+    if (logState.status) p.push('status=' + encodeURIComponent(logState.status));
+    if (logState.model) p.push('model=' + encodeURIComponent(logState.model));
+    if (logState.user) p.push('user=' + encodeURIComponent(logState.user));
+    if (logState.q) p.push('q=' + encodeURIComponent(logState.q));
+    p.push('page=' + logState.page);
+    p.push('pageSize=' + logState.pageSize);
+    return p.join('&');
+  }
+
+  function logToolbarHtml() {
+    function opt(v, label, cur) {
+      return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>';
+    }
+    return '<div class="hm-log-toolbar">' +
+      '<label>状态<select id="logStatus">' + opt('', '全部', logState.status) +
+        opt('success', '成功', logState.status) + opt('failed', '失败', logState.status) + '</select></label>' +
+      '<label>模型<input id="logModel" value="' + esc(logState.model) + '" placeholder="模型名"></label>' +
+      '<label>用户<input id="logUser" value="' + esc(logState.user) + '" placeholder="用户"></label>' +
+      '<label>关键词<input id="logQ" value="' + esc(logState.q) + '" placeholder="任务 / 错误"></label>' +
+      '<label>起始<input id="logFrom" type="datetime-local" value="' + esc(logState.from) + '"></label>' +
+      '<label>结束<input id="logTo" type="datetime-local" value="' + esc(logState.to) + '"></label>' +
+      '<label>每页<select id="logPageSize">' +
+        [20, 50, 100, 200].map(function (n) { return opt(String(n), n + ' 条', String(logState.pageSize)); }).join('') +
+      '</select></label>' +
+      '<button type="button" class="hm-log-btn is-primary" data-logsubmit>查询</button>' +
+      '<button type="button" class="hm-log-btn" data-logreset>重置</button>' +
+      '</div>';
+  }
+
+  function readLogFilters() {
+    function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    function iso(v) {
+      if (!v) return '';
+      var d = new Date(v);
+      return isNaN(d.getTime()) ? v : d.toISOString();
+    }
+    logState.status = val('logStatus');
+    logState.model = String(val('logModel') || '').trim();
+    logState.user = String(val('logUser') || '').trim();
+    logState.q = String(val('logQ') || '').trim();
+    logState.from = iso(val('logFrom'));
+    logState.to = iso(val('logTo'));
+    var ps = Number(val('logPageSize'));
+    logState.pageSize = ps > 0 ? Math.min(200, ps) : 50;
+  }
+
+  function renderLogsPage(body) {
+    body = body || document.getElementById('adminBody');
+    if (!body) return;
+    body.innerHTML = logToolbarHtml() +
+      '<div class="hm-admin-panel hm-admin-panel-wide">' +
+        '<div class="hm-admin-panel-head"><h3>调用日志</h3><span id="logMeta">加载中…</span></div>' +
+        '<div id="logTable"></div>' +
+        '<div class="hm-log-pager" id="logPager"></div>' +
+      '</div>';
+    loadCallLogs();
+  }
+
+  function renderLogTable() {
+    var wrap = document.getElementById('logTable');
+    if (!wrap) return;
+    var meta = document.getElementById('logMeta');
+    if (meta) {
+      meta.textContent = '共 ' + logState.total + ' 条 · 第 ' + logState.page + '/' + logState.pages + ' 页' +
+        (logState.source === 'logs' ? '（兼容接口 /admin/logs）' : '');
+    }
+    if (!logState.rows.length) {
+      wrap.innerHTML = '<div class="hm-admin-empty">当前筛选条件下没有调用记录。</div>';
+      return;
+    }
+    var trs = logState.rows.map(function (r) {
+      var cls = r.status === 'success' ? 'is-success' : (r.status === 'failed' ? 'is-failed' : '');
+      var label = r.status === 'success' ? '成功' : (r.status === 'failed' ? '失败' : (r.rawStatus || '—'));
+      return '<tr>' +
+        '<td class="hm-td-time">' + esc(r.timeText) + '</td>' +
+        '<td class="hm-td-acc">' + esc(r.user) + '</td>' +
+        '<td class="hm-td-model">' + esc(r.model) +
+          (r.modelKey && r.modelKey !== r.model ? '<span class="hm-log-src">' + esc(r.modelKey) + '</span>' : '') + '</td>' +
+        '<td class="hm-td-code">' + esc(r.taskId) + '</td>' +
+        '<td>' + esc(r.durationText) + '</td>' +
+        '<td><span class="hm-log-state ' + cls + '">' + esc(label) + '</span>' +
+          (r.error ? '<small class="hm-log-err-text" title="' + esc(r.error) + '">' + esc(r.error) + '</small>' : '') + '</td>' +
+        '<td>' + esc(r.tokensText) + '</td>' +
+        '<td class="hm-td-code">' + esc(r.codeText) + '</td>' +
+        '<td>¥' + esc(r.costText) + '</td>' +
+      '</tr>';
+    }).join('');
+    wrap.innerHTML = '<div class="hm-admin-log-table-wrap"><table class="hm-admin-log-table">' +
+      '<thead><tr><th>时间</th><th>用户</th><th>模型</th><th>任务 ID</th><th>耗时</th>' +
+      '<th>状态</th><th>Tokens</th><th>响应码</th><th>费用</th></tr></thead>' +
+      '<tbody>' + trs + '</tbody></table></div>';
+  }
+
+  function renderLogPager() {
+    var el = document.getElementById('logPager');
+    if (!el) return;
+    el.innerHTML = '<span>第 ' + logState.page + ' / ' + logState.pages + ' 页 · 共 ' + logState.total + ' 条</span>' +
+      '<button type="button" class="hm-log-btn" data-logpage="prev"' + (logState.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+      '<button type="button" class="hm-log-btn" data-logpage="next"' + (logState.page >= logState.pages ? ' disabled' : '') + '>下一页</button>';
+  }
+
+  function applyLogData(data, source) {
+    var rows = Array.isArray(data) ? data : ((data && (data.rows || data.items || data.list)) || []);
+    var total = data && !Array.isArray(data) && data.total != null ? Number(data.total) : rows.length;
+    var pages = data && !Array.isArray(data) && data.pages != null ? Number(data.pages) : 0;
+    logState.source = source;
+    logState.rows = rows.map(normalizeLogRow);
+    logState.total = isNaN(total) ? rows.length : total;
+    logState.pages = pages > 0 ? pages : Math.max(1, Math.ceil(logState.total / logState.pageSize));
+    if (logState.page > logState.pages) logState.page = logState.pages;
+    renderLogTable();
+    renderLogPager();
+  }
+
+  function loadCallLogs() {
+    var wrap = document.getElementById('logTable');
+    if (!wrap) return;
+    if (currentTopTab !== 'admin' || currentSubTab !== 'logs') return;
+    var api = HM.api;
+    if (!api) return;
+    var seq = ++logState.seq;
+    wrap.innerHTML = '<div class="hm-admin-loading"><span>加载中…</span></div>';
+    var meta = document.getElementById('logMeta');
+    if (meta) meta.textContent = '加载中…';
+    var pager = document.getElementById('logPager');
+    if (pager) pager.innerHTML = '';
+
+    function stale() { return seq !== logState.seq; }
+
+    function fail(err) {
+      if (stale()) return;
+      var status = Number(err && err.status || 0);
+      var msg = (err && err.message) || String(err);
+      var title = status === 401 ? '未登录或登录已过期（HTTP 401）' : '调用日志加载失败';
+      var hint = status === 401
+        ? '请用管理员账号重新登录；密码只在这里输入，不会写进代码或日志。'
+        : (err && err.offline ? '无法连接后端服务，请检查网络后重试。' : '');
+      wrap.innerHTML = '<div class="hm-admin-error">' +
+        '<h3>' + esc(title) + '</h3>' +
+        '<p>' + esc(msg) + '</p>' +
+        (hint ? '<p class="hm-log-hint">' + esc(hint) + '</p>' : '') +
+        '<div class="hm-log-err-actions">' +
+          (status !== 401 ? '' : '<button type="button" class="hm-log-btn is-primary" data-logsignin>管理员登录</button>') +
+          '<button type="button" class="hm-log-btn" data-logretry>重试</button>' +
+        '</div>' +
+      '</div>';
+      if (meta) meta.textContent = status === 401 ? '未登录（401）' : '加载失败';
+    }
+
+    var primary = api.admin && api.admin.callLogs
+      ? api.admin.callLogs(logQueryString())
+      : Promise.reject(new Error('日志接口未注册'));
+    primary.then(function (data) {
+      if (stale()) return;
+      applyLogData(data, 'call-logs');
+    }).catch(function (err) {
+      if (stale()) return;
+      /* /admin/call-logs 不存在（404）时才退回旧表 /admin/logs；其余错误直接报出来 */
+      if (Number(err && err.status) === 404 && api.admin && api.admin.legacyLogs) {
+        api.admin.legacyLogs().then(function (data) {
+          if (stale()) return;
+          applyLogData(data, 'logs');
+        }).catch(function (err2) {
+          if (stale()) return;
+          fail(Number(err2 && err2.status) === 404 ? err : err2);
+        });
+        return;
+      }
+      fail(err);
+    });
   }
 
   /* ============ 账号管理（真实账号 + 注册审批） ============ */
@@ -72014,6 +72289,13 @@ window.HMChat = (function () {
         projects: function () { return HM.api.get('/admin/projects'); },
       };
     }
+    /* 调用日志主接口（新表）+ 兼容接口（旧表） */
+    HM.api.admin.callLogs = function (qs) {
+      return HM.api.get('/admin/call-logs' + (qs ? '?' + qs : ''), 30000);
+    };
+    HM.api.admin.legacyLogs = function () {
+      return HM.api.get('/admin/logs', 30000);
+    };
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', ensureAdminApi);
