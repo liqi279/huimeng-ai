@@ -180,6 +180,19 @@ router.get('/image-proxy', wrap(async (req, res) => {
     }
     if (!buffer.length) throw jsonError(502, '上游返回空内容');
 
+    /* 兼容模式：腾讯云函数 URL 当前会丢弃二进制响应体（既有流式接口同样如此），
+       前端可用 ?format=json 拿到 dataUrl 后自行转 Blob 使用。 */
+    if (String((req.query && req.query.format) || '').toLowerCase() === 'json') {
+      res.setHeader('Cache-Control', CACHE_CONTROL);
+      res.json({
+        ok: true,
+        contentType,
+        bytes: buffer.length,
+        dataUrl: 'data:' + contentType.split(';')[0] + ';base64,' + buffer.toString('base64'),
+      });
+      return;
+    }
+
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', CACHE_CONTROL);
     res.setHeader('X-Content-Type-Options', 'nosniff');
