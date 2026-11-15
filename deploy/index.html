@@ -27778,6 +27778,13 @@ const state = {
     ? storedPrefs.audioModel
     : 'tts-1',
   providerId: typeof storedPrefs.providerId === 'string' ? storedPrefs.providerId : '',
+  /* 首尾帧补间服务地址：随账号 prefs 同步，可跨设备沿用 */
+  toonApi: typeof storedPrefs.toonApi === 'string' && storedPrefs.toonApi
+    ? storedPrefs.toonApi
+    : 'http://127.0.0.1:7861',
+  toon2Api: typeof storedPrefs.toon2Api === 'string' && storedPrefs.toon2Api
+    ? storedPrefs.toon2Api
+    : 'http://127.0.0.1:7862',
   /* 接入管理只保留 RayinAPI：本地旧的非 Rayin 平台配置读取时直接丢弃，不显示也不参与推导 */
   providers: (function () {
     const saved = loadJSON(LS_PROVIDERS, {}) || {};
@@ -30013,7 +30020,9 @@ function persistPrefs() {
     lora: state.lora,
     videoModel: state.videoModel,
     audioModel: state.audioModel,
-    providerId: state.providerId
+    providerId: state.providerId,
+    toonApi: state.toonApi,
+    toon2Api: state.toon2Api
   });
   if (window.HMSync && window.HMSync.pushPrefs) window.HMSync.pushPrefs();
 }
@@ -60760,11 +60769,31 @@ window.HMChat = (function () {
 
     var api = $('tcApi');
     if (api) {
-      try { var saved = localStorage.getItem(API_LS); if (saved) api.value = saved; } catch (e) {}
+      var applySaved = function () {
+        var A = window.HMApp;
+        var cloud = (A && A.state && A.state.toonApi) || '';
+        var saved = cloud || localStorage.getItem(API_LS) || '';
+        if (saved) api.value = saved;
+        if (saved) state.apiBase = saved;
+      };
+      try { applySaved(); } catch (e) {}
       api.addEventListener('change', function () {
-        try { localStorage.setItem(API_LS, api.value.trim()); } catch (e) {}
+        var v = api.value.trim();
+        state.apiBase = v;
+        try { localStorage.setItem(API_LS, v); } catch (e) {}
+        var A = window.HMApp;
+        if (A && A.state) A.state.toonApi = v;
+        if (A && A.persistPrefs) A.persistPrefs();
         if (!state.busy) setBusy(false);
-        testApi(true);
+        if (v) testApi(true); else setBadge(false, '服务未连接');
+      });
+      /* 云端 prefs 到达时刷新地址 */
+      document.addEventListener('hm:prefs', function () {
+        try {
+          var A = window.HMApp;
+          var v = (A && A.state && A.state.toonApi) || '';
+          if (v && v !== api.value) { api.value = v; state.apiBase = v; testApi(true); }
+        } catch (e) {}
       });
     }
 
@@ -60855,7 +60884,9 @@ window.HMChat = (function () {
   }
   function base() {
     var el = $('t2Api');
-    var v = String((el && el.value) || localStorage.getItem(LS) || DEFAULT_BASE).trim().replace(/\/+$/, '');
+    var A = window.HMApp;
+    var v = String((el && el.value) || (A && A.state && A.state.toon2Api) ||
+      localStorage.getItem(LS) || DEFAULT_BASE).trim().replace(/\/+$/, '');
     return v || DEFAULT_BASE;
   }
   function setMeta(text) { var el = $('t2Meta'); if (el) el.textContent = text; }
@@ -61085,11 +61116,30 @@ window.HMChat = (function () {
 
     var apiInput = $('t2Api');
     if (apiInput) {
-      var saved = '';
-      try { saved = localStorage.getItem(LS) || ''; } catch (e) {}
-      if (saved) apiInput.value = saved;
+      var applySaved = function () {
+        var A = window.HMApp;
+        var cloud = (A && A.state && A.state.toon2Api) || '';
+        var saved = cloud || localStorage.getItem(LS) || '';
+        if (saved) apiInput.value = saved;
+      };
+      try { applySaved(); } catch (e) {}
       apiInput.addEventListener('change', function () {
-        try { localStorage.setItem(LS, apiInput.value.trim()); } catch (e) {}
+        var v = apiInput.value.trim().replace(/\/+$/, '');
+        apiInput.value = v;
+        try { localStorage.setItem(LS, v); } catch (e) {}
+        var A = window.HMApp;
+        if (A && A.state) A.state.toon2Api = v;
+        if (A && A.persistPrefs) A.persistPrefs();
+        if (!v) { setBadge(false, '服务未连接'); var st = $('t2ApiState'); if (st) st.textContent = '请填写服务地址'; return; }
+        if (!state.busy) testApi(true);
+      });
+      /* 云端 prefs 到达时刷新地址 */
+      document.addEventListener('hm:prefs', function () {
+        try {
+          var A = window.HMApp;
+          var v = (A && A.state && A.state.toon2Api) || '';
+          if (v && v !== apiInput.value) { apiInput.value = v; testApi(true); }
+        } catch (e) {}
       });
     }
 
@@ -76090,6 +76140,8 @@ window.HMChat = (function () {
       try {
         Object.assign(window.HMApp.state, data);
         if (window.HMApp.syncSettingsUI) window.HMApp.syncSettingsUI();
+        /* 通知各模块（如首尾帧补间服务地址）把云端值刷回输入框 */
+        document.dispatchEvent(new CustomEvent('hm:prefs'));
       } catch (e) {}
     }
   }
