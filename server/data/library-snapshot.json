@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-15T13:12:18.927Z",
+  "generatedAt": "2026-11-15T13:52:52.129Z",
   "source": "huimeng_library.books",
-  "total": 689,
+  "total": 695,
   "areas": {
-    "paint": 665,
+    "paint": 671,
     "ref": 24
   },
   "books": [
@@ -15220,6 +15220,73 @@
       "pdfBytes": 377728047,
       "coverKey": "library/covers/343-book-cover.jpg",
       "coverBytes": 306719
+    },
+    {
+      "id": "lib-mwhvnaq2-9cd0d4",
+      "sortNo": 343,
+      "title": "Cartoon Animation with Preston Blair, Revised Edition!",
+      "author": "Preston Blair",
+      "intro": "",
+      "pageCount": 194,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "01_Cover.xhtml",
+          "page": 1
+        },
+        {
+          "title": "CARTOON ANIMATION",
+          "page": 2
+        },
+        {
+          "title": "CONTENTS",
+          "page": 3
+        },
+        {
+          "title": "CELEBRATING 70 YEARS OF PRESTON BLAIR!",
+          "page": 4
+        },
+        {
+          "title": "INTRODUCTION FROM PRESTON BLAIR",
+          "page": 5
+        },
+        {
+          "title": "CHAPTER 1 GETTING STARTED",
+          "page": 6
+        },
+        {
+          "title": "CHAPTER 2 CARTOON CONSTRUCTION",
+          "page": 7
+        },
+        {
+          "title": "CHAPTER 3&gt; CHARACTER DESIGN &amp; DEVELOPMENT",
+          "page": 8
+        },
+        {
+          "title": "CHAPTER 4 BASIC CHARACTER MOVEMENT",
+          "page": 9
+        },
+        {
+          "title": "CHAPTER 5 ANIMATION PRINCIPLES",
+          "page": 10
+        },
+        {
+          "title": "CHAPTER 6 ANIMATED ACTING",
+          "page": 11
+        },
+        {
+          "title": "ABOUT PRESTON BLAIR",
+          "page": 12
+        },
+        {
+          "title": "Copyright",
+          "page": 13
+        }
+      ],
+      "pdfKey": "library/books/344-book.pdf",
+      "pdfBytes": 21518752,
+      "coverKey": "library/covers/344-book-cover.jpg",
+      "coverBytes": 175117
     },
     {
       "id": "lib-mwf5l0sh-208ac4",
@@ -31462,6 +31529,217 @@
       "pdfBytes": 604615150,
       "coverKey": "library/covers/700-book-cover.jpg",
       "coverBytes": 306459
+    },
+    {
+      "id": "lib-mwhw2ohc-667611",
+      "sortNo": 700,
+      "title": "漫画核心技法 7册合集",
+      "author": "[中] UP动漫社",
+      "intro": "一套涵盖了多种流行漫画类型的教程，包括了“Q版、美少女、古典”、此外还有“基础篇、服饰道具、草图篇、造型篇”等等针对性的入门教程。更为难得的是这本教程非常贴心的采用了多色彩标注的教学方式，看起来非常直观。",
+      "pageCount": 1845,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "漫画核心技法 古典人物篇",
+          "page": 1
+        },
+        {
+          "title": "漫画核心技法 可爱Q版漫画绘制篇",
+          "page": 259
+        },
+        {
+          "title": "漫画核心技法 基础篇",
+          "page": 524
+        },
+        {
+          "title": "漫画核心技法 服饰与道具篇",
+          "page": 798
+        },
+        {
+          "title": "漫画核心技法 美少女篇",
+          "page": 1048
+        },
+        {
+          "title": "漫画核心技法 草图篇",
+          "page": 1330
+        },
+        {
+          "title": "漫画核心技法 造型篇",
+          "page": 1588
+        }
+      ],
+      "pdfKey": "library/books/701-book.pdf",
+      "pdfBytes": 433755920,
+      "coverKey": "library/covers/701-book-cover.jpg",
+      "coverBytes": 281095
+    },
+    {
+      "id": "lib-mwhw15l4-59d51d",
+      "sortNo": 701,
+      "title": "超级漫画创作技法图解教程 5册合集",
+      "author": "[日] 风祭、苍次郎、千火之慎 等",
+      "intro": "一套非常生动的漫画教程，直观的真人照片对照写生，彻底解决动漫人物创作时难以把控的种种问题 ，非常推荐漫画人物身体绘制比较薄弱的同学提高学习。",
+      "pageCount": 925,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "超级漫画创作技法图解教程 从人体解剖学习人物画法",
+          "page": 1
+        },
+        {
+          "title": "超级漫画创作技法图解教程 从人物写真学习人物画法",
+          "page": 199
+        },
+        {
+          "title": "超级漫画创作技法图解教程 动态人物衣褶的画法",
+          "page": 365
+        },
+        {
+          "title": "超级漫画创作技法图解教程 动漫人物的设定与上色技巧",
+          "page": 563
+        },
+        {
+          "title": "超级漫画创作技法图解教程 漫画人物画法入门",
+          "page": 729
+        }
+      ],
+      "pdfKey": "library/books/702-book.pdf",
+      "pdfBytes": 346321572,
+      "coverKey": "library/covers/702-book-cover.jpg",
+      "coverBytes": 223409
+    },
+    {
+      "id": "lib-mwhvwtqi-d2e430",
+      "sortNo": 705,
+      "title": "漫画技法终极向导 升级版 1-6册合集",
+      "author": "[日] 林晃",
+      "intro": "一套非常经典的以漫画人物绘制为主题的漫画教程。",
+      "pageCount": 895,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "漫画技法终极向导 升级版1 简单基础篇",
+          "page": 1
+        },
+        {
+          "title": "漫画技法终极向导 升级版2 人物和画材的基础篇",
+          "page": 150
+        },
+        {
+          "title": "漫画技法终极向导 升级版3 描绘绝妙人物的秘诀篇",
+          "page": 299
+        },
+        {
+          "title": "漫画技法终极向导 升级版4 活动人物绘画技巧篇",
+          "page": 448
+        },
+        {
+          "title": "漫画技法终极向导 升级版5 魄力人物的表现篇",
+          "page": 597
+        },
+        {
+          "title": "漫画技法终极向导 升级版6 完美人物篇",
+          "page": 747
+        }
+      ],
+      "pdfKey": "library/books/706-book.pdf",
+      "pdfBytes": 165792040,
+      "coverKey": "library/covers/706-book-cover.jpg",
+      "coverBytes": 234338
+    },
+    {
+      "id": "lib-mwhw1s3z-b21c24",
+      "sortNo": 706,
+      "title": "最新卡通漫画技法 1-8册合集",
+      "author": "[日] 林晃、八木泽梨穗、佐藤元、山上胜也、小崎亚衣",
+      "intro": "非常经典的一套漫画教程，涵盖了常见了漫画类型（如：美少女/美少年、Q版动物/人物、机械），此外还有漫画技法专题（造型、动态、表情）等等。",
+      "pageCount": 1044,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "最新卡通漫画技法1 造型基础篇",
+          "page": 1
+        },
+        {
+          "title": "最新卡通漫画技法2 表情刻画篇",
+          "page": 119
+        },
+        {
+          "title": "最新卡通漫画技法3 动态捕捉篇",
+          "page": 249
+        },
+        {
+          "title": "最新卡通漫画技法4 美少女造型篇",
+          "page": 380
+        },
+        {
+          "title": "最新卡通漫画技法5 Q版人物篇",
+          "page": 511
+        },
+        {
+          "title": "最新卡通漫画技法6 Q版动物篇",
+          "page": 641
+        },
+        {
+          "title": "最新卡通漫画技法7 机械设定篇",
+          "page": 770
+        },
+        {
+          "title": "最新卡通漫画技法8 美少年造型篇",
+          "page": 899
+        }
+      ],
+      "pdfKey": "library/books/707-book.pdf",
+      "pdfBytes": 223177459,
+      "coverKey": "library/covers/707-book-cover.jpg",
+      "coverBytes": 278787
+    },
+    {
+      "id": "lib-mwhw53td-2bbcd6",
+      "sortNo": 707,
+      "title": "日本漫画创作技法 8册合集",
+      "author": "[日] 尾泽忠、PLEX工作室、中岛诚、翠菊纪子、赤浪、草野雄、新田康弘",
+      "intro": "多种创作主题的漫画教程，包括妖怪、嘻哈、幻想、变形金刚、少女角色等等，此外还有肢体表情、格斗动作、色彩运用等漫画技法专题。",
+      "pageCount": 1102,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "日本漫画创作技法 变形金刚",
+          "page": 1
+        },
+        {
+          "title": "日本漫画创作技法 嘻哈文化",
+          "page": 127
+        },
+        {
+          "title": "日本漫画创作技法 妖怪造型",
+          "page": 267
+        },
+        {
+          "title": "日本漫画创作技法 少女角色",
+          "page": 421
+        },
+        {
+          "title": "日本漫画创作技法 格斗动作",
+          "page": 559
+        },
+        {
+          "title": "日本漫画创作技法 神奇幻想",
+          "page": 687
+        },
+        {
+          "title": "日本漫画创作技法 肢体表情",
+          "page": 841
+        },
+        {
+          "title": "日本漫画创作技法 色彩运用",
+          "page": 981
+        }
+      ],
+      "pdfKey": "library/books/708-book.pdf",
+      "pdfBytes": 377467062,
+      "coverKey": "library/covers/708-book-cover.jpg",
+      "coverBytes": 244875
     }
   ]
 }
