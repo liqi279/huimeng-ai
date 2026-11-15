@@ -1,0 +1,96 @@
+{
+    "createdAt":  "2026-11-15T22:03:03",
+    "backend":  "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api",
+    "account":  {
+                    "id":  "u_init_admin0001",
+                    "username":  "admin",
+                    "email":  null,
+                    "role":  "admin",
+                    "status":  "approved",
+                    "note":  "初始化超管",
+                    "createdAt":  1794090627923,
+                    "approvedAt":  null
+                },
+    "worksCount":  38,
+    "imagesCount":  0,
+    "externalLinks":  0,
+    "fileCount":  8,
+    "totalBytes":  1282596,
+    "fetchResults":  [
+                         {
+                             "name":  "accounts.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  581
+                         },
+                         {
+                             "name":  "export.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  632485
+                         },
+                         {
+                             "name":  "bootstrap.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  562938
+                         },
+                         {
+                             "name":  "desk.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  5332
+                         },
+                         {
+                             "name":  "user-data-status.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  400
+                         }
+                     ],
+    "assets":  [
+
+               ],
+    "files":  [
+                  {
+                      "relativePath":  "accounts.json",
+                      "bytes":  581,
+                      "sha256":  "2FB094812872EFD6AB060CEC2554B403B2862B350975E27C166F22AC08280C1A"
+                  },
+                  {
+                      "relativePath":  "bootstrap.json",
+                      "bytes":  562938,
+                      "sha256":  "816F91F0A32DF19CFB2DEC42DB3DF7B2F0CE1CFF4037CC01CADBEE2312F05CD1"
+                  },
+                  {
+                      "relativePath":  "desk.json",
+                      "bytes":  5332,
+                      "sha256":  "33F73758A1C3DB7ED15C1EE4C7593814AE51C2550132D26E53C12A3AAF181013"
+                  },
+                  {
+                      "relativePath":  "export.json",
+                      "bytes":  632485,
+                      "sha256":  "CB3ECA4901EE123BC5A7D99036657F9691C841EBE95AE5902DCC3EAA7E11A4B1"
+                  },
+                  {
+                      "relativePath":  "images-index.json",
+                      "bytes":  0,
+                      "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+                  },
+                  {
+                      "relativePath":  "README_恢复说明.md",
+                      "bytes":  2028,
+                      "sha256":  "DE4E54900A79241C39E3C1E57F512F103BCABD3F3ACE76D491CB20D8185BACE4"
+                  },
+                  {
+                      "relativePath":  "user-data-status.json",
+                      "bytes":  400,
+                      "sha256":  "4CA661C8F859D503709C565C1025E40CD41505D59E67C10FD71EC59D992C5CB3"
+                  },
+                  {
+                      "relativePath":  "works.json",
+                      "bytes":  78832,
+                      "sha256":  "0DCD916022B44521A056E23B4F05D9910F5F79CAE66E37C470D6C550AF68E36C"
+                  }
+              ]
+}
