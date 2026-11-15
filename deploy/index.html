@@ -56948,9 +56948,9 @@ window.HMChat = (function () {
     }
     if (els.pagerPrev) els.pagerPrev.disabled = state.shelfPage <= 1;
     if (els.pagerNext) els.pagerNext.disabled = state.shelfPage >= pages;
-    /* 右侧步进：上=上一页，下=下一页（与箭头指向一致） */
-    if (els.pagerUp) els.pagerUp.disabled = state.shelfPage <= 1;
-    if (els.pagerDown) els.pagerDown.disabled = state.shelfPage >= pages;
+    /* 右侧步进：▲ = 数值 +1（下一页），▼ = 数值 -1（上一页） */
+    if (els.pagerUp) els.pagerUp.disabled = state.shelfPage >= pages;
+    if (els.pagerDown) els.pagerDown.disabled = state.shelfPage <= 1;
   }
 
   /* 新增书籍后定位到最后一页，让新书落在最后一页的最后一个格位 */
@@ -58678,30 +58678,42 @@ window.HMChat = (function () {
     if (els.pagerNext) els.pagerNext.addEventListener('click', function () { goPage(state.shelfPage + 1); });
     els.pagerUp = $('libPagerUp');
     els.pagerDown = $('libPagerDown');
-    /* 上箭头 = 数值 +1（下一页），下箭头 = 数值 -1（上一页）。
-       单击一档；按住 420ms 后开始连发，每 110ms 一档，松手立即停；goPage 自带边界钳制。 */
+    /* 上箭头 = 数值 +1，下箭头 = 数值 -1；goPage 自带边界钳制（1 ~ 总页数） */
     function bindPagerRepeat(btn, delta) {
-      if (!btn) return;
+      if (!btn || btn.dataset.hmPagerBound) return;
+      btn.dataset.hmPagerBound = '1';
       var holdTimer = null;
       var repeatTimer = null;
+      var delay = 140;
       function stopRepeat() {
         if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-        if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
+        if (repeatTimer) { clearTimeout(repeatTimer); repeatTimer = null; }
+        delay = 140;
       }
       function stepOnce() { goPage(state.shelfPage + delta); }
-      btn.addEventListener('pointerdown', function (event) {
-        if (event.button !== 0) return;
+      /* 连发：起步 140ms 一档，每次减 8ms，最快 60ms 一档 */
+      function tick() {
+        stepOnce();
+        delay = Math.max(60, delay - 8);
+        repeatTimer = setTimeout(tick, delay);
+      }
+      function start(event) {
+        if (event && event.button !== undefined && event.button !== 0) return;
+        if (event) event.preventDefault();
         stopRepeat();
         stepOnce();
         holdTimer = setTimeout(function () {
           holdTimer = null;
-          stepOnce();
-          repeatTimer = setInterval(stepOnce, 110);
-        }, 420);
-      });
-      ['pointerup', 'pointercancel', 'pointerleave', 'blur'].forEach(function (name) {
-        btn.addEventListener(name, stopRepeat);
-      });
+          tick();
+        }, 400);
+      }
+      btn.addEventListener('pointerdown', start);
+      btn.addEventListener('pointerup', stopRepeat);
+      btn.addEventListener('pointercancel', stopRepeat);
+      btn.addEventListener('pointerleave', stopRepeat);
+      btn.addEventListener('blur', stopRepeat);
+      /* 松手在按钮外也能立刻停 */
+      window.addEventListener('pointerup', stopRepeat);
       /* 键盘触发（Enter/Space）没有 pointerdown，补一次单击 */
       btn.addEventListener('click', function (event) {
         if (event.detail === 0) stepOnce();
