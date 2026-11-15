@@ -15247,13 +15247,15 @@ body[data-season="winter"] .hm-rail-item { color: var(--text-2); }
  * 环境粒子（常驻）
  * ================================================================== */
 .hm-season-ambient {
-  /* 主题背景层：必须压在桌面卡片下面（卡片 z-index 从 1 起），
-     放 -1 保证即便与卡片同层的旧数据也不会盖住卡片；仍可透过半透明画板看到粒子 */
-  position: fixed; inset: 0; z-index: -1;
+  /* 主题粒子层：与卡片同处一个堆叠上下文，粒子 z-index 0、卡片从 1 起，
+     所以粒子一定在卡片之下；之前用 -1 会被 body 背景整个盖掉导致看不见。
+     不用提高 z-index，也不拦截鼠标。 */
+  position: fixed; inset: 0; z-index: 0;
   width: 100%; height: 100%;
   pointer-events: none; opacity: 0.5;
   mix-blend-mode: screen;
 }
+body { isolation: isolate; }
 
 /* 响应式 */
 @media (max-width: 900px) {
@@ -15311,8 +15313,8 @@ body.hm-light[data-season="summer"] .hm-rail, body.hm-light[data-season="summer"
 body.hm-light[data-season="autumn"] .hm-rail, body.hm-light[data-season="autumn"] .hm-top { background: #fffaf4; }
 body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"] .hm-top { background: #f8fbfe; }
 
-/* 环境粒子层级：低于 body 背景之上的所有内容（卡片/浮窗/菜单/大图），只当背景光效 */
-.hm-season-ambient { z-index: -1; opacity: 0.42; }
+/* 环境粒子层级：同层但排在卡片之前（z-index 0，卡片从 1 起） */
+.hm-season-ambient { z-index: 0; opacity: 0.42; }
 
 /* ==========================================================
  * API接入管理（设置页顶 Tab）
