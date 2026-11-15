@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-15T09:16:29.925Z",
+  "generatedAt": "2026-11-15T10:38:21.625Z",
   "source": "huimeng_library.books",
-  "total": 566,
+  "total": 589,
   "areas": {
-    "paint": 548,
-    "ref": 18
+    "paint": 569,
+    "ref": 20
   },
   "books": [
     {
@@ -21777,6 +21777,20 @@
       "coverBytes": 70540
     },
     {
+      "id": "lib-mwhn8coq-5bb27d",
+      "sortNo": 476,
+      "title": "漫画魔术:神话幻想人物的绘制与上色",
+      "author": "Supittha Annie Bunyapen",
+      "intro": "原名《Manga Magic: How to Draw and Color Mythical and Fantasy Characters》，漫画家Supittha \"Annie\" Bunyapen的一本幻想系角色的手绘上色教程。",
+      "pageCount": 523,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/477-book.pdf",
+      "pdfBytes": 533422279,
+      "coverKey": "library/covers/477-book-cover.jpg",
+      "coverBytes": 324695
+    },
+    {
       "id": "lib-mwhl22il-3aff44",
       "sortNo": 477,
       "title": "透视法:使用网格进行室内设计素描",
@@ -21903,6 +21917,20 @@
       "coverBytes": 235915
     },
     {
+      "id": "lib-mwhntxzt-b43626",
+      "sortNo": 487,
+      "title": "富岡二郎 イラストテクニック＋アートワークス",
+      "author": "日本画师富岡二郎（富冈二郎、tomioka jirou",
+      "intro": "日本画师富岡二郎（富冈二郎、tomioka jirou）的一本漫画教程插画集。",
+      "pageCount": 195,
+      "area": "ref",
+      "toc": [],
+      "pdfKey": "library/books/488-book.pdf",
+      "pdfBytes": 881092258,
+      "coverKey": "library/covers/488-book-cover.jpg",
+      "coverBytes": 225825
+    },
+    {
       "id": "lib-mwhln66u-18c560",
       "sortNo": 488,
       "title": "不复杂的绘画练习法",
@@ -21915,6 +21943,20 @@
       "pdfBytes": 326182075,
       "coverKey": "library/covers/489-book-cover.jpg",
       "coverBytes": 284556
+    },
+    {
+      "id": "lib-mwhnmlvw-df2bff",
+      "sortNo": 489,
+      "title": "Framed Ink 2 迷情黑白2",
+      "author": "Marcos Mateu-Mestre",
+      "intro": "原名《Framed Ink 2: Frame Format, Energy, and Composition for Visual Storytellers》，经典的欧美漫画分镜教程第二册。\n*可能有缺页，待更好的版本补充。",
+      "pageCount": 125,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/490-book.pdf",
+      "pdfBytes": 1268160600,
+      "coverKey": "library/covers/490-book-cover.jpg",
+      "coverBytes": 291506
     },
     {
       "id": "lib-mwg1tbci-6ef209",
@@ -22258,6 +22300,20 @@
       "coverBytes": 296374
     },
     {
+      "id": "lib-mwho78sk-658701",
+      "sortNo": 492,
+      "title": "Morpho艺用解剖学系列8册",
+      "author": "Morpho",
+      "intro": "硬核的艺用解剖学人体参考教程，8册合集。\n*该教程有一些裸露、骨骼、骷髅的直接表现，不适应的同学谨慎下载。",
+      "pageCount": 1045,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/493-book.pdf",
+      "pdfBytes": 1500835631,
+      "coverKey": "library/covers/493-book-cover.jpg",
+      "coverBytes": 28507
+    },
+    {
       "id": "lib-mwhllirq-ed1200",
       "sortNo": 493,
       "title": "迷人男子的画法",
@@ -22326,6 +22382,20 @@
       "pdfBytes": 171747007,
       "coverKey": "library/covers/498-book-cover.jpg",
       "coverBytes": 231025
+    },
+    {
+      "id": "lib-mwhowu79-1aae34",
+      "sortNo": 498,
+      "title": "滴溜溜姿势目录DVD-ROM4 学生服",
+      "author": "[日] マール社編集部",
+      "intro": "《ぐるぐるポーズカタログDVD-ROM》系列第4部，主题是“学生制服”，可以通过网页控制三个视角与多个方向的人物姿势，推荐在电脑使用，解压文件后打开“index.html”文件即可。",
+      "pageCount": 3456,
+      "area": "ref",
+      "toc": [],
+      "pdfKey": "library/books/499-book.pdf",
+      "pdfBytes": 1683019608,
+      "coverKey": "library/covers/499-book-cover.jpg",
+      "coverBytes": 44821
     },
     {
       "id": "lib-mwhls3hx-f2b5be",
@@ -25966,6 +26036,1745 @@
       "pdfBytes": 61079824,
       "coverKey": "library/covers/582-book-cover.jpg",
       "coverBytes": 314568
+    },
+    {
+      "id": "lib-mwhmkqr8-91d896",
+      "sortNo": 582,
+      "title": "美少女图鉴百科 学园篇",
+      "author": "[日] モノクロワークス",
+      "intro": "原名《クリエイターのためのおんなのこデータベース－学園編－》，以学生为主题的角色设定教程，包括服饰设定等等。",
+      "pageCount": 145,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/583-book.pdf",
+      "pdfBytes": 372061787,
+      "coverKey": "library/covers/583-book-cover.jpg",
+      "coverBytes": 181574
+    },
+    {
+      "id": "lib-mwhmllir-7ab2fa",
+      "sortNo": 583,
+      "title": "从零开始学背景作画",
+      "author": "[日] mocha",
+      "intro": "原名《背景作画 ゼロから学ぶプロの技》，“神技作画シリーズ”系列中的一本背景画教程，使用软件为：Photoshop CC。",
+      "pageCount": 145,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/584-book.pdf",
+      "pdfBytes": 78991362,
+      "coverKey": "library/covers/584-book-cover.jpg",
+      "coverBytes": 267797
+    },
+    {
+      "id": "lib-mwhmottk-74bad0",
+      "sortNo": 584,
+      "title": "让角色充满魅力的发型设计250例 男性篇",
+      "author": "[日] 玄光社MOOK",
+      "intro": "原名《魅せるキャラクターを描くための ヘアスタイル250-男性編-》，玄光社MOOK推出的一本由11位插画师发布的总共超过250种发型样式的教程。",
+      "pageCount": 132,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/585-book.pdf",
+      "pdfBytes": 375550881,
+      "coverKey": "library/covers/585-book-cover.jpg",
+      "coverBytes": 261000
+    },
+    {
+      "id": "lib-mwhmpqw7-89ed9e",
+      "sortNo": 585,
+      "title": "向专业画师学习华丽背景的画法 CLIP STUDIO PAINT篇",
+      "author": "[日] サイドランチ 吉川アキ 電鬼 吉田誠治 ゼンジ",
+      "intro": "原名《プロ絵師の技を完全マスター 魅せる背景 上達術 決定版 CLIP STUDIO PAINT PRO/EX対応》，一本CSP的背景教程，附带了特典文件，主要clip格式的源文件和CSP的笔刷。",
+      "pageCount": 210,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "はじめに",
+          "page": 3
+        },
+        {
+          "title": "目次",
+          "page": 4
+        },
+        {
+          "title": "BASIC01 背景の基礎知識",
+          "page": 9
+        },
+        {
+          "title": "BASIC02 透視図法",
+          "page": 11
+        },
+        {
+          "title": "BASIC03 パース定規",
+          "page": 14
+        },
+        {
+          "title": "BASIC04 便利な機能",
+          "page": 16
+        },
+        {
+          "title": "BASIC05 合成モード",
+          "page": 19
+        },
+        {
+          "title": "01 色とりどりな花畑を描く",
+          "page": 21
+        },
+        {
+          "title": "02 幻想の国の城を描く",
+          "page": 49
+        },
+        {
+          "title": "03 街の路地裏を描く",
+          "page": 75
+        },
+        {
+          "title": "04 夕暮れの遺跡を描く",
+          "page": 99
+        },
+        {
+          "title": "05 夜の未来都市を描く",
+          "page": 127
+        },
+        {
+          "title": "06 夕焼けの日本家屋を描く",
+          "page": 157
+        },
+        {
+          "title": "07 空想の蒸気機関車を描く",
+          "page": 185
+        },
+        {
+          "title": "奥付",
+          "page": 209
+        },
+        {
+          "title": "裏表紙",
+          "page": 210
+        }
+      ],
+      "pdfKey": "library/books/586-book.pdf",
+      "pdfBytes": 96691120,
+      "coverKey": "library/covers/586-book-cover.jpg",
+      "coverBytes": 326837
+    },
+    {
+      "id": "lib-mwhmqqtw-81375e",
+      "sortNo": 586,
+      "title": "深入讲解!CLIP STUDIO PAINT PRO人物上色入门",
+      "author": "[日] 乃樹坂くしお",
+      "intro": "原名《とことん解説！キャラクターの「塗り」入門教室　CLIP STUDIO PAINT PROで学ぶ描画の基本テクニック》，画师乃樹坂くしお的一本CSP入门教程，附带源文件。",
+      "pageCount": 212,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 2
+        },
+        {
+          "title": "はじめに",
+          "page": 6
+        },
+        {
+          "title": "本書の使い方",
+          "page": 7
+        },
+        {
+          "title": "Contents",
+          "page": 10
+        },
+        {
+          "title": "Chapter1 CLIP STUDIO PAINT PROで塗りの準備",
+          "page": 14
+        },
+        {
+          "title": "1-01 CLIP STUDIO PAINT PROについて",
+          "page": 15
+        },
+        {
+          "title": "CLIP STUDIO PAINTの入手方法",
+          "page": 15
+        },
+        {
+          "title": "CLIP STUDIO PAINTのエディションの違い",
+          "page": 16
+        },
+        {
+          "title": "1-02 CLIP STUDIO PAINT PROの基本操作",
+          "page": 17
+        },
+        {
+          "title": "キャンバスの設定について",
+          "page": 17
+        },
+        {
+          "title": "ペン・ブラシツールの選択と設定",
+          "page": 18
+        },
+        {
+          "title": "描画色の指定について",
+          "page": 21
+        },
+        {
+          "title": "イラストの保存と書き出しについて",
+          "page": 24
+        },
+        {
+          "title": "1-03 レイヤーとマスクの基本操作",
+          "page": 25
+        },
+        {
+          "title": "レイヤーの基本と「レイヤー」パレットについて",
+          "page": 25
+        },
+        {
+          "title": "レイヤーの合成モードについて",
+          "page": 27
+        },
+        {
+          "title": "マスク機能を使い分ける",
+          "page": 27
+        },
+        {
+          "title": "下塗りのコツはレイヤー構造を意識すること",
+          "page": 29
+        },
+        {
+          "title": "Chapter2 アニメ塗りでキャラクターを塗る",
+          "page": 30
+        },
+        {
+          "title": "2-01 アニメ塗りのキャラクターの準備",
+          "page": 31
+        },
+        {
+          "title": "アニメ塗りについて",
+          "page": 31
+        },
+        {
+          "title": "キャラクターのラフを描く",
+          "page": 32
+        },
+        {
+          "title": "線画を描く",
+          "page": 34
+        },
+        {
+          "title": "2-02 しっかりした下塗りをする",
+          "page": 37
+        },
+        {
+          "title": "下のレイヤーをはみ出すように塗る",
+          "page": 37
+        },
+        {
+          "title": "薄い色を下塗りするときのコツ",
+          "page": 37
+        },
+        {
+          "title": "下塗りをしたキャラクター",
+          "page": 38
+        },
+        {
+          "title": "2-03 アニメ塗りでキャラクターを塗っていく",
+          "page": 39
+        },
+        {
+          "title": "頬と唇を塗る",
+          "page": 39
+        },
+        {
+          "title": "肌影を塗っていく",
+          "page": 40
+        },
+        {
+          "title": "肌にハイライトを入れていく",
+          "page": 43
+        },
+        {
+          "title": "スカートを塗る",
+          "page": 44
+        },
+        {
+          "title": "シャツを塗る",
+          "page": 46
+        },
+        {
+          "title": "上着を塗る",
+          "page": 47
+        },
+        {
+          "title": "リボンと猫耳を塗る",
+          "page": 49
+        },
+        {
+          "title": "2-04 表情を塗ってキャラクターを仕上げていく",
+          "page": 51
+        },
+        {
+          "title": "口や目を塗っていく",
+          "page": 51
+        },
+        {
+          "title": "髪を塗っていく",
+          "page": 54
+        },
+        {
+          "title": "2-05 背景を仕上げてイラストを完成する",
+          "page": 59
+        },
+        {
+          "title": "地面と空の下塗り",
+          "page": 59
+        },
+        {
+          "title": "フェンスを配置する",
+          "page": 60
+        },
+        {
+          "title": "街を追加する",
+          "page": 64
+        },
+        {
+          "title": "空を塗る",
+          "page": 65
+        },
+        {
+          "title": "Chapter3 ブラシ塗りでキャラクターを塗る",
+          "page": 68
+        },
+        {
+          "title": "3-01 ブラシ塗りのキャラクターの準備",
+          "page": 69
+        },
+        {
+          "title": "ブラシ塗りについて",
+          "page": 69
+        },
+        {
+          "title": "ラフを描く",
+          "page": 70
+        },
+        {
+          "title": "線画を描く",
+          "page": 72
+        },
+        {
+          "title": "キャラクターを下塗りする",
+          "page": 74
+        },
+        {
+          "title": "3-02 ブラシ塗りでキャラクターの肌を塗っていく",
+          "page": 75
+        },
+        {
+          "title": "頬と爪を塗る",
+          "page": 75
+        },
+        {
+          "title": "肌の影を塗っていく",
+          "page": 76
+        },
+        {
+          "title": "肌の影の色を調整する",
+          "page": 78
+        },
+        {
+          "title": "肌にハイライトを塗る",
+          "page": 80
+        },
+        {
+          "title": "3-03 キャラクターの服を塗っていく",
+          "page": 81
+        },
+        {
+          "title": "スカートを塗る",
+          "page": 81
+        },
+        {
+          "title": "シャツを塗る",
+          "page": 83
+        },
+        {
+          "title": "上着（アウター）を塗る",
+          "page": 85
+        },
+        {
+          "title": "飲み物を塗る",
+          "page": 89
+        },
+        {
+          "title": "3-04 ブラシ塗りで表情を塗っていく",
+          "page": 91
+        },
+        {
+          "title": "目と表情を塗っていく",
+          "page": 91
+        },
+        {
+          "title": "髪を塗っていく",
+          "page": 94
+        },
+        {
+          "title": "目の透かし処理を行っておく",
+          "page": 99
+        },
+        {
+          "title": "線画に色をつける",
+          "page": 100
+        },
+        {
+          "title": "3-05 背景を塗って仕上げていく",
+          "page": 103
+        },
+        {
+          "title": "テーブルを塗る",
+          "page": 103
+        },
+        {
+          "title": "残りの背景も塗っていく",
+          "page": 107
+        },
+        {
+          "title": "Chapter4 グリザイユ画法でキャラクターを塗る",
+          "page": 116
+        },
+        {
+          "title": "4-01 グリザイユ塗りのキャラクターの準備",
+          "page": 117
+        },
+        {
+          "title": "グリザイユ画法での塗り",
+          "page": 117
+        },
+        {
+          "title": "ラフを描く",
+          "page": 118
+        },
+        {
+          "title": "線画を描く",
+          "page": 120
+        },
+        {
+          "title": "キャラクターを下塗りする",
+          "page": 120
+        },
+        {
+          "title": "4-02 モノクロでキャラクターを塗っていく",
+          "page": 121
+        },
+        {
+          "title": "服の模様を入れていく",
+          "page": 121
+        },
+        {
+          "title": "顔周りの影を入れていく",
+          "page": 122
+        },
+        {
+          "title": "手の周りの影を入れる",
+          "page": 123
+        },
+        {
+          "title": "耳の横から下がる髪とおさげの髪に影を入れる",
+          "page": 124
+        },
+        {
+          "title": "シュシュ、シャツ、セーターの影を入れる",
+          "page": 125
+        },
+        {
+          "title": "本に影を入れる",
+          "page": 128
+        },
+        {
+          "title": "ショートパンツと足に影を入れる",
+          "page": 129
+        },
+        {
+          "title": "目とメガネの影を入れていく",
+          "page": 130
+        },
+        {
+          "title": "グラデーションの影を入れていく",
+          "page": 133
+        },
+        {
+          "title": "全体にハイライトを入れていく",
+          "page": 135
+        },
+        {
+          "title": "グラデーションのハイライトを塗る",
+          "page": 139
+        },
+        {
+          "title": "メガネのレンズを塗っていく",
+          "page": 140
+        },
+        {
+          "title": "4-03 キャラクターに色をのせていく",
+          "page": 143
+        },
+        {
+          "title": "各部位ごとに分けて色をのせていく",
+          "page": 143
+        },
+        {
+          "title": "各部の色味を調整する",
+          "page": 145
+        },
+        {
+          "title": "顔周りに色をのせて色味を調整する",
+          "page": 152
+        },
+        {
+          "title": "4-04 背景を塗って仕上げていく",
+          "page": 155
+        },
+        {
+          "title": "ベンチを塗る",
+          "page": 155
+        },
+        {
+          "title": "残りの背景を塗っていく",
+          "page": 157
+        },
+        {
+          "title": "仕上げの調整をする",
+          "page": 161
+        },
+        {
+          "title": "Chapter5 モノクロ塗り＋グラデーションマップで塗る",
+          "page": 164
+        },
+        {
+          "title": "5-01 グラデーションマップの利用方法",
+          "page": 165
+        },
+        {
+          "title": "グラデーションマップについて",
+          "page": 165
+        },
+        {
+          "title": "グラデーションマップの色を決めるコツ",
+          "page": 166
+        },
+        {
+          "title": "5-02 キャラクターの準備",
+          "page": 169
+        },
+        {
+          "title": "キャラクターと使用ペン・ブラシ",
+          "page": 169
+        },
+        {
+          "title": "ラフを描く",
+          "page": 169
+        },
+        {
+          "title": "線画を描く",
+          "page": 172
+        },
+        {
+          "title": "キャラクターを下塗りする",
+          "page": 172
+        },
+        {
+          "title": "5-03 グラデーションマップでキャラクターを塗る",
+          "page": 173
+        },
+        {
+          "title": "塗りの準備",
+          "page": 173
+        },
+        {
+          "title": "肌を塗る",
+          "page": 174
+        },
+        {
+          "title": "タイツを塗る",
+          "page": 176
+        },
+        {
+          "title": "マフラーを塗る",
+          "page": 177
+        },
+        {
+          "title": "スカートを塗る",
+          "page": 179
+        },
+        {
+          "title": "セーターを塗る",
+          "page": 180
+        },
+        {
+          "title": "ダッフルコートを塗る",
+          "page": 181
+        },
+        {
+          "title": "紐留めを塗る",
+          "page": 182
+        },
+        {
+          "title": "紐を塗る",
+          "page": 183
+        },
+        {
+          "title": "留め具とボタンを塗る",
+          "page": 184
+        },
+        {
+          "title": "髪を塗っていく",
+          "page": 185
+        },
+        {
+          "title": "表情を塗っていく",
+          "page": 187
+        },
+        {
+          "title": "メガネを塗る",
+          "page": 189
+        },
+        {
+          "title": "ヘアピンを塗る",
+          "page": 190
+        },
+        {
+          "title": "レンズを塗る",
+          "page": 190
+        },
+        {
+          "title": "仕上げの処理を行う",
+          "page": 191
+        },
+        {
+          "title": "5-04 背景を塗り、仕上げていく",
+          "page": 193
+        },
+        {
+          "title": "窓枠を塗っていく",
+          "page": 193
+        },
+        {
+          "title": "窓ガラスを塗っていく",
+          "page": 194
+        },
+        {
+          "title": "壁を塗る",
+          "page": 195
+        },
+        {
+          "title": "植木を描いていく",
+          "page": 196
+        },
+        {
+          "title": "花を描いていく",
+          "page": 197
+        },
+        {
+          "title": "背景の色調を調整して仕上げる",
+          "page": 198
+        },
+        {
+          "title": "Appendix イラストの印象を変えるバリエーション",
+          "page": 202
+        },
+        {
+          "title": "A-01 イラストにひと手間加えるテクニック",
+          "page": 203
+        },
+        {
+          "title": "背景をぼかしてキャラクターを目立たせる",
+          "page": 203
+        },
+        {
+          "title": "グロー効果を加える",
+          "page": 205
+        },
+        {
+          "title": "背景などの設定を変更して雰囲気を変える",
+          "page": 206
+        },
+        {
+          "title": "奥付",
+          "page": 211
+        }
+      ],
+      "pdfKey": "library/books/587-book.pdf",
+      "pdfBytes": 102109973,
+      "coverKey": "library/covers/587-book-cover.jpg",
+      "coverBytes": 259463
+    },
+    {
+      "id": "lib-mwhmruao-631534",
+      "sortNo": 587,
+      "title": "数码绘的上色讲座",
+      "author": "[日] はねこと kyuri 泉彩 鈴ノ しぷっ",
+      "intro": "原名《デジタルイラスト 色塗りメイキング講座》，五位知名画师はねこと、kyuri、泉彩、鈴ノ、しぷっ合作推出的一本上色教程，每人一个例子，使用不同的软件。",
+      "pageCount": 211,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/588-book.pdf",
+      "pdfBytes": 120479262,
+      "coverKey": "library/covers/588-book-cover.jpg",
+      "coverBytes": 287990
+    },
+    {
+      "id": "lib-mwhmsu3d-ba5175",
+      "sortNo": 588,
+      "title": "向专业画师学习 CLIP STUDIO PAINT PRO进阶技巧",
+      "author": "[日] しきみ lack 秋咲りお",
+      "intro": "原名《CLIP STUDIO PAINT PRO　プロの絵師に学ぶイラスト上達テクニック》，三位知名画师しきみ、lack、秋咲りお的一本CSP教程，附带三个LIP源文件。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "扉",
+          "page": 4
+        },
+        {
+          "title": "はじめに",
+          "page": 6
+        },
+        {
+          "title": "目次",
+          "page": 7
+        },
+        {
+          "title": "作者紹介",
+          "page": 9
+        },
+        {
+          "title": "CLIP STUDIO PAINT PRO について",
+          "page": 10
+        },
+        {
+          "title": "■PART 1 イラストテクニックのための準備",
+          "page": 12
+        },
+        {
+          "title": "1-1 CLIP STUDIO PAINTの画面構成",
+          "page": 13
+        },
+        {
+          "title": "1-2 ワークスペースを準備する",
+          "page": 14
+        },
+        {
+          "title": "1-3 ショートカットキーを設定する",
+          "page": 15
+        },
+        {
+          "title": "2-1 キャンバスを用意する",
+          "page": 17
+        },
+        {
+          "title": "2-2 ラフを「鉛筆」で描画する",
+          "page": 18
+        },
+        {
+          "title": "3-1 レイヤーを作成する",
+          "page": 23
+        },
+        {
+          "title": "3-2 「ペン」ツールで清書する",
+          "page": 24
+        },
+        {
+          "title": "4-1 レイヤーを準備する",
+          "page": 29
+        },
+        {
+          "title": "4-2 「塗りつぶし」ツールを使う",
+          "page": 30
+        },
+        {
+          "title": "4-3 「筆」ツールを使い分ける",
+          "page": 32
+        },
+        {
+          "title": "4-4 色を選択する",
+          "page": 34
+        },
+        {
+          "title": "4-5 レイヤーを管理する",
+          "page": 37
+        },
+        {
+          "title": "4-6 保存する",
+          "page": 38
+        },
+        {
+          "title": "5-1 はみ出さないように塗る",
+          "page": 39
+        },
+        {
+          "title": "5-2 レイヤーマスクを利用して塗る",
+          "page": 40
+        },
+        {
+          "title": "5-3 素材を利用する",
+          "page": 42
+        },
+        {
+          "title": "5-4 色調補正とフィルターを使う",
+          "page": 45
+        },
+        {
+          "title": "5-5 合成モードで光と影を表現する",
+          "page": 47
+        },
+        {
+          "title": "■PART 2 イラストテクニック しきみ",
+          "page": 50
+        },
+        {
+          "title": "しきみ 「泥中之蓮」",
+          "page": 51
+        },
+        {
+          "title": "1-1 イラストのイメージを固める",
+          "page": 53
+        },
+        {
+          "title": "1-2 ラフから下描きを仕上げる",
+          "page": 55
+        },
+        {
+          "title": "1-3 線の勢いを大切に線画を描く",
+          "page": 57
+        },
+        {
+          "title": "1-4 下塗りをして配色を決める",
+          "page": 60
+        },
+        {
+          "title": "2-1 人物を印象的に塗る",
+          "page": 64
+        },
+        {
+          "title": "2-2 調和を意識して衣装を描く",
+          "page": 67
+        },
+        {
+          "title": "2-3 主役を引き立たせる小物を塗る",
+          "page": 73
+        },
+        {
+          "title": "3-1 近景の水滴と植物を描く",
+          "page": 76
+        },
+        {
+          "title": "3-2 遠景の島と波と雲を描く",
+          "page": 77
+        },
+        {
+          "title": "4-1 イラストの完成度を上げるコツ",
+          "page": 80
+        },
+        {
+          "title": "4-2 最終調整をする",
+          "page": 82
+        },
+        {
+          "title": "■PART 3 イラストテクニック lack",
+          "page": 84
+        },
+        {
+          "title": "lack 「鍵職人と自動人形」",
+          "page": 85
+        },
+        {
+          "title": "1-1 イメージを形にする",
+          "page": 87
+        },
+        {
+          "title": "1-2 影塗りはモノクロ技法の要",
+          "page": 90
+        },
+        {
+          "title": "2-1 グラデーションマップで色味を決める",
+          "page": 93
+        },
+        {
+          "title": "2-2 背景を描き込む",
+          "page": 98
+        },
+        {
+          "title": "2-3 キャラクターを描き込む",
+          "page": 100
+        },
+        {
+          "title": "2-4 パーツを描き込む",
+          "page": 105
+        },
+        {
+          "title": "3-1 光を入れる",
+          "page": 109
+        },
+        {
+          "title": "3-2 背景を描き加える",
+          "page": 111
+        },
+        {
+          "title": "4-1 「ガウスぼかし」で距離感を出す",
+          "page": 116
+        },
+        {
+          "title": "4-2 発光を加える",
+          "page": 117
+        },
+        {
+          "title": "4-3 最後の描き込み",
+          "page": 118
+        },
+        {
+          "title": "■PART 4 イラストテクニック 秋咲りお",
+          "page": 122
+        },
+        {
+          "title": "秋咲りお 「ローズガーディアン」",
+          "page": 123
+        },
+        {
+          "title": "1-1 パースを意識してラフを描く",
+          "page": 125
+        },
+        {
+          "title": "1-2 細部を詰めて下描きを仕上げる",
+          "page": 128
+        },
+        {
+          "title": "1-3 図形ツールやパース定規で線画を描く",
+          "page": 129
+        },
+        {
+          "title": "1-4 下塗りをして影の位置を決める",
+          "page": 132
+        },
+        {
+          "title": "2-1 肌の丸みを影で表現する",
+          "page": 133
+        },
+        {
+          "title": "2-2 印象的な目元に仕上げる",
+          "page": 136
+        },
+        {
+          "title": "2-3 つややかな髪を表現する",
+          "page": 137
+        },
+        {
+          "title": "2-4 素材感を意識して服を塗る",
+          "page": 140
+        },
+        {
+          "title": "2-5 金細工の質感を表現する",
+          "page": 145
+        },
+        {
+          "title": "3-1 透明感のある翼を演出する",
+          "page": 146
+        },
+        {
+          "title": "3-2 カチューシャと小物のバラを塗る",
+          "page": 147
+        },
+        {
+          "title": "3-3 幻想的なガラス玉を表現する",
+          "page": 148
+        },
+        {
+          "title": "3-4 細部の完成度を高める",
+          "page": 151
+        },
+        {
+          "title": "4-1 近景のバラとツルバラを描く",
+          "page": 153
+        },
+        {
+          "title": "4-2 遠景のドームと天窓を描く",
+          "page": 155
+        },
+        {
+          "title": "4-3 自作の筆で遠景の植物を描く",
+          "page": 157
+        },
+        {
+          "title": "4-4 風の流れを意識して雲を描く",
+          "page": 160
+        },
+        {
+          "title": "4-5 魅力的なイラストに仕上げる",
+          "page": 161
+        },
+        {
+          "title": "奥付",
+          "page": 163
+        }
+      ],
+      "pdfKey": "library/books/589-book.pdf",
+      "pdfBytes": 83292602,
+      "coverKey": "library/covers/589-book-cover.jpg",
+      "coverBytes": 313340
+    },
+    {
+      "id": "lib-mwhmtawq-cabb60",
+      "sortNo": 589,
+      "title": "描绘可爱服饰的技法",
+      "author": "[日] 藍飴",
+      "intro": "原名《かわいいコスチュームが描ける本》，画师藍飴的一本可爱服饰教程。",
+      "pageCount": 75,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/590-book.pdf",
+      "pdfBytes": 40484441,
+      "coverKey": "library/covers/590-book-cover.jpg",
+      "coverBytes": 76005
+    },
+    {
+      "id": "lib-mwhmtvhx-69f5e7",
+      "sortNo": 590,
+      "title": "女孩身体的画法 看起来更SEXY的技巧",
+      "author": "[日] 林晃",
+      "intro": "原名《女の子のカラダの描き方 色っぽく見せるテクニック》，林晃的人体教程，如何让女性看起来更具魅力的技巧。",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 1
+        },
+        {
+          "title": "本書のねらい",
+          "page": 4
+        },
+        {
+          "title": "はじめに",
+          "page": 8
+        },
+        {
+          "title": "プロローグ 女の子の色っぽさって何だろう",
+          "page": 9
+        },
+        {
+          "title": "お色気表現5 大ポイント",
+          "page": 10
+        },
+        {
+          "title": "第1章 ポーズとしぐさで 色っぽく見せる",
+          "page": 19
+        },
+        {
+          "title": "ポーズとしぐさを変えればこんなに色っぽい！",
+          "page": 20
+        },
+        {
+          "title": "バストショットを色っぽく描いてみよう",
+          "page": 22
+        },
+        {
+          "title": "全身のポーズを描いてみよう",
+          "page": 26
+        },
+        {
+          "title": "ニーショットポーズを描いてみよう",
+          "page": 32
+        },
+        {
+          "title": "いろんな色っぽいポーズを描いてみよう",
+          "page": 34
+        },
+        {
+          "title": "バストショットの色っぽいしぐさ",
+          "page": 40
+        },
+        {
+          "title": "多彩なポーズとしぐさを組み合わせる",
+          "page": 46
+        },
+        {
+          "title": "第2章 カメラワークで 差をつける！ グッとくるカメラアングル",
+          "page": 51
+        },
+        {
+          "title": "色っぽく見せるにはカメラワークが大切",
+          "page": 52
+        },
+        {
+          "title": "カメラマンになった気分で描いてみよう",
+          "page": 54
+        },
+        {
+          "title": "カメラワークの基本は「標準」「フカン」「アオリ」",
+          "page": 56
+        },
+        {
+          "title": "カメラワークを意識した作画① アオリの色っぽい描写",
+          "page": 62
+        },
+        {
+          "title": "カメラワークを意識した作画② フカンで色っぽく描こう",
+          "page": 68
+        },
+        {
+          "title": "カメラワークを意識した作画③ 見せたいものをクローズアップしよう",
+          "page": 74
+        },
+        {
+          "title": "その他のカメラワークを意識した作画",
+          "page": 80
+        },
+        {
+          "title": "第3章 色っぽく感じる表情と パーツ描写",
+          "page": 83
+        },
+        {
+          "title": "表情やパーツ描写を変えるだけで色っぽい！",
+          "page": 84
+        },
+        {
+          "title": "ドキッとするような表情を描こう",
+          "page": 86
+        },
+        {
+          "title": "普通の表情を色っぽくしてみよう",
+          "page": 88
+        },
+        {
+          "title": "表情の作画を通してパーツを学ぼう",
+          "page": 92
+        },
+        {
+          "title": "グッとくるバスト表現をマスターしよう",
+          "page": 98
+        },
+        {
+          "title": "グッとくるお尻表現をマスターしよう",
+          "page": 106
+        },
+        {
+          "title": "色っぽい脚の表現",
+          "page": 116
+        },
+        {
+          "title": "色っぽい背中・おなか",
+          "page": 126
+        },
+        {
+          "title": "第4章 みんなが「色っぽい」 と感じる場面は？ シチュエーションと演出について考えよう",
+          "page": 129
+        },
+        {
+          "title": "ドキッとさせるにはシチュエーションが大事",
+          "page": 130
+        },
+        {
+          "title": "バスタオル巻き姿でつかむ布の表現",
+          "page": 132
+        },
+        {
+          "title": "シチュエーション① 前かがみ",
+          "page": 136
+        },
+        {
+          "title": "シチュエーション② 四つんばい",
+          "page": 140
+        },
+        {
+          "title": "シチュエーション③ ころんじゃった！",
+          "page": 142
+        },
+        {
+          "title": "シチュエーション④ チラリでドキッ！",
+          "page": 146
+        },
+        {
+          "title": "シチュエーション⑤ 着替え中です",
+          "page": 150
+        },
+        {
+          "title": "演出① シャツやスカートのめくれ表現",
+          "page": 154
+        },
+        {
+          "title": "演出② 濡れ表現",
+          "page": 162
+        },
+        {
+          "title": "シチュエーション+演出 水際の彼女",
+          "page": 165
+        },
+        {
+          "title": "カバーイラストメイキング",
+          "page": 175
+        },
+        {
+          "title": "奥付",
+          "page": 178
+        }
+      ],
+      "pdfKey": "library/books/591-book.pdf",
+      "pdfBytes": 57726519,
+      "coverKey": "library/covers/591-book-cover.jpg",
+      "coverBytes": 180616
+    },
+    {
+      "id": "lib-mwhmv03i-37d1e6",
+      "sortNo": 591,
+      "title": "背景画的画法(改进这里会更好)",
+      "author": "[日] 酒井達也  かも仮面",
+      "intro": "原名《ここを変えればグッと良くなる 背景画の描き方 キャラを生かす背景》，“超描けるシリーズ”系列，背景画的绘制要点。",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "中表紙",
+          "page": 3
+        },
+        {
+          "title": "グラビア",
+          "page": 5
+        },
+        {
+          "title": "はじめに",
+          "page": 15
+        },
+        {
+          "title": "目次",
+          "page": 17
+        },
+        {
+          "title": "Chapter01 まず押さえたい5つのこと",
+          "page": 18
+        },
+        {
+          "title": "COLUMN プロがお答え！ 作画なんでもQ＆A 1",
+          "page": 35
+        },
+        {
+          "title": "Chapter02 背景画の添削",
+          "page": 36
+        },
+        {
+          "title": "COLUMN プロがお答え！ 作画なんでもQ＆A 2",
+          "page": 99
+        },
+        {
+          "title": "Chapter03 キャラに合わせて背景画を描く",
+          "page": 100
+        },
+        {
+          "title": "COLUMN プロがお答え！ 作画なんでもQ＆A 3",
+          "page": 135
+        },
+        {
+          "title": "Chapter04 さらに現場を目指す人たちへ",
+          "page": 136
+        },
+        {
+          "title": "奥付",
+          "page": 147
+        },
+        {
+          "title": "本書を読んだ人におすすめしたい！ 技法集＆ポーズ集",
+          "page": 148
+        },
+        {
+          "title": "裏表紙",
+          "page": 152
+        }
+      ],
+      "pdfKey": "library/books/592-book.pdf",
+      "pdfBytes": 115492633,
+      "coverKey": "library/covers/592-book-cover.jpg",
+      "coverBytes": 214949
+    },
+    {
+      "id": "lib-mwhmziws-1110e3",
+      "sortNo": 592,
+      "title": "随心所欲的日本画 进步的诀窍",
+      "author": "[日] 中村鳳男",
+      "intro": "原名《思い通りに描ける 日本画 上達のコツ》，日本画的教程。",
+      "pageCount": 129,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/593-book.pdf",
+      "pdfBytes": 28561119,
+      "coverKey": "library/covers/593-book-cover.jpg",
+      "coverBytes": 179799
+    },
+    {
+      "id": "lib-mwhn02cr-726c2b",
+      "sortNo": 593,
+      "title": "色彩百科全书 色彩的基础、配色、使用方法",
+      "author": "[日] 色彩活用研究所サミュエル",
+      "intro": "原名《色の事典 色彩の基礎・配色・使い方》，硬核的色彩理论书。",
+      "pageCount": 225,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/594-book.pdf",
+      "pdfBytes": 50520746,
+      "coverKey": "library/covers/594-book-cover.jpg",
+      "coverBytes": 204363
+    },
+    {
+      "id": "lib-mwhn11o7-5fb132",
+      "sortNo": 594,
+      "title": "人物插画中的效果表现大全",
+      "author": "[日] 工画堂スタジオ",
+      "intro": "原名《キャラクターイラスト エフェクト表現大全》，CLIP STUDIO PAINT教程，主要讲解了关于火、水、风、光、暗、天气等自然现象的效果，魔法、科幻、舞台演出等梦幻般的效果的表现方法",
+      "pageCount": 226,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "﻿表紙",
+          "page": 2
+        },
+        {
+          "title": "ご購入・ご利用前に必ずお読みください",
+          "page": 3
+        },
+        {
+          "title": "はじめに",
+          "page": 4
+        },
+        {
+          "title": "目次",
+          "page": 5
+        },
+        {
+          "title": "CLIP STUDIO PAINT PROよく使うツール＆機能",
+          "page": 7
+        },
+        {
+          "title": "火のカテゴリー",
+          "page": 10
+        },
+        {
+          "title": "火の表現",
+          "page": 11
+        },
+        {
+          "title": "PART1 爆発の描き方",
+          "page": 11
+        },
+        {
+          "title": "PART2 剣炎エフェクトの描き方",
+          "page": 15
+        },
+        {
+          "title": "PART3 火の粉の描き方",
+          "page": 19
+        },
+        {
+          "title": "PART4 焦げた服の描き方",
+          "page": 21
+        },
+        {
+          "title": "PART5 仕上げの描き方",
+          "page": 22
+        },
+        {
+          "title": "水のカテゴリー",
+          "page": 24
+        },
+        {
+          "title": "水の表現",
+          "page": 25
+        },
+        {
+          "title": "PART1 水しぶきの描き方",
+          "page": 25
+        },
+        {
+          "title": "PART2 剣水エフェクトの描き方",
+          "page": 29
+        },
+        {
+          "title": "PART3 水泡の描き方",
+          "page": 32
+        },
+        {
+          "title": "PART4 濡れた服の描き方",
+          "page": 34
+        },
+        {
+          "title": "PART5 仕上げの描き方",
+          "page": 36
+        },
+        {
+          "title": "氷の表現",
+          "page": 38
+        },
+        {
+          "title": "PART1 氷塊の描き方",
+          "page": 38
+        },
+        {
+          "title": "PART2 剣氷エフェクトの描き方",
+          "page": 41
+        },
+        {
+          "title": "PART3 雪の描き方",
+          "page": 45
+        },
+        {
+          "title": "PART4 仕上げの描き方",
+          "page": 48
+        },
+        {
+          "title": "水中の表現",
+          "page": 50
+        },
+        {
+          "title": "PART1 水底光の描き方",
+          "page": 50
+        },
+        {
+          "title": "PART2 泡の描き方",
+          "page": 53
+        },
+        {
+          "title": "PART3 水面の描き方",
+          "page": 56
+        },
+        {
+          "title": "水面の表現",
+          "page": 66
+        },
+        {
+          "title": "PART1 水面の映り込みの描き方",
+          "page": 66
+        },
+        {
+          "title": "PART2 水面の波紋の描き方",
+          "page": 69
+        },
+        {
+          "title": "風のカテゴリー",
+          "page": 74
+        },
+        {
+          "title": "風の表現",
+          "page": 75
+        },
+        {
+          "title": "PART1 竜巻の描き方",
+          "page": 75
+        },
+        {
+          "title": "PART2 剣風エフェクトの描き方",
+          "page": 78
+        },
+        {
+          "title": "PART3 舞う葉や花びらの描き方",
+          "page": 81
+        },
+        {
+          "title": "PART4 仕上げの描き方",
+          "page": 83
+        },
+        {
+          "title": "移動エフェクトの表現",
+          "page": 85
+        },
+        {
+          "title": "PART1 空中を飛ぶナイフの描き方",
+          "page": 85
+        },
+        {
+          "title": "斬撃の表現",
+          "page": 90
+        },
+        {
+          "title": "PART1 斬撃エフェクトの描き方",
+          "page": 90
+        },
+        {
+          "title": "衝撃の表現",
+          "page": 95
+        },
+        {
+          "title": "PART1 衝撃エフェクトの描き方",
+          "page": 95
+        },
+        {
+          "title": "PART2 瓦礫エフェクトの描き方",
+          "page": 100
+        },
+        {
+          "title": "光のカテゴリー",
+          "page": 104
+        },
+        {
+          "title": "光の表現",
+          "page": 105
+        },
+        {
+          "title": "PART1 虹エフェクトの描き方",
+          "page": 105
+        },
+        {
+          "title": "PART2 剣光エフェクトの描き方",
+          "page": 108
+        },
+        {
+          "title": "PART3 光の粒の描き方",
+          "page": 113
+        },
+        {
+          "title": "PART4 仕上げの描き方",
+          "page": 117
+        },
+        {
+          "title": "雷の表現",
+          "page": 118
+        },
+        {
+          "title": "PART1 雷エフェクトの描き方",
+          "page": 118
+        },
+        {
+          "title": "PART2 雷のエネルギー玉の描き方",
+          "page": 123
+        },
+        {
+          "title": "PART3 仕上げの描き方",
+          "page": 128
+        },
+        {
+          "title": "闇のカテゴリー",
+          "page": 130
+        },
+        {
+          "title": "闇の表現",
+          "page": 131
+        },
+        {
+          "title": "PART1 闇のオーラの描き方",
+          "page": 131
+        },
+        {
+          "title": "PART2 剣闇エフェクトの描き方",
+          "page": 134
+        },
+        {
+          "title": "PART3 闇のエネルギー球の描き方",
+          "page": 137
+        },
+        {
+          "title": "PART4 仕上げの描き方",
+          "page": 142
+        },
+        {
+          "title": "魔法のカテゴリー",
+          "page": 144
+        },
+        {
+          "title": "魔法の表現",
+          "page": 145
+        },
+        {
+          "title": "PART1 魔力エフェクトの描き方",
+          "page": 145
+        },
+        {
+          "title": "PART2 魔法陣の描き方",
+          "page": 149
+        },
+        {
+          "title": "PART3 仕上げの描き方",
+          "page": 153
+        },
+        {
+          "title": "バリアの表現",
+          "page": 154
+        },
+        {
+          "title": "PART1 攻撃を弾くバリアの描き方",
+          "page": 154
+        },
+        {
+          "title": "PART2 バリアの描き方",
+          "page": 159
+        },
+        {
+          "title": "天候のカテゴリー",
+          "page": 164
+        },
+        {
+          "title": "天候の表現",
+          "page": 165
+        },
+        {
+          "title": "PART1 木漏れ日の描き方",
+          "page": 165
+        },
+        {
+          "title": "PART2 夕焼けの描き方",
+          "page": 170
+        },
+        {
+          "title": "PART3 夜空の描き方",
+          "page": 174
+        },
+        {
+          "title": "PART4 雨の描き方",
+          "page": 179
+        },
+        {
+          "title": "PART5 雪の描き方",
+          "page": 185
+        },
+        {
+          "title": "PART6 霧の描き方",
+          "page": 190
+        },
+        {
+          "title": "その他",
+          "page": 194
+        },
+        {
+          "title": "その他の表現",
+          "page": 195
+        },
+        {
+          "title": "PART1 ステージエフェクトの描き方",
+          "page": 195
+        },
+        {
+          "title": "PART1 SF エフェクトの描き方",
+          "page": 202
+        },
+        {
+          "title": "仕上げ",
+          "page": 208
+        },
+        {
+          "title": "仕上げの表現",
+          "page": 209
+        },
+        {
+          "title": "PART1 色トレスの仕方",
+          "page": 209
+        },
+        {
+          "title": "PART2 ぼかし（被写界深度）の仕方",
+          "page": 212
+        },
+        {
+          "title": "PART3 ブラーのかけ方",
+          "page": 214
+        },
+        {
+          "title": "PART4 色味をのせる仕方",
+          "page": 216
+        },
+        {
+          "title": "PART5 ノイズ効果（色収差）の仕方",
+          "page": 218
+        },
+        {
+          "title": "PART6 グロー効果の仕方",
+          "page": 219
+        },
+        {
+          "title": "PART7 最終調整の仕方",
+          "page": 220
+        },
+        {
+          "title": "イラストレーター紹介",
+          "page": 223
+        },
+        {
+          "title": "奥付",
+          "page": 225
+        },
+        {
+          "title": "電子版奥付",
+          "page": 226
+        }
+      ],
+      "pdfKey": "library/books/595-book.pdf",
+      "pdfBytes": 106157165,
+      "coverKey": "library/covers/595-book-cover.jpg",
+      "coverBytes": 317923
+    },
+    {
+      "id": "lib-mwhn1hc8-200984",
+      "sortNo": 595,
+      "title": "美少女插画中真实肌肤的上色",
+      "author": "[日] B-銀河 pen助",
+      "intro": "原名《美少女イラストのリアルな肌の塗り方》，“超描けるシリーズ”系列其中的一本，主要讲如何上色让人物看起来更SEXY。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/596-book.pdf",
+      "pdfBytes": 37730926,
+      "coverKey": "library/covers/596-book-cover.jpg",
+      "coverBytes": 227837
+    },
+    {
+      "id": "lib-mwhn3jnf-169687",
+      "sortNo": 596,
+      "title": "Extreme Perspective Grids 透视网格参考图",
+      "author": "",
+      "intro": "一套透视网格参考图，共900张，附有使用教程。",
+      "pageCount": 993,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[漫画教程]Extreme Perspective Grids",
+          "page": 1
+        }
+      ],
+      "pdfKey": "library/books/597-book.pdf",
+      "pdfBytes": 221752610,
+      "coverKey": "library/covers/597-book-cover.jpg",
+      "coverBytes": 112707
+    },
+    {
+      "id": "lib-mwhn44w9-2bf848",
+      "sortNo": 597,
+      "title": "如何画出性感的女孩身体部位",
+      "author": "[日] うめ丸 ぶんぼん",
+      "intro": "原名《セクシーに魅せる! 女の子の人体パーツの描き方》，人体教程专题。",
+      "pageCount": 166,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/598-book.pdf",
+      "pdfBytes": 45205083,
+      "coverKey": "library/covers/598-book-cover.jpg",
+      "coverBytes": 238969
+    },
+    {
+      "id": "lib-mwhn4pbr-60d9c5",
+      "sortNo": 598,
+      "title": "手脚的画法 基础入门",
+      "author": "[日] げんまい",
+      "intro": "原名《キャラクター表現の幅が広がる 手と足の描き方基本レッスン 超描けるシリーズ》，一本非常实用的手脚入门教程，超描けるシリーズ系列。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/599-book.pdf",
+      "pdfBytes": 36657886,
+      "coverKey": "library/covers/599-book-cover.jpg",
+      "coverBytes": 284419
+    },
+    {
+      "id": "lib-mwhn5aq9-6c8f3d",
+      "sortNo": 599,
+      "title": "种村有菜的彩墨插画上色指南",
+      "author": "[日] 種村有菜",
+      "intro": "原名《イラストメイキングブック 種村有菜 カラーインク》，日本著名漫画家种村有菜的彩色墨水上色教程。",
+      "pageCount": 114,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/600-book.pdf",
+      "pdfBytes": 43570765,
+      "coverKey": "library/covers/600-book-cover.jpg",
+      "coverBytes": 380346
     }
   ]
 }
