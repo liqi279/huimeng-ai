@@ -67724,6 +67724,8 @@ window.HMChat = (function () {
       marquee = {
         startX: event.clientX - rect.left + grid.scrollLeft,
         startY: event.clientY - rect.top + grid.scrollTop,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
         x: 0, y: 0, w: 0, h: 0,
         el: document.createElement('div')
       };
@@ -67936,13 +67938,18 @@ window.HMChat = (function () {
     var visibleBottom = visibleTop + grid.clientHeight;
     if (cy < visibleTop + 30) grid.scrollTop = Math.max(0, cy - 80);
     else if (cy > visibleBottom - 30) grid.scrollTop = Math.min(grid.scrollHeight, cy - grid.clientHeight + 80);
-    /* 实时判断哪些卡片被框住（矩形与卡片相交即命中，四个方向拖动都一样） */
+    /* 实时判断哪些卡片被框住：用视口坐标下的实际可见矩形做「相交即中」，
+       含主题缩放/transform 后的真实尺寸，四个方向拖动都一样 */
+    var vx1 = Math.min(marquee.startClientX, event.clientX);
+    var vy1 = Math.min(marquee.startClientY, event.clientY);
+    var vx2 = Math.max(marquee.startClientX, event.clientX);
+    var vy2 = Math.max(marquee.startClientY, event.clientY);
     var allCards = grid.querySelectorAll('.desk-card, .folder-card, .result-card.is-desk-job[data-job]');
     allCards.forEach(function (c) {
       /* 叠放浮窗里的图片不参与框选 */
       if (c.closest('.stack-panel')) return;
-      var l = c.offsetLeft, t = c.offsetTop, r = l + c.offsetWidth, b = t + c.offsetHeight;
-      var hit = l < x + w && r > x && t < y + h && b > y;
+      var cr = c.getBoundingClientRect();
+      var hit = cr.left < vx2 && cr.right > vx1 && cr.top < vy2 && cr.bottom > vy1;
       var k = c.hasAttribute('data-job') ? 'job:' + c.dataset.job : (c.classList.contains('folder-card') ? c.dataset.folder : c.dataset.work);
       if (hit) {
         view.selected[k] = true;
