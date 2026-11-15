@@ -7740,6 +7740,17 @@ body.hm-light .hm-page-empty {
   pointer-events: none;
 }
 
+/* 拖到「参考主体」时：原卡留在原位只降低不透明度，跟手的是半透明虚影 */
+.desk-card.is-refsource, .folder-card.is-refsource {
+  opacity: 0.35;
+}
+.desk-ref-ghost {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  filter: saturate(1.1);
+}
+
 .desk-card.is-cut { opacity: 0.45; border-style: dashed; }
 
 .desk-thumb {
@@ -67862,14 +67873,42 @@ window.HMChat = (function () {
       item.nextTop = top;
     });
     if (drag.sortMode) applySortPreview(event);
-    /* 拖到「参考主体」区域上方时高亮（桌面卡片走指针拖拽，没有原生 dragover 事件） */
+    /* 拖到「参考主体」区域：原卡立刻回原位（只降不透明度），改成半透明虚影跟手，
+       避免整张卡片被「搬」到参考区；拖出参考区则撤掉虚影、卡片保持原位 */
     var refHoverEl = byId('refDrop');
     if (refHoverEl && !refHoverEl.hidden) {
       var rr = refHoverEl.getBoundingClientRect();
-      /* 与 pointerup 保持同一 12px 容差，避免「高亮了却放不进去」 */
       var overRef = event.clientX >= rr.left - 12 && event.clientX <= rr.right + 12 &&
                     event.clientY >= rr.top - 12 && event.clientY <= rr.bottom + 12;
       refHoverEl.classList.toggle('is-over', overRef);
+      if (overRef && !drag.refGhost) {
+        drag.items.forEach(function (item) {
+          if (!item.el) return;
+          if (item.left != null) { item.el.style.left = item.left + 'px'; item.el.style.top = item.top + 'px'; }
+          item.el.classList.add('is-refsource');
+        });
+        var srcEl = drag.items[0] && drag.items[0].el;
+        if (srcEl) {
+          var ghost = srcEl.cloneNode(true);
+          ghost.className = 'desk-card desk-ref-ghost';
+          ghost.style.cssText = 'position:fixed;left:0;top:0;width:' + srcEl.offsetWidth +
+            'px;height:' + srcEl.offsetHeight + 'px;margin:0;pointer-events:none;z-index:10030;' +
+            'opacity:.55;transform:translate(-50%,-50%);';
+          document.body.appendChild(ghost);
+          drag.refGhost = ghost;
+        }
+      }
+      if (drag.refGhost) {
+        if (overRef) {
+          drag.refGhost.style.left = event.clientX + 'px';
+          drag.refGhost.style.top = event.clientY + 'px';
+          if (event.cancelable) event.preventDefault();
+          return; /* 参考区拖拽期间不移动真实卡片、不参与排序 */
+        }
+        drag.refGhost.remove();
+        drag.refGhost = null;
+        drag.items.forEach(function (item) { if (item.el) item.el.classList.remove('is-refsource'); });
+      }
     }
     /* 拖动时让 grid 自动跟随滚动
        注意：只能在卡片贴近可见区域边缘时才滚动，否则会出现「点一下上面的图，
@@ -67979,6 +68018,10 @@ window.HMChat = (function () {
     if (!drag) return;
     var current = drag;
     drag = null;
+    if (current.refGhost) {
+      current.refGhost.remove();
+      current.items.forEach(function (item) { if (item.el) item.el.classList.remove('is-refsource'); });
+    }
     var merged = false;
     /* 真正拖动过：松手后浏览器可能补发一次 click（选中/看大图），这里标记吞掉 */
     if (current.moved) suppressClick = true;
