@@ -27359,7 +27359,7 @@ const ENGINES = [
 const RAYIN_DEFAULT = {
   base: 'https://www.rayinai.com/v1',
   key: '',
-  gptModel: 'gpt-image-2.5-flare',
+  gptModel: 'gpt-image-2',
   bananaModel: 'gemini-3.1-flash-image'
 };
 
@@ -27835,10 +27835,14 @@ const state = {
  * （chat/completions 返回 404 not supported by any configured account），
  * 统一切到 GPT-image 的可用模型 gpt-image-2.5-flare（/images/generations）。
  * 带版本标记，之后用户在模型菜单里手动选回 Gemini 不会被反复覆盖。 */
-if (storedPrefs.rayinChannel !== 'gpt-image-2.5') {
+if (storedPrefs.rayinChannel !== 'gpt-image-2-base') {
   if (state.engine === 'banana') state.engine = 'gpt-image';
-  if (!state.api.gptModel || /^gemini-/.test(state.api.gptModel)) state.api.gptModel = 'gpt-image-2.5-flare';
-  storedPrefs.rayinChannel = 'gpt-image-2.5';
+  /* 默认用最省积分的基础档 gpt-image-2；历史上被自动升到 flare 的一并降回 */
+  if (!state.api.gptModel || /^gemini-/.test(state.api.gptModel) || state.api.gptModel === 'gpt-image-2.5-flare') {
+    state.api.gptModel = 'gpt-image-2';
+  }
+  if (!state.channelModel || state.channelModel === 'gpt-image-2.5-flare') state.channelModel = 'gpt-image-2';
+  storedPrefs.rayinChannel = 'gpt-image-2-base';
   try {
     localStorage.setItem(LS_PREFS, JSON.stringify(Object.assign({}, storedPrefs, {
       engine: state.engine,
@@ -30737,19 +30741,7 @@ async function generateOne(job, prompt) {
     } catch (err) {
       /* 后端已返回明确错误（err.message 非空）→ 直接展示给用户，不 fallback */
       if (err && err.message) {
-        /* 模型名不存在：先用这条配置的真实模型清单自愈一次，再重试（只试一次） */
-        if (!job._modelHeal && (job.engine === 'banana' || job.engine === 'gpt-image')
-            && !isGroupUnavailableError(err.message) && isModelNameError(err.message)) {
-          job._modelHeal = true;
-          var healedModel = await healImageModel(job.engine);
-          if (healedModel) {
-            job.channelModel = healedModel;
-            const healedRemote = await runBackendImage(job, prompt);
-            const healedElapsed = (Date.now() - job.startedAt) / 1000;
-            markJobDone(job, healedRemote.url, healedRemote.seed, healedElapsed);
-            return;
-          }
-        }
+        /* 失败即止：不再自动换模型或静默重发，重试必须由用户手动点 */
         /* 如果后端没有 hint，按错误类型补一条能落地的提示（明确该改哪个字段） */
         if (!err.hint && !err.offline) {
           if (isGroupUnavailableError(err.message)) {
@@ -31246,9 +31238,9 @@ function gptQualityFor(job) {
 async function runRayinImage(job, prompt) {
   const size = gptSizeFor(job);
   const quality = gptQualityFor(job);
-  /* 用户设置的模型 ID 不可用时，按 fallback 链自动重试下一个官方 ID */
+  /* 不自动换模型 / 不静默重发：只用当前配置的模型（默认 gpt-image-2），失败即止，重试由用户点 */
   const userModel = rayinCfg().gptModel || RAYIN_DEFAULT.gptModel;
-  const fallbacks = [userModel].concat(GPT_IMAGE_FALLBACKS.filter(function (m) { return m !== userModel; }));
+  const fallbacks = [userModel];
 
   let lastError = null;
   for (let i = 0; i < fallbacks.length; i += 1) {
@@ -32700,7 +32692,14 @@ function stopTicker() {
 }
 
 async function handleGenerate() {
-  if (state.generating) return;
+  /* 并发去重：正在生成、或 800ms 内重复触发（连点 / 回车连击）都直接挡掉 */
+  if (state.generating) {
+    toast('正在生成中，请等当前任务结束', 'info');
+    return;
+  }
+  const nowSubmit = Date.now();
+  if (state._lastSubmitAt && nowSubmit - state._lastSubmitAt < 800) return;
+  state._lastSubmitAt = nowSubmit;
 
   // 视频 / 音频模式交给 V3 工作台（走后端接口）
   if (state.mode && state.mode !== 'image') {
@@ -32712,6 +32711,21 @@ async function handleGenerate() {
   if (!rawPrompt) {
     shakePrompt();
     toast('先描述一下你想要的画面', 'error');
+    return;
+  }
+
+  /* 生成前本地校验：参数不合法就不发请求，避免空跑一次扣积分 */
+  const pendingRefs = currentRefs();
+  for (let ri = 0; ri < pendingRefs.length; ri += 1) {
+    const r = pendingRefs[ri];
+    if (!r || (!r.dataUrl && !r.preview && !r.thumb)) {
+      toast('第 ' + (ri + 1) + ' 张参考图还没准备好，请重新上传或移除后再试', 'error');
+      return;
+    }
+  }
+  const countNum = Number(state.count);
+  if (!isFinite(countNum) || countNum < 1) {
+    toast('生成数量无效，请重新设置', 'error');
     return;
   }
 
@@ -32735,6 +32749,14 @@ async function handleGenerate() {
 
   const model = getModel(state.modelId);
   const size = currentSize();
+  if (!model || !model.id) {
+    toast('当前风格模型无效，请重新选择', 'error');
+    return;
+  }
+  if (!size || !(Number(size.w) > 0) || !(Number(size.h) > 0)) {
+    toast('尺寸参数无效，请重新选择比例或清晰度', 'error');
+    return;
+  }
   const baseSeed = clamp(Number(els.seedInput.value) || randomSeed(), 1, 2147483647);
   state.seed = baseSeed;
   persistPrefs();
@@ -32753,7 +32775,7 @@ async function handleGenerate() {
       promptEn: '',
       modelId: model.id,
       modelName: model.name,
-      channelModel: state.channelModel || '',
+      channelModel: state.channelModel || 'gpt-image-2',
       engine: state.engine,
       metaLabel: (ENGINE_META[state.engine] || ENGINE_META.flux).meta,
       width: size.w,
