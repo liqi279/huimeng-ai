@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-15T09:07:21.356Z",
+  "generatedAt": "2026-11-15T09:16:29.925Z",
   "source": "huimeng_library.books",
-  "total": 554,
+  "total": 566,
   "areas": {
-    "paint": 538,
-    "ref": 16
+    "paint": 548,
+    "ref": 18
   },
   "books": [
     {
@@ -22300,6 +22300,34 @@
       "coverBytes": 269023
     },
     {
+      "id": "lib-mwhm7jny-8a5e8f",
+      "sortNo": 496,
+      "title": "JK就是正义 女学生制服图鉴",
+      "author": "日本画师クマノイ(kumanoikuma)",
+      "intro": "来自日本画师クマノイ(kumanoikuma)的一本女子学生制服设定集，非常精美，中文名《JK就是正义 女学生制服图鉴》。",
+      "pageCount": 147,
+      "area": "ref",
+      "toc": [],
+      "pdfKey": "library/books/497-book.pdf",
+      "pdfBytes": 36643162,
+      "coverKey": "library/covers/497-book-cover.jpg",
+      "coverBytes": 226920
+    },
+    {
+      "id": "lib-mwhma62z-a24a9a",
+      "sortNo": 497,
+      "title": "女子中・高生の制服攻略本",
+      "author": "日本画师クマノイ(kumanoikuma)",
+      "intro": "来自日本画师クマノイ(kumanoikuma)的一本女子学生制服设定集，非常精美。",
+      "pageCount": 148,
+      "area": "ref",
+      "toc": [],
+      "pdfKey": "library/books/498-book.pdf",
+      "pdfBytes": 171747007,
+      "coverKey": "library/covers/498-book-cover.jpg",
+      "coverBytes": 231025
+    },
+    {
       "id": "lib-mwhls3hx-f2b5be",
       "sortNo": 499,
       "title": "动画作画的基础~人物与机器人~",
@@ -25798,6 +25826,146 @@
       "pdfBytes": 76727173,
       "coverKey": "library/covers/572-book-cover.jpg",
       "coverBytes": 205723
+    },
+    {
+      "id": "lib-mwhm20bq-ae7e86",
+      "sortNo": 572,
+      "title": "物理表现的绘制技法",
+      "author": "[日] 平井太朗",
+      "intro": "原名《物理表現のイラスト描画》，一本物理表现的绘制技法，真实地绘制诸如爆炸，火焰，烟雾，云，水和风之类的物理表现效果。",
+      "pageCount": 162,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/573-book.pdf",
+      "pdfBytes": 95311137,
+      "coverKey": "library/covers/573-book-cover.jpg",
+      "coverBytes": 261564
+    },
+    {
+      "id": "lib-mwhm2jfm-d2f40b",
+      "sortNo": 573,
+      "title": "初次的女性绘制课堂 描绘想象中的女性",
+      "author": "[日] 岩崎宏",
+      "intro": "原名《はじめての女性画レッスン帳 イメージ通りの女性を描く》，一本复古风的女性人物绘制教程。",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/574-book.pdf",
+      "pdfBytes": 38273190,
+      "coverKey": "library/covers/574-book-cover.jpg",
+      "coverBytes": 181523
+    },
+    {
+      "id": "lib-mwhm75kr-9af071",
+      "sortNo": 574,
+      "title": "萌系美少女角色的绘制技法",
+      "author": "[日] 犬洞あん 羽純りお 02whip Gurne うっけ",
+      "intro": "原名《萌え美少女キャラのつくりかた》，“犬洞あん、羽純りお、02whip、Gurne 、うっけ”五位画师合作推出的一本美少女角色画法，从绘制到上色。",
+      "pageCount": 161,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/575-book.pdf",
+      "pdfBytes": 546550727,
+      "coverKey": "library/covers/575-book-cover.jpg",
+      "coverBytes": 251711
+    },
+    {
+      "id": "lib-mwhm7rwh-e103af",
+      "sortNo": 575,
+      "title": "校园人物的画法 入门篇",
+      "author": "[日] 林晃",
+      "intro": "原名《学園マンガの描き方 入門編》，林晃推出的日式校园人物的设定教程。",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/576-book.pdf",
+      "pdfBytes": 43341780,
+      "coverKey": "library/covers/576-book-cover.jpg",
+      "coverBytes": 253872
+    },
+    {
+      "id": "lib-mwhm8d7x-4f6caf",
+      "sortNo": 576,
+      "title": "从零开始学专业网络漫画创作",
+      "author": "[日] 泡沫 佐木郁 世紀末 にいち まき田 ヤマダ",
+      "intro": "原名《Webマンガの技術　ゼロから学ぶプロの技　神技作画シリーズ》，“神技作画”系列的一本，WEB漫画创作教程。",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/577-book.pdf",
+      "pdfBytes": 42575005,
+      "coverKey": "library/covers/577-book-cover.jpg",
+      "coverBytes": 272549
+    },
+    {
+      "id": "lib-mwhm98lv-db8569",
+      "sortNo": 577,
+      "title": "男女脸部的画法 区分角度、年龄、表情不同的角色设计",
+      "author": "[日] YANAMi",
+      "intro": "原名《男女の顔の描き分け 角度別・年齢別・表情別のキャラデッサン》，一本脸部画法的专题。",
+      "pageCount": 171,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/578-book.pdf",
+      "pdfBytes": 74373290,
+      "coverKey": "library/covers/578-book-cover.jpg",
+      "coverBytes": 242366
+    },
+    {
+      "id": "lib-mwhma1d9-5bf351",
+      "sortNo": 578,
+      "title": "闪亮眼睛的画法",
+      "author": "[日] 玄光社",
+      "intro": "原名《きらめく瞳の描き方》，多位画师联合推出的一本教程，教你画出闪亮的眼睛，“超描けるシリーズ”系列，参与画师：お久しぶり/うさもち。/りりのすけ/さげお/千歳坂すず/わも/葉月 透。",
+      "pageCount": 152,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/579-book.pdf",
+      "pdfBytes": 62784128,
+      "coverKey": "library/covers/579-book-cover.jpg",
+      "coverBytes": 207177
+    },
+    {
+      "id": "lib-mwhmanqj-920d07",
+      "sortNo": 579,
+      "title": "SAI×Photoshop背景的画法 自如地表现季节和时间的流逝",
+      "author": "[日] garnet",
+      "intro": "原名《ステップアップ式 SAI×Photoshopで描く 背景レッスン ～季節や時の流れを自在に表現する～》，SAI+PHOTOSHOP的背景画教程，附带DVD光盘，内有PSD源文件。",
+      "pageCount": 211,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/580-book.pdf",
+      "pdfBytes": 57351471,
+      "coverKey": "library/covers/580-book-cover.jpg",
+      "coverBytes": 228494
+    },
+    {
+      "id": "lib-mwhmb76m-b2ec9c",
+      "sortNo": 580,
+      "title": "色彩的教科书",
+      "author": "[日] 桜井輝子",
+      "intro": "原名《色の教科書》，如何合理运用颜色的教程。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/581-book.pdf",
+      "pdfBytes": 50895704,
+      "coverKey": "library/covers/581-book-cover.jpg",
+      "coverBytes": 186263
+    },
+    {
+      "id": "lib-mwhmbtq9-7c9751",
+      "sortNo": 581,
+      "title": "Copic马克笔 简单上色进阶教程",
+      "author": "[日] 玄光社MOOK",
+      "intro": "原名《コピックかんたん上達色ぬりレッスン》，Copic马克笔的上色教程。",
+      "pageCount": 156,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/582-book.pdf",
+      "pdfBytes": 61079824,
+      "coverKey": "library/covers/582-book-cover.jpg",
+      "coverBytes": 314568
     }
   ]
 }
