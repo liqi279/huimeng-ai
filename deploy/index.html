@@ -67746,16 +67746,16 @@ window.HMChat = (function () {
     else if (isFolder) key = card.dataset.folder;
     else key = card.dataset.work;
 
-    /* 普通单击不再立刻 selectOnly：否则按下鼠标就会把卡片加入批量选择，
-       弹出「已选 N 项 / 合并到新文件夹…」操作条。
-       只有 Ctrl/⌘/Shift 组合键才立即切换选中；普通拖拽在真正开始拖动时才补选中。 */
+    /* 普通单击：按下即高亮（原来要等 pointerup/click 才切换，手感明显延迟）。
+       选中态同步写入，拖动仍然沿用同一份选中集合，不影响拖动排序。 */
     var plainClick = !(event.ctrlKey || event.metaKey || event.shiftKey);
     if (!plainClick) toggleSelect(key);
+    else if (!view.selected[key]) selectOnly(key);
 
     var ids = selectedIds();
     var pendingKey = null;
-    if (plainClick && !view.selected[key]) {
-      ids = [key];        /* 先按单张参与拖拽，拖动超过阈值后再 selectOnly */
+    if (plainClick && !view.selected[key] && ids.indexOf(key) < 0) {
+      ids = [key];
       pendingKey = key;
     }
     if (!ids.length) return;
