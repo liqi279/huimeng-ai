@@ -4691,16 +4691,32 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   line-height: inherit;
   overflow: visible;       /* thumb 在内部，visible 也没问题 */
 }
+/* 胶囊：深色圆角底 + 细边框（不占布局宽度），左侧缩略图绝对定位，
+   文字「@N」保持与 textarea 文本等宽，所以光标不会偏移、连续多个也不挤行 */
+.hm-prompt-overlay .chip { position: relative; display: inline-block; }
+.hm-prompt-overlay .chip::before {
+  content: '';
+  position: absolute;
+  left: -1.18em;
+  right: -0.18em;
+  top: -0.16em;
+  bottom: -0.16em;
+  border-radius: 7px;
+  background: rgba(12, 18, 32, 0.82);
+  border: 1px solid rgba(167, 139, 250, 0.38);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  z-index: 0;
+}
 .hm-prompt-overlay .chip .chip-label {
   display: inline-block;
-  color: #fff;
-  font-weight: 700;
+  color: #c7d2fe;
+  font-weight: 600;
   font-size: inherit;     /* 和 textarea 同字号，chip 宽度才和文本完全一致 */
   white-space: nowrap;
   padding: 0;             /* 必须 0：任何 padding 都会让 chip 宽于文本，光标整体偏移 */
-  border-radius: 5px;
-  background-color: rgba(99, 102, 241, 0.92);
-  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.55);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   height: 1.45em;
   line-height: 1.45em;
   vertical-align: -0.28em;
@@ -4708,20 +4724,20 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   position: relative;
   z-index: 1;
 }
-/* 缩略图：放在 chip 内部左边缘（覆盖 "@" 字符位置），不溢出外部 */
+/* 缩略图：贴在胶囊左端（绝对定位，不占文档流宽度），约胶囊高度的六成 */
 .hm-prompt-overlay .chip .chip-thumb {
   position: absolute;
-  left: 0.5px;             /* ← 在 chip 内部，不是外部！0.5px 防止边缘抗锯齿 */
+  left: -1.06em;
   top: 50%;
   transform: translateY(-50%);
-  width: 0.9em;
-  height: 0.9em;
+  width: 0.92em;
+  height: 0.92em;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  z-index: 2;              /* ← 在 label 上层，盖住 "@" */
+  z-index: 2;
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮）——与参考图卡同一套紫金强调色 */
@@ -4803,11 +4819,12 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 .hm-ref-ac-tag {
   display: inline-block;
   padding: 0 5px;
-  border-radius: 5px;
-  background: rgba(99, 102, 241, 0.92);
-  color: #fff;
+  border-radius: 7px;
+  background: rgba(12, 18, 32, 0.82);
+  border: 1px solid rgba(167, 139, 250, 0.38);
+  color: #c7d2fe;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
 }
 .hm-ref-ac-footer {
@@ -29158,8 +29175,11 @@ function _ensureChipCache(refs) {
   if (key === _chipCacheKey) return _chipCacheHtml;
   _chipCacheKey = key;
   _chipCacheHtml = refs.map(function (ref, i) {
-    /* chip 只保留序号，宽度与文本「图N」完全一致（缩略图统一在参考区/建议卡里显示） */
-    return '<span class="chip"><span class="chip-label">图' + (i + 1) + '</span></span>';
+    var u = ref.thumb || ref.dataUrl || '';
+    /* 深色胶囊：左侧小缩略图（绝对定位、不占宽度）+ "@N" 浅色文字，
+       整体宽度与文本里的 @N 完全一致，连续多个也不会挤行 */
+    return '<span class="chip"><span class="chip-thumb" style="background-image:url(' + u + ')"></span>' +
+      '<span class="chip-label">@' + (i + 1) + '</span></span>';
   });
   return _chipCacheHtml;
 }
@@ -29184,7 +29204,8 @@ function renderPromptOverlay() {
   overlay.scrollTop = ta.scrollTop;
 
   var chips = _ensureChipCache(refs);
-  var html = _escPromptHtml(text).replace(/(?:@|图)(\d+)(?![0-9])/g, function (match, n) {
+  /* @图1 / 图1 / @1 都归一到同一枚胶囊，避免出现「@图1图1」这种重复文案 */
+  var html = _escPromptHtml(text).replace(/(?:@图|图|@)(\d+)(?![0-9])/g, function (match, n) {
     return chips[Number(n) - 1] || match;
   });
   overlay.innerHTML = html || ' ';
