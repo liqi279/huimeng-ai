@@ -25418,29 +25418,9 @@ body.dv-open .hm-page {
         <button class="primary-btn" id="apiSave">保存并启用</button>
       </div>
 
-      <div class="api-divider">免费额度平台（可选 · 注册即送额度）</div>
-      <div class="api-form">
-        <label class="field">
-          <span>平台</span>
-          <select id="providerSelect"></select>
-        </label>
-        <label class="field">
-          <span>接口地址</span>
-          <input id="providerBaseInput" type="text" placeholder="https://api.siliconflow.cn/v1" autocomplete="off">
-        </label>
-        <label class="field">
-          <span>API Key</span>
-          <input id="providerKeyInput" type="password" placeholder="免费注册后获取" autocomplete="off">
-        </label>
-        <label class="field">
-          <span>默认模型 ID</span>
-          <input id="providerModelInput" type="text" placeholder="Kwai-Kolors/Kolors" autocomplete="off">
-        </label>
-      </div>
-      <p class="api-hint" id="providerHint">密钥仅保存在本浏览器。
-        <a id="providerKeyLink" href="https://cloud.siliconflow.cn/account/ak" target="_blank" rel="noopener">获取密钥</a>
-      </p>
-      <button class="subtle-btn wide" id="providerSave">保存平台配置</button>
+      <div class="api-divider" hidden></div>
+      <div class="api-form" hidden></div>
+      <p class="api-hint" hidden></p>
     </div>
   </div>
 
@@ -26888,6 +26868,11 @@ const CATALOG_FALLBACK = {
     { id: 'gemini-3.1-flash-lite-image', engine: 'banana', model: 'gemini-3.1-flash-lite-image', name: 'Gemini 3.1 Flash Lite Image', badge: 'Gemini · Lite', hint: '最轻量 · 秒级响应' },
   ]
 };
+
+/* 这些平台标注「免费」，实际调用需注册充值/消耗额度，不属于可直接使用的免费资源：
+ * 统一从内置目录移除（保留无 Key 的 Pollinations 系列与用户自建的 RayinAPI）。
+ * 本机旧记录里若指向已移除平台，读取时自然被跳过，不报错。 */
+CATALOG_FALLBACK.providers = [];
 
 const TRANSLATE_API = 'https://text.pollinations.ai/';
 /* 免费额度用尽时的兜底通道（图片带水印，仅在主通道不可用时使用） */
