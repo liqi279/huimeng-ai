@@ -69236,6 +69236,12 @@ window.HMChat = (function () {
             view.selectedFolders[fid] = true;
             view.activeFolder = fid;
             clearSelection();
+            /* renderDesktop 在非 create 视图会提前 return（只标 deskDirty），
+               从资产/项目页点文件夹时就不会切过去，看起来像"点了没反应"。
+               先切回 create 视图，让这次点击真的进入文件夹桌面。 */
+            if (document.body.getAttribute('data-view') !== 'create' && A.switchView) {
+              A.switchView('create');
+            }
             renderPanel();
             renderDesktop();
             /* 不关 panel */
@@ -69254,6 +69260,9 @@ window.HMChat = (function () {
           view.selectedFolders = {};
           view.activeFolder = null;
           clearSelection();
+          if (document.body.getAttribute('data-view') !== 'create' && A.switchView) {
+            A.switchView('create');
+          }
           renderPanel();
           renderDesktop();
         } else if (action === 'new') {
