@@ -26580,7 +26580,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     var raw = String(url || '');
     if (!raw) return '';
     var target = /^https?:\/\//i.test(raw) ? raw : api.mediaUrl(raw);
-    var path = '/api/image-proxy?url=' + encodeURIComponent(target);
+    /* SCF 函数 URL 不透传二进制响应体（200 空 body），走 JSON 通道拿 dataUrl */
+    var path = '/api/image-proxy?url=' + encodeURIComponent(target) + '&format=json';
     return origin ? origin + path : path;
   };
 
@@ -29766,11 +29767,36 @@ async function hmReadImageBlob(src) {
   var proxy = window.HM && window.HM.api && window.HM.api.imageProxyUrl
     ? window.HM.api.imageProxyUrl(src) : '';
   if (!proxy) throw new Error(direct);
+  /* 代理改走 format=json：SCF 函数 URL 不透传二进制响应体，
+     返回 { ok, contentType, bytes, dataUrl }，这里把 dataUrl 还原成 Blob。 */
   var r2 = await fetch(proxy, { mode: 'cors' });
-  if (!r2.ok) throw new Error(direct + ' · 服务端代取 HTTP ' + r2.status);
-  var b2 = await r2.blob();
-  if (!b2 || !b2.size) throw new Error(direct + ' · 服务端代取为空');
-  return b2;
+  var raw2 = await r2.text();
+  var j2 = null;
+  try { j2 = raw2 ? JSON.parse(raw2) : null; } catch (e) { j2 = null; }
+  if (!r2.ok) {
+    var why2 = (j2 && j2.error && (j2.error.message || j2.error)) || ('HTTP ' + r2.status);
+    throw new Error(direct + ' · 服务端代取失败：' + String(why2).slice(0, 160));
+  }
+  var dataUrl = j2 && j2.dataUrl ? String(j2.dataUrl) : '';
+  if (!dataUrl || dataUrl.indexOf('data:') !== 0) {
+    throw new Error(direct + ' · 服务端代取为空');
+  }
+  var comma = dataUrl.indexOf(',');
+  if (comma < 0) throw new Error(direct + ' · 服务端代取格式异常');
+  var head = dataUrl.slice(0, comma);
+  var body = dataUrl.slice(comma + 1);
+  var mime = (head.match(/^data:([^;]+)/i) || [])[1] || (j2 && j2.contentType) || 'image/jpeg';
+  var out;
+  if (/;base64/i.test(head)) {
+    var bin = atob(body);
+    var arr = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    out = new Blob([arr], { type: mime });
+  } else {
+    out = new Blob([decodeURIComponent(body)], { type: mime });
+  }
+  if (!out || !out.size) throw new Error(direct + ' · 服务端代取为空');
+  return out;
 }
 
 window.HMRefDrop = {
