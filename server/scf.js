@@ -90,17 +90,32 @@ function waitReady() {
 
 /* 腾讯云函数 URL 会给「没有 Content-Disposition」的响应自动补 attachment，
    浏览器直接打开 /api/health 就变成下载文件。这里对 json/text/xml 显式声明 inline；
-   文件下载接口自己设置的 attachment 不受影响。 */
+   文件下载接口自己设置的 attachment 不受影响。
+   同时把响应头名统一成 Title-Case：函数 URL 网关按大小写匹配
+   Content-Type，Express 输出的全小写头会让网关误判为 JSON，
+   造成「重复 Content-Type + 二进制 body 丢失」。 */
+function canonicalHeaderName(name) {
+  return String(name).split('-').map((part) => (
+    part ? part.charAt(0).toUpperCase() + part.slice(1) : part
+  )).join('-');
+}
+
 function withInlineDisposition(out) {
   if (!out || !out.headers) return out;
-  const headers = out.headers;
+  const source = out.headers;
+  const headers = {};
+  Object.keys(source).forEach((key) => {
+    headers[canonicalHeaderName(key)] = source[key];
+  });
   const keys = Object.keys(headers);
-  if (keys.some((k) => k.toLowerCase() === 'content-disposition')) return out;
-  const ctKey = keys.find((k) => k.toLowerCase() === 'content-type');
-  const ct = ctKey ? String(headers[ctKey]) : '';
-  if (/^(application\/json|text\/|application\/xml|application\/javascript)/i.test(ct)) {
-    headers['Content-Disposition'] = 'inline';
+  if (!keys.some((k) => k.toLowerCase() === 'content-disposition')) {
+    const ctKey = keys.find((k) => k.toLowerCase() === 'content-type');
+    const ct = ctKey ? String(headers[ctKey]) : '';
+    if (/^(application\/json|text\/|application\/xml|application\/javascript)/i.test(ct)) {
+      headers['Content-Disposition'] = 'inline';
+    }
   }
+  out.headers = headers;
   return out;
 }
 
