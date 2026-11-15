@@ -31500,12 +31500,27 @@ function saveWork(job) {
   saveWorks();
   renderWorks();
 
+  /* 生图成功先归档到后端：本地只留缩略图 + 资产地址，避免配额把作品挤掉 */
+  if (type === 'image' && window.HMSync && HMSync.archiveWork) {
+    if (job.url && job.url.indexOf('data:') === 0) work._pendingUrl = job.url;
+    HMSync.archiveWork(work).then(function (r) {
+      if (r && r.ok) {
+        if (state.view === 'works') renderWorks();
+        toast('原图已存到云端，本地只保留缩略图', 'ok', 3000);
+      } else if (r && r.reason === 'upload-failed') {
+        toast('原图暂只在本机：云端归档失败，已排队自动补传', 'warn', 6000);
+      } else if (r && r.reason === 'offline') {
+        toast('当前离线：原图先存本机，联网后自动补传到云端', 'warn', 6000);
+      }
+    }).catch(function () {});
+  }
+
   if (type !== 'image') return;
 
   // GPT-image 常返回 base64 内联图，直接存会超出 localStorage 容量，压缩后再落盘
   if (job.url.indexOf('data:') === 0) {
     compressDataUrl(job.url, 1280, 0.86).then(function (small) {
-      if (!small || work.calibrated) return;
+      if (!small || work.calibrated || work._assetId) return;
       work.url = small;
       saveWorks();
       if (state.view === 'works') renderWorks();
@@ -31606,8 +31621,29 @@ function saveWorks() {
     return;
   }
 
-  /* 彻底写不进：必须显式告知，不能假装保存成功 */
-  toast('本机存储空间不足，这张作品未能写入本地缓存，请立即下载保存', 'error', 9000);
+  /* 彻底写不进：先把原图转存云端，再给出能区分「浏览器配额」和「磁盘」的提示 */
+  if (window.__hmQuotaToastAt && Date.now() - window.__hmQuotaToastAt < 8000) {
+    syncWorksToServer();
+    return;
+  }
+  window.__hmQuotaToastAt = Date.now();
+  if (window.HMSync && HMSync.archiveWork && state.works[0]) {
+    HMSync.archiveWork(state.works[0]).catch(function () {});
+  }
+  var fallbackMsg = '本机存储空间不足：原图已转存云端，本地只保留缩略图，仍可查看与下载';
+  if (navigator.storage && navigator.storage.estimate) {
+    navigator.storage.estimate().then(function (est) {
+      if (!est || !est.quota) { toast(fallbackMsg, 'error', 9000); return; }
+      var mb = function (n) { return (n / 1048576).toFixed(0) + 'MB'; };
+      var pct = Math.round(est.usage / est.quota * 100);
+      var msg = pct >= 85
+        ? '浏览器本地配额已满（' + mb(est.usage) + ' / ' + mb(est.quota) + '）：原图已改存云端，本地只留缩略图；可在浏览器「站点设置 → 清除数据」释放空间'
+        : '写入本地缓存失败（配额仅占 ' + pct + '%）：多为设备磁盘空间不足，请先清理磁盘；原图已改存云端，不影响查看与下载';
+      toast(msg, 'error', 9000);
+    }).catch(function () { toast(fallbackMsg, 'error', 9000); });
+  } else {
+    toast(fallbackMsg, 'error', 9000);
+  }
   syncWorksToServer();
 }
 
@@ -31898,7 +31934,10 @@ function openLightbox(item) {
     els.lbImage.style.display = '';
     els.lbImage.src = item.url || item.thumb || '';
     els.lbImage.onerror = function () {
-      if (item.thumb && els.lbImage.src !== item.thumb) els.lbImage.src = item.thumb;
+      if (item.thumb && els.lbImage.src !== item.thumb) {
+        els.lbImage.src = item.thumb;
+        toast('云端原图暂不可达，已显示本地缩略图', 'warn', 5000);
+      }
     };
     els.lbImage.onload = function () {
       lbReset(); /* 每次打开都从 100% 起，不再按窗口大小自适应缩小 */
@@ -74210,6 +74249,11 @@ window.HMChat = (function () {
     if (!uid() || busy || !window.HMApp) return;
     if (!force && Date.now() - lastPullAt < 20000) return;
     lastPullAt = Date.now();
+    /* 登录后后台补传 + 逐步迁移本地老原图（成功一张释放一张） */
+    setTimeout(function () {
+      try { migrateLocalOriginals(3); } catch (e) {}
+      try { retryPendingUploads(); } catch (e) {}
+    }, 3000);
     busy = true;
     try {
       await window.HMApp.hydrateWorks();
@@ -74649,6 +74693,83 @@ window.HMChat = (function () {
     return { ok: failed.length === 0, total: cases.length, failed: failed.map(function (c) { return c[0]; }) };
   }
 
+  /* ---- 原图归档：本地空间不足时把原图存到后端，本地只留缩略图 + 地址 ---- */
+  var PENDING_KEY = 'anidream.pendingUploads';
+  function pendingIds() {
+    try { return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]') || []; } catch (e) { return []; }
+  }
+  function savePendingIds(list) {
+    try { localStorage.setItem(PENDING_KEY, JSON.stringify((list || []).slice(0, 50))); } catch (e) {}
+  }
+  function markPendingUpload(id) {
+    if (!id) return;
+    var list = pendingIds();
+    if (list.indexOf(id) < 0) list.unshift(id);
+    savePendingIds(list);
+  }
+
+  async function archiveWork(work) {
+    if (!work || !work.id) return { ok: false, reason: 'no-work' };
+    if (!uid()) return { ok: false, reason: 'auth' };
+    if (!api.online) {
+      /* 离线也入队：联网后由 retryPendingUploads 自动补传，不能只留在内存里 */
+      markPendingUpload(work.id);
+      return { ok: false, reason: 'offline' };
+    }
+    var raw = (typeof work._pendingUrl === 'string' && work._pendingUrl) || work.url;
+    if (!raw || (raw.indexOf('data:') !== 0 && !/^https?:/i.test(raw))) return { ok: false, reason: 'no-src' };
+    if (work._assetId) {
+      /* 已经在对象存储：直接释放本地整份副本 */
+      try { idbDelBlob(work.id); } catch (e) {}
+      work.blob = false;
+      return { ok: true, url: work.url };
+    }
+    var backup = work.url;
+    work.url = raw;
+    try { await uploadAsset(work); } catch (e) {}
+    if (!work._assetId) {
+      work.url = backup;
+      markPendingUpload(work.id);
+      return { ok: false, reason: 'upload-failed' };
+    }
+    delete work._pendingUrl;
+    /* 只在云端确实有副本后才删本机原图，避免两头都丢 */
+    try { idbDelBlob(work.id); } catch (e) {}
+    work.blob = false;
+    work._localBlobKept = false;
+    work._archivedAt = Date.now();
+    savePendingIds(pendingIds().filter(function (x) { return x !== work.id; }));
+    if (window.HMApp && window.HMApp.saveWorks) { try { window.HMApp.saveWorks(); } catch (e) {} }
+    if (window.HMApp && window.HMApp.renderWorks) { try { window.HMApp.renderWorks(); } catch (e) {} }
+    return { ok: true, url: work.url, bytes: work._assetBytes || 0 };
+  }
+
+  async function retryPendingUploads() {
+    if (!uid() || !api.online) return;
+    var ids = pendingIds();
+    if (!ids.length) return;
+    var works = (window.HMApp && window.HMApp.state && window.HMApp.state.works) || [];
+    for (var i = 0; i < ids.length && i < 5; i += 1) {
+      var target = null;
+      for (var j = 0; j < works.length; j += 1) {
+        if (works[j] && works[j].id === ids[i]) { target = works[j]; break; }
+      }
+      if (!target) { savePendingIds(pendingIds().filter(function (x) { return x !== ids[i]; })); continue; }
+      await archiveWork(target);
+    }
+  }
+
+  /* 已有本地原图不硬删：逐张上传成功后，才释放对应的本地副本 */
+  async function migrateLocalOriginals(limit) {
+    if (!uid() || !api.online) return;
+    try { await window.HMApp.hydrateWorks(); } catch (e) {}
+    var pool = ((window.HMApp && window.HMApp.state && window.HMApp.state.works) || []).filter(function (w) {
+      return w && w.id && !w._assetId && typeof w.url === 'string'
+        && w.url.indexOf('data:') === 0 && w.url.length > 200000;
+    }).slice(0, limit || 3);
+    for (var i = 0; i < pool.length; i += 1) { await archiveWork(pool[i]); }
+  }
+
   window.HMSync = {
     afterLogin: afterLogin,
     onWorksChanged: onWorksChanged,
@@ -74684,6 +74805,10 @@ window.HMChat = (function () {
     runSyncWrite: runSyncWrite,
     recoverLocal: recoverLocal,
     autoRecover: maybeAutoRecover,
+    archiveWork: archiveWork,
+    retryPendingUploads: retryPendingUploads,
+    migrateLocalOriginals: migrateLocalOriginals,
+    hasPendingUploads: function () { return pendingIds().length > 0; },
     assertNoDataLoss: assertNoDataLoss,
     pullDocs: async function () {
       var boot = await pullBootstrap();
