@@ -4065,9 +4065,7 @@ body.hm-resizing * {
   padding-left: 12px;
   flex-shrink: 0; /* 固定 tabs 高度，不被压缩 */
   max-width: 100%;
-  /* 纵向必须放行：删除叉号是浮在口袋上边缘之外的气泡，不能被 tabs 容器裁掉。
-     口袋过多时靠 tab 自身 flex-shrink 收缩（文字省略号），仍不换行。 */
-  overflow: visible;
+  overflow-x: auto; /* 口袋过多时横向滚动，绝不换行错位 */
   scrollbar-width: none;
 }
 .hm-tabs::-webkit-scrollbar { display: none; }
@@ -4089,7 +4087,7 @@ body.hm-resizing * {
   justify-content: center;
   gap: 4px;
   white-space: nowrap;
-  overflow: visible; /* 让删除气泡浮到口袋上边缘之外 */
+  overflow: hidden;
   flex: 0 1 auto;
   position: relative;
   transition: color 0.18s ease, background 0.18s ease;
@@ -4099,48 +4097,6 @@ body.hm-resizing * {
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
-}
-/* 删除叉号：悬停/键盘聚焦时在口袋正上方浮出一个小气泡（位于口袋上边缘之外），
-   不压住口袋名字；移开即隐藏。触屏无 hover 时保持可见可点，避免删不掉 */
-.hm-tab-del {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 5px);
-  transform: translateX(-50%);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  border: 1px solid rgba(251, 113, 133, 0.5);
-  background: rgb(24, 33, 48);
-  color: #fecdd3;
-  font-size: 10px;
-  line-height: 1;
-  padding: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
-  z-index: 6;
-  white-space: nowrap;
-}
-/* 气泡小尖角：指向下面的口袋 */
-.hm-tab-del::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 4px solid transparent;
-  border-top-color: rgba(251, 113, 133, 0.5);
-}
-.hm-tab:hover .hm-tab-del,
-.hm-tab:focus-within .hm-tab-del,
-.hm-tab:focus-visible .hm-tab-del,
-.hm-tab-del:focus-visible { display: inline-flex; }
-.hm-tab-del:hover { color: #fff; background: rgba(251, 113, 133, 0.35); }
-
-@media (hover: none) {
-  .hm-tab .hm-tab-del { display: inline-flex; }
 }
 
 .hm-tab:hover {
@@ -28548,26 +28504,28 @@ function promptTabLabel(index) {
 function renderPromptTabs() {
   if (!els.promptTabs || !els.addPromptTab) return;
   ensureTabSlots();
+  /* 重建 DOM 会丢焦点：如果焦点原本在口袋上，重建后落回当前选中的口袋，
+     否则「选中口袋后按 Delete」会因为 target 变成 body 而失效 */
+  var keepFocus = !!(document.activeElement && document.activeElement.closest &&
+    document.activeElement.closest('.hm-tab[data-tab]'));
   els.promptTabs.querySelectorAll('.hm-tab[data-tab]').forEach(function (node) { node.remove(); });
   state.prompts.forEach(function (_, index) {
     const btn = document.createElement('button');
     btn.className = 'hm-tab' + (index === state.activePrompt ? ' is-active' : '');
     btn.dataset.tab = String(index);
-    btn.title = (state.promptNames[index] || '口袋 ' + (index + 1)) + '（双击重命名）';
+    btn.title = (state.promptNames[index] || '口袋 ' + (index + 1)) + '（双击重命名；选中后按 Delete / Backspace 删除）';
     btn.setAttribute('aria-label', '口袋 ' + promptTabLabel(index));
     var label = document.createElement('span');
     label.className = 'hm-tab-label';
     label.textContent = promptTabLabel(index);
-    var del = document.createElement('span');
-    del.className = 'hm-tab-del';
-    del.dataset.del = String(index);
-    del.title = '删除这个口袋';
-    del.textContent = '×';
     btn.appendChild(label);
-    btn.appendChild(del);
     els.promptTabs.insertBefore(btn, els.addPromptTab);
   });
   els.addPromptTab.hidden = state.prompts.length >= promptTabMaxCount();
+  if (keepFocus) {
+    var activeTab = els.promptTabs.querySelector('.hm-tab.is-active');
+    if (activeTab) activeTab.focus();
+  }
 }
 
 function switchPromptTab(index) {
@@ -32882,27 +32840,78 @@ function bindEvents() {
   }
 
   if (els.promptTabs) {
+    var pocketLongPressFired = false;
     els.promptTabs.addEventListener('click', function (event) {
       const addBtn = event.target.closest('#addPromptTab');
       if (addBtn) {
         addPromptTab();
         return;
       }
-      const del = event.target.closest('[data-del]');
-      if (del) {
-        event.stopPropagation();
-        deletePromptTab(Number(del.dataset.del));
-        return;
-      }
+      if (pocketLongPressFired) { pocketLongPressFired = false; return; }
       const tab = event.target.closest('[data-tab]');
       if (tab) switchPromptTab(Number(tab.dataset.tab));
     });
     els.promptTabs.addEventListener('dblclick', function (event) {
-      if (event.target.closest('[data-del]')) return; /* 双击叉号不触发重命名 */
       const tab = event.target.closest('[data-tab]');
       if (tab) {
         event.preventDefault();
         renamePromptTab(Number(tab.dataset.tab));
+      }
+    });
+
+    /* 删除口袋：只在「焦点在口袋本身」时响应 Delete / Backspace。
+       焦点在输入框/文本域/可编辑区时直接放行，绝不会抢走删字。 */
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+      var target = event.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      var tab = target && target.closest ? target.closest('.hm-tab[data-tab]') : null;
+      if (!tab) return;
+      event.preventDefault();
+      var index = Number(tab.dataset.tab);
+      deletePromptTab(index);
+      requestAnimationFrame(function () {
+        var active = els.promptTabs.querySelector('.hm-tab.is-active');
+        if (active) active.focus();
+      });
+    });
+
+    /* 无键盘场景（触屏 / 鼠标）：右键菜单或长按 600ms 删除 */
+    function confirmDeletePocket(tab) {
+      var index = Number(tab.dataset.tab);
+      if (!window.confirm('删除口袋「' + promptTabLabel(index) + '」？')) return false;
+      deletePromptTab(index);
+      return true;
+    }
+    els.promptTabs.addEventListener('contextmenu', function (event) {
+      var tab = event.target.closest('.hm-tab[data-tab]');
+      if (!tab) return;
+      event.preventDefault();
+      confirmDeletePocket(tab);
+    });
+    var pocketPress = { timer: null, x: 0, y: 0 };
+    els.promptTabs.addEventListener('pointerdown', function (event) {
+      var tab = event.target.closest('.hm-tab[data-tab]');
+      if (!tab || event.pointerType === 'mouse') return;
+      pocketPress.x = event.clientX;
+      pocketPress.y = event.clientY;
+      if (pocketPress.timer) clearTimeout(pocketPress.timer);
+      pocketPress.timer = setTimeout(function () {
+        pocketPress.timer = null;
+        pocketLongPressFired = true;
+        confirmDeletePocket(tab);
+      }, 600);
+    });
+    function cancelPocketPress() {
+      if (pocketPress.timer) { clearTimeout(pocketPress.timer); pocketPress.timer = null; }
+    }
+    els.promptTabs.addEventListener('pointerup', cancelPocketPress);
+    els.promptTabs.addEventListener('pointercancel', cancelPocketPress);
+    els.promptTabs.addEventListener('pointerleave', cancelPocketPress);
+    els.promptTabs.addEventListener('pointermove', function (event) {
+      if (!pocketPress.timer) return;
+      if (Math.abs(event.clientX - pocketPress.x) > 10 || Math.abs(event.clientY - pocketPress.y) > 10) {
+        cancelPocketPress();
       }
     });
   }
