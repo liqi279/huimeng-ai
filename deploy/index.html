@@ -16841,6 +16841,47 @@ body.rail-collapsed .hm-page {
   text-align: center;
   font-family: inherit;
   font-size: 12px;
+  /* 去掉浏览器自带的上下小箭头：它的加减方向与翻页方向相反，
+     统一用右侧的 ▲/▼（上=上一页，下=下一页） */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.lib-pager-jump input::-webkit-outer-spin-button,
+.lib-pager-jump input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 翻页步进：上箭头=上一页，下箭头=下一页，上下排列 */
+.lib-pager-steps {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 2px;
+}
+.lib-pager-steps button {
+  width: 22px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 162, 39, 0.32);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8d8b8;
+  font-size: 8px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lib-pager-steps button:hover:not(:disabled) {
+  background: rgba(201, 162, 39, 0.16);
+  color: #fff2d0;
+}
+.lib-pager-steps button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .lib-pager-jump input:focus {
@@ -21124,6 +21165,10 @@ body.dv-open .hm-page {
       <button type="button" class="lib-pager-btn" id="libPagerPrev">‹ 上一页</button>
       <span class="lib-pager-info" id="libPagerInfo">第 1 / 1 页</span>
       <label class="lib-pager-jump" for="libPagerInput">跳到 <input type="number" id="libPagerInput" min="1" step="1" inputmode="numeric"> 页</label>
+      <span class="lib-pager-steps" aria-label="按页翻动">
+        <button type="button" id="libPagerUp" title="上一页" aria-label="上一页">▲</button>
+        <button type="button" id="libPagerDown" title="下一页" aria-label="下一页">▼</button>
+      </span>
       <button type="button" class="lib-pager-btn" id="libPagerNext">下一页 ›</button>
     </div>
 
@@ -56668,6 +56713,9 @@ window.HMChat = (function () {
     }
     if (els.pagerPrev) els.pagerPrev.disabled = state.shelfPage <= 1;
     if (els.pagerNext) els.pagerNext.disabled = state.shelfPage >= pages;
+    /* 右侧步进：上=上一页，下=下一页（与箭头指向一致） */
+    if (els.pagerUp) els.pagerUp.disabled = state.shelfPage <= 1;
+    if (els.pagerDown) els.pagerDown.disabled = state.shelfPage >= pages;
   }
 
   /* 新增书籍后定位到最后一页，让新书落在最后一页的最后一个格位 */
@@ -58393,6 +58441,10 @@ window.HMChat = (function () {
     }
     if (els.pagerPrev) els.pagerPrev.addEventListener('click', function () { goPage(state.shelfPage - 1); });
     if (els.pagerNext) els.pagerNext.addEventListener('click', function () { goPage(state.shelfPage + 1); });
+    els.pagerUp = $('libPagerUp');
+    els.pagerDown = $('libPagerDown');
+    if (els.pagerUp) els.pagerUp.addEventListener('click', function () { goPage(state.shelfPage - 1); });
+    if (els.pagerDown) els.pagerDown.addEventListener('click', function () { goPage(state.shelfPage + 1); });
     if (els.pagerInput) {
       var applyJump = function () {
         var v = parseInt(els.pagerInput.value, 10);
