@@ -25862,11 +25862,11 @@ body.dv-open .hm-page {
       <div class="api-form">
         <label class="field">
           <span>API 地址</span>
-          <input id="apiBaseInput" type="text" placeholder="https://www.rayinai.com/v1" autocomplete="off">
+          <input id="apiBaseInput" name="hm-api-base" type="text" placeholder="https://www.rayinai.com/v1" autocomplete="off">
         </label>
         <label class="field">
           <span>API Key（可选 · 留空用服务端默认）</span>
-          <input id="apiKeyInput" type="password" placeholder="sk-...（可留空）" autocomplete="off">
+          <input id="apiKeyInput" name="hm-api-key" type="password" placeholder="sk-...（可留空）" autocomplete="new-password">
         </label>
         <label class="field">
           <span>GPT-image 模型 ID</span>
@@ -26084,12 +26084,12 @@ body.dv-open .hm-page {
 
         <label class="hm-auth-field">
           <span>用户名</span>
-          <input id="authUsername" type="text" placeholder="请输入用户名" autocomplete="username">
+          <input id="authUsername" name="hm-account" type="text" placeholder="请输入用户名" autocomplete="off">
         </label>
 
         <label class="hm-auth-field">
           <span>密码</span>
-          <input id="authPassword" type="password" placeholder="请输入密码" autocomplete="current-password">
+          <input id="authPassword" name="hm-pass" type="password" placeholder="请输入密码" autocomplete="new-password">
         </label>
 
         <div class="hm-auth-error" id="authError" hidden></div>
@@ -26688,6 +26688,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   var api = (window.HM && window.HM.api) ? window.HM.api : null;
 
   var submitting = false;
+  /* 首次打开登录框时清空一次，避免浏览器密码管理器把「接口地址 + API Key」填进来 */
+  var loginFieldsCleared = false;
 
   var els = {};
   function cache() {
@@ -26726,6 +26728,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     els.auth.hidden = false;
     els.auth.setAttribute('aria-hidden', 'false');
     clearError();
+    if (!loginFieldsCleared) {
+      loginFieldsCleared = true;
+      if (els.username) els.username.value = '';
+      if (els.password) els.password.value = '';
+    }
     setTimeout(function () { els.username && els.username.focus(); }, 50);
     /* Render 免费层休眠后首个请求要 20~60 秒唤醒：
        打开登录框就先预热，用户输入账号密码的时间足够服务器醒来 */
