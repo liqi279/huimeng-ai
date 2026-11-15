@@ -16207,6 +16207,11 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease, color 0.2s ease;
 }
 
+/* 预设/设置等弹窗打开时，这个按钮不该浮在弹窗左缘（大图 lightbox 仍照常显示） */
+body.hm-modal-open .hm-rail-toggle {
+  display: none;
+}
+
 .hm-rail-toggle svg {
   width: 12px;
   height: 12px;
@@ -76651,6 +76656,21 @@ window.HMChat = (function () {
   pullBrush();
   renderTimeline();
   if (transportEl) updateTime(eng.getTimeState());
+})();
+</script>
+
+<script>
+/* 弹窗（预设/设置等 .modal）打开时给 body 打标记，隐藏侧栏折叠按钮。
+   那个按钮 z-index 高于 .modal，会浮在弹窗左缘；大图 lightbox（9999）不受影响。 */
+(function () {
+  function sync() {
+    document.body.classList.toggle('hm-modal-open', !!document.querySelector('.modal.is-open'));
+  }
+  var mo = new MutationObserver(sync);
+  Array.prototype.forEach.call(document.querySelectorAll('.modal'), function (m) {
+    mo.observe(m, { attributes: true, attributeFilter: ['class'] });
+  });
+  sync();
 })();
 </script>
 
