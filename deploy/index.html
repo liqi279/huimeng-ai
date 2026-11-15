@@ -4693,18 +4693,18 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 }
 .hm-prompt-overlay .chip .chip-label {
   display: inline-block;
-  color: #dbeafe;
-  font-weight: 500;
-  font-size: inherit;     /* 和 textarea 同字号，@N 宽度才一致 */
+  color: #fff;
+  font-weight: 700;
+  font-size: inherit;     /* 和 textarea 同字号，chip 宽度才和文本完全一致 */
   white-space: nowrap;
-  padding: 0;             /* ⚠️ 必须 0！任何 padding → label 宽于 @N → 光标偏 */
-  border-radius: 7px;
-  background-color: rgba(51, 65, 85, 0.55);
-  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
-  height: 1.75em;
-  line-height: 1.75em;
+  padding: 0;             /* 必须 0：任何 padding 都会让 chip 宽于文本，光标整体偏移 */
+  border-radius: 5px;
+  background-color: rgba(99, 102, 241, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.55);
+  height: 1.45em;
+  line-height: 1.45em;
+  vertical-align: -0.28em;
   box-sizing: border-box;
-  /* z-index 比 thumb 低 —— "@" 字符会被 thumb 盖住，"1"/"2" 数字露出来 */
   position: relative;
   z-index: 1;
 }
@@ -4767,15 +4767,16 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 }
 .hm-ref-ac-item:hover,
 .hm-ref-ac-item.is-active {
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(139, 92, 246, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.35);
 }
 .hm-ref-ac-thumb {
   width: 40px;
   height: 40px;
-  border-radius: 5px;
+  border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(167, 139, 250, 0.42);
   background: rgba(0,0,0,0.25);
 }
 .hm-ref-ac-thumb img {
@@ -4802,9 +4803,9 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 .hm-ref-ac-tag {
   display: inline-block;
   padding: 0 5px;
-  border-radius: 8px;
-  background: rgba(56,189,248,0.25);
-  color: #bae6fd;
+  border-radius: 5px;
+  background: rgba(99, 102, 241, 0.92);
+  color: #fff;
   font-size: 10px;
   font-weight: 700;
   line-height: 1.5;
@@ -25225,7 +25226,7 @@ body.dv-open .hm-page {
         <div class="hm-ref-empty" id="refEmpty">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="13" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><path d="M5.5 16.5l4.2-4 3.2 2.8 2.5-2.3 3.1 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
           <span id="refEmptyText">拖入或上传参考图（最多 10 张）</span>
-          <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 @1 @2 … 引用</span>
+          <span class="hm-ref-hint" id="refHintText">参考图可指定主体 · 提示词中用 图1 图2 … 引用</span>
         </div>
 
         <!-- 参考图网格 -->
@@ -25653,7 +25654,7 @@ body.dv-open .hm-page {
           <div><strong>生成并下载原图</strong><p>生成完成后点击下载按钮保存原图；作品会同步到右上「个人空间」。</p></div>
         </div>
       </div>
-      <p class="guide-note">免密钥通道由 SANA 提供，秒级出图。也可在「接入设置」填入免费额度平台（硅基流动 / 魔搭 / Together）的密钥，使用 FLUX、Kolors 等动漫模型；再叠加「动漫 LoRA 风格」即可获得番剧质感。请勿生成违法违规内容。</p>
+      <p class="guide-note">生图由 RayinAPI 提供：在「接入设置」填入 RayinAPI 的接口地址与密钥即可使用 GPT-image / Gemini 两条通道；再叠加「动漫 LoRA 风格」即可获得番剧质感。请勿生成违法违规内容。</p>
       <button class="primary-btn wide" id="helpDone">开始创作</button>
     </div>
   </div>
@@ -27070,79 +27071,8 @@ const CATALOG_FALLBACK = {
     { id: 'flux', engine: 'flux', model: 'flux', name: 'FLUX.1', badge: '免密钥', hint: '通用大模型 · 高质量' },
     { id: 'flux-realism', engine: 'flux', model: 'flux-realism', name: 'FLUX Realism', badge: '免密钥', hint: '写实质感 · 细腻' },
   ],
-  providers: [
-    {
-      id: 'siliconflow', name: '硅基流动 SiliconFlow',
-      base: 'https://api.siliconflow.cn/v1',
-      color: '#60a5fa',
-      keyUrl: 'https://cloud.siliconflow.cn/account/ak',
-      models: [
-        { id: 'Kwai-Kolors/Kolors', name: 'Kolors 中文动漫', badge: '动漫 · 官方' },
-        { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', badge: '通用 · 快速' },
-        { id: 'black-forest-labs/FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用 · 高质量' },
-        { id: 'stabilityai/stable-diffusion-3.5-large', name: 'SD 3.5 Large', badge: 'SD · 标准' }
-      ]
-    },
-    {
-      id: 'modelscope', name: '魔搭 ModelScope',
-      base: 'https://api-inference.modelscope.cn/v1',
-      color: '#34d399',
-      keyUrl: 'https://modelscope.cn/my/myaccesstoken',
-      models: [
-        { id: 'Kolors', name: 'Kolors 中文动漫', badge: '动漫 · 官方' },
-        { id: 'FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用' }
-      ]
-    },
-    {
-      id: 'together', name: 'Together AI',
-      base: 'https://api.together.xyz/v1',
-      color: '#fb923c',
-      keyUrl: 'https://api.together.xyz/settings/api-keys',
-      models: [
-        { id: 'black-forest-labs/FLUX.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
-        { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', badge: '快速' },
-        { id: 'stabilityai/stable-diffusion-xl-base-1.0', name: 'SDXL 1.0', badge: 'SD · 经典' }
-      ]
-    },
-    {
-      id: 'openrouter', name: 'OpenRouter',
-      base: 'https://openrouter.ai/api/v1',
-      color: '#f472b6',
-      keyUrl: 'https://openrouter.ai/keys',
-      models: [
-        { id: 'black-forest-labs/flux.1-dev', name: 'FLUX.1 Dev', badge: '通用' },
-        { id: 'google/imagen-3.0-free', name: 'Imagen 3.0 Free', badge: '免费' }
-      ]
-    },
-    {
-      id: 'dashscope', name: '阿里百炼 DashScope',
-      base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      color: '#6366f1',
-      keyUrl: 'https://dashscope.console.aliyun.com/apiKey',
-      models: [
-        { id: 'flux-schnell', name: 'FLUX Schnell', badge: '阿里 · 官方' },
-        { id: 'wanx-v1', name: '通义万相', badge: '阿里 · 中文' }
-      ]
-    },
-    {
-      id: 'ark', name: '火山方舟 Ark',
-      base: 'https://ark.cn-beijing.volces.com/api/v3',
-      color: '#ef4444',
-      keyUrl: 'https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey',
-      models: [
-        { id: 'doubao-1-5-vision-pro-32k-250115', name: '豆包 Vision Pro', badge: '火山' }
-      ]
-    },
-    {
-      id: 'hunyuan', name: '混元 Hunyuan',
-      base: 'https://api.hunyuan.cloud.tencent.com/v1',
-      color: '#06b6d4',
-      keyUrl: 'https://cloud.tencent.com/product/hunyuan',
-      models: [
-        { id: 'hunyuan-image', name: '混元生图', badge: '腾讯' }
-      ]
-    }
-  ],
+  /* 接入管理只保留 RayinAPI：第三方平台预设已从代码中删除，不再回灌 */
+  providers: [],
   loras: [],
   rayin: [
     /* GPT 图像模型（OpenAI key → /images/generations） */
@@ -27554,10 +27484,16 @@ const state = {
   audioModel: typeof storedPrefs.audioModel === 'string' && storedPrefs.audioModel
     ? storedPrefs.audioModel
     : 'tts-1',
-  providerId: typeof storedPrefs.providerId === 'string' && storedPrefs.providerId
-    ? storedPrefs.providerId
-    : 'siliconflow',
-  providers: loadJSON(LS_PROVIDERS, {}) || {},
+  providerId: typeof storedPrefs.providerId === 'string' ? storedPrefs.providerId : '',
+  /* 接入管理只保留 RayinAPI：本地旧的非 Rayin 平台配置读取时直接丢弃，不显示也不参与推导 */
+  providers: (function () {
+    const saved = loadJSON(LS_PROVIDERS, {}) || {};
+    const kept = {};
+    Object.keys(saved).forEach(function (k) {
+      if (k.indexOf('__rayin') === 0) kept[k] = saved[k];
+    });
+    return kept;
+  })(),
   catalog: CATALOG_FALLBACK,
   api: Object.assign({}, RAYIN_DEFAULT, storedApi),
   works: Array.isArray(storedWorks)
@@ -28753,13 +28689,9 @@ function normalizeProviderBase(value) {
 
 function renderProviderSelect() {
   if (!els.providerSelect) return;
-  const providers = catalogData().providers || [];
-  const rows = providers.map(function (p) {
-    return '<option value="' + p.id + '">' + p.name + ' · 免费额度</option>';
-  });
-  rows.push('<option value="custom">自定义 OpenAI 兼容平台</option>');
-  els.providerSelect.innerHTML = rows.join('');
-  els.providerSelect.value = state.providerId;
+  /* 新增接入唯一选项：RayinAPI（地址 + 密钥即可用） */
+  els.providerSelect.innerHTML = '<option value="__rayin__">RayinAPI</option>';
+  els.providerSelect.value = '__rayin__';
 }
 
 function fillProviderFields(providerId) {
@@ -28768,7 +28700,7 @@ function fillProviderFields(providerId) {
   if (els.providerKeyInput) els.providerKeyInput.value = cfg.key || '';
   if (els.providerModelInput) els.providerModelInput.value = cfg.model || '';
   if (els.providerKeyLink) {
-    const url = (cfg.preset && cfg.preset.keyUrl) || 'https://cloud.siliconflow.cn/account/ak';
+    const url = (cfg.preset && cfg.preset.keyUrl) || 'https://www.rayinai.com';
     els.providerKeyLink.href = url;
     els.providerKeyLink.textContent = cfg.preset
       ? '前往 ' + cfg.preset.name + ' 获取密钥'
@@ -28871,14 +28803,10 @@ async function loadCatalog() {
   try {
     const data = await window.HM.api.catalog();
     if (!data) return;
-    /* 后端曾把 providers 清成 []（纯免密钥通道改造的副作用）；空数组不能覆盖
-       内置平台目录，否则设置页「接入总数」只剩 RayinAPI 一条。 */
-    const providers = (Array.isArray(data.providers) && data.providers.length)
-      ? data.providers
-      : (CATALOG_FALLBACK.providers || []);
     state.catalog = {
       keyless: (data.keyless && data.keyless.length) ? data.keyless : (CATALOG_FALLBACK.keyless || []),
-      providers: providers,
+      /* 接入管理只保留 RayinAPI：后端 /catalog 里即便还带第三方平台，也不采用 */
+      providers: [],
       rayin: (data.rayin && data.rayin.length) ? data.rayin : (CATALOG_FALLBACK.rayin || []),
       loras: data.loras || []
     };
@@ -28961,10 +28889,10 @@ function syncRefNote() {
   const count = currentRefs().length;
 
   if (count === 0) {
-    els.refNote.textContent = '当前描述 · 支持多参考图 · 提示词中用 @1 @2 @3 等引用（最多 ' + REF_MAX_COUNT + ' 张）';
+    els.refNote.textContent = '当前描述 · 支持多参考图 · 提示词中用 图1 图2 图3 等引用（最多 ' + REF_MAX_COUNT + ' 张）';
     els.refNote.classList.remove('is-warn');
   } else {
-    els.refNote.textContent = '当前描述已添加 ' + count + ' 张参考图 · 拖动滑块可整体缩放参考图 · 用 @1~@' + count + ' 在提示词中指定';
+    els.refNote.textContent = '当前描述已添加 ' + count + ' 张参考图 · 拖动滑块可整体缩放参考图 · 用 图1~图' + count + ' 在提示词中指定';
     els.refNote.classList.remove('is-warn');
   }
 }
@@ -29230,9 +29158,8 @@ function _ensureChipCache(refs) {
   if (key === _chipCacheKey) return _chipCacheHtml;
   _chipCacheKey = key;
   _chipCacheHtml = refs.map(function (ref, i) {
-    var u = ref.thumb || ref.dataUrl;
-    /* chip 顺序：图标在前，@图N 在后，整体 inline-flex */
-    return '<span class="chip"><span class="chip-thumb" style="background-image:url(' + u + ')"></span><span class="chip-label">@' + (i + 1) + '</span></span>';
+    /* chip 只保留序号，宽度与文本「图N」完全一致（缩略图统一在参考区/建议卡里显示） */
+    return '<span class="chip"><span class="chip-label">图' + (i + 1) + '</span></span>';
   });
   return _chipCacheHtml;
 }
@@ -29257,7 +29184,7 @@ function renderPromptOverlay() {
   overlay.scrollTop = ta.scrollTop;
 
   var chips = _ensureChipCache(refs);
-  var html = _escPromptHtml(text).replace(/@(\d+)(?![0-9])/g, function (match, n) {
+  var html = _escPromptHtml(text).replace(/(?:@|图)(\d+)(?![0-9])/g, function (match, n) {
     return chips[Number(n) - 1] || match;
   });
   overlay.innerHTML = html || ' ';
@@ -29384,8 +29311,7 @@ function showRefAutocomplete() {
       return '<div class="hm-ref-ac-item' + (i === 0 ? ' is-active' : '') + '" data-idx="' + item.idx + '">' +
         '<div class="hm-ref-ac-thumb"><img src="' + (item.ref.thumb || item.ref.dataUrl) + '" alt=""></div>' +
         '<div class="hm-ref-ac-info">' +
-          '<div class="hm-ref-ac-name"><span class="hm-ref-ac-tag">@' + (item.idx + 1) + '</span> ' +
-            (item.ref.name || ('参考图 ' + (item.idx + 1))) + '</div>' +
+          '<div class="hm-ref-ac-name"><span class="hm-ref-ac-tag">图' + (item.idx + 1) + '</span></div>' +
         '</div></div>';
     }).join('');
   }
@@ -29417,7 +29343,7 @@ function _commitRefAc(refIdx) {
   var atIdx = before.lastIndexOf('@');
   if (atIdx < 0) return;
   var val = ta.value;
-  var insert = '@' + (refIdx + 1) + ' ';
+  var insert = '图' + (refIdx + 1) + ' ';
   ta.value = val.slice(0, atIdx) + insert + val.slice(pos);
   var newPos = atIdx + insert.length;
   ta.selectionStart = ta.selectionEnd = newPos;
@@ -33313,7 +33239,7 @@ function bindEvents() {
       var atBtn = ev.target.closest('.hm-ref-hover-at');
       if (atBtn) {
         ev.stopPropagation();
-        if (_refHoverIdx >= 0) insertPromptAt('@' + (_refHoverIdx + 1) + ' ');
+        if (_refHoverIdx >= 0) insertPromptAt('图' + (_refHoverIdx + 1) + ' ');
         hideRefHover();
         return;
       }
@@ -61844,7 +61770,7 @@ window.HMChat = (function () {
       }
     } else {
       if (emptyText) emptyText.textContent = '拖入或上传参考图（最多 10 张）· 支持多张批量';
-      if (hintText) hintText.textContent = '参考图可指定主体 · 提示词中用 @1 @2 … 引用';
+      if (hintText) hintText.textContent = '参考图可指定主体 · 提示词中用 图1 图2 … 引用';
       if (input) input.setAttribute('accept', 'image/*');
       if (limits) limits.hidden = true;
     }
@@ -72049,6 +71975,14 @@ window.HMChat = (function () {
       delete doc.bindings[oldId];
       delete doc.billing[oldId];
     });
+    /* 接入管理只保留 RayinAPI：清掉其它平台的历史记录（不显示、不参与模型推导） */
+    Object.keys(doc.providers).forEach(function (pid) {
+      if (pid.indexOf('__rayin') !== 0) {
+        delete doc.providers[pid];
+        delete doc.bindings[pid];
+        delete doc.billing[pid];
+      }
+    });
     doc.updatedAt = Number(doc.updatedAt) || 0;
     apiDocCache = doc;
     return doc;
@@ -72121,23 +72055,9 @@ window.HMChat = (function () {
     var App = window.HMApp;
     if (!App) return [];
     var doc = getApiDoc();
-    var catalog = (App.state && App.state.catalog && App.state.catalog.providers) || [];
-    var saved = Object.assign({}, (App.state && App.state.providers) || {}, doc.providers || {});
-    var list = catalog.map(function (p) {
-      var s = saved[p.id] || {};
-      return {
-        id: p.id,
-        name: s.name || p.name,
-        base: s.base || p.base || '',
-        key: s.key || '',
-        model: s.model || (p.models && p.models[0] ? (p.models[0].id || p.models[0].model) : ''),
-        models: p.models || [],
-        enabled: p.id === (App.state && App.state.providerId) || !!s.key,
-        preset: p,
-        type: apiBinding(p.id),
-        billing: apiBilling(p.id)
-      };
-    });
+    /* 接入管理只保留 RayinAPI：catalog.providers 不再参与（第三方平台预设已删），
+       本地旧平台配置也不再回显，全部以 RayinAPI 的两条接入为准 */
+    var list = [];
     // RayinAPI：一个平台下挂两条接入配置（GPT-image / Gemini Banana）
     var prefs = (App.state && App.state.prefs) || {};
     var gptRec = doc.providers['__rayin__:gpt-image'] || {};
@@ -72176,22 +72096,7 @@ window.HMChat = (function () {
       billing: apiBilling('__rayin__:banana')
     });
     // 自定义已填但 catalog 里没有的
-    Object.keys(saved).forEach(function (id) {
-      if (id.indexOf('__rayin') === 0) return;
-      if (!list.find(function (p) { return p.id === id; })) {
-        list.push({
-          id: id,
-          name: saved[id].name || id,
-          base: saved[id].base || '',
-          key: saved[id].key || '',
-          model: saved[id].model || '',
-          enabled: !!saved[id].key,
-          isCustom: true,
-          type: apiBinding(id),
-          billing: apiBilling(id)
-        });
-      }
-    });
+    /* 非 Rayin 的历史配置一律不再展示（读盘时已过滤，这里再兜一层） */
     return list;
   }
 
@@ -73035,9 +72940,18 @@ window.HMChat = (function () {
               try {
                 var j = JSON.parse(r.result);
                 var App = window.HMApp;
+                /* 导入时同样只收 RayinAPI：其他平台的旧配置直接丢弃 */
+                function rayinOnly(src) {
+                  var out = {};
+                  Object.keys(src || {}).forEach(function (k2) {
+                    if (k2.indexOf('__rayin') === 0) out[k2] = src[k2];
+                  });
+                  return out;
+                }
                 if (j.providers) {
-                  App.state.providers = j.providers;
-                  try { localStorage.setItem('anidream.providers.v1', JSON.stringify(j.providers)); } catch (e) {}
+                  var pv = rayinOnly(j.providers);
+                  App.state.providers = pv;
+                  try { localStorage.setItem('anidream.providers.v1', JSON.stringify(pv)); } catch (e) {}
                 }
                 if (j.rayin) {
                   App.state.prefs = App.state.prefs || {};
@@ -73048,7 +72962,9 @@ window.HMChat = (function () {
                   apiDocCache = null;
                   var imported = getApiDoc();
                   ['providers', 'bindings'].forEach(function (k) {
-                    if (j.api[k] && typeof j.api[k] === 'object') imported[k] = j.api[k];
+                    if (j.api[k] && typeof j.api[k] === 'object') {
+                      imported[k] = (k === 'providers') ? rayinOnly(j.api[k]) : j.api[k];
+                    }
                   });
                   if (j.api.billing && typeof j.api.billing === 'object') imported.billing = j.api.billing;
                   if (j.api.rayin) imported.rayin = j.api.rayin;
