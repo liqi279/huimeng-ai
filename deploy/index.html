@@ -7740,9 +7740,11 @@ body.hm-light .hm-page-empty {
   pointer-events: none;
 }
 
-/* 拖到「参考主体」时：原卡留在原位只降低不透明度，跟手的是半透明虚影 */
+/* 拖动源卡片：留在原位只降低不透明度，跟手的是半透明虚影（不做放大/抬起位移） */
 .desk-card.is-refsource, .folder-card.is-refsource {
   opacity: 0.35;
+  transform: none !important;
+  box-shadow: none !important;
 }
 .desk-ref-ghost {
   border-radius: 14px;
@@ -25132,8 +25134,6 @@ body.dv-open .hm-page {
                 <div class="hm-chip-grid" id="freeModelList"></div>
                 <span class="hm-menu-label">RayinAI</span>
                 <div class="hm-chip-grid" id="rayinModelList"></div>
-                <span class="hm-menu-label">LoRA 风格</span>
-                <div class="hm-chip-grid" id="loraList"></div>
               </div>
               <div data-mode-panel="video" hidden>
                 <span class="hm-menu-label">视频模型</span>
@@ -25313,6 +25313,7 @@ body.dv-open .hm-page {
           <button data-cat="风格" class="is-active">风格</button>
           <button data-cat="滤镜">滤镜</button>
           <button data-cat="运镜">运镜</button>
+          <button data-cat="LoRA">LoRA</button>
           <button data-cat="自定义">自定义</button>
         </div>
         <label class="hm-preset-search">
@@ -60139,8 +60140,56 @@ window.HMChat = (function () {
     { id: 'custom-free', name: '自由关键词', category: '自定义', keywords: '', tag: '自由', accent: '#8a93a6' }
   ];
 
-  var W_TEMPLATES = {
-    storyboard: '【分镜脚本】\n镜头 01 · 全景：\n场景：\n动作：\n情绪：\n\n镜头 02 · 特写：\n场景：\n动作：\n情绪：\n',
+  /* LoRA 风格并入「预设」：模型选择弹窗不再单独列 LoRA。
+     预设里选中一条时，既把触发词写进提示词，也把 loraId 落到 state.lora
+     （请求 payload 的 style 字段），保证不是只显示名字。offline 时用内置兜底。 */
+  var LORA_FALLBACK = [
+    { id: 'cel-anime', name: '赛璐璐番剧', tag: 'LoRA · 番剧质感', prompt: 'anime screencap, TV anime key visual, cel shading, clean crisp lineart, flat colors, detailed eyes' },
+    { id: 'kyoani-soft', name: '京阿尼柔光', tag: 'LoRA · 柔和光影', prompt: 'kyoto animation style, soft diffused lighting, delicate highlights, expressive detailed eyes, gentle atmosphere' },
+    { id: 'shinkai-sky', name: '新海诚天空', tag: 'LoRA · 逆光天空', prompt: 'makoto shinkai style, dramatic cumulus sky, lens flare, vivid saturated colors, glowing backlight, cinematic anime' },
+    { id: 'ghibli-hand', name: '吉卜力手绘', tag: 'LoRA · 水彩手绘', prompt: 'studio ghibli style, hand drawn animation, watercolor background, warm natural lighting, nostalgic gentle mood' },
+    { id: 'thick-paint', name: '厚涂插画', tag: 'LoRA · 厚涂笔触', prompt: 'thick paint anime illustration, impasto brush strokes, painterly rendering, dramatic rim light, rich color depth' },
+    { id: 'retro-90s', name: '90s 赛璐璐', tag: 'LoRA · 复古胶片', prompt: '1990s anime screenshot, retro cel animation, film grain, VHS color bleed, vintage television look' },
+    { id: 'chibi-sticker', name: 'Q版贴纸', tag: 'LoRA · 盲盒潮玩', prompt: 'chibi character, thick outline sticker style, pastel macaron colors, big glossy eyes, white plain background' },
+    { id: 'guofeng-anime', name: '国风动漫', tag: 'LoRA · 东方美学', prompt: 'chinese oriental anime illustration, hanfu costume, ink wash accents, gold ornament details, elegant oriental aesthetic' }
+  ];
+
+  function loraPresets() {
+    var src = (A.state && A.state.catalog && Array.isArray(A.state.catalog.loras) && A.state.catalog.loras.length)
+      ? A.state.catalog.loras
+      : LORA_FALLBACK;
+    var seen = {};
+    presetList.forEach(function (p) {
+      seen[String(p.name || '').trim()] = true;
+      seen[String(p.keywords || '').trim()] = true;
+    });
+    var out = [];
+    src.forEach(function (l) {
+      if (!l || !l.id || !l.prompt) return;
+      var name = String(l.name || '').trim();
+      var kw = String(l.prompt || '').trim();
+      if (!name || !kw) return;
+      if (seen[name] || seen[kw]) return;   /* 与既有预设同名/同词的合并，不出现两个一样的名字 */
+      seen[name] = true;
+      seen[kw] = true;
+      out.push({
+        id: 'lora-' + l.id,
+        name: name,
+        category: 'LoRA',
+        keywords: kw,
+        tag: l.tag || 'LoRA',
+        accent: '#a78bfa',
+        loraId: l.id
+      });
+    });
+    return out;
+  }
+
+  function allPresets() {
+    return presetList.concat(loraPresets());
+  }
+
+  var W_TEMPLATES = {    storyboard: '【分镜脚本】\n镜头 01 · 全景：\n场景：\n动作：\n情绪：\n\n镜头 02 · 特写：\n场景：\n动作：\n情绪：\n',
     character: '【角色设定】\n姓名：\n年龄：\n外貌（发型 / 瞳色 / 服装）：\n性格：\n标志性道具：\n常用动作：\n',
     scene: '【场景描述】\n地点：\n时间：\n天气：\n光线：\n主要物件：\n氛围关键词：\n',
     camera: '【镜头语言】\n景别：特写 / 近景 / 中景 / 全景\n机位：平视 / 俯拍 / 仰拍\n运动：推 / 拉 / 摇 / 移 / 环绕\n焦距与景深：\n构图要点：\n'
@@ -61832,6 +61881,11 @@ window.HMChat = (function () {
       presetActive = saved;
       var chip = document.getElementById('presetChipText');
       if (chip) chip.textContent = saved.name;
+      /* 重开页面后 LoRA 预设要把风格参数一起恢复，不能只恢复名字 */
+      if (saved.loraId && state.lora !== saved.loraId) {
+        state.lora = saved.loraId;
+        try { A.persistPrefs(); } catch (err) {}
+      }
     }
   }
 
@@ -61856,7 +61910,7 @@ window.HMChat = (function () {
     var grid = document.getElementById('presetGrid');
     if (!grid) return;
 
-    var list = presetList.filter(function (item) {
+    var list = allPresets().filter(function (item) {
       if (item.category !== presetCat) return false;
       if (!presetSearch) return true;
       return [item.name, item.tag, item.keywords, item.category].join(' ').toLowerCase().indexOf(presetSearch) >= 0;
@@ -61880,7 +61934,7 @@ window.HMChat = (function () {
   }
 
   function applyPreset(id) {
-    var preset = presetList.find(function (item) { return item.id === id; });
+    var preset = allPresets().find(function (item) { return item.id === id; });
     if (!preset) return;
 
     if (!preset.keywords) {
@@ -61893,6 +61947,12 @@ window.HMChat = (function () {
     var text = input.value.trim();
     if (text.toLowerCase().indexOf(preset.keywords.toLowerCase()) < 0) {
       input.value = text ? text.replace(/[，,\s]+$/, '') + ', ' + preset.keywords : preset.keywords;
+    }
+
+    /* LoRA 预设：除了触发词，还要把风格参数真正挂到请求上 */
+    if (preset.loraId) {
+      state.lora = preset.loraId;
+      try { A.persistPrefs(); } catch (err) {}
     }
 
     presetActive = preset;
@@ -61921,7 +61981,9 @@ window.HMChat = (function () {
       }
     }
     presetActive = null;
+    state.lora = '';
     writeJSON(LS.preset, null);
+    try { A.persistPrefs(); } catch (err) {}
     var chip = document.getElementById('presetChipText');
     if (chip) chip.textContent = '预设';
     A.toast('已清除预设关键词', 'info');
@@ -67959,6 +68021,18 @@ window.HMChat = (function () {
      因此把阈值提高到 8px（常规桌面端 5-10px 区间）。 */
   var DRAG_THRESHOLD = 8;
 
+  /* 半透明虚影：原卡留在桌面原位，跟手的是这张克隆出来的虚影 */
+  function createRefGhost(srcEl) {
+    if (!srcEl) return null;
+    var ghost = srcEl.cloneNode(true);
+    ghost.className = 'desk-card desk-ref-ghost';
+    ghost.style.cssText = 'position:fixed;left:0;top:0;width:' + srcEl.offsetWidth +
+      'px;height:' + srcEl.offsetHeight + 'px;margin:0;pointer-events:none;z-index:10030;' +
+      'opacity:.55;transform:translate(-50%,-50%);';
+    document.body.appendChild(ghost);
+    return ghost;
+  }
+
   /* 桌面卡片点击语义（单击选中 / 双击看大图）所需的两个模块级状态：
      lastPointerType —— 记录最后一次按下的输入类型，触屏保留「单击即看大图」；
      suppressClick  —— 拖动结束后置 true，吞掉松手时补发的那次 click。 */
@@ -67977,6 +68051,18 @@ window.HMChat = (function () {
         selectOnly(drag.pendingKey);
         drag.pendingKey = null;
       }
+      /* 作品卡：从拖动开始就用「原卡不动 + 虚影跟手」，
+         而不是整张卡片被搬走（用户明确要求拖向参考主体时原图留在原位） */
+      if (!drag.sortMode && drag.items.length === 1 && drag.items[0].el &&
+          drag.items[0].el.classList.contains('desk-card')) {
+        drag.ghostMode = true;
+        drag.items[0].el.classList.add('is-refsource');
+        drag.refGhost = createRefGhost(drag.items[0].el);
+        if (drag.refGhost) {
+          drag.refGhost.style.left = event.clientX + 'px';
+          drag.refGhost.style.top = event.clientY + 'px';
+        }
+      }
       try { event.preventDefault(); } catch (e) {}
     }
     drag.items.forEach(function (item) {
@@ -67986,47 +68072,46 @@ window.HMChat = (function () {
       /* 横向限死 rail 边缘，纵向允许无限向下（grid 自动滚动） */
       var left = Math.max(0, Math.min(drag.maxLeft, item.left + dx));
       var top = Math.max(-CARD_H, item.top + dy);
-      item.el.style.left = left + 'px';
-      item.el.style.top = top + 'px';
       item.nextLeft = left;
       item.nextTop = top;
+      if (drag.ghostMode) return; /* 原作卡留在原位，只有虚影跟手 */
+      item.el.style.left = left + 'px';
+      item.el.style.top = top + 'px';
     });
+    if (drag.refGhost) {
+      drag.refGhost.style.left = event.clientX + 'px';
+      drag.refGhost.style.top = event.clientY + 'px';
+    }
     if (drag.sortMode) applySortPreview(event);
-    /* 拖到「参考主体」区域：原卡立刻回原位（只降不透明度），改成半透明虚影跟手，
-       避免整张卡片被「搬」到参考区；拖出参考区则撤掉虚影、卡片保持原位 */
+    /* 拖到「参考主体」区域：作品卡已经是虚影模式，这里只负责高亮；
+       文件夹/叠放卡仍沿用「进入参考区才切虚影」的旧逻辑 */
     var refHoverEl = byId('refDrop');
     if (refHoverEl && !refHoverEl.hidden) {
       var rr = refHoverEl.getBoundingClientRect();
       var overRef = event.clientX >= rr.left - 12 && event.clientX <= rr.right + 12 &&
                     event.clientY >= rr.top - 12 && event.clientY <= rr.bottom + 12;
       refHoverEl.classList.toggle('is-over', overRef);
-      if (overRef && !drag.refGhost) {
+      if (overRef && !drag.refGhost && !drag.ghostMode) {
         drag.items.forEach(function (item) {
           if (!item.el) return;
           if (item.left != null) { item.el.style.left = item.left + 'px'; item.el.style.top = item.top + 'px'; }
           item.el.classList.add('is-refsource');
         });
         var srcEl = drag.items[0] && drag.items[0].el;
-        if (srcEl) {
-          var ghost = srcEl.cloneNode(true);
-          ghost.className = 'desk-card desk-ref-ghost';
-          ghost.style.cssText = 'position:fixed;left:0;top:0;width:' + srcEl.offsetWidth +
-            'px;height:' + srcEl.offsetHeight + 'px;margin:0;pointer-events:none;z-index:10030;' +
-            'opacity:.55;transform:translate(-50%,-50%);';
-          document.body.appendChild(ghost);
-          drag.refGhost = ghost;
-        }
-      }
-      if (drag.refGhost) {
-        if (overRef) {
+        drag.refGhost = createRefGhost(srcEl);
+        if (drag.refGhost) {
           drag.refGhost.style.left = event.clientX + 'px';
           drag.refGhost.style.top = event.clientY + 'px';
-          if (event.cancelable) event.preventDefault();
-          return; /* 参考区拖拽期间不移动真实卡片、不参与排序 */
         }
+      }
+      if (!drag.ghostMode && drag.refGhost && !overRef) {
         drag.refGhost.remove();
         drag.refGhost = null;
         drag.items.forEach(function (item) { if (item.el) item.el.classList.remove('is-refsource'); });
+      }
+      if (drag.refGhost && overRef) {
+        if (event.cancelable) event.preventDefault();
+        return; /* 参考区拖拽期间不参与排序 */
       }
     }
     /* 拖动时让 grid 自动跟随滚动
@@ -68315,8 +68400,9 @@ window.HMChat = (function () {
     }
     if (merged) return;
 
-    /* 没合并：清 is-dragging + 保存位置 */
-    if (current.moved) {
+    /* 没合并：清 is-dragging + 保存位置
+       作品卡是「虚影跟手」：落在参考区外也不搬动原图，保持桌面原位 */
+    if (current.moved && !current.ghostMode) {
       current.items.forEach(function (item) {
         if (!item.el) return;
         item.el.classList.remove('is-dragging');
