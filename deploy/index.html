@@ -2209,8 +2209,10 @@ body[data-view="works"] .view-works {
 }
 
 .lb-stage {
-  position: absolute; inset: 0;
-  /* 底部给下载/操作栏预留高度：默认 100% 展示时图片不会压在栏体下面 */
+  position: absolute; left: 0; right: 0;
+  /* 上/下各自给固定栏让位：图片只在「两条栏之间」的可见区内垂直居中，
+     上方留白（对着顶栏）与下方留白（对着底栏）因此相等 */
+  top: var(--lb-top-h, 0px);
   bottom: var(--lb-bar-h, 0px);
   display: flex; align-items: center; justify-content: center;
   overflow: hidden; cursor: grab;
@@ -2219,7 +2221,7 @@ body[data-view="works"] .view-works {
 
 .lb-stage #lbImage {
   max-width: 90vw;
-  max-height: calc(100vh - 140px - var(--lb-bar-h, 0px));
+  max-height: 100%;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
@@ -2309,6 +2311,10 @@ body[data-view="works"] .view-works {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
+  /* 左下角文字顶格：从栏体内容区最左边缘起排，不居中、不额外缩进 */
+  text-align: left;
+  padding: 0;
+  margin: 0;
 }
 
 .lb-bar .primary-btn {
@@ -2333,6 +2339,9 @@ body[data-view="works"] .view-works {
   font-size: 9px;
   color: rgba(155, 145, 180, 0.72);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lb-close {
@@ -32242,12 +32251,20 @@ function bindLightboxGestures() {
   });
 }
 
-/* 量出底部下载/操作栏的实际高度，写进 --lb-bar-h：
-   预览舞台按这个值抬高底边，默认 100% 展示时图片不会被栏体盖住。 */
+/* 量出上/下两条固定栏（缩放工具栏、下载/操作栏）的占位：
+   --lb-bar-h 抬高舞台底边，--lb-top-h 压低舞台顶边。
+   两条栏本身是 absolute 固定定位，图片只在中间这段区域居中，所以上下留白相等。 */
 function syncLbBarSpace() {
   var bar = document.querySelector('.lightbox .lb-bar');
   var h = bar ? Math.ceil(bar.getBoundingClientRect().height) : 0;
   document.documentElement.style.setProperty('--lb-bar-h', (h + 36) + 'px');
+  var zb = document.querySelector('.lightbox .lb-zoom-bar');
+  var topH = 36;
+  if (zb && !zb.hidden) {
+    var r = zb.getBoundingClientRect();
+    if (r.height) topH = Math.ceil(r.bottom) + 18;
+  }
+  document.documentElement.style.setProperty('--lb-top-h', topH + 'px');
 }
 
 function openLightbox(item) {
@@ -32284,15 +32301,21 @@ function openLightbox(item) {
     els.lbStage.appendChild(failBox);
   } else if (type === 'image') {
     els.lbImage.style.display = '';
+    /* 换图时先藏住：等新图解码完把变换归零再显形，
+       避免「先用旧尺寸显示、加载完再跳一下居中」 */
+    els.lbImage.style.visibility = 'hidden';
     els.lbImage.src = item.url || item.thumb || '';
     els.lbImage.onerror = function () {
       if (item.thumb && els.lbImage.src !== item.thumb) {
         els.lbImage.src = item.thumb;
         toast('云端原图暂不可达，已显示本地缩略图', 'warn', 5000);
+      } else {
+        els.lbImage.style.visibility = '';
       }
     };
     els.lbImage.onload = function () {
       lbReset(); /* 每次打开都从 100% 起，不再按窗口大小自适应缩小 */
+      els.lbImage.style.visibility = '';
     };
   } else {
     els.lbImage.style.display = 'none';
@@ -32306,13 +32329,12 @@ function openLightbox(item) {
   }
 
   els.lbPrompt.textContent = item.prompt || '';
+  /* 底部栏不再显示平台名（星野动漫）和种子编号，其余信息保留并自然顶到最左 */
   els.lbMeta.textContent = [
     type === 'video' ? '视频' : type === 'audio' ? '音频' : '',
-    item.modelName || 'AI',
     item.engine ? (ENGINE_META[item.engine] || {}).meta || '' : '',
     item.width && item.height ? item.width + '×' + item.height : '',
     item.duration ? item.duration + ' 秒' : '',
-    item.seed ? 'Seed ' + item.seed : '',
     item.steps ? item.steps + ' 步' : ''
   ].filter(Boolean).join(' · ');
 
