@@ -32592,7 +32592,6 @@ function bindEvents() {
         persistPrefs();
         syncEngineUI();
         closeAllMenus();
-        toast('视频模型：' + modeModelLabel('video'), 'success');
         return;
       }
       const aBtn = event.target.closest('[data-amodel]');
@@ -32601,7 +32600,6 @@ function bindEvents() {
         persistPrefs();
         syncEngineUI();
         closeAllMenus();
-        toast('音频模型：' + modeModelLabel('audio'), 'success');
         return;
       }
 
@@ -32610,8 +32608,6 @@ function bindEvents() {
         state.lora = loraBtn.dataset.lora || '';
         persistPrefs();
         syncEngineUI();
-        const preset = findLora(state.lora);
-        toast(preset ? '已启用风格：' + preset.name : '已关闭风格增强', 'success');
         return;
       }
 
@@ -32637,19 +32633,13 @@ function bindEvents() {
       if (!cfg.key) {
         toast('该模型来自免费额度平台，需先填写平台 API Key', 'info');
         openApiModal();
-      } else {
-        toast('已切换到 ' + currentModelLabel(), 'success');
       }
       return;
     }
 
     /* gpt-image / banana 走服务端内置默认密钥，前端不填也能生成；
-       仅免费额度平台(openai)需要用户自备密钥 */
-    if (value === 'gpt-image' || value === 'banana') {
-      toast('已切换到 ' + currentModelLabel() + ' · 使用服务端默认密钥', 'success');
-    } else {
-      toast('已切换到 ' + currentModelLabel(), 'success');
-    }
+       仅免费额度平台(openai)需要用户自备密钥。
+       切换语言模型/通道不再弹提示，避免每次切换都冒一条浮层。 */
   });
 
   els.apiConfigBtn.addEventListener('click', function () {
@@ -45993,10 +45983,6 @@ window.HMDirector3D = (function () {
     if (tControls.mode !== mode) tControls.setMode(mode);
     syncGizmoBar();
     renderInspector();
-    if (opts && opts.announce) {
-      var label = mode === 'translate' ? '移动（M）' : mode === 'rotate' ? '旋转（R）' : '缩放（S）';
-      toast('模式：' + label);
-    }
   }
 
   /* 选中物体时，在视口右上角显示 M/R/S 切换浮条 */
@@ -58045,7 +58031,6 @@ window.HMChat = (function () {
       btn.addEventListener('click', function () {
         setArea(btn.getAttribute('data-area'));
         closeModal();
-        toast('已切换到「' + areaLabel(currentArea(), areaCounts()) + '」', 'info');
       });
     });
   }
@@ -60843,10 +60828,8 @@ window.HMChat = (function () {
         });
         if (key === 'none') {
           stopSeasonAmbient();
-          A.toast && A.toast('已切换为经典夜色主题', 'info');
         } else {
           restartSeasonAmbient();
-          A.toast && A.toast('已切换为「' + SEASONS[key].label + '」主题', 'success');
         }
       });
     });
@@ -60873,7 +60856,6 @@ window.HMChat = (function () {
       applyTheme(theme === 'light' ? 'dark' : 'light');
       writeJSON(LS.theme, theme);
       lightBtn.textContent = theme === 'light' ? '☀️ 浅色模式' : '🌙 深色模式';
-      A.toast && A.toast(theme === 'light' ? '已切换到浅色模式' : '已切换到深色模式', 'info');
     });
   }
 
@@ -61210,12 +61192,6 @@ window.HMChat = (function () {
         if (!btn) return;
         setMode(btn.dataset.mode);
         A.closeAllMenus();
-        A.toast(
-          state.mode === 'image' ? '已切换到图片生成'
-            : state.mode === 'video' ? '已切换到视频生成 · 需启动后端'
-              : '已切换到音频合成 · 需启动后端',
-          'info'
-        );
       });
     }
 
