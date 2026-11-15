@@ -25315,13 +25315,11 @@ body.dv-open .hm-page {
           <div class="hm-menu-wrap">
             <button class="hm-chip hm-chip-model" id="engineModelBtn" aria-haspopup="true" aria-expanded="false" title="当前模型">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l7.5 4.3v8.4L12 20.5l-7.5-4.3V7.8L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12l7.5-4.2M12 12v8.5M12 12L4.5 7.8" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
-              <span id="enginePillText">SANA 动漫</span>
+              <span id="enginePillText">GPT Image 2.5 Flare</span>
               <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="hm-menu hm-menu-up hm-model-menu" id="modelMenu" aria-hidden="true">
               <div data-mode-panel="image">
-                <span class="hm-menu-label">免费模型</span>
-                <div class="hm-chip-grid" id="freeModelList"></div>
                 <span class="hm-menu-label">RayinAI</span>
                 <div class="hm-chip-grid" id="rayinModelList"></div>
               </div>
@@ -25454,8 +25452,6 @@ body.dv-open .hm-page {
       </div>
 
       <select id="engineSelect" class="hm-visually-hidden" aria-label="选择生图模型" tabindex="-1">
-        <option value="flux">FLUX.1 · 免费（无需密钥）</option>
-        <option value="openai">免费额度平台模型</option>
         <option value="gpt-image">GPT-image · RayinAPI</option>
         <option value="banana">Gemini Banana · RayinAI</option>
       </select>
@@ -27516,10 +27512,10 @@ const state = {
   steps: clamp(Number(storedPrefs.steps) || 8, 4, 12),
   seed: Number(storedPrefs.seed) || randomSeed(),
   translate: storedPrefs.translate !== false,
-  engine: ENGINE_META[storedPrefs.engine] ? storedPrefs.engine : 'flux',
+  engine: ENGINE_META[storedPrefs.engine] ? storedPrefs.engine : 'gpt-image',
   channelModel: typeof storedPrefs.channelModel === 'string' && storedPrefs.channelModel
     ? storedPrefs.channelModel
-    : 'sana',                          // 免费通道模型 ID（sana / 第三方模型 ID）
+    : 'gpt-image-2.5-flare',            // RayinAI 图像模型 ID（gpt-image* / gemini*）
   lora: typeof storedPrefs.lora === 'string' ? storedPrefs.lora : '',   // 动漫 LoRA 风格包 ID
   videoModel: typeof storedPrefs.videoModel === 'string' && storedPrefs.videoModel
     ? storedPrefs.videoModel
@@ -27578,6 +27574,9 @@ if (storedPrefs.rayinChannel !== 'gpt-image-2.5') {
 }
 /* 引擎与模型名必须自洽：gpt-image 端点只认 gpt-image*，banana 只认 gemini*。
  * 历史配置里常见 engine 已切、channelModel 还是旧通道的模型名，会 404。 */
+/* 「免费模型 / 免费额度平台」整组已下线：本地旧选择（flux / openai）失效时
+   自动落到当前真正可用的 RayinAI 通道，不做静默失败。 */
+if (state.engine !== 'gpt-image' && state.engine !== 'banana') state.engine = 'gpt-image';
 if (state.engine === 'gpt-image' && !/^gpt-image/i.test(state.channelModel || '')) {
   state.channelModel = state.api.gptModel || 'gpt-image-2.5-flare';
 }
@@ -27956,7 +27955,6 @@ function bindEls() {
   els.engineBtn = document.getElementById('engineBtn');
   els.modeMenu = document.getElementById('modeMenu');
   els.modelMenu = document.getElementById('modelMenu');
-  els.freeModelList = document.getElementById('freeModelList');
   els.rayinModelList = document.getElementById('rayinModelList');
   els.loraList = document.getElementById('loraList');
   els.providerSelect = document.getElementById('providerSelect');
@@ -28809,25 +28807,11 @@ function shortModelName(name) {
     .trim();
 }
 
-/* 模型菜单：免密钥通道 + 免费额度平台模型 + 动漫 LoRA 风格 */
+/* 模型菜单：只渲染 RayinAI 可用模型 + 动漫 LoRA 风格。
+ * 「免费模型 / 免费额度平台」整组已下线：这些条目要消耗额度或依赖第三方授权，
+ * 之前由后端 /catalog 的 providers 合并回来，现在连入口一起移除。 */
 function renderCatalogMenus() {
   const data = catalogData();
-
-  if (els.freeModelList) {
-    const rows = [];
-    (data.keyless || []).forEach(function (m) {
-      rows.push('<button data-engine="flux" data-model="' + m.model + '" title="' +
-        (m.desc || m.name) + '">' + shortModelName(m.name) + '</button>');
-    });
-    (data.providers || []).forEach(function (p) {
-      (p.models || []).forEach(function (m) {
-        rows.push('<button data-engine="openai" data-provider="' + p.id + '" data-model="' + m.id +
-          '" title="' + p.name + ' · ' + m.id + '">' + shortModelName(m.name) + '</button>');
-      });
-    });
-    els.freeModelList.innerHTML = rows.join('') ||
-      '<p class="hm-menu-note">后端离线，暂无在线模型目录</p>';
-  }
 
   /* RayinAI 模型 — 从后端 rayin 数组动态渲染，每个模型独立按钮 */
   if (els.rayinModelList) {
@@ -32653,7 +32637,13 @@ function reuseJob(job) {
   if (job.channelModel && findChannelModel(job.channelModel)) {
     state.channelModel = job.channelModel;
   }
-  state.engine = ENGINE_META[job.engine] ? job.engine : 'flux';
+  /* 旧作品可能记录了已下线的免费 / 免费额度通道，恢复参数时落到当前可用通道 */
+  state.engine = (job.engine === 'gpt-image' || job.engine === 'banana') ? job.engine : 'gpt-image';
+  if (state.engine === 'gpt-image' && !/^gpt-image/i.test(state.channelModel || '')) {
+    state.channelModel = rayinCfg().gptModel || 'gpt-image-2.5-flare';
+  } else if (state.engine === 'banana' && !/^gemini/i.test(state.channelModel || '')) {
+    state.channelModel = rayinCfg().bananaModel || 'gemini-3.1-flash-image';
+  }
   if (job.ratioId && RATIOS.some(function (r) { return r.id === job.ratioId; })) state.ratio = job.ratioId;
   if (job.scaleId && SCALES.some(function (s) { return s.id === job.scaleId; })) state.scale = job.scaleId;
   if (typeof job.seed === 'number' && job.seed > 0) state.seed = job.seed;
