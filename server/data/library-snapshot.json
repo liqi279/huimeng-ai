@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-15T10:38:21.625Z",
+  "generatedAt": "2026-11-15T11:14:48.090Z",
   "source": "huimeng_library.books",
-  "total": 589,
+  "total": 633,
   "areas": {
-    "paint": 569,
-    "ref": 20
+    "paint": 611,
+    "ref": 22
   },
   "books": [
     {
@@ -27775,6 +27775,2612 @@
       "pdfBytes": 43570765,
       "coverKey": "library/covers/600-book-cover.jpg",
       "coverBytes": 380346
+    },
+    {
+      "id": "lib-mwhps8zb-ab45a0",
+      "sortNo": 600,
+      "title": "推荐视角",
+      "author": "[日] Ryota-H",
+      "intro": "原名《画角ノススメ》，日本P站画师Ryota-H的一本关于透视的小教程，用视角和相机来考虑插图的透视",
+      "pageCount": 66,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/601-book.pdf",
+      "pdfBytes": 200175287,
+      "coverKey": "library/covers/601-book-cover.jpg",
+      "coverBytes": 298944
+    },
+    {
+      "id": "lib-mwhpp5mm-451760",
+      "sortNo": 601,
+      "title": "用数码工具画！上班族的画法",
+      "author": "[日] レミック",
+      "intro": "原名《デジタルツールで描く! サラリーマンの描き方》，日本男性上班族绘制专题，有大量的图例可供参考。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/602-book.pdf",
+      "pdfBytes": 49411386,
+      "coverKey": "library/covers/602-book-cover.jpg",
+      "coverBytes": 285990
+    },
+    {
+      "id": "lib-mwhpq1bn-8045c1",
+      "sortNo": 602,
+      "title": "妙趣横生的可爱发型攻略DX",
+      "author": "[日] ガールズ向上委員会",
+      "intro": "原名《ミラクルハッピー かんたん かわいい ヘアアレンジDX》，一本生活向的书籍，里面有大量的发型及绑法参考，作为漫画参考类教程非常适合。",
+      "pageCount": 257,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/603-book.pdf",
+      "pdfBytes": 78346884,
+      "coverKey": "library/covers/603-book-cover.jpg",
+      "coverBytes": 390181
+    },
+    {
+      "id": "lib-mwhpqh5p-50f0e3",
+      "sortNo": 603,
+      "title": "幻想风景的画法",
+      "author": "[日] ゾウノセ、角丸つぶら",
+      "intro": "原名《ファンタジー風景の描き方》，CLIP STUDIO PAINT的风景教程",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/604-book.pdf",
+      "pdfBytes": 45699051,
+      "coverKey": "library/covers/604-book-cover.jpg",
+      "coverBytes": 264179
+    },
+    {
+      "id": "lib-mwhprtzp-ff93b0",
+      "sortNo": 604,
+      "title": "令人心动的制服男子图鉴",
+      "author": "[日] レッカ社",
+      "intro": "原名《胸キュン 制服男子コレクション》，一本制服男子的设定参考集。",
+      "pageCount": 130,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/605-book.pdf",
+      "pdfBytes": 74516853,
+      "coverKey": "library/covers/605-book-cover.jpg",
+      "coverBytes": 348692
+    },
+    {
+      "id": "lib-mwhprgj8-ef7969",
+      "sortNo": 605,
+      "title": "用数码工具画！衣服的褶皱和阴影的画法",
+      "author": "[日] ダテナオト",
+      "intro": "原名《デジタルツールで描く! 服のシワと影の描き方》，服饰专题教程，专门针对褶皱和阴影。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/606-book.pdf",
+      "pdfBytes": 37252469,
+      "coverKey": "library/covers/606-book-cover.jpg",
+      "coverBytes": 319841
+    },
+    {
+      "id": "lib-mwhpsjnk-5b4e35",
+      "sortNo": 606,
+      "title": "插图解构新书",
+      "author": "[日] ダテナオト、弐藤 潔",
+      "intro": "原名《イラスト解体新書》，漫画进阶教程，解决绘画过程中的违和感，让你的画技更上一层楼。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/607-book.pdf",
+      "pdfBytes": 45012384,
+      "coverKey": "library/covers/607-book-cover.jpg",
+      "coverBytes": 280368
+    },
+    {
+      "id": "lib-mwhpultv-66ed61",
+      "sortNo": 607,
+      "title": "Photobash入门CLIP STUDIO PAINT PRO与照片合成绘制场景插画",
+      "author": "[日] 角丸つぶら、ゾウノセ",
+      "intro": "原名《フォトバッシュ入門 CLIP STUDIO PAINT PROと写真を使って描く風景イラスト》，所谓Photobash，指的是将数张照片（Photo）在画布上剪贴组合（bash）制作成为插画的技法。因为是利用原本就存在于照片中的细节及质感，相较从零开始描绘，可以省下许多时间。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/608-book.pdf",
+      "pdfBytes": 76787865,
+      "coverKey": "library/covers/608-book-cover.jpg",
+      "coverBytes": 233523
+    },
+    {
+      "id": "lib-mwhpucqu-b32ab9",
+      "sortNo": 608,
+      "title": "什么姿势都能画出来！漫画角色练习簿",
+      "author": "[日] 西東社編集部",
+      "intro": "原名《どんなポーズでも描けるようになる！ マンガキャラアタリ練習帳》，一本非常实用的人物姿势绘制参考教程。",
+      "pageCount": 226,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/609-book.pdf",
+      "pdfBytes": 52213575,
+      "coverKey": "library/covers/609-book-cover.jpg",
+      "coverBytes": 244639
+    },
+    {
+      "id": "lib-mwhpugqm-67c319",
+      "sortNo": 609,
+      "title": "手绘画师们的东方插画技巧 水彩、油画、马克笔、彩铅、铅笔",
+      "author": "[日] 三澤寛志",
+      "intro": "原名《アナログ絵師たちの東方イラストテクニック 水彩、油絵、コピック、色鉛筆、鉛筆など》，东方系列的手绘教程。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/610-book.pdf",
+      "pdfBytes": 43872013,
+      "coverKey": "library/covers/610-book-cover.jpg",
+      "coverBytes": 250084
+    },
+    {
+      "id": "lib-mwhpuons-c63e3f",
+      "sortNo": 610,
+      "title": "动画师速写:运动中人物的素描集 肌肉角色篇",
+      "author": "[日] 羽山淳一",
+      "intro": "原名《アニメーターズ・スケッチ 動きのある人物スケッチ集 —筋肉キャラクター編—》，日本画师羽山淳一的一本漫画速写参考教程，非常实用。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/611-book.pdf",
+      "pdfBytes": 42195674,
+      "coverKey": "library/covers/611-book-cover.jpg",
+      "coverBytes": 176142
+    },
+    {
+      "id": "lib-mwhpuzg4-4bbd32",
+      "sortNo": 611,
+      "title": "男性肌肉的画法",
+      "author": "[日] カネダ工房",
+      "intro": "原名《男の筋肉 描きわけポーズ集 スリムからマッチョまで》，一本男性肌肉的绘制教程，结合真人图例。",
+      "pageCount": 160,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/612-book.pdf",
+      "pdfBytes": 14961647,
+      "coverKey": "library/covers/612-book-cover.jpg",
+      "coverBytes": 187239
+    },
+    {
+      "id": "lib-mwhq0i5h-22b317",
+      "sortNo": 612,
+      "title": "泳装的画法",
+      "author": "[日] 玄光社",
+      "intro": "原名《水着の描き方》，玄光社推出的一本泳装专题教程，属于“超描けるシリーズ”系列。\n参与画师：イコモチ,美和野らぐ,HARURI,むらき,マダカン,春雨燕,右下ななめ,めり越,koutetuyarou,大黒屋炎雀,まめも,かすかず,こわたりひろ,メルルート",
+      "pageCount": 152,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/613-book.pdf",
+      "pdfBytes": 128792211,
+      "coverKey": "library/covers/613-book-cover.jpg",
+      "coverBytes": 302692
+    },
+    {
+      "id": "lib-mwhq0egz-39833d",
+      "sortNo": 613,
+      "title": "像素画教室",
+      "author": "[日] 中川悠京",
+      "intro": "原名《ドット絵教室》，日本漫画家中川悠京的推出的像素画教程。",
+      "pageCount": 194,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/614-book.pdf",
+      "pdfBytes": 113146834,
+      "coverKey": "library/covers/614-book-cover.jpg",
+      "coverBytes": 224029
+    },
+    {
+      "id": "lib-mwhq0uk0-4f47f5",
+      "sortNo": 614,
+      "title": "兽耳的画法",
+      "author": "[日] YANAMi、ひそな、些夜、文倉十",
+      "intro": "原名《ケモミミの描き方》，四位画师（YANAMi、ひそな、些夜、文倉十）合作推出的兽耳角色绘制的教程，属于玄光社的“超描けるシリーズ”系列。",
+      "pageCount": 155,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/615-book.pdf",
+      "pdfBytes": 128329144,
+      "coverKey": "library/covers/615-book-cover.jpg",
+      "coverBytes": 196128
+    },
+    {
+      "id": "lib-mwhq4mmh-90b971",
+      "sortNo": 616,
+      "title": "描绘出想要表现的世界 CSP插画指南",
+      "author": "[日] グラフィック社編集部",
+      "intro": "原名《表現したい世界を描く！　CLIP STUDIO PAINT PROイラストレーションテクニック》，三位画师（烏羽雨、MikaPikazo、もくり）合作推出的CLIP STUDIO PAINT PRO的教程，附带源文件（clip+psd双版本）。",
+      "pageCount": 196,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "目次",
+          "page": 6
+        },
+        {
+          "title": "作家紹介",
+          "page": 8
+        },
+        {
+          "title": "本書の使い方",
+          "page": 11
+        },
+        {
+          "title": "PART1：もくり 仏も昔は凡夫なり",
+          "page": 12
+        },
+        {
+          "title": "コンセプト&ラフギャラリー",
+          "page": 14
+        },
+        {
+          "title": "STEP01 ラフを起こして構図を練る",
+          "page": 22
+        },
+        {
+          "title": "STEP02 ラフを基に線画を描く",
+          "page": 30
+        },
+        {
+          "title": "STEP03 メインの人物に彩色する",
+          "page": 38
+        },
+        {
+          "title": "STEP04 小物に彩色する",
+          "page": 50
+        },
+        {
+          "title": "STEP05 背景を描いて作品が完成",
+          "page": 57
+        },
+        {
+          "title": "PART2：烏羽雨 騎手と竜",
+          "page": 70
+        },
+        {
+          "title": "コンセプト&ラフギャラリー",
+          "page": 72
+        },
+        {
+          "title": "STEP01 イラストの構図を決める",
+          "page": 78
+        },
+        {
+          "title": "STEP02 線画を描き起こす",
+          "page": 82
+        },
+        {
+          "title": "STEP03 パーツごとに塗り分ける",
+          "page": 88
+        },
+        {
+          "title": "STEP04 周囲の植物を描く",
+          "page": 93
+        },
+        {
+          "title": "STEP05 ディテールを詰める",
+          "page": 103
+        },
+        {
+          "title": "STEP06 陰影を描き込む",
+          "page": 108
+        },
+        {
+          "title": "STEP07 全体を整えて完成",
+          "page": 119
+        },
+        {
+          "title": "PART3：Mika Pikazo COLOR GIRL",
+          "page": 124
+        },
+        {
+          "title": "コンセプト&ラフギャラリー",
+          "page": 126
+        },
+        {
+          "title": "STEP01 構想案からラフを仕上げる",
+          "page": 134
+        },
+        {
+          "title": "STEP02 線の強弱を使い分けながら線画を描く",
+          "page": 142
+        },
+        {
+          "title": "STEP03 人物の本体（肌・髪・目）を塗る",
+          "page": 152
+        },
+        {
+          "title": "STEP04 人物の装飾部分に彩色",
+          "page": 164
+        },
+        {
+          "title": "STEP05 背景を塗って仕上げる",
+          "page": 177
+        },
+        {
+          "title": "CLIP STUDIO PAINTのインターフェース紹介",
+          "page": 188
+        },
+        {
+          "title": "CLIP STUDIO PAINTのおすすめ機能",
+          "page": 190
+        },
+        {
+          "title": "ショートカットキー一覧",
+          "page": 192
+        },
+        {
+          "title": "奥付",
+          "page": 194
+        },
+        {
+          "title": "裏表紙",
+          "page": 196
+        }
+      ],
+      "pdfKey": "library/books/617-book.pdf",
+      "pdfBytes": 81060337,
+      "coverKey": "library/covers/617-book-cover.jpg",
+      "coverBytes": 348845
+    },
+    {
+      "id": "lib-mwhq5brh-58525f",
+      "sortNo": 617,
+      "title": "向专业画师学角色上色的技巧 CSP篇",
+      "author": "[日] グラフィック社編集部",
+      "intro": "原名《プロ絵師の技を完全マスター キャラ塗り上達術 決定版 CLIP STUDIO PAINT PRO/EX 対応》，十位画师（月森フユカ、玄米、美和野らぐ、吉村拓也、紅木春(红木春)、青紅(青十紅)、吉岡愛理、江川あきら、鈴城敦、珠樹みつね ）教你如何通过CLIP STUDIO PAINT PRO/EX上色。",
+      "pageCount": 210,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "はじめに",
+          "page": 3
+        },
+        {
+          "title": "目次",
+          "page": 4
+        },
+        {
+          "title": "本書の使い方",
+          "page": 7
+        },
+        {
+          "title": "01アニメ塗り（月森フユカ）",
+          "page": 9
+        },
+        {
+          "title": "設定",
+          "page": 11
+        },
+        {
+          "title": "STEP1 肌を塗る",
+          "page": 12
+        },
+        {
+          "title": "STEP2 瞳を塗る",
+          "page": 15
+        },
+        {
+          "title": "STEP3 髪を塗る",
+          "page": 17
+        },
+        {
+          "title": "STEP4 服を塗る",
+          "page": 19
+        },
+        {
+          "title": "STEP5 仕上げテクニック",
+          "page": 23
+        },
+        {
+          "title": "02ブラシ塗り（玄米）",
+          "page": 25
+        },
+        {
+          "title": "設定",
+          "page": 27
+        },
+        {
+          "title": "STEP1 瞳を塗る",
+          "page": 28
+        },
+        {
+          "title": "STEP2 肌を塗る",
+          "page": 31
+        },
+        {
+          "title": "STEP3 髪を塗る",
+          "page": 37
+        },
+        {
+          "title": "STEP4 服を塗る",
+          "page": 40
+        },
+        {
+          "title": "STEP5 仕上げテクニック",
+          "page": 44
+        },
+        {
+          "title": "03ブラシ塗り（美和野らぐ）",
+          "page": 45
+        },
+        {
+          "title": "設定",
+          "page": 47
+        },
+        {
+          "title": "STEP1 肌を塗る",
+          "page": 48
+        },
+        {
+          "title": "STEP2 瞳を塗る",
+          "page": 51
+        },
+        {
+          "title": "STEP3 髪を塗る",
+          "page": 55
+        },
+        {
+          "title": "STEP4 服を塗る",
+          "page": 58
+        },
+        {
+          "title": "STEP5 仕上げテクニック",
+          "page": 62
+        },
+        {
+          "title": "04ブラシ＋厚塗り（吉村拓也）",
+          "page": 65
+        },
+        {
+          "title": "設定",
+          "page": 67
+        },
+        {
+          "title": "STEP1 下塗り",
+          "page": 68
+        },
+        {
+          "title": "STEP2 肌を塗る",
+          "page": 70
+        },
+        {
+          "title": "STEP3 服を塗る",
+          "page": 74
+        },
+        {
+          "title": "STEP4 髪を塗る",
+          "page": 79
+        },
+        {
+          "title": "STEP5 瞳を塗る",
+          "page": 83
+        },
+        {
+          "title": "05水彩塗り（紅木春）",
+          "page": 85
+        },
+        {
+          "title": "設定",
+          "page": 87
+        },
+        {
+          "title": "STEP1 肌を塗る",
+          "page": 88
+        },
+        {
+          "title": "STEP2 瞳を塗る",
+          "page": 91
+        },
+        {
+          "title": "STEP3 髪を塗る",
+          "page": 94
+        },
+        {
+          "title": "STEP4 服を塗る",
+          "page": 98
+        },
+        {
+          "title": "STEP5 仕上げテクニック",
+          "page": 103
+        },
+        {
+          "title": "06水彩＋厚塗り（青紅）",
+          "page": 105
+        },
+        {
+          "title": "設定",
+          "page": 107
+        },
+        {
+          "title": "STEP1 肌を塗る",
+          "page": 108
+        },
+        {
+          "title": "STEP2 瞳を塗る",
+          "page": 110
+        },
+        {
+          "title": "STEP3 髪を塗る",
+          "page": 113
+        },
+        {
+          "title": "STEP4 服を塗る",
+          "page": 117
+        },
+        {
+          "title": "STEP5 仕上げテクニック",
+          "page": 121
+        },
+        {
+          "title": "07厚塗り（吉岡愛理）",
+          "page": 123
+        },
+        {
+          "title": "設定",
+          "page": 125
+        },
+        {
+          "title": "STEP1 パーツを分ける",
+          "page": 127
+        },
+        {
+          "title": "STEP2 肌を塗る",
+          "page": 128
+        },
+        {
+          "title": "STEP3 瞳を塗る",
+          "page": 131
+        },
+        {
+          "title": "STEP4 服を塗る",
+          "page": 133
+        },
+        {
+          "title": "STEP5 髪を塗る",
+          "page": 139
+        },
+        {
+          "title": "STEP6 仕上げテクニック",
+          "page": 141
+        },
+        {
+          "title": "08厚塗り（江川あきら）",
+          "page": 143
+        },
+        {
+          "title": "設定",
+          "page": 145
+        },
+        {
+          "title": "STEP1 ラフ（下絵）を描く/STEP2 顔を塗る",
+          "page": 146
+        },
+        {
+          "title": "STEP3 メカボディを塗る",
+          "page": 151
+        },
+        {
+          "title": "STEP4 髪を塗る",
+          "page": 156
+        },
+        {
+          "title": "STEP5 仕上げテクニック",
+          "page": 159
+        },
+        {
+          "title": "09ギャルゲ塗り（鈴城敦）",
+          "page": 163
+        },
+        {
+          "title": "設定",
+          "page": 165
+        },
+        {
+          "title": "STEP1 肌を塗る",
+          "page": 166
+        },
+        {
+          "title": "STEP2 髪を塗る",
+          "page": 171
+        },
+        {
+          "title": "STEP3 瞳を塗る",
+          "page": 176
+        },
+        {
+          "title": "STEP4 服を塗る",
+          "page": 179
+        },
+        {
+          "title": "STEP5 仕上げテクニック",
+          "page": 184
+        },
+        {
+          "title": "10宝石塗り（珠樹みつね）",
+          "page": 185
+        },
+        {
+          "title": "設定",
+          "page": 187
+        },
+        {
+          "title": "STEP1 宝石を塗る",
+          "page": 188
+        },
+        {
+          "title": "STEP2 髪を塗る",
+          "page": 191
+        },
+        {
+          "title": "STEP3 服を塗る",
+          "page": 195
+        },
+        {
+          "title": "STEP4 肌を塗る",
+          "page": 200
+        },
+        {
+          "title": "STEP5 瞳を塗る",
+          "page": 202
+        },
+        {
+          "title": "STEP6 仕上げテクニック",
+          "page": 205
+        },
+        {
+          "title": "奥付",
+          "page": 209
+        },
+        {
+          "title": "裏表紙",
+          "page": 210
+        }
+      ],
+      "pdfKey": "library/books/618-book.pdf",
+      "pdfBytes": 97030761,
+      "coverKey": "library/covers/618-book-cover.jpg",
+      "coverBytes": 333130
+    },
+    {
+      "id": "lib-mwhq5syv-298b8e",
+      "sortNo": 618,
+      "title": "角色作画的要点 舒展的人体曲线画法",
+      "author": "[日] グラフィック社編集部",
+      "intro": "原名《キャラ作画のつぼ ねじれ・くびれ・脱力の描きかた》，漫画大神桂正和参与的一本关于女性身体绘制要点的教程，真人模特配合讲解。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/619-book.pdf",
+      "pdfBytes": 300111331,
+      "coverKey": "library/covers/619-book-cover.jpg",
+      "coverBytes": 217162
+    },
+    {
+      "id": "lib-mwhq7kzp-d2ad95",
+      "sortNo": 619,
+      "title": "为绘画角色注入生命力-插画 漫画进阶技法6 线条与阴影篇",
+      "author": "[日] toshi",
+      "intro": "原名《線と陰 アニメーターから学ぶキャラクター作画術》，人气画师TOSHI的人体进阶教程，助你画出更生动的角色。",
+      "pageCount": 356,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[toshi]線と陰 アニメーターから学ぶキャラクター作画術",
+          "page": 1
+        },
+        {
+          "title": "漫画家大课堂 线条与阴影",
+          "page": 179
+        }
+      ],
+      "pdfKey": "library/books/620-book.pdf",
+      "pdfBytes": 175147630,
+      "coverKey": "library/covers/620-book-cover.jpg",
+      "coverBytes": 281406
+    },
+    {
+      "id": "lib-mwhq9nby-d311d4",
+      "sortNo": 620,
+      "title": "手的画法 神志那弘志的人体讲座",
+      "author": "[日] 神志那 弘志",
+      "intro": "原名《手の描き方　神志那弘志の人体パーツ・イラスト講座》，日本动画监督/作画监督神志那弘志的人体手部专题教程。",
+      "pageCount": 153,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/621-book.pdf",
+      "pdfBytes": 139247136,
+      "coverKey": "library/covers/621-book-cover.jpg",
+      "coverBytes": 203351
+    },
+    {
+      "id": "lib-mwhpubzh-8d736d",
+      "sortNo": 621,
+      "title": "情侣日常互动姿势参考集",
+      "author": "[日] スカーレット・ベリ子",
+      "intro": "原名《マンガ家と作るいちゃLOVEポーズデッサン集》，一本很实用的男女情侣日常互动姿势的参考草图集。",
+      "pageCount": 107,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/622-book.pdf",
+      "pdfBytes": 27927097,
+      "coverKey": "library/covers/622-book-cover.jpg",
+      "coverBytes": 133406
+    },
+    {
+      "id": "lib-mwhq7tb3-cf7421",
+      "sortNo": 622,
+      "title": "极致的角色作画",
+      "author": "[日] toshi",
+      "intro": "原名《極める！キャラ作画　神技作画シリーズ》，P站人气画师TOSHI的漫画教程，神技作画系列中的一本，满满都是漫画人物绘制的干货。",
+      "pageCount": 185,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/623-book.pdf",
+      "pdfBytes": 59352547,
+      "coverKey": "library/covers/623-book-cover.jpg",
+      "coverBytes": 292278
+    },
+    {
+      "id": "lib-mwhq8nll-8908f1",
+      "sortNo": 623,
+      "title": "萌萌美少年组合的画法 男子篇",
+      "author": "[日] カネダ工房、角丸つぶら",
+      "intro": "原名《萌えふたりの描き方 男子編》，一本男男CP画法的教程。",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/624-book.pdf",
+      "pdfBytes": 36200105,
+      "coverKey": "library/covers/624-book-cover.jpg",
+      "coverBytes": 227199
+    },
+    {
+      "id": "lib-mwhq9b3e-7f96d2",
+      "sortNo": 624,
+      "title": "魅惑型男绘画讲座",
+      "author": "[日] つよ丸",
+      "intro": "原名《色気のある男の描き方》，一本男性角色绘制教程。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/625-book.pdf",
+      "pdfBytes": 43600966,
+      "coverKey": "library/covers/625-book-cover.jpg",
+      "coverBytes": 232920
+    },
+    {
+      "id": "lib-mwhqad7x-a343b2",
+      "sortNo": 625,
+      "title": "人体素描红笔矫正培训班",
+      "author": "[日] cielo",
+      "intro": "原名《人体デッサン赤ペン添削塾 (キャラのポーズがみるみる上達!)》，一本漫画角色造型的教程。",
+      "pageCount": 172,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/626-book.pdf",
+      "pdfBytes": 64846336,
+      "coverKey": "library/covers/626-book-cover.jpg",
+      "coverBytes": 268491
+    },
+    {
+      "id": "lib-mwhqh8fp-fef425",
+      "sortNo": 626,
+      "title": "Q版角色的画法 2.5/2/3头身篇",
+      "author": "[日] 宮月もそこ 角丸つぶら",
+      "intro": "原名《ミニキャラクターの描き分け ほんわか2.5/2/3頭身編》，一本Q版漫画教程，非常萌。",
+      "pageCount": 184,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/627-book.pdf",
+      "pdfBytes": 366004217,
+      "coverKey": "library/covers/627-book-cover.jpg",
+      "coverBytes": 208702
+    },
+    {
+      "id": "lib-mwhq2qng-34cee6",
+      "sortNo": 627,
+      "title": "女生发型辞典",
+      "author": "[日] ポストメディア編集部",
+      "intro": "原名《おんなのこの髪型カタログ》，一迅社推出的一本介绍女生发型的参考教程。",
+      "pageCount": 99,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/628-book.pdf",
+      "pdfBytes": 186248276,
+      "coverKey": "library/covers/628-book-cover.jpg",
+      "coverBytes": 266552
+    },
+    {
+      "id": "lib-mwhqge2x-3a0eec",
+      "sortNo": 628,
+      "title": "插画、漫画的配色绘画教室",
+      "author": "[日] 松岡伸治",
+      "intro": "原名《イラスト、漫画のための配色教室》，日本画师松岡伸治(松冈伸治)推出的配色教程。",
+      "pageCount": 261,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[ポストメディア編集部]おんなのこの髪型カタログ",
+          "page": 1
+        },
+        {
+          "title": "[松岡伸治]イラスト、漫画のための配色教室",
+          "page": 100
+        }
+      ],
+      "pdfKey": "library/books/629-book.pdf",
+      "pdfBytes": 283336425,
+      "coverKey": "library/covers/629-book-cover.jpg",
+      "coverBytes": 266552
+    },
+    {
+      "id": "lib-mwhqbjtp-d2a7dd",
+      "sortNo": 629,
+      "title": "军服的画法 认识世界的军装军服",
+      "author": "[日] Col.Ayabe、(萌)表現探求サークル",
+      "intro": "原名《軍服の描き方 仕組みからわかる世界の軍装・軍服》，从军服的轮廓，到各国的设计，军刀和勋章等附属品，为了描画军服的基础到实例网罗了的「军服的教科书」！",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/630-book.pdf",
+      "pdfBytes": 41876996,
+      "coverKey": "library/covers/630-book-cover.jpg",
+      "coverBytes": 190201
+    },
+    {
+      "id": "lib-mwhqdaxf-65c664",
+      "sortNo": 630,
+      "title": "兽耳角色设计书",
+      "author": "[日] しゅがお",
+      "intro": "原名《ケモミミキャラクターデザインブック》，画师しゅがお推出的一本动物拟人化“兽耳”角色设计为主题的幻想题材漫画教程，各种各样萌萌哒的兽娘都有讲解哦。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "表紙",
+          "page": 1
+        },
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "Gallery",
+          "page": 6
+        },
+        {
+          "title": "目次",
+          "page": 12
+        },
+        {
+          "title": "本書の見方",
+          "page": 16
+        },
+        {
+          "title": "Chapter1 ケモミミキャラクターの基本",
+          "page": 17
+        },
+        {
+          "title": "ケモミミとは？",
+          "page": 18
+        },
+        {
+          "title": "ケモミミの付き方",
+          "page": 19
+        },
+        {
+          "title": "しっぽの付き方",
+          "page": 20
+        },
+        {
+          "title": "シルエットを意識したキャラクターデザイン",
+          "page": 22
+        },
+        {
+          "title": "キャラクターデザインのコツ",
+          "page": 24
+        },
+        {
+          "title": "Chapter2 ケモミミキャラクターのデザイン",
+          "page": 27
+        },
+        {
+          "title": "【ネコ】ネコ耳キャラのイメージ",
+          "page": 28
+        },
+        {
+          "title": "気怠そうなネコ",
+          "page": 30
+        },
+        {
+          "title": "クールなネコ/かわいく威嚇するネコ",
+          "page": 31
+        },
+        {
+          "title": "マッシュボブタイプ/古着女子タイプ",
+          "page": 32
+        },
+        {
+          "title": "黒ネコ",
+          "page": 33
+        },
+        {
+          "title": "イエネコのデザイン/メインクーン",
+          "page": 34
+        },
+        {
+          "title": "スコティッシュフォールド/アビシニアン",
+          "page": 35
+        },
+        {
+          "title": "マンチカン",
+          "page": 36
+        },
+        {
+          "title": "アメリカンショートヘア",
+          "page": 37
+        },
+        {
+          "title": "ボンベイ",
+          "page": 38
+        },
+        {
+          "title": "エジプシャンマウ",
+          "page": 39
+        },
+        {
+          "title": "シャム（モダンスタイル）",
+          "page": 40
+        },
+        {
+          "title": "シャム（トラッドスタイル）",
+          "page": 41
+        },
+        {
+          "title": "ヒマラヤン",
+          "page": 42
+        },
+        {
+          "title": "ロシアンブルー",
+          "page": 43
+        },
+        {
+          "title": "ペルシャ",
+          "page": 44
+        },
+        {
+          "title": "エキゾチックショートヘア/ジャパニーズボブテイル",
+          "page": 45
+        },
+        {
+          "title": "ネコのなかまのデザイン/クロヒョウ",
+          "page": 46
+        },
+        {
+          "title": "ユキヒョウ/ライオン",
+          "page": 47
+        },
+        {
+          "title": "オオヤマネコ",
+          "page": 48
+        },
+        {
+          "title": "トラ",
+          "page": 49
+        },
+        {
+          "title": "スナネコ/マヌルネコ",
+          "page": 50
+        },
+        {
+          "title": "ネコの表情アイデア",
+          "page": 51
+        },
+        {
+          "title": "【イヌ】イヌ耳キャラのイメージ",
+          "page": 52
+        },
+        {
+          "title": "狛犬タイプ",
+          "page": 54
+        },
+        {
+          "title": "干支の戌タイプ/食事をするイヌ",
+          "page": 55
+        },
+        {
+          "title": "イエイヌのデザイン/ダックスフント",
+          "page": 56
+        },
+        {
+          "title": "ボーダーコリー",
+          "page": 57
+        },
+        {
+          "title": "ボルゾイ",
+          "page": 58
+        },
+        {
+          "title": "プードル（トイプードル）",
+          "page": 59
+        },
+        {
+          "title": "ジャーマン・シェパード・ドッグ",
+          "page": 60
+        },
+        {
+          "title": "ドーベルマン",
+          "page": 61
+        },
+        {
+          "title": "柴犬",
+          "page": 62
+        },
+        {
+          "title": "ゴールデンレトリバー",
+          "page": 63
+        },
+        {
+          "title": "日本スピッツ",
+          "page": 64
+        },
+        {
+          "title": "シベリアンハスキー/セントバーナード",
+          "page": 65
+        },
+        {
+          "title": "ポメラニアン",
+          "page": 66
+        },
+        {
+          "title": "チワワ/ウェルシュ・コーギー・ペンブローク",
+          "page": 67
+        },
+        {
+          "title": "イヌのなかまのデザイン/タヌキ",
+          "page": 68
+        },
+        {
+          "title": "イヌの表情アイデア",
+          "page": 69
+        },
+        {
+          "title": "【キツネ】キツネ耳キャラのイメージ",
+          "page": 70
+        },
+        {
+          "title": "カジュアルタイプ",
+          "page": 72
+        },
+        {
+          "title": "巫女タイプ/九尾の狐タイプ",
+          "page": 73
+        },
+        {
+          "title": "夏のバカンスタイプ",
+          "page": 74
+        },
+        {
+          "title": "いろんなキツネのデザイン/アカギツネ",
+          "page": 75
+        },
+        {
+          "title": "ギンギツネ",
+          "page": 76
+        },
+        {
+          "title": "フェネックギツネ",
+          "page": 78
+        },
+        {
+          "title": "ホッキョクギツネ/コサックギツネ",
+          "page": 79
+        },
+        {
+          "title": "キツネの表情アイデア",
+          "page": 80
+        },
+        {
+          "title": "Column 1 服のロゴを考える",
+          "page": 81
+        },
+        {
+          "title": "【オオカミ】オオカミ耳キャラのイメージ",
+          "page": 82
+        },
+        {
+          "title": "かわいく威嚇するオオカミ/ワイルドなオオカミ",
+          "page": 84
+        },
+        {
+          "title": "いろんなオオカミのデザイン/ハイイロオオカミ",
+          "page": 85
+        },
+        {
+          "title": "ホッキョクオオカミ",
+          "page": 86
+        },
+        {
+          "title": "ニホンオオカミ",
+          "page": 87
+        },
+        {
+          "title": "オオカミの表情アイデア",
+          "page": 88
+        },
+        {
+          "title": "Column 2 いろんな目の形",
+          "page": 89
+        },
+        {
+          "title": "【ウサギ】ウサ耳キャラのイメージ",
+          "page": 90
+        },
+        {
+          "title": "ロリータタイプ",
+          "page": 92
+        },
+        {
+          "title": "雪ウサギ/ファンシータイプ",
+          "page": 93
+        },
+        {
+          "title": "いろんなウサギのデザイン/ヒマラヤン",
+          "page": 94
+        },
+        {
+          "title": "ネザーランドドワーフ/イングリッシュアンゴラ",
+          "page": 95
+        },
+        {
+          "title": "ジャパニーズ・ホワイト",
+          "page": 96
+        },
+        {
+          "title": "ロップイヤー",
+          "page": 97
+        },
+        {
+          "title": "ライオンヘッド",
+          "page": 98
+        },
+        {
+          "title": "ウサギの表情アイデア",
+          "page": 99
+        },
+        {
+          "title": "【有蹄類】ヒツジ耳キャラのイメージ",
+          "page": 100
+        },
+        {
+          "title": "いろんな有蹄類のデザイン/ヒツジ（角無し）",
+          "page": 102
+        },
+        {
+          "title": "ヒツジ（角あり）",
+          "page": 103
+        },
+        {
+          "title": "トナカイ",
+          "page": 104
+        },
+        {
+          "title": "ニホンジカ",
+          "page": 105
+        },
+        {
+          "title": "イノシシ",
+          "page": 106
+        },
+        {
+          "title": "ウシ（ホルスタイン種）/ウシ（闘牛）",
+          "page": 107
+        },
+        {
+          "title": "ウマ",
+          "page": 108
+        },
+        {
+          "title": "ロバ",
+          "page": 109
+        },
+        {
+          "title": "ヤギ",
+          "page": 110
+        },
+        {
+          "title": "【鳥類】イワトビペンギン",
+          "page": 111
+        },
+        {
+          "title": "コウテイペンギン",
+          "page": 112
+        },
+        {
+          "title": "カラス",
+          "page": 114
+        },
+        {
+          "title": "ハクチョウ/ヘビクイワシ",
+          "page": 115
+        },
+        {
+          "title": "【その他の動物】デグー",
+          "page": 116
+        },
+        {
+          "title": "ネズミ",
+          "page": 117
+        },
+        {
+          "title": "ロボロフスキーハムスター",
+          "page": 118
+        },
+        {
+          "title": "シマリス",
+          "page": 119
+        },
+        {
+          "title": "イタチ",
+          "page": 120
+        },
+        {
+          "title": "フェレット/カワウソ",
+          "page": 121
+        },
+        {
+          "title": "ホッキョクグマ",
+          "page": 122
+        },
+        {
+          "title": "ジャイアントパンダ",
+          "page": 123
+        },
+        {
+          "title": "アライグマ",
+          "page": 124
+        },
+        {
+          "title": "ハリネズミ/アカゲザル（赤毛猿）",
+          "page": 125
+        },
+        {
+          "title": "ウサギコウモリ",
+          "page": 126
+        },
+        {
+          "title": "ニシキヘビ",
+          "page": 127
+        },
+        {
+          "title": "Column 4 デフォルメキャラクターのコツ",
+          "page": 128
+        },
+        {
+          "title": "【幻想生物】ドラゴン（火竜）",
+          "page": 130
+        },
+        {
+          "title": "シーサーペント（海竜）",
+          "page": 131
+        },
+        {
+          "title": "ワイバーン（翼竜）",
+          "page": 132
+        },
+        {
+          "title": "天使",
+          "page": 134
+        },
+        {
+          "title": "悪魔",
+          "page": 135
+        },
+        {
+          "title": "Column 4 カバーデザインができるまで",
+          "page": 136
+        },
+        {
+          "title": "キャラクターデザインワークス",
+          "page": 142
+        },
+        {
+          "title": "奥付",
+          "page": 146
+        }
+      ],
+      "pdfKey": "library/books/631-book.pdf",
+      "pdfBytes": 66791575,
+      "coverKey": "library/covers/631-book-cover.jpg",
+      "coverBytes": 151241
+    },
+    {
+      "id": "lib-mwhqed5r-f70d5d",
+      "sortNo": 631,
+      "title": "奇幻服装设计图鉴",
+      "author": "[日] もくり",
+      "intro": "原名《ファンタジー衣装デザイン図鑑》，画师もくり推出的一本\"幻想”为主题的服装设计指南，主要以图鉴为主，属于设计参考类画集。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/632-book.pdf",
+      "pdfBytes": 39579449,
+      "coverKey": "library/covers/632-book-cover.jpg",
+      "coverBytes": 299210
+    },
+    {
+      "id": "lib-mwhqgm6q-332cfd",
+      "sortNo": 632,
+      "title": "用Copic马克笔绘制极致梦幻色彩",
+      "author": "[日] ぷぅ 優樹ユキ ぱる野 姫神 かをり",
+      "intro": "原名《ドリーミィカラーで極める!コピック上達メイキング》，多位画师联合推出的Copic马克笔上色教程。",
+      "pageCount": 155,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/633-book.pdf",
+      "pdfBytes": 91647943,
+      "coverKey": "library/covers/633-book-cover.jpg",
+      "coverBytes": 352318
+    },
+    {
+      "id": "lib-mwhqhpk2-8b0325",
+      "sortNo": 633,
+      "title": "SS Illustration Making Book 传统画材mix vol.01",
+      "author": "[日] スモールエス編集部",
+      "intro": "原名《SSイラストメイキングブック アナログ画材MIX vol.01》，多位PIXIV人气画师联合推出的关于7种“アナログ画材”的使用心得，包括：丙烯水粉、丙烯彩色颜料、酒精性马克笔、水性马克笔、透明水彩、彩色铅笔、彩色墨水。",
+      "pageCount": 132,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/634-book.pdf",
+      "pdfBytes": 55505769,
+      "coverKey": "library/covers/634-book-cover.jpg",
+      "coverBytes": 359576
+    },
+    {
+      "id": "lib-mwhpvflr-4cffb7",
+      "sortNo": 634,
+      "title": "描绘有点令人心动的女孩动作插图姿势集",
+      "author": "[日] サイドランチ",
+      "intro": "原名《ちょっとドキドキする女の子の仕草を描くイラストポーズ集》，列举了各行各业各种女孩令人心动的瞬间的绘制技巧，非常不错的插图参考教程。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/635-book.pdf",
+      "pdfBytes": 14409300,
+      "coverKey": "library/covers/635-book-cover.jpg",
+      "coverBytes": 190003
+    },
+    {
+      "id": "lib-mwhq0lkm-df856f",
+      "sortNo": 635,
+      "title": "360°任何角度都可以完美掌握！ 漫画角色素描入门",
+      "author": "[日] 藤井英俊",
+      "intro": "原名《360°どんな角度もカンペキマスター！ マンガキャラデッサン入門》，一本多角度人体绘制教程",
+      "pageCount": 227,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "COVER",
+          "page": 2
+        },
+        {
+          "title": "電子書籍について",
+          "page": 3
+        },
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "もくじ",
+          "page": 6
+        },
+        {
+          "title": "本書の特長と見方",
+          "page": 11
+        },
+        {
+          "title": "【PART１】マンガキャラを描くための基本",
+          "page": 14
+        },
+        {
+          "title": "◎顔の構造を知ろう",
+          "page": 15
+        },
+        {
+          "title": "顔の基本のバランス",
+          "page": 15
+        },
+        {
+          "title": "パーツバランスを変える",
+          "page": 16
+        },
+        {
+          "title": "表情の動き",
+          "page": 16
+        },
+        {
+          "title": "◎骨の構造を知ろう",
+          "page": 17
+        },
+        {
+          "title": "覚えておきたい骨一覧",
+          "page": 17
+        },
+        {
+          "title": "背骨の動き",
+          "page": 18
+        },
+        {
+          "title": "肩、腰の動き",
+          "page": 18
+        },
+        {
+          "title": "◎筋肉の構造を知ろう",
+          "page": 19
+        },
+        {
+          "title": "覚えておきたい筋肉一覧",
+          "page": 19
+        },
+        {
+          "title": "筋肉の連動性",
+          "page": 20
+        },
+        {
+          "title": "◎関節の動きを知ろう",
+          "page": 21
+        },
+        {
+          "title": "上半身の関節",
+          "page": 21
+        },
+        {
+          "title": "下半身の関節",
+          "page": 22
+        },
+        {
+          "title": "☆マンガでステップアップ！ 講座①効果線の描き方",
+          "page": 23
+        },
+        {
+          "title": "【PART２】顔の描き方",
+          "page": 24
+        },
+        {
+          "title": "◎顔の描き方の基本",
+          "page": 25
+        },
+        {
+          "title": "アタリを使おう",
+          "page": 25
+        },
+        {
+          "title": "年齢による変化",
+          "page": 25
+        },
+        {
+          "title": "写真から描き起こす",
+          "page": 26
+        },
+        {
+          "title": "男女のちがい",
+          "page": 26
+        },
+        {
+          "title": "プロセスで確認（女性）",
+          "page": 27
+        },
+        {
+          "title": "プロセスで確認（リアル）",
+          "page": 28
+        },
+        {
+          "title": "プロセスで確認（デフォルメ）",
+          "page": 28
+        },
+        {
+          "title": "プロセスで確認（男性）",
+          "page": 29
+        },
+        {
+          "title": "プロセスで確認（リアル）",
+          "page": 30
+        },
+        {
+          "title": "プロセスで確認（デフォルメ）",
+          "page": 30
+        },
+        {
+          "title": "◎ななめ顔の描き方",
+          "page": 31
+        },
+        {
+          "title": "アタリをとる",
+          "page": 31
+        },
+        {
+          "title": "男女のちがい",
+          "page": 31
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 32
+        },
+        {
+          "title": "◎横顔の描き方",
+          "page": 33
+        },
+        {
+          "title": "アタリを使おう",
+          "page": 33
+        },
+        {
+          "title": "男女のちがい",
+          "page": 33
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 34
+        },
+        {
+          "title": "◎アオリ顔の描き方",
+          "page": 35
+        },
+        {
+          "title": "アタリをとる",
+          "page": 35
+        },
+        {
+          "title": "男女のちがい",
+          "page": 35
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 36
+        },
+        {
+          "title": "◎フカン顔の描き方",
+          "page": 37
+        },
+        {
+          "title": "アタリをとる",
+          "page": 37
+        },
+        {
+          "title": "男女のちがい",
+          "page": 37
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 38
+        },
+        {
+          "title": "◎顔360度マスター［女性］",
+          "page": 39
+        },
+        {
+          "title": "正面",
+          "page": 39
+        },
+        {
+          "title": "アオリ",
+          "page": 40
+        },
+        {
+          "title": "フカン",
+          "page": 40
+        },
+        {
+          "title": "◎顔360度マスター［男性］",
+          "page": 41
+        },
+        {
+          "title": "正面",
+          "page": 41
+        },
+        {
+          "title": "アオリ",
+          "page": 42
+        },
+        {
+          "title": "フカン",
+          "page": 42
+        },
+        {
+          "title": "◎目の描き方",
+          "page": 43
+        },
+        {
+          "title": "目の構造を知ろう",
+          "page": 43
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 43
+        },
+        {
+          "title": "よく使う目のタイプ",
+          "page": 44
+        },
+        {
+          "title": "目の動き",
+          "page": 44
+        },
+        {
+          "title": "いろいろな目",
+          "page": 45
+        },
+        {
+          "title": "◎まゆ毛の描き方",
+          "page": 47
+        },
+        {
+          "title": "まゆ毛の構造を知ろう",
+          "page": 47
+        },
+        {
+          "title": "男女のまゆ毛のちがい",
+          "page": 47
+        },
+        {
+          "title": "まゆ毛と感情表現",
+          "page": 48
+        },
+        {
+          "title": "まゆ毛の種類",
+          "page": 48
+        },
+        {
+          "title": "◎鼻の描き方",
+          "page": 49
+        },
+        {
+          "title": "鼻の構造を知ろう",
+          "page": 49
+        },
+        {
+          "title": "鼻のマンガデッサン",
+          "page": 50
+        },
+        {
+          "title": "◎口の描き方",
+          "page": 51
+        },
+        {
+          "title": "口の構造を知ろう",
+          "page": 51
+        },
+        {
+          "title": "口の感情表現",
+          "page": 51
+        },
+        {
+          "title": "さまざまな角度から見る",
+          "page": 52
+        },
+        {
+          "title": "◎耳の描き方",
+          "page": 53
+        },
+        {
+          "title": "耳の構造を知ろう",
+          "page": 53
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 53
+        },
+        {
+          "title": "子どもの耳の描き方",
+          "page": 54
+        },
+        {
+          "title": "さまざまな角度から見る",
+          "page": 54
+        },
+        {
+          "title": "◎りんかくの描き方",
+          "page": 55
+        },
+        {
+          "title": "代表的なりんかく３種",
+          "page": 55
+        },
+        {
+          "title": "さまざまなりんかく",
+          "page": 56
+        },
+        {
+          "title": "◎髪の毛の描き方",
+          "page": 59
+        },
+        {
+          "title": "流れを理解す",
+          "page": 59
+        },
+        {
+          "title": "簡略化してもOK",
+          "page": 59
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 60
+        },
+        {
+          "title": "毛先の描き方",
+          "page": 60
+        },
+        {
+          "title": "いろいろな髪型",
+          "page": 61
+        },
+        {
+          "title": "◎感情表現の描き方",
+          "page": 65
+        },
+        {
+          "title": "感情の描き分け",
+          "page": 65
+        },
+        {
+          "title": "女性の感情チャート",
+          "page": 67
+        },
+        {
+          "title": "男性の感情チャート",
+          "page": 69
+        },
+        {
+          "title": "◎年齢による顔の変化",
+          "page": 71
+        },
+        {
+          "title": "顔のおもな変化",
+          "page": 71
+        },
+        {
+          "title": "老人キャラの特徴",
+          "page": 72
+        },
+        {
+          "title": "女性の顔の成長",
+          "page": 73
+        },
+        {
+          "title": "男性の顔の成長",
+          "page": 74
+        },
+        {
+          "title": "◎キャラクター表現［女性］",
+          "page": 75
+        },
+        {
+          "title": "キャラと表情の変化",
+          "page": 75
+        },
+        {
+          "title": "◎キャラクター表現［男性］",
+          "page": 77
+        },
+        {
+          "title": "キャラと表情の変化",
+          "page": 77
+        },
+        {
+          "title": "☆マンガでステップアップ！ 講座②効果的なカゲの入れ方",
+          "page": 79
+        },
+        {
+          "title": "【PART３】全身の描き方",
+          "page": 80
+        },
+        {
+          "title": "◎全身のパーツバランスを知る",
+          "page": 81
+        },
+        {
+          "title": "全身イラストのコツ",
+          "page": 81
+        },
+        {
+          "title": "バランスの目安",
+          "page": 82
+        },
+        {
+          "title": "◎全身の描き方",
+          "page": 83
+        },
+        {
+          "title": "男女の描き分け",
+          "page": 83
+        },
+        {
+          "title": "プロセスで確認（女性全身）",
+          "page": 85
+        },
+        {
+          "title": "プロセスで確認（男性全身）",
+          "page": 87
+        },
+        {
+          "title": "◎横から全身を描く",
+          "page": 89
+        },
+        {
+          "title": "横から見た特徴",
+          "page": 89
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 90
+        },
+        {
+          "title": "◎ななめから全身を描く",
+          "page": 91
+        },
+        {
+          "title": "ななめから見た特徴",
+          "page": 91
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 92
+        },
+        {
+          "title": "◎後ろから全身を描く",
+          "page": 93
+        },
+        {
+          "title": "後ろから見た特徴",
+          "page": 93
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 94
+        },
+        {
+          "title": "◎アオリから全身を描く",
+          "page": 95
+        },
+        {
+          "title": "アオリから見た特徴",
+          "page": 95
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 96
+        },
+        {
+          "title": "◎フカンから全身を描く",
+          "page": 97
+        },
+        {
+          "title": "フカンから見た特徴",
+          "page": 97
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 98
+        },
+        {
+          "title": "◎全身360度マスター［女性］",
+          "page": 99
+        },
+        {
+          "title": "正面360度",
+          "page": 99
+        },
+        {
+          "title": "アオリ360度",
+          "page": 101
+        },
+        {
+          "title": "フカン360度",
+          "page": 102
+        },
+        {
+          "title": "◎全身360度マスター［男性］",
+          "page": 103
+        },
+        {
+          "title": "正面360度",
+          "page": 103
+        },
+        {
+          "title": "アオリ360度",
+          "page": 105
+        },
+        {
+          "title": "フカン360度",
+          "page": 106
+        },
+        {
+          "title": "◎体型と頭身の考え方",
+          "page": 107
+        },
+        {
+          "title": "年齢による体の成長",
+          "page": 107
+        },
+        {
+          "title": "デフォルメキャラの頭身",
+          "page": 108
+        },
+        {
+          "title": "男女の成長の比較",
+          "page": 109
+        },
+        {
+          "title": "◎体型の描き分け",
+          "page": 111
+        },
+        {
+          "title": "体型を描き分けよう",
+          "page": 111
+        },
+        {
+          "title": "◎各パーツの可動域",
+          "page": 113
+        },
+        {
+          "title": "上半身の可動域",
+          "page": 113
+        },
+        {
+          "title": "首の可動域",
+          "page": 114
+        },
+        {
+          "title": "下半身の可動域",
+          "page": 114
+        },
+        {
+          "title": "◎手の特徴を知ろう",
+          "page": 115
+        },
+        {
+          "title": "手の甲・手のひらの基本",
+          "page": 115
+        },
+        {
+          "title": "骨と関節で考える",
+          "page": 116
+        },
+        {
+          "title": "◎手の描き方",
+          "page": 117
+        },
+        {
+          "title": "グーチョキパーを描く",
+          "page": 117
+        },
+        {
+          "title": "シーンで描く",
+          "page": 119
+        },
+        {
+          "title": "◎年齢ごとの手の変化",
+          "page": 121
+        },
+        {
+          "title": "年齢や性別による変化",
+          "page": 121
+        },
+        {
+          "title": "◎上半身の描き方",
+          "page": 123
+        },
+        {
+          "title": "腕の動き",
+          "page": 123
+        },
+        {
+          "title": "基本のポーズ",
+          "page": 124
+        },
+        {
+          "title": "シーンで描く",
+          "page": 125
+        },
+        {
+          "title": "◎足の描き方",
+          "page": 129
+        },
+        {
+          "title": "足の基本",
+          "page": 129
+        },
+        {
+          "title": "５つのブロックで考える",
+          "page": 129
+        },
+        {
+          "title": "さまざまな角度から描く",
+          "page": 130
+        },
+        {
+          "title": "◎足の指の動き",
+          "page": 131
+        },
+        {
+          "title": "つま先立ちの指の動き",
+          "page": 131
+        },
+        {
+          "title": "ふんばるときの指の動き",
+          "page": 131
+        },
+        {
+          "title": "さまざまな指の動き",
+          "page": 132
+        },
+        {
+          "title": "◎脚・下半身の描き方",
+          "page": 133
+        },
+        {
+          "title": "いろいろな脚の形",
+          "page": 133
+        },
+        {
+          "title": "基本のポーズ",
+          "page": 134
+        },
+        {
+          "title": "シーンで描く",
+          "page": 135
+        },
+        {
+          "title": "◎全身を使った動き",
+          "page": 137
+        },
+        {
+          "title": "アタリから考えよう",
+          "page": 137
+        },
+        {
+          "title": "殴る・蹴る",
+          "page": 139
+        },
+        {
+          "title": "寝そべり",
+          "page": 140
+        },
+        {
+          "title": "感情を表現する",
+          "page": 141
+        },
+        {
+          "title": "☆マンガでステップアップ！ 講座③戦闘シーンの描き方",
+          "page": 143
+        },
+        {
+          "title": "【PART４】服、シワの描き方",
+          "page": 144
+        },
+        {
+          "title": "◎服の描き方の基本",
+          "page": 145
+        },
+        {
+          "title": "体のラインを意識する",
+          "page": 145
+        },
+        {
+          "title": "首まわりを意識する",
+          "page": 146
+        },
+        {
+          "title": "◎Tシャツ・パンツの描き方",
+          "page": 147
+        },
+        {
+          "title": "T シャツの構",
+          "page": 147
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 147
+        },
+        {
+          "title": "パンツの構造",
+          "page": 148
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 148
+        },
+        {
+          "title": "◎360度マスター［Tシャツ・パンツ］",
+          "page": 149
+        },
+        {
+          "title": "正面",
+          "page": 149
+        },
+        {
+          "title": "◎ニット・スカートの描き方",
+          "page": 151
+        },
+        {
+          "title": "ニットの構造",
+          "page": 151
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 151
+        },
+        {
+          "title": "スカートの構造",
+          "page": 152
+        },
+        {
+          "title": "プロセスで確認",
+          "page": 152
+        },
+        {
+          "title": "◎360度マスター［ニット・スカート］",
+          "page": 153
+        },
+        {
+          "title": "正面",
+          "page": 153
+        },
+        {
+          "title": "◎シワの基本を覚える",
+          "page": 155
+        },
+        {
+          "title": "実物とイラストの比較",
+          "page": 155
+        },
+        {
+          "title": "◎3つのシワを覚えよう",
+          "page": 157
+        },
+        {
+          "title": "寄せジワ",
+          "page": 157
+        },
+        {
+          "title": "ひっぱりジワ",
+          "page": 158
+        },
+        {
+          "title": "たるみジワ",
+          "page": 158
+        },
+        {
+          "title": "◎シワで素材を表現する",
+          "page": 159
+        },
+        {
+          "title": "うすい＋やわらかい素材",
+          "page": 159
+        },
+        {
+          "title": "うすい＋かたい素材",
+          "page": 160
+        },
+        {
+          "title": "厚い＋やわらかい素材",
+          "page": 161
+        },
+        {
+          "title": "◎シワで体型を表現［女性］",
+          "page": 163
+        },
+        {
+          "title": "女性らしいシワ表現",
+          "page": 163
+        },
+        {
+          "title": "バストの表現",
+          "page": 164
+        },
+        {
+          "title": "お尻の表現",
+          "page": 164
+        },
+        {
+          "title": "◎シワで体型を表現［男性］",
+          "page": 165
+        },
+        {
+          "title": "男性らしいシワ表現",
+          "page": 165
+        },
+        {
+          "title": "シワで筋肉の表現",
+          "page": 166
+        },
+        {
+          "title": "◎スカートを描き分ける",
+          "page": 167
+        },
+        {
+          "title": "3つのタイプのスカート",
+          "page": 167
+        },
+        {
+          "title": "いろいろな角度から描く",
+          "page": 168
+        },
+        {
+          "title": "座る・歩くときの動き",
+          "page": 169
+        },
+        {
+          "title": "さまざまなシーンでの動き",
+          "page": 170
+        },
+        {
+          "title": "☆マンガでステップアップ！ 講座④ホラー表現の描き方",
+          "page": 171
+        },
+        {
+          "title": "【PART５】さまざまなシーンの描き方",
+          "page": 172
+        },
+        {
+          "title": "◎女子高生・セーラー服編",
+          "page": 173
+        },
+        {
+          "title": "学校へ小走り",
+          "page": 173
+        },
+        {
+          "title": "友達にあいさつする",
+          "page": 174
+        },
+        {
+          "title": "プリントを渡す",
+          "page": 175
+        },
+        {
+          "title": "お弁当を食べる",
+          "page": 177
+        },
+        {
+          "title": "じゃれあう",
+          "page": 178
+        },
+        {
+          "title": "カップルで下校",
+          "page": 179
+        },
+        {
+          "title": "◎女子高生・ブレザー編",
+          "page": 181
+        },
+        {
+          "title": "自転車通学",
+          "page": 181
+        },
+        {
+          "title": "あくび",
+          "page": 182
+        },
+        {
+          "title": "美術部",
+          "page": 182
+        },
+        {
+          "title": "チョコをプレゼント",
+          "page": 183
+        },
+        {
+          "title": "◎女性・自宅編",
+          "page": 185
+        },
+        {
+          "title": "髪を乾かす",
+          "page": 185
+        },
+        {
+          "title": "料理をする",
+          "page": 187
+        },
+        {
+          "title": "ケーキを食べる",
+          "page": 188
+        },
+        {
+          "title": "着替えをする",
+          "page": 189
+        },
+        {
+          "title": "ベッドで足をバタバタ",
+          "page": 190
+        },
+        {
+          "title": "好きな人から連絡が！",
+          "page": 190
+        },
+        {
+          "title": "◎男子高校生・学ラン編",
+          "page": 191
+        },
+        {
+          "title": "ちょっかいを出す",
+          "page": 191
+        },
+        {
+          "title": "ケンカをする",
+          "page": 192
+        },
+        {
+          "title": "仲直り",
+          "page": 192
+        },
+        {
+          "title": "壁ドン",
+          "page": 193
+        },
+        {
+          "title": "◎男子高校生・ブレザー編",
+          "page": 195
+        },
+        {
+          "title": "パンをくわえながら",
+          "page": 195
+        },
+        {
+          "title": "ぼーっと窓の外を見る",
+          "page": 196
+        },
+        {
+          "title": "居眠りする",
+          "page": 196
+        },
+        {
+          "title": "彼女に怒られる",
+          "page": 197
+        },
+        {
+          "title": "1 人でカラオケ",
+          "page": 199
+        },
+        {
+          "title": "1 人で悩む",
+          "page": 200
+        },
+        {
+          "title": "◎男性・自宅編",
+          "page": 201
+        },
+        {
+          "title": "カップ麺を食べる",
+          "page": 201
+        },
+        {
+          "title": "目覚まし時計を止める",
+          "page": 202
+        },
+        {
+          "title": "寝そべりながら",
+          "page": 202
+        },
+        {
+          "title": "風呂あがりのビール",
+          "page": 203
+        },
+        {
+          "title": "◎会社員編",
+          "page": 205
+        },
+        {
+          "title": "デスクワークをする",
+          "page": 205
+        },
+        {
+          "title": "公園でひと休み",
+          "page": 206
+        },
+        {
+          "title": "上司に怒られる",
+          "page": 207
+        },
+        {
+          "title": "同僚と飲み",
+          "page": 209
+        },
+        {
+          "title": "千鳥足で帰る",
+          "page": 211
+        },
+        {
+          "title": "◎恋人とデート編",
+          "page": 213
+        },
+        {
+          "title": "デート前",
+          "page": 213
+        },
+        {
+          "title": "手をつないで歩く",
+          "page": 214
+        },
+        {
+          "title": "相合傘",
+          "page": 215
+        },
+        {
+          "title": "浴衣デート",
+          "page": 216
+        },
+        {
+          "title": "◎そのほかのシーン編",
+          "page": 217
+        },
+        {
+          "title": "バンドマン",
+          "page": 217
+        },
+        {
+          "title": "アイドル",
+          "page": 219
+        },
+        {
+          "title": "サッカー",
+          "page": 221
+        },
+        {
+          "title": "水分補給",
+          "page": 222
+        },
+        {
+          "title": "★おすすめの道具",
+          "page": 223
+        },
+        {
+          "title": "★イラストレーター紹介",
+          "page": 225
+        },
+        {
+          "title": "奥付",
+          "page": 227
+        }
+      ],
+      "pdfKey": "library/books/636-book.pdf",
+      "pdfBytes": 103042341,
+      "coverKey": "library/covers/636-book-cover.jpg",
+      "coverBytes": 287925
+    },
+    {
+      "id": "lib-mwhqi718-3e7c7c",
+      "sortNo": 636,
+      "title": "漫画人物手脚绘画技法完全攻略",
+      "author": "[日] 横溝透子",
+      "intro": "原名《手足の描き方マスターガイド 写真と図で徹底解説!》，一本非常直观的手脚绘画教程，采用真人照片对比的教学方式。",
+      "pageCount": 155,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/637-book.pdf",
+      "pdfBytes": 78451256,
+      "coverKey": "library/covers/637-book-cover.jpg",
+      "coverBytes": 241646
+    },
+    {
+      "id": "lib-mwhqi1mb-e3b156",
+      "sortNo": 637,
+      "title": "女体的凸凹图鉴 由脂肪和汗毛形成的阴影和曲线",
+      "author": "[日] 玖住",
+      "intro": "原名《女体の凸凹図鑑 脂肪と産毛が作る陰影と曲線》，光是骨骼和肌肉的理解，是画不好女性的身体的。用脂肪突出的女性体态的美妙曲线。用照片和插图解说正确描绘女性身体的轮廓线的秘诀，一本专业的女性身体画法教程",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/638-book.pdf",
+      "pdfBytes": 35874741,
+      "coverKey": "library/covers/638-book-cover.jpg",
+      "coverBytes": 208722
+    },
+    {
+      "id": "lib-mwhqjiu2-66e817",
+      "sortNo": 638,
+      "title": "点缀角色小物品的画法",
+      "author": "[日] 24",
+      "intro": "原名《キャラクターを彩る 小物の描き方》，“超描けるシリーズ”系列的一本服饰类教程。讲解了从头到脚各种小饰品的画法。",
+      "pageCount": 150,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/639-book.pdf",
+      "pdfBytes": 45714561,
+      "coverKey": "library/covers/639-book-cover.jpg",
+      "coverBytes": 242819
+    },
+    {
+      "id": "lib-mwhqj55w-4e1f89",
+      "sortNo": 639,
+      "title": "可爱的幻想插画技法",
+      "author": "[日] 藍飴",
+      "intro": "原名《かわいいファンタジーイラストが描ける本》，日本插画师藍飴教你画各种各样幻想系角色，包含各种职业、种族的服饰设定",
+      "pageCount": 156,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/640-book.pdf",
+      "pdfBytes": 51458694,
+      "coverKey": "library/covers/640-book-cover.jpg",
+      "coverBytes": 313164
+    },
+    {
+      "id": "lib-mwhqjfqd-1eae52",
+      "sortNo": 640,
+      "title": "无主线插画技法",
+      "author": "[日] ア・メリカ(Amelicart)",
+      "intro": "原名《“主線なし\"イラストの描き方》。\n以桃太郎为主题创作的科幻作品「少年桃太郎冒险」共10张左右的全新创作插画的绘制步骤来介绍\n将「没有主线」的插画的4大要点以浅显易懂的方式解说。\n线条有以呈现轮廓为主的「主要线条」，\n以及呈现质地或立体感的「次要线条」。\n利用主要线条构成的图则称为「线稿」。\n在现实世界中轮廓其实是不存在的，而是由人类的大脑产生的。\n人类的眼睛和大脑对于检测边缘界线的能力是很优秀的。\n可以从「对比的不同」、「对形状的记忆」区分物体和物体的不同，由此产生出轮廓。\n不使用轮廓线，利用颜色分别为平面上色，就是「没有主要线条的插画」。\n以利用颜色分别画出平面的方式表现作品。\n因为没有画出明确的轮廓线条，\n所以颜色与颜色之间的界线会比较柔和模糊，\n画中的气氛也会一下子变得温暖柔和起来。\n不使用轮廓线的「没有主要线条的插画」，\n很适合用来表现「光线和气氛」。\n就由人气快速上升中的插画家Amelicart，\n将「没有主要线条的插画」从「想法」到「画法」，\n为大家以浅显易懂的方式解说吧。\n本书推荐给想尝试不使用轮廓线、没有主线的插画的人，\n想了解新的插画表现方式的人。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/641-book.pdf",
+      "pdfBytes": 58763076,
+      "coverKey": "library/covers/641-book-cover.jpg",
+      "coverBytes": 205306
+    },
+    {
+      "id": "lib-mwhq2dhx-3b2733",
+      "sortNo": 661,
+      "title": "从零开始学画美男子",
+      "author": "[日] 秋赤音、えびも、キナコ、佐木郁 、しきみ、 べっこ、ホノジロ トヲジ",
+      "intro": "神技作画シリーズ系列一本《美男子作画 ゼロから学ぶプロの技（从零开始学画美男子）》，由七位日本画师秋赤音、えびも、キナコ、佐木郁 、しきみ、 べっこ、ホノジロ トヲジ合作推出的数码绘教程，SAI、PHOTO SHOP、CLIP STUDIO PAINTD等常用绘画软件均有涉及。",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/662-book.pdf",
+      "pdfBytes": 37964651,
+      "coverKey": "library/covers/662-book-cover.jpg",
+      "coverBytes": 403574
+    },
+    {
+      "id": "lib-mwhq6f9y-0dfc9d",
+      "sortNo": 689,
+      "title": "漫画达人技法圣经 手足表现篇",
+      "author": "",
+      "intro": "",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/690-book.pdf",
+      "pdfBytes": 88884748,
+      "coverKey": "library/covers/690-book-cover.jpg",
+      "coverBytes": 183252
+    },
+    {
+      "id": "lib-mwhq9dtd-621e1c",
+      "sortNo": 690,
+      "title": "瞬间连拍动作姿势(瞬間連写アクションポーズ) 2册合集",
+      "author": "[日] ユーデンフレームワークス",
+      "intro": "《瞬間連写アクションポーズ》系列，手动拍摄的，分辨率不高，收录了“立ち回り・スタント・アクロバット（武打特技杂技）与ヒロイン・アクション篇（女主角动作篇）”两本。",
+      "pageCount": 344,
+      "area": "ref",
+      "toc": [],
+      "pdfKey": "library/books/691-book.pdf",
+      "pdfBytes": 180122828,
+      "coverKey": "library/covers/691-book-cover.jpg",
+      "coverBytes": 148184
+    },
+    {
+      "id": "lib-mwhq77rk-f497d1",
+      "sortNo": 691,
+      "title": "超级漫画真人参考图鉴 4册合集",
+      "author": "[中] 灌木文化动漫研究组",
+      "intro": "一套真人图片的漫画参考素材，涵盖了“运动姿态、服饰、日常姿态、局部到整体”等内容。",
+      "pageCount": 162,
+      "area": "ref",
+      "toc": [],
+      "pdfKey": "library/books/692-book.pdf",
+      "pdfBytes": 29305287,
+      "coverKey": "library/covers/692-book-cover.jpg",
+      "coverBytes": 186633
     }
   ]
 }
