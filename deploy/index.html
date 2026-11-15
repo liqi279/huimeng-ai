@@ -4039,7 +4039,9 @@ body.hm-resizing * {
   padding-left: 12px;
   flex-shrink: 0; /* 固定 tabs 高度，不被压缩 */
   max-width: 100%;
-  overflow-x: auto; /* 口袋过多时横向滚动，绝不换行错位 */
+  /* 纵向必须放行：删除叉号是浮在口袋上边缘之外的气泡，不能被 tabs 容器裁掉。
+     口袋过多时靠 tab 自身 flex-shrink 收缩（文字省略号），仍不换行。 */
+  overflow: visible;
   scrollbar-width: none;
 }
 .hm-tabs::-webkit-scrollbar { display: none; }
@@ -4061,7 +4063,8 @@ body.hm-resizing * {
   justify-content: center;
   gap: 4px;
   white-space: nowrap;
-  overflow: hidden;
+  overflow: visible; /* 让删除气泡浮到口袋上边缘之外 */
+  flex: 0 1 auto;
   position: relative;
   transition: color 0.18s ease, background 0.18s ease;
 }
@@ -4071,30 +4074,43 @@ body.hm-resizing * {
   white-space: nowrap;
   text-align: center;
 }
-/* 删除叉号：默认不占位（绝对定位浮在口袋右上角），只在 hover/键盘聚焦时浮现，
-   不会把口袋名挤偏；触屏无 hover 时保持可见可点，避免删不掉 */
+/* 删除叉号：悬停/键盘聚焦时在口袋正上方浮出一个小气泡（位于口袋上边缘之外），
+   不压住口袋名字；移开即隐藏。触屏无 hover 时保持可见可点，避免删不掉 */
 .hm-tab-del {
   position: absolute;
-  top: 50%;
-  right: 2px;
-  transform: translateY(-50%);
+  left: 50%;
+  bottom: calc(100% + 5px);
+  transform: translateX(-50%);
   display: none;
   align-items: center;
   justify-content: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  border: 1px solid rgba(251, 113, 133, 0.45);
-  background: rgba(15, 25, 38, 0.96);
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  border: 1px solid rgba(251, 113, 133, 0.5);
+  background: rgb(24, 33, 48);
   color: #fecdd3;
   font-size: 10px;
   line-height: 1;
   padding: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
-  z-index: 3;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
+  z-index: 6;
+  white-space: nowrap;
+}
+/* 气泡小尖角：指向下面的口袋 */
+.hm-tab-del::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(251, 113, 133, 0.5);
 }
 .hm-tab:hover .hm-tab-del,
-.hm-tab:focus-visible .hm-tab-del { display: inline-flex; }
+.hm-tab:focus-within .hm-tab-del,
+.hm-tab:focus-visible .hm-tab-del,
+.hm-tab-del:focus-visible { display: inline-flex; }
 .hm-tab-del:hover { color: #fff; background: rgba(251, 113, 133, 0.35); }
 
 @media (hover: none) {
@@ -4686,16 +4702,16 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 }
 .hm-prompt-overlay .chip .chip-label {
   display: inline-block;
-  color: #c7d2fe;
+  color: #dbeafe;
   font-weight: 500;
   font-size: inherit;     /* 和 textarea 同字号，@N 宽度才一致 */
   white-space: nowrap;
   padding: 0;             /* ⚠️ 必须 0！任何 padding → label 宽于 @N → 光标偏 */
-  border-radius: 3px;
-  background-color: rgba(99, 102, 241, 0.22);
-  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.55);
-  height: 1.3em;
-  line-height: 1.3em;
+  border-radius: 7px;
+  background-color: rgba(51, 65, 85, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
+  height: 1.75em;
+  line-height: 1.75em;
   box-sizing: border-box;
   /* z-index 比 thumb 低 —— "@" 字符会被 thumb 盖住，"1"/"2" 数字露出来 */
   position: relative;
@@ -4707,9 +4723,10 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   left: 0.5px;             /* ← 在 chip 内部，不是外部！0.5px 防止边缘抗锯齿 */
   top: 50%;
   transform: translateY(-50%);
-  width: 0.75em;           /* ← 0.75em ≈ 9.75px，刚好覆盖 "@" 字符（约 8px 宽） */
-  height: 0.75em;
-  border-radius: 2px;
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -15583,6 +15600,54 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   font-size: 11px; font-weight: 400; color: rgba(160, 155, 185, 0.6);
 }
 .hm-api-log-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+
+/* 调用日志的平台/类型筛选：原生下拉在深色主题下要能读清 */
+.hm-api-log-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.hm-api-log-filters select {
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(0, 0, 0, 0.28);
+  color: #dbe6f5;
+  font-size: 11.5px;
+  font-family: inherit;
+  color-scheme: dark;
+}
+
+.hm-api-log-filters select option {
+  background-color: #101c2b;
+  color: #e8eefb;
+}
+
+.hm-api-log-filters select option:checked {
+  background-color: #24405c;
+  color: #fff;
+}
+
+.hm-api-log-filter-count {
+  font-size: 10.5px;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+[data-theme="light"] .hm-api-log-filters select {
+  background: #fff;
+  color: #1f2937;
+  border-color: rgba(15, 23, 42, 0.18);
+  color-scheme: light;
+}
+
+[data-theme="light"] .hm-api-log-filters select option {
+  background-color: #fff;
+  color: #1f2937;
+}
 .hm-api-tool-btn.small { padding: 5px 10px; font-size: 11.5px; }
 
 /* ========= API 接入列表 — 平台下拉 / 类型筛选 / 列表容器 ========= */
@@ -16210,6 +16275,13 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
 /* 预设/设置等弹窗打开时，这个按钮不该浮在弹窗左缘（大图 lightbox 仍照常显示） */
 body.hm-modal-open .hm-rail-toggle {
   display: none;
+}
+
+/* 图片预览 / 大图查看期间：整排侧栏按钮与把手一起真正隐藏（不是用 z-index 压住），
+   避免遮罩下还能点到侧栏；退出预览后自动恢复。 */
+body.hm-lb-open .hm-rail,
+body.hm-lb-open .hm-rail-toggle {
+  display: none !important;
 }
 
 .hm-rail-toggle svg {
@@ -20092,6 +20164,32 @@ body.dv-open .hm-page {
   letter-spacing: 0.3px;
 }
 .hm-admin-panel-head span { font-size: 11px; color: #64748b; }
+
+/* ============ 消耗日志（api_call_logs） ============ */
+.hm-usage-wrap { overflow: auto; border-top: 1px solid rgba(148, 163, 184, 0.14); }
+.hm-usage-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.hm-usage-table th {
+  position: sticky; top: 0; z-index: 1;
+  text-align: left; font-weight: 500; color: #8fa3bd; font-size: 11.5px;
+  padding: 10px 12px; background: #0d1b2a;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16); white-space: nowrap;
+}
+.hm-usage-table td {
+  padding: 12px; vertical-align: top; color: #cbd5e1;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+.hm-usage-table tr:hover td { background: rgba(56, 189, 248, 0.05); }
+.hm-usage-table td b { display: block; color: #e2e8f0; font-weight: 600; }
+.hm-usage-table td small { display: block; color: #7c8fa8; font-size: 11px; margin-top: 3px; }
+.hm-usage-time { color: #9fb3c8; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hm-usage-status { display: inline-block; font-size: 11.5px; font-weight: 600; margin-bottom: 2px; }
+.hm-usage-status.is-ok { color: #34d399; }
+.hm-usage-status.is-fail { color: #fb7185; }
+.hm-usage-job { color: #64748b; word-break: break-all; }
+.hm-usage-err { color: #fda4af; }
+.hm-usage-cost { color: #fbbf24; font-weight: 700; white-space: nowrap; text-align: right; }
+.hm-usage-dim { color: #94a3b8; white-space: nowrap; }
+.hm-admin-empty { padding: 28px 12px; text-align: center; color: #8fa3bd; font-size: 12.5px; }
 
 /* ============ 环形图 ============ */
 .hm-admin-ring-wrap {
@@ -25033,6 +25131,7 @@ body.dv-open .hm-page {
       <button class="hm-admin-tab is-active" data-tab="overview"><span>概览</span></button>
       <button class="hm-admin-tab" data-tab="ranking"><span>消耗排行</span></button>
       <button class="hm-admin-tab" data-tab="logs"><span>调用日志</span></button>
+      <button class="hm-admin-tab" data-tab="usage"><span>消耗日志</span></button>
       <button class="hm-admin-tab" data-tab="accounts"><span>账号管理</span><i class="hm-admin-tab-badge" id="accountsPendingBadge" hidden>0</i></button>
       <button class="hm-admin-tab" data-tab="projects"><span>项目管理</span></button>
     </div>
@@ -26220,6 +26319,17 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (/^(https?:|data:|blob:)/i.test(value)) return value;
     if (value.charAt(0) === '/' && origin) return origin + value;
     return value;
+  };
+
+  /* 跨域图片代理：上游图没有 CORS 头时，由后端代取字节（服务端不受浏览器跨域限制） */
+  api.origin = origin || '';
+  api.base = base;
+  api.imageProxyUrl = function (url) {
+    var raw = String(url || '');
+    if (!raw) return '';
+    var target = /^https?:\/\//i.test(raw) ? raw : api.mediaUrl(raw);
+    var path = '/api/image-proxy?url=' + encodeURIComponent(target);
+    return origin ? origin + path : path;
   };
 
   /* 历史数据里保存的旧域名绝对地址（后端已迁移）统一改写到当前 API origin。
@@ -29222,9 +29332,8 @@ function showRefAutocomplete() {
       return '<div class="hm-ref-ac-item' + (i === 0 ? ' is-active' : '') + '" data-idx="' + item.idx + '">' +
         '<div class="hm-ref-ac-thumb"><img src="' + (item.ref.thumb || item.ref.dataUrl) + '" alt=""></div>' +
         '<div class="hm-ref-ac-info">' +
-          '<div class="hm-ref-ac-name"><span class="hm-ref-ac-tag">@' + (item.idx + 1) + '</span> 主体图</div>' +
-          '<div class="hm-ref-ac-meta">' + item.ref.width + '×' + item.ref.height + ' · 强度 ' +
-            (item.ref.weight != null ? item.ref.weight : 70) + '%</div>' +
+          '<div class="hm-ref-ac-name"><span class="hm-ref-ac-tag">@' + (item.idx + 1) + '</span> ' +
+            (item.ref.name || ('参考图 ' + (item.idx + 1))) + '</div>' +
         '</div></div>';
     }).join('');
   }
@@ -29429,7 +29538,7 @@ async function pickRefFile(file) {
       dataUrl: canvas.toDataURL('image/jpeg', 0.92),
       thumb: tCanvas.toDataURL('image/jpeg', 0.7),
       preview: pCanvas.toDataURL('image/jpeg', 0.86),
-      name: 'reference_' + (arr.length + 1) + '.jpg',
+      name: file.name || ('reference_' + (arr.length + 1) + '.jpg'),
       width: width,
       height: height,
       weight: 70 /* 默认主体强度 70% */
@@ -29448,6 +29557,30 @@ async function pickRefFile(file) {
  * 原生 HTML5 拖放（作品卡）与桌面卡片的指针拖拽都调用这里，
  * 最终一律走 pickRefFile()，与手动选择文件落在同一处状态（currentRefs()）。
  * dataTransfer 里只放作品 id，不放 base64。 */
+/* 读取图片字节：先直连（有 CORS 头的图最快），失败再走后端 /api/image-proxy 代取。
+   「作品/素材 → 参考主体」共用这一条，避免各处自写 fetch 再各弹一条跨域提示。 */
+async function hmReadImageBlob(src) {
+  var direct = '';
+  try {
+    var res = await fetch(src, { mode: 'cors' });
+    if (res.ok) {
+      var b = await res.blob();
+      if (b && b.size) return b;
+    }
+    direct = '直连 HTTP ' + res.status;
+  } catch (e) {
+    direct = '直连被浏览器拦截';
+  }
+  var proxy = window.HM && window.HM.api && window.HM.api.imageProxyUrl
+    ? window.HM.api.imageProxyUrl(src) : '';
+  if (!proxy) throw new Error(direct);
+  var r2 = await fetch(proxy, { mode: 'cors' });
+  if (!r2.ok) throw new Error(direct + ' · 服务端代取 HTTP ' + r2.status);
+  var b2 = await r2.blob();
+  if (!b2 || !b2.size) throw new Error(direct + ' · 服务端代取为空');
+  return b2;
+}
+
 window.HMRefDrop = {
   acceptWorkId: async function (workId) {
     var wid = String(workId || '');
@@ -29466,9 +29599,7 @@ window.HMRefDrop = {
     var src = work.url || work.thumb || '';
     if (!src) { toast('这张作品没有可用的图片', 'error'); return false; }
     try {
-      var res = await fetch(src, { mode: 'cors' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      var blob = await res.blob();
+      var blob = await hmReadImageBlob(src);
       var type = blob.type || 'image/jpeg';
       if (!/^image\//i.test(type)) type = 'image/jpeg';
       var ext = type.indexOf('png') >= 0 ? 'png' : type.indexOf('webp') >= 0 ? 'webp' : 'jpg';
@@ -29482,7 +29613,8 @@ window.HMRefDrop = {
       await pickRefFile(file);   /* 与手动上传同一条通路：校验/缩放/缩略图/写 currentRefs/renderRef */
       return true;
     } catch (err) {
-      toast('这张图有跨域限制，请先下载再手动上传为参考主体', 'error');
+      var why = String((err && err.message) || '网络被拦截');
+      toast('这张图读不到（' + why + '）；请下载后手动上传为参考主体', 'error', 6000);
       return false;
     }
   }
@@ -30414,6 +30546,9 @@ async function runBackendImage(job, prompt) {
     if (payload.model !== picked) state.channelModel = payload.model;
   }
 
+  /* 日志要记录「真实发出的模型名」，而不是界面上的展示名 */
+  job.sentModel = String(payload.model || (payload.provider && payload.provider.model) || '');
+
   const data = await window.HM.api.generate(payload, 180000);
   const item = data && data.items && data.items[0];
   if (!item || !item.url) throw new Error('后端未返回图片');
@@ -30995,14 +31130,98 @@ function createLoadingCard(job) {
   els.resultGrid.appendChild(card);
 }
 
+/* ---------------- API 调用日志（真实记录，持久化到本机） ----------------
+ * 每次真实调用（成功/失败）都落一条，字段与请求一一对应：
+ * ts / provider / model（真实发出的模型名）/ type / status / latencyMs / errorMsg / jobId
+ * 只写真实调用，不做任何示例数据；最多保留 500 条。 */
+var API_LOG_KEY = 'anidream.api-logs.v1';
+
+function apiLogRead() {
+  try {
+    var rows = JSON.parse(localStorage.getItem(API_LOG_KEY) || '[]');
+    return Array.isArray(rows) ? rows : [];
+  } catch (e) { return []; }
+}
+
+function apiLogWrite(rows) {
+  try {
+    localStorage.setItem(API_LOG_KEY, JSON.stringify(rows.slice(0, 500)));
+  } catch (e) {}
+}
+
+function apiLogPush(entry) {
+  var e = entry || {};
+  var rec = {
+    ts: Number(e.ts) || Date.now(),
+    provider: String(e.provider || '未知接入'),
+    model: String(e.model || ''),
+    type: String(e.type || 'image'),
+    status: e.status === 'ok' ? 'ok' : 'fail',
+    latencyMs: Math.max(0, Math.round(Number(e.latencyMs) || 0)),
+    promptPreview: String(e.promptPreview || ''),
+    errorMsg: String(e.errorMsg || ''),
+    endpoint: String(e.endpoint || 'generate'),
+    jobId: String(e.jobId || '')
+  };
+  var rows = apiLogRead();
+  rows.unshift(rec);
+  apiLogWrite(rows);
+  /* 后台上报真实落库：失败静默，绝不影响出图主流程 */
+  try {
+    var token = localStorage.getItem('hm.token') || '';
+    var base = (window.HM && window.HM.api && window.HM.api.base) ? window.HM.api.base : '';
+    if (token && base) {
+      fetch(base + '/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({
+          provider: rec.provider,
+          model: rec.model,
+          kind: rec.type,
+          status: rec.status,
+          latencyMs: rec.latencyMs,
+          promptPreview: rec.promptPreview,
+          errorMsg: rec.errorMsg,
+          jobId: rec.jobId,
+          createdAt: rec.ts
+        })
+      }).catch(function () {});
+    }
+  } catch (e) {}
+  return rec;
+}
+
+/* 平台/接入配置 + 真实发出的模型名 */
+function apiLogContext(job) {
+  var engine = (job && job.engine) || state.engine;
+  var provider;
+  if (engine === 'gpt-image' || engine === 'banana') {
+    provider = 'RayinAI · ' + (engine === 'banana' ? 'Gemini 图像' : 'GPT-image');
+  } else if (engine === 'flux') {
+    provider = '免密钥通道 · Pollinations';
+  } else if (engine === 'openai') {
+    provider = '免费额度平台 · 自备 Key';
+  } else {
+    provider = '内置通道 · ' + engine;
+  }
+  var sent = (job && (job.sentModel || job.modelName)) || '';
+  return {
+    provider: provider,
+    model: String(sent || (job && job.model) || ''),
+    type: (job && job.type) || state.mode || 'image'
+  };
+}
+
 function markJobError(job, err) {
   saveFailedWork(job, err);
   job.status = 'error';
   try {
+    var logCtx = apiLogContext(job);
     apiLogPush({
-      provider: 'state.engine=' + state.engine + (state.providerId ? '; providerId=' + state.providerId : ''),
+      provider: logCtx.provider,
       endpoint: 'generate',
-      model: job.modelName || job.model || '',
+      model: logCtx.model,
+      type: logCtx.type,
       promptPreview: (job.fullPrompt || '').slice(0, 60),
       status: 'fail',
       latencyMs: Math.round(Date.now() - (job.startedAt || Date.now())),
@@ -31119,10 +31338,12 @@ function markJobDone(job, url, seed, elapsed) {
 
   /* API 调用日志 */
   try {
+    var logCtx = apiLogContext(job);
     apiLogPush({
-      provider: 'state.engine=' + state.engine + (state.providerId ? '; providerId=' + state.providerId : ''),
+      provider: logCtx.provider,
       endpoint: 'generate',
-      model: job.modelName || job.model || '',
+      model: logCtx.model,
+      type: logCtx.type,
       promptPreview: (job.fullPrompt || '').slice(0, 60),
       status: 'ok',
       latencyMs: Math.round(elapsed || (Date.now() - (job.startedAt || Date.now()))),
@@ -32065,6 +32286,8 @@ function openLightbox(item) {
   els.lightbox.classList.add('is-open');
   els.lightbox.setAttribute('aria-hidden', 'false');
   document.body.classList.add('no-scroll');
+  /* 预览期间连侧栏按钮/把手一起隐藏，退出预览由 closeLightbox 恢复 */
+  document.body.classList.add('hm-lb-open');
 
   bindLightboxGestures();
 }
@@ -32073,6 +32296,7 @@ function closeLightbox() {
   els.lightbox.classList.remove('is-open');
   els.lightbox.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('no-scroll');
+  document.body.classList.remove('hm-lb-open');
   state.activeItem = null;
   // 停止视频/音频
   var media = els.lbStage.querySelector('.lb-media-el');
@@ -32428,7 +32652,6 @@ function reuseJob(job) {
       var parsed = null;
       if (raw) { try { parsed = JSON.parse(raw); } catch (e) { parsed = null; } }
       if (Array.isArray(parsed) && parsed.length) applyJobRefs(parsed);
-      else toast('该作品没有可恢复的参考图', 'info');
     }).catch(function () {
       toast('参考图读取失败，请刷新后重试', 'error');
     });
@@ -32439,7 +32662,6 @@ function reuseJob(job) {
   persistPrefs();
   switchView('create');
   els.promptInput.focus();
-  toast('已复用该作品的参数', 'success');
 }
 
 /* ---------------- RayinAPI 接入设置 ---------------- */
@@ -67868,7 +68090,7 @@ window.HMChat = (function () {
     renderAll();
   }
 
-  function tidy() {
+  function tidy(silent) {
     var grid = byId('resultGrid');
     if (!grid) return;
     /* 每一层桌面：works + 本层 folders 合并紧凑排 */
@@ -67894,7 +68116,7 @@ window.HMChat = (function () {
     persistNow();
     renderDesktop();
     setTimeout(function () { grid.scrollTop = 0; }, 30);
-    A.toast('已按时间紧凑整理（最早在顶）', 'success');
+    if (!silent) A.toast('已按时间紧凑整理（最早在顶）', 'success');
   }
 
   /* ---------------- 选择 ---------------- */
@@ -67972,13 +68194,20 @@ window.HMChat = (function () {
       /* 空白处按下 → 框选。主题背景/装饰/纹理层都算空白：
          只要不是卡片本体、叠放浮窗或菜单，就允许起框，避免背景层吃掉鼠标事件 */
       if (event.target.closest('.folder-card[data-stack], .stack-panel, .desk-context-menu, .hm-menu, .desk-sel-bar')) return;
-      if (!event.shiftKey && !event.ctrlKey && !event.metaKey) clearSelection();
+      /* 记录拖动前的基线选中：框经过再移开的卡片要回到这个状态，而不是一律清空 */
+      var baseSel = {};
+      if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
+        clearSelection();
+      } else {
+        Object.keys(view.selected).forEach(function (k) { if (view.selected[k]) baseSel[k] = true; });
+      }
       var rect = grid.getBoundingClientRect();
       marquee = {
         startX: event.clientX - rect.left + grid.scrollLeft,
         startY: event.clientY - rect.top + grid.scrollTop,
         startClientX: event.clientX,
         startClientY: event.clientY,
+        baseline: baseSel,
         x: 0, y: 0, w: 0, h: 0,
         el: document.createElement('div')
       };
@@ -68110,18 +68339,9 @@ window.HMChat = (function () {
         selectOnly(drag.pendingKey);
         drag.pendingKey = null;
       }
-      /* 作品卡：从拖动开始就用「原卡不动 + 虚影跟手」，
-         而不是整张卡片被搬走（用户明确要求拖向参考主体时原图留在原位） */
-      if (!drag.sortMode && drag.items.length === 1 && drag.items[0].el &&
-          drag.items[0].el.classList.contains('desk-card')) {
-        drag.ghostMode = true;
-        drag.items[0].el.classList.add('is-refsource');
-        drag.refGhost = createRefGhost(drag.items[0].el);
-        if (drag.refGhost) {
-          drag.refGhost.style.left = event.clientX + 'px';
-          drag.refGhost.style.top = event.clientY + 'px';
-        }
-      }
+      /* 桌面内拖动就是普通移动：卡片跟手、可落在桌面任意位置。
+         只有拖到「参考主体」区域上方时才切虚影（见下方 refHoverEl 分支），
+         这样同一段拖拽可以中途切换，且非参考区永远能正常落位。 */
       try { event.preventDefault(); } catch (e) {}
     }
     drag.items.forEach(function (item) {
@@ -68150,7 +68370,10 @@ window.HMChat = (function () {
       var overRef = event.clientX >= rr.left - 12 && event.clientX <= rr.right + 12 &&
                     event.clientY >= rr.top - 12 && event.clientY <= rr.bottom + 12;
       refHoverEl.classList.toggle('is-over', overRef);
-      if (overRef && !drag.refGhost && !drag.ghostMode) {
+      if (overRef && !drag.refGhost) {
+        /* 只有「拖向参考主体」这一种意图才切虚影：
+           原卡回原位只降不透明度，跟手的是半透明克隆 */
+        drag.ghostMode = true;
         drag.items.forEach(function (item) {
           if (!item.el) return;
           if (item.left != null) { item.el.style.left = item.left + 'px'; item.el.style.top = item.top + 'px'; }
@@ -68163,10 +68386,19 @@ window.HMChat = (function () {
           drag.refGhost.style.top = event.clientY + 'px';
         }
       }
-      if (!drag.ghostMode && drag.refGhost && !overRef) {
+      if (drag.refGhost && !overRef) {
+        /* 离开参考区：撤掉虚影，卡片立刻回到跟手位置，继续普通拖动 */
         drag.refGhost.remove();
         drag.refGhost = null;
-        drag.items.forEach(function (item) { if (item.el) item.el.classList.remove('is-refsource'); });
+        drag.ghostMode = false;
+        drag.items.forEach(function (item) {
+          if (!item.el) return;
+          item.el.classList.remove('is-refsource');
+          if (typeof item.nextLeft === 'number') {
+            item.el.style.left = item.nextLeft + 'px';
+            item.el.style.top = item.nextTop + 'px';
+          }
+        });
       }
       if (drag.refGhost && overRef) {
         if (event.cancelable) event.preventDefault();
@@ -68257,9 +68489,12 @@ window.HMChat = (function () {
       var k = c.hasAttribute('data-job') ? 'job:' + c.dataset.job : (c.classList.contains('folder-card') ? c.dataset.folder : c.dataset.work);
       if (hit) {
         view.selected[k] = true;
-        /* 立刻落到 DOM：拖动过程中就能看到和单击选中同一套 is-selected 高亮 */
         c.classList.add('is-selected');
-      } else if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
+      } else if (marquee.baseline && marquee.baseline[k]) {
+        /* 拖动前就选中的卡片：框移开也保持选中 */
+        view.selected[k] = true;
+        c.classList.add('is-selected');
+      } else {
         delete view.selected[k];
         c.classList.remove('is-selected');
       }
@@ -68460,8 +68695,8 @@ window.HMChat = (function () {
     if (merged) return;
 
     /* 没合并：清 is-dragging + 保存位置
-       作品卡是「虚影跟手」：落在参考区外也不搬动原图，保持桌面原位 */
-    if (current.moved && !current.ghostMode) {
+       拖进参考区松手的路径已在上面 return，这里只需按最后跟手坐标落位 */
+    if (current.moved) {
       current.items.forEach(function (item) {
         if (!item.el) return;
         item.el.classList.remove('is-dragging');
@@ -68526,7 +68761,10 @@ window.HMChat = (function () {
   function renderOpenStackPanels() {
     var map = stackOpenMap();
     Object.keys(map).forEach(function (sid) {
-      if (!desk.stacks.some(function (s) { return s.id === sid; })) { closeStackPanel(sid); return; }
+      /* 数据快照里暂时找不到这组（云端拉取/重排的中间态）时不关闭浮窗：
+         浮窗只由用户明确关闭（✕ / Esc）、组被前端自己删空、或进入项目桌面时收起。
+         否则一次后台刷新就会把用户正开着的叠放「藏」起来。 */
+      if (!desk.stacks.some(function (s) { return s.id === sid; })) return;
       if (view.activeFolder) return;
       try { renderStackPanel(sid); } catch (e) {}
     });
@@ -68536,7 +68774,7 @@ window.HMChat = (function () {
     id = id || '';
     if (!id) return;
     var st = desk.stacks.find(function (s) { return s.id === id; });
-    if (!st) { closeStackPanel(id); return; }
+    if (!st) return; /* 同上：不因数据中间态移除已打开的浮窗 */
     if (!stackOpenMap()[id]) return;
     var grid = byId('resultGrid');
     if (!grid) return;
@@ -68842,7 +69080,26 @@ window.HMChat = (function () {
         if (node.parentNode) node.parentNode.removeChild(node);
       });
     });
-    persistNow();
+    /* 删图后同步叠放成员：被删光的叠放整组移除（不留空壳），并关掉它开着的浮窗 */
+    var emptiedStacks = [];
+    desk.stacks.forEach(function (st) {
+      var before = (st.memberIds || []).length;
+      st.memberIds = (st.memberIds || []).filter(function (id) { return !ids[id]; });
+      if (st.memberIds.length !== before) {
+        if (st.memberIds.length) st.name = '叠放 (' + st.memberIds.length + ')';
+        else emptiedStacks.push(st.id);
+      }
+    });
+    if (emptiedStacks.length) {
+      desk.stacks = desk.stacks.filter(function (s) { return emptiedStacks.indexOf(s.id) < 0; });
+      emptiedStacks.forEach(function (sid) {
+        delete desk.positions[sid];
+        closeStackPanel(sid);
+      });
+    }
+    /* 删除后立刻按原有顺序规则紧凑重排（叠放/文件夹/图片一起），并持久化坐标：
+       否则删掉中间一张后会留下空位、后面的叠放与文件夹不跟随前移。 */
+    tidy(true);
     A.saveWorks();
     A.renderWorks();
     /* 删除同步到后端（写墓碑，其它设备增量拉取时能感知删除） */
@@ -68977,7 +69234,6 @@ window.HMChat = (function () {
     if (A.syncSettingsUI) A.syncSettingsUI();
     if (A.persistPrefs) A.persistPrefs();
     A.switchView('create');
-    A.toast('已恢复「' + workName(work) + '」的生成参数', 'success');
   }
 
   function appendPrompt(work) {
@@ -69016,16 +69272,19 @@ window.HMChat = (function () {
       apply(url);
       return;
     }
-    fetch(url, { mode: 'cors' }).then(function (res) {
-      if (!res.ok) throw new Error('fetch failed');
-      return res.blob();
-    }).then(function (blob) {
+    fetchImageForRef(url).then(function (blob) {
       var reader = new FileReader();
       reader.onload = function () { apply(String(reader.result || '')); };
       reader.readAsDataURL(blob);
-    }).catch(function () {
-      A.toast('该图片存在跨域限制，请先下载再手动上传为参考图', 'error');
+    }).catch(function (err) {
+      var why = String((err && err.message) || '网络被拦截');
+      A.toast('这张图读不到（' + why + '）；请下载后手动上传为参考图', 'error', 6000);
     });
+  }
+
+  /* 与 HMRefDrop 同一套策略：直连失败 → 后端代理代取 */
+  function fetchImageForRef(url) {
+    return hmReadImageBlob(url);
   }
 
   function sendToCanvas(work) {
@@ -70788,6 +71047,63 @@ window.HMChat = (function () {
 
   var loadSeq = 0;
 
+  /* ============ 消耗日志（与调用日志同一张 api_call_logs 表） ============ */
+  function usageTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    function p(n) { return String(n).padStart(2, '0'); }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  function usageKindLabel(kind) {
+    return kind === 'video' ? '视频生成' : kind === 'audio' ? '音频合成'
+      : kind === 'chat' ? 'AI 对话' : '桌面';
+  }
+
+  function usageRow(r) {
+    var ok = r.rawStatus === 'ok';
+    var sec = Number(r.duration) || 0;
+    var durText = sec >= 60
+      ? (Math.floor(sec / 60) + 'm ' + Math.round(sec % 60) + 's')
+      : (Math.round(sec) + 's');
+    return '<tr>' +
+      '<td class="hm-usage-time">' + usageTime(r.createdAt) + '</td>' +
+      '<td class="hm-usage-time">' + usageTime(r.finishedAt) + '</td>' +
+      '<td>' + hmEsc(r.userId || '—') + '</td>' +
+      '<td><b>' + hmEsc(r.model || '未标注模型') + '</b><small>' + hmEsc(usageKindLabel(r.kind)) + '</small></td>' +
+      '<td><span class="hm-usage-status ' + (ok ? 'is-ok' : 'is-fail') + '">' + (ok ? '成功' : '失败') + '</span>' +
+        '<small class="hm-usage-job">' + hmEsc(r.taskId || '') + '</small>' +
+        (ok ? '' : '<small class="hm-usage-err">' + hmEsc(r.errorMsg || '—') + '</small>') +
+      '</td>' +
+      '<td class="hm-usage-dim">个人空间</td>' +
+      '<td class="hm-usage-dim">' + usageKindLabel(r.kind) + '</td>' +
+      '<td class="hm-usage-time">' + durText + '</td>' +
+      '<td class="hm-usage-cost">⚡ ' + (Number(r.cost) || 0).toFixed(2) + '</td>' +
+      '</tr>';
+  }
+
+  function renderUsageLogs(data, body) {
+    var rows = (data && data.rows) || [];
+    var okCount = rows.filter(function (r) { return r.rawStatus === 'ok'; }).length;
+    var totalCost = rows.reduce(function (s, r) { return s + (Number(r.cost) || 0); }, 0);
+    var html = '<div class="hm-admin-panel hm-usage-panel">' +
+      '<div class="hm-admin-panel-head"><h3>消耗日志</h3>' +
+      '<span>共 ' + rows.length + ' 条 · 成功 ' + okCount + ' · 合计 ⚡' + totalCost.toFixed(2) + '</span></div>';
+    if (!rows.length) {
+      html += '<div class="hm-admin-empty">还没有消耗记录：出图成功或失败后会自动写入这张表。</div>';
+    } else {
+      html += '<div class="hm-usage-wrap"><table class="hm-usage-table"><thead><tr>' +
+        '<th>点击时间</th><th>结束时间</th><th>成员</th><th>模型</th><th>状态</th>' +
+        '<th>项目</th><th>生成方式</th><th>耗时</th><th>消耗积分</th>' +
+        '</tr></thead><tbody>';
+      rows.slice(0, 200).forEach(function (r) { html += usageRow(r); });
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+  }
+
   function loadTab(tab) {
     /* 当前不在「管理台」顶 Tab 时不要渲染，否则会把「API接入管理」等面板覆盖成加载中/仪表盘 */
     if (currentTopTab !== 'admin') return;
@@ -70801,6 +71117,7 @@ window.HMChat = (function () {
       overview: HM.api.admin.overview,
       ranking:  HM.api.admin.ranking,
       logs:     HM.api.admin.logs,
+      usage:    HM.api.admin.logs,
       accounts: function () { return HM.api.listUsers(); },
       projects: HM.api.admin.projects,
     };
@@ -70811,7 +71128,8 @@ window.HMChat = (function () {
       if (seq !== loadSeq || currentTopTab !== 'admin') return;
       body.innerHTML = '';
       var renderers = { overview: renderOverview, ranking: renderRanking,
-                        logs: renderLogs, accounts: renderAccounts, projects: renderProjects };
+                        logs: renderLogs, usage: renderUsageLogs,
+                        accounts: renderAccounts, projects: renderProjects };
       if (renderers[tab]) renderers[tab](data, body);
     }).catch(function (err) {
       if (seq !== loadSeq || currentTopTab !== 'admin') return;
@@ -71489,6 +71807,8 @@ window.HMChat = (function () {
     { id: 'audio', label: '生音频' }
   ];
   var apiFilter = { platform: '', types: [], billing: '' };
+  /* 调用日志的筛选：只按真实记录里出现过的平台/类型来筛 */
+  var apiLogFilter = { platform: '', type: '' };
   var apiDocCache = null;
 
   /* 接入配置文档：providers / bindings / rayin，随 /docs/api 同步，换设备可恢复。
@@ -72370,12 +72690,39 @@ window.HMChat = (function () {
       '    </div>' +
       '  </section>';
 
+    /* 日志筛选：选项只来自真实记录里出现过的平台/类型 */
+    var logPlatforms = [];
+    var logTypes = [];
+    apiLogs.forEach(function (l) {
+      if (l.provider && logPlatforms.indexOf(l.provider) < 0) logPlatforms.push(l.provider);
+      var lt = l.type || 'image';
+      if (logTypes.indexOf(lt) < 0) logTypes.push(lt);
+    });
+    var shownLogs = apiLogs.filter(function (l) {
+      if (apiLogFilter.platform && l.provider !== apiLogFilter.platform) return false;
+      if (apiLogFilter.type && (l.type || 'image') !== apiLogFilter.type) return false;
+      return true;
+    });
+
     html += '  <section class="hm-api-sec">' +
       '    <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>调用日志 <span class="hm-api-sec-sub">成功 ' + okCount + ' · 失败 ' + failCount + ' · 最多保留 500 条</span></h3>' +
       '    <div class="hm-api-log-actions">' +
       '      <button class="hm-api-tool-btn small" data-log-act="clear">🗑 清空日志</button>' +
       '      <button class="hm-api-tool-btn small" data-log-act="export">📤 导出日志 CSV</button>' +
       '    </div>';
+    if (apiLogs.length) {
+      html += '<div class="hm-api-log-filters">' +
+        '<select data-log-filter="platform"><option value="">全部平台</option>' +
+        logPlatforms.map(function (p) {
+          return '<option value="' + hmEsc(p) + '"' + (apiLogFilter.platform === p ? ' selected' : '') + '>' + hmEsc(p) + '</option>';
+        }).join('') + '</select>' +
+        '<select data-log-filter="type"><option value="">全部类型</option>' +
+        logTypes.map(function (t) {
+          return '<option value="' + hmEsc(t) + '"' + (apiLogFilter.type === t ? ' selected' : '') + '>' + hmEsc(apiLogTypeLabel(t)) + '</option>';
+        }).join('') + '</select>' +
+        '<span class="hm-api-log-filter-count">当前 ' + shownLogs.length + ' 条</span>' +
+        '</div>';
+    }
 
     if (!apiLogs.length) {
       html += '<div class="hm-api-log-empty">' +
@@ -72383,13 +72730,15 @@ window.HMChat = (function () {
         '<p>还没有调用记录</p>' +
         '<small>在「生成」页出图成功或失败后会自动写日志</small>' +
         '</div>';
+    } else if (!shownLogs.length) {
+      html += '<div class="hm-api-log-empty"><p>当前筛选下没有调用记录</p><small>换个平台或类型试试</small></div>';
     } else {
       html += '<div class="hm-api-log-wrap"><table class="hm-api-log-table"><thead><tr>' +
-        '<th>时间</th><th>状态</th><th>Provider</th><th>模型</th><th>耗时</th><th>提示词</th><th>错误</th>' +
+        '<th>时间</th><th>结果</th><th>类型</th><th>平台 / 接入配置</th><th>模型</th><th>耗时</th><th>提示词</th><th>失败原因</th>' +
         '</tr></thead><tbody>';
-      apiLogs.slice(0, 200).forEach(function (l) { html += logRowHtml(l); });
+      shownLogs.slice(0, 200).forEach(function (l) { html += logRowHtml(l); });
       html += '</tbody></table></div>';
-      if (apiLogs.length > 200) html += '<p class="hm-api-log-more">仅显示最近 200 条（共 ' + apiLogs.length + '）</p>';
+      if (shownLogs.length > 200) html += '<p class="hm-api-log-more">仅显示最近 200 条（筛选后共 ' + shownLogs.length + '）</p>';
     }
     html += '  </section>';
 
@@ -72407,21 +72756,26 @@ window.HMChat = (function () {
     var ss = String(d.getSeconds()).padStart(2, '0');
     var dateStr = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hh + ':' + mm + ':' + ss;
     var statusClass = l.status === 'ok' ? 'is-ok' : 'is-fail';
-    var statusIcon = l.status === 'ok' ? '✓' : '✗';
+    var statusIcon = l.status === 'ok' ? '✓ 成功' : '✗ 失败';
     var provider = hmEsc(l.provider || '');
-    var model = hmEsc(l.model || '');
+    var model = hmEsc(l.model || '—');
     var latency = (l.latencyMs != null ? Math.round(l.latencyMs) + ' ms' : '—');
     var prompt = hmEsc((l.promptPreview || '').slice(0, 55));
     var err = hmEsc((l.errorMsg || '').slice(0, 60));
     return '<tr class="' + statusClass + '">' +
       '<td class="hm-api-log-ts">' + dateStr + '</td>' +
       '<td class="hm-api-log-status ' + statusClass + '">' + statusIcon + '</td>' +
+      '<td>' + hmEsc(apiLogTypeLabel(l.type)) + '</td>' +
       '<td class="hm-api-log-provider">' + provider + '</td>' +
       '<td class="hm-api-log-model">' + model + '</td>' +
       '<td class="hm-api-log-latency">' + latency + '</td>' +
       '<td class="hm-api-log-prompt" title="' + hmEsc(l.promptPreview || '') + '">' + prompt + '</td>' +
       '<td class="hm-api-log-err" title="' + hmEsc(l.errorMsg || '') + '">' + err + '</td>' +
       '</tr>';
+  }
+
+  function apiLogTypeLabel(t) {
+    return t === 'video' ? '生视频' : t === 'audio' ? '生音频' : t === 'chat' ? 'AI对话' : '生图';
   }
 
   function bindApiPanel(body) {
@@ -72431,6 +72785,13 @@ window.HMChat = (function () {
     body.dataset.apiBound = '1';
 
     body.addEventListener('change', function (e) {
+      var logSel = e.target.closest('[data-log-filter]');
+      if (logSel) {
+        var lk = logSel.getAttribute('data-log-filter');
+        apiLogFilter[lk === 'platform' ? 'platform' : 'type'] = logSel.value;
+        renderApiPanel(body);
+        return;
+      }
       var plat = e.target.closest('[data-api-platform]');
       if (plat) {
         apiFilter.platform = plat.value;
