@@ -16794,6 +16794,8 @@ body.rail-collapsed .hm-page {
   align-items: center;
   gap: 6px;
   color: #cbb489;
+  /* 整排翻页控件可压缩，但数字框必须保持原尺寸，不能被挤小 */
+  flex: 0 0 auto;
 }
 
 /* 数字框：高度/宽度/边框保持原样，右侧内部留出 ▲/▼ 的宽度 */
@@ -16802,11 +16804,15 @@ body.rail-collapsed .hm-page {
   display: inline-flex;
   width: 56px;
   height: 30px;
+  flex: 0 0 56px;
+  min-width: 56px;
 }
 
 .lib-pager-jump input {
   width: 56px;
   height: 30px;
+  flex: 0 0 56px;
+  min-width: 56px;
   box-sizing: border-box;
   border-radius: 8px;
   border: 1px solid rgba(201, 162, 39, 0.32);
