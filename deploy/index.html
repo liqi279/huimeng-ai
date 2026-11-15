@@ -20054,6 +20054,15 @@ body.dv-open .hm-page {
 .tc-api-state.is-ok { color: #4ade80; }
 .tc-hint { margin: 8px 0 0; font-size: 10.5px; line-height: 1.7; color: var(--muted); }
 
+/* 首尾帧补间 Pro · 模式切换 */
+.t2-modes { display: flex; gap: 6px; padding: 4px; border-radius: 11px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.22); }
+.t2-mode { flex: 1; height: 30px; border-radius: 8px; font-size: 11.5px; font-weight: 600; color: var(--muted); border: 1px solid transparent; }
+.t2-mode:hover { color: var(--text-2); }
+.t2-mode.is-active { color: #fff; background: linear-gradient(135deg, rgba(139, 92, 246, 0.32), rgba(244, 114, 182, 0.16)); border-color: rgba(167, 139, 250, 0.35); }
+.t2-mode:disabled { cursor: default; }
+#view-tooltoon2.is-interp .t2-diff-only { opacity: 0.42; }
+#view-tooltoon2.is-interp .t2-diff-only input { pointer-events: none; }
+
 .tc-btn {
   height: 32px;
   padding: 0 13px;
@@ -21447,6 +21456,11 @@ body.dv-open .hm-page {
         <strong>ToonCrafter首尾帧补间</strong>
         <p>两张线稿自动生成中间过渡帧 · 赛璐璐友好 · 漫剧补帧核心工具</p>
       </button>
+      <button class="hm-tool-card" data-tool="tooltoon2">
+        <span class="hm-tool-icon">间</span>
+        <strong>首尾帧补间 Pro</strong>
+        <p>AnimateDiff 扩散补间 + 纯插帧双模式 · 本地服务 :7862 · 可与 ToonCrafter 并存</p>
+      </button>
       <button class="hm-tool-card" data-tool="toolopenvideo">
         <span class="hm-tool-icon">开</span>
         <strong>开源生视频</strong>
@@ -21599,6 +21613,93 @@ body.dv-open .hm-page {
 
         <div class="tc-timeline" id="tcTimeline"></div>
         <pre class="tc-cmd" id="tcCmd">cd 插件/09-ToonCrafter首尾帧补间/服务 && python server.py --port 7861</pre>
+      </section>
+    </div>
+  </main>
+
+  <!-- ===================== 首尾帧补间 Pro（AnimateDiff + 纯插帧） ===================== -->
+  <main class="hm-page tc-page" id="view-tooltoon2" hidden>
+    <div class="hm-page-head">
+      <div>
+        <h2>首尾帧补间 Pro</h2>
+        <p>AnimateDiff 扩散补间 / RIFE 纯插帧双模式：首帧 + 尾帧 → 过渡视频 · 本地服务默认 http://127.0.0.1:7862</p>
+      </div>
+      <div class="tc-head-badge" id="t2Badge">服务未连接</div>
+    </div>
+
+    <div class="tc-body">
+      <aside class="tc-panel">
+        <div class="tc-sec">
+          <div class="tc-sec-h">补间模式</div>
+          <div class="t2-modes" role="group" aria-label="补间模式">
+            <button type="button" class="t2-mode is-active" data-t2-mode="diffusion">扩散补间</button>
+            <button type="button" class="t2-mode" data-t2-mode="interp">纯插帧</button>
+          </div>
+          <p class="tc-hint" id="t2ModeHint">AnimateDiff 扩散生成中间帧，动作更自然；需 GPU 与模型权重。</p>
+        </div>
+
+        <div class="tc-sec">
+          <div class="tc-sec-h">关键帧</div>
+          <label class="tc-drop" id="t2DropFirst">
+            <input type="file" accept="image/*" id="t2FileFirst" hidden>
+            <img class="tc-thumb" id="t2ThumbFirst" alt="">
+            <span class="tc-drop-tip">首帧 · 点击或拖入</span>
+          </label>
+          <label class="tc-drop" id="t2DropLast">
+            <input type="file" accept="image/*" id="t2FileLast" hidden>
+            <img class="tc-thumb" id="t2ThumbLast" alt="">
+            <span class="tc-drop-tip">尾帧 · 点击或拖入</span>
+          </label>
+        </div>
+
+        <div class="tc-sec" id="t2ParamSec">
+          <div class="tc-sec-h">推理参数</div>
+          <label class="tc-field t2-diff-only"><span>提示词</span>
+            <input class="tc-input" id="t2Prompt" type="text" value="an anime scene" placeholder="描述画面内容"></label>
+          <label class="tc-field t2-diff-only"><span>采样步数 <b id="t2StepsVal">25</b></span>
+            <input type="range" id="t2Steps" min="10" max="50" step="5" value="25"></label>
+          <label class="tc-field t2-diff-only"><span>CFG 引导强度 <b id="t2CfgVal">7.5</b></span>
+            <input type="range" id="t2Cfg" min="1" max="15" step="0.5" value="7.5"></label>
+          <label class="tc-field t2-diff-only"><span>ETA 采样随机性 <b id="t2EtaVal">0.0</b></span>
+            <input type="range" id="t2Eta" min="0" max="1" step="0.1" value="0"></label>
+          <label class="tc-field"><span>帧率 FPS <b id="t2FsVal">8</b></span>
+            <input type="range" id="t2Fs" min="5" max="30" step="1" value="8"></label>
+          <label class="tc-field"><span>随机种子 <b id="t2SeedVal">123</b></span>
+            <input type="range" id="t2Seed" min="0" max="50000" step="1" value="123"></label>
+          <label class="tc-field"><span>分辨率</span>
+            <select id="t2Res" class="tc-select">
+              <option value="320_512">512 × 320（默认）</option>
+              <option value="256_256">256 × 256（最快）</option>
+              <option value="576_1024">1024 × 576（高清，需更多显存）</option>
+            </select></label>
+        </div>
+
+        <div class="tc-sec">
+          <div class="tc-sec-h">推理服务</div>
+          <input class="tc-input" id="t2Api" type="text" value="http://127.0.0.1:7862" placeholder="推理服务地址">
+          <div class="tc-row">
+            <button class="tc-btn tc-btn-line" id="t2ApiTest" type="button">连接测试</button>
+            <span class="tc-api-state" id="t2ApiState">未连接</span>
+          </div>
+          <p class="tc-hint">需先在本机启动首尾帧补间 Pro 服务（默认 <code>python server.py --port 7862</code>），与 :7861 的 ToonCrafter 可同时运行。</p>
+        </div>
+      </aside>
+
+      <section class="tc-main">
+        <div class="tc-stage">
+          <video id="t2Video" controls loop playsinline hidden></video>
+          <div class="tc-stage-empty" id="t2Empty">上传首尾帧、连接 :7862 服务后点击「生成补间」</div>
+          <div class="tc-stage-meta" id="t2Meta">—</div>
+        </div>
+
+        <div class="tc-toolbar">
+          <button class="tc-btn tc-btn-primary" id="t2GenBtn" type="button">✨ 生成补间</button>
+          <button class="tc-btn" id="t2StopBtn" type="button" hidden>⏹ 停止生成</button>
+          <button class="tc-btn" id="t2PlayBtn" type="button">▶ 播放</button>
+          <button class="tc-btn" id="t2SaveBtn" type="button">下载视频</button>
+        </div>
+
+        <pre class="tc-cmd" id="t2Cmd">cd 插件/首尾帧补间Pro/服务 && python server.py --port 7862</pre>
       </section>
     </div>
   </main>
@@ -29918,7 +30019,7 @@ function persistPrefs() {
 }
 
 /* ---------------- 视图与侧栏 ---------------- */
-var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'edit', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'layout', 'oua', 'animation', 'bg', 'history', 'admin', 'usage', 'compile', 'publish'];
+var VIEW_IDS = ['create', 'canvas', 'tools', 'toolopenvideo', 'tooltoon', 'tooltoon2', 'toolimage', 'toolreference', 'tooltraining', 'toolrestore', 'toolworkflow', 'assets', 'library', 'voice', 'modeling', 'director', 'edit', 'director3d', 'storyboard', 'paint', 'plan', 'script', 'art', 'layout', 'oua', 'animation', 'bg', 'history', 'admin', 'usage', 'compile', 'publish'];
 
 function switchView(view) {
   if (VIEW_IDS.indexOf(view) < 0) return;
@@ -60736,6 +60837,300 @@ window.HMChat = (function () {
   };
 })();
 
+/* =============================================================
+ * 首尾帧补间 Pro（AnimateDiff 扩散补间 + 纯插帧）
+ * 服务：GET /api/health · POST /api/warmup
+ *       POST /api/interpolate（multipart：first/last/prompt/steps/cfg/eta/fs/seed/resolution/mode）
+ *       GET  /results/<name>.mp4
+ * 默认地址 http://127.0.0.1:7862，与 :7861 的 ToonCrafter 并存
+ * ============================================================= */
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var LS = 'anidream.toon2.api.v1';
+  var DEFAULT_BASE = 'http://127.0.0.1:7862';
+  var state = { mode: 'diffusion', first: null, last: null, apiOk: false, busy: false, xhr: null, url: '' };
+
+  function toast(msg, type) {
+    if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type || 'info');
+  }
+  function base() {
+    var el = $('t2Api');
+    var v = String((el && el.value) || localStorage.getItem(LS) || DEFAULT_BASE).trim().replace(/\/+$/, '');
+    return v || DEFAULT_BASE;
+  }
+  function setMeta(text) { var el = $('t2Meta'); if (el) el.textContent = text; }
+  function setBadge(ok, text) {
+    state.apiOk = ok;
+    var b = $('t2Badge');
+    if (b) { b.textContent = text; b.classList.toggle('is-ok', ok); }
+  }
+
+  function setMode(mode) {
+    state.mode = mode === 'interp' ? 'interp' : 'diffusion';
+    document.querySelectorAll('#view-tooltoon2 [data-t2-mode]').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-t2-mode') === state.mode);
+    });
+    var view = $('view-tooltoon2');
+    if (view) view.classList.toggle('is-interp', state.mode === 'interp');
+    ['t2Prompt', 't2Steps', 't2Cfg', 't2Eta'].forEach(function (id) {
+      var el = $(id);
+      if (el) el.disabled = state.mode === 'interp';
+    });
+    var hint = $('t2ModeHint');
+    if (hint) hint.textContent = state.mode === 'interp'
+      ? '纯插帧：不生成新内容，只按光流补中间帧，速度快、保留原画；提示词 / 步数 / CFG / ETA 不生效。'
+      : 'AnimateDiff 扩散生成中间帧，动作更自然；需 GPU 与模型权重。';
+  }
+
+  function loadImage(file, key, thumbId) {
+    if (!file || !/^image\//.test(file.type)) { toast('请选择图片文件', 'error'); return; }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      if (key === 'first') state.first = file; else state.last = file;
+      var th = $(thumbId);
+      if (th) { th.src = url; th.classList.add('is-loaded'); }
+      var drop = th && th.closest('.tc-drop');
+      if (drop) drop.classList.add('has-img');
+      toast('已载入' + (key === 'first' ? '首帧' : '尾帧') + '（' + img.width + '×' + img.height + '）', 'success');
+    };
+    img.onerror = function () { toast('图片读取失败', 'error'); };
+    img.src = url;
+  }
+
+  function bindDrop(dropId, fileId, key, thumbId) {
+    var drop = $(dropId), input = $(fileId);
+    if (!drop || !input) return;
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) loadImage(input.files[0], key, thumbId);
+    });
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('is-over'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('is-over'); });
+    });
+    drop.addEventListener('drop', function (e) {
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) loadImage(f, key, thumbId);
+    });
+  }
+
+  function testApi(silent) {
+    var b = base();
+    var el = $('t2ApiState');
+    if (window.location.protocol === 'https:' && b.indexOf('http://') === 0) {
+      if (el) el.textContent = 'https 页面无法访问 http 本地服务，请用本地版打开';
+      setBadge(false, '服务未连接');
+      if (!silent) toast('https 页面访问 http 本地服务会被浏览器拦截', 'error');
+      return;
+    }
+    if (el) el.textContent = '检测中…';
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var timer = ctrl ? window.setTimeout(function () { ctrl.abort(); }, 6000) : null;
+    fetch(b + '/api/health', { signal: ctrl && ctrl.signal })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (info) {
+        if (timer) window.clearTimeout(timer);
+        if (!info) throw new Error('服务无响应');
+        var dev = info.device === 'cuda' ? (info.gpu || 'GPU') : 'CPU（较慢）';
+        var modes = info.modes ? ' · 模式 ' + [].concat(info.modes).join('/') : '';
+        if (el) el.textContent = '已连接 · ' + dev + modes;
+        setBadge(true, '服务已连接');
+        if (!silent) toast('已连接补间服务（' + dev + '）', 'success');
+        if (state.mode === 'diffusion') {
+          fetch(b + '/api/warmup', { method: 'POST' }).catch(function () {});
+        }
+      })
+      .catch(function () {
+        if (timer) window.clearTimeout(timer);
+        if (el) el.textContent = '未连接 · 请先启动 :7862 服务';
+        setBadge(false, '服务未连接');
+        if (!silent) toast('连接失败：请确认本机已启动 python server.py --port 7862', 'error');
+      });
+  }
+
+  function setBusy(busy) {
+    state.busy = busy;
+    var gen = $('t2GenBtn'), stop = $('t2StopBtn');
+    if (gen) gen.disabled = busy;
+    if (stop) stop.hidden = !busy;
+  }
+
+  function generate() {
+    if (state.busy) return;
+    if (!state.first || !state.last) { toast('请先上传首帧和尾帧', 'error'); return; }
+    var b = base();
+    var fd = new FormData();
+    fd.append('mode', state.mode);
+    fd.append('first', state.first);
+    fd.append('last', state.last);
+    fd.append('prompt', ($('t2Prompt') && $('t2Prompt').value) || '');
+    fd.append('steps', ($('t2Steps') && $('t2Steps').value) || '25');
+    fd.append('cfg', ($('t2Cfg') && $('t2Cfg').value) || '7.5');
+    fd.append('eta', ($('t2Eta') && $('t2Eta').value) || '0');
+    fd.append('fs', ($('t2Fs') && $('t2Fs').value) || '8');
+    fd.append('seed', ($('t2Seed') && $('t2Seed').value) || '123');
+    fd.append('resolution', ($('t2Res') && $('t2Res').value) || '320_512');
+
+    var xhr = new XMLHttpRequest();
+    state.xhr = xhr;
+    xhr.open('POST', b + '/api/interpolate', true);
+    xhr.responseType = 'json';
+    var started = Date.now();
+    var tick = window.setInterval(function () {
+      setMeta('生成中… ' + Math.round((Date.now() - started) / 1000) + 's（' +
+        (state.mode === 'interp' ? '纯插帧' : '扩散补间') + '）');
+    }, 500);
+    setBusy(true);
+    xhr.upload.onprogress = function (e) {
+      if (e.lengthComputable) setMeta('上传关键帧 ' + Math.round((e.loaded / e.total) * 100) + '%');
+    };
+    xhr.onload = function () {
+      window.clearInterval(tick);
+      setBusy(false);
+      state.xhr = null;
+      var data = xhr.response;
+      if (!data) { try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; } }
+      if (xhr.status >= 200 && xhr.status < 300 && data && data.ok !== false) {
+        var name = data.name || data.file ||
+          (data.video ? String(data.video).split('/').pop() : '');
+        var url = data.video
+          ? (String(data.video).indexOf('http') === 0 ? data.video : b + data.video)
+          : (name ? b + '/results/' + name + '.mp4' : '');
+        if (!url) {
+          setMeta('生成失败：服务未返回视频地址');
+          toast('生成失败：服务未返回视频地址', 'error');
+          return;
+        }
+        state.url = url;
+        var video = $('t2Video'), empty = $('t2Empty');
+        if (empty) empty.hidden = true;
+        if (video) {
+          video.hidden = false;
+          video.src = url;
+          var pr = video.play();
+          if (pr && pr.catch) pr.catch(function () {});
+        }
+        setMeta('完成 · ' + (data.elapsed ? data.elapsed + 's · ' : '') +
+          (state.mode === 'interp' ? '纯插帧' : (data.steps ? data.steps + ' 步' : '扩散补间')) +
+          (data.fps ? ' · ' + data.fps + ' fps' : ''));
+        toast('补间完成', 'success');
+      } else {
+        var msg = (data && (data.error || data.message)) || ('HTTP ' + xhr.status);
+        setMeta('生成失败：' + msg);
+        toast('生成失败：' + msg, 'error');
+      }
+    };
+    xhr.onerror = function () {
+      window.clearInterval(tick);
+      setBusy(false);
+      state.xhr = null;
+      setMeta('无法连接 ' + b + ' · 请先启动本地补间服务');
+      setBadge(false, '服务未连接');
+      toast('无法连接本地补间服务，请确认 :7862 已启动', 'error');
+    };
+    xhr.onabort = function () {
+      window.clearInterval(tick);
+      setBusy(false);
+      state.xhr = null;
+      setMeta('已停止生成');
+    };
+    xhr.send(fd);
+  }
+
+  function play() {
+    var video = $('t2Video');
+    if (!state.url && video) state.url = video.src || '';
+    if (!state.url) { toast('还没有可播放的视频', 'info'); return; }
+    if (video) {
+      video.hidden = false;
+      var pr = video.play();
+      if (pr && pr.catch) pr.catch(function () { toast('浏览器阻止了自动播放，请点视频上的播放键', 'info'); });
+    }
+  }
+
+  function save() {
+    var video = $('t2Video');
+    if (!state.url && video) state.url = video.src || '';
+    if (!state.url) { toast('还没有可下载的视频', 'info'); return; }
+    var a = document.createElement('a');
+    a.href = state.url;
+    a.download = 'first-last-' + Date.now() + '.mp4';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast('已开始下载视频', 'success');
+  }
+
+  function bind() {
+    document.querySelectorAll('#view-tooltoon2 [data-t2-mode]').forEach(function (btn) {
+      btn.addEventListener('click', function () { setMode(btn.getAttribute('data-t2-mode')); });
+    });
+    bindDrop('t2DropFirst', 't2FileFirst', 'first', 't2ThumbFirst');
+    bindDrop('t2DropLast', 't2FileLast', 'last', 't2ThumbLast');
+
+    [['t2Steps', 't2StepsVal'], ['t2Cfg', 't2CfgVal'], ['t2Eta', 't2EtaVal'], ['t2Fs', 't2FsVal'], ['t2Seed', 't2SeedVal']].forEach(function (pair) {
+      var input = $(pair[0]), out = $(pair[1]);
+      if (!input || !out) return;
+      var sync = function () { out.textContent = input.value; };
+      input.addEventListener('input', sync);
+      sync();
+    });
+
+    var apiInput = $('t2Api');
+    if (apiInput) {
+      var saved = '';
+      try { saved = localStorage.getItem(LS) || ''; } catch (e) {}
+      if (saved) apiInput.value = saved;
+      apiInput.addEventListener('change', function () {
+        try { localStorage.setItem(LS, apiInput.value.trim()); } catch (e) {}
+      });
+    }
+
+    var testBtn = $('t2ApiTest');
+    if (testBtn) testBtn.addEventListener('click', function () { testApi(false); });
+    var genBtn = $('t2GenBtn');
+    if (genBtn) genBtn.addEventListener('click', generate);
+    var stopBtn = $('t2StopBtn');
+    if (stopBtn) stopBtn.addEventListener('click', function () {
+      if (state.xhr) { try { state.xhr.abort(); } catch (e) {} }
+    });
+    var playBtn = $('t2PlayBtn');
+    if (playBtn) playBtn.addEventListener('click', play);
+    var saveBtn = $('t2SaveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', save);
+  }
+
+  var booted = false;
+  function boot() {
+    if (booted || !document.getElementById('view-tooltoon2')) return;
+    booted = true;
+    bind();
+    setMode('diffusion');
+    setBusy(false);
+    testApi(true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+  window.HMToon2 = {
+    leave: function () {
+      var v = $('t2Video');
+      if (v && !v.paused) v.pause();
+    }
+  };
+})();
+
 </script>
   <script>
 'use strict';
@@ -61836,6 +62231,9 @@ window.HMChat = (function () {
     }
     if (prevView === 'tooltoon' && view !== 'tooltoon' && window.HMToon) {
       try { window.HMToon.leave(); } catch (e) { /* ignore */ }
+    }
+    if (prevView === 'tooltoon2' && view !== 'tooltoon2' && window.HMToon2) {
+      try { window.HMToon2.leave(); } catch (e) { /* ignore */ }
     }
     prevView = view;
 
@@ -63284,6 +63682,7 @@ window.HMChat = (function () {
     if (tool === 'toolworkflow') { A.switchView('toolworkflow'); return; }
     if (tool === 'toolopenvideo') { A.switchView('toolopenvideo'); return; }
     if (tool === 'tooltoon') { A.switchView('tooltoon'); return; }
+    if (tool === 'tooltoon2') { A.switchView('tooltoon2'); return; }
     if (tool === 'translate') return translateTool();
     if (tool === 'inspire') { A.els.inspireBtn.click(); return; }
     if (tool === 'presets') { openPresetModal(); return; }
