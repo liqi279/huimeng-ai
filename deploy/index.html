@@ -21166,8 +21166,8 @@ body.dv-open .hm-page {
       <span class="lib-pager-info" id="libPagerInfo">第 1 / 1 页</span>
       <label class="lib-pager-jump" for="libPagerInput">跳到 <input type="number" id="libPagerInput" min="1" step="1" inputmode="numeric"> 页</label>
       <span class="lib-pager-steps" aria-label="按页翻动">
-        <button type="button" id="libPagerUp" title="上一页" aria-label="上一页">▲</button>
-        <button type="button" id="libPagerDown" title="下一页" aria-label="下一页">▼</button>
+        <button type="button" id="libPagerUp" title="数值 +1（下一页）" aria-label="数值 +1（下一页）">▲</button>
+        <button type="button" id="libPagerDown" title="数值 -1（上一页）" aria-label="数值 -1（上一页）">▼</button>
       </span>
       <button type="button" class="lib-pager-btn" id="libPagerNext">下一页 ›</button>
     </div>
@@ -58443,8 +58443,37 @@ window.HMChat = (function () {
     if (els.pagerNext) els.pagerNext.addEventListener('click', function () { goPage(state.shelfPage + 1); });
     els.pagerUp = $('libPagerUp');
     els.pagerDown = $('libPagerDown');
-    if (els.pagerUp) els.pagerUp.addEventListener('click', function () { goPage(state.shelfPage - 1); });
-    if (els.pagerDown) els.pagerDown.addEventListener('click', function () { goPage(state.shelfPage + 1); });
+    /* 上箭头 = 数值 +1（下一页），下箭头 = 数值 -1（上一页）。
+       单击一档；按住 420ms 后开始连发，每 110ms 一档，松手立即停；goPage 自带边界钳制。 */
+    function bindPagerRepeat(btn, delta) {
+      if (!btn) return;
+      var holdTimer = null;
+      var repeatTimer = null;
+      function stopRepeat() {
+        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+        if (repeatTimer) { clearInterval(repeatTimer); repeatTimer = null; }
+      }
+      function stepOnce() { goPage(state.shelfPage + delta); }
+      btn.addEventListener('pointerdown', function (event) {
+        if (event.button !== 0) return;
+        stopRepeat();
+        stepOnce();
+        holdTimer = setTimeout(function () {
+          holdTimer = null;
+          stepOnce();
+          repeatTimer = setInterval(stepOnce, 110);
+        }, 420);
+      });
+      ['pointerup', 'pointercancel', 'pointerleave', 'blur'].forEach(function (name) {
+        btn.addEventListener(name, stopRepeat);
+      });
+      /* 键盘触发（Enter/Space）没有 pointerdown，补一次单击 */
+      btn.addEventListener('click', function (event) {
+        if (event.detail === 0) stepOnce();
+      });
+    }
+    bindPagerRepeat(els.pagerUp, 1);
+    bindPagerRepeat(els.pagerDown, -1);
     if (els.pagerInput) {
       var applyJump = function () {
         var v = parseInt(els.pagerInput.value, 10);
