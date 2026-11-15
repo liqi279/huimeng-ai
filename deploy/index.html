@@ -25682,7 +25682,6 @@ body.dv-open .hm-page {
 
       <select id="engineSelect" class="hm-visually-hidden" aria-label="选择生图模型" tabindex="-1">
         <option value="gpt-image">GPT-image · RayinAPI</option>
-        <option value="banana">Gemini Banana · RayinAI</option>
       </select>
     </div>
   </div>
@@ -25862,8 +25861,8 @@ body.dv-open .hm-page {
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
       <span class="modal-kicker">RAYINAPI</span>
-      <h2>接入 GPT-image 与 Gemini Banana</h2>
-      <p class="api-desc">服务端已内置 GPT-image 与 Gemini 默认密钥，开箱即用。API Key 可留空（用服务端默认值），填写则用你自己的 key 覆盖。密钥仅保存在本浏览器。</p>
+      <h2>接入 GPT-image</h2>
+      <p class="api-desc">服务端已内置 GPT-image 默认密钥，开箱即用。API Key 可留空（用服务端默认值），填写则用你自己的 key 覆盖。密钥仅保存在本浏览器。</p>
 
       <div class="api-form">
         <label class="field">
@@ -25876,11 +25875,7 @@ body.dv-open .hm-page {
         </label>
         <label class="field">
           <span>GPT-image 模型 ID</span>
-          <input id="gptModelInput" type="text" placeholder="gemini-3-pro-image" autocomplete="off">
-        </label>
-        <label class="field">
-          <span>Gemini Banana 模型 ID</span>
-          <input id="bananaModelInput" type="text" placeholder="gemini-3.1-flash-image" autocomplete="off">
+          <input id="gptModelInput" type="text" placeholder="gpt-image-2" autocomplete="off">
         </label>
       </div>
 
@@ -27286,10 +27281,6 @@ const CATALOG_FALLBACK = {
     { id: 'gpt-image-2', engine: 'gpt-image', model: 'gpt-image-2', name: 'GPT Image 2', badge: 'GPT · 标准', hint: '稳定通用 · OpenAI 原生生图' },
     { id: 'gpt-image-2.5-flare', engine: 'gpt-image', model: 'gpt-image-2.5-flare', name: 'GPT Image 2.5 Flare', badge: 'GPT · 光影增强', hint: '光影绚丽 · 氛围渲染' },
     { id: 'gpt-image-2.5-sunburst', engine: 'gpt-image', model: 'gpt-image-2.5-sunburst', name: 'GPT Image 2.5 Sunburst', badge: 'GPT · 细节爆发', hint: '高细节 · 锐度爆发' },
-    /* Gemini 图像模型（Gemini key → /chat/completions） */
-    { id: 'gemini-3-pro-image', engine: 'banana', model: 'gemini-3-pro-image', name: 'Gemini 3 Pro Image', badge: 'Gemini · Pro', hint: '最高质量 · 精细渲染' },
-    { id: 'gemini-3.1-flash-image', engine: 'banana', model: 'gemini-3.1-flash-image', name: 'Gemini 3.1 Flash Image', badge: 'Gemini · Flash', hint: '速度最快 · 平衡质量' },
-    { id: 'gemini-3.1-flash-lite-image', engine: 'banana', model: 'gemini-3.1-flash-lite-image', name: 'Gemini 3.1 Flash Lite Image', badge: 'Gemini · Lite', hint: '最轻量 · 秒级响应' },
   ]
 };
 
@@ -27750,12 +27741,14 @@ if (storedPrefs.rayinChannel !== 'gpt-image-2.5') {
  * 历史配置里常见 engine 已切、channelModel 还是旧通道的模型名，会 404。 */
 /* 「免费模型 / 免费额度平台」整组已下线：本地旧选择（flux / openai）失效时
    自动落到当前真正可用的 RayinAI 通道，不做静默失败。 */
-if (state.engine !== 'gpt-image' && state.engine !== 'banana') state.engine = 'gpt-image';
-if (state.engine === 'gpt-image' && !/^gpt-image/i.test(state.channelModel || '')) {
-  state.channelModel = state.api.gptModel || 'gpt-image-2.5-flare';
+if (state.engine !== 'gpt-image') state.engine = 'gpt-image';
+/* Banana / Gemini 三个模型已下架：历史选择统一回退到 gpt-image-2，不留死选项。 */
+if (/^gemini/i.test(state.channelModel || '') || /^banana/i.test(state.channelModel || '')) {
+  state.channelModel = 'gpt-image-2';
 }
-if (state.engine === 'banana' && !/^gemini/i.test(state.channelModel || '')) {
-  state.channelModel = state.api.bananaModel || 'gemini-3.1-flash-image';
+if (/^gemini/i.test(state.api.gptModel || '')) state.api.gptModel = 'gpt-image-2';
+if (state.engine === 'gpt-image' && !/^gpt-image/i.test(state.channelModel || '')) {
+  state.channelModel = state.api.gptModel || 'gpt-image-2';
 }
 
 /* ========== tab 状态辅助器 ==========
@@ -29014,7 +29007,9 @@ async function loadCatalog() {
       keyless: (data.keyless && data.keyless.length) ? data.keyless : (CATALOG_FALLBACK.keyless || []),
       /* 接入管理只保留 RayinAPI：后端 /catalog 里即便还带第三方平台，也不采用 */
       providers: [],
-      rayin: (data.rayin && data.rayin.length) ? data.rayin : (CATALOG_FALLBACK.rayin || []),
+      /* Banana/Gemini 三个模型已下架：即使后端还没摘掉，也一律过滤，只留 gpt-image */
+      rayin: ((data.rayin && data.rayin.length) ? data.rayin : (CATALOG_FALLBACK.rayin || []))
+        .filter(function (m) { return /^gpt-image/i.test(String((m && m.model) || (m && m.id) || '')); }),
       loras: data.loras || []
     };
     renderCatalogMenus();
@@ -32935,8 +32930,8 @@ function openApiModal() {
   els.apiBaseInput.value = rayinCfg().base || RAYIN_DEFAULT.base;
   els.apiKeyInput.value = rayinCfg().key || '';
   els.gptModelInput.value = rayinCfg().gptModel || RAYIN_DEFAULT.gptModel;
-  els.bananaModelInput.value = rayinCfg().bananaModel || RAYIN_DEFAULT.bananaModel;
-  els.apiHint.textContent = '密钥可留空（使用服务端默认 GPT / Gemini 密钥），填写则用你自己的 key 覆盖。保存后即可在上方面板下拉切换模型。';
+  if (els.bananaModelInput) els.bananaModelInput.value = rayinCfg().bananaModel || RAYIN_DEFAULT.bananaModel;
+  els.apiHint.textContent = '密钥可留空（使用服务端默认 GPT-image 密钥），填写则用你自己的 key 覆盖。保存后即可在上方面板下拉切换模型。';
   renderProviderSelect();
   fillProviderFields(state.providerId);
   els.apiModal.classList.add('is-open');
@@ -32954,7 +32949,7 @@ function saveRayinConfig() {
   const key = els.apiKeyInput.value.trim();
   const base = normalizeBase(els.apiBaseInput.value) || RAYIN_DEFAULT.base;
   const gptModel = els.gptModelInput.value.trim() || RAYIN_DEFAULT.gptModel;
-  const bananaModel = els.bananaModelInput.value.trim() || RAYIN_DEFAULT.bananaModel;
+  const bananaModel = (els.bananaModelInput ? els.bananaModelInput.value.trim() : '') || RAYIN_DEFAULT.bananaModel;
 
   state.api = {
     base: base,
@@ -32968,7 +32963,7 @@ function saveRayinConfig() {
   if (key) {
     toast('接入信息已保存 · 使用自定义密钥', 'success');
   } else {
-    toast('已保存 · 将使用服务端默认 GPT / Gemini 密钥', 'success');
+    toast('已保存 · 将使用服务端默认 GPT-image 密钥', 'success');
   }
 }
 
@@ -32994,16 +32989,11 @@ async function fetchRayinModels() {
       .filter(Boolean);
 
     const gpt = ids.find(function (id) { return /gpt-image/i.test(id); });
-    const banana = ids.find(function (id) { return /nano.?banana/i.test(id); }) ||
-      ids.find(function (id) { return /banana/i.test(id); }) ||
-      ids.find(function (id) { return /gemini.*image/i.test(id); });
 
     if (gpt) els.gptModelInput.value = gpt;
-    if (banana) els.bananaModelInput.value = banana;
 
     els.apiHint.textContent = '共 ' + ids.length + ' 个模型' +
-      (gpt ? ' · GPT: ' + gpt : ' · 未找到 gpt-image') +
-      (banana ? ' · Banana: ' + banana : ' · 未找到 banana');
+      (gpt ? ' · GPT: ' + gpt : ' · 未找到 gpt-image');
     toast(ids.length ? '模型列表已读取' : '账号未返回模型列表', ids.length ? 'success' : 'info');
   } catch (err) {
     els.apiHint.textContent = '读取失败：' + (err.message || '网络错误') + '，请检查 Key 与 API 地址';
@@ -72658,8 +72648,8 @@ window.HMChat = (function () {
     if (!doc.bindings || typeof doc.bindings !== 'object') doc.bindings = {};
     if (!doc.billing || typeof doc.billing !== 'object') doc.billing = {};
     if (!doc.rayin || typeof doc.rayin !== 'object') doc.rayin = {};
-    /* Rayin 拆卡迁移：平台只有 RayinAPI，配置用「平台:系列」区分，原 Key / 类型 / 计费沿用 */
-    if (!doc.providers['__rayin__:gpt-image'] || !doc.providers['__rayin__:banana']) {
+    /* Banana/Gemini 三个模型已下架：接入管理只保留 GPT-image 一张卡，历史 banana 配置清掉 */
+    if (!doc.providers['__rayin__:gpt-image']) {
       var oldGpt = doc.providers['__rayin__'] || {};
       var oldBan = doc.providers['__rayin_banana__'] || {};
       var rb = oldGpt.base || oldBan.base || doc.rayin.base || 'https://www.rayinai.com/v1';
@@ -72667,30 +72657,18 @@ window.HMChat = (function () {
       var gpt = Object.assign({}, oldGpt);
       gpt.name = 'RayinAPI'; gpt.platform = '__rayin__'; gpt.series = 'GPT-image'; gpt.engine = 'gpt-image';
       gpt.base = oldGpt.base || rb; gpt.key = oldGpt.key || rk;
-      gpt.model = oldGpt.model || doc.gptModel || 'gpt-image-2.5-flare'; gpt.model2 = '';
+      var gptModel = String(oldGpt.model || doc.gptModel || '');
+      gpt.model = /^gpt-image/i.test(gptModel) ? gptModel : 'gpt-image-2';
+      gpt.model2 = '';
       doc.providers['__rayin__:gpt-image'] = gpt;
-      var ban = Object.assign({}, oldBan);
-      ban.name = 'RayinAPI'; ban.platform = '__rayin__'; ban.series = 'Gemini Banana'; ban.engine = 'banana';
-      ban.base = oldBan.base || rb; ban.key = oldBan.key || rk;
-      ban.model = oldBan.model || doc.bananaModel || 'gemini-3.1-flash-image'; ban.model2 = '';
-      doc.providers['__rayin__:banana'] = ban;
       if (doc.bindings['__rayin__'] != null) doc.bindings['__rayin__:gpt-image'] = doc.bindings['__rayin__'];
-      if (doc.bindings['__rayin_banana__'] != null) doc.bindings['__rayin__:banana'] = doc.bindings['__rayin_banana__'];
       if (doc.billing['__rayin__'] != null) doc.billing['__rayin__:gpt-image'] = doc.billing['__rayin__'];
-      if (doc.billing['__rayin_banana__'] != null) doc.billing['__rayin__:banana'] = doc.billing['__rayin_banana__'];
-      delete doc.providers['__rayin__'];
-      delete doc.providers['__rayin_banana__'];
-      delete doc.bindings['__rayin_banana__'];
-      delete doc.billing['__rayin_banana__'];
     }
-    /* 无论是否刚迁移，历史伪平台 id 一律清掉（先从旧 id 补值到新配置，避免丢类型/计费） */
-    [['__rayin__', '__rayin__:gpt-image'], ['__rayin_banana__', '__rayin__:banana']].forEach(function (pair) {
-      var oldId = pair[0], newId = pair[1];
-      if (doc.bindings[oldId] != null && doc.bindings[newId] == null) doc.bindings[newId] = doc.bindings[oldId];
-      if (doc.billing[oldId] != null && doc.billing[newId] == null) doc.billing[newId] = doc.billing[oldId];
-      delete doc.providers[oldId];
-      delete doc.bindings[oldId];
-      delete doc.billing[oldId];
+    /* 无论是否刚迁移，历史伪平台 id 与 Banana 配置一律清掉 */
+    ['__rayin__', '__rayin__:banana', '__rayin_banana__'].forEach(function (pid) {
+      delete doc.providers[pid];
+      delete doc.bindings[pid];
+      delete doc.billing[pid];
     });
     /* 接入管理只保留 RayinAPI：清掉其它平台的历史记录（不显示、不参与模型推导） */
     Object.keys(doc.providers).forEach(function (pid) {
@@ -72773,12 +72751,10 @@ window.HMChat = (function () {
     if (!App) return [];
     var doc = getApiDoc();
     /* 接入管理只保留 RayinAPI：catalog.providers 不再参与（第三方平台预设已删），
-       本地旧平台配置也不再回显，全部以 RayinAPI 的两条接入为准 */
+       本地旧平台配置也不再回显，只保留 GPT-image 一条接入（Banana/Gemini 已下架） */
     var list = [];
-    // RayinAPI：一个平台下挂两条接入配置（GPT-image / Gemini Banana）
     var prefs = (App.state && App.state.prefs) || {};
     var gptRec = doc.providers['__rayin__:gpt-image'] || {};
-    var banRec = doc.providers['__rayin__:banana'] || {};
     var rayinModels = (App.state && App.state.catalog && App.state.catalog.rayin) || [];
     list.push({
       id: '__rayin__:gpt-image',
@@ -72788,29 +72764,13 @@ window.HMChat = (function () {
       series: 'GPT-image',
       base: gptRec.base || 'https://www.rayinai.com/v1',
       key: gptRec.key || '',
-      model: gptRec.model || doc.gptModel || prefs.gptModel || 'gpt-image-2.5-flare',
+      model: gptRec.model || doc.gptModel || prefs.gptModel || 'gpt-image-2',
       models: rayinModels.filter(function (m) { return m.engine === 'gpt-image'; }),
-      enabled: ((App.state && App.state.engine) || 'gpt-image') === 'gpt-image',
+      enabled: true,
       isRayin: true,
       rayinVariant: 'gpt',
       type: apiBinding('__rayin__:gpt-image'),
       billing: apiBilling('__rayin__:gpt-image')
-    });
-    list.push({
-      id: '__rayin__:banana',
-      platform: '__rayin__',
-      platformName: 'RayinAPI',
-      name: 'RayinAPI',
-      series: 'Gemini Banana',
-      base: banRec.base || 'https://www.rayinai.com/v1',
-      key: banRec.key || '',
-      model: banRec.model || doc.bananaModel || prefs.bananaModel || 'gemini-3.1-flash-image',
-      models: rayinModels.filter(function (m) { return m.engine === 'banana'; }),
-      enabled: (App.state && App.state.engine) === 'banana',
-      isRayin: true,
-      rayinVariant: 'banana',
-      type: apiBinding('__rayin__:banana'),
-      billing: apiBilling('__rayin__:banana')
     });
     // 自定义已填但 catalog 里没有的
     /* 非 Rayin 的历史配置一律不再展示（读盘时已过滤，这里再兜一层） */
