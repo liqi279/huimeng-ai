@@ -16796,9 +16796,18 @@ body.rail-collapsed .hm-page {
   color: #cbb489;
 }
 
+/* 数字框：高度/宽度/边框保持原样，右侧内部留出 ▲/▼ 的宽度 */
+.lib-pager-box {
+  position: relative;
+  display: inline-flex;
+  width: 56px;
+  height: 30px;
+}
+
 .lib-pager-jump input {
   width: 56px;
   height: 30px;
+  box-sizing: border-box;
   border-radius: 8px;
   border: 1px solid rgba(201, 162, 39, 0.32);
   background: rgba(0, 0, 0, 0.28);
@@ -16806,8 +16815,10 @@ body.rail-collapsed .hm-page {
   text-align: center;
   font-family: inherit;
   font-size: 12px;
+  /* 右侧给框内的 ▲/▼ 让位：数字在剩余区域居中，不会被箭头压住 */
+  padding: 0 19px 0 1px;
   /* 去掉浏览器自带的上下小箭头：它的加减方向与翻页方向相反，
-     统一用右侧的 ▲/▼（上=上一页，下=下一页） */
+     统一用框内的 ▲/▼（上=数值 +1，下=数值 -1） */
   appearance: textfield;
   -moz-appearance: textfield;
 }
@@ -16818,30 +16829,37 @@ body.rail-collapsed .hm-page {
   margin: 0;
 }
 
-/* 翻页步进：上箭头=上一页，下箭头=下一页，上下排列 */
+/* 翻页步进：贴在数字框内部右侧，与数字并排；上=+1，下=-1 */
 .lib-pager-steps {
-  display: inline-flex;
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 18px;
+  display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-left: 2px;
+  gap: 1px;
+  border-left: 1px solid rgba(201, 162, 39, 0.22);
+  border-radius: 0 7px 7px 0;
+  overflow: hidden;
 }
 .lib-pager-steps button {
-  width: 22px;
-  height: 14px;
-  display: inline-flex;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 4px;
-  border: 1px solid rgba(201, 162, 39, 0.32);
-  background: rgba(255, 255, 255, 0.05);
+  border: 0;
+  background: transparent;
   color: #e8d8b8;
-  font-size: 8px;
+  font-size: 7.5px;
   line-height: 1;
   cursor: pointer;
 }
 .lib-pager-steps button:hover:not(:disabled) {
-  background: rgba(201, 162, 39, 0.16);
+  background: rgba(201, 162, 39, 0.22);
   color: #fff2d0;
 }
 .lib-pager-steps button:disabled {
@@ -21129,11 +21147,15 @@ body.dv-open .hm-page {
     <div class="lib-shelf-pager" id="libPager" hidden>
       <button type="button" class="lib-pager-btn" id="libPagerPrev">‹ 上一页</button>
       <span class="lib-pager-info" id="libPagerInfo">第 1 / 1 页</span>
-      <label class="lib-pager-jump" for="libPagerInput">跳到 <input type="number" id="libPagerInput" min="1" step="1" inputmode="numeric"> 页</label>
-      <span class="lib-pager-steps" aria-label="按页翻动">
-        <button type="button" id="libPagerUp" title="数值 +1（下一页）" aria-label="数值 +1（下一页）">▲</button>
-        <button type="button" id="libPagerDown" title="数值 -1（上一页）" aria-label="数值 -1（上一页）">▼</button>
-      </span>
+      <label class="lib-pager-jump" for="libPagerInput">跳到
+        <span class="lib-pager-box">
+          <input type="number" id="libPagerInput" min="1" step="1" inputmode="numeric">
+          <span class="lib-pager-steps" aria-label="按页翻动">
+            <button type="button" id="libPagerUp" title="数值 +1（下一页）" aria-label="数值 +1（下一页）">▲</button>
+            <button type="button" id="libPagerDown" title="数值 -1（上一页）" aria-label="数值 -1（上一页）">▼</button>
+          </span>
+        </span>
+      页</label>
       <button type="button" class="lib-pager-btn" id="libPagerNext">下一页 ›</button>
     </div>
 
