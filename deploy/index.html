@@ -71457,6 +71457,9 @@ window.HMChat = (function () {
       ? window.HMSync.pullApi().catch(function () { return null; })
       : Promise.resolve(null);
     return fresh.then(function () {
+      /* 模型留空时按真实清单自动选（不覆盖用户已填的模型名） */
+      return autoPickModelIfNeeded(p);
+    }).then(function () {
       var doc = getApiDoc();
       var prefs = App.state.prefs = App.state.prefs || {};
       var providers = App.state.providers = App.state.providers || {};
@@ -71476,7 +71479,11 @@ window.HMChat = (function () {
       if (p.billing === 'free' || p.billing === 'paid') doc.billing[id] = p.billing;
 
       if (id.indexOf('__rayin__') === 0) {
-        var isBanana = id === '__rayin__:banana';
+        /* 通道跟着模型名/地址形态走，而不是跟着卡片 id：
+         * /v1beta 且 Gemini 模型 → banana；gpt-image* → OpenAI 兼容出图 */
+        var modelIsGemini = /^gemini/i.test(String(p.model || ''));
+        var baseIsNative = /\/v\d+(alpha|beta)\d*$/i.test(String(p.base || ''));
+        var isBanana = modelIsGemini && (baseIsNative || !/^gpt-image/i.test(String(p.model || '')));
         var prevRayin = doc.rayin || {};
         var rayinKey = p.key || prevProvider.key || '';
         prefs.rayin = { base: p.base, key: rayinKey };
@@ -71624,6 +71631,36 @@ window.HMChat = (function () {
   }
 
   function isImageModelId(id) { return /image|imagen|dall|flux|seedream|banana/i.test(String(id || '')); }
+
+  /* 保存时模型留空：按这条 Key 的真实 /models 清单自动选一个能出图的模型。
+   * 只填空值，用户手填的模型（含 gpt-image-2）一律不覆盖。 */
+  var API_IMG_PREF = ['gpt-image-2.5-flare', 'gpt-image-2', 'gpt-image-2.6-flare',
+    'gpt-image-2.6-sunburst', 'gpt-image-2.5-sunburst',
+    'gemini-3.1-flash-image', 'gemini-2.5-flash-image', 'gemini-3-pro-image'];
+
+  function autoPickModelIfNeeded(p) {
+    if (String((p && p.model) || '').trim() || !p || !p.base) return Promise.resolve();
+    var root = apiBaseNormalize(p.base).base;
+    var native = /\/v\d+(alpha|beta)\d*$/i.test(root);
+    if (!native && !/\/v\d+[a-z]*$/i.test(root)) root = root.replace(/\/+$/, '') + '/v1';
+    var headers = p.key ? (native ? { 'x-goog-api-key': p.key } : { 'Authorization': 'Bearer ' + p.key }) : {};
+    return fetch(root + '/models', { method: 'GET', headers: headers }).then(function (r) {
+      if (!r.ok) return null;
+      return r.json();
+    }).then(function (data) {
+      var ids = ((data && (data.data || data.models)) || []).map(function (m) {
+        return String((m && (m.id || m.name)) || '').replace(/^models\//, '');
+      }).filter(Boolean);
+      var imgs = ids.filter(isImageModelId);
+      if (!imgs.length) return;
+      var chosen = '';
+      for (var i = 0; i < API_IMG_PREF.length && !chosen; i += 1) {
+        if (imgs.indexOf(API_IMG_PREF[i]) >= 0) chosen = API_IMG_PREF[i];
+      }
+      if (!chosen) chosen = imgs[0];
+      p.model = chosen;
+    }).catch(function () {});
+  }
 
   function testApi(id, base, key, model, engine) {
     var App = window.HMApp;
@@ -72246,8 +72283,8 @@ window.HMChat = (function () {
             /* 本机已写入，重渲染让绑定/表格立即生效，同时把云端失败原因留在卡片上 */
             renderApiPanel(body);
             var msg2 = document.querySelector('.hm-api-card[data-api="' + p.id + '"] [data-msg]');
-            if (msg2) { msg2.textContent = '本机已保存；云端失败：' + reason; msg2.className = 'hm-api-foot-msg is-bad'; }
-            if (window.HMApp && HMApp.toast) HMApp.toast('已保存到本机；云端失败：' + reason, 'error');
+            if (msg2) { msg2.textContent = '仅本机生效：已保存到本机，云端失败：' + reason; msg2.className = 'hm-api-foot-msg is-bad'; }
+            if (window.HMApp && HMApp.toast) HMApp.toast('仅本机生效：已保存到本机，云端失败：' + reason, 'error');
           } else {
             saveBtn.disabled = false;
             if (msgEl) { msgEl.textContent = '保存失败：' + reason; msgEl.className = 'hm-api-foot-msg is-bad'; }
@@ -72283,7 +72320,7 @@ window.HMChat = (function () {
       else payload[k] = el.value.trim();
     });
     if (!payload.base) return Promise.reject(new Error('接口地址不能为空'));
-    if (!payload.model) return Promise.reject(new Error('模型 ID 不能为空'));
+    /* 模型可以留空：保存时会按这条 Key 的真实清单自动选一个能出图的模型 */
     return saveApiCard(payload);
   }
 
@@ -72351,7 +72388,7 @@ window.HMChat = (function () {
   window.HMCloudReload.api = function () { resetApiDoc(); };
 
   /* 全局暴露 */
-  window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin, testApi: testApi };
+  window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin, testApi: testApi, saveApiCard: saveApiCard, autoPickModelIfNeeded: autoPickModelIfNeeded };
 })();
 
 
