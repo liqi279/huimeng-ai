@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-14T08:17:39.947Z",
+  "generatedAt": "2026-11-15T09:07:21.356Z",
   "source": "huimeng_library.books",
-  "total": 497,
+  "total": 554,
   "areas": {
-    "paint": 481,
+    "paint": 538,
     "ref": 16
   },
   "books": [
@@ -21551,6 +21551,65 @@
       "coverBytes": 132964
     },
     {
+      "id": "lib-mwhkvue1-b5780f",
+      "sortNo": 463,
+      "title": "Mitch Leeuwe解剖绘画系列4册合集",
+      "author": "Mitch Leeuwe",
+      "intro": "人气画师Mitch Leeuwe的一套以解刨为基础的人体绘画教程。",
+      "pageCount": 157,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[Mitch Leeuwe]Anatomy how to draw the Heads",
+          "page": 1
+        },
+        {
+          "title": "[Mitch Leeuwe]Anatomy how to draw the Lower body",
+          "page": 45
+        },
+        {
+          "title": "[Mitch Leeuwe]Anatomy how to draw the Upper body",
+          "page": 78
+        },
+        {
+          "title": "[Mitch Leeuwe]How to Learn Anatomy",
+          "page": 111
+        }
+      ],
+      "pdfKey": "library/books/464-book.pdf",
+      "pdfBytes": 90459431,
+      "coverKey": "library/covers/464-book-cover.jpg",
+      "coverBytes": 127740
+    },
+    {
+      "id": "lib-mwhkqd1h-b56742",
+      "sortNo": 465,
+      "title": "强壮肌肉的画法",
+      "author": "[日] 虎杖鷲 上野綺士 KiKi GomTang",
+      "intro": "原名《強い筋肉の描き方》，“超描けるシリーズ”系列的一本，教你画肌肉猛男。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/466-book.pdf",
+      "pdfBytes": 72941065,
+      "coverKey": "library/covers/466-book-cover.jpg",
+      "coverBytes": 235707
+    },
+    {
+      "id": "lib-mwhkzs3q-4f490e",
+      "sortNo": 466,
+      "title": "游戏画师教导！奇幻插画的基本规则和迷人的技巧",
+      "author": "[日] 天野英",
+      "intro": "原名《ゲーム絵師が教える！ ファンタジーイラストの基本ルールと魅せるテクニック（萌え絵の教科書 vol.5）》，画师天野英的一本奇幻角色漫画教程。",
+      "pageCount": 165,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/467-book.pdf",
+      "pdfBytes": 145881256,
+      "coverKey": "library/covers/467-book-cover.jpg",
+      "coverBytes": 264389
+    },
+    {
       "id": "lib-mwg1si2k-dc8cf1",
       "sortNo": 467,
       "title": "萌之绘的教科书 增补修订版+汉化版",
@@ -21565,6 +21624,299 @@
       "coverBytes": 231520
     },
     {
+      "id": "lib-mwhl0x7m-4d9d05",
+      "sortNo": 468,
+      "title": "透视学校 迅速提高你的绘画技巧",
+      "author": "[日] 椎名見早子",
+      "intro": "原名《パース塾―画力がメキメキUPする!いちばん簡単な遠近法講座 イラスト・漫画・風景画、すべて》，一本简明透视入门教程，适用于插图、漫画、风景，一切。",
+      "pageCount": 132,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/469-book.pdf",
+      "pdfBytes": 172942906,
+      "coverKey": "library/covers/469-book-cover.jpg",
+      "coverBytes": 269025
+    },
+    {
+      "id": "lib-mwhltpf8-c9a195",
+      "sortNo": 469,
+      "title": "下田スケッチ 绘画入门+人物篇",
+      "author": "[日] 下田スケッチ",
+      "intro": "原名《下田スケッチ描き方本》、《下田スケッチ人物本》，推特画师下田スケッチ(simodasketch)的两本漫画教程。",
+      "pageCount": 94,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/470-book.pdf",
+      "pdfBytes": 27584853,
+      "coverKey": "library/covers/470-book-cover.jpg",
+      "coverBytes": 56720
+    },
+    {
+      "id": "lib-mwhlurks-69a27e",
+      "sortNo": 470,
+      "title": "优质作画 100位专业人士教你画出好看的人物",
+      "author": "[日] いちあっぷ編集部",
+      "intro": "原名《映え作画 プロ100人が教える魅力的なキャラ作り》，本书分为两部分，第一部分介绍了画出好看人物需要的技巧，第二部分介绍了七位人气画师(さくしゃ2、さとうぽて、なっく、ゆつもえ、ひざのきんにく、天城望、灸場メロ)的独家绘制技巧。",
+      "pageCount": 186,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/471-book.pdf",
+      "pdfBytes": 73915368,
+      "coverKey": "library/covers/471-book-cover.jpg",
+      "coverBytes": 360703
+    },
+    {
+      "id": "lib-mwhl2gvd-65b424",
+      "sortNo": 471,
+      "title": "通过七种颜色的主题插画学绘画技巧，从人到花、天空、水和星星",
+      "author": "[日] 村カルキ",
+      "intro": "原名《7色のテーマイラストで学ぶ 塗りテクニック 人物から花・空・水・星まで》，日本画师村カルキ(murakaruki)的一本具有强烈个人风格的漫画教程。",
+      "pageCount": 160,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/472-book.pdf",
+      "pdfBytes": 132435460,
+      "coverKey": "library/covers/472-book-cover.jpg",
+      "coverBytes": 330395
+    },
+    {
+      "id": "lib-mwhlungw-b4eb23",
+      "sortNo": 472,
+      "title": "为第一次画画的人画动漫人物",
+      "author": "[日] ユニバーサル・パブリシング",
+      "intro": "原名《初めて描く人のための漫画キャラデッサン》，一本漫画人物教程。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "目次",
+          "page": 4
+        },
+        {
+          "title": "はじめに",
+          "page": 6
+        },
+        {
+          "title": "Chapter0 デジタルで色を塗る",
+          "page": 7
+        },
+        {
+          "title": "Chapter1 トレースしてみよう",
+          "page": 43
+        },
+        {
+          "title": "Chapter2 模写してみよう",
+          "page": 73
+        },
+        {
+          "title": "Chapter3 見ないで描くための準備",
+          "page": 93
+        },
+        {
+          "title": "Chapter4 見ないで描くための注意",
+          "page": 133
+        },
+        {
+          "title": "Chapter5 女の子を描いてみよう",
+          "page": 163
+        },
+        {
+          "title": "あとがき／参考文献",
+          "page": 176
+        },
+        {
+          "title": "イラストレーターの紹介",
+          "page": 177
+        }
+      ],
+      "pdfKey": "library/books/473-book.pdf",
+      "pdfBytes": 73831180,
+      "coverKey": "library/covers/473-book-cover.jpg",
+      "coverBytes": 244136
+    },
+    {
+      "id": "lib-mwhlv2uw-d4ee1b",
+      "sortNo": 473,
+      "title": "插图、漫画的人物绘画教室",
+      "author": "[日] 松岡伸治",
+      "intro": "原名《イラスト、漫画のためのキャラクター描画教室》，日本画师松岡伸治(松冈伸治)的一本漫画人物绘制教程。",
+      "pageCount": 172,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/474-book.pdf",
+      "pdfBytes": 62163814,
+      "coverKey": "library/covers/474-book-cover.jpg",
+      "coverBytes": 253752
+    },
+    {
+      "id": "lib-mwhlxwfs-031b88",
+      "sortNo": 474,
+      "title": "枪与刀战斗姿势风格图鉴",
+      "author": "[韩] 스튜디오 하드 디",
+      "intro": "原名《총&나이프 격투포즈 스타일도감》，一本战斗姿势集，大量的真人及武器的多角度参考图例，图鉴类教程，语言完全不妨碍参考。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/475-book.pdf",
+      "pdfBytes": 280130827,
+      "coverKey": "library/covers/475-book-cover.jpg",
+      "coverBytes": 270960
+    },
+    {
+      "id": "lib-mwhl1n7d-8eae7e",
+      "sortNo": 475,
+      "title": "战斗美少女角色画法：武器x萌角色x逼真的攻击姿势！",
+      "author": "[日] 伊原達矢",
+      "intro": "原名《戦う美少女キャラクターの描き方： 武器×萌えキャラ×リアルな攻撃ポーズを描く!》，介绍了使用多种常用武器的战斗美少女画法，清晰度不是很高。",
+      "pageCount": 90,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/476-book.pdf",
+      "pdfBytes": 35161924,
+      "coverKey": "library/covers/476-book-cover.jpg",
+      "coverBytes": 70540
+    },
+    {
+      "id": "lib-mwhl22il-3aff44",
+      "sortNo": 477,
+      "title": "透视法:使用网格进行室内设计素描",
+      "author": "Donald Gerds",
+      "intro": "原名《PERSPECTIVE: Using the Grid System for Interior Design Sketching》，一本室内场景透视教程",
+      "pageCount": 60,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/478-book.pdf",
+      "pdfBytes": 21923416,
+      "coverKey": "library/covers/478-book-cover.jpg",
+      "coverBytes": 164619
+    },
+    {
+      "id": "lib-mwhl43g3-7687f9",
+      "sortNo": 478,
+      "title": "手游(Soshage)画师技能培训讲座",
+      "author": "[日] つくぐ  Garuku さくらいだい",
+      "intro": "原名《ソシャゲ絵師スキルアップ講座》，三位画师“つくぐ 、Garuku、さくらいだい”合作推出的一本手游(Soshage)风格插画教程。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/479-book.pdf",
+      "pdfBytes": 46070865,
+      "coverKey": "library/covers/479-book-cover.jpg",
+      "coverBytes": 330322
+    },
+    {
+      "id": "lib-mwhl5en3-abe496",
+      "sortNo": 479,
+      "title": "向专业画师学习 提升特效效果 CLIP STUDIO PAINT篇",
+      "author": "[日] パルプライド",
+      "intro": "原名《プロ絵師の技を完全マスター エフェクト上達術 決定版 CLIP STUDIO PAINT PRO/EX対応》，一本CSP特效（自然界的火、水、雪、风、雷等等）表现教程，附带特典源文件。",
+      "pageCount": 209,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/480-book.pdf",
+      "pdfBytes": 63706374,
+      "coverKey": "library/covers/480-book-cover.jpg",
+      "coverBytes": 368668
+    },
+    {
+      "id": "lib-mwhl6g7t-6f9b1c",
+      "sortNo": 480,
+      "title": "Copic马克笔入门 可爱的角色和身边的小物品",
+      "author": "[日] 川名すず 角丸つぶら（角丸圆）",
+      "intro": "原名《コピックで描く基本 可愛いキャラと身の回りの小物たち》，一本非常可爱的Copic马克笔绘制教程",
+      "pageCount": 154,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/481-book.pdf",
+      "pdfBytes": 97853054,
+      "coverKey": "library/covers/481-book-cover.jpg",
+      "coverBytes": 247046
+    },
+    {
+      "id": "lib-mwhlvy2k-239233",
+      "sortNo": 481,
+      "title": "漫画人物和世界观脱颖而出！配色方案创意书",
+      "author": "[日] 都外川八恵",
+      "intro": "原名《マンガキャラ&世界観が引き立つ! 配色アイデア帳》，多位画师“朝日川、おとうふ、くろでこ、こんぴ、佐倉おりこ、竹村ケイ、中野、那流、橋本洸介、二尋鴇彦、丸谷朋弘、ゆのひと”合作推出的一本配色思路参考教程。",
+      "pageCount": 194,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/482-book.pdf",
+      "pdfBytes": 49008121,
+      "coverKey": "library/covers/482-book-cover.jpg",
+      "coverBytes": 318334
+    },
+    {
+      "id": "lib-mwhl6c9z-644831",
+      "sortNo": 482,
+      "title": "插图最快进步法",
+      "author": "[日] さいとうなおき（齋藤 直葵）",
+      "intro": "原名《イラスト最速上達法》，日本插画师齋藤直葵(斋藤直葵)的一本插图改进教程，文字向。",
+      "pageCount": 245,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/483-book.pdf",
+      "pdfBytes": 46751875,
+      "coverKey": "library/covers/483-book-cover.jpg",
+      "coverBytes": 218847
+    },
+    {
+      "id": "lib-mwhl80ac-28b5cd",
+      "sortNo": 483,
+      "title": "用你的手机作画 第一本数码绘指导手册",
+      "author": "[日](萌)表現探求サークル",
+      "intro": "原名《スマホで描く! はじめてのデジ絵ガイドブック》，一本智能手机作画指南，包括各种APP的介绍及使用。",
+      "pageCount": 162,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/484-book.pdf",
+      "pdfBytes": 83402037,
+      "coverKey": "library/covers/484-book-cover.jpg",
+      "coverBytes": 247356
+    },
+    {
+      "id": "lib-mwhl8oza-dc49cf",
+      "sortNo": 485,
+      "title": "极尽表现! 眼睛的画法",
+      "author": "[日]末冨正直、秋赤音、ちょん＊、金平東、SPIdeR.、湖木マウ",
+      "intro": "原名《表現を極める！目の描き方》，多位画师(末冨正直、秋赤音、ちょん＊、金平東、SPIdeR.、湖木マウ)合作推出的一本眼睛绘制教程。",
+      "pageCount": 177,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/486-book.pdf",
+      "pdfBytes": 91665895,
+      "coverKey": "library/covers/486-book-cover.jpg",
+      "coverBytes": 186241
+    },
+    {
+      "id": "lib-mwhlwf2l-b378ab",
+      "sortNo": 486,
+      "title": "完整解释 迅速提高! 手和脚的画法：让人物更逼真、更有活力",
+      "author": "[日]アクアスター",
+      "intro": "原名《完全解説 すぐ上達！ 手と足の描き方：キャラクターをもっとリアルに、ぐんと躍動的に描く》，一本很生动的手脚画法教程。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/487-book.pdf",
+      "pdfBytes": 65882511,
+      "coverKey": "library/covers/487-book-cover.jpg",
+      "coverBytes": 235915
+    },
+    {
+      "id": "lib-mwhln66u-18c560",
+      "sortNo": 488,
+      "title": "不复杂的绘画练习法",
+      "author": "[日]松村上久郎",
+      "intro": "原名《ややこしくない絵の描き方》，画师松村上久郎的一本漫画进阶，讲解如何进行分解、抓重点进行绘制练习。",
+      "pageCount": 306,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/489-book.pdf",
+      "pdfBytes": 326182075,
+      "coverKey": "library/covers/489-book-cover.jpg",
+      "coverBytes": 284556
+    },
+    {
       "id": "lib-mwg1tbci-6ef209",
       "sortNo": 490,
       "title": "Space Drawing: Perspective",
@@ -21577,6 +21929,389 @@
       "pdfBytes": 197848073,
       "coverKey": "library/covers/491-book-cover.jpg",
       "coverBytes": 321694
+    },
+    {
+      "id": "lib-mwhlavgz-c7e43f",
+      "sortNo": 491,
+      "title": "效果图样 运动/流动/纹理的表现目录",
+      "author": "[日] 松岡伸治",
+      "intro": "原名《エフェクトグラフィックス　動き・流れ・質感の表現カタログ》，日本画师松岡伸治(松冈伸治)的一本“火焰、龙卷风、水雾、闪电”等等常见现象的表现教程。",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "扉",
+          "page": 4
+        },
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "目次",
+          "page": 6
+        },
+        {
+          "title": "●Chapter1 エフェクトの基本",
+          "page": 8
+        },
+        {
+          "title": "エフェクトの基本",
+          "page": 9
+        },
+        {
+          "title": "エフェクト表現の種類",
+          "page": 11
+        },
+        {
+          "title": "エフェクトと形",
+          "page": 13
+        },
+        {
+          "title": "エフェクトと色",
+          "page": 15
+        },
+        {
+          "title": "●Chapter2 光系のエフェクト",
+          "page": 16
+        },
+        {
+          "title": "「ヱヴァンゲリヲン新劇場版：序 EVANGELION:1.11 YOU ARE (NOT) ALONE.」",
+          "page": 17
+        },
+        {
+          "title": "「少女☆歌劇 レヴュースタァライト」",
+          "page": 19
+        },
+        {
+          "title": "「蒼穹のファフナー EXODUS」",
+          "page": 23
+        },
+        {
+          "title": "光の基本表現",
+          "page": 27
+        },
+        {
+          "title": "光の応用表現",
+          "page": 29
+        },
+        {
+          "title": "光の描き方",
+          "page": 33
+        },
+        {
+          "title": "雷の描き方",
+          "page": 34
+        },
+        {
+          "title": "ビームの描き方",
+          "page": 35
+        },
+        {
+          "title": "放電の描き方",
+          "page": 37
+        },
+        {
+          "title": "魔法の描き方",
+          "page": 38
+        },
+        {
+          "title": "星々の描き方",
+          "page": 39
+        },
+        {
+          "title": "炸裂光の描き方",
+          "page": 40
+        },
+        {
+          "title": "オーロラの描き方",
+          "page": 41
+        },
+        {
+          "title": "●Chapter3 炎系のエフェクト",
+          "page": 42
+        },
+        {
+          "title": "「つくしのムック」",
+          "page": 43
+        },
+        {
+          "title": "「どろろ」",
+          "page": 45
+        },
+        {
+          "title": "「アズールレーン」",
+          "page": 49
+        },
+        {
+          "title": "炎の基本表現",
+          "page": 53
+        },
+        {
+          "title": "炎の応用表現",
+          "page": 55
+        },
+        {
+          "title": "炎の描き方",
+          "page": 57
+        },
+        {
+          "title": "火球の描き方",
+          "page": 59
+        },
+        {
+          "title": "火炎放射の描き方",
+          "page": 60
+        },
+        {
+          "title": "発砲炎の描き方",
+          "page": 61
+        },
+        {
+          "title": "●Chapter4 爆発系のエフェクト",
+          "page": 62
+        },
+        {
+          "title": "「Under the Dog」",
+          "page": 63
+        },
+        {
+          "title": "「アルドノア・ゼロ」",
+          "page": 67
+        },
+        {
+          "title": "「フリップフラッパーズ」",
+          "page": 69
+        },
+        {
+          "title": "爆発の基本表現",
+          "page": 71
+        },
+        {
+          "title": "爆発の応用表現",
+          "page": 73
+        },
+        {
+          "title": "爆発の描き方",
+          "page": 75
+        },
+        {
+          "title": "衝撃波の描き方",
+          "page": 76
+        },
+        {
+          "title": "破砕の描き方",
+          "page": 77
+        },
+        {
+          "title": "噴火の描き方",
+          "page": 78
+        },
+        {
+          "title": "超爆発の描き方",
+          "page": 79
+        },
+        {
+          "title": "●Chapter5 煙・雲系のエフェクト",
+          "page": 80
+        },
+        {
+          "title": "「Under the Dog」",
+          "page": 81
+        },
+        {
+          "title": "「つくしのムック」",
+          "page": 85
+        },
+        {
+          "title": "煙・雲の基本表現",
+          "page": 87
+        },
+        {
+          "title": "煙・雲の応用表現",
+          "page": 89
+        },
+        {
+          "title": "煙の描き方",
+          "page": 91
+        },
+        {
+          "title": "線状の煙の描き方",
+          "page": 92
+        },
+        {
+          "title": "積雲の描き方",
+          "page": 93
+        },
+        {
+          "title": "高積雲の描き方",
+          "page": 94
+        },
+        {
+          "title": "巻雲の描き方",
+          "page": 95
+        },
+        {
+          "title": "●Chapter6 水系のエフェクト",
+          "page": 96
+        },
+        {
+          "title": "「夜明け告げるルーのうた」",
+          "page": 97
+        },
+        {
+          "title": "「アンクレットと蒼い海」",
+          "page": 101
+        },
+        {
+          "title": "「the_Filmament」",
+          "page": 107
+        },
+        {
+          "title": "水の基本表現",
+          "page": 111
+        },
+        {
+          "title": "水の応用表現",
+          "page": 113
+        },
+        {
+          "title": "水の描き方（アタリの描き方）",
+          "page": 115
+        },
+        {
+          "title": "水の描き方（流水の描き方）",
+          "page": 116
+        },
+        {
+          "title": "水しぶきの描き方",
+          "page": 117
+        },
+        {
+          "title": "水面の描き方",
+          "page": 118
+        },
+        {
+          "title": "粘液・油の描き方",
+          "page": 119
+        },
+        {
+          "title": "●Chapter7 風系のエフェクト",
+          "page": 120
+        },
+        {
+          "title": "アニメ「フレームアームズ・ガール」",
+          "page": 121
+        },
+        {
+          "title": "「賭ケグルイxx」",
+          "page": 125
+        },
+        {
+          "title": "「For キミに贈る歌」",
+          "page": 129
+        },
+        {
+          "title": "「DANGER」",
+          "page": 133
+        },
+        {
+          "title": "風の基本表現",
+          "page": 137
+        },
+        {
+          "title": "風の応用表現",
+          "page": 139
+        },
+        {
+          "title": "風の描き方",
+          "page": 141
+        },
+        {
+          "title": "竜巻の描き方",
+          "page": 142
+        },
+        {
+          "title": "なびきの描き方",
+          "page": 143
+        },
+        {
+          "title": "舞う花びらの描き方",
+          "page": 144
+        },
+        {
+          "title": "スピード感の描き方",
+          "page": 145
+        },
+        {
+          "title": "参考文献・イラスト制作",
+          "page": 146
+        },
+        {
+          "title": "奥付",
+          "page": 147
+        }
+      ],
+      "pdfKey": "library/books/492-book.pdf",
+      "pdfBytes": 81806837,
+      "coverKey": "library/covers/492-book-cover.jpg",
+      "coverBytes": 296374
+    },
+    {
+      "id": "lib-mwhllirq-ed1200",
+      "sortNo": 493,
+      "title": "迷人男子的画法",
+      "author": "[日] えびも",
+      "intro": "原名《愛され男子の描き方》，日本插画师えびも的一本美男子绘制教程。",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/494-book.pdf",
+      "pdfBytes": 231057349,
+      "coverKey": "library/covers/494-book-cover.jpg",
+      "coverBytes": 386758
+    },
+    {
+      "id": "lib-mwhlrwie-e0f16e",
+      "sortNo": 494,
+      "title": "举手投足间魅力尽显 上班族插画解析集",
+      "author": "[日] ma2",
+      "intro": "原名《サラリーマンイラストブック 何気ないしぐさ135》，日本插画师ma2的一本上班族绘制教程，教程内容不多，比起教程更像是画集。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/495-book.pdf",
+      "pdfBytes": 330913962,
+      "coverKey": "library/covers/495-book-cover.jpg",
+      "coverBytes": 218256
+    },
+    {
+      "id": "lib-mwhlp4cg-4f8ef7",
+      "sortNo": 495,
+      "title": "斋藤直葵的插画修改教室",
+      "author": "[日] さいとうなおき（齋藤 直葵）",
+      "intro": "原名《さいとうなおきのもったいない！イラスト添削講座》，日本插画师齋藤直葵(斋藤直葵)的一本插图改进指南，偏文字向。",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/496-book.pdf",
+      "pdfBytes": 81503496,
+      "coverKey": "library/covers/496-book-cover.jpg",
+      "coverBytes": 269023
+    },
+    {
+      "id": "lib-mwhls3hx-f2b5be",
+      "sortNo": 499,
+      "title": "动画作画的基础~人物与机器人~",
+      "author": "[日] 尾澤直志(尾泽直志)",
+      "intro": "原名《アニメ作画のきほん (～キャラクター＆メカ～)》，日本动画大师尾澤直志(尾泽直志)的一本动画作画入门教程。",
+      "pageCount": 202,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/500-book.pdf",
+      "pdfBytes": 97188069,
+      "coverKey": "library/covers/500-book-cover.jpg",
+      "coverBytes": 222763
     },
     {
       "id": "lib-mwg2gc0k-677636",
@@ -24210,6 +24945,859 @@
       "pdfBytes": 194692678,
       "coverKey": "library/covers/541-book-cover.jpg",
       "coverBytes": 280506
+    },
+    {
+      "id": "lib-mwg4xjj3-c45451",
+      "sortNo": 541,
+      "title": "姿势的定理",
+      "author": "[日] 篠房六郎",
+      "intro": "原名《ポーズの定理》，一本非常实用的人物姿势参考教程，附带一本摘要以及CSP用的笔刷。",
+      "pageCount": 800,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/542-book.pdf",
+      "pdfBytes": 1450369783,
+      "coverKey": "library/covers/542-book-cover.jpg",
+      "coverBytes": 215764
+    },
+    {
+      "id": "lib-mwhklfvl-4d13be",
+      "sortNo": 542,
+      "title": "肌肉男的画法",
+      "author": "[日] ユニバーサル・パブリシング",
+      "intro": "原名《筋肉男子の描き方》，男性肌肉绘制教程。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/543-book.pdf",
+      "pdfBytes": 122309446,
+      "coverKey": "library/covers/543-book-cover.jpg",
+      "coverBytes": 181452
+    },
+    {
+      "id": "lib-mwhkmct3-c21c88",
+      "sortNo": 543,
+      "title": "令人着迷的男性肌肉的画法",
+      "author": "[日] 橘亨、MRI、京塚アラキ、江川仮名子、パルプライド",
+      "intro": "原名《魅せる！ 男の筋肉を描く》，五位画师（ 橘亨、MRI、京塚アラキ、江川仮名子、パルプライド）合作推出的一本男性肌肉绘制教程",
+      "pageCount": 114,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/544-book.pdf",
+      "pdfBytes": 98837783,
+      "coverKey": "library/covers/544-book-cover.jpg",
+      "coverBytes": 188007
+    },
+    {
+      "id": "lib-mwhknc9p-f7d606",
+      "sortNo": 544,
+      "title": "幻想角色的绘制教室 用数码绘制令世界着迷的角色技法",
+      "author": "[日] つよ丸 七原しえ もくり 山村れぇ",
+      "intro": "原名《「ファンタジーキャラ」描き方教室　デジタルで描く！ 世界を魅せるキャラの技術》，四位画师“つよ丸、七原しえ、もくり、山村れぇ”合作推出一本幻想系人物绘制教程，使用的是CSP与PS。",
+      "pageCount": 183,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/545-book.pdf",
+      "pdfBytes": 102115352,
+      "coverKey": "library/covers/545-book-cover.jpg",
+      "coverBytes": 382174
+    },
+    {
+      "id": "lib-mwhko27b-4fd8c2",
+      "sortNo": 545,
+      "title": "描绘中世纪欧洲的风景",
+      "author": "[日] J・タネダ 屋久木雄太 ユウキナオヒロ",
+      "intro": "原名《中世ヨーロッパの風景を描く》，一本场景绘制教程。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/546-book.pdf",
+      "pdfBytes": 71645461,
+      "coverKey": "library/covers/546-book-cover.jpg",
+      "coverBytes": 295657
+    },
+    {
+      "id": "lib-mwhkowa2-fc4f91",
+      "sortNo": 546,
+      "title": "Q版角色的进阶法则 颜、表情、体型、骨骼、姿势、道具等",
+      "author": "[日] 石塚綾香 きん太",
+      "intro": "原名《今にも動き出しそうな ミニキャラ 上達の法則 顔、表情、体型、骨格、ポーズ、アイテムなど、リアルなメイキングから学ぶ上達術が満載!!》，一本风格比较时髦的Q版教程",
+      "pageCount": 188,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/547-book.pdf",
+      "pdfBytes": 86752726,
+      "coverKey": "library/covers/547-book-cover.jpg",
+      "coverBytes": 276653
+    },
+    {
+      "id": "lib-mwhkpgch-e9d6db",
+      "sortNo": 547,
+      "title": "偶像服装设计图鉴",
+      "author": "[日] kyachi",
+      "intro": "原名《アイドル衣装デザイン図鑑》，\" 超描けるシリーズ\"系列的一本，服饰设计和绘制教程。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/548-book.pdf",
+      "pdfBytes": 43104351,
+      "coverKey": "library/covers/548-book-cover.jpg",
+      "coverBytes": 274034
+    },
+    {
+      "id": "lib-mwhkqegh-4adcc2",
+      "sortNo": 548,
+      "title": "角色设计的教科书 在绘制中学习有魅力的人物插图的画法",
+      "author": "[日] 株式会社Playce",
+      "intro": "原名《キャラクターデザインの教科書 メイキングで学ぶ魅力的な人物イラストの描き方》，一本角色设计的进阶教程。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "扉",
+          "page": 4
+        },
+        {
+          "title": "はじめに",
+          "page": 5
+        },
+        {
+          "title": "目次",
+          "page": 6
+        },
+        {
+          "title": "■キャラクターデザインの基礎知識",
+          "page": 8
+        },
+        {
+          "title": "キャラクターとは？",
+          "page": 9
+        },
+        {
+          "title": "キャラクターづくりの流れ",
+          "page": 11
+        },
+        {
+          "title": "インタビュー 水野暁一（セガゲームス）",
+          "page": 15
+        },
+        {
+          "title": "キャラクターデザインのヒント",
+          "page": 17
+        },
+        {
+          "title": "テーマに合わせたキャラクターデザイン",
+          "page": 19
+        },
+        {
+          "title": "■CHAPTER.01 ちゃもーい 音楽ユニットのキャラクター",
+          "page": 22
+        },
+        {
+          "title": "着想／ユニットの感性を具現化する",
+          "page": 24
+        },
+        {
+          "title": "人物設定1／楽曲のイメージをデザインに反映",
+          "page": 25
+        },
+        {
+          "title": "人物設定2／描写に深みをもたせる",
+          "page": 27
+        },
+        {
+          "title": "人物設定3／細部の装飾を考える",
+          "page": 28
+        },
+        {
+          "title": "イメージスケッチ／キャラクターが語る楽曲の世界",
+          "page": 29
+        },
+        {
+          "title": "ラフ／背景の情報量を整理する",
+          "page": 30
+        },
+        {
+          "title": "塗り1／印象的な画面をつくる線の色",
+          "page": 32
+        },
+        {
+          "title": "塗り2／主役を引き立てる配色",
+          "page": 33
+        },
+        {
+          "title": "仕上げ／「整形レイヤー」で完成度を高める",
+          "page": 34
+        },
+        {
+          "title": "・COLUMN MIMI×ミュージックビデオ",
+          "page": 35
+        },
+        {
+          "title": "・INTERVIEW",
+          "page": 37
+        },
+        {
+          "title": "・GALLERY",
+          "page": 39
+        },
+        {
+          "title": "・PROFILE",
+          "page": 43
+        },
+        {
+          "title": "■CHAPTER.02 toi8 カードバトルRPGのキャラクター",
+          "page": 44
+        },
+        {
+          "title": "人物設定1／インスピレーションは愛猫から",
+          "page": 46
+        },
+        {
+          "title": "・COLUMN 文字情報から人物を構築する",
+          "page": 47
+        },
+        {
+          "title": "人物設定2／戦闘力と性格を表す配色",
+          "page": 49
+        },
+        {
+          "title": "ラフ／視線で画面のなかへ誘う",
+          "page": 50
+        },
+        {
+          "title": "下塗り／あどけなさを色で表す",
+          "page": 51
+        },
+        {
+          "title": "塗り1／触感を意識する",
+          "page": 52
+        },
+        {
+          "title": "塗り2／画面の情報量をコントロールする",
+          "page": 54
+        },
+        {
+          "title": "塗り3／キャラクターを際立たせる",
+          "page": 55
+        },
+        {
+          "title": "効果1／テクスチャでつくる手ざわり",
+          "page": 57
+        },
+        {
+          "title": "効果2／偶然の変化を生かす",
+          "page": 58
+        },
+        {
+          "title": "仕上げ／画面の情感を高める",
+          "page": 59
+        },
+        {
+          "title": "・INTERVIEW",
+          "page": 61
+        },
+        {
+          "title": "・GALLERY",
+          "page": 63
+        },
+        {
+          "title": "・PROFILE",
+          "page": 67
+        },
+        {
+          "title": "■SPECIAL INTERVIEW 島田フミカネ",
+          "page": 68
+        },
+        {
+          "title": "■CHAPTER.03 つなこ ゲームのキャラクター",
+          "page": 74
+        },
+        {
+          "title": "人物設定1／変身前の少女",
+          "page": 76
+        },
+        {
+          "title": "人物設定2／性格を動作に反映する",
+          "page": 77
+        },
+        {
+          "title": "人物設定3／1度目の変身は大胆に",
+          "page": 79
+        },
+        {
+          "title": "人物設定4／さらなる進化を遂げた女神",
+          "page": 81
+        },
+        {
+          "title": "イメージスケッチ／動きのある画面とポージング",
+          "page": 83
+        },
+        {
+          "title": "ラフ／イメージのブラッシュアップ",
+          "page": 84
+        },
+        {
+          "title": "作画／顔と仕上げは時間をかけて",
+          "page": 85
+        },
+        {
+          "title": "塗り1／光と影でつくる立体的な髪",
+          "page": 86
+        },
+        {
+          "title": "塗り2／吸い込まれるような瞳",
+          "page": 87
+        },
+        {
+          "title": "仕上げ／レイヤーでつくるいろいろな光",
+          "page": 88
+        },
+        {
+          "title": "・COLUMN キャラクターを3DCG化する",
+          "page": 89
+        },
+        {
+          "title": "・INTERVIEW",
+          "page": 91
+        },
+        {
+          "title": "・GALLERY",
+          "page": 93
+        },
+        {
+          "title": "・PROFILE",
+          "page": 97
+        },
+        {
+          "title": "■CHAPTER.04 うっけ コスプレのためのキャラクター",
+          "page": 98
+        },
+        {
+          "title": "人物設定1／魔女のファッションデザイナー",
+          "page": 100
+        },
+        {
+          "title": "人物設定2／性格の見える衣装デザイン",
+          "page": 101
+        },
+        {
+          "title": "ラフ／主従関係を表す表情とポーズ",
+          "page": 102
+        },
+        {
+          "title": "・COLUMN キャラクターの描き分け",
+          "page": 104
+        },
+        {
+          "title": "塗り1／影はまとめて描画する",
+          "page": 105
+        },
+        {
+          "title": "塗り2／線に表情をつけてメリハリを",
+          "page": 106
+        },
+        {
+          "title": "塗り3／小物と背景で魅せる演出",
+          "page": 107
+        },
+        {
+          "title": "仕上げ／ひとつの絵柄にまとめ上げる",
+          "page": 109
+        },
+        {
+          "title": "・COLUMN 二次元と三次元の往復",
+          "page": 111
+        },
+        {
+          "title": "・INTERVIEW",
+          "page": 113
+        },
+        {
+          "title": "・GALLERY",
+          "page": 115
+        },
+        {
+          "title": "・PROFILE",
+          "page": 119
+        },
+        {
+          "title": "■CHAPTER.05 Anmi 実体験をもとにしたキャラクター",
+          "page": 120
+        },
+        {
+          "title": "着想／アイデアソースは実体験",
+          "page": 122
+        },
+        {
+          "title": "ラフ／画面全体で人物を表現",
+          "page": 123
+        },
+        {
+          "title": "人物設定／個性がつまったアイテム",
+          "page": 124
+        },
+        {
+          "title": "場面設定1／少女をヒロインに変える光",
+          "page": 125
+        },
+        {
+          "title": "場面設定2／間接的な水の表現",
+          "page": 127
+        },
+        {
+          "title": "塗り1／水のなかでの浮遊感",
+          "page": 128
+        },
+        {
+          "title": "塗り2／ブラシを使い分けて質感を出す",
+          "page": 129
+        },
+        {
+          "title": "仕上げ／太陽光がつくり出す光の空間",
+          "page": 130
+        },
+        {
+          "title": "・COLUMN 一枚絵から想像を広げる",
+          "page": 132
+        },
+        {
+          "title": "・INTERVIEW",
+          "page": 133
+        },
+        {
+          "title": "・GALLERY",
+          "page": 135
+        },
+        {
+          "title": "・PROFILE",
+          "page": 139
+        },
+        {
+          "title": "■キャラクター記号学",
+          "page": 140
+        },
+        {
+          "title": "目",
+          "page": 141
+        },
+        {
+          "title": "眉",
+          "page": 145
+        },
+        {
+          "title": "口",
+          "page": 146
+        },
+        {
+          "title": "輪郭",
+          "page": 147
+        },
+        {
+          "title": "肌",
+          "page": 149
+        },
+        {
+          "title": "髪型",
+          "page": 150
+        },
+        {
+          "title": "・COLUMN 目・髪型・パーツの配置でバリエーションをつくる",
+          "page": 155
+        },
+        {
+          "title": "体型",
+          "page": 156
+        },
+        {
+          "title": "配色",
+          "page": 158
+        },
+        {
+          "title": "summary 記号を組み合わせたキャラクター",
+          "page": 159
+        },
+        {
+          "title": "イラストカット作画 Illustrator's Profile",
+          "page": 161
+        },
+        {
+          "title": "○制作協力／参考文献",
+          "page": 162
+        },
+        {
+          "title": "奥付",
+          "page": 163
+        }
+      ],
+      "pdfKey": "library/books/549-book.pdf",
+      "pdfBytes": 83575023,
+      "coverKey": "library/covers/549-book-cover.jpg",
+      "coverBytes": 230068
+    },
+    {
+      "id": "lib-mwhkrclx-42acc3",
+      "sortNo": 549,
+      "title": "创造有魅力的幻想角色的构思&作画技巧",
+      "author": "[日] ぴず",
+      "intro": "原名《魅力的なファンタジーキャラを作る発想&作画テクニック》，一本幻想角色设计教程。",
+      "pageCount": 152,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/550-book.pdf",
+      "pdfBytes": 74124901,
+      "coverKey": "library/covers/550-book-cover.jpg",
+      "coverBytes": 350150
+    },
+    {
+      "id": "lib-mwhks7zr-315654",
+      "sortNo": 550,
+      "title": "动人故事的角色设计和插图的画法",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《物語を動かすキャラクターデザインとイラストの描き方)》，一本角色设计的教程。",
+      "pageCount": 166,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "はじめに",
+          "page": 4
+        },
+        {
+          "title": "本書の使い方",
+          "page": 5
+        },
+        {
+          "title": "CHAPTER.1 キャラクターデザインの基礎知識",
+          "page": 7
+        },
+        {
+          "title": "CHAPTER.2 スマホゲーム用のキャラクターデザイン",
+          "page": 21
+        },
+        {
+          "title": "CHAPTER.3 イラスト用のキャラクターデザイン",
+          "page": 71
+        },
+        {
+          "title": "CHAPTER.4 ファンアートのキャラクターデザイン",
+          "page": 147
+        },
+        {
+          "title": "イラストレーター紹介",
+          "page": 161
+        }
+      ],
+      "pdfKey": "library/books/551-book.pdf",
+      "pdfBytes": 93322488,
+      "coverKey": "library/covers/551-book-cover.jpg",
+      "coverBytes": 268704
+    },
+    {
+      "id": "lib-mwhktr6g-504820",
+      "sortNo": 551,
+      "title": "任何人都能学会！理解构图的书",
+      "author": "[日] 斉藤むねお",
+      "intro": "原名《誰でもかんたん!!構図がわかる本：バランス力アップで漫画・イラストが上手くなる! (○×式で解説)》，日本漫画家斉藤むねお推出的构图教程，非常简单明了。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/552-book.pdf",
+      "pdfBytes": 117353993,
+      "coverKey": "library/covers/552-book-cover.jpg",
+      "coverBytes": 193863
+    },
+    {
+      "id": "lib-mwhkvha9-2ef328",
+      "sortNo": 552,
+      "title": "10天掌握 Live2D模型制作讲座",
+      "author": "[日] fumi",
+      "intro": "原名《10日でマスター Live2Dモデルメイキング講座》，Live2D的入门教程。",
+      "pageCount": 225,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/553-book.pdf",
+      "pdfBytes": 52312142,
+      "coverKey": "library/covers/553-book-cover.jpg",
+      "coverBytes": 285884
+    },
+    {
+      "id": "lib-mwhkz0nu-8596bf",
+      "sortNo": 553,
+      "title": "室田雄平:如何进行热门角色创作",
+      "author": "[日] 室田雄平",
+      "intro": "原名《アニメーター室田雄平が考えるヒットするキャラクターデザインの作り方》，《LoveLive!》角色设计原案与总作画监督的室田雄平的角色设计教程（感觉更像是LL的设定集）。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/554-book.pdf",
+      "pdfBytes": 289094540,
+      "coverKey": "library/covers/554-book-cover.jpg",
+      "coverBytes": 108979
+    },
+    {
+      "id": "lib-mwhkzta1-64d663",
+      "sortNo": 554,
+      "title": "漫画角色的服装资料集 男子休闲服装篇",
+      "author": "[日] アミューズメントメディア総合学院",
+      "intro": "原名《マンガキャラの服装資料集 男子カジュアル編》，マンガ工房推出的一本服装设计参考教程。",
+      "pageCount": 106,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/555-book.pdf",
+      "pdfBytes": 46879241,
+      "coverKey": "library/covers/555-book-cover.jpg",
+      "coverBytes": 297393
+    },
+    {
+      "id": "lib-mwhl16cj-77d79b",
+      "sortNo": 555,
+      "title": "漫画角色的服装资料集 女子民族服装篇",
+      "author": "[日] アミューズメントメディア総合学院",
+      "intro": "原名《マンガキャラの服装資料集 女子民族衣装編》，マンガ工房推出的一本服装设计参考教程。",
+      "pageCount": 106,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/556-book.pdf",
+      "pdfBytes": 100094151,
+      "coverKey": "library/covers/556-book-cover.jpg",
+      "coverBytes": 233978
+    },
+    {
+      "id": "lib-mwhl26mq-8bf82a",
+      "sortNo": 556,
+      "title": "战斗女主角的作画&设计技巧",
+      "author": "[日] 馬越嘉彦、香川久",
+      "intro": "原名《香川久×馬越嘉彦 バトルヒロイン作画＆デザインテクニック》，两位日本原画师马越嘉彦与香川久合作推出的一本漫画教程。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/557-book.pdf",
+      "pdfBytes": 64962055,
+      "coverKey": "library/covers/557-book-cover.jpg",
+      "coverBytes": 276862
+    },
+    {
+      "id": "lib-mwhl48y4-b33ecf",
+      "sortNo": 557,
+      "title": "性感&可爱的女子角色的画法",
+      "author": "[日] 柾見ちえ",
+      "intro": "原名《セクシー&かわいい 女の子キャラの作り方》，日本画师柾見ちえ的一本女性角色绘制教程。",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/558-book.pdf",
+      "pdfBytes": 164305787,
+      "coverKey": "library/covers/558-book-cover.jpg",
+      "coverBytes": 313541
+    },
+    {
+      "id": "lib-mwhl59n2-e9ac1e",
+      "sortNo": 558,
+      "title": "作画修改教室",
+      "author": "[日] 押山清高",
+      "intro": "《作画添削教室》，日本原画师、动画导演押山清高的一本作画批改书，比较硬核。",
+      "pageCount": 169,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/559-book.pdf",
+      "pdfBytes": 61050158,
+      "coverKey": "library/covers/559-book-cover.jpg",
+      "coverBytes": 345819
+    },
+    {
+      "id": "lib-mwhl69rz-225043",
+      "sortNo": 559,
+      "title": "超级技巧!人物绘制技法 如何捕捉线条的本质并展现细节",
+      "author": "[日] Toshi",
+      "intro": "原名《超技巧！人物作画テクニック　ディテールから見えてくる、本当の線の捉え方》，Toshi老师的身体绘制技巧教程。",
+      "pageCount": 162,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/560-book.pdf",
+      "pdfBytes": 64972864,
+      "coverKey": "library/covers/560-book-cover.jpg",
+      "coverBytes": 245501
+    },
+    {
+      "id": "lib-mwhl6nui-9c7390",
+      "sortNo": 560,
+      "title": "加加美高浩全力教授“手”的画法 动人心弦的画风",
+      "author": "[日] 加々美高浩",
+      "intro": "原名《加々美高浩が全力で教える「手」の描き方 圧倒的に心を揺さぶる作画流儀》，日本动画师加加美高浩的一本手部专题绘画教程。",
+      "pageCount": 74,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/561-book.pdf",
+      "pdfBytes": 15366061,
+      "coverKey": "library/covers/561-book-cover.jpg",
+      "coverBytes": 101569
+    },
+    {
+      "id": "lib-mwhl7e8z-00c842",
+      "sortNo": 561,
+      "title": "角色设计★素描Vol.1 少年的描绘方法",
+      "author": "[日] 武蔵野ルネ",
+      "intro": "原名《キャラデザ★デッサンVol.1 少年の描きかた》，一本比较古典的男性漫画角色画法教程。",
+      "pageCount": 156,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/562-book.pdf",
+      "pdfBytes": 43460324,
+      "coverKey": "library/covers/562-book-cover.jpg",
+      "coverBytes": 198186
+    },
+    {
+      "id": "lib-mwhli5ty-814f45",
+      "sortNo": 562,
+      "title": "萌萌两人组合的画法 男女篇",
+      "author": "[日] カネダ工房、角丸つぶ",
+      "intro": "原名《萌えふたりの描き方 男女編》，一本男女CP情侣互动情景的漫画教程。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/563-book.pdf",
+      "pdfBytes": 767500923,
+      "coverKey": "library/covers/563-book-cover.jpg",
+      "coverBytes": 230109
+    },
+    {
+      "id": "lib-mwhlj1gi-df1625",
+      "sortNo": 563,
+      "title": "美丽的蝴蝶图鉴 如果四季飞舞的蝴蝶是美少女的话…",
+      "author": "[日] うりも 角丸つぶら",
+      "intro": "原名《美ちょうちょ図鑑 もしも、四季折々に舞うチョウが美少女だったなら…》，画师うりも与角丸つぶら（角丸圆）合作推出的一本蝴蝶拟人化教程。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/564-book.pdf",
+      "pdfBytes": 53817287,
+      "coverKey": "library/covers/564-book-cover.jpg",
+      "coverBytes": 289040
+    },
+    {
+      "id": "lib-mwhllfcy-d28479",
+      "sortNo": 564,
+      "title": "动画师速写:运动中人物的素描集 战斗角色篇",
+      "author": "[日] 羽山淳一",
+      "intro": "原名《アニメーターズ・スケッチ 動きのある人物スケッチ集 —バトルキャラクター編—》，日本画师羽山淳一的一本漫画速写参考教程，非常实用。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/565-book.pdf",
+      "pdfBytes": 186459755,
+      "coverKey": "library/covers/565-book-cover.jpg",
+      "coverBytes": 149083
+    },
+    {
+      "id": "lib-mwhlmoup-98ee43",
+      "sortNo": 565,
+      "title": "灰阶画法&效果 完全入门教程",
+      "author": "[日] 天領寺セナ",
+      "intro": "原名《グリザイユ画法&エフェクト 完全マスターブック》，P站画师天領寺セナ的一本clip studio paint“grisaille画法”教程，附带CSP的源文件。",
+      "pageCount": 196,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/566-book.pdf",
+      "pdfBytes": 83217669,
+      "coverKey": "library/covers/566-book-cover.jpg",
+      "coverBytes": 289270
+    },
+    {
+      "id": "lib-mwhlnilb-e0d836",
+      "sortNo": 566,
+      "title": "专业画师的技法 通过角色、姿势、构图来吸引人的进阶插图技巧",
+      "author": "[日] サイドランチ",
+      "intro": "原名《プロ絵師の作法　キャラクター・ポーズ・構図で魅せるイラスト上達テクニック》， 综合类人物漫画教程，主要着重于讲解如何提高插画魅力的技巧。",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/567-book.pdf",
+      "pdfBytes": 54055831,
+      "coverKey": "library/covers/567-book-cover.jpg",
+      "coverBytes": 291065
+    },
+    {
+      "id": "lib-mwhlo8zo-7e95ed",
+      "sortNo": 567,
+      "title": "用妆容区分女性角色的技巧",
+      "author": "[日] 姐川",
+      "intro": "原名《メイクで女の子キャラを描き分けるテクニック》，画师姐川的一本跟化妆结合起来的女性角色绘制教程，“超描けるシリーズ”系列中的一本。",
+      "pageCount": 152,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/568-book.pdf",
+      "pdfBytes": 50059580,
+      "coverKey": "library/covers/568-book-cover.jpg",
+      "coverBytes": 222313
+    },
+    {
+      "id": "lib-mwhlp2bi-f9824d",
+      "sortNo": 568,
+      "title": "如何画出甜蜜的他",
+      "author": "[日] うにいくら, 桐矢隆,ツグトク, 平井ゆづき, 藤未都也,御木ミギリ",
+      "intro": "原名《甘い彼の描き方230》，玄光社推出的一本“男朋友”画法的情侣互动专题教程，“超描けるシリーズ”系列。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/569-book.pdf",
+      "pdfBytes": 51670331,
+      "coverKey": "library/covers/569-book-cover.jpg",
+      "coverBytes": 277036
+    },
+    {
+      "id": "lib-mwhlrn1b-d2735f",
+      "sortNo": 569,
+      "title": "[吉成曜]动漫中的效果表现物理学 两册合集",
+      "author": "[日] MdN編集部 / 吉成曜",
+      "intro": "原名《エフェクト表現の物理学 爆発と液体と炎と煙と魔法と。》《イラスト表現の物理学 爆発＋液体＋炎＋煙＋魔法を描く》，月刊MdN的特集，吉成曜推出的一套插画物理表现的教程，附带15张翻译内容。",
+      "pageCount": 221,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[漫画教程][MdN編集部]イラスト表現の物理学\\[漫画教程][MdN編集部]イラスト表現の物理学1",
+          "page": 1
+        },
+        {
+          "title": "[漫画教程][MdN編集部]イラスト表現の物理学\\[漫画教程][MdN編集部]イラスト表現の物理学2",
+          "page": 72
+        },
+        {
+          "title": "[漫画教程][MdN編集部]イラスト表現の物理学\\[翻译部分]动漫中的效果表现物理学",
+          "page": 207
+        }
+      ],
+      "pdfKey": "library/books/570-book.pdf",
+      "pdfBytes": 240991603,
+      "coverKey": "library/covers/570-book-cover.jpg",
+      "coverBytes": 162000
+    },
+    {
+      "id": "lib-mwhlsd6v-027d7d",
+      "sortNo": 570,
+      "title": "Q版角色的画法 全面讲解Q版表现基础",
+      "author": "[日] 濱元隆輔(滨元隆辅)",
+      "intro": "原名《デフォルメキャラの描き方 ―デフォルメ表現の基本を徹底解説! 》，日本画师濱元隆輔推出的一本Q版漫画教程，“超描けるシリーズ”系列。",
+      "pageCount": 156,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/571-book.pdf",
+      "pdfBytes": 56772171,
+      "coverKey": "library/covers/571-book-cover.jpg",
+      "coverBytes": 298227
+    },
+    {
+      "id": "lib-mwhlt6j9-d63a1d",
+      "sortNo": 571,
+      "title": "从专业作画中学超级漫画素描 男性角色创作实况",
+      "author": "[日] 林晃 九分くりん 森田和明",
+      "intro": "原名《プロの作画から学ぶ超マンガデッサン 男子キャラデザインの現場から》，林晃的一本男性角色手绘教程。",
+      "pageCount": 202,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/572-book.pdf",
+      "pdfBytes": 76727173,
+      "coverKey": "library/covers/572-book-cover.jpg",
+      "coverBytes": 205723
     }
   ]
 }
