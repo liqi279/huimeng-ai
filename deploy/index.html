@@ -25691,7 +25691,7 @@ body.dv-open .hm-page {
     <span id="stageModelTag">二次元动漫</span>
     <span id="stageResultCount">0 张作品</span>
     <span id="queueText">空闲</span>
-    <span id="composerEngineNote">FLUX.1 · 免费算力</span>
+    <span id="composerEngineNote">GPT-image · RayinAPI</span>
     <span id="planTag">FREE</span>
     <p id="composerNotice">免费通道 · 无水印 · 生成后可直接下载原图</p>
     <p id="engineNote">免费通道，无需配置即可生成</p>
@@ -27264,15 +27264,9 @@ const ENGINE_META = {
   banana: { label: 'Gemini Banana', pill: 'Gemini Banana · RayinAI', hint: 'RayinAI · Gemini 2.0 多模态生图', meta: 'Gemini Banana', free: false }
 };
 
-/* 免费模型目录（启动时从后端 /catalog 拉取，拉不到就用内置兜底） */
+/* FLUX 免费引擎整组已下线：渠道只保留 GPT-image，keyless 目录恒为空 */
 const CATALOG_FALLBACK = {
-  keyless: [
-    { id: 'flux-anime', engine: 'flux', model: 'flux-anime', name: 'FLUX Anime', badge: '免密钥', hint: '二次元插画 · 高质量' },
-    { id: 'kolors', engine: 'flux', model: 'kolors', name: 'Kolors 中文动漫', badge: '免密钥', hint: '中文提示词强 · 国风' },
-    { id: 'sana', engine: 'flux', model: 'sana', name: 'SANA 动漫', badge: '免密钥', hint: '免费 · 秒级出图' },
-    { id: 'flux', engine: 'flux', model: 'flux', name: 'FLUX.1', badge: '免密钥', hint: '通用大模型 · 高质量' },
-    { id: 'flux-realism', engine: 'flux', model: 'flux-realism', name: 'FLUX Realism', badge: '免密钥', hint: '写实质感 · 细腻' },
-  ],
+  keyless: [],
   /* 接入管理只保留 RayinAPI：第三方平台预设已从代码中删除，不再回灌 */
   providers: [],
   loras: [],
@@ -27741,14 +27735,33 @@ if (storedPrefs.rayinChannel !== 'gpt-image-2.5') {
  * 历史配置里常见 engine 已切、channelModel 还是旧通道的模型名，会 404。 */
 /* 「免费模型 / 免费额度平台」整组已下线：本地旧选择（flux / openai）失效时
    自动落到当前真正可用的 RayinAI 通道，不做静默失败。 */
+var freeChannelStale = state.engine !== 'gpt-image' || /^flux|^sana|^kolors/i.test(String(state.channelModel || ''));
 if (state.engine !== 'gpt-image') state.engine = 'gpt-image';
+/* FLUX 免费引擎已下线：本地旧选择（flux / sana / kolors…）统一回退到 gpt-image + gpt-image-2 */
+if (/^flux|^sana|^kolors/i.test(String(state.channelModel || ''))) {
+  state.channelModel = 'gpt-image-2';
+}
 /* Banana / Gemini 三个模型已下架：历史选择统一回退到 gpt-image-2，不留死选项。 */
 if (/^gemini/i.test(state.channelModel || '') || /^banana/i.test(state.channelModel || '')) {
   state.channelModel = 'gpt-image-2';
 }
-if (/^gemini/i.test(state.api.gptModel || '')) state.api.gptModel = 'gpt-image-2';
+if (/^gemini/i.test(state.api.gptModel || '') || /^flux|^sana|^kolors/i.test(String(state.api.gptModel || ''))) {
+  state.api.gptModel = 'gpt-image-2';
+}
 if (state.engine === 'gpt-image' && !/^gpt-image/i.test(state.channelModel || '')) {
   state.channelModel = state.api.gptModel || 'gpt-image-2';
+}
+/* 清掉存着免费引擎的旧本地配置，避免下次启动再把 flux 读回来 */
+if (freeChannelStale) {
+  try {
+    var cleanedPrefs = Object.assign({}, storedPrefs, {
+      engine: 'gpt-image',
+      channelModel: state.channelModel
+    });
+    delete cleanedPrefs.freeModel;
+    localStorage.setItem(LS_PREFS, JSON.stringify(cleanedPrefs));
+  } catch (e) {}
+  try { localStorage.removeItem('anidream.queue.v1'); } catch (e) {}
 }
 
 /* ========== tab 状态辅助器 ==========
@@ -29004,7 +29017,8 @@ async function loadCatalog() {
     const data = await window.HM.api.catalog();
     if (!data) return;
     state.catalog = {
-      keyless: (data.keyless && data.keyless.length) ? data.keyless : (CATALOG_FALLBACK.keyless || []),
+      /* FLUX 免费引擎已下线：即便后端还返回 keyless，也不采用 */
+      keyless: [],
       /* 接入管理只保留 RayinAPI：后端 /catalog 里即便还带第三方平台，也不采用 */
       providers: [],
       /* Banana/Gemini 三个模型已下架：即使后端还没摘掉，也一律过滤，只留 gpt-image */
@@ -29017,7 +29031,7 @@ async function loadCatalog() {
 }
 
 function syncEngineUI() {
-  const meta = ENGINE_META[state.engine] || ENGINE_META.flux;
+  const meta = ENGINE_META[state.engine] || ENGINE_META['gpt-image'];
   els.engineSelect.value = state.engine;
   els.composerEngineNote.textContent = meta.free ? currentModelLabel() + ' · 免费' : meta.label + ' · RayinAPI';
   if (!state.generating) els.genHint.textContent = meta.hint;
@@ -33201,7 +33215,7 @@ function bindEvents() {
       }
 
       const btn = event.target.closest('[data-engine]');
-      if (!btn || !ENGINE_META[btn.dataset.engine]) return;
+      if (!btn || btn.dataset.engine !== 'gpt-image') return;
       if (btn.dataset.provider) state.providerId = btn.dataset.provider;
       if (btn.dataset.model) state.channelModel = btn.dataset.model;
       els.engineSelect.value = btn.dataset.engine;
@@ -33212,19 +33226,15 @@ function bindEvents() {
 
   els.engineSelect.addEventListener('change', function () {
     const value = els.engineSelect.value;
-    if (!ENGINE_META[value]) return;
-    state.engine = value;
-    persistPrefs();
-    syncEngineUI();
-
-    if (value === 'openai') {
-      const cfg = providerConfig();
-      if (!cfg.key) {
-        toast('该模型来自免费额度平台，需先填写平台 API Key', 'info');
-        openApiModal();
-      }
+    /* FLUX 免费引擎已下线：渠道只认 GPT-image */
+    if (value !== 'gpt-image') {
+      els.engineSelect.value = 'gpt-image';
+      state.engine = 'gpt-image';
       return;
     }
+    state.engine = 'gpt-image';
+    persistPrefs();
+    syncEngineUI();
 
     /* gpt-image / banana 走服务端内置默认密钥，前端不填也能生成；
        仅免费额度平台(openai)需要用户自备密钥。
@@ -34450,7 +34460,7 @@ function boot() {
   // 首次打开时给出轻量引导提示
   if (!storedPrefs || !storedPrefs.modelId) {
     setTimeout(function () {
-      toast('已接入 FLUX.1 免费动漫引擎，选风格即可开始', 'success');
+      toast('已接入 GPT-image · 选风格即可开始', 'success');
     }, 800);
   }
 }
