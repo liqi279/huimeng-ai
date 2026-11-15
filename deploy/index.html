@@ -4728,12 +4728,13 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   z-index: 2;              /* ← 在 label 上层，盖住 "@" */
 }
 
-/* ref-idx 点击时的视觉反馈（@N 被高亮） */
+/* ref-idx 点击时的视觉反馈（@N 被高亮）——与参考图卡同一套紫金强调色 */
 .hm-prompt-textarea .hm-ref-mention {
-  color: #bae6fd;
-  background: rgba(56, 189, 248, 0.15);
-  border-radius: 3px;
-  padding: 0 2px;
+  color: #e9d7ff;
+  background: rgba(167, 139, 250, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.32);
+  border-radius: 4px;
+  padding: 0 3px;
 }
 
 /* ========== @ 自动补全弹窗 ========== */
@@ -4745,9 +4746,9 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   overflow-y: auto;
   padding: 4px;
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 3px rgba(56,189,248,0.1);
+  background: rgba(24, 19, 40, 0.98);
+  border: 1px solid rgba(167, 139, 250, 0.28);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 3px rgba(139, 92, 246, 0.12);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   scrollbar-width: thin;
@@ -7677,6 +7678,8 @@ body.hm-light .hm-page-empty {
 /* ---------- 桌面画板 ---------- */
 #resultGrid.is-board {
   position: relative;
+  /* 独立堆叠上下文：主题粒子层（z-index 0）永远在本区域所有卡片之下 */
+  z-index: 1;
   display: block;
   flex: 1 1 auto;
   width: 100%;
@@ -67785,7 +67788,9 @@ window.HMChat = (function () {
     return desk.folders.filter(function (f) {
       if (!f || !f.id) return false;
       if (f.id === view.activeFolder) return false;
-      if ((f.parentId || null) !== parentId) return false;
+      /* 个人空间（根桌面）不再只显示顶层文件夹：其他项目里的文件夹也要能出现，
+         这样在个人空间就能直接进入别处建的项目文件夹；进入某文件夹后仍只显示它的直接子级 */
+      if (parentId !== null && (f.parentId || null) !== parentId) return false;
       return folderHasContent(f.id);
     });
   }
