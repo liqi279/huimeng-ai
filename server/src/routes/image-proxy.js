@@ -29,6 +29,15 @@ const CACHE_CONTROL = 'public, max-age=86400';
 
 const BLOCKED_HOST_SUFFIX = ['.local', '.internal', '.localhost'];
 const BLOCKED_HOSTS = ['localhost', 'metadata.google.internal', 'metadata'];
+/* 受信对象存储/CDN：SCF 同地域访问 COS/OSS 时 DNS 会解析到 10.x 内网地址，
+   这是正常的内网加速链路，不能按 SSRF 拦截。仅对这些域名放行内网解析结果，
+   仍然禁止 IP 字面量与 localhost。 */
+const TRUSTED_HOST_SUFFIX = [
+  '.myqcloud.com',
+  '.tencentcos.cn',
+  '.aliyuncs.com',
+  '.aliyuncdn.com',
+];
 
 function isPrivateIPv4(ip) {
   const parts = ip.split('.').map(Number);
@@ -58,6 +67,14 @@ function isBlockedHostname(hostname) {
   if (!host) return true;
   if (BLOCKED_HOSTS.indexOf(host) >= 0) return true;
   for (const suffix of BLOCKED_HOST_SUFFIX) {
+    if (host.endsWith(suffix)) return true;
+  }
+  return false;
+}
+
+function isTrustedStorageHost(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/\.$/, '');
+  for (const suffix of TRUSTED_HOST_SUFFIX) {
     if (host.endsWith(suffix)) return true;
   }
   return false;
@@ -94,10 +111,11 @@ async function assertAllowedTarget(rawUrl) {
     throw jsonError(502, '目标域名解析失败', hostname);
   }
   if (!records.length) throw jsonError(502, '目标域名解析失败', hostname);
+  const trusted = isTrustedStorageHost(hostname);
   for (const record of records) {
     const address = record && record.address;
     const bad = net.isIPv4(address) ? isPrivateIPv4(address) : isPrivateIPv6(address);
-    if (bad) throw jsonError(403, '目标地址不被允许', '域名解析到内网或保留地址');
+    if (bad && !trusted) throw jsonError(403, '目标地址不被允许', '域名解析到内网或保留地址');
   }
   return parsed;
 }
