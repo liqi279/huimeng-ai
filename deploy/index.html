@@ -76539,6 +76539,7 @@ window.HMChat = (function () {
     if (e && e.detail) sizeInfo = e.detail;
     syncView();
     renderTimeline();
+    pullBrush();
   });
   if (window.ResizeObserver) {
     new ResizeObserver(function () { syncView(); }).observe(paperEl);
@@ -76718,6 +76719,7 @@ window.HMChat = (function () {
       return;
     }
     var buf = [];
+    /* getLayers() 已按「顶层在前」返回，直接渲染 */
     layers.forEach(function (l) {
       buf.push(
         '<div class="hm-oua-lyr-row' + (l.active ? ' is-active' : '') + (l.visible ? '' : ' is-off') + '" data-layer-id="' + l.id + '">' +
