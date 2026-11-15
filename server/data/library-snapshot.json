@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-15T11:14:48.090Z",
+  "generatedAt": "2026-11-15T13:12:18.927Z",
   "source": "huimeng_library.books",
-  "total": 633,
+  "total": 689,
   "areas": {
-    "paint": 611,
-    "ref": 22
+    "paint": 665,
+    "ref": 24
   },
   "books": [
     {
@@ -27987,6 +27987,20 @@
       "coverBytes": 196128
     },
     {
+      "id": "lib-mwhuh577-cba8fa",
+      "sortNo": 615,
+      "title": "漫画素材工房",
+      "author": "[日] 漫画素材工房",
+      "intro": "P站画师“漫画素材工房”的教程包，大量干货满满的人体教程素材。包含了PIXIV和FANBOX（FANBOX不保证全）的图包，应该是截止到2019年12月左右，小部分有汉化。图片比较杂，会有重复，建议下载后根据自己的喜好再整理一次。",
+      "pageCount": 6216,
+      "area": "ref",
+      "toc": [],
+      "pdfKey": "library/books/616-book.pdf",
+      "pdfBytes": 1926252533,
+      "coverKey": "library/covers/616-book-cover.jpg",
+      "coverBytes": 142606
+    },
+    {
       "id": "lib-mwhq4mmh-90b971",
       "sortNo": 616,
       "title": "描绘出想要表现的世界 CSP插画指南",
@@ -30327,6 +30341,295 @@
       "coverBytes": 205306
     },
     {
+      "id": "lib-mwhql47x-0f122a",
+      "sortNo": 641,
+      "title": "教你如何画出「人物的背景」 用CLIP STUDIO PAINT描绘角色感情的风景技法",
+      "author": "[日] よー清水",
+      "intro": "原名《「キャラの背景」描き方教室 CLIP STUDIO PAINTで描く！ キャラの想いを物語る風景の技術》，P站画师よー清水的一本风景画教程，使用软件为CLIP STUDIO PAINT。",
+      "pageCount": 211,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/642-book.pdf",
+      "pdfBytes": 109154176,
+      "coverKey": "library/covers/642-book-cover.jpg",
+      "coverBytes": 228025
+    },
+    {
+      "id": "lib-mwhqlxlx-cf8e7e",
+      "sortNo": 642,
+      "title": "教你如何画出「奇幻风格」 用PHOTOSHOP创造触动人心的场景",
+      "author": "[日] よー清水",
+      "intro": "原名《「ファンタジー背景」描き方教室 Photoshopで描く! 心を揺さぶる風景の秘訣》，P站画师よー清水的一本风景画教程，使用软件为PHOTOSHOP。",
+      "pageCount": 211,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/643-book.pdf",
+      "pdfBytes": 84766059,
+      "coverKey": "library/covers/643-book-cover.jpg",
+      "coverBytes": 272064
+    },
+    {
+      "id": "lib-mwhqlbks-5bcfda",
+      "sortNo": 643,
+      "title": "背景CG进阶讲座 游戏也能用的场景画法",
+      "author": "[日] 酒井達也",
+      "intro": "原名《背景CG上達講座 ゲームに使えるパーツ＆シーンの描き方》，一本背景绘制教程，使用软件为CLIP STUDIO PAINT与PHOTOSHOP。",
+      "pageCount": 211,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/644-book.pdf",
+      "pdfBytes": 78038930,
+      "coverKey": "library/covers/644-book-cover.jpg",
+      "coverBytes": 266786
+    },
+    {
+      "id": "lib-mwhqlxge-0da5be",
+      "sortNo": 644,
+      "title": "CLIP STUDIO PAINT闪闪发光的画法 使宝石 矿物 金属熠熠生辉的绘制技巧",
+      "author": "[日] 珠樹みつね  角丸つぶら（角丸圆）",
+      "intro": "原名《CLIP STUDIO PAINT キラキラの描き方 宝石・鉱物・金属などを輝かせる塗りのテクニック》，一本描绘宝石、矿物、金属等闪亮物体的漫画教程书，非常实用。",
+      "pageCount": 163,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/645-book.pdf",
+      "pdfBytes": 32938162,
+      "coverKey": "library/covers/645-book-cover.jpg",
+      "coverBytes": 254882
+    },
+    {
+      "id": "lib-mwhqmm52-b91ab0",
+      "sortNo": 645,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.10",
+      "author": "[韩] DSマイル(DSmile)",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.10》，韩国插画师DSマイル(DSmile)的CG插画教程，SAI/CLIP STUDIO PAINT/PHOTOSHOP的技巧解说。",
+      "pageCount": 217,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/646-book.pdf",
+      "pdfBytes": 66142934,
+      "coverKey": "library/covers/646-book-cover.jpg",
+      "coverBytes": 305827
+    },
+    {
+      "id": "lib-mwhr5mjo-46eca3",
+      "sortNo": 646,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.9",
+      "author": "[韩] Anmi",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.9》，韩国超人气画师ANMI的CG插画教程，SAI/CLIP STUDIO PAINT/PHOTOSHOP的技巧解说。",
+      "pageCount": 419,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "[Anmi]Let's Make ★ Character CGイラストテクニック vol.9",
+          "page": 1
+        },
+        {
+          "title": "Let's Make ★ Character CG插画绘画技巧 Vol.9 Anmi",
+          "page": 211
+        }
+      ],
+      "pdfKey": "library/books/647-book.pdf",
+      "pdfBytes": 989920265,
+      "coverKey": "library/covers/647-book-cover.jpg",
+      "coverBytes": 270183
+    },
+    {
+      "id": "lib-mwhqn28y-179540",
+      "sortNo": 647,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.8",
+      "author": "[日] ぶーた(Booota)",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.8》，日本插画师ぶーた(Booota)推出的一本CG插画教程，主要使用SAI与CLIP STUDIO PAINT。",
+      "pageCount": 209,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/648-book.pdf",
+      "pdfBytes": 50739374,
+      "coverKey": "library/covers/648-book-cover.jpg",
+      "coverBytes": 233553
+    },
+    {
+      "id": "lib-mwhqoh24-77be78",
+      "sortNo": 648,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.7",
+      "author": "[日] 藤ちょこ（藤原）",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.7》，本书是日本超人气画师藤原的首本个人教程，使用CLIP STUDIO PAINT PRO和openCanvas完成她的绘画创作。藤原擅长用非常详尽的步骤和说明来讲解每一幅画作，书中她不但分享了这些讲解，还把每幅画从创意开始的构思也进行了说明，让你可以完整学习到一幅精美的插画作品是怎样从一个灵感到草图，再到完整的绚丽画面。",
+      "pageCount": 225,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/649-book.pdf",
+      "pdfBytes": 64590015,
+      "coverKey": "library/covers/649-book-cover.jpg",
+      "coverBytes": 325483
+    },
+    {
+      "id": "lib-mwhqokqq-cb2ca4",
+      "sortNo": 649,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.6",
+      "author": "[日] TNSK",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.6》，日本插画师TNSK推出的CLIP STUDIO PAINT/PHOTOSHOP插画绘制教程。",
+      "pageCount": 225,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/650-book.pdf",
+      "pdfBytes": 57476469,
+      "coverKey": "library/covers/650-book-cover.jpg",
+      "coverBytes": 196746
+    },
+    {
+      "id": "lib-mwhqpjgk-e83ad3",
+      "sortNo": 650,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.5",
+      "author": "[日] 加藤アカツキ",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.5》，完美讲解Photoshop与IllustStudio的使用技巧！掌握提高画面的层次感、运用配色使人物更加突出的秘诀",
+      "pageCount": 225,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/651-book.pdf",
+      "pdfBytes": 48158214,
+      "coverKey": "library/covers/651-book-cover.jpg",
+      "coverBytes": 245901
+    },
+    {
+      "id": "lib-mwhqpp7i-609278",
+      "sortNo": 651,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.4",
+      "author": "[日] Mitha(ミサ)",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.4》，完整地介绍了作者绘制数码插画的步骤和使用的技巧，非常值得习惯用电脑完成整个绘制过程的人借鉴和参考。以Photoshop/SAI为主要软件，以与众不同的个人漫画特点介绍了具有鲜明特色的CG绘制基础方法及技巧。",
+      "pageCount": 225,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/652-book.pdf",
+      "pdfBytes": 49912924,
+      "coverKey": "library/covers/652-book-cover.jpg",
+      "coverBytes": 276945
+    },
+    {
+      "id": "lib-mwhqqt3g-63ca8c",
+      "sortNo": 652,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.3",
+      "author": "[日] redjuice",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.3》，完整地介绍了作者绘制数码插画的步骤和使用的技巧，非常值得习惯用电脑完成整个绘制过程的人借鉴和参考。以Photoshop/SAI为主要软件，以与众不同的个人漫画特点介绍了具有鲜明特色的CG绘制基础方法及技巧",
+      "pageCount": 225,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/653-book.pdf",
+      "pdfBytes": 50413737,
+      "coverKey": "library/covers/653-book-cover.jpg",
+      "coverBytes": 238650
+    },
+    {
+      "id": "lib-mwhqqqtl-0a77cf",
+      "sortNo": 653,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.2",
+      "author": "[日] しめ子",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.2》，完整地介绍了作者绘制数码插画的步骤和使用的技巧，非常值得习惯用电脑完成整个绘制过程的人借鉴和参考。以Photoshop为主要软件，以与众不同的个人漫画特点介绍了具有鲜明特色的CG绘制基础方法及技巧。",
+      "pageCount": 209,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/654-book.pdf",
+      "pdfBytes": 37742895,
+      "coverKey": "library/covers/654-book-cover.jpg",
+      "coverBytes": 140915
+    },
+    {
+      "id": "lib-mwhqs33p-f6a29f",
+      "sortNo": 654,
+      "title": "Let's Make ★ Character CG 插画技巧 vol.1",
+      "author": "[日] 水上カオリ（水上香）",
+      "intro": "原名《Let's Make ★ Character CGイラストテクニック vol.1》，完整地介绍了作者绘制数码插画的步骤和使用的技巧，非常值得习惯用电脑完成整个绘制过程的人借鉴和参考。以SAI、Photoshop、Painter为主要软件，以与众不同的个人漫画特点介绍了具有鲜明特色的CG绘制基础方法及技巧。",
+      "pageCount": 201,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/655-book.pdf",
+      "pdfBytes": 41234210,
+      "coverKey": "library/covers/655-book-cover.jpg",
+      "coverBytes": 227681
+    },
+    {
+      "id": "lib-mwhqsnto-077551",
+      "sortNo": 655,
+      "title": "插画、漫画的构图绘画教室",
+      "author": "[日] 松岡伸治",
+      "intro": "原名《イラスト、漫画のための構図の描画教室》，日本画师松岡伸治(松冈伸治)推出的构图教程。主攻人物构图，以「引导出主角的魅力」、「为画面营造焦点」为主干。从构图的起手式开始，搭配实例解说4大类构图方式，为图面打造立体动态效果。37种构图变化型教学，能依故事场景选择合适的布局，明确有效地传达作者的想法。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/656-book.pdf",
+      "pdfBytes": 79357778,
+      "coverKey": "library/covers/656-book-cover.jpg",
+      "coverBytes": 306849
+    },
+    {
+      "id": "lib-mwhqtrbf-651cee",
+      "sortNo": 656,
+      "title": "OX秒懂透视：任何人都能学会！立体透视构图技法",
+      "author": "[日] 斉藤むねお",
+      "intro": "原名《○×式で解説 誰でもかんたん!! パースがわかる本: 空間認識力アップで漫画・イラストが上手くなる!》，日本漫画家斉藤むねお推出的透视教程，非常简单明了。",
+      "pageCount": 202,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/657-book.pdf",
+      "pdfBytes": 67015809,
+      "coverKey": "library/covers/657-book-cover.jpg",
+      "coverBytes": 343262
+    },
+    {
+      "id": "lib-mwhqtycr-b94688",
+      "sortNo": 657,
+      "title": "Photoshop背景教科书 绘制漫画和插图",
+      "author": "[日] 菊池杏子",
+      "intro": "原名《Photoshopで描く 漫画、イラストのための背景画の教科書》，Photoshop的背景绘制教程。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/658-book.pdf",
+      "pdfBytes": 55844019,
+      "coverKey": "library/covers/658-book-cover.jpg",
+      "coverBytes": 199286
+    },
+    {
+      "id": "lib-mwhqvc7q-6df6e2",
+      "sortNo": 658,
+      "title": "使用照片处理制作风景插画",
+      "author": "[日] さけハラス",
+      "intro": "原名《写真加工で作る風景イラスト》，“神技作画シリーズ”系列中的一本，日本插画师さけハラス推出的照片加工教程，使用的软件为CLIP STUDIO PAINT。",
+      "pageCount": 153,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/659-book.pdf",
+      "pdfBytes": 61455723,
+      "coverKey": "library/covers/659-book-cover.jpg",
+      "coverBytes": 400071
+    },
+    {
+      "id": "lib-mwhqwmeg-70f7ef",
+      "sortNo": 659,
+      "title": "CLIP STUDIO PAINT PRO 官方指南",
+      "author": "[日] 株式会社セルシス",
+      "intro": "原名《CLIP STUDIO PAINT PRO 公式ガイドブック》，绘图软件CLIP STUDIO PAINT PRO的使用教程，适合入门使用",
+      "pageCount": 178,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/660-book.pdf",
+      "pdfBytes": 96035459,
+      "coverKey": "library/covers/660-book-cover.jpg",
+      "coverBytes": 160479
+    },
+    {
+      "id": "lib-mwhqwv9l-ec59de",
+      "sortNo": 660,
+      "title": "数码作画法 动画中看到的天空和云彩的风景画法",
+      "author": "[日] Bamboo",
+      "intro": "原名《デジタル作画法 アニメで見た空と雲のある風景の描き方》，讲解了动画天空和云彩的画法，使用软件为PHOTOSHOP与Painter。",
+      "pageCount": 147,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/661-book.pdf",
+      "pdfBytes": 53120701,
+      "coverKey": "library/covers/661-book-cover.jpg",
+      "coverBytes": 202895
+    },
+    {
       "id": "lib-mwhq2dhx-3b2733",
       "sortNo": 661,
       "title": "从零开始学画美男子",
@@ -30339,6 +30642,401 @@
       "pdfBytes": 37964651,
       "coverKey": "library/covers/662-book-cover.jpg",
       "coverBytes": 403574
+    },
+    {
+      "id": "lib-mwhqxiuf-cfde8e",
+      "sortNo": 662,
+      "title": "从零开始学画美少女",
+      "author": "[日] フライ、げみ、けーしん、田中寛崇、U35",
+      "intro": "神技作画シリーズ系列一本《美少女作画 ゼロから学ぶプロの技（从零开始学画美少女）》，由五位日本画师フライ、げみ、けーしん、田中寛崇、U35合作推出的数码绘教程，SAI、PHOTO SHOP、CLIP STUDIO PAINTD等常用绘画软件均有涉及。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/663-book.pdf",
+      "pdfBytes": 35377505,
+      "coverKey": "library/covers/663-book-cover.jpg",
+      "coverBytes": 238418
+    },
+    {
+      "id": "lib-mwhqyn27-1692ea",
+      "sortNo": 663,
+      "title": "数码插画的“插画”绘制方式辞典 用CLIP STUDIO PAINT PRO绘制多彩插画！",
+      "author": "[日] NextCreator編集部",
+      "intro": "原名《デジタルイラストの「塗り」事典 CLIP STUDIO PAINT PROで描く! 多彩な描画のテクニック56》，日本NextCreator編集部推出的CLIP STUDIO PAINT PRO专题教程。",
+      "pageCount": 203,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/664-book.pdf",
+      "pdfBytes": 76983824,
+      "coverKey": "library/covers/664-book-cover.jpg",
+      "coverBytes": 274096
+    },
+    {
+      "id": "lib-mwhqytc7-3b106f",
+      "sortNo": 664,
+      "title": "亚洲幻想女孩角色设计书",
+      "author": "[日] 紅木春(红木春)",
+      "intro": "原名《超描けるシリーズ アジアンファンタジーな女の子のキャラクターデザインブック》，日本插画师紅木春的角色设计书，当画集看也非常精美哦。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/665-book.pdf",
+      "pdfBytes": 53048897,
+      "coverKey": "library/covers/665-book-cover.jpg",
+      "coverBytes": 295646
+    },
+    {
+      "id": "lib-mwhqzhmk-0f4a35",
+      "sortNo": 665,
+      "title": "幻想服装的画法",
+      "author": "[日] もくり",
+      "intro": "原名《超描けるシリーズ ファンタジー衣装の描き方》，日本插画师もくり推出的的幻想系服装绘制教程。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/666-book.pdf",
+      "pdfBytes": 41069233,
+      "coverKey": "library/covers/666-book-cover.jpg",
+      "coverBytes": 368836
+    },
+    {
+      "id": "lib-mwhqzu5m-8be7a2",
+      "sortNo": 666,
+      "title": "超萌童话风女孩的服装设计目录 佐倉おりこ",
+      "author": "[日] 佐倉おりこ(佐仓织子)",
+      "intro": "原名《超描けるシリーズ メルヘンでかわいい女の子の衣装デザインカタログ》，日本女插画师佐倉おりこ(佐仓织子)的超萌童话系服装教程，当画集观看也非常可爱哦。",
+      "pageCount": 148,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/667-book.pdf",
+      "pdfBytes": 47650154,
+      "coverKey": "library/covers/667-book-cover.jpg",
+      "coverBytes": 368512
+    },
+    {
+      "id": "lib-mwhr2cp9-71351a",
+      "sortNo": 667,
+      "title": "Clip Studio Paint道场 角色造型篇",
+      "author": "[日] サイドランチ",
+      "intro": "原名《クリスタ道場 キャラクター･メイキング編 CLIP STUDIO PAINT PRO/EX対応》，日本サイドランチ的推出的Clip Studio Paint使用教程，对应PRO与EX版本。",
+      "pageCount": 298,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/668-book.pdf",
+      "pdfBytes": 123105406,
+      "coverKey": "library/covers/668-book-cover.jpg",
+      "coverBytes": 290333
+    },
+    {
+      "id": "lib-mwhr32h6-70ed92",
+      "sortNo": 668,
+      "title": "画力素描 人体与女孩",
+      "author": "[日] 黒坂圭太",
+      "intro": "原名《画力デッサン 人体と女の子》，日本动画导演黒坂圭太的推出的具有强烈个人色彩的漫画教程，复古又荒诞。",
+      "pageCount": 174,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/669-book.pdf",
+      "pdfBytes": 141976620,
+      "coverKey": "library/covers/669-book-cover.jpg",
+      "coverBytes": 179966
+    },
+    {
+      "id": "lib-mwhr6u1e-243ae6",
+      "sortNo": 669,
+      "title": "用数码工具画！画出人物丰富的表情",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《デジタルツールで描く！感情があふれ出るキャラの表情の描き方》，日本スタジオ・ハードデラックス推出的漫画人物教程，介绍了如何绘制各种各样不同情绪的表情，已有中文版。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/670-book.pdf",
+      "pdfBytes": 199212996,
+      "coverKey": "library/covers/670-book-cover.jpg",
+      "coverBytes": 281993
+    },
+    {
+      "id": "lib-mwhr50qe-6d3cdb",
+      "sortNo": 670,
+      "title": "用数码工具画！提升角色魅力的头发画法",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《デジタルツールで描く！キャラクターを引き立てる髪の描き方》，日本スタジオ・ハードデラックス推出的漫画人物教程，介绍了如何绘制各种各样不同的头发，已有中文版。",
+      "pageCount": 165,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/671-book.pdf",
+      "pdfBytes": 77345540,
+      "coverKey": "library/covers/671-book-cover.jpg",
+      "coverBytes": 294733
+    },
+    {
+      "id": "lib-mwhr6bwi-007518",
+      "sortNo": 671,
+      "title": "用数码工具画！画出各种各样的角色",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《デジタルツールで描く! 違いがわかるキャラクターの描き分け方》，日本スタジオ・ハードデラックス推出的漫画人物教程，介绍了如何绘制各种各样不同的角色。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/672-book.pdf",
+      "pdfBytes": 49475947,
+      "coverKey": "library/covers/672-book-cover.jpg",
+      "coverBytes": 296800
+    },
+    {
+      "id": "lib-mwhr77l7-06d93d",
+      "sortNo": 672,
+      "title": "用数码工具画！提高魅力的女孩子衣服的画法",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《デジタルツールで描く！魅力を引き出す女の子の服の描き方》，日本スタジオ・ハードデラックス推出的漫画女子服饰教程，涵盖了各种可爱的美少女服饰专题。",
+      "pageCount": 149,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/673-book.pdf",
+      "pdfBytes": 63586205,
+      "coverKey": "library/covers/673-book-cover.jpg",
+      "coverBytes": 253649
+    },
+    {
+      "id": "lib-mwhr8fn4-df1871",
+      "sortNo": 673,
+      "title": "数码插画的“效果”绘制方式辞典 用CLIP STUDIO PAINT PRO画！效果与完成技巧",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《デジタルイラストの「エフェクト」描き方事典 CLIP STUDIO PAINT PROで描く！ 効果と仕上げのテクニック50》，日本スタジオ・ハードデラックス推出的CLIP STUDIO PAINT专题教程，讲解了火，烟，水，风，闪电和光等经典效果的绘制方法。",
+      "pageCount": 195,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/674-book.pdf",
+      "pdfBytes": 97702345,
+      "coverKey": "library/covers/674-book-cover.jpg",
+      "coverBytes": 291382
+    },
+    {
+      "id": "lib-mwhr8cnk-16a41e",
+      "sortNo": 674,
+      "title": "数码插画的“身体”绘制方式辞典 正确绘制身体各个部位的秘诀",
+      "author": "[日] 松(A・TYPEcorp.)",
+      "intro": "原名《デジタルイラストの「身体」描き方事典 身体パーツの一つひとつをきちんとデッサンするための秘訣39》，日本松(A・TYPEcorp.)推出的漫画人物身体绘制的专题教程。",
+      "pageCount": 179,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/675-book.pdf",
+      "pdfBytes": 53386456,
+      "coverKey": "library/covers/675-book-cover.jpg",
+      "coverBytes": 250360
+    },
+    {
+      "id": "lib-mwhranve-664863",
+      "sortNo": 675,
+      "title": "数码插画的“构图 姿势”绘制方式辞典 提升角色表现力的绘画秘诀",
+      "author": "[日] シカタシヨミ",
+      "intro": "原名《デジタルイラストの「構図・ポーズ」事典 キャラクターを引き立てる絵作りの秘訣40》，日本シカタシヨミ推出的漫画人物构图与姿势的专题教程。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/676-book.pdf",
+      "pdfBytes": 176032046,
+      "coverKey": "library/covers/676-book-cover.jpg",
+      "coverBytes": 297462
+    },
+    {
+      "id": "lib-mwhrbio0-71571c",
+      "sortNo": 676,
+      "title": "数码插画的“服装”绘制方式辞典 装饰人物的衣服的秘密45",
+      "author": "[日] スタジオ・ハードデラックス",
+      "intro": "原名《デジタルイラストの「服装」描き方事典 キャラクターを着飾る衣服の秘訣45》，日本スタジオ・ハードデラックス推出的漫画服饰绘制专题教程。",
+      "pageCount": 180,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/677-book.pdf",
+      "pdfBytes": 152281891,
+      "coverKey": "library/covers/677-book-cover.jpg",
+      "coverBytes": 289773
+    },
+    {
+      "id": "lib-mwhr9y0x-2dcca2",
+      "sortNo": 677,
+      "title": "数码插画的“表情”绘制方式辞典 传达思念的情感表现53",
+      "author": "[日] NextCreator編集部",
+      "intro": "原名《デジタルイラストの「表情」描き方事典 想いが伝わる感情表現53》，日本NextCreator編集部推出的漫画表情绘制专题教程。",
+      "pageCount": 177,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/678-book.pdf",
+      "pdfBytes": 54843859,
+      "coverKey": "library/covers/678-book-cover.jpg",
+      "coverBytes": 287095
+    },
+    {
+      "id": "lib-mwhrb68z-21a684",
+      "sortNo": 678,
+      "title": "数码插画的“背景”绘制方式辞典 用Photoshop绘制多彩风景",
+      "author": "[日] 出雲寺ぜんすけ",
+      "intro": "原名《デジタルイラストの「背景」描き方事典 Photoshopで描く!シーンを彩る風景》，日本出雲寺ぜんすけ推出的Photoshop专题风景教程。",
+      "pageCount": 201,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/679-book.pdf",
+      "pdfBytes": 45074605,
+      "coverKey": "library/covers/679-book-cover.jpg",
+      "coverBytes": 191882
+    },
+    {
+      "id": "lib-mwhrcqg8-f7aa37",
+      "sortNo": 679,
+      "title": "大叔的画法",
+      "author": "[日] 廣済堂マンガ工房",
+      "intro": "原名《オジサンの描き方》，日本廣済堂マンガ工房推出的大叔专题漫画教程。",
+      "pageCount": 146,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/680-book.pdf",
+      "pdfBytes": 91009158,
+      "coverKey": "library/covers/680-book-cover.jpg",
+      "coverBytes": 194850
+    },
+    {
+      "id": "lib-mwhrcyqz-726a6c",
+      "sortNo": 680,
+      "title": "大叔的画法 头部与身体篇",
+      "author": "[日] YANAMi",
+      "intro": "原名《オジサン描き分けテクニック 顔・からだ編》，日本画师YANAMi推出的大叔专题漫画教程。",
+      "pageCount": 155,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/681-book.pdf",
+      "pdfBytes": 89304918,
+      "coverKey": "library/covers/681-book-cover.jpg",
+      "coverBytes": 221502
+    },
+    {
+      "id": "lib-mwhrjee2-2d6ed7",
+      "sortNo": 681,
+      "title": "描绘可爱女孩子的技法",
+      "author": "[日] 藍飴",
+      "intro": "原名《かわいい女の子が描ける本》，日本插画师藍飴教你画各种各样充满女性魅力的可爱角色！",
+      "pageCount": 143,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/682-book.pdf",
+      "pdfBytes": 398675404,
+      "coverKey": "library/covers/682-book-cover.jpg",
+      "coverBytes": 302005
+    },
+    {
+      "id": "lib-mwhre5y8-d1fc37",
+      "sortNo": 682,
+      "title": "动画角色的绘制与设计技巧",
+      "author": "[日] 羽山淳一",
+      "intro": "原名《アニメキャラクターの作画＆デザインテクニック》，日本猛男原画师羽山淳一（Hayama Junichi）的动漫角色设计与绘制的教程。",
+      "pageCount": 170,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/683-book.pdf",
+      "pdfBytes": 55160697,
+      "coverKey": "library/covers/683-book-cover.jpg",
+      "coverBytes": 229223
+    },
+    {
+      "id": "lib-mwhreddn-15b37d",
+      "sortNo": 683,
+      "title": "不需要天赋就能学会的插画技巧",
+      "author": "[日] ニリツ",
+      "intro": "原名《神技作画シリーズ 才能はいらない イラストで食う技術》，日本著名插画师、漫画师ニリツ（Nilitsu）推出的关于漫画CG学习技巧的书，理论比较多，懂日文或者是作者粉丝的同学可以看看哦",
+      "pageCount": 153,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/684-book.pdf",
+      "pdfBytes": 62252574,
+      "coverKey": "library/covers/684-book-cover.jpg",
+      "coverBytes": 307881
+    },
+    {
+      "id": "lib-mwhrfcqj-7d575d",
+      "sortNo": 684,
+      "title": "可以用在漫画中-食的画法",
+      "author": "[日] 一迅社",
+      "intro": "原名《マンガで使える! 食の描き方》，一迅社推出的有关“食”的场景的绘制专题教程。",
+      "pageCount": 80,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/685-book.pdf",
+      "pdfBytes": 40332549,
+      "coverKey": "library/covers/685-book-cover.jpg",
+      "coverBytes": 281421
+    },
+    {
+      "id": "lib-mwhrfb88-f17467",
+      "sortNo": 685,
+      "title": "画师们的东方插画技巧-从线稿到插画的绘制",
+      "author": "[日] 粗茶、火神レオ、角丸圆",
+      "intro": "原名《コピック絵師たちの東方イラストテクニック 塗り絵からイラストメイキングまで》，《东方Project》系列的马克笔上色教程。",
+      "pageCount": 155,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/686-book.pdf",
+      "pdfBytes": 46495102,
+      "coverKey": "library/covers/686-book-cover.jpg",
+      "coverBytes": 295883
+    },
+    {
+      "id": "lib-mwhrgz0n-cd2966",
+      "sortNo": 686,
+      "title": "单色插画技巧",
+      "author": "[日] jaco",
+      "intro": "原名《超描けるシリーズ モノクロイラストテクニック》，玄光社推出的PIXIV人气插画师JACO的单色漫画专题教程。",
+      "pageCount": 164,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/687-book.pdf",
+      "pdfBytes": 54363929,
+      "coverKey": "library/covers/687-book-cover.jpg",
+      "coverBytes": 264900
+    },
+    {
+      "id": "lib-mwhrlv9c-e95983",
+      "sortNo": 687,
+      "title": "朴理卢教程合集",
+      "author": "[韩]朴理卢",
+      "intro": "",
+      "pageCount": 785,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "上色：选对位置用对色",
+          "page": 1
+        },
+        {
+          "title": "光与色",
+          "page": 192
+        },
+        {
+          "title": "漫画小白入坑指南",
+          "page": 396
+        },
+        {
+          "title": "辅助线：学漫画的有效方法",
+          "page": 576
+        }
+      ],
+      "pdfKey": "library/books/688-book.pdf",
+      "pdfBytes": 261236931,
+      "coverKey": "library/covers/688-book-cover.jpg",
+      "coverBytes": 218836
+    },
+    {
+      "id": "lib-mwhrhvql-026887",
+      "sortNo": 688,
+      "title": "漫画基础  新手避坑指南-多宝",
+      "author": "",
+      "intro": "",
+      "pageCount": 183,
+      "area": "paint",
+      "toc": [],
+      "pdfKey": "library/books/689-book.pdf",
+      "pdfBytes": 33913608,
+      "coverKey": "library/covers/689-book-cover.jpg",
+      "coverBytes": 244327
     },
     {
       "id": "lib-mwhq6f9y-0dfc9d",
@@ -30381,6 +31079,389 @@
       "pdfBytes": 29305287,
       "coverKey": "library/covers/692-book-cover.jpg",
       "coverBytes": 186633
+    },
+    {
+      "id": "lib-mwhsmgd1-9d940c",
+      "sortNo": 692,
+      "title": "美式漫画教程14册合集",
+      "author": "",
+      "intro": "收集整理了一套美式漫画教程，包括：丧尸、怪物、科幻、魔法幻想、超级英雄、机器人、吸血鬼、海盗、战争等等常见的美式漫画题材，教程内容一般，适合有一定漫画基础又想尝试美漫创作的同学参考。",
+      "pageCount": 1906,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "Christopher Hart - Drawing Cutting Edge Comics",
+          "page": 1
+        },
+        {
+          "title": "How To Draw (And Fight) Zombies(2008)",
+          "page": 146
+        },
+        {
+          "title": "How To Draw And Battle Alien Invasions(2012)",
+          "page": 275
+        },
+        {
+          "title": "How To Draw Magic and Fantasy(2010)",
+          "page": 405
+        },
+        {
+          "title": "How To Draw Modern Warfare(2011)",
+          "page": 534
+        },
+        {
+          "title": "How To Draw Ninjas & Samurai(2006)",
+          "page": 663
+        },
+        {
+          "title": "How To Draw Pirates(2007)",
+          "page": 808
+        },
+        {
+          "title": "How To Draw Sci-Fi(2010)",
+          "page": 936
+        },
+        {
+          "title": "How To Draw Superpowered Heroes(2009)",
+          "page": 1066
+        },
+        {
+          "title": "How To Draw Superpowered Villains(2012)",
+          "page": 1196
+        },
+        {
+          "title": "How To Draw Transforming Robots(2012)",
+          "page": 1326
+        },
+        {
+          "title": "How To Draw Vampires(2010)",
+          "page": 1508
+        },
+        {
+          "title": "How To Draw Zombies",
+          "page": 1638
+        },
+        {
+          "title": "You Can Draw Monsters(2008)",
+          "page": 1767
+        }
+      ],
+      "pdfKey": "library/books/693-book.pdf",
+      "pdfBytes": 981770201,
+      "coverKey": "library/covers/693-book-cover.jpg",
+      "coverBytes": 240550
+    },
+    {
+      "id": "lib-mwhtz9e9-8d6b47",
+      "sortNo": 693,
+      "title": "瞬摄动作类姿势(瞬撮アクションポーズ) 1-3 合集",
+      "author": "[日] 玄光社",
+      "intro": "一套还不错真人的参考图集，适合练习打斗类动态，原名《瞬撮アクションポーズ》。\n目录：\n\n瞬撮アクションポーズ01 女子高生アクション編\n（瞬摄动作类POSE01 女子高中生动作篇）\n瞬撮アクションポーズ02 バディ・アクション編\n（瞬摄动作类POSE02 男子动态动作篇）\n瞬撮アクションポーズ03 刀剣・銃・少女バトル編\n（瞬摄动作类POSE03 刀剑・枪・少女战斗篇）",
+      "pageCount": 1037,
+      "area": "ref",
+      "toc": [],
+      "pdfKey": "library/books/694-book.pdf",
+      "pdfBytes": 1010091933,
+      "coverKey": "library/covers/694-book-cover.jpg",
+      "coverBytes": 189225
+    },
+    {
+      "id": "lib-mwhrquih-d64a74",
+      "sortNo": 694,
+      "title": "漫画企划讲座合集 快描教室/漫漫快快/漫画密技",
+      "author": "[日] 菅野博士、唐泽佳子",
+      "intro": "日本amazon网路书店读者评价5颗星，解决各种学习漫画各种疑难杂症的教程书，文字为主。",
+      "pageCount": 192,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "漫画企划讲座1 快描教室",
+          "page": 1
+        },
+        {
+          "title": "漫画企划讲座2 漫漫快快",
+          "page": 57
+        },
+        {
+          "title": "漫画企划讲座3 漫画密技",
+          "page": 118
+        }
+      ],
+      "pdfKey": "library/books/695-book.pdf",
+      "pdfBytes": 349273334,
+      "coverKey": "library/covers/695-book-cover.jpg",
+      "coverBytes": 98774
+    },
+    {
+      "id": "lib-mwhro92b-5d88a4",
+      "sortNo": 695,
+      "title": "吉他手JK/裙子/水手服/西装女孩的画法参考资料 5册合集",
+      "author": "[日] mirai1521",
+      "intro": "日本推特画师mirai1521的一套非常画法参考资料（原名：描き方参考帖）系列。共5册，PDF格式带书签。分别展示了吉他手女子高中生/女子短裙/女子长裙/水手服/西装女孩的各种角度和姿势的画法图例。",
+      "pageCount": 539,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "ギターJK描き方参考帖",
+          "page": 1
+        },
+        {
+          "title": "スカート描き方参考帖",
+          "page": 104
+        },
+        {
+          "title": "スカート描き方参考帖（丈長め編）",
+          "page": 207
+        },
+        {
+          "title": "セーラー服描き方参考帖",
+          "page": 310
+        },
+        {
+          "title": "ブレザー女子描き方参考帖",
+          "page": 413
+        }
+      ],
+      "pdfKey": "library/books/696-book.pdf",
+      "pdfBytes": 104083781,
+      "coverKey": "library/covers/696-book-cover.jpg",
+      "coverBytes": 166079
+    },
+    {
+      "id": "lib-mwhrte7m-1999c8",
+      "sortNo": 696,
+      "title": "日本人气漫画师的新漫画课堂 合集",
+      "author": "[日] 日本成美堂出版",
+      "intro": "一套以漫画人物为主的漫画教程，风格比较独特。",
+      "pageCount": 934,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "日本人气漫画师的新漫画课堂1 帅气男孩子的画法",
+          "page": 1
+        },
+        {
+          "title": "日本人气漫画师的新漫画课堂2 可爱女孩子的画法",
+          "page": 152
+        },
+        {
+          "title": "日本人气漫画师的新漫画课堂3 漫画角色的画法",
+          "page": 302
+        },
+        {
+          "title": "日本人气漫画师的新漫画课堂4 人物动态的画法",
+          "page": 452
+        },
+        {
+          "title": "日本人气漫画师的新漫画课堂5 漫画场景的画法",
+          "page": 618
+        },
+        {
+          "title": "日本人气漫画师的新漫画课堂6 脚本创作与人物设定的技法",
+          "page": 785
+        }
+      ],
+      "pdfKey": "library/books/697-book.pdf",
+      "pdfBytes": 214467774,
+      "coverKey": "library/covers/697-book-cover.jpg",
+      "coverBytes": 212976
+    },
+    {
+      "id": "lib-mwhs4fk8-848379",
+      "sortNo": 697,
+      "title": "超级漫画素描技法 合集",
+      "author": "[日] 荻野仁、平田亮、田中裕久、立中顺平、成田早苗、林晃等",
+      "intro": "国内流传最广的一套漫画教程，涵盖了漫画技法的方方面面，非常经典。",
+      "pageCount": 2202,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "超级漫画素描技法 人物与素材篇",
+          "page": 1
+        },
+        {
+          "title": "超级漫画素描技法 人物素描基础篇",
+          "page": 204
+        },
+        {
+          "title": "超级漫画素描技法 人物结构篇",
+          "page": 369
+        },
+        {
+          "title": "超级漫画素描技法 人物表现篇",
+          "page": 530
+        },
+        {
+          "title": "超级漫画素描技法 基础篇",
+          "page": 725
+        },
+        {
+          "title": "超级漫画素描技法 头身比篇",
+          "page": 913
+        },
+        {
+          "title": "超级漫画素描技法 美少年造型篇",
+          "page": 1100
+        },
+        {
+          "title": "超级漫画素描技法 草图篇",
+          "page": 1248
+        },
+        {
+          "title": "超级漫画素描技法 角色设计基础",
+          "page": 1436
+        },
+        {
+          "title": "超级漫画素描技法 质感表现篇",
+          "page": 1610
+        },
+        {
+          "title": "超级漫画素描技法 运动篇",
+          "page": 1799
+        },
+        {
+          "title": "超级漫画素描技法 透视篇",
+          "page": 2000
+        }
+      ],
+      "pdfKey": "library/books/698-book.pdf",
+      "pdfBytes": 619121169,
+      "coverKey": "library/covers/698-book-cover.jpg",
+      "coverBytes": 296514
+    },
+    {
+      "id": "lib-mwhsb8xg-4d6d24",
+      "sortNo": 698,
+      "title": "日本漫画手绘技法经典教程 17册合集",
+      "author": "[日] 林晃、日本漫画技法研究会 等",
+      "intro": "非常经典又全面的日式漫画教程从入门到美少女、美少年、服饰、动物、机械、透视等等内容都有涵盖",
+      "pageCount": 2188,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "日本漫画手绘技法经典教程01 绘画基础",
+          "page": 1
+        },
+        {
+          "title": "日本漫画手绘技法经典教程02 人物身体的画法",
+          "page": 131
+        },
+        {
+          "title": "日本漫画手绘技法经典教程03 男孩子的画法",
+          "page": 264
+        },
+        {
+          "title": "日本漫画手绘技法经典教程04 女孩子的画法",
+          "page": 394
+        },
+        {
+          "title": "日本漫画手绘技法经典教程05 美少女的画法（繁体版）",
+          "page": 524
+        },
+        {
+          "title": "日本漫画手绘技法经典教程06 世界美少女的画法",
+          "page": 651
+        },
+        {
+          "title": "日本漫画手绘技法经典教程07 成熟女孩的画法",
+          "page": 779
+        },
+        {
+          "title": "日本漫画手绘技法经典教程08 双人体组合画法",
+          "page": 907
+        },
+        {
+          "title": "日本漫画手绘技法经典教程09 衣服的画法",
+          "page": 1028
+        },
+        {
+          "title": "日本漫画手绘技法经典教程10 人物角色的画法",
+          "page": 1158
+        },
+        {
+          "title": "日本漫画手绘技法经典教程11 动物的画法",
+          "page": 1271
+        },
+        {
+          "title": "日本漫画手绘技法经典教程12 机械的画法",
+          "page": 1414
+        },
+        {
+          "title": "日本漫画手绘技法经典教程13 机器人的画法",
+          "page": 1542
+        },
+        {
+          "title": "日本漫画手绘技法经典教程14 透视的画法",
+          "page": 1671
+        },
+        {
+          "title": "日本漫画手绘技法经典教程15 背景的处理技巧",
+          "page": 1806
+        },
+        {
+          "title": "日本漫画手绘技法经典教程16 漫画技法的应用",
+          "page": 1926
+        },
+        {
+          "title": "日本漫画手绘技法经典教程17 动画制作基础",
+          "page": 2056
+        }
+      ],
+      "pdfKey": "library/books/699-book.pdf",
+      "pdfBytes": 636034562,
+      "coverKey": "library/covers/699-book-cover.jpg",
+      "coverBytes": 245877
+    },
+    {
+      "id": "lib-mwhshc0s-320cda",
+      "sortNo": 699,
+      "title": "漫画+ CG技法系列9册合集",
+      "author": "[日] garnet、6U☆等",
+      "intro": "一套由日本漫画名家推出的数码绘CG技法教程，使用软件为SAI、PHOTO SHOP等主流绘图软件。",
+      "pageCount": 1871,
+      "area": "paint",
+      "toc": [
+        {
+          "title": "漫画+81位绘师教你角色创作",
+          "page": 1
+        },
+        {
+          "title": "漫画+日本人气绘师乙女创作全攻略",
+          "page": 232
+        },
+        {
+          "title": "漫画+萌系美少女人气绘师的15堂必修课",
+          "page": 445
+        },
+        {
+          "title": "漫画+萌系美少女漫画技法全攻略",
+          "page": 602
+        },
+        {
+          "title": "漫画+超人气CG漫画背景创作技法",
+          "page": 765
+        },
+        {
+          "title": "漫画+超人气绘师创作背景的80必修技",
+          "page": 948
+        },
+        {
+          "title": "漫画+超动感游戏插画角色设计",
+          "page": 1163
+        },
+        {
+          "title": "漫画+超级绘师CG漫画绘制全攻略",
+          "page": 1474
+        },
+        {
+          "title": "漫画+超质感CG漫画背景表现技法",
+          "page": 1689
+        }
+      ],
+      "pdfKey": "library/books/700-book.pdf",
+      "pdfBytes": 604615150,
+      "coverKey": "library/covers/700-book-cover.jpg",
+      "coverBytes": 306459
     }
   ]
 }
