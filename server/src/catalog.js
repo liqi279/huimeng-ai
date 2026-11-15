@@ -1,63 +1,15 @@
 'use strict';
 
 /* =============================================================
- * 免费模型目录（Pollinations 匿名通道，全部免密钥）
+ * 免费模型目录（2026-11-15 已按需求清空）
  * 全部走 runFlux → https://image.pollinations.ai/prompt/{prompt}
  * 实测 2026-10-30 沙箱代理下可通（HTTP 200 + content-type: image/jpeg）
  * ============================================================= */
 
-const KEYLESS = [
-  {
-    id: 'flux-anime',
-    engine: 'flux',
-    model: 'flux-anime',
-    name: 'FLUX Anime',
-    badge: '免密钥',
-    hint: '二次元插画 · 高质量',
-    desc: 'FLUX 动漫微调版，色彩鲜亮、线条干净，适合二次元插画和番剧风格关键帧。',
-    tags: ['二次元', '插画', '番剧'],
-  },
-  {
-    id: 'kolors',
-    engine: 'flux',
-    model: 'kolors',
-    name: 'Kolors 中文动漫',
-    badge: '免密钥',
-    hint: '中文提示词强 · 国风',
-    desc: '快手 Kolors 模型，中文提示词理解出色，擅长国风和东方风格动漫。',
-    tags: ['中文', '国风', '动漫'],
-  },
-  {
-    id: 'sana',
-    engine: 'flux',
-    model: 'sana',
-    name: 'SANA 动漫',
-    badge: '免密钥',
-    hint: '免费 · 秒级出图',
-    desc: 'SANA 动漫系列，速度快、风格稳定，适合快速预览和批量生成。',
-    tags: ['快速', '稳定', '动漫'],
-  },
-  {
-    id: 'flux',
-    engine: 'flux',
-    model: 'flux',
-    name: 'FLUX.1',
-    badge: '免密钥',
-    hint: '通用大模型 · 高质量',
-    desc: 'FLUX.1 通用文生图，覆盖广泛风格，二次元也可出高质量结果。',
-    tags: ['通用', '高质量'],
-  },
-  {
-    id: 'flux-realism',
-    engine: 'flux',
-    model: 'flux-realism',
-    name: 'FLUX Realism',
-    badge: '免密钥',
-    hint: '写实质感 · 细腻',
-    desc: 'FLUX 写实微调版，二次元也能出细腻光影和质感渲染。',
-    tags: ['写实', '细腻'],
-  },
-];
+/* KEYLESS（Pollinations 免费通道）
+ * 2026-11-15 按需求清空：FLUX Anime / Kolors / SANA / FLUX.1 / FLUX Realism 下线。
+ * findKeyless() 仍可安全调用（返回 null）。 */
+const KEYLESS = [];
 
 /* PROVIDERS（免费额度平台）
  * 2026-11-15 按需求清空：设置页只保留 RayinAPI / LoRA / 免密钥通道。
