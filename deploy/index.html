@@ -16332,6 +16332,12 @@ body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* 未登录（登录/注册页）时不显示侧栏与折叠把手；登录成功后按原逻辑恢复 */
+body.hm-auth-open .hm-rail,
+body.hm-auth-open .hm-rail-toggle {
+  display: none !important;
+}
+
 /* 贴边把手：与侧栏同底色、无独立描边/投影，左缘压住侧栏边框 1px，
    外露部分只有与侧栏同色的圆角舌片，视觉上属于侧栏本身 */
 .hm-rail-toggle {
@@ -26727,6 +26733,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (!els.auth) return;
     els.auth.hidden = false;
     els.auth.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('hm-auth-open');
     clearError();
     if (!loginFieldsCleared) {
       loginFieldsCleared = true;
@@ -26744,6 +26751,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (!els.auth) return;
     els.auth.hidden = true;
     els.auth.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('hm-auth-open');
   }
 
   function setError(msg) {
