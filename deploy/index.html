@@ -17228,20 +17228,30 @@ body.rail-collapsed .hm-page {
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+  /* 顶部不留白：返回栏直接贴上沿，避免滚动时露出一条缝 */
+  padding-top: 0;
   padding-bottom: 28px;
 }
 /* 让文件夹网格按内容高度撑开，交给外层滚动，而不是被 flex 压扁 */
 .lib-concept-scroll .lib-dirs {
   flex: 0 0 auto;
 }
-/* 返回栏滚动时吸顶，带底色，不遮住下面的卡片内容 */
+/* 返回栏吸顶：底色与页面上沿同色，底边用透明渐变羽化，
+   滚动时内容从渐隐里浮出，不出现硬边或色带 */
 .lib-concept-scroll .lib-dir-bar {
   flex: 0 0 auto;
   position: sticky;
   top: 0;
   z-index: 4;
-  padding-bottom: 10px;
-  background: linear-gradient(180deg, var(--lib-wood-deep, #2a1a10) 74%, rgba(42, 26, 16, 0));
+  margin: 0 -26px;
+  padding: 14px 26px 4px;
+  background: linear-gradient(
+    180deg,
+    #19110a 0%,
+    #19110a 62%,
+    rgba(25, 17, 10, 0.82) 84%,
+    rgba(25, 17, 10, 0) 100%
+  );
 }
 
 /* 0 本书时的空态：叠在柜子内部，不替换柜体 */
@@ -19788,6 +19798,13 @@ a.lib-btn {
   .lib-shelf-wrap {
     padding: 10px 12px 8px;
     gap: 10px;
+  }
+  /* 窄屏同样贴顶、同宽，避免吸顶栏两侧露缝 */
+  .lib-shelf-wrap.lib-concept-scroll { padding-top: 0; }
+  .lib-concept-scroll .lib-dir-bar {
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
   .lib-shelf-books {
