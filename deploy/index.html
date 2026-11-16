@@ -4793,64 +4793,54 @@ body.hm-ref-fs-open .hm-rail-toggle {
    这是 Slack / Discord / GitHub mention 的实现思路。 */
 .hm-prompt-overlay .chip {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1em;
   vertical-align: baseline;
   padding: 0;
-  margin: 0;
-  font-size: inherit;
+  margin: 0 -0.28em 0 0; /* 右侧负边距吃掉 token 后面的空格，整体宽度贴近 @图N */
   font-family: inherit;
+  font-size: 0.86em;
   line-height: inherit;
-  overflow: visible;       /* thumb 在内部，visible 也没问题 */
+  white-space: nowrap;
 }
-/* 胶囊：深色圆角底 + 细边框（不占布局宽度），左侧缩略图绝对定位，
-   文字「@N」保持与 textarea 文本等宽，所以光标不会偏移、连续多个也不挤行 */
-.hm-prompt-overlay .chip { position: relative; display: inline-block; }
 .hm-prompt-overlay .chip::before {
   content: '';
   position: absolute;
-  /* 只覆盖自身文字宽度，不再向左/右溢出，避免压住前后正文导致重叠 */
-  left: 0;
-  right: 0;
-  top: -0.16em;
-  bottom: -0.16em;
+  left: -0.16em;
+  right: -0.16em;
+  top: -0.18em;
+  bottom: -0.18em;
   border-radius: 7px;
   background: rgba(12, 18, 32, 0.82);
   border: 1px solid rgba(167, 139, 250, 0.38);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   z-index: 0;
 }
+.hm-prompt-overlay .chip .chip-at,
 .hm-prompt-overlay .chip .chip-label {
-  display: inline-block;
-  color: #c7d2fe;
-  font-weight: 600;
-  font-size: inherit;     /* 和 textarea 同字号，chip 宽度才和文本完全一致 */
-  white-space: nowrap;
-  padding: 0;             /* 必须 0：任何 padding 都会让 chip 宽于文本，光标整体偏移 */
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  height: 1.45em;
-  line-height: 1.45em;
-  vertical-align: -0.28em;
-  box-sizing: border-box;
   position: relative;
   z-index: 1;
+  color: #c7d2fe;
+  font-weight: 600;
+  font-size: inherit;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  line-height: 1.3;
 }
-/* 缩略图：贴在胶囊左端（绝对定位，不占文档流宽度），约胶囊高度的六成 */
+/* 缩略图：正常行内流，排在「@」和「图N」之间，不叠字、不占负偏移 */
 .hm-prompt-overlay .chip .chip-thumb {
-  position: absolute;
-  /* 贴在 chip 自身左端、盖住开头的「@」，不再用负偏移侵占前面的正文 */
-  left: 0.04em;
-  top: 50%;
-  transform: translateY(-50%);
+  position: relative;
+  flex: 0 0 auto;
   width: 0.86em;
   height: 0.86em;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* ref-idx 点击时的视觉反馈（@N 被高亮）——与参考图卡同一套紫金强调色 */
@@ -29745,8 +29735,10 @@ function _ensureChipCache(refs) {
     var u = ref.thumb || ref.dataUrl || '';
     /* 深色胶囊：左侧小缩略图（绝对定位、不占宽度）+ "@N" 浅色文字，
        整体宽度与文本里的 @N 完全一致，连续多个也不会挤行 */
-    return '<span class="chip"><span class="chip-thumb" style="background-image:url(' + u + ')"></span>' +
-      '<span class="chip-label">@图' + (i + 1) + '</span></span>';
+    /* 块内顺序：@ → 缩略图 → 图N，三个部分都是行内流，互不覆盖 */
+    return '<span class="chip"><span class="chip-at">@</span>' +
+      '<span class="chip-thumb" style="background-image:url(' + u + ')"></span>' +
+      '<span class="chip-label">图' + (i + 1) + '</span></span>';
   });
   return _chipCacheHtml;
 }
