@@ -29480,12 +29480,20 @@ function renderRef() {
         check;
 
       cell.querySelectorAll('[data-ref-act]').forEach(function (btn) {
-        btn.addEventListener('click', function (ev) {
+        var act = btn.dataset.refAct;
+        /* 用 pointerdown 直接触发：参考区/画布上的拖拽逻辑会在 pointerdown 里 preventDefault，
+           这会连带吞掉后续 click，导致「叉号 / 查看 / @」点了没反应 */
+        btn.addEventListener('pointerdown', function (ev) {
+          ev.preventDefault();
           ev.stopPropagation();
-          var act = btn.dataset.refAct;
           if (act === 'del') removeRefAt(idx);
           else if (act === 'view') openRefFullscreen(idx);
           else if (act === 'mention') insertPromptAt('图' + (idx + 1) + ' ');
+        });
+        /* 保留 click 拦截：动作已在 pointerdown 执行，避免再冒泡到格子触发打开大图 */
+        btn.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
         });
       });
 
