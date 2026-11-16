@@ -17159,7 +17159,54 @@ body.rail-collapsed .hm-page {
   height: 200px;
   flex: 0 1 auto;
   max-width: 100%;
+  overflow: hidden;
 }
+.lib-dir-items.is-hidden {
+  display: none;
+}
+.lib-dir-items.is-anim-in {
+  animation: hmDirIn .3s ease-in-out both;
+}
+.lib-dir-items.is-anim-out {
+  animation: hmDirOut .26s ease-in-out both;
+}
+@keyframes hmDirIn {
+  from { height: 0; opacity: 0; }
+  to { height: 200px; opacity: 1; }
+}
+@keyframes hmDirOut {
+  from { height: 200px; opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+.lib-dir-items.is-anim-in .lib-book {
+  animation: hmItemIn .24s ease-in-out both;
+}
+.lib-dir-items.is-anim-out .lib-book {
+  animation: hmItemOut .22s ease-in-out both;
+}
+@keyframes hmItemIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes hmItemOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(8px); }
+}
+/* 组内条目依次错开出现；收起时按相反顺序淡出 */
+.lib-dir-items.is-anim-in .lib-book:nth-child(1) { animation-delay: 0ms; }
+.lib-dir-items.is-anim-in .lib-book:nth-child(2) { animation-delay: 35ms; }
+.lib-dir-items.is-anim-in .lib-book:nth-child(3) { animation-delay: 70ms; }
+.lib-dir-items.is-anim-in .lib-book:nth-child(4) { animation-delay: 105ms; }
+.lib-dir-items.is-anim-in .lib-book:nth-child(5) { animation-delay: 140ms; }
+.lib-dir-items.is-anim-in .lib-book:nth-child(6) { animation-delay: 175ms; }
+.lib-dir-items.is-anim-in .lib-book:nth-child(7) { animation-delay: 210ms; }
+.lib-dir-items.is-anim-in .lib-book:nth-child(n+8) { animation-delay: 245ms; }
+.lib-dir-items.is-anim-out .lib-book:nth-child(1) { animation-delay: 175ms; }
+.lib-dir-items.is-anim-out .lib-book:nth-child(2) { animation-delay: 140ms; }
+.lib-dir-items.is-anim-out .lib-book:nth-child(3) { animation-delay: 105ms; }
+.lib-dir-items.is-anim-out .lib-book:nth-child(4) { animation-delay: 70ms; }
+.lib-dir-items.is-anim-out .lib-book:nth-child(5) { animation-delay: 35ms; }
+.lib-dir-items.is-anim-out .lib-book:nth-child(n+6) { animation-delay: 0ms; }
 /* 原画资料：条目用文件夹形态呈现（只是外观，点开仍是原来的书籍入口） */
 .lib-book.is-dir {
   width: 168px;
@@ -56627,7 +56674,7 @@ window.HMChat = (function () {
     booted: false,
     loading: false,
     pdfTocCollapsed: false, /* 目录折叠状态：本次阅读内记住 */
-    libDirOpen: '',         /* 原画资料里就地展开的目录名（纯展示，不持久化） */
+    libDirOpen: {},         /* 原画资料里就地展开的目录集合（纯展示，不持久化，可同时展开多个） */
     storeUsedBytes: null,   /* 全库已用字节数（GET /library/books 的 store.usedBytes） */
     storeLimitLabel: ''     /* 全库上限文案（store.limitLabel，如 "500G"） */
   };
@@ -57140,7 +57187,7 @@ window.HMChat = (function () {
   /* 原画资料区域的目录视图：文件夹卡 + 就地展开的书目，点击书目仍走 openBook */
   function renderConceptDirs() {
     var groups = conceptDirGroups(state.shelfBooks);
-    var openKey = state.libDirOpen || '';
+    var openMap = state.libDirOpen || {};
     var rows = '';
     groups.forEach(function (g) {
       var isGroup = !!g.name && g.books.length > 1;
@@ -57148,7 +57195,7 @@ window.HMChat = (function () {
         rows += g.books.map(function (b, i) { return bookCardHtml(b, i); }).join('');
         return;
       }
-      var open = openKey === g.name;
+      var open = !!openMap[g.name];
       var cover = conceptDirCover(g.books);
       rows += '<button type="button" class="lib-book is-dir' + (open ? ' is-open' : '') + '" data-libdir="' + esc(g.name) + '"'
         + ' title="' + esc(g.name) + ' · ' + g.books.length + ' 册">'
@@ -57159,7 +57206,7 @@ window.HMChat = (function () {
         + '<span class="lib-dir-name">' + esc(g.name) + '</span>'
         + '<span class="lib-dir-meta">' + g.books.length + ' 册 · ' + (open ? '点击收起' : '点击展开') + '</span>'
         + '</span></button>'
-        + '<div class="lib-dir-items"' + (open ? '' : ' hidden') + '>'
+        + '<div class="lib-dir-items' + (open ? '' : ' is-hidden') + '">'
         + g.books.map(function (b, i) { return bookCardHtml(b, i, true); }).join('')
         + '</div>';
     });
@@ -59116,22 +59163,36 @@ window.HMChat = (function () {
         }, 150);
       });
       els.body.addEventListener('click', function (event) {
-        /* 原画资料的目录卡：只做局部显隐与布局切换，不重绘整个区域（避免整片闪一下）。
-           展开内容紧跟目录卡作为同级 flex 项，后面的目录自动顺延，不占整行 */
+        /* 原画资料的目录卡：只做局部显隐与动画，不重绘（避免闪）。
+           多个目录可同时展开；再次点击同一个才收起。展开内容紧跟目录卡同级顺延 */
         var dirCard = event.target.closest('[data-libdir]');
         if (dirCard) {
           var dirName = dirCard.getAttribute('data-libdir');
-          var willOpen = state.libDirOpen !== dirName;
-          var allBtns = els.body.querySelectorAll('[data-libdir]');
-          for (var bi = 0; bi < allBtns.length; bi++) {
-            var on = willOpen && allBtns[bi] === dirCard;
-            allBtns[bi].classList.toggle('is-open', on);
-            var box = allBtns[bi].nextElementSibling;
-            if (box && box.classList && box.classList.contains('lib-dir-items')) box.hidden = !on;
-            var meta = allBtns[bi].querySelector('.lib-dir-meta');
-            if (meta) meta.textContent = meta.textContent.replace(/点击(展开|收起)$/, on ? '点击收起' : '点击展开');
+          state.libDirOpen = state.libDirOpen || {};
+          var willOpen = !state.libDirOpen[dirName];
+          var box = dirCard.nextElementSibling;
+          if (willOpen) state.libDirOpen[dirName] = true;
+          else delete state.libDirOpen[dirName];
+          dirCard.classList.toggle('is-open', willOpen);
+          var meta = dirCard.querySelector('.lib-dir-meta');
+          if (meta) meta.textContent = meta.textContent.replace(/点击(展开|收起)$/, willOpen ? '点击收起' : '点击展开');
+          if (box && box.classList && box.classList.contains('lib-dir-items')) {
+            box.classList.remove('is-anim-in', 'is-anim-out');
+            void box.offsetWidth; /* 重启 CSS 动画 */
+            if (willOpen) {
+              box.classList.remove('is-hidden');
+              box.classList.add('is-anim-in');
+            } else {
+              box.classList.add('is-anim-out');
+              /* 动画结束后再真正隐藏；期间重新展开会移除 is-anim-out，不会误隐藏 */
+              setTimeout(function () {
+                if (!box.classList.contains('is-anim-in')) {
+                  box.classList.remove('is-anim-out');
+                  box.classList.add('is-hidden');
+                }
+              }, 320);
+            }
           }
-          state.libDirOpen = willOpen ? dirName : '';
           return;
         }
         var card = event.target.closest('.lib-book');
