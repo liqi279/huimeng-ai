@@ -33071,6 +33071,9 @@ function saveWorks() {
     var err0 = window.__hmLastSaveError;
     if (err0 && err0.name === 'QuotaExceededError') {
       localStorage.removeItem(bakKey);
+      /* 旧快照 / 离线队列都是可重建缓存：配额告急时先回收再重试整份作品，
+         否则备份把配额占满，作品本体写不进去就只剩错误提示 */
+      if (window.HMAuth && window.HMAuth.trimStorage) { try { window.HMAuth.trimStorage(); } catch (e2) {} }
       if (saveJSON(key, persistMeta(false, false))) {
         syncWorksToServer();
         return;
