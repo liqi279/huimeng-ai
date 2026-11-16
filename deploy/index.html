@@ -57285,7 +57285,7 @@ window.HMChat = (function () {
         + '<span class="lib-dir-meta">' + g.books.length + ' 册 · ' + (open ? '点击收起' : '点击展开') + '</span>'
         + '</span></button>'
         + '<div class="lib-dir-items' + (open ? '' : ' is-hidden') + '">'
-        + g.books.map(function (b, i) { return bookCardHtml(b, i, true); }).join('')
+        + g.books.map(function (b, i) { return bookCardHtml(b, i); }).join('')
         + '</div>';
     });
     if (!rows) {
@@ -57384,10 +57384,13 @@ window.HMChat = (function () {
        asBook=true 用于「文件夹展开后的组内书目」，仍渲染成原来的书卡 */
     if (state.area === 'concept' && !asBook) {
       var dirPages = (b.pages && b.pages.length) || Number(b.pageCount) || 0;
+      var dCover = b.coverUrl ? mediaFile(b.coverUrl) : '';
       return '<button type="button" class="lib-book is-dir' + (b.coverUrl ? ' has-cover' : '') + '" data-id="' + esc(b.id) + '"'
         + ' title="' + esc(b.title) + ' · ' + esc(b.category || '未分类') + '">'
         + '<span class="lib-dir-body">'
-        + '<span class="lib-dir-ico">📁</span>'
+        + (dCover
+          ? '<img class="lib-dir-cover" src="' + esc(dCover) + '" alt="' + esc(b.title) + '" loading="lazy">'
+          : '<span class="lib-dir-ico">📁</span>')
         + '<span class="lib-dir-name">' + esc(b.title) + '</span>'
         + '<span class="lib-dir-meta">' + esc(b.category || '未分类') + ' · ' + dirPages + ' 页</span>'
         + '</span>'
