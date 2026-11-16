@@ -4818,8 +4818,8 @@ body.hm-ref-fs-open .hm-rail-toggle {
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 0.16em;
-  padding: 0 0.2em;
+  gap: 0.1em;
+  padding: 0 0.1em;
   border-radius: 7px;
   background: rgba(8, 30, 50, 0.88);
   border: 1px solid rgba(56, 189, 248, 0.5);
@@ -29739,12 +29739,22 @@ function _syncPromptOverlayBox() {
   var overlay = _promptOverlayEl;
   if (!ta || !overlay) return;
   var cs = window.getComputedStyle(ta);
-  overlay.style.left = ta.offsetLeft + 'px';
-  overlay.style.top = ta.offsetTop + 'px';
+  /* 用视口矩形换算，不依赖 offsetParent 关系：overlay 的定位包含块可能是任意祖先 */
+  var r = ta.getBoundingClientRect();
+  var bl = parseFloat(cs.borderLeftWidth) || 0;
+  var bt = parseFloat(cs.borderTopWidth) || 0;
+  var parent = overlay.offsetParent || document.body || document.documentElement;
+  var pr = parent.getBoundingClientRect();
+  var pcs = window.getComputedStyle(parent);
+  var pbl = parseFloat(pcs.borderLeftWidth) || 0;
+  var pbt = parseFloat(pcs.borderTopWidth) || 0;
+  overlay.style.left = (r.left + bl - pr.left - pbl + (parent.scrollLeft || 0)) + 'px';
+  overlay.style.top = (r.top + bt - pr.top - pbt + (parent.scrollTop || 0)) + 'px';
   overlay.style.width = ta.clientWidth + 'px';
   overlay.style.height = ta.clientHeight + 'px';
   overlay.style.boxSizing = 'border-box';
   overlay.style.padding = cs.padding;
+  overlay.style.margin = '0';
   overlay.style.fontFamily = cs.fontFamily;
   overlay.style.fontSize = cs.fontSize;
   overlay.style.fontWeight = cs.fontWeight;
