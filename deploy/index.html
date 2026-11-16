@@ -4676,6 +4676,13 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
   transform: translateY(-1px);
 }
 
+/* 预览层打开时隐藏侧边栏与把手（做法同登录页 .hm-auth-open），关闭时移除状态类恢复 */
+body.hm-ref-fs-open .hm-rail,
+body.hm-ref-fs-open .hm-rail-toggle {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* ========== 全屏查看 modal（图一） ========== */
 .hm-ref-fullscreen[hidden] {
   display: none !important; /* class 选择器优先级覆盖 UA 的 [hidden]，必须显式处理 */
@@ -4683,7 +4690,9 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 .hm-ref-fullscreen {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  /* 提到最上层：原来 9999 会被应用外壳（顶栏/侧栏）的层叠上下文压住，
+     预览层看起来没有铺满视口、背景也不够暗 */
+  z-index: 2147482000;
   background: rgba(0, 0, 0, 0.92);
   display: flex;
   align-items: center;
@@ -29428,17 +29437,26 @@ function openRefFullscreen(idx) {
   if (!list[idx]) return;
   _refFsIdx = idx;
   _refFsScale = 1;
+  /* 表单/面板里若有 transform、filter、backdrop-filter 会形成 containing block，
+     把 position:fixed 降级成面板内定位；打开时把预览层挪回 body，保证全视口覆盖 */
+  if (els.refFullscreen && els.refFullscreen.parentNode !== document.body) {
+    document.body.appendChild(els.refFullscreen);
+  }
   if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
   /* 配额降级/旧数据可能只有 preview 或 thumb，没有 dataUrl，逐级回退避免 src=undefined */
   if (els.refFsImg) els.refFsImg.src = list[idx].dataUrl || list[idx].preview || list[idx].thumb || '';
   if (els.refFsIdx) els.refFsIdx.textContent = '@' + (idx + 1);
   if (els.refFullscreen) els.refFullscreen.hidden = false;
+  /* 预览打开期间隐藏侧边栏与把手，关闭时在 closeRefFullscreen 里移除 */
+  document.body.classList.add('hm-ref-fs-open');
 }
 function closeRefFullscreen() {
   _refFsIdx = -1;
   _refFsScale = 1;
   if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
   if (els.refFullscreen) els.refFullscreen.hidden = true;
+  /* 预览关闭后恢复侧边栏与把手 */
+  document.body.classList.remove('hm-ref-fs-open');
 }
 
 /* ========== renderRef（完全重写） ========== */
