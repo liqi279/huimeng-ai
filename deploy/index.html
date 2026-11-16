@@ -4799,8 +4799,9 @@ body.hm-ref-fs-open .lightbox {
 .hm-prompt-overlay .chip {
   position: relative;
   display: inline-block;
-  padding: 0;
-  margin: 0;
+  /* 视觉上左右各留一点缝：负 margin 抵消等量 padding，文本流宽度仍严格等于 @图N */
+  padding: 0 0.14em;
+  margin: 0 -0.14em;
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -4823,8 +4824,8 @@ body.hm-ref-fs-open .lightbox {
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 0.1em;
-  padding: 0 0.1em;
+  gap: 0.24em;
+  padding: 0 0.16em;
   border-radius: 7px;
   background: rgba(8, 30, 50, 0.88);
   border: 1px solid rgba(56, 189, 248, 0.5);
