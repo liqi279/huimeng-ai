@@ -30261,6 +30261,9 @@ window.HMRefDrop = {
       toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
       return false;
     }
+    /* 同一张作品重复拖入：不重复添加（srcKey 记录来源作品 id） */
+    var dup = currentRefs().some(function (r) { return r && r.srcKey === wid; });
+    if (dup) { toast('这张图已在参考主体里', 'info'); return false; }
     var src = work.url || work.thumb || '';
     if (!src) { toast('这张作品没有可用的图片', 'error'); return false; }
     try {
@@ -30276,6 +30279,13 @@ window.HMRefDrop = {
         try { file.name = 'work_' + wid + '.' + ext; } catch (e2) {}
       }
       await pickRefFile(file);   /* 与手动上传同一条通路：校验/缩放/缩略图/写 currentRefs/renderRef */
+      /* 标记来源，供重复拖入时判重，不影响其它字段与渲染 */
+      var list = currentRefs();
+      var last = list[list.length - 1];
+      if (last && last.srcKey !== wid) {
+        last.srcKey = wid;
+        setCurrentRefs(list);
+      }
       return true;
     } catch (err) {
       var why = String((err && err.message) || '网络被拦截');
@@ -70409,6 +70419,20 @@ window.HMChat = (function () {
       var startX = event.clientX, startY = event.clientY;
       var ghost = null;
       var moved = false;
+      var overRef = null;
+      /* 落点是否在参考主体区域内（与原生拖拽同一 12px 容差） */
+      function refDropAt(x, y) {
+        var ref = byId('refDrop');
+        if (!ref || ref.hidden) return null;
+        var r = ref.getBoundingClientRect();
+        if (!r.width || !r.height) return null;
+        if (x < r.left - 12 || x > r.right + 12 || y < r.top - 12 || y > r.bottom + 12) return null;
+        return ref;
+      }
+      function setRefOver(on) {
+        var ref = byId('refDrop');
+        if (ref) ref.classList.toggle('is-over', !!on);
+      }
       function onMove(e) {
         if (!moved && Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) < 8) return;
         if (!moved) {
@@ -70420,6 +70444,9 @@ window.HMChat = (function () {
           ghost.style.left = e.clientX + 'px';
           ghost.style.top = e.clientY + 'px';
         }
+        /* 参考主体可放置反馈：进入高亮、离开立即取消 */
+        overRef = refDropAt(e.clientX, e.clientY);
+        setRefOver(!!overRef);
         if (e.cancelable) e.preventDefault();
       }
       function onUp(e) {
@@ -70429,10 +70456,19 @@ window.HMChat = (function () {
         if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
         ghost = null;
         panel._spDragging = false;
+        setRefOver(false);
         if (!moved) return;
         /* 拖动结束吞掉随后补发的 click，避免顺带切换浮窗里的选中态 */
         panel._spDragEnded = true;
         setTimeout(function () { panel._spDragEnded = false; }, 0);
+        var hitRef = refDropAt(e.clientX, e.clientY);
+        if (hitRef) {
+          /* 拖到参考主体区域：走与作品卡拖入同一条通路（含上限/去重校验） */
+          if (window.HMRefDrop && typeof window.HMRefDrop.acceptWorkId === 'function') {
+            try { window.HMRefDrop.acceptWorkId(wid); } catch (err) {}
+          }
+          return;
+        }
         var dropEl = document.elementFromPoint(e.clientX, e.clientY);
         if (!dropEl) return;                         /* 界面外：取消 */
         if (dropEl.closest('.stack-panel')) return;   /* 落回浮窗内：取消 */
