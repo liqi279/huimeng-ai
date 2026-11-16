@@ -68791,22 +68791,6 @@ window.HMChat = (function () {
         grid.appendChild(existing);
       }
       existing.innerHTML = stackCardHtmlInner(s);
-      /* 叠放卡自己接右键：只靠 #resultGrid 的委托时，卡内缩略图/角标/信息条常常命中不到叠放分支，
-         会落到空白桌面的 deskCtx 或干脆没反应。直接绑在卡上并按鼠标坐标打开菜单，不再依赖委托 */
-      if (!existing._hmCtxBound) {
-        existing._hmCtxBound = true;
-        existing.addEventListener('contextmenu', function (ev) {
-          var sid = existing.dataset.stack;
-          if (!sid) return;
-          ev.preventDefault();
-          ev.stopPropagation();
-          selectOnly(sid);
-          var th = ev.target.closest('.folder-t[data-stack-fp]');
-          var thWork = th ? findWork(th.dataset.stackFp) : null;
-          if (thWork) openWorkMenu(thWork, ev.clientX, ev.clientY);
-          else openStackPanel(sid);
-        });
-      }
       var pos = desk.positions[s.id];
       if (!pos || !pos.pxLeft) {
         pos = nextFreeSlot(works.length + folders.length + si, grid, occupied);
@@ -69240,6 +69224,25 @@ window.HMChat = (function () {
   var lastPointerType = 'mouse';
   var suppressClick = false;
 
+  /* 叠放卡移动时，它已打开的浮窗按拖动开始时的相对偏移一起移动；
+     松手后把绝对坐标写回 stack.panel（原有位置字段），重渲染时沿用，不会跳回原位 */
+  function followStackPanel(sid, item, left, top) {
+    var panel = stackPanelEl(sid);
+    if (!panel || !panel.parentNode) return;
+    if (!item.panelOff) {
+      item.panelOff = {
+        x: (parseFloat(panel.style.left) || 0) - (item.left || 0),
+        y: (parseFloat(panel.style.top) || 0) - (item.top || 0)
+      };
+    }
+    var px = Math.max(0, left + item.panelOff.x);
+    var py = Math.max(0, top + item.panelOff.y);
+    panel.style.left = px + 'px';
+    panel.style.top = py + 'px';
+    var st = desk.stacks.find(function (s) { return s.id === sid; });
+    if (st) st.panel = { x: px, y: py, userSet: true };
+  }
+
   function onPointerMove(event) {
     if (!drag) return;
     var dx = event.clientX - drag.startX;
@@ -69269,6 +69272,8 @@ window.HMChat = (function () {
       if (drag.ghostMode) return; /* 原作卡留在原位，只有虚影跟手 */
       item.el.style.left = left + 'px';
       item.el.style.top = top + 'px';
+      var stackId = item.el.dataset && item.el.dataset.stack;
+      if (stackId) followStackPanel(stackId, item, left, top);
     });
     if (drag.refGhost) {
       drag.refGhost.style.left = event.clientX + 'px';
@@ -70900,6 +70905,27 @@ window.HMChat = (function () {
           e.dataTransfer.effectAllowed = 'move';
         } catch (err) {}
       });
+
+      /* 叠放卡右键统一在 document 捕获阶段处理：焦点态/拖拽逻辑里的 preventDefault、
+         stopPropagation 会先把事件吞掉，卡片自身的监听和 #resultGrid 的委托都可能收不到 */
+      document.addEventListener('contextmenu', function (event) {
+        var stackCard = event.target && event.target.closest ? event.target.closest('.folder-card[data-stack]') : null;
+        if (!stackCard) return;
+        var sid = stackCard.dataset.stack;
+        if (!sid) return;
+        event.preventDefault();
+        event.stopPropagation();
+        selectOnly(sid);
+        var th = event.target.closest('.folder-t[data-stack-fp]');
+        var thWork = th ? findWork(th.dataset.stackFp) : null;
+        if (!thWork) {
+          var st = desk.stacks.find(function (x) { return x.id === sid; });
+          var members = st ? stackMembers(st) : [];
+          thWork = members[0] || null;
+        }
+        if (thWork) openWorkMenu(thWork, event.clientX, event.clientY);
+        else openStackPanel(sid);
+      }, true);
 
       grid.addEventListener('pointerdown', onPointerDown);
       grid.addEventListener('contextmenu', function (event) {
