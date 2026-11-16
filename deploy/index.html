@@ -5306,6 +5306,71 @@ body.hm-light .hm-slider-val {
   background: rgba(56, 189, 248, 0.35);
   color: transparent;
 }
+/* ========== 富文本输入区（contenteditable） ==========
+   textarea 仅作隐藏数据源，屏幕上只由这一层排版，胶囊是真正参与排版的原子节点 */
+.hm-prompt.has-rich textarea {
+  position: absolute !important;
+  left: 0; top: 0;
+  width: 1px !important; height: 1px !important;
+  padding: 0 !important; border: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+.hm-prompt-rich {
+  display: none;
+  flex: 1 1 auto;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 74px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  color: #dbe7f3;
+  caret-color: #dbe7f3;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.hm-prompt.has-rich .hm-prompt-rich { display: block; }
+.hm-prompt-rich:empty::before {
+  content: attr(data-placeholder);
+  color: #5f7288;
+  pointer-events: none;
+}
+.hm-prompt-rich::selection,
+.hm-prompt-rich *::selection {
+  background: rgba(56, 189, 248, 0.35);
+}
+/* 引用胶囊：inline-block 原子节点，前后由 margin 让位，不再重叠 */
+.hm-prompt-rich .rich-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.24em;
+  vertical-align: middle;
+  margin: 0 0.2em;
+  padding: 0.06em 0.24em;
+  border-radius: 7px;
+  background: rgba(8, 30, 50, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 1px 6px rgba(56, 189, 248, 0.18);
+  color: #bae6fd;
+  font-weight: 600;
+  white-space: nowrap;
+  user-select: none;
+}
+.hm-prompt-rich .rich-chip img {
+  width: 0.92em;
+  height: 0.92em;
+  border-radius: 3px;
+  object-fit: cover;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  pointer-events: none;
+}
 
 .hm-composer.is-expanded .hm-prompt {
   min-height: 160px; /* expanded 时给 prompt 一个最低高度 */
@@ -25784,6 +25849,7 @@ body.dv-open .hm-page {
 
       <div class="hm-prompt prompt-wrap">
         <textarea id="promptInput" maxlength="1800" placeholder="描述你想生成的画面..."></textarea>
+        <div class="hm-prompt-rich" id="promptRich" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="描述你想生成的画面..."></div>
         <span class="hm-count" id="charCount">0 / 1800</span>
         <button class="hm-expand" id="expandPrompt" aria-label="展开输入区">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -29058,6 +29124,7 @@ function switchPromptTab(index) {
   state.activePrompt = index;
   ensureTabSlots();
   els.promptInput.value = state.prompts[index];
+  if (_richEl) richRenderFromValue();
   renderPromptTabs();
   renderRef(); /* ← 切换 tab 时切换独立的 ref 网格 */
   applyRefWeightUI(currentTabRefWeight()); /* ← 同步 ref 强度 slider */
@@ -29087,6 +29154,7 @@ function deletePromptTab(index) {
   state.tabPrompts = state.prompts;
   ensureTabSlots();
   els.promptInput.value = state.prompts[state.activePrompt] || '';
+  if (_richEl) richRenderFromValue();
   renderPromptTabs();
   renderRef();
   applyRefWeightUI(currentTabRefWeight());
@@ -29816,7 +29884,157 @@ function _ensureChipCache(refs) {
   return _chipCacheHtml;
 }
 
+/* ========== 富文本输入区（contenteditable，唯一排版来源） ==========
+ * textarea 仅作隐藏数据源（发送、保存、@插入等既有逻辑全部读它），
+ * 屏幕上的文字与胶囊只由这一层绘制，胶囊是参与排版的行内原子节点。 */
+var _richEl = null;
+
+function _richChipNode(n) {
+  var list = currentRefs();
+  var ref = list[n - 1];
+  var el = document.createElement('span');
+  el.className = 'rich-chip';
+  el.contentEditable = 'false';
+  el.dataset.ref = String(n);
+  var img = '';
+  if (ref) {
+    var u = ref.thumb || ref.preview || ref.dataUrl || '';
+    if (u) img = '<img alt="" src="' + u.replace(/"/g, '&quot;') + '">';
+  }
+  el.innerHTML = img + '<span>@</span><span>图' + n + '</span>';
+  return el;
+}
+
+/* 把富文本节点还原成纯文本：胶囊 → @图N，换行按 br/块级 div 还原 */
+function richSerialize() {
+  if (!_richEl) return '';
+  var out = '';
+  (function walk(node) {
+    var kids = node.childNodes || [];
+    for (var i = 0; i < kids.length; i++) {
+      var c = kids[i];
+      if (c.nodeType === 3) { out += c.nodeValue.replace(/\u200b/g, ''); continue; }
+      if (c.nodeType !== 1) continue;
+      if (c.dataset && c.dataset.ref) { out += '@图' + c.dataset.ref; continue; }
+      if (c.tagName === 'BR') { out += '\n'; continue; }
+      if (c.tagName === 'DIV' || c.tagName === 'P') {
+        if (out && out.charAt(out.length - 1) !== '\n') out += '\n';
+        walk(c);
+        continue;
+      }
+      walk(c);
+    }
+  })(_richEl);
+  return out.replace(/\n+$/, '');
+}
+
+/* 用 textarea 的值重建富文本 DOM（外部修改值后调用） */
+function richRenderFromValue() {
+  if (!_richEl) return;
+  var text = (els.promptInput && els.promptInput.value) || '';
+  var frag = document.createDocumentFragment();
+  var re = /@图(\d+)/g;
+  var last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+    frag.appendChild(_richChipNode(Number(m[1])));
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+  _richEl.innerHTML = '';
+  _richEl.appendChild(frag);
+  /* 外部改动后的重建：光标放到末尾，避免落点悬空 */
+  if (document.activeElement === _richEl) {
+    try {
+      var r = document.createRange();
+      r.selectNodeContents(_richEl);
+      r.collapse(false);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+    } catch (e) {}
+  }
+}
+
+/* 富文本输入后：文本回写 textarea，保持既有发送/持久化链路不变 */
+function richSyncToTextarea() {
+  var ta = els.promptInput;
+  if (!ta || !_richEl) return;
+  var text = richSerialize();
+  if (/@图0/.test(text)) return;
+  if (text.length > 1800) {
+    text = text.slice(0, 1800);
+    ta.value = text;
+    richRenderFromValue();
+  } else {
+    ta.value = text;
+  }
+  _chipCacheKey = '';
+  _acKey = '';
+  try { updateCharCount(); } catch (e) {}
+  try { scheduleComposerSave(); } catch (e) {}
+}
+
+/* 在当前光标处插入引用胶囊 */
+function richInsertRefChip(n) {
+  if (!_richEl) return false;
+  _richEl.focus();
+  var sel = window.getSelection();
+  var node = _richChipNode(n);
+  if (sel && sel.rangeCount) {
+    var r = sel.getRangeAt(0);
+    r.deleteContents();
+    r.insertNode(node);
+    /* 胶囊后补一个空格，继续输入不贴着 */
+    var space = document.createTextNode(' ');
+    if (node.parentNode) node.parentNode.insertBefore(space, node.nextSibling);
+    var nr = document.createRange();
+    nr.setStart(space, 1);
+    nr.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(nr);
+  } else {
+    _richEl.appendChild(node);
+    _richEl.appendChild(document.createTextNode(' '));
+  }
+  richSyncToTextarea();
+  return true;
+}
+
+function initRichPrompt() {
+  var ta = els.promptInput;
+  var rich = document.getElementById('promptRich');
+  if (!ta || !rich) return;
+  _richEl = rich;
+  var wrap = ta.closest('.hm-prompt');
+  if (wrap) wrap.classList.add('has-rich');
+  richRenderFromValue();
+
+  rich.addEventListener('input', function () {
+    richSyncToTextarea();
+  });
+  /* 粘贴一律纯文本 */
+  rich.addEventListener('paste', function (ev) {
+    ev.preventDefault();
+    var txt = (ev.clipboardData || window.clipboardData).getData('text/plain') || '';
+    if (!txt) return;
+    document.execCommand('insertText', false, txt);
+    richSyncToTextarea();
+  });
+  rich.addEventListener('keydown', function (ev) {
+    if (ev.isComposing || ev.keyCode === 229) return;  /* 中文输入法候选期间不拦截 */
+    if (ev.key === 'Enter' && !ev.shiftKey) {
+      ev.preventDefault();
+      if (els.generateBtn) els.generateBtn.click();
+    }
+  });
+  /* 外部（@ 插入 / 删图 / 拖拽换序）改完 textarea 后，富文本跟着重建 */
+  richSyncToTextarea();
+}
+
 function renderPromptOverlay() {
+  /* 富文本编辑器接管排版后，旧的镜像层彻底停用 */
+  if (_richEl) { richRenderFromValue(); return; }
   var ta = els.promptInput;
   if (!ta) return;
   var overlay = _ensurePromptOverlay();
@@ -29858,6 +30076,8 @@ function schedulePromptOverlay() {
 function bindPromptOverlayEvents() {
   var ta = els.promptInput;
   if (!ta) return;
+  /* 富文本编辑器接管视觉与输入；textarea 只留作数据源 */
+  initRichPrompt();
   ta.addEventListener('input', schedulePromptOverlay);
   ta.addEventListener('scroll', schedulePromptOverlay);
   ta.addEventListener('paste', function () {
@@ -29910,9 +30130,36 @@ function clearRefImages() {
   renderRef();
 }
 
+/* 富文本编辑器里按光标插入纯文本（@图N 会在同步时变成胶囊） */
+function richInsertText(text) {
+  if (!_richEl) return;
+  _richEl.focus();
+  var sel = window.getSelection();
+  if (sel && sel.rangeCount) {
+    var r = sel.getRangeAt(0);
+    r.deleteContents();
+    var tn = document.createTextNode(text);
+    r.insertNode(tn);
+    var nr = document.createRange();
+    nr.setStart(tn, text.length);
+    nr.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(nr);
+  } else {
+    _richEl.appendChild(document.createTextNode(text));
+  }
+  richSyncToTextarea();
+  richRenderFromValue();
+}
+
 function insertPromptAt(text) {
   const ta = els.promptInput;
   if (!ta) return;
+  if (_richEl) {
+    richInsertText(text);
+    try { updateCharCount(); } catch (e) {}
+    return;
+  }
   const start = ta.selectionStart;
   const end = ta.selectionEnd;
   const val = ta.value;
