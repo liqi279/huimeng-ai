@@ -4684,6 +4684,11 @@ body.hm-ref-fs-open .hm-rail-toggle {
   visibility: hidden !important;
   pointer-events: none !important;
 }
+/* 参考图「查看」复用作品 lightbox：它的 z-index 只有 90，会被应用外壳压住，
+   打开期间提到最顶层，关闭后自然恢复 */
+body.hm-ref-fs-open .lightbox {
+  z-index: 2147482000;
+}
 
 /* ========== 全屏查看 modal（图一） ========== */
 .hm-ref-fullscreen[hidden] {
