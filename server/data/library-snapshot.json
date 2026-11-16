@@ -1,9 +1,10 @@
 {
-  "generatedAt": "2026-11-15T14:34:21.324Z",
+  "generatedAt": "2026-11-16T16:24:21.130Z",
   "source": "huimeng_library.books",
-  "total": 755,
+  "total": 761,
   "areas": {
     "paint": 731,
+    "concept": 6,
     "ref": 24
   },
   "books": [
@@ -16,10 +17,10 @@
       "pageCount": 146,
       "area": "paint",
       "toc": [],
-      "pdfKey": "api/library/file/library/books/mw819v2a-001-kawaii.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw80yetl-001-kawaii-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw819v2a-001-kawaii.pdf",
+      "pdfBytes": 83500919,
+      "coverKey": "library/covers/mw80yetl-001-kawaii-cover.jpg",
+      "coverBytes": 601836
     },
     {
       "id": "lib-mw86nrb0-363dff",
@@ -30,10 +31,24 @@
       "pageCount": 177,
       "area": "paint",
       "toc": [],
-      "pdfKey": "api/library/file/library/books/mw86menn-002-mini-chara.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw86m7g0-002-mini-chara-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw86menn-002-mini-chara.pdf",
+      "pdfBytes": 118452960,
+      "coverKey": "library/covers/mw86m7g0-002-mini-chara-cover.jpg",
+      "coverBytes": 888273
+    },
+    {
+      "id": "lib-mwjgvqx7-e224f2",
+      "sortNo": 1,
+      "title": "CLANNAD · 画集 · 上（Clannad01 000-047）",
+      "author": "KEY / 萌绘图库",
+      "intro": "来源：[萌绘图库][20220311]Clannad01；原压缩包《[画集]KEY经典GAL改动画《Clannad》的画集》。第 1-48 页（共 144 页，分 3 卷）。",
+      "pageCount": 48,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/clannad-20261117-clannad-huaji-1.pdf",
+      "pdfBytes": 71615023,
+      "coverKey": "library/covers/clannad-20261117-clannad-huaji-1.jpg",
+      "coverBytes": 255756
     },
     {
       "id": "lib-mw97y0mu-d5ff0e",
@@ -44,10 +59,24 @@
       "pageCount": 10,
       "area": "paint",
       "toc": [],
-      "pdfKey": "api/library/file/library/books/mw97uyyt-003-momoko.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw97uyjw-003-momoko-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw97uyyt-003-momoko.pdf",
+      "pdfBytes": 8361528,
+      "coverKey": "library/covers/mw97uyjw-003-momoko-cover.jpg",
+      "coverBytes": 100807
+    },
+    {
+      "id": "lib-mwjgwo4u-5e34e0",
+      "sortNo": 2,
+      "title": "CLANNAD · 画集 · 中（Clannad01 048-095）",
+      "author": "KEY / 萌绘图库",
+      "intro": "来源：[萌绘图库][20220311]Clannad01；原压缩包《[画集]KEY经典GAL改动画《Clannad》的画集》。第 49-96 页（共 144 页，分 3 卷）。",
+      "pageCount": 48,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/clannad-20261117-clannad-huaji-2.pdf",
+      "pdfBytes": 80247438,
+      "coverKey": "library/covers/clannad-20261117-clannad-huaji-2.jpg",
+      "coverBytes": 215236
     },
     {
       "id": "lib-mw9882jp-5ee852",
@@ -95,10 +124,24 @@
           "page": 63
         }
       ],
-      "pdfKey": "api/library/file/library/books/mw985riv-004-qiansui-pixel.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw985qu5-004-qiansui-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw985riv-004-qiansui-pixel.pdf",
+      "pdfBytes": 43324555,
+      "coverKey": "library/covers/mw985qu5-004-qiansui-cover.jpg",
+      "coverBytes": 82552
+    },
+    {
+      "id": "lib-mwjgxfeg-1ae31d",
+      "sortNo": 3,
+      "title": "CLANNAD · 画集 · 下（Clannad01 096-143）",
+      "author": "KEY / 萌绘图库",
+      "intro": "来源：[萌绘图库][20220311]Clannad01；原压缩包《[画集]KEY经典GAL改动画《Clannad》的画集》。第 97-144 页（共 144 页，分 3 卷）。",
+      "pageCount": 48,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/clannad-20261117-clannad-huaji-3.pdf",
+      "pdfBytes": 84285455,
+      "coverKey": "library/covers/clannad-20261117-clannad-huaji-3.jpg",
+      "coverBytes": 275518
     },
     {
       "id": "lib-mw9a8pu5-763209",
@@ -109,10 +152,24 @@
       "pageCount": 204,
       "area": "paint",
       "toc": [],
-      "pdfKey": "api/library/file/library/books/mw9a5uhb-005-pixel-bg.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw9a5uhb-005-pixel-bg.pdf",
+      "pdfBytes": 245340260,
+      "coverKey": "library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
+      "coverBytes": 148947
+    },
+    {
+      "id": "lib-mwjgxnn9-e4896c",
+      "sortNo": 4,
+      "title": "CLANNAD · 日历 · 2009",
+      "author": "KEY / 萌绘图库",
+      "intro": "来源：[萌绘图库][20221107]Clannad0910Calendar / Clannad 2009 Calendar，共 7 页。",
+      "pageCount": 7,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/clannad-20261117-clannad-calendar-2009.pdf",
+      "pdfBytes": 23052777,
+      "coverKey": "library/covers/clannad-20261117-clannad-calendar-2009.jpg",
+      "coverBytes": 171369
     },
     {
       "id": "lib-mw9ak57x-423ad7",
@@ -160,10 +217,24 @@
           "page": 1671
         }
       ],
-      "pdfKey": "api/library/file/library/books/mw9ahk53-006-girls-pose-9vol.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9ahcng-006-girls-pose-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw9ahk53-006-girls-pose-9vol.pdf",
+      "pdfBytes": 232280809,
+      "coverKey": "library/covers/mw9ahcng-006-girls-pose-cover.jpg",
+      "coverBytes": 89670
+    },
+    {
+      "id": "lib-mwjgxt67-541f00",
+      "sortNo": 5,
+      "title": "CLANNAD · 日历 · 2010",
+      "author": "KEY / 萌绘图库",
+      "intro": "来源：[萌绘图库][20221107]Clannad0910Calendar / Clannad 2010 Calendar，共 7 页。",
+      "pageCount": 7,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/clannad-20261117-clannad-calendar-2010.pdf",
+      "pdfBytes": 10235753,
+      "coverKey": "library/covers/clannad-20261117-clannad-calendar-2010.jpg",
+      "coverBytes": 325917
     },
     {
       "id": "lib-mw9bj5qo-f39210",
@@ -191,10 +262,24 @@
           "page": 856
         }
       ],
-      "pdfKey": "api/library/file/library/books/mw9bhcmo-007-dress-pose-4vol.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw9bhcmo-007-dress-pose-4vol.pdf",
+      "pdfBytes": 141071323,
+      "coverKey": "library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
+      "coverBytes": 99073
+    },
+    {
+      "id": "lib-mwjgylh5-bf43ec",
+      "sortNo": 6,
+      "title": "CLANNAD · 资料设定线稿集",
+      "author": "KEY / 萌绘图库",
+      "intro": "来源：[线稿集]CLANNAD 动画资料设定线稿集，共 35 页人物线稿。",
+      "pageCount": 35,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/clannad-20261117-clannad-xiankao.pdf",
+      "pdfBytes": 87975848,
+      "coverKey": "library/covers/clannad-20261117-clannad-xiankao.jpg",
+      "coverBytes": 117649
     },
     {
       "id": "lib-mw9bovcf-c4aa7a",
@@ -226,10 +311,10 @@
           "page": 872
         }
       ],
-      "pdfKey": "api/library/file/library/books/mw9bn7yf-008-boys-pose-5vol.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw9bn7yf-008-boys-pose-5vol.pdf",
+      "pdfBytes": 157482527,
+      "coverKey": "library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
+      "coverBytes": 202662
     },
     {
       "id": "lib-mw9ler9s-e9679b",
@@ -240,10 +325,10 @@
       "pageCount": 163,
       "area": "paint",
       "toc": [],
-      "pdfKey": "api/library/file/library/books/mw9leg53-009-paint-income.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9lecyl-009-paint-income-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw9leg53-009-paint-income.pdf",
+      "pdfBytes": 38661990,
+      "coverKey": "library/covers/mw9lecyl-009-paint-income-cover.jpg",
+      "coverBytes": 455437
     },
     {
       "id": "lib-mw9mgki5-4f1173",
@@ -254,10 +339,10 @@
       "pageCount": 130,
       "area": "paint",
       "toc": [],
-      "pdfKey": "api/library/file/library/books/mw9mfr0i-010-sai-paint-tech.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw9mfr0i-010-sai-paint-tech.pdf",
+      "pdfBytes": 42187172,
+      "coverKey": "library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
+      "coverBytes": 773362
     },
     {
       "id": "lib-mw9mna4r-02d065",
@@ -285,10 +370,10 @@
           "page": 390
         }
       ],
-      "pdfKey": "api/library/file/library/books/mw9mlkok-011-fantasy-tech.pdf",
-      "pdfBytes": null,
-      "coverKey": "api/library/file/library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
-      "coverBytes": null
+      "pdfKey": "library/books/mw9mlkok-011-fantasy-tech.pdf",
+      "pdfBytes": 192109125,
+      "coverKey": "library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
+      "coverBytes": 1645914
     },
     {
       "id": "lib-mwaz6plf-33b5a3",
@@ -27395,7 +27480,7 @@
       "area": "paint",
       "toc": [
         {
-          "title": "﻿表紙",
+          "title": "表紙",
           "page": 2
         },
         {
