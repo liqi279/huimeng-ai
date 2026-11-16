@@ -4793,43 +4793,49 @@ body.hm-ref-fs-open .hm-rail-toggle {
    这是 Slack / Discord / GitHub mention 的实现思路。 */
 .hm-prompt-overlay .chip {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1em;
-  vertical-align: baseline;
+  display: inline-block;
   padding: 0;
-  margin: 0 -0.28em 0 0; /* 右侧负边距吃掉 token 后面的空格，整体宽度贴近 @图N */
+  margin: 0;
   font-family: inherit;
-  font-size: 0.86em;
+  font-size: inherit;
   line-height: inherit;
+  letter-spacing: inherit;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+/* 不可见的真实文本占位：宽度严格等于 @图N，保证镜像与 textarea 每个字符落点一致 */
+.hm-prompt-overlay .chip .chip-ghost {
+  visibility: hidden;
+  font: inherit;
+  letter-spacing: inherit;
   white-space: nowrap;
 }
-.hm-prompt-overlay .chip::before {
-  content: '';
+/* 胶囊视觉层：绝对定位在 token 的文字位置上，不参与文本流宽度计算 */
+.hm-prompt-overlay .chip .chip-visual {
   position: absolute;
-  left: -0.16em;
-  right: -0.16em;
-  top: -0.18em;
-  bottom: -0.18em;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16em;
+  padding: 0 0.2em;
   border-radius: 7px;
   background: rgba(8, 30, 50, 0.88);
   border: 1px solid rgba(56, 189, 248, 0.5);
   box-shadow: 0 1px 6px rgba(56, 189, 248, 0.18);
-  z-index: 0;
+  white-space: nowrap;
+  pointer-events: none;
 }
 .hm-prompt-overlay .chip .chip-at,
 .hm-prompt-overlay .chip .chip-label {
-  position: relative;
-  z-index: 1;
   color: #bae6fd;
   font-weight: 600;
   font-size: inherit;
   padding: 0;
-  background: none;
-  box-shadow: none;
   line-height: 1.3;
 }
-/* 缩略图：正常行内流，排在「@」和「图N」之间，不叠字、不占负偏移 */
+/* 缩略图：正常行内流，排在胶囊内部，不叠字、不占负偏移 */
 .hm-prompt-overlay .chip .chip-thumb {
   position: relative;
   flex: 0 0 auto;
@@ -5259,13 +5265,17 @@ body.hm-light .hm-slider-val {
   appearance: none;
 }
 
-/* overlay 层：盖在 textarea 上显示 @N 富文本 chip（纯视觉，不交互） */
+/* overlay 层：与 textarea 内容盒严格重合，只负责绘制文字与引用胶囊（纯视觉，不交互） */
 .hm-prompt-overlay {
   position: absolute;
-  inset: 0;
   pointer-events: none;
-  padding: 2px 40px 18px 14px; /* 和 .hm-prompt padding 对齐 */
-  overflow: visible;           /* 让 chip-thumb 溢出左侧不被裁剪 */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   font-size: 12.5px;
   line-height: 1.6;
   color: #dbe7f3;
@@ -5284,6 +5294,11 @@ body.hm-light .hm-slider-val {
 
 .hm-prompt textarea::placeholder {
   color: #5f7288;
+}
+/* 文字透明后选区仍要可见，否则用户看不出选中范围 */
+.hm-prompt textarea::selection {
+  background: rgba(56, 189, 248, 0.35);
+  color: transparent;
 }
 
 .hm-composer.is-expanded .hm-prompt {
@@ -29711,15 +29726,36 @@ function _ensurePromptOverlay() {
 
   _promptOverlayEl = document.createElement('div');
   _promptOverlayEl.className = 'hm-prompt-overlay';
-  /* 字号/行高/字体必须与 textarea 完全一致（含内联样式），否则 chip 与光标错位 */
-  var cs = window.getComputedStyle(ta);
-  _promptOverlayEl.style.fontSize = cs.fontSize;
-  _promptOverlayEl.style.lineHeight = cs.lineHeight;
-  _promptOverlayEl.style.fontFamily = cs.fontFamily;
-  _promptOverlayEl.style.letterSpacing = cs.letterSpacing;
-  /* 插在 textarea 前面，保证 textarea 在 overlay 之上 */
+  /* 插在 textarea 前面，保证 textarea 在 overlay 之上（它只透明显示光标/选区） */
   wrap.insertBefore(_promptOverlayEl, ta);
+  _syncPromptOverlayBox();
   return _promptOverlayEl;
+}
+
+/* 把 overlay 的盒模型、字体、换行规则精确对齐 textarea 的内容盒，
+   两边度量完全一致，镜像出来的文字才不会错位 */
+function _syncPromptOverlayBox() {
+  var ta = els.promptInput;
+  var overlay = _promptOverlayEl;
+  if (!ta || !overlay) return;
+  var cs = window.getComputedStyle(ta);
+  overlay.style.left = ta.offsetLeft + 'px';
+  overlay.style.top = ta.offsetTop + 'px';
+  overlay.style.width = ta.clientWidth + 'px';
+  overlay.style.height = ta.clientHeight + 'px';
+  overlay.style.boxSizing = 'border-box';
+  overlay.style.padding = cs.padding;
+  overlay.style.fontFamily = cs.fontFamily;
+  overlay.style.fontSize = cs.fontSize;
+  overlay.style.fontWeight = cs.fontWeight;
+  overlay.style.lineHeight = cs.lineHeight;
+  overlay.style.letterSpacing = cs.letterSpacing;
+  overlay.style.whiteSpace = cs.whiteSpace;
+  overlay.style.wordBreak = cs.wordBreak;
+  overlay.style.overflowWrap = cs.overflowWrap;
+  overlay.style.textAlign = cs.textAlign;
+  overlay.scrollTop = ta.scrollTop;
+  overlay.scrollLeft = ta.scrollLeft;
 }
 
 /* chip 的 HTML 只在参考图变化时重建一次，避免每次输入都重新解码图片 */
@@ -29749,11 +29785,13 @@ function _ensureChipCache(refs) {
     var u = ref.thumb || ref.dataUrl || '';
     /* 深色胶囊：左侧小缩略图（绝对定位、不占宽度）+ "@N" 浅色文字，
        整体宽度与文本里的 @N 完全一致，连续多个也不会挤行 */
-    /* 块内顺序：缩略图 → @ → 图N，三部分都是行内流，互不覆盖 */
-    return '<span class="chip">' +
+    /* 占位层用真实文本「@图N」定宽；视觉层绝对定位叠在占位上方：缩略图 → @ → 图N */
+    return '<span class="chip"><span class="chip-ghost">@图' + (i + 1) + '</span>' +
+      '<span class="chip-visual">' +
       '<span class="chip-thumb" style="background-image:url(' + u + ')"></span>' +
       '<span class="chip-at">@</span>' +
-      '<span class="chip-label">图' + (i + 1) + '</span></span>';
+      '<span class="chip-label">图' + (i + 1) + '</span>' +
+      '</span></span>';
   });
   return _chipCacheHtml;
 }
@@ -29771,11 +29809,13 @@ function renderPromptOverlay() {
     ta.style.color = ''; /* 恢复正常颜色 */
     return;
   }
-  /* 有 refs：textarea 文字透明（只留光标），overlay 画真实文字 + chip */
+  /* 有 refs：textarea 文字透明（只留光标与选区），overlay 完整镜像全部内容 */
   ta.style.color = 'transparent';
   ta.style.caretColor = '#dbe7f3';
   overlay.style.display = 'block';
+  _syncPromptOverlayBox();
   overlay.scrollTop = ta.scrollTop;
+  overlay.scrollLeft = ta.scrollLeft;
 
   var chips = _ensureChipCache(refs);
   /* 只把显式引用（@图N / @N）换成胶囊；正文里普通的「图2」保持原样，
@@ -29803,6 +29843,8 @@ function bindPromptOverlayEvents() {
   ta.addEventListener('paste', function () {
     schedulePromptOverlay();
   });
+  /* 窗口/面板尺寸变化会改变 textarea 内容盒，镜像层跟着重新对齐 */
+  window.addEventListener('resize', schedulePromptOverlay);
 }
 
 function removeRefAt(idx) {
