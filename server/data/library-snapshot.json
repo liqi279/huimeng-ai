@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-16T17:27:14.839Z",
+  "generatedAt": "2026-11-16T18:16:34.247Z",
   "source": "huimeng_library.books",
-  "total": 796,
+  "total": 813,
   "areas": {
     "paint": 731,
-    "concept": 41,
+    "concept": 58,
     "ref": 24
   },
   "books": [
@@ -2187,6 +2187,20 @@
       "coverBytes": 242962
     },
     {
+      "id": "lib-mwjkcm8c-8a55f2",
+      "sortNo": 42,
+      "title": "86 · 原画集 · 第1/2卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：原画集/…的原画集.zip / 86EightySixArt02，共 59 页。本卷第 1-30 页（共 59 页，分 2 卷）。",
+      "pageCount": 30,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-genga-v1.pdf",
+      "pdfBytes": 16446084,
+      "coverKey": "library/covers/86-20261117-86-genga-v1.jpg",
+      "coverBytes": 122646
+    },
+    {
       "id": "lib-mwcfx56y-c2c2fe",
       "sortNo": 43,
       "title": "上吧！漫画达人必修课：入门篇",
@@ -2766,6 +2780,20 @@
       "coverBytes": 308525
     },
     {
+      "id": "lib-mwjkcux7-bad947",
+      "sortNo": 43,
+      "title": "86 · 原画集 · 第2/2卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：原画集/…的原画集.zip / 86EightySixArt02，共 59 页。本卷第 31-59 页（共 59 页，分 2 卷）。",
+      "pageCount": 29,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-genga-v2.pdf",
+      "pdfBytes": 16194303,
+      "coverKey": "library/covers/86-20261117-86-genga-v2.jpg",
+      "coverBytes": 113988
+    },
+    {
       "id": "lib-mwcfxt2d-ceef4f",
       "sortNo": 44,
       "title": "上吧！漫画达人必修课：Q 版篇",
@@ -3313,6 +3341,20 @@
       "coverBytes": 283306
     },
     {
+      "id": "lib-mwjkd8jx-e6c60e",
+      "sortNo": 44,
+      "title": "86 · 设定集",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…的设定集.zip / 86EightySixArt，共 59 页。",
+      "pageCount": 59,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-settei.pdf",
+      "pdfBytes": 43408685,
+      "coverKey": "library/covers/86-20261117-86-settei.jpg",
+      "coverBytes": 109980
+    },
+    {
       "id": "lib-mwcfzasy-13daf2",
       "sortNo": 45,
       "title": "上吧！漫画达人必修课：洋服美少女",
@@ -3562,6 +3604,20 @@
       "pdfBytes": 67888926,
       "coverKey": "library/covers/046-manga-master-western-dress-cover.jpg",
       "coverBytes": 300976
+    },
+    {
+      "id": "lib-mwjkdw1l-ab0753",
+      "sortNo": 45,
+      "title": "86 · BD附带画集+包装扫描图 · 第1/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 1-22 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v1.pdf",
+      "pdfBytes": 75692343,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v1.jpg",
+      "coverBytes": 127421
     },
     {
       "id": "lib-mwcfzw9m-32b3dc",
@@ -3959,6 +4015,20 @@
       "coverBytes": 286506
     },
     {
+      "id": "lib-mwjkeglt-9c6dec",
+      "sortNo": 46,
+      "title": "86 · BD附带画集+包装扫描图 · 第2/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 23-44 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v2.pdf",
+      "pdfBytes": 59636008,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v2.jpg",
+      "coverBytes": 74585
+    },
+    {
       "id": "lib-mwcg0v72-df5dc0",
       "sortNo": 47,
       "title": "上吧！漫画达人必修课：古风入门",
@@ -3971,6 +4041,20 @@
       "pdfBytes": 37894046,
       "coverKey": "library/covers/048-manga-master-ancient-beginner-cover.jpg",
       "coverBytes": 311495
+    },
+    {
+      "id": "lib-mwjkf60q-6677ae",
+      "sortNo": 47,
+      "title": "86 · BD附带画集+包装扫描图 · 第3/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 45-66 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v3.pdf",
+      "pdfBytes": 86563545,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v3.jpg",
+      "coverBytes": 121301
     },
     {
       "id": "lib-mwcg4btr-b69805",
@@ -3987,6 +4071,20 @@
       "coverBytes": 213373
     },
     {
+      "id": "lib-mwjkfuxm-ead102",
+      "sortNo": 48,
+      "title": "86 · BD附带画集+包装扫描图 · 第4/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 67-88 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v4.pdf",
+      "pdfBytes": 64493148,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v4.jpg",
+      "coverBytes": 127062
+    },
+    {
       "id": "lib-mwcg5gtj-063176",
       "sortNo": 49,
       "title": "CG 漫画人物技法讲座",
@@ -3999,6 +4097,20 @@
       "pdfBytes": 57898550,
       "coverKey": "library/covers/050-cg-character-lecture-cover.jpg",
       "coverBytes": 209518
+    },
+    {
+      "id": "lib-mwjkgfe9-ae7c41",
+      "sortNo": 49,
+      "title": "86 · BD附带画集+包装扫描图 · 第5/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 89-110 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v5.pdf",
+      "pdfBytes": 73200208,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v5.jpg",
+      "coverBytes": 240829
     },
     {
       "id": "lib-mwdg5o1u-1183a7",
@@ -4015,6 +4127,20 @@
       "coverBytes": 209195
     },
     {
+      "id": "lib-mwjkh4im-c9d6a3",
+      "sortNo": 50,
+      "title": "86 · BD附带画集+包装扫描图 · 第6/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 111-132 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v6.pdf",
+      "pdfBytes": 83080298,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v6.jpg",
+      "coverBytes": 115001
+    },
+    {
       "id": "lib-mwdg6l2n-9d41ce",
       "sortNo": 51,
       "title": "日本动漫绘画中的人物设计",
@@ -4027,6 +4153,20 @@
       "pdfBytes": 86049966,
       "coverKey": "library/covers/052-anime-character-design-cover.jpg",
       "coverBytes": 207075
+    },
+    {
+      "id": "lib-mwjkhmzu-d85397",
+      "sortNo": 51,
+      "title": "86 · BD附带画集+包装扫描图 · 第7/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 133-154 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v7.pdf",
+      "pdfBytes": 63098128,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v7.jpg",
+      "coverBytes": 41584
     },
     {
       "id": "lib-mwdg7u45-9eb800",
@@ -4043,6 +4183,20 @@
       "coverBytes": 299931
     },
     {
+      "id": "lib-mwjkidkl-28e269",
+      "sortNo": 52,
+      "title": "86 · BD附带画集+包装扫描图 · 第8/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 155-176 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v8.pdf",
+      "pdfBytes": 78260355,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v8.jpg",
+      "coverBytes": 109282
+    },
+    {
       "id": "lib-mwdg9em4-bbe478",
       "sortNo": 53,
       "title": "服装的皱褶：实践技法",
@@ -4055,6 +4209,20 @@
       "pdfBytes": 49281336,
       "coverKey": "library/covers/054-clothing-wrinkles-cover.jpg",
       "coverBytes": 291963
+    },
+    {
+      "id": "lib-mwjkiubi-f15e64",
+      "sortNo": 53,
+      "title": "86 · BD附带画集+包装扫描图 · 第9/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 177-198 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v9.pdf",
+      "pdfBytes": 58881430,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v9.jpg",
+      "coverBytes": 127591
     },
     {
       "id": "lib-mwdgc0c8-f66272",
@@ -4071,6 +4239,20 @@
       "coverBytes": 186871
     },
     {
+      "id": "lib-mwjkjgtj-998169",
+      "sortNo": 54,
+      "title": "86 · BD附带画集+包装扫描图 · 第10/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 199-220 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v10.pdf",
+      "pdfBytes": 80756728,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v10.jpg",
+      "coverBytes": 107788
+    },
+    {
       "id": "lib-mwdgdlbp-f9afbe",
       "sortNo": 55,
       "title": "西洋甲胄＆武具作画资料",
@@ -4083,6 +4265,20 @@
       "pdfBytes": 45292322,
       "coverKey": "library/covers/056-western-armor-reference-cover.jpg",
       "coverBytes": 236717
+    },
+    {
+      "id": "lib-mwjkk2h1-a2a774",
+      "sortNo": 55,
+      "title": "86 · BD附带画集+包装扫描图 · 第11/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 221-242 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v11.pdf",
+      "pdfBytes": 73464771,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v11.jpg",
+      "coverBytes": 121813
     },
     {
       "id": "lib-mwdgjbwl-a95b28",
@@ -4099,6 +4295,20 @@
       "coverBytes": 122274
     },
     {
+      "id": "lib-mwjkklf6-842ad6",
+      "sortNo": 56,
+      "title": "86 · BD附带画集+包装扫描图 · 第12/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 243-264 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v12.pdf",
+      "pdfBytes": 67051361,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v12.jpg",
+      "coverBytes": 112445
+    },
+    {
       "id": "lib-mwdgm3fj-299c56",
       "sortNo": 57,
       "title": "向专业画师学习：水彩上色进阶技巧",
@@ -4113,6 +4323,20 @@
       "coverBytes": 181078
     },
     {
+      "id": "lib-mwjkl8xv-d7321a",
+      "sortNo": 57,
+      "title": "86 · BD附带画集+包装扫描图 · 第13/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 265-286 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v13.pdf",
+      "pdfBytes": 85099370,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v13.jpg",
+      "coverBytes": 300856
+    },
+    {
       "id": "lib-mwdgpdu1-0b8abb",
       "sortNo": 58,
       "title": "SAI 的进阶指南：仅用 SAI 就可以诞生出美少女的绘画教程",
@@ -4125,6 +4349,20 @@
       "pdfBytes": 398728631,
       "coverKey": "library/covers/059-sai-advanced-guide-cover.jpg",
       "coverBytes": 272822
+    },
+    {
+      "id": "lib-mwjklvj4-e3ffad",
+      "sortNo": 58,
+      "title": "86 · BD附带画集+包装扫描图 · 第14/14卷",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：设定集/…BD附带画集+包装扫描图….zip / 86EightySixBDBooklet，共 308 页。本卷第 287-308 页（共 308 页，分 14 卷）。",
+      "pageCount": 22,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/86-20261117-86-bdbooklet-v14.pdf",
+      "pdfBytes": 64263738,
+      "coverKey": "library/covers/86-20261117-86-bdbooklet-v14.jpg",
+      "coverBytes": 109741
     },
     {
       "id": "lib-mwdgpz8m-e93783",
