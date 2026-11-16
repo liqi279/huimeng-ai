@@ -19602,6 +19602,26 @@ a.lib-btn {
   line-height: 1.2;
 }
 
+/* 阅读历史：真实封面（与上传时同一套图片服务） */
+.lib-panel-cover.has-img {
+  padding: 0;
+  overflow: hidden;
+  background: #221610;
+}
+.lib-panel-cover.has-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 缺失/加载失败：中性占位，不出现裂图 */
+.lib-panel-cover.is-placeholder {
+  background: linear-gradient(150deg, rgba(148, 163, 184, 0.2), rgba(30, 22, 16, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(255, 240, 210, 0.12);
+  color: rgba(214, 190, 148, 0.62);
+  font-size: 8px;
+}
+
 .lib-panel-text {
   flex: 1;
   min-width: 0;
@@ -19621,10 +19641,11 @@ a.lib-btn {
 
 .lib-panel-text small {
   font-size: 10px;
+  line-height: 1.4;
   color: rgba(214, 190, 148, 0.6);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* 进度 · 作者 · 关闭时间可能较长：允许换行，窄屏不溢出 */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .lib-panel-go {
@@ -57912,6 +57933,53 @@ window.HMChat = (function () {
     return Number(h && (h.openedAt || h.updatedAt || h.at)) || 0;
   }
 
+  /* 关闭/结束阅读时间：退出阅读器时写入 closedAt；格式化给列表小字用 */
+  function fmtHistTime(ts) {
+    var n = Number(ts);
+    if (!n) return '';
+    var d = new Date(n);
+    if (isNaN(d.getTime())) return '';
+    function p(x) { return (x < 10 ? '0' : '') + x; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+      + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  function markHistClosed(bookId) {
+    if (!bookId) return;
+    var entry = null;
+    for (var i = 0; i < state.hist.length; i++) {
+      if (state.hist[i].bookId === bookId) { entry = state.hist[i]; break; }
+    }
+    if (!entry) return;
+    entry.closedAt = nowMs();
+    try { writeJSON(LS.hist, state.hist); } catch (e) {}
+    if (state.mode === 'remote') { try { saveRemoteMeta(); } catch (e) {} }
+  }
+
+  /* 阅读历史封面：优先书目自身的 coverUrl（与上传时同一套图片服务）；
+     加载失败先换原图地址，仍失败则退回中性占位，绝不留下裂图 */
+  function panelCoverFallback(img) {
+    if (!img) return;
+    var box = img.parentNode;
+    var placeholder = function () {
+      if (!box) return;
+      box.classList.add('is-placeholder');
+      box.innerHTML = '<span>无封面</span>';
+    };
+    if (img.getAttribute('data-cover-fb')) { placeholder(); return; }
+    img.setAttribute('data-cover-fb', '1');
+    var id = img.getAttribute('data-cover-id');
+    if (!id) { placeholder(); return; }
+    fetch(apiUrl('/library/books/' + encodeURIComponent(id) + '/cover-url'))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.url) img.src = d.url;
+        else placeholder();
+      })
+      .catch(placeholder);
+  }
+  window.HM.panelCoverFallback = panelCoverFallback;
+
   function histClearedAt() {
     try { return Number(localStorage.getItem(HIST_CLEARED_KEY)) || 0; } catch (e) { return 0; }
   }
@@ -59600,6 +59668,7 @@ window.HMChat = (function () {
     els.reader.innerHTML = '';
     if (state.current) {
       var book = state.current;
+      markHistClosed(book.id);
       renderDetail(book);
     }
   }
@@ -59614,11 +59683,15 @@ window.HMChat = (function () {
     var hint = '';
     var emptyText;
     if (kind === 'fav') {
-      list = state.books.filter(function (b) { return isFavorite(b.id); });
+      list = state.books.filter(function (b) { return isFavorite(b.id); })
+        .map(function (b) { return { book: b, h: null }; });
       emptyText = '还没有收藏的书籍，打开一本书点击「收藏」吧。';
     } else {
       list = state.hist.filter(histInRange)
-        .map(function (h) { return h.book || byId(h.bookId); })
+        .map(function (h) {
+          var b = h.book || byId(h.bookId);
+          return b ? { book: b, h: h } : null;
+        })
         .filter(Boolean);
       emptyText = state.hist.length
         ? '这个时间段内没有阅读记录，换个时间范围试试。'
@@ -59642,13 +59715,24 @@ window.HMChat = (function () {
       + '<div class="lib-modal-head"><h3>' + title + '</h3>'
       + '<button type="button" class="lib-modal-close" data-close>×</button></div>'
       + tools
-      + (list.length ? '<div class="lib-panel-list">' + list.map(function (b) {
+      + (list.length ? '<div class="lib-panel-list">' + list.map(function (it) {
+        var b = it.book;
         var p = progressOf(b.id);
         var sub = kind === 'fav'
           ? esc(b.author) + ' · ' + esc(b.category)
           : (p ? '上次读到第 ' + p + ' 页' : '未开始阅读') + ' · ' + esc(b.author);
+        if (kind === 'hist') {
+          /* 小字：进度 · 作者 · 关闭时间；老记录没有 closedAt 时显示「未记录」 */
+          sub += ' · 关闭 ' + (fmtHistTime(it.h && it.h.closedAt) || '未记录');
+        }
+        var cover = kind === 'hist' && coverUrlUsable(b.coverUrl) ? mediaFile(b.coverUrl) : '';
+        var coverHtml = cover
+          ? '<span class="lib-panel-cover has-img"><img src="' + esc(cover) + '" alt="" loading="lazy"'
+            + ' data-cover-id="' + esc(b.id) + '" onerror="window.HM.panelCoverFallback(this)"></span>'
+          : '<span class="lib-panel-cover' + (kind === 'hist' ? ' is-placeholder' : '') + '" style="--accent:' + esc(b.accent) + '">'
+            + '<span>' + esc(kind === 'hist' ? '无封面' : b.title.slice(0, 4)) + '</span></span>';
         return '<button type="button" class="lib-panel-item" data-open="' + esc(b.id) + '">'
-          + '<span class="lib-panel-cover" style="--accent:' + esc(b.accent) + '"><span>' + esc(b.title.slice(0, 4)) + '</span></span>'
+          + coverHtml
           + '<span class="lib-panel-text"><b>' + esc(b.title) + '</b><small>' + sub + '</small></span>'
           + '<span class="lib-panel-go">打开 →</span></button>';
       }).join('') + '</div>'
