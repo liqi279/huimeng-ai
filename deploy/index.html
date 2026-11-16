@@ -4262,23 +4262,31 @@ body.hm-resizing * {
 }
 .hm-ref-tools {
   position: absolute;
-  /* 用 inset 撑满格子内容盒 + flex 居中，不依赖 50%/translate，也不受内边距影响 */
-  inset: 0;
+  /* 四个方向贴合格子边缘 + 自身 flex 居中：不依赖 50%/translate，也不受图片比例、圆角、内边距影响 */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
   padding: 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   z-index: 3;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.16s ease;
+  transition: none;
 }
-/* 只有鼠标进入格子、或格子内元素获得焦点时显示；移出即隐藏 */
-.hm-ref-cell:hover .hm-ref-tools,
-.hm-ref-cell:focus-within .hm-ref-tools {
+/* 只有鼠标进入格子、或格子内元素获得（键盘）焦点时显示；移出立即隐藏 */
+.hm-ref-cell:hover > .hm-ref-tools,
+.hm-ref-cell:focus-visible > .hm-ref-tools,
+.hm-ref-cell:has(:focus-visible) > .hm-ref-tools {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
