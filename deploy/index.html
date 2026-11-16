@@ -62781,7 +62781,10 @@ window.HMChat = (function () {
 
     var t0 = performance.now();
     var raf = 0;
+    var running = false;
+    var pausedAt = 0;
     function frame(now) {
+      if (document.hidden) { running = false; return; }
       var t = (now - t0) / 1000;
       ctx.clearRect(0, 0, W, H);
       drawSeasonScene(ctx, W, H, s, t, opts.noGlow);
@@ -62791,14 +62794,34 @@ window.HMChat = (function () {
       }
       raf = requestAnimationFrame(frame);
     }
-    raf = requestAnimationFrame(frame);
+    function play() {
+      if (running || document.hidden) return;
+      running = true;
+      /* 扣除后台停留的时间，切回时不出现粒子瞬移 */
+      if (pausedAt) { t0 += performance.now() - pausedAt; pausedAt = 0; }
+      raf = requestAnimationFrame(frame);
+    }
+    /* 页面不可见时停止 RAF，切回再继续，避免后台常驻烧 CPU */
+    function onVisibility() {
+      if (document.hidden) {
+        pausedAt = performance.now();
+        running = false;
+        cancelAnimationFrame(raf);
+      } else {
+        play();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility);
+    play();
 
     function onResize() { resize(); }
     window.addEventListener('resize', onResize);
 
     return function stop() {
+      running = false;
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }
 
