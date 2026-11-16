@@ -4255,6 +4255,8 @@ body.hm-resizing * {
   font-size: 12px;
   line-height: 1;
   z-index: 4;
+  pointer-events: auto; /* 别被上层浮层/拖动起手层挡住 */
+  touch-action: manipulation;
 }
 .hm-ref-x:hover {
   background: rgba(251, 113, 133, 0.75);
@@ -29526,20 +29528,18 @@ function renderRef() {
 
       cell.querySelectorAll('[data-ref-act]').forEach(function (btn) {
         var act = btn.dataset.refAct;
-        /* 用 pointerdown 直接触发：参考区/画布上的拖拽逻辑会在 pointerdown 里 preventDefault，
-           这会连带吞掉后续 click，导致「叉号 / 查看 / @」点了没反应 */
-        btn.addEventListener('pointerdown', function (ev) {
-          ev.preventDefault();
-          ev.stopPropagation();
+        /* 动作只执行一次，pointerdown 与 click 双通道兜底：父级拖拽逻辑可能把其中一个吃掉 */
+        var run = function (ev) {
+          if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+          var now = Date.now();
+          if (btn._hmActAt && now - btn._hmActAt < 500) return;
+          btn._hmActAt = now;
           if (act === 'del') removeRefAt(idx);
           else if (act === 'view') openRefFullscreen(idx);
           else if (act === 'mention') insertPromptAt('@图' + (idx + 1) + ' ');
-        });
-        /* 保留 click 拦截：动作已在 pointerdown 执行，避免再冒泡到格子触发打开大图 */
-        btn.addEventListener('click', function (ev) {
-          ev.preventDefault();
-          ev.stopPropagation();
-        });
+        };
+        btn.addEventListener('pointerdown', run);
+        btn.addEventListener('click', run);
       });
 
       /* 旧版本把 preview 存成了 1:1 裁切图：加载后若比例与原图不符，
@@ -29776,10 +29776,11 @@ function bindPromptOverlayEvents() {
 }
 
 function removeRefAt(idx) {
-  var arr = currentRefs();
+  var arr = currentRefs().slice();
+  if (idx < 0 || idx >= arr.length) return;
   arr.splice(idx, 1);
-  setCurrentRefs(arr);
-  els.refInput.value = '';
+  setCurrentRefs(arr); /* 先持久化，后面任何一步出错都不影响数据 */
+  try { if (els.refInput) els.refInput.value = ''; } catch (e) {}
   /* 清除选择态、关闭全屏（如果删的是当前全屏图） */
   delete _refSelectedSet[idx];
   var nextSel = {};
@@ -29790,7 +29791,20 @@ function removeRefAt(idx) {
   });
   _refSelectedSet = nextSel;
   if (_refFsIdx === idx) closeRefFullscreen();
-  hideRefHover();
+  else if (_refFsIdx > idx) _refFsIdx -= 1;
+  try { hideRefHover(); } catch (e) {}
+  /* 提示词里的 @图N：删掉指向这张图的引用，其余编号前移，避免指向不存在的图 */
+  var ta = els.promptInput;
+  if (ta && ta.value && ta.value.indexOf('@图') >= 0) {
+    ta.value = ta.value.replace(/@图(\d+)\s?/g, function (m, n) {
+      var k = Number(n);
+      if (k === idx + 1) return '';
+      if (k > idx + 1) return '@图' + (k - 1) + ' ';
+      return m;
+    });
+    try { updateCharCount(); } catch (e) {}
+    schedulePromptOverlay();
+  }
   renderRef();
   toast('已删除参考图 #' + (idx + 1), 'info');
 }
