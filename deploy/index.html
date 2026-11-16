@@ -17144,6 +17144,63 @@ body.rail-collapsed .hm-page {
   cursor: pointer;
 }
 
+/* 原画资料：条目用文件夹形态呈现（只是外观，点开仍是原来的书籍入口） */
+.lib-book.is-dir {
+  width: 168px;
+  perspective: none;
+  transform: none;
+}
+.lib-book.is-dir::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  width: 48%;
+  height: 16px;
+  border-radius: 8px 10px 0 0;
+  background: linear-gradient(180deg, #4a7fbd, #2a4d78);
+  border: 1.5px solid rgba(96, 165, 250, 0.55);
+  border-bottom: 0;
+}
+.lib-dir-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 0 12px 12px 12px;
+  background: linear-gradient(180deg, #1d3350, #12233a);
+  border: 1.5px solid rgba(96, 165, 250, 0.55);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+  text-align: left;
+  overflow: hidden;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.lib-book.is-dir:hover .lib-dir-body {
+  border-color: rgba(96, 165, 250, 0.9);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42), 0 0 0 2px rgba(96, 165, 250, 0.18);
+}
+.lib-dir-ico {
+  font-size: 22px;
+  line-height: 1;
+}
+.lib-dir-name {
+  font-size: 13px;
+  line-height: 1.35;
+  color: #e8f1ff;
+  max-height: 3.7em;
+  overflow: hidden;
+}
+.lib-dir-meta {
+  margin-top: auto;
+  font-size: 11px;
+  color: #8fb0d6;
+}
+
 .lib-book:hover {
   transform: translateY(-12px) rotate(0deg) scale(1.015);
   filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.55));
@@ -57009,7 +57066,8 @@ window.HMChat = (function () {
     var inner = probe.clientWidth - padL - padR;
     els.body.removeChild(probe);
     if (!(inner > 0)) return shelfPerRowCache || 1;
-    shelfPerRowCache = Math.max(1, Math.floor((inner + gap) / (SHELF_BOOK_WIDTH + gap)));
+    var bookW = state.area === 'concept' ? 168 : SHELF_BOOK_WIDTH; /* 原画资料按文件夹形态的宽度算每层容量 */
+    shelfPerRowCache = Math.max(1, Math.floor((inner + gap) / (bookW + gap)));
     return shelfPerRowCache;
   }
 
@@ -57091,6 +57149,20 @@ window.HMChat = (function () {
   }
 
   function bookCardHtml(b, index) {
+    /* 原画资料：条目按文件夹形态展示；data-id 与 .lib-book 保持不变，
+       点开仍走原来的 openBook 入口，搜索/预取/收藏逻辑都不变 */
+    if (state.area === 'concept') {
+      var dirPages = (b.pages && b.pages.length) || Number(b.pageCount) || 0;
+      return '<button type="button" class="lib-book is-dir' + (b.coverUrl ? ' has-cover' : '') + '" data-id="' + esc(b.id) + '"'
+        + ' title="' + esc(b.title) + ' · ' + esc(b.category || '未分类') + '">'
+        + '<span class="lib-dir-body">'
+        + '<span class="lib-dir-ico">📁</span>'
+        + '<span class="lib-dir-name">' + esc(b.title) + '</span>'
+        + '<span class="lib-dir-meta">' + esc(b.category || '未分类') + ' · ' + dirPages + ' 页</span>'
+        + '</span>'
+        + (isFavorite(b.id) ? '<span class="lib-book-star" title="已收藏">★</span>' : '')
+        + '</button>';
+    }
     var tilt = ((index % 5) - 2) * 1.1;
     var width = 120; /* 单本标称宽度，每层容量按柜内宽度现场测量 */
     var pageCount = (b.pages && b.pages.length) || Number(b.pageCount) || 0;
