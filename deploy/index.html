@@ -3877,9 +3877,8 @@ body.hm-light .hm-tm-clear { color: #475569; border-color: rgba(15, 23, 42, 0.12
   overflow-y: auto;
   overflow-x: hidden;
   padding: 26px 28px calc(var(--hm-dock-h, 250px) + 16px);
-  background:
-    radial-gradient(ellipse 62% 46% at 50% 0%, rgba(38, 86, 128, 0.14), transparent 62%),
-    #0a111c;
+  /* 底色在 body 上，这里保持透明，粒子层才能透出来又不盖住卡片 */
+  background: transparent;
 }
 
 .hm-canvas::-webkit-scrollbar {
@@ -6035,7 +6034,10 @@ body[data-view="works"] .hm-dock {
  * 兼容 Edge 与 Chrome（Chromium），无 :has / 无 CSS 嵌套
  * ============================================================= */
 body {
-  background: #0a111c;
+  /* 桌面底色上移到 body：环境粒子层夹在页面底色与卡片之间，才能看得见 */
+  background:
+    radial-gradient(ellipse 62% 46% at 50% 0%, rgba(38, 86, 128, 0.14), transparent 62%),
+    #0a111c;
 }
 
 /* ---------- 左侧导航栏 ---------- */
@@ -7406,7 +7408,12 @@ body.hm-light .hm-sq:hover {
   color: #1d4ed8;
 }
 
-body.hm-light .hm-canvas,
+body.hm-light {
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(59, 130, 246, 0.08), transparent 60%), #eef2f7;
+}
+body.hm-light .hm-canvas {
+  background: transparent;
+}
 body.hm-light .hm-page,
 body.hm-light .hm-works {
   background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(59, 130, 246, 0.08), transparent 60%), #eef2f7;
@@ -15612,7 +15619,7 @@ body.hm-light[data-season="autumn"] .hm-rail, body.hm-light[data-season="autumn"
 body.hm-light[data-season="winter"] .hm-rail, body.hm-light[data-season="winter"] .hm-top { background: #f8fbfe; }
 
 /* 环境粒子层级：同层但排在卡片之前（z-index 0，卡片从 1 起） */
-.hm-season-ambient { z-index: 0; opacity: 0.42; }
+.hm-season-ambient { z-index: 0; opacity: 0.8; }
 
 /* ==========================================================
  * API接入管理（设置页顶 Tab）
@@ -62848,6 +62855,20 @@ window.HMChat = (function () {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r * 2.2, 0, Math.PI * 2);
       ctx.fill();
+    } else if (type === 'dust') {
+      /* 默认主题的中性星尘：冷白偏蓝，中心亮核 + 柔光晕，深底上清晰可见 */
+      var gd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 5.5);
+      gd.addColorStop(0, 'rgba(235,245,255,' + p.alpha + ')');
+      gd.addColorStop(0.35, 'rgba(180,212,255,' + (p.alpha * 0.55) + ')');
+      gd.addColorStop(1, 'rgba(140,180,255,0)');
+      ctx.fillStyle = gd;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(250,253,255,' + p.alpha + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.9, p.r * 0.6), 0, Math.PI * 2);
+      ctx.fill();
     } else {
       var g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 7);
       g2.addColorStop(0, 'rgba(190,255,225,' + p.alpha + ')');
@@ -62958,7 +62979,8 @@ window.HMChat = (function () {
       if (document.hidden) { running = false; return; }
       var t = (now - t0) / 1000;
       ctx.clearRect(0, 0, W, H);
-      drawSeasonScene(ctx, W, H, s, t, opts.noGlow);
+      /* 环境粒子层只画粒子（bg:false），四季天空只用于全屏 CG */
+      if (opts.bg !== false) drawSeasonScene(ctx, W, H, s, t, opts.noGlow);
       for (var j = 0; j < ps.length; j++) {
         updateSeasonParticle(ps[j], s.type, W, H, t);
         drawSeasonParticle(ctx, ps[j], s.type);
@@ -63036,7 +63058,13 @@ window.HMChat = (function () {
   function startSeasonAmbient() {
     stopSeasonAmbient();
     var key = currentSeason();
-    if (!SEASONS[key]) return;
+    /* 默认主题（未选季节）也要有背景粒子：用一套中性星尘，不画四季天空，
+       否则「none」直接 return，默认桌面永远看不到粒子 */
+    var preset = SEASONS[key] || {
+      key: 'none', type: 'dust',
+      sky: ['#0a111c', '#0a111c', '#0a111c', '#0a111c'],
+      accent: '#93c5fd', glow: '#cfe7ff'
+    };
     if (!readJSON(LS.seasonFx, true)) return;
     var cv = document.getElementById('hmSeasonAmbient');
     if (!cv) {
@@ -63045,7 +63073,8 @@ window.HMChat = (function () {
       cv.className = 'hm-season-ambient';
       document.body.appendChild(cv);
     }
-    seasonAmbientStop = runSeasonCanvas(cv, SEASONS[key], { count: 42, noGlow: key === 'summer' });
+    /* bg:false → 只画粒子，透明背景，不盖住应用本身 */
+    seasonAmbientStop = runSeasonCanvas(cv, preset, { count: 60, noGlow: true, bg: false });
   }
 
   function stopSeasonAmbient() {
@@ -63111,7 +63140,7 @@ window.HMChat = (function () {
           }).join('') +
         '</div>' +
         '<div class="hm-season-options">' +
-          '<label class="hm-season-switch"><input type="checkbox" id="hmSeasonAmbient" ' + (ambientOn ? 'checked' : '') + '><span>环境粒子常驻</span></label>' +
+          '<label class="hm-season-switch"><input type="checkbox" id="hmSeasonAmbientToggle" ' + (ambientOn ? 'checked' : '') + '><span>环境粒子常驻</span></label>' +
           '<label class="hm-season-switch"><input type="checkbox" id="hmSeasonAuto" ' + (autoOn ? 'checked' : '') + '><span>四季自动轮回（30s）</span></label>' +
           '<button class="hm-season-theme-btn" id="hmSeasonLight">' + (theme === 'light' ? '☀️ 浅色模式' : '🌙 深色模式') + '</button>' +
         '</div>' +
@@ -63131,15 +63160,13 @@ window.HMChat = (function () {
         overlay.querySelectorAll('.hm-season-card').forEach(function (c) {
           c.classList.toggle('is-active', c === card);
         });
-        if (key === 'none') {
-          stopSeasonAmbient();
-        } else {
-          restartSeasonAmbient();
-        }
+        /* 选「无」也要保留默认星尘粒子；是否显示统一由 restartSeasonAmbient 判断开关 */
+        restartSeasonAmbient();
       });
     });
 
-    var fx = overlay.querySelector('#hmSeasonAmbient');
+    /* 复选框 id 必须与模板里的 hmSeasonAmbientToggle 一致，避免和粒子 canvas 的 id 冲突 */
+    var fx = overlay.querySelector('#hmSeasonAmbientToggle');
     fx.addEventListener('change', function () {
       writeJSON(LS.seasonFx, fx.checked);
       if (fx.checked) restartSeasonAmbient(); else stopSeasonAmbient();
