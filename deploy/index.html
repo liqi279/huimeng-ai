@@ -4525,6 +4525,10 @@ body[data-ref-select="1"] .hm-ref-cell.is-selected img {
 }
 
 /* ========== 右侧悬浮工具条（图四：选择素材 + 全部删除） ========== */
+.hm-ref-right-clear.is-unlocked {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.5);
+}
 .hm-ref-right-bar {
   position: absolute;
   top: 4px;
@@ -5232,6 +5236,14 @@ body.hm-light .hm-slider-val {
   text-align: right;
 }
 
+/* 提示词输入与全屏「画面描述」编辑器共用同一套度量，避免再分叉 */
+:root {
+  --hm-prompt-fs: 14px;
+  --hm-prompt-lh: 1.75;
+  --hm-prompt-bg: #0d1827;
+  --hm-prompt-border: rgba(96, 165, 250, 0.24);
+  --hm-prompt-radius: 15px;
+}
 .hm-prompt {
   position: relative;
   padding: 2px 40px 18px 14px;
@@ -34289,14 +34301,47 @@ function bindEvents() {
   if (els.refSelectBtn) els.refSelectBtn.addEventListener('click', function (ev) {
     ev.stopPropagation(); enterRefSelectMode();
   });
-  if (els.refClearBtn) els.refClearBtn.addEventListener('click', function (ev) {
-    ev.stopPropagation();
-    if (!currentRefs().length) return;
-    if (confirm('确定要清空所有参考图吗？')) {
+  /* 「全部删除」上锁：第一次点击只解锁，锁定状态下不删任何东西 */
+  var _refClearUnlocked = false;
+  var _refClearTimer = 0;
+  function paintRefClearLock(unlocked) {
+    if (!els.refClearBtn) return;
+    els.refClearBtn.classList.toggle('is-unlocked', !!unlocked);
+    els.refClearBtn.title = unlocked ? '已解锁，再点执行全部删除' : '全部删除（已锁定，点击解锁）';
+    var span = els.refClearBtn.querySelector('span');
+    var svg = els.refClearBtn.querySelector('svg');
+    if (span) span.textContent = unlocked ? '再点删除' : '全部删除';
+    if (svg) {
+      svg.innerHTML = unlocked
+        ? '<rect x="4" y="11" width="16" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+        : '<rect x="4" y="11" width="16" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+    }
+  }
+  function refClearRelock() {
+    _refClearUnlocked = false;
+    if (_refClearTimer) { clearTimeout(_refClearTimer); _refClearTimer = 0; }
+    paintRefClearLock(false);
+  }
+  paintRefClearLock(false);
+  if (els.refClearBtn) {
+    els.refClearBtn.addEventListener('mouseleave', refClearRelock);
+    els.refClearBtn.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      if (!currentRefs().length) return;
+      /* 锁定状态：只解锁，不执行删除、不弹确认 */
+      if (!_refClearUnlocked) {
+        _refClearUnlocked = true;
+        paintRefClearLock(true);
+        toast('已解锁，再点一次执行全部删除', 'info');
+        if (_refClearTimer) clearTimeout(_refClearTimer);
+        _refClearTimer = setTimeout(refClearRelock, 5000);
+        return;
+      }
       clearRefImages();
       toast('已清空所有参考图', 'info');
-    }
-  });
+      refClearRelock();
+    });
+  }
 
   /* === 选择模式顶部工具条 === */
   if (els.refSelectCancel) els.refSelectCancel.addEventListener('click', exitRefSelectMode);
