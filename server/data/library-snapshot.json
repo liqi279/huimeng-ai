@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-16T16:24:21.130Z",
+  "generatedAt": "2026-11-16T16:48:16.750Z",
   "source": "huimeng_library.books",
-  "total": 761,
+  "total": 768,
   "areas": {
     "paint": 731,
-    "concept": 6,
+    "concept": 13,
     "ref": 24
   },
   "books": [
@@ -317,6 +317,20 @@
       "coverBytes": 202662
     },
     {
+      "id": "lib-mwjhs6ux-223757",
+      "sortNo": 7,
+      "title": "小魔女学园 · Storyboard Vol.1",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Little Witch Academia Storyboard Vol.1.rar，共 25 页分镜。",
+      "pageCount": 25,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/lwa-20261117-lwa-storyboard-vol1.pdf",
+      "pdfBytes": 36136251,
+      "coverKey": "library/covers/lwa-20261117-lwa-storyboard-vol1.jpg",
+      "coverBytes": 57116
+    },
+    {
       "id": "lib-mw9ler9s-e9679b",
       "sortNo": 8,
       "title": "是新手也没关系！教你靠插画生财的秘诀",
@@ -331,6 +345,20 @@
       "coverBytes": 455437
     },
     {
+      "id": "lib-mwjhsb74-4ca228",
+      "sortNo": 8,
+      "title": "小魔女学园 · Creator's Sketchbook",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]小魔女学园 Creator's Sketchbook.rar，共 23 页设定稿。",
+      "pageCount": 23,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/lwa-20261117-lwa-creators-sketchbook.pdf",
+      "pdfBytes": 8658315,
+      "coverKey": "library/covers/lwa-20261117-lwa-creators-sketchbook.jpg",
+      "coverBytes": 161426
+    },
+    {
       "id": "lib-mw9mgki5-4f1173",
       "sortNo": 9,
       "title": "SAI超级绘画技术",
@@ -343,6 +371,20 @@
       "pdfBytes": 42187172,
       "coverKey": "library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
       "coverBytes": 773362
+    },
+    {
+      "id": "lib-mwjht8as-1cdc7b",
+      "sortNo": 9,
+      "title": "小魔女学园 · 动画线稿原画集",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]小魔女学园 动画线稿原画集.rar，共 76 页原画。",
+      "pageCount": 76,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/lwa-20261117-lwa-genga.pdf",
+      "pdfBytes": 109496185,
+      "coverKey": "library/covers/lwa-20261117-lwa-genga.jpg",
+      "coverBytes": 126960
     },
     {
       "id": "lib-mw9mna4r-02d065",
@@ -376,6 +418,20 @@
       "coverBytes": 1645914
     },
     {
+      "id": "lib-mwjhtke4-33d34b",
+      "sortNo": 10,
+      "title": "小魔女学园 · 线稿设定集",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]小魔女学园 线稿设定集.7z，共 38 页；原 PNG 转 JPEG(q90) 制 PDF。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/lwa-20261117-lwa-settei.pdf",
+      "pdfBytes": 31422317,
+      "coverKey": "library/covers/lwa-20261117-lwa-settei.jpg",
+      "coverBytes": 100336
+    },
+    {
       "id": "lib-mwaz6plf-33b5a3",
       "sortNo": 11,
       "title": "幻想系美少女設定資料集",
@@ -388,6 +444,20 @@
       "pdfBytes": 68170803,
       "coverKey": "library/covers/012-fantasy-girl-character-design-cover.jpg",
       "coverBytes": 361543
+    },
+    {
+      "id": "lib-mwjhtomp-532f08",
+      "sortNo": 11,
+      "title": "小魔女学园 · 芳垣祐介原画稿 · BOOTLEG 1",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]小魔女学园 芳垣祐介原画稿.7z / Little Witch Academia BOOTLEG 1，共 44 页。",
+      "pageCount": 44,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/lwa-20261117-lwa-yoshigaki-bootleg-1.pdf",
+      "pdfBytes": 10050954,
+      "coverKey": "library/covers/lwa-20261117-lwa-yoshigaki-bootleg-1.jpg",
+      "coverBytes": 129834
     },
     {
       "id": "lib-mwaz6oot-51cd86",
@@ -404,6 +474,20 @@
       "coverBytes": 262353
     },
     {
+      "id": "lib-mwjhtsxo-19e99f",
+      "sortNo": 12,
+      "title": "小魔女学园 · 芳垣祐介原画稿 · BOOTLEG 2",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]小魔女学园 芳垣祐介原画稿.7z / Little Witch Academia BOOTLEG 2，共 51 页。",
+      "pageCount": 51,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/lwa-20261117-lwa-yoshigaki-bootleg-2.pdf",
+      "pdfBytes": 13748179,
+      "coverKey": "library/covers/lwa-20261117-lwa-yoshigaki-bootleg-2.jpg",
+      "coverBytes": 186238
+    },
+    {
       "id": "lib-mwaz6p5h-14e0b7",
       "sortNo": 13,
       "title": "画出暖心手感 我的第一堂iPad人物电绘课",
@@ -416,6 +500,20 @@
       "pdfBytes": 159821890,
       "coverKey": "library/covers/014-ipad-digital-painting-cover.jpg",
       "coverBytes": 169769
+    },
+    {
+      "id": "lib-mwjhtwhh-71ffbb",
+      "sortNo": 13,
+      "title": "小魔女学园 · 芳垣祐介原画稿 · BOOTLEG 3",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]小魔女学园 芳垣祐介原画稿.7z / Little Witch Academia BOOTLEG 3，共 34 页。",
+      "pageCount": 34,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/lwa-20261117-lwa-yoshigaki-bootleg-3.pdf",
+      "pdfBytes": 6431589,
+      "coverKey": "library/covers/lwa-20261117-lwa-yoshigaki-bootleg-3.jpg",
+      "coverBytes": 98846
     },
     {
       "id": "lib-mwaz1nu4-0f8795",
