@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-16T16:59:47.749Z",
+  "generatedAt": "2026-11-16T17:19:18.398Z",
   "source": "huimeng_library.books",
-  "total": 771,
+  "total": 792,
   "areas": {
     "paint": 731,
-    "concept": 16,
+    "concept": 37,
     "ref": 24
   },
   "books": [
@@ -623,6 +623,20 @@
       "coverBytes": 204389
     },
     {
+      "id": "lib-mwjik3mk-c8ea90",
+      "sortNo": 17,
+      "title": "斩服少女 · 动画原画集 一",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集 一.zip，共 175 页。",
+      "pageCount": 175,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-1.pdf",
+      "pdfBytes": 53653095,
+      "coverKey": "library/covers/klk-20261117-klk-genga-1.jpg",
+      "coverBytes": 227608
+    },
+    {
       "id": "lib-mwayx6xa-dedae3",
       "sortNo": 18,
       "title": "服装绘画技法完全攻略 男女生制服&便服",
@@ -635,6 +649,20 @@
       "pdfBytes": 35486291,
       "coverKey": "library/covers/019-uniform-casual-clothes-cover.jpg",
       "coverBytes": 194001
+    },
+    {
+      "id": "lib-mwjiknx3-b206b1",
+      "sortNo": 18,
+      "title": "斩服少女 · 动画原画集 二 · 第1/5卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集二.rar，共 325 页。本卷第 1-65 页（共 325 页，分 5 卷）。",
+      "pageCount": 65,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-2-v1.pdf",
+      "pdfBytes": 69119618,
+      "coverKey": "library/covers/klk-20261117-klk-genga-2-v1.jpg",
+      "coverBytes": 276183
     },
     {
       "id": "lib-mwayvg4t-50ac21",
@@ -651,6 +679,20 @@
       "coverBytes": 237762
     },
     {
+      "id": "lib-mwjilaa8-e1f23b",
+      "sortNo": 19,
+      "title": "斩服少女 · 动画原画集 二 · 第2/5卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集二.rar，共 325 页。本卷第 66-130 页（共 325 页，分 5 卷）。",
+      "pageCount": 65,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-2-v2.pdf",
+      "pdfBytes": 67836742,
+      "coverKey": "library/covers/klk-20261117-klk-genga-2-v2.jpg",
+      "coverBytes": 165523
+    },
+    {
       "id": "lib-mwc2tup6-944e1c",
       "sortNo": 20,
       "title": "即使新手也能上手 SAI使用手册",
@@ -663,6 +705,20 @@
       "pdfBytes": 113657572,
       "coverKey": "library/covers/021-sai-master-book-cover.jpg",
       "coverBytes": 235776
+    },
+    {
+      "id": "lib-mwjilzen-5fcf80",
+      "sortNo": 20,
+      "title": "斩服少女 · 动画原画集 二 · 第3/5卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集二.rar，共 325 页。本卷第 131-195 页（共 325 页，分 5 卷）。",
+      "pageCount": 65,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-2-v3.pdf",
+      "pdfBytes": 71133389,
+      "coverKey": "library/covers/klk-20261117-klk-genga-2-v3.jpg",
+      "coverBytes": 243663
     },
     {
       "id": "lib-mwc315wl-84a192",
@@ -679,6 +735,20 @@
       "coverBytes": 278483
     },
     {
+      "id": "lib-mwjimn4k-cd0c8a",
+      "sortNo": 21,
+      "title": "斩服少女 · 动画原画集 二 · 第4/5卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集二.rar，共 325 页。本卷第 196-260 页（共 325 页，分 5 卷）。",
+      "pageCount": 65,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-2-v4.pdf",
+      "pdfBytes": 72877701,
+      "coverKey": "library/covers/klk-20261117-klk-genga-2-v4.jpg",
+      "coverBytes": 173509
+    },
+    {
       "id": "lib-mwc44r85-9b47ac",
       "sortNo": 22,
       "title": "CLIP STUDIO灰阶画法&特效完全绘制指南",
@@ -691,6 +761,20 @@
       "pdfBytes": 84601610,
       "coverKey": "library/covers/023-clip-studio-grayscale-guide-cover.jpg",
       "coverBytes": 227580
+    },
+    {
+      "id": "lib-mwjinchs-51ae87",
+      "sortNo": 22,
+      "title": "斩服少女 · 动画原画集 二 · 第5/5卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集二.rar，共 325 页。本卷第 261-325 页（共 325 页，分 5 卷）。",
+      "pageCount": 65,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-2-v5.pdf",
+      "pdfBytes": 78200489,
+      "coverKey": "library/covers/klk-20261117-klk-genga-2-v5.jpg",
+      "coverBytes": 221878
     },
     {
       "id": "lib-mwc5rjlx-7f7a96",
@@ -776,6 +860,20 @@
       "coverBytes": 306230
     },
     {
+      "id": "lib-mwjio0lm-671fa7",
+      "sortNo": 23,
+      "title": "斩服少女 · 动画原画集 三 · 第1/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集三.rar，共 361 页。本卷第 1-61 页（共 361 页，分 6 卷）。",
+      "pageCount": 61,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-3-v1.pdf",
+      "pdfBytes": 64699873,
+      "coverKey": "library/covers/klk-20261117-klk-genga-3-v1.jpg",
+      "coverBytes": 297145
+    },
+    {
       "id": "lib-mwc64zt9-fe9dcd",
       "sortNo": 24,
       "title": "漫画・插图・素描用多角度姿势集 日常生活篇vol1-4",
@@ -805,6 +903,20 @@
       "pdfBytes": 328897722,
       "coverKey": "library/covers/025-pose-collection-daily-vol1-4-cover.jpg",
       "coverBytes": 283667
+    },
+    {
+      "id": "lib-mwjiokep-f98b69",
+      "sortNo": 24,
+      "title": "斩服少女 · 动画原画集 三 · 第2/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集三.rar，共 361 页。本卷第 62-122 页（共 361 页，分 6 卷）。",
+      "pageCount": 61,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-3-v2.pdf",
+      "pdfBytes": 67385679,
+      "coverKey": "library/covers/klk-20261117-klk-genga-3-v2.jpg",
+      "coverBytes": 179099
     },
     {
       "id": "lib-mwc9g6lo-139124",
@@ -854,6 +966,20 @@
       "coverBytes": 272456
     },
     {
+      "id": "lib-mwjip3h3-b59521",
+      "sortNo": 25,
+      "title": "斩服少女 · 动画原画集 三 · 第3/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集三.rar，共 361 页。本卷第 123-183 页（共 361 页，分 6 卷）。",
+      "pageCount": 61,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-3-v3.pdf",
+      "pdfBytes": 68889234,
+      "coverKey": "library/covers/klk-20261117-klk-genga-3-v3.jpg",
+      "coverBytes": 224167
+    },
+    {
       "id": "lib-mwcaluzz-03657d",
       "sortNo": 26,
       "title": "可以直接使用的姿势系列光盘 5 套合集",
@@ -887,6 +1013,20 @@
       "pdfBytes": 428218346,
       "coverKey": "library/covers/027-pose-material-collection-5sets-cover.jpg",
       "coverBytes": 65634
+    },
+    {
+      "id": "lib-mwjipob9-1bf17e",
+      "sortNo": 26,
+      "title": "斩服少女 · 动画原画集 三 · 第4/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集三.rar，共 361 页。本卷第 184-244 页（共 361 页，分 6 卷）。",
+      "pageCount": 61,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-3-v4.pdf",
+      "pdfBytes": 72747778,
+      "coverKey": "library/covers/klk-20261117-klk-genga-3-v4.jpg",
+      "coverBytes": 281118
     },
     {
       "id": "lib-mwcb67r0-241ff0",
@@ -932,6 +1072,20 @@
       "coverBytes": 171946
     },
     {
+      "id": "lib-mwjiq9h7-cec32b",
+      "sortNo": 27,
+      "title": "斩服少女 · 动画原画集 三 · 第5/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集三.rar，共 361 页。本卷第 245-305 页（共 361 页，分 6 卷）。",
+      "pageCount": 61,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-3-v5.pdf",
+      "pdfBytes": 76118607,
+      "coverKey": "library/covers/klk-20261117-klk-genga-3-v5.jpg",
+      "coverBytes": 206681
+    },
+    {
       "id": "lib-mwcde99q-996620",
       "sortNo": 28,
       "title": "姿势资料集 POSE REFERENCE vol01-05",
@@ -967,6 +1121,20 @@
       "coverBytes": 116957
     },
     {
+      "id": "lib-mwjiqs9d-e56db4",
+      "sortNo": 28,
+      "title": "斩服少女 · 动画原画集 三 · 第6/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]Kill la Kill动画原画集三.rar，共 361 页。本卷第 306-361 页（共 361 页，分 6 卷）。",
+      "pageCount": 56,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-genga-3-v6.pdf",
+      "pdfBytes": 67253052,
+      "coverKey": "library/covers/klk-20261117-klk-genga-3-v6.jpg",
+      "coverBytes": 234818
+    },
+    {
       "id": "lib-mwcdzptv-d8cbb1",
       "sortNo": 29,
       "title": "如何描绘不同头身比例的迷你角色：温馨可爱 2.5 / 2 / 3 头身篇",
@@ -979,6 +1147,20 @@
       "pdfBytes": 235372007,
       "coverKey": "library/covers/030-chibi-head-body-ratio-2.5-2-3-cover.jpg",
       "coverBytes": 231987
+    },
+    {
+      "id": "lib-mwjirbqi-24da1e",
+      "sortNo": 29,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.1 · 第1/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 1.rar，共 150 页。本卷第 1-25 页（共 150 页，分 6 卷）。",
+      "pageCount": 25,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-1-v1.pdf",
+      "pdfBytes": 66212897,
+      "coverKey": "library/covers/klk-20261117-klk-art-1-v1.jpg",
+      "coverBytes": 89446
     },
     {
       "id": "lib-mwcew9yi-4e0bef",
@@ -995,6 +1177,20 @@
       "coverBytes": 153507
     },
     {
+      "id": "lib-mwjis5m4-cea994",
+      "sortNo": 30,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.1 · 第2/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 1.rar，共 150 页。本卷第 26-50 页（共 150 页，分 6 卷）。",
+      "pageCount": 25,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-1-v2.pdf",
+      "pdfBytes": 86639826,
+      "coverKey": "library/covers/klk-20261117-klk-art-1-v2.jpg",
+      "coverBytes": 152933
+    },
+    {
       "id": "lib-mwcex4nv-a32ab3",
       "sortNo": 31,
       "title": "荒木飞吕彦的漫画术",
@@ -1007,6 +1203,20 @@
       "pdfBytes": 50089419,
       "coverKey": "library/covers/032-araki-manga-jutsu-cover.jpg",
       "coverBytes": 73029
+    },
+    {
+      "id": "lib-mwjispsw-0c3ef2",
+      "sortNo": 31,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.1 · 第3/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 1.rar，共 150 页。本卷第 51-75 页（共 150 页，分 6 卷）。",
+      "pageCount": 25,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-1-v3.pdf",
+      "pdfBytes": 57754322,
+      "coverKey": "library/covers/klk-20261117-klk-art-1-v3.jpg",
+      "coverBytes": 115060
     },
     {
       "id": "lib-mwcezg94-23414f",
@@ -1023,6 +1233,20 @@
       "coverBytes": 246649
     },
     {
+      "id": "lib-mwjitfeq-4c0c5a",
+      "sortNo": 32,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.1 · 第4/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 1.rar，共 150 页。本卷第 76-100 页（共 150 页，分 6 卷）。",
+      "pageCount": 25,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-1-v4.pdf",
+      "pdfBytes": 65202272,
+      "coverKey": "library/covers/klk-20261117-klk-art-1-v4.jpg",
+      "coverBytes": 126188
+    },
+    {
       "id": "lib-mwcf112b-697568",
       "sortNo": 33,
       "title": "可以直接使用的女孩姿势 500",
@@ -1035,6 +1259,20 @@
       "pdfBytes": 49107842,
       "coverKey": "library/covers/034-girl-poses-500-cover.jpg",
       "coverBytes": 295906
+    },
+    {
+      "id": "lib-mwjiu216-7a1279",
+      "sortNo": 33,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.1 · 第5/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 1.rar，共 150 页。本卷第 101-125 页（共 150 页，分 6 卷）。",
+      "pageCount": 25,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-1-v5.pdf",
+      "pdfBytes": 72071354,
+      "coverKey": "library/covers/klk-20261117-klk-art-1-v5.jpg",
+      "coverBytes": 99674
     },
     {
       "id": "lib-mwcfcjex-7ea985",
@@ -1051,6 +1289,20 @@
       "coverBytes": 218729
     },
     {
+      "id": "lib-mwjiursx-10c435",
+      "sortNo": 34,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.1 · 第6/6卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 1.rar，共 150 页。本卷第 126-150 页（共 150 页，分 6 卷）。",
+      "pageCount": 25,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-1-v6.pdf",
+      "pdfBytes": 61987585,
+      "coverKey": "library/covers/klk-20261117-klk-art-1-v6.jpg",
+      "coverBytes": 141223
+    },
+    {
       "id": "lib-mwcfd9jn-386ddd",
       "sortNo": 35,
       "title": "Framed Ink 迷情黑白（汉化版）",
@@ -1063,6 +1315,20 @@
       "pdfBytes": 60822769,
       "coverKey": "library/covers/036-framed-ink-cn-cover.jpg",
       "coverBytes": 62541
+    },
+    {
+      "id": "lib-mwjival4-35fa41",
+      "sortNo": 35,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.2 · 第1/3卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 2.rar，共 144 页。本卷第 1-48 页（共 144 页，分 3 卷）。",
+      "pageCount": 48,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-2-v1.pdf",
+      "pdfBytes": 60007282,
+      "coverKey": "library/covers/klk-20261117-klk-art-2-v1.jpg",
+      "coverBytes": 103439
     },
     {
       "id": "lib-mwcffaen-471ff9",
@@ -1079,6 +1345,20 @@
       "coverBytes": 174451
     },
     {
+      "id": "lib-mwjivra9-1bcb58",
+      "sortNo": 36,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.2 · 第2/3卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 2.rar，共 144 页。本卷第 49-96 页（共 144 页，分 3 卷）。",
+      "pageCount": 48,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-2-v2.pdf",
+      "pdfBytes": 59005653,
+      "coverKey": "library/covers/klk-20261117-klk-art-2-v2.jpg",
+      "coverBytes": 102434
+    },
+    {
       "id": "lib-mwcfhyc6-9b1324",
       "sortNo": 37,
       "title": "动漫设计 超炫动态大图集：萌媚少女篇",
@@ -1091,6 +1371,20 @@
       "pdfBytes": 19283302,
       "coverKey": "library/covers/038-dynamic-art-moe-girls-cover.jpg",
       "coverBytes": 214835
+    },
+    {
+      "id": "lib-mwjiw7ge-c8954c",
+      "sortNo": 37,
+      "title": "斩服少女 · The Art of Kill La Kill Vol.2 · 第3/3卷",
+      "author": "Trigger / 萌绘图库",
+      "intro": "来源：[线稿集]The Art of Kill La Kill Vol. 2.rar，共 144 页。本卷第 97-144 页（共 144 页，分 3 卷）。",
+      "pageCount": 48,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/klk-20261117-klk-art-2-v3.pdf",
+      "pdfBytes": 54278643,
+      "coverKey": "library/covers/klk-20261117-klk-art-2-v3.jpg",
+      "coverBytes": 87392
     },
     {
       "id": "lib-mwcfj81f-80ba9e",
