@@ -4806,8 +4806,9 @@ body.hm-ref-fs-open .hm-rail-toggle {
 .hm-prompt-overlay .chip::before {
   content: '';
   position: absolute;
-  left: -1.18em;
-  right: -0.18em;
+  /* 只覆盖自身文字宽度，不再向左/右溢出，避免压住前后正文导致重叠 */
+  left: 0;
+  right: 0;
   top: -0.16em;
   bottom: -0.16em;
   border-radius: 7px;
@@ -4836,11 +4837,12 @@ body.hm-ref-fs-open .hm-rail-toggle {
 /* 缩略图：贴在胶囊左端（绝对定位，不占文档流宽度），约胶囊高度的六成 */
 .hm-prompt-overlay .chip .chip-thumb {
   position: absolute;
-  left: -1.06em;
+  /* 贴在 chip 自身左端、盖住开头的「@」，不再用负偏移侵占前面的正文 */
+  left: 0.04em;
   top: 50%;
   transform: translateY(-50%);
-  width: 0.92em;
-  height: 0.92em;
+  width: 0.86em;
+  height: 0.86em;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background-size: cover;
@@ -29459,6 +29461,31 @@ function closeRefFullscreen() {
   document.body.classList.remove('hm-ref-fs-open');
 }
 
+/* ========== 调换参考图顺序 ==========
+ * 移动后编号会整体变化，提示词里的 @图N 按「旧编号 → 新编号」重写，
+ * 保证引用仍然指向原来那张图，而不是指向新位置上的别的图。 */
+function reorderRefs(from, to) {
+  var list = currentRefs();
+  if (from < 0 || to < 0 || from >= list.length || to >= list.length || from === to) return;
+  var moved = list.splice(from, 1)[0];
+  list.splice(to, 0, moved);
+  setCurrentRefs(list);
+  var ta = els.promptInput;
+  if (ta && ta.value) {
+    ta.value = ta.value.replace(/@图(\d+)/g, function (m, n) {
+      var oldIdx = Number(n);
+      var newIdx = oldIdx;
+      if (oldIdx === from + 1) newIdx = to + 1;
+      else if (from < to && oldIdx > from + 1 && oldIdx <= to + 1) newIdx = oldIdx - 1;
+      else if (from > to && oldIdx >= to + 1 && oldIdx < from + 1) newIdx = oldIdx + 1;
+      return '@图' + newIdx;
+    });
+    updateCharCount();
+    schedulePromptOverlay();
+  }
+  renderRef();
+}
+
 /* ========== renderRef（完全重写） ========== */
 function renderRef() {
   var list = currentRefs();
@@ -29555,6 +29582,30 @@ function renderRef() {
           if (_refSelectMode) toggleRefSelected(idx);
           else openRefFullscreen(idx);
         }
+      });
+
+      /* 左右拖动调整参考图顺序：松手按落点插入，编号与提示词里的 @图N 一起更新 */
+      cell.addEventListener('pointerdown', function (ev) {
+        if (ev.button !== 0) return;
+        if (ev.target.closest && ev.target.closest('[data-ref-act]')) return;
+        var startX = ev.clientX;
+        var dragging = false;
+        function onMove(e) {
+          if (!dragging && Math.abs(e.clientX - startX) < 8) return;
+          if (!dragging) { dragging = true; cell.style.opacity = '.55'; }
+        }
+        function onUp(e) {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          if (!dragging) return;
+          cell.style.opacity = '';
+          var target = document.elementFromPoint(e.clientX, e.clientY);
+          var tCell = target && target.closest ? target.closest('.hm-ref-cell') : null;
+          if (!tCell || tCell === cell || tCell.classList.contains('hm-ref-add')) return;
+          reorderRefs(Number(cell.dataset.idx), Number(tCell.dataset.idx));
+        }
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
       });
 
       els.refGrid.appendChild(cell);
@@ -29672,7 +29723,7 @@ function _ensureChipCache(refs) {
     /* 深色胶囊：左侧小缩略图（绝对定位、不占宽度）+ "@N" 浅色文字，
        整体宽度与文本里的 @N 完全一致，连续多个也不会挤行 */
     return '<span class="chip"><span class="chip-thumb" style="background-image:url(' + u + ')"></span>' +
-      '<span class="chip-label">@' + (i + 1) + '</span></span>';
+      '<span class="chip-label">@图' + (i + 1) + '</span></span>';
   });
   return _chipCacheHtml;
 }
