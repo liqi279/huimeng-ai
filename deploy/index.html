@@ -17222,6 +17222,28 @@ body.rail-collapsed .hm-page {
   animation: libFadeUp 0.42s ease both;
 }
 
+/* 原画资料：.lib-body 是 overflow:hidden，文件夹区必须自己滚，
+   否则卡片再多也只能看到被裁掉的前几行（截图里的“滚不动”就是这个） */
+.lib-shelf-wrap.lib-concept-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-bottom: 28px;
+}
+/* 让文件夹网格按内容高度撑开，交给外层滚动，而不是被 flex 压扁 */
+.lib-concept-scroll .lib-dirs {
+  flex: 0 0 auto;
+}
+/* 返回栏滚动时吸顶，带底色，不遮住下面的卡片内容 */
+.lib-concept-scroll .lib-dir-bar {
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  padding-bottom: 10px;
+  background: linear-gradient(180deg, var(--lib-wood-deep, #2a1a10) 74%, rgba(42, 26, 16, 0));
+}
+
 /* 0 本书时的空态：叠在柜子内部，不替换柜体 */
 .lib-shelf-empty {
   position: absolute;
@@ -34603,6 +34625,10 @@ function bindEvents() {
   var fsLabel = document.getElementById('fontSizeLabel');
   if (fsSlider) {
     function applyFontSize(v) {
+      v = Math.max(10, Math.min(22, Number(v) || 13));
+      /* 富文本输入区（提示词框 + 全屏编辑器）共用 --hm-prompt-fs：
+         只改隐藏 textarea 的话，可见的 contenteditable 不会变 —— 之前字号滑块「没反应」就是这个原因 */
+      document.documentElement.style.setProperty('--hm-prompt-fs', v + 'px');
       /* 行高必须是像素值：早先写成无单位数字会被当成倍数（17.55 × 13px = 228px），
          导致光标和文字严重错位、首行文字被压到中间 */
       var lh = Math.round(Number(v) * 1.6 * 10) / 10 + 'px';
@@ -34616,6 +34642,12 @@ function bindEvents() {
         ov.style.fontSize = v + 'px';
         ov.style.lineHeight = lh;
       }
+      /* 全屏编辑器里的隐藏 textarea 也跟随（富文本区由变量驱动） */
+      var edInput = document.getElementById('promptEditorInput');
+      if (edInput) {
+        edInput.style.fontSize = v + 'px';
+        edInput.style.lineHeight = lh;
+      }
       if (fsLabel) fsLabel.textContent = String(v);
       syncRangeFill(fsSlider);
       updateSliderBtn();
@@ -34628,6 +34660,30 @@ function bindEvents() {
     /* 初始化 */
     if (state.fontSize) fsSlider.value = String(state.fontSize);
     applyFontSize(state.fontSize || 13);
+
+    /* Ctrl / ⌘ + 滚轮：在提示词框或全屏编辑器上调字号
+       （普通滚轮保留给长文本滚动，不抢滚动） */
+    var lastFontWheel = 0;
+    function onFontWheel(event) {
+      if (!(event.ctrlKey || event.metaKey)) return;
+      event.preventDefault();
+      var now = Date.now();
+      if (now - lastFontWheel < 90) return;
+      lastFontWheel = now;
+      var min = Number(fsSlider.min || 10);
+      var max = Number(fsSlider.max || 22);
+      var next = Number(fsSlider.value) + (event.deltaY < 0 ? 1 : -1);
+      next = Math.max(min, Math.min(max, next));
+      if (next === Number(fsSlider.value)) return;
+      fsSlider.value = String(next);
+      state.fontSize = next;
+      applyFontSize(next);
+      persistPrefs();
+    }
+    ['promptRich', 'promptEditorRich'].forEach(function (id) {
+      var box = document.getElementById(id);
+      if (box) box.addEventListener('wheel', onFontWheel, { passive: false });
+    });
   }
 
   /* 参考主体强度 slider —— 每个 tab 独立（UI/预览同步走顶层 applyRefWeightUI） */
@@ -58082,7 +58138,7 @@ window.HMChat = (function () {
       });
     }
     if (!rows) {
-      els.body.innerHTML = '<div class="lib-shelf-wrap">'
+      els.body.innerHTML = '<div class="lib-shelf-wrap lib-concept-scroll">'
         + (page ? '<div class="lib-dir-bar"><button type="button" class="lib-dir-back" data-libback="1">← 返回</button><span class="lib-dir-title">' + esc(pageLabel) + '</span></div>' : '')
         + '<div class="lib-empty lib-shelf-empty">'
         + '<div class="lib-empty-icon">📁</div><h3>' + (state.query ? '没有找到相关资料' : '这个区域还没有资料') + '</h3>'
@@ -58096,7 +58152,7 @@ window.HMChat = (function () {
       ? '<div class="lib-dir-bar"><button type="button" class="lib-dir-back" data-libback="1">← 返回</button>'
         + '<span class="lib-dir-title">' + esc(pageLabel) + '</span></div>'
       : '';
-    els.body.innerHTML = '<div class="lib-shelf-wrap">' + bar
+    els.body.innerHTML = '<div class="lib-shelf-wrap lib-concept-scroll">' + bar
       + '<div class="lib-dirs' + (page ? ' is-page' : '') + '">' + rows + '</div></div>';
     if (els.pager) els.pager.hidden = true;
     renderStatus();
