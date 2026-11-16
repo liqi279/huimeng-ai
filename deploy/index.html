@@ -26056,6 +26056,22 @@ body.dv-open .hm-page {
     <button data-fcmd="delete"><span class="hm-ctx-ico">🗑️</span>删除文件夹（图片保留）</button>
   </div>
 
+  <div class="hm-ctx" id="stackCtx" hidden>
+    <button data-scmd="open"><span class="hm-ctx-ico">⤢</span>打开叠放</button>
+    <button data-scmd="ungroup"><span class="hm-ctx-ico">⧉</span>解散叠放</button>
+    <div class="hm-ctx-line"></div>
+    <button data-scmd="zip"><span class="hm-ctx-ico">📦</span>导出压缩包</button>
+    <button data-scmd="download"><span class="hm-ctx-ico">📥</span>批量下载</button>
+    <div class="hm-ctx-line"></div>
+    <button data-scmd="rename"><span class="hm-ctx-ico">✏️</span>重命名</button>
+    <div class="hm-ctx-line"></div>
+    <button data-scmd="copy"><span class="hm-ctx-ico">📋</span>复制</button>
+    <button data-scmd="cut"><span class="hm-ctx-ico">✂️</span>剪切</button>
+    <button data-scmd="out" disabled><span class="hm-ctx-ico">↗</span>移出文件夹</button>
+    <div class="hm-ctx-line"></div>
+    <button data-scmd="delete" class="is-danger"><span class="hm-ctx-ico">🗑️</span><span id="stackCtxDelLabel">删除 (1)</span></button>
+  </div>
+
   <div class="modal" id="paramModal" aria-hidden="true">
     <div class="modal-card hm-param-card">
       <button class="modal-close" data-close-param aria-label="关闭">
@@ -69229,6 +69245,9 @@ window.HMChat = (function () {
   function followStackPanel(sid, item, left, top) {
     var panel = stackPanelEl(sid);
     if (!panel || !panel.parentNode) return;
+    var st = desk.stacks.find(function (s) { return s.id === sid; });
+    /* 用户手动拖过浮窗（userSet）：保持用户放的位置，不再被自动跟随覆盖 */
+    if (st && st.panel && st.panel.userSet) return;
     if (!item.panelOff) {
       item.panelOff = {
         x: (parseFloat(panel.style.left) || 0) - (item.left || 0),
@@ -69239,8 +69258,8 @@ window.HMChat = (function () {
     var py = Math.max(0, top + item.panelOff.y);
     panel.style.left = px + 'px';
     panel.style.top = py + 'px';
-    var st = desk.stacks.find(function (s) { return s.id === sid; });
-    if (st) st.panel = { x: px, y: py, userSet: true };
+    /* 跟随出来的坐标只标记 follow，不标记 userSet，后续仍可按「贴卡」重新吸附 */
+    if (st) st.panel = { x: px, y: py, follow: true };
   }
 
   function onPointerMove(event) {
@@ -69760,14 +69779,14 @@ window.HMChat = (function () {
       if (cardEl) {
         var cl = cardEl.offsetLeft, ct = cardEl.offsetTop;
         var cw = cardEl.offsetWidth || 200, ch = cardEl.offsetHeight || 200;
-        x = cl + cw + 12;
-        if (x > maxX) x = cl - pw - 12;
+        x = cl + cw + 8;
+        if (x > maxX) x = cl - pw - 8;
         y = ct;
         if (x < minX) {
           /* 左右都放不下 → 卡片下方 */
           x = Math.max(minX, Math.min(maxX, cl));
-          y = ct + ch + 12;
-          if (y > maxY) y = Math.max(minY, ct - ph - 12);
+          y = ct + ch + 8;
+          if (y > maxY) y = Math.max(minY, ct - ph - 8);
         } else if (y > maxY) {
           y = Math.max(minY, Math.min(maxY, ct + ch - ph));
         }
@@ -69776,11 +69795,8 @@ window.HMChat = (function () {
         y = Math.max(minY, (grid.clientHeight - ph) / 2);
       }
     }
-    /* 已经显示的浮窗保持当前位置（点别处、重排、整理都不跳），只做边界收拢 */
-    if (hadPanel && keepLeft && keepTop) {
-      x = parseInt(keepLeft, 10) || 0;
-      y = parseInt(keepTop, 10) || 0;
-    }
+    /* 没有用户手动放置（userSet）的浮窗每次都按上面「贴卡」重新算，保证紧贴叠放；
+       用户拖过的那一组走 pos.x/pos.y，不会被自动布局挪走 */
     panel.style.left = Math.min(maxX, Math.max(minX, x)) + 'px';
     panel.style.top = Math.min(maxY, Math.max(minY, y)) + 'px';
 
@@ -70213,7 +70229,7 @@ window.HMChat = (function () {
 
   /* ---------------- 右键菜单 ---------------- */
   function hideContexts() {
-    ['hmCtx', 'deskCtx', 'folderCtx'].forEach(function (id) {
+    ['hmCtx', 'deskCtx', 'folderCtx', 'stackCtx'].forEach(function (id) {
       var el = byId(id);
       if (el) el.hidden = true;
     });
@@ -70916,15 +70932,12 @@ window.HMChat = (function () {
         event.preventDefault();
         event.stopPropagation();
         selectOnly(sid);
-        var th = event.target.closest('.folder-t[data-stack-fp]');
-        var thWork = th ? findWork(th.dataset.stackFp) : null;
-        if (!thWork) {
-          var st = desk.stacks.find(function (x) { return x.id === sid; });
-          var members = st ? stackMembers(st) : [];
-          thWork = members[0] || null;
-        }
-        if (thWork) openWorkMenu(thWork, event.clientX, event.clientY);
-        else openStackPanel(sid);
+        /* 叠放有专属处理菜单（打开/解散/导出/下载/重命名/复制/剪切/删除），
+           不再借用单张图的菜单，也不再只是打开浮窗 */
+        view.menuStack = sid;
+        var delLabel = byId('stackCtxDelLabel');
+        if (delLabel) delLabel.textContent = '删除 (' + Math.max(1, selectedIds().length) + ')';
+        showContext('stackCtx', event.clientX, event.clientY);
       }, true);
 
       grid.addEventListener('pointerdown', onPointerDown);
@@ -71241,8 +71254,96 @@ window.HMChat = (function () {
       });
     }
 
+    /* 叠放右键菜单的命令 */
+    var stackCtx = byId('stackCtx');
+    if (stackCtx) {
+      stackCtx.addEventListener('click', function (event) {
+        var btn = event.target.closest('[data-scmd]');
+        if (!btn || btn.disabled) return;
+        var cmd = btn.dataset.scmd;
+        var sid = view.menuStack;
+        hideContexts();
+        var st = desk.stacks.find(function (s) { return s.id === sid; });
+        if (!st) return;
+        var members = stackMembers(st);
+        if (cmd === 'rename') {
+          askName('重命名叠放', st.name || '叠放', function (value) {
+            st.name = value || st.name;
+            desk.updatedAt = Date.now();
+            persistNow();
+            renderDesktop();
+            renderOpenStackPanels();
+          });
+          return;
+        }
+        if (!members.length) { A.toast('这组叠放里没有图片', 'info'); return; }
+        if (cmd === 'open') {
+          openStackPanel(sid);
+        } else if (cmd === 'ungroup') {
+          desk.stacks = desk.stacks.filter(function (s) { return s.id !== sid; });
+          desk.updatedAt = Date.now();
+          clearSelection();
+          persistNow();
+          renderDesktop();
+          A.toast('已解散「' + (st.name || '叠放') + '」，图片已回到桌面', 'success');
+        } else if (cmd === 'zip') {
+          var zipName = (st.name || '叠放').replace(/[\\/:*?"<>|]/g, '_');
+          if (typeof JSZip === 'undefined') {
+            A.toast('开始下载「' + zipName + '」里的 ' + members.length + ' 项', 'success');
+            members.forEach(function (w, i) {
+              setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 400);
+            });
+            return;
+          }
+          A.toast('正在打包「' + zipName + '」…', 'info');
+          var zip = new JSZip();
+          var sub = zip.folder(zipName);
+          var pending = members.length;
+          var done = function () {
+            pending -= 1;
+            if (pending > 0) return;
+            zip.generateAsync({ type: 'blob' }).then(function (blob) {
+              var a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = zipName + '.zip';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+              A.toast('已导出「' + zipName + '.zip」（' + members.length + ' 项）', 'success');
+            });
+          };
+          members.forEach(function (w) {
+            var url = w.url || w.thumb;
+            var fname = A.fileNameFor(w);
+            fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
+              if (!/\.([a-z0-9]+)$/i.test(fname)) fname += '.' + ((blob.type || '').split('/')[1] || 'png');
+              sub.file(fname, blob);
+            }).catch(function () {}).then(done);
+          });
+        } else if (cmd === 'download') {
+          A.toast('开始批量下载 ' + members.length + ' 项', 'success');
+          members.forEach(function (w, i) {
+            setTimeout(function () { A.downloadImage(w.url, A.fileNameFor(w)); }, i * 300);
+          });
+        } else if (cmd === 'copy') {
+          clipboard.setCopy(members);
+          A.toast('已复制 ' + members.length + ' 项，Ctrl+V 粘贴', 'info');
+        } else if (cmd === 'cut') {
+          clipboard.setCut(members, view.activeFolder || null);
+          A.toast('已剪切 ' + members.length + ' 项，Ctrl+V 粘贴', 'info');
+        } else if (cmd === 'delete') {
+          if (!window.confirm('删除整组叠放里的 ' + members.length + ' 张图片？此操作不可撤销。')) return;
+          deleteWorks(members, true);
+          clearSelection();
+          persistNow();
+          renderDesktop();
+        }
+      });
+    }
+
     document.addEventListener('click', function (event) {
-      if (event.target.closest('#hmCtx') || event.target.closest('#deskCtx') || event.target.closest('#folderCtx')) return;
+      if (event.target.closest('#hmCtx') || event.target.closest('#deskCtx') || event.target.closest('#folderCtx') || event.target.closest('#stackCtx')) return;
       hideContexts();
     });
 
