@@ -17294,6 +17294,13 @@ body.rail-collapsed .hm-page {
   align-items: flex-end;
   gap: 16px;
 }
+/* 原画资料：可拖动卡片外层（同一条 flex 流里紧挨排列） */
+.lib-dirs .lib-drag-item { display: flex; flex: 0 0 auto; }
+.lib-dirs .lib-drag-item[draggable="true"] { cursor: grab; }
+.lib-dirs .lib-drag-item.is-dragging { opacity: 0.4; cursor: grabbing; }
+.lib-dirs .lib-drag-item.is-drop-before { box-shadow: -3px 0 0 0 #60a5fa; border-radius: 8px; }
+.lib-dirs .lib-drag-item.is-drop-after { box-shadow: 3px 0 0 0 #60a5fa; border-radius: 8px; }
+.lib-dirs .lib-drag-item img { -webkit-user-drag: none; user-select: none; }
 /* 母文件夹页里的子文件夹：卡片之间留出与第一层接近的疏密 */
 .lib-dirs.is-page {
   gap: 26px;
@@ -57327,6 +57334,7 @@ window.HMChat = (function () {
     user: 'anidream.library.user.v1',
     area: 'anidream.library.area.v1',
     pdfMode: 'anidream.library.pdfmode.v1',
+    conceptOrder: 'anidream.library.conceptOrder.v1',
     ocrLang: 'anidream.library.ocrlang.v1',
     pageOcrLang: 'anidream.library.pageocrlang.v1',
     meta: 'anidream.library.books.meta.v1'
@@ -57836,21 +57844,47 @@ window.HMChat = (function () {
 
   function shelfPageSize() { return measureShelfPerRow() * SHELF_ROWS_PER_PAGE; }
 
-  /* 原画资料：按标题里「·」前的前缀自动分组（如「CLANNAD · 画集 · 上」→ CLANNAD），
-     不写死 id，后续同前缀的条目会自动归入同一目录；无前缀的条目单独成卡 */
+  /* 原画资料：母文件夹标题用作品全称。优先取条目的 category（若它是「前缀 + 更长全称」），
+     否则用下面这张常见缩写映射补全；都没有时才沿用前缀本身。只影响展示，不改书目数据。 */
+  var CONCEPT_WORK_NAMES = {
+    '86': '86－不存在的战区－',
+    'eva': '新世纪福音战士',
+    'air': 'AIR',
+    'clannad': 'CLANNAD',
+    '小魔女学园': '小魔女学园',
+    '斩服少女': '斩服少女',
+    '灵能百分百': '灵能百分百',
+    '紫罗兰永恒花园': '紫罗兰永恒花园'
+  };
+
+  function conceptWorkName(prefix, books) {
+    var p = String(prefix || '').trim();
+    if (!p) return '';
+    var lower = p.toLowerCase();
+    for (var i = 0; i < books.length; i++) {
+      var c = String(books[i].category || '').trim();
+      if (c && c !== '未分类' && c.toLowerCase().indexOf(lower) === 0 && c.length > p.length) return c;
+    }
+    return CONCEPT_WORK_NAMES[lower] || CONCEPT_WORK_NAMES[p] || p;
+  }
+
+  /* 按标题前缀自动分组（如「CLANNAD · 画集 · 上」→ CLANNAD），不写死 id；
+     key/prefix 保持原前缀用于身份与排序持久化，name 只用于展示全称。 */
   function conceptDirGroups(list) {
     var map = {}, order = [];
     list.forEach(function (b) {
       var title = String(b.title || '');
-      var cut = title.indexOf('·');
+      /* 分隔符兼容「·」「•」「・」「|」：作品前缀相同即归入同一母文件夹 */
+      var cut = title.search(/[·•・|｜]/);
       var prefix = cut > 0 ? title.slice(0, cut).trim() : '';
       var key = prefix || ('\u0000' + b.id);
       if (!map[key]) {
-        map[key] = { name: prefix, books: [] };
+        map[key] = { key: key, prefix: prefix, name: prefix, books: [] };
         order.push(map[key]);
       }
       map[key].books.push(b);
     });
+    order.forEach(function (g) { g.name = conceptWorkName(g.prefix, g.books); });
     return order;
   }
 
@@ -57871,46 +57905,114 @@ window.HMChat = (function () {
     return pick && pick.coverUrl ? mediaFile(pick.coverUrl) : '';
   }
 
-  /* 原画资料的两级页面：第一层只列作品母文件夹；点进去整块换成子文件夹页面（带返回） */
+  /* ---------------- 原画资料：展示顺序（自然排序 + 拖拽自定义顺序） ---------------- */
+  function conceptNaturalCompare(a, b) {
+    var ax = String(a || '').toLowerCase().match(/(\d+|\D+)/g) || [];
+    var bx = String(b || '').toLowerCase().match(/(\d+|\D+)/g) || [];
+    var n = Math.min(ax.length, bx.length);
+    for (var i = 0; i < n; i++) {
+      var x = ax[i], y = bx[i];
+      if (x === y) continue;
+      var nx = /^\d+$/.test(x), ny = /^\d+$/.test(y);
+      if (nx && ny) return Number(x) - Number(y);
+      return x.localeCompare(y, 'zh-Hans-CN');
+    }
+    return ax.length - bx.length;
+  }
+
+  /* 顺序结构：{ dirs: ['g:86', 'b:<bookId>'...], items: { '86': [bookId...] } } */
+  function conceptOrderRead() {
+    var d = readJSON(LS.conceptOrder, null);
+    return {
+      dirs: (d && Array.isArray(d.dirs)) ? d.dirs : [],
+      items: (d && d.items && typeof d.items === 'object') ? d.items : {}
+    };
+  }
+
+  function conceptOrderSave(order) {
+    order.updatedAt = nowMs();
+    writeJSON(LS.conceptOrder, order);
+    /* 与阅读偏好同一条同步链路：library 文档随账号走 */
+    clearTimeout(libPrefsPushTimer);
+    libPrefsPushTimer = setTimeout(function () {
+      if (window.HMSync && window.HMSync.pushLibraryPrefs) {
+        try { window.HMSync.pushLibraryPrefs(); } catch (e) {}
+      }
+    }, 600);
+  }
+
+  function conceptGroupKey(g) {
+    return g.prefix ? ('g:' + g.prefix) : ('b:' + ((g.books[0] && g.books[0].id) || ''));
+  }
+
+  /* 母文件夹：自定义顺序优先，新增的按作品名自然排序追加 */
+  function orderConceptGroups(groups, order) {
+    var rank = {};
+    (order.dirs || []).forEach(function (k, i) { if (!(k in rank)) rank[k] = i; });
+    groups.forEach(function (g) {
+      g._key = conceptGroupKey(g);
+      g._rank = (g._key in rank) ? rank[g._key] : 1e9;
+      g._sortText = g.name || String((g.books[0] && g.books[0].title) || '');
+    });
+    groups.sort(function (a, b) {
+      if (a._rank !== b._rank) return a._rank - b._rank;
+      return conceptNaturalCompare(a._sortText, b._sortText);
+    });
+    return groups;
+  }
+
+  /* 组内子文件夹：自定义顺序优先，新增的按卷次自然排序追加（第2卷 < 第10卷） */
+  function orderConceptBooks(books, savedIds) {
+    var rank = {};
+    (savedIds || []).forEach(function (id, i) { if (!(String(id) in rank)) rank[String(id)] = i; });
+    return books.slice().sort(function (a, b) {
+      var ra = (String(a.id) in rank) ? rank[String(a.id)] : 1e9;
+      var rb = (String(b.id) in rank) ? rank[String(b.id)] : 1e9;
+      if (ra !== rb) return ra - rb;
+      return conceptNaturalCompare(a.title, b.title);
+    });
+  }
+
+  function conceptDirCardHtml(g) {
+    var cover = conceptDirCover(g.books);
+    return '<button type="button" class="lib-book is-dir" data-libdir="' + esc(g.key) + '"'
+      + ' title="' + esc(g.name) + ' · ' + g.books.length + ' 册">'
+      + '<span class="lib-dir-body">'
+      + (cover
+        ? '<img class="lib-dir-cover" src="' + esc(cover) + '" alt="' + esc(g.name) + '" loading="lazy">'
+        : '<span class="lib-dir-ico">📁</span>')
+      + '<span class="lib-dir-name">' + esc(g.name) + '</span>'
+      + '<span class="lib-dir-meta">' + g.books.length + ' 册 · 点击进入</span>'
+      + '</span></button>';
+  }
+
+  /* 原画资料的两级页面：第一层只列作品母文件夹；点进去整块换成子文件夹页面（带返回）。
+     同组子文件夹连续排在同一条 flex 流里（组间才有间距），卡片外层可拖动换序。 */
   function renderConceptDirs() {
-    var groups = conceptDirGroups(state.shelfBooks);
+    var order = conceptOrderRead();
+    var groups = orderConceptGroups(conceptDirGroups(state.shelfBooks), order);
     var page = state.libDirPage || '';
+    var cur = null;
+    groups.forEach(function (g) { if (g.key === page) cur = g; });
+    var pageLabel = cur ? cur.name : page;
     var rows = '';
     if (page) {
-      var cur = null;
-      groups.forEach(function (g) { if (g.name === page) cur = g; });
-      var books = cur ? cur.books : [];
-      if (books.length) {
-        rows = '<div class="lib-dir-row">'
-          + books.map(function (b, i) { return bookCardHtml(b, i); }).join('')
-          + '</div>';
-      }
+      var books = cur ? orderConceptBooks(cur.books, order.items[page]) : [];
+      rows = books.map(function (b, i) {
+        return '<div class="lib-drag-item" draggable="true" data-drag-id="' + esc(b.id) + '">'
+          + bookCardHtml(b, i) + '</div>';
+      }).join('');
     } else {
       groups.forEach(function (g) {
         var isGroup = !!g.name && g.books.length > 1;
-        if (!isGroup) {
-          rows += '<div class="lib-dir-row">'
-            + g.books.map(function (b, i) { return bookCardHtml(b, i); }).join('')
-            + '</div>';
-          return;
-        }
-        var cover = conceptDirCover(g.books);
-        rows += '<div class="lib-dir-row">'
-          + '<button type="button" class="lib-book is-dir" data-libdir="' + esc(g.name) + '"'
-          + ' title="' + esc(g.name) + ' · ' + g.books.length + ' 册">'
-          + '<span class="lib-dir-body">'
-          + (cover
-            ? '<img class="lib-dir-cover" src="' + esc(cover) + '" alt="' + esc(g.name) + '" loading="lazy">'
-            : '<span class="lib-dir-ico">📁</span>')
-          + '<span class="lib-dir-name">' + esc(g.name) + '</span>'
-          + '<span class="lib-dir-meta">' + g.books.length + ' 册 · 点击进入</span>'
-          + '</span></button>'
-          + '</div>';
+        var card = isGroup ? conceptDirCardHtml(g) : bookCardHtml(g.books[0], 0);
+        rows += '<div class="lib-drag-item" draggable="true" data-drag-key="' + esc(conceptGroupKey(g)) + '">'
+          + card + '</div>';
       });
     }
     if (!rows) {
       els.body.innerHTML = '<div class="lib-shelf-wrap">'
-        + (page ? '<div class="lib-dir-bar"><button type="button" class="lib-dir-back" data-libback="1">← 返回</button><span class="lib-dir-title">' + esc(page) + '</span></div>' : '')
+        + (page ? '<div class="lib-dir-bar"><button type="button" class="lib-dir-back" data-libback="1">← 返回</button><span class="lib-dir-title">' + esc(pageLabel) + '</span></div>' : '')
         + '<div class="lib-empty lib-shelf-empty">'
         + '<div class="lib-empty-icon">📁</div><h3>' + (state.query ? '没有找到相关资料' : '这个区域还没有资料') + '</h3>'
         + '<p>' + (state.query ? '换个关键词试试，或清空搜索查看全部资料。' : '上传资料后会自动按标题前缀归入对应文件夹。') + '</p>'
@@ -57921,7 +58023,7 @@ window.HMChat = (function () {
     }
     var bar = page
       ? '<div class="lib-dir-bar"><button type="button" class="lib-dir-back" data-libback="1">← 返回</button>'
-        + '<span class="lib-dir-title">' + esc(page) + '</span></div>'
+        + '<span class="lib-dir-title">' + esc(pageLabel) + '</span></div>'
       : '';
     els.body.innerHTML = '<div class="lib-shelf-wrap">' + bar
       + '<div class="lib-dirs' + (page ? ' is-page' : '') + '">' + rows + '</div></div>';
@@ -59891,6 +59993,72 @@ window.HMChat = (function () {
         /* 统一走站内详情/阅读；PDF 入口在详情与阅读界面内 */
         openBook(card.getAttribute('data-id'));
       });
+
+      /* 原画资料：拖动排序（母文件夹 / 组内子文件夹），松手立即生效并持久化 */
+      var conceptDrag = null;
+      function clearConceptDrop() {
+        if (!els.body) return;
+        els.body.querySelectorAll('.lib-drag-item').forEach(function (n) {
+          n.classList.remove('is-drop-before', 'is-drop-after');
+          delete n.dataset.dropAfter;
+        });
+      }
+      function clearConceptDrag() {
+        if (conceptDrag && conceptDrag.el) conceptDrag.el.classList.remove('is-dragging');
+        conceptDrag = null;
+        clearConceptDrop();
+      }
+      els.body.addEventListener('dragstart', function (event) {
+        if (state.area !== 'concept') return;
+        var item = event.target.closest && event.target.closest('.lib-drag-item');
+        if (!item) return;
+        conceptDrag = { el: item };
+        item.classList.add('is-dragging');
+        try {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', item.getAttribute('data-drag-id') || item.getAttribute('data-drag-key') || '');
+        } catch (e) {}
+      });
+      els.body.addEventListener('dragover', function (event) {
+        if (!conceptDrag) return;
+        var item = event.target.closest && event.target.closest('.lib-drag-item');
+        if (!item || item === conceptDrag.el) return;
+        event.preventDefault();
+        try { event.dataTransfer.dropEffect = 'move'; } catch (e) {}
+        var rect = item.getBoundingClientRect();
+        var after = (event.clientX - rect.left) > rect.width / 2;
+        clearConceptDrop();
+        item.classList.add(after ? 'is-drop-after' : 'is-drop-before');
+        item.dataset.dropAfter = after ? '1' : '0';
+      });
+      els.body.addEventListener('drop', function (event) {
+        if (!conceptDrag) return;
+        var item = event.target.closest && event.target.closest('.lib-drag-item');
+        if (!item) return;
+        event.preventDefault();
+        var src = conceptDrag.el;
+        var after = item.dataset.dropAfter === '1';
+        var nodes = Array.prototype.slice.call(els.body.querySelectorAll('.lib-drag-item'));
+        var from = nodes.indexOf(src);
+        if (from < 0) { clearConceptDrag(); return; }
+        nodes.splice(from, 1);
+        var to = nodes.indexOf(item);
+        if (to < 0) { clearConceptDrag(); return; }
+        if (after) to += 1;
+        nodes.splice(to, 0, src);
+        var order = conceptOrderRead();
+        var page = state.libDirPage || '';
+        if (page) {
+          order.items[page] = nodes.map(function (n) { return n.getAttribute('data-drag-id'); }).filter(Boolean);
+        } else {
+          order.dirs = nodes.map(function (n) { return n.getAttribute('data-drag-key'); }).filter(Boolean);
+        }
+        conceptOrderSave(order);
+        clearConceptDrag();
+        renderShelf();
+      });
+      els.body.addEventListener('dragend', clearConceptDrag);
+
       /* 悬停 / 键盘聚焦 / 按下即预取 pdf-url：点击时省掉一次后端握手 */
       function prefetchCard(el) {
         var card = el && el.closest && el.closest('.lib-book');
@@ -77446,7 +77614,13 @@ window.HMChat = (function () {
       }
     } catch (e) {}
     try { pdfMode = localStorage.getItem('anidream.library.pdfmode.v1'); } catch (e) {}
-    var data = { area: area, pdfMode: pdfMode, updatedAt: Date.now() };
+    /* 原画资料的文件夹拖拽顺序：随同一个 library 文档同步 */
+    var conceptOrder = null;
+    try {
+      var rawOrder = localStorage.getItem('anidream.library.conceptOrder.v1');
+      if (rawOrder) conceptOrder = JSON.parse(rawOrder);
+    } catch (e) {}
+    var data = { area: area, pdfMode: pdfMode, conceptOrder: conceptOrder, updatedAt: Date.now() };
     return pushDoc('library', data).catch(function (err) {
       if (err && err.offline) return;
       toast('阅读偏好同步失败：' + ((err && err.message) || '网络异常'), 'error');
@@ -77469,6 +77643,7 @@ window.HMChat = (function () {
         try {
           if (data.area != null) localStorage.setItem('anidream.library.area.v1', JSON.stringify(data.area));
           if (data.pdfMode != null) localStorage.setItem('anidream.library.pdfmode.v1', String(data.pdfMode));
+          if (data.conceptOrder != null) localStorage.setItem('anidream.library.conceptOrder.v1', JSON.stringify(data.conceptOrder));
         } catch (e) {}
       }
       if (rev != null) { revs.docs[kind] = rev; saveRevs(); }
