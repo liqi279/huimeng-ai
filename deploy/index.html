@@ -27679,8 +27679,11 @@ function loadJSON(key, fallback) {
 function saveJSON(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    window.__hmLastSaveError = null;
     return true;
   } catch (err) {
+    /* 记下真实异常（QuotaExceededError / SecurityError / 其他），提示文案据此区分原因 */
+    window.__hmLastSaveError = err;
     return false;
   }
 }
@@ -32271,6 +32274,19 @@ function saveWorks() {
     return;
   }
 
+  /* 配额告急时先释放同内容的备份键（整份 JSON，等于白占一倍空间）再原样重试一次；
+     另有 .snap.<ts> 快照兜底，删备份不影响恢复 */
+  try {
+    var err0 = window.__hmLastSaveError;
+    if (err0 && err0.name === 'QuotaExceededError') {
+      localStorage.removeItem(bakKey);
+      if (saveJSON(key, persistMeta(false, false))) {
+        syncWorksToServer();
+        return;
+      }
+    }
+  } catch (e) {}
+
   /* 配额不足：先去掉参考图缓存（通常是最大头）再试 */
   if (saveJSON(key, persistMeta(true, false))) {
     toast('本机存储空间紧张：已省略参考图缓存，作品本身已保存', 'warn', 6000);
@@ -32295,19 +32311,28 @@ function saveWorks() {
     HMSync.archiveWork(state.works[0]).catch(function () {});
   }
   var fallbackMsg = '本机存储空间不足：原图已转存云端，本地只保留缩略图，仍可查看与下载';
-  if (navigator.storage && navigator.storage.estimate) {
-    navigator.storage.estimate().then(function (est) {
-      if (!est || !est.quota) { toast(fallbackMsg, 'error', 9000); return; }
-      var mb = function (n) { return (n / 1048576).toFixed(0) + 'MB'; };
-      var pct = Math.round(est.usage / est.quota * 100);
-      var msg = pct >= 85
-        ? '浏览器本地配额已满（' + mb(est.usage) + ' / ' + mb(est.quota) + '）：原图已改存云端，本地只留缩略图；可在浏览器「站点设置 → 清除数据」释放空间'
-        : '写入本地缓存失败（配额仅占 ' + pct + '%）：多为设备磁盘空间不足，请先清理磁盘；原图已改存云端，不影响查看与下载';
-      toast(msg, 'error', 9000);
-    }).catch(function () { toast(fallbackMsg, 'error', 9000); });
+  var saveErr = window.__hmLastSaveError || {};
+  var saveErrName = String(saveErr.name || '');
+  /* 原来的「配额仅占 0%」来自 navigator.storage.estimate()，它的 usage 不含 localStorage，
+     所以会出现「0% 却说空间不足」的自相矛盾。这里改按 localStorage 实际字节数统计。 */
+  var lsBytes = 0;
+  try {
+    for (var li = 0; li < localStorage.length; li += 1) {
+      var lk = localStorage.key(li) || '';
+      lsBytes += (lk.length + (localStorage.getItem(lk) || '').length) * 2;
+    }
+  } catch (e) {}
+  var msg;
+  if (saveErrName === 'QuotaExceededError' || saveErrName === 'NS_ERROR_DOM_QUOTA_REACHED') {
+    msg = '站点本地存储已满（localStorage 已占约 ' + (lsBytes / 1048576).toFixed(1) + 'MB，浏览器上限一般 5MB，与磁盘无关）：原图已改存云端，不影响查看与下载；可在浏览器「站点设置 → 清除数据」释放空间';
+  } else if (saveErrName === 'SecurityError') {
+    msg = '浏览器禁止本站写入本地存储（隐私模式或站点数据被禁用）：原图已改存云端，不影响查看与下载';
+  } else if (saveErrName) {
+    msg = '写入本地缓存失败（' + saveErrName + '）：与磁盘空间无关；原图已改存云端，不影响查看与下载';
   } else {
-    toast(fallbackMsg, 'error', 9000);
+    msg = '写入本地缓存失败：原图已改存云端，不影响查看与下载';
   }
+  toast(msg || fallbackMsg, 'error', 9000);
   syncWorksToServer();
 }
 
