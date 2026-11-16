@@ -30005,6 +30005,38 @@ function richInsertRefChip(n) {
   return true;
 }
 
+/* 手打 @图N 时即时转成胶囊（只处理光标前刚输入的完整 token） */
+function richAutoConvertToken() {
+  if (!_richEl || !document.activeElement) return;
+  var sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  var r = sel.getRangeAt(0);
+  if (!r.collapsed) return;
+  var node = r.startContainer;
+  if (node.nodeType !== 3) return;
+  var txt = node.nodeValue || '';
+  var off = r.startOffset;
+  var m = txt.slice(0, off).match(/@图(\d+)$/);
+  if (!m) return;
+  var n = Number(m[1]);
+  if (!currentRefs()[n - 1]) return;
+  var start = off - m[0].length;
+  var del = document.createRange();
+  del.setStart(node, start);
+  del.setEnd(node, off);
+  del.deleteContents();
+  var chip = _richChipNode(n);
+  del.insertNode(chip);
+  var sp = document.createTextNode(' ');
+  chip.parentNode.insertBefore(sp, chip.nextSibling);
+  var nr = document.createRange();
+  nr.setStart(sp, 1);
+  nr.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(nr);
+  richSyncToTextarea();
+}
+
 function initRichPrompt() {
   var ta = els.promptInput;
   var rich = document.getElementById('promptRich');
@@ -30016,6 +30048,9 @@ function initRichPrompt() {
 
   rich.addEventListener('input', function () {
     richSyncToTextarea();
+    richAutoConvertToken();
+    /* 手打 @ 触发自动补全（按编辑器里的真实光标） */
+    try { showRefAutocomplete(); } catch (e) {}
   });
   /* 粘贴一律纯文本 */
   rich.addEventListener('paste', function (ev) {
@@ -30200,9 +30235,22 @@ function showRefAutocomplete() {
   if (!ta) return;
   _ensureAcEl();
 
-  /* 找到光标前的 @ 字符 */
-  var val = ta.value;
-  var pos = ta.selectionStart;
+  /* 找到光标前的 @ 字符；富文本编辑时按编辑器内的光标与文本判断 */
+  var val, pos, caretRect = null;
+  if (_richEl) {
+    var sel0 = window.getSelection();
+    if (!sel0 || !sel0.rangeCount || !_richEl.contains(sel0.anchorNode)) { hideRefAutocomplete(); return; }
+    var r0 = sel0.getRangeAt(0);
+    var pre = document.createRange();
+    pre.setStart(_richEl, 0);
+    pre.setEnd(r0.startContainer, r0.startOffset);
+    val = pre.toString();
+    pos = val.length;
+    caretRect = r0.getBoundingClientRect();
+  } else {
+    val = ta.value;
+    pos = ta.selectionStart;
+  }
   var before = val.slice(0, pos);
   var atIdx = before.lastIndexOf('@');
   if (atIdx < 0) return;
@@ -30239,11 +30287,17 @@ function showRefAutocomplete() {
     }).join('');
   }
 
-  /* 定位：textarea 光标附近 */
-  var rect = ta.getBoundingClientRect();
-  var caretCoords = _getCaretCoords(ta);
-  var left = caretCoords.left;
-  var top = caretCoords.bottom;
+  /* 定位：富文本用实际光标矩形，textarea 用镜像 trick */
+  var left, top;
+  if (caretRect) {
+    left = caretRect.left;
+    top = caretRect.bottom || (caretRect.top + 20);
+  } else {
+    var rect = ta.getBoundingClientRect();
+    var caretCoords = _getCaretCoords(ta);
+    left = caretCoords.left;
+    top = caretCoords.bottom;
+  }
   /* 边界修正 */
   var maxLeft = window.innerWidth - _acEl.offsetWidth - 8;
   if (left > maxLeft) left = maxLeft;
@@ -30261,6 +30315,36 @@ function _commitRefAc(refIdx) {
   hideRefAutocomplete();
   var ta = els.promptInput;
   if (!ta) return;
+  /* 富文本：把光标前刚输入的「@query」替换成胶囊 */
+  if (_richEl) {
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    var rr = sel.getRangeAt(0);
+    var node = rr.startContainer;
+    if (node.nodeType === 3) {
+      var t = node.nodeValue || '';
+      var off = rr.startOffset;
+      var at = t.slice(0, off).lastIndexOf('@');
+      if (at >= 0) {
+        var del = document.createRange();
+        del.setStart(node, at);
+        del.setEnd(node, off);
+        del.deleteContents();
+        var chip = _richChipNode(refIdx + 1);
+        del.insertNode(chip);
+        var sp = document.createTextNode(' ');
+        chip.parentNode.insertBefore(sp, chip.nextSibling);
+        var nr = document.createRange();
+        nr.setStart(sp, 1);
+        nr.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(nr);
+        richSyncToTextarea();
+        try { updateCharCount(); } catch (e) {}
+        return;
+      }
+    }
+  }
   var pos = ta.selectionStart;
   var before = ta.value.slice(0, pos);
   var atIdx = before.lastIndexOf('@');
@@ -32218,6 +32302,7 @@ function saveFailedWork(job, err) {
     record.thumb = null;
     record.calibrated = false;
     record.elapsed = Number(job.elapsed) || 0;
+    record.closedAt = record.closedAt || Number(job.closedAt) || Date.now();
   } else {
     record = {
       id: job.id,
@@ -32245,7 +32330,8 @@ function saveFailedWork(job, err) {
       duration: job.duration || 0,
       elapsed: Number(job.elapsed) || 0,
       refImages: Array.isArray(job.refImages) ? job.refImages : null,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      closedAt: Number(job.closedAt) || Date.now()
     };
     state.works.unshift(record);
     state.works = state.works.slice(0, MAX_WORKS);
@@ -32725,7 +32811,9 @@ function saveWork(job) {
     elapsed: Number(job.elapsed) || 0,
     /* 保存参考主体素材，供「恢复参数」时还原参考图 */
     refImages: Array.isArray(job.refImages) ? job.refImages : null,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    /* 任务结束（关闭）时刻：历史记录里展示「关闭 时间」 */
+    closedAt: Number(job.closedAt) || Date.now()
   };
 
   var existingIndex = -1;
@@ -68780,6 +68868,13 @@ window.HMChat = (function () {
     if (work.type === 'audio') {
       return '<div class="' + cls + ' is-audio"><span>♪</span><small>音频</small></div>';
     }
+    /* 历史记录封面：优先小图 thumb，懒加载；加载失败时退回中性占位，不出现裂图 */
+    if (mode === 'history') {
+      return '<div class="' + cls + '">' +
+        '<img src="' + esc(work.thumb || work.url) + '" alt="' + esc(work.prompt) + '" loading="lazy" decoding="async" draggable="false"' +
+        ' onerror="this.style.display=\'none\';this.parentNode.classList.add(\'is-missing\')">' +
+        '</div>';
+    }
     return '<div class="' + cls + '"><img src="' + esc(work.thumb || work.url) + '" alt="' + esc(work.prompt) + '" loading="lazy" draggable="false"></div>';
   }
 
@@ -71335,6 +71430,17 @@ window.HMChat = (function () {
     }
   }
 
+  /* 关闭时间文案：取记录的 closedAt（任务结束/关闭时刻），缺失时显示「未记录」 */
+  function historyClosedText(work) {
+    var ts = Number(work && work.closedAt) || 0;
+    if (!ts) return '关闭 未记录';
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return '关闭 未记录';
+    function p(n) { return n < 10 ? '0' + n : '' + n; }
+    return '关闭 ' + d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+      ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
   function historyCardHtml(work) {
     var meta = work.type === 'audio' ? '音频 · 语音合成' : (work.type === 'video' ? '视频 · ' + (work.duration || 5) + '秒' : (work.width || 0) + '×' + (work.height || 0));
     var isFailed = !!(work.failed || work.ok === false);
@@ -71347,6 +71453,7 @@ window.HMChat = (function () {
       '</div>' +
       '<div class="hm-history-foot">' +
       '<span>' + esc(today(work.createdAt)) + '</span>' +
+      '<span class="hm-history-closed">' + esc(historyClosedText(work)) + '</span>' +
       '<span class="hm-history-acts">' +
       '<button data-hact="preview" title="预览">◎</button>' +
       '<button data-hact="id" title="任务 ID">ID</button>' +
