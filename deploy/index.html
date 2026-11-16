@@ -4262,11 +4262,13 @@ body.hm-resizing * {
 }
 .hm-ref-tools {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  /* 用 inset 撑满格子内容盒 + flex 居中，不依赖 50%/translate，也不受内边距影响 */
+  inset: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
   z-index: 3;
   opacity: 0;
@@ -4274,20 +4276,12 @@ body.hm-resizing * {
   pointer-events: none;
   transition: opacity 0.16s ease;
 }
-/* 悬停或键盘焦点进入格子才显示中间两个图标 */
+/* 只有鼠标进入格子、或格子内元素获得焦点时显示；移出即隐藏 */
 .hm-ref-cell:hover .hm-ref-tools,
 .hm-ref-cell:focus-within .hm-ref-tools {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-}
-/* 触屏 / 无 hover 环境：常显，保证能点到 */
-@media (hover: none) {
-  .hm-ref-tools {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-  }
 }
 .hm-ref-cell:focus-visible {
   outline: 2px solid rgba(167, 139, 250, 0.8);
@@ -29349,15 +29343,22 @@ function renderRef() {
         });
       }
 
-      /* 事件：选择模式下点击 cell = toggle 选中；否则点击 = 打开全屏 */
+      /* 事件：选择模式下点击 cell = toggle 选中；否则点击 = 打开全屏。
+         触屏（无 hover）第一次点只聚焦，让中间两个图标出现，再点一次才开大图。 */
       cell.addEventListener('click', function (ev) {
         if (_refSelectMode) {
           ev.stopPropagation();
           toggleRefSelected(idx);
           return;
         }
+        if (window.matchMedia && window.matchMedia('(hover: none)').matches && !cell.dataset.touchArmed) {
+          cell.dataset.touchArmed = '1';
+          try { cell.focus(); } catch (e) {}
+          return;
+        }
         openRefFullscreen(idx);
       });
+      cell.addEventListener('focusout', function () { delete cell.dataset.touchArmed; });
 
       /* 键盘 Enter / Space 也打开大图（与点击一致） */
       cell.addEventListener('keydown', function (ev) {
