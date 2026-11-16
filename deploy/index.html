@@ -4812,16 +4812,16 @@ body.hm-ref-fs-open .hm-rail-toggle {
   top: -0.18em;
   bottom: -0.18em;
   border-radius: 7px;
-  background: rgba(12, 18, 32, 0.82);
-  border: 1px solid rgba(167, 139, 250, 0.38);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  background: rgba(8, 30, 50, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 1px 6px rgba(56, 189, 248, 0.18);
   z-index: 0;
 }
 .hm-prompt-overlay .chip .chip-at,
 .hm-prompt-overlay .chip .chip-label {
   position: relative;
   z-index: 1;
-  color: #c7d2fe;
+  color: #bae6fd;
   font-weight: 600;
   font-size: inherit;
   padding: 0;
@@ -4836,7 +4836,7 @@ body.hm-ref-fs-open .hm-rail-toggle {
   width: 0.86em;
   height: 0.86em;
   border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.45);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -29735,9 +29735,10 @@ function _ensureChipCache(refs) {
     var u = ref.thumb || ref.dataUrl || '';
     /* 深色胶囊：左侧小缩略图（绝对定位、不占宽度）+ "@N" 浅色文字，
        整体宽度与文本里的 @N 完全一致，连续多个也不会挤行 */
-    /* 块内顺序：@ → 缩略图 → 图N，三个部分都是行内流，互不覆盖 */
-    return '<span class="chip"><span class="chip-at">@</span>' +
+    /* 块内顺序：缩略图 → @ → 图N，三部分都是行内流，互不覆盖 */
+    return '<span class="chip">' +
       '<span class="chip-thumb" style="background-image:url(' + u + ')"></span>' +
+      '<span class="chip-at">@</span>' +
       '<span class="chip-label">图' + (i + 1) + '</span></span>';
   });
   return _chipCacheHtml;
