@@ -29480,20 +29480,21 @@ function deleteSelectedRefs() {
 /* ========== 全屏查看 ========== */
 function openRefFullscreen(idx) {
   var list = currentRefs();
-  if (!list[idx]) return;
-  _refFsIdx = idx;
-  _refFsScale = 1;
-  /* 表单/面板里若有 transform、filter、backdrop-filter 会形成 containing block，
-     把 position:fixed 降级成面板内定位；打开时把预览层挪回 body，保证全视口覆盖 */
-  if (els.refFullscreen && els.refFullscreen.parentNode !== document.body) {
-    document.body.appendChild(els.refFullscreen);
+  var ref = list[idx];
+  if (!ref) return;
+  /* 复用作品原有的查看组件（书架/结果区点开作品用的同一个 lightbox）：
+     外观、工具栏、缩放、关闭方式完全一致，不再使用参考区自己的全屏预览 */
+  if (typeof openLightbox === 'function') {
+    openLightbox({
+      type: 'image',
+      url: ref.dataUrl || ref.preview || ref.thumb || '',
+      thumb: ref.thumb || '',
+      width: ref.width,
+      height: ref.height,
+      prompt: '参考图 图' + (idx + 1) + (ref.name ? ' · ' + ref.name : '')
+    });
   }
-  if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
-  /* 配额降级/旧数据可能只有 preview 或 thumb，没有 dataUrl，逐级回退避免 src=undefined */
-  if (els.refFsImg) els.refFsImg.src = list[idx].dataUrl || list[idx].preview || list[idx].thumb || '';
-  if (els.refFsIdx) els.refFsIdx.textContent = '@' + (idx + 1);
-  if (els.refFullscreen) els.refFullscreen.hidden = false;
-  /* 预览打开期间隐藏侧边栏与把手，关闭时在 closeRefFullscreen 里移除 */
+  /* 侧栏隐藏沿用原状态类（lightbox 自身的 hm-lb-open 也会隐藏，这里保持兼容） */
   document.body.classList.add('hm-ref-fs-open');
 }
 function closeRefFullscreen() {
@@ -29501,6 +29502,9 @@ function closeRefFullscreen() {
   _refFsScale = 1;
   if (els.refFsImg) els.refFsImg.style.transform = 'scale(1)';
   if (els.refFullscreen) els.refFullscreen.hidden = true;
+  if (els.lightbox && els.lightbox.classList.contains('is-open') && typeof closeLightbox === 'function') {
+    closeLightbox();
+  }
   /* 预览关闭后恢复侧边栏与把手 */
   document.body.classList.remove('hm-ref-fs-open');
 }
@@ -33012,6 +33016,8 @@ function closeLightbox() {
   els.lightbox.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('no-scroll');
   document.body.classList.remove('hm-lb-open');
+  /* 参考图「查看」也走这个组件，关闭时一并清掉参考预览状态类 */
+  document.body.classList.remove('hm-ref-fs-open');
   state.activeItem = null;
   // 停止视频/音频
   var media = els.lbStage.querySelector('.lb-media-el');
