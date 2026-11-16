@@ -17146,15 +17146,20 @@ body.rail-collapsed .hm-page {
 
 .lib-dirs {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 16px;
   padding: 18px 22px 26px;
 }
-.lib-dir-row {
+/* 目录卡按行紧密铺满；展开的目录占满整行，后面的目录自然被顶到下一行 */
+.lib-dir-cell {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 14px;
+}
+.lib-dir-cell.is-open {
+  flex: 1 1 100%;
 }
 .lib-dir-items {
   display: flex;
@@ -17215,7 +17220,8 @@ body.rail-collapsed .hm-page {
   border-radius: 8px;
   border: 1px solid rgba(96, 165, 250, 0.35);
 }
-.lib-book.is-dir.is-open .lib-dir-body {
+.lib-book.is-dir.is-open .lib-dir-body,
+.lib-dir-cell.is-open .lib-book.is-dir .lib-dir-body {
   border-color: rgba(96, 165, 250, 0.95);
 }
 .lib-dir-name {
@@ -57147,14 +57153,14 @@ window.HMChat = (function () {
     groups.forEach(function (g) {
       var isGroup = !!g.name && g.books.length > 1;
       if (!isGroup) {
-        rows += '<div class="lib-dir-row">'
+        rows += '<div class="lib-dir-cell">'
           + g.books.map(function (b, i) { return bookCardHtml(b, i); }).join('')
           + '</div>';
         return;
       }
       var open = openKey === g.name;
       var cover = conceptDirCover(g.books);
-      rows += '<div class="lib-dir-row">'
+      rows += '<div class="lib-dir-cell' + (open ? ' is-open' : '') + '">'
         + '<button type="button" class="lib-book is-dir' + (open ? ' is-open' : '') + '" data-libdir="' + esc(g.name) + '"'
         + ' title="' + esc(g.name) + ' · ' + g.books.length + ' 册">'
         + '<span class="lib-dir-body">'
@@ -57164,9 +57170,9 @@ window.HMChat = (function () {
         + '<span class="lib-dir-name">' + esc(g.name) + '</span>'
         + '<span class="lib-dir-meta">' + g.books.length + ' 册 · ' + (open ? '点击收起' : '点击展开') + '</span>'
         + '</span></button>'
-        + (open ? '<div class="lib-dir-items">'
-          + g.books.map(function (b, i) { return bookCardHtml(b, i, true); }).join('')
-          + '</div>' : '')
+        + '<div class="lib-dir-items"' + (open ? '' : ' hidden') + '>'
+        + g.books.map(function (b, i) { return bookCardHtml(b, i, true); }).join('')
+        + '</div>'
         + '</div>';
     });
     if (!rows) {
@@ -59122,12 +59128,25 @@ window.HMChat = (function () {
         }, 150);
       });
       els.body.addEventListener('click', function (event) {
-        /* 原画资料的目录卡：就地展开/收起组内书目（纯展示切换） */
+        /* 原画资料的目录卡：只做局部显隐与布局切换，不重绘整个区域（避免整片闪一下） */
         var dirCard = event.target.closest('[data-libdir]');
         if (dirCard) {
           var dirName = dirCard.getAttribute('data-libdir');
-          state.libDirOpen = state.libDirOpen === dirName ? '' : dirName;
-          renderShelf();
+          var cell = dirCard.closest('.lib-dir-cell');
+          var willOpen = state.libDirOpen !== dirName;
+          var allCells = els.body.querySelectorAll('.lib-dir-cell');
+          for (var ci = 0; ci < allCells.length; ci++) {
+            var isTarget = allCells[ci] === cell;
+            var on = isTarget && willOpen;
+            allCells[ci].classList.toggle('is-open', on);
+            var items = allCells[ci].querySelector('.lib-dir-items');
+            if (items) items.hidden = !on;
+            var btn = allCells[ci].querySelector('[data-libdir]');
+            if (btn) btn.classList.toggle('is-open', on);
+            var meta = allCells[ci].querySelector('.lib-dir-meta');
+            if (meta) meta.textContent = meta.textContent.replace(/点击(展开|收起)$/, on ? '点击收起' : '点击展开');
+          }
+          state.libDirOpen = willOpen ? dirName : '';
           return;
         }
         var card = event.target.closest('.lib-book');
