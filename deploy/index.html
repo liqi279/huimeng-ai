@@ -5350,7 +5350,7 @@ body.hm-light .hm-slider-val {
 .hm-prompt-rich .rich-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.24em;
+  gap: 0;            /* @ 与「图N」紧贴，作为一个整体 token */
   vertical-align: middle;
   margin: 0 0.2em;
   padding: 0.06em 0.24em;
@@ -5366,6 +5366,8 @@ body.hm-light .hm-slider-val {
 .hm-prompt-rich .rich-chip img {
   width: 0.92em;
   height: 0.92em;
+  /* 缩略图与 @ 之间留出明显间隔，与「@图N」内部紧贴形成对比 */
+  margin-right: 0.3em;
   border-radius: 3px;
   object-fit: cover;
   border: 1px solid rgba(56, 189, 248, 0.45);
