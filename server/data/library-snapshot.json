@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-16T18:16:34.247Z",
+  "generatedAt": "2026-11-16T18:58:58.149Z",
   "source": "huimeng_library.books",
-  "total": 813,
+  "total": 882,
   "areas": {
     "paint": 731,
-    "concept": 58,
+    "concept": 127,
     "ref": 24
   },
   "books": [
@@ -4379,6 +4379,20 @@
       "coverBytes": 235777
     },
     {
+      "id": "lib-mwjljx7d-8bd7d1",
+      "sortNo": 59,
+      "title": "EVA · 新世纪福音战士 剧场版原画集 · 上卷 · 第1/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士 剧场版》的动画原画集【包含了大量的设定草图、分镜线稿2】\\[线稿集]新世纪福音战士 剧场版原画集\\上卷，共 405 页。本卷第 1-203 页（共 405 页，分 2 卷）。",
+      "pageCount": 203,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-01.pdf",
+      "pdfBytes": 56050400,
+      "coverKey": "library/covers/eva-20261117-eva-01.jpg",
+      "coverBytes": 424458
+    },
+    {
       "id": "lib-mwdgv6z5-720268",
       "sortNo": 60,
       "title": "超级漫画图典 5000 例：服装篇",
@@ -4391,6 +4405,20 @@
       "pdfBytes": 69530743,
       "coverKey": "library/covers/061-manga-5000-costume-cover.jpg",
       "coverBytes": 235132
+    },
+    {
+      "id": "lib-mwjlkcwf-688de0",
+      "sortNo": 60,
+      "title": "EVA · 新世纪福音战士 剧场版原画集 · 上卷 · 第2/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士 剧场版》的动画原画集【包含了大量的设定草图、分镜线稿2】\\[线稿集]新世纪福音战士 剧场版原画集\\上卷，共 405 页。本卷第 204-405 页（共 405 页，分 2 卷）。",
+      "pageCount": 202,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-02.pdf",
+      "pdfBytes": 52317335,
+      "coverKey": "library/covers/eva-20261117-eva-02.jpg",
+      "coverBytes": 222838
     },
     {
       "id": "lib-mwdgw6sd-c014fe",
@@ -4407,6 +4435,20 @@
       "coverBytes": 259101
     },
     {
+      "id": "lib-mwjlktx7-042390",
+      "sortNo": 61,
+      "title": "EVA · 新世纪福音战士 剧场版原画集 · 下卷 · 第1/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士 剧场版》的动画原画集【包含了大量的设定草图、分镜线稿2】\\[线稿集]新世纪福音战士 剧场版原画集\\下卷，共 393 页。本卷第 1-197 页（共 393 页，分 2 卷）。",
+      "pageCount": 197,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-03.pdf",
+      "pdfBytes": 51686915,
+      "coverKey": "library/covers/eva-20261117-eva-03.jpg",
+      "coverBytes": 374154
+    },
+    {
       "id": "lib-mwdgxxso-7d5e7d",
       "sortNo": 62,
       "title": "超级漫画图典 5000 例：美少女篇",
@@ -4419,6 +4461,20 @@
       "pdfBytes": 64289332,
       "coverKey": "library/covers/063-manga-5000-bishojo-cover.jpg",
       "coverBytes": 244476
+    },
+    {
+      "id": "lib-mwjll8qh-48c107",
+      "sortNo": 62,
+      "title": "EVA · 新世纪福音战士 剧场版原画集 · 下卷 · 第2/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士 剧场版》的动画原画集【包含了大量的设定草图、分镜线稿2】\\[线稿集]新世纪福音战士 剧场版原画集\\下卷，共 393 页。本卷第 198-393 页（共 393 页，分 2 卷）。",
+      "pageCount": 196,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-04.pdf",
+      "pdfBytes": 51848136,
+      "coverKey": "library/covers/eva-20261117-eva-04.jpg",
+      "coverBytes": 197177
     },
     {
       "id": "lib-mwdh00qm-3ee87f",
@@ -4435,6 +4491,20 @@
       "coverBytes": 296069
     },
     {
+      "id": "lib-mwjllm3l-828159",
+      "sortNo": 63,
+      "title": "EVA · 原画集 · Groundworks of Evangelion Vol 2 · 第1/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】2.7z\\[线稿集]Groundworks of Evangelion Vol 2，共 253 页。本卷第 1-127 页（共 253 页，分 2 卷）。",
+      "pageCount": 127,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-05.pdf",
+      "pdfBytes": 44893360,
+      "coverKey": "library/covers/eva-20261117-eva-05.jpg",
+      "coverBytes": 101633
+    },
+    {
       "id": "lib-mwdh1yt3-d6340b",
       "sortNo": 64,
       "title": "漫画女子角色服饰资料集",
@@ -4447,6 +4517,20 @@
       "pdfBytes": 57997229,
       "coverKey": "library/covers/065-female-costume-reference-cover.jpg",
       "coverBytes": 213579
+    },
+    {
+      "id": "lib-mwjllzrs-8a3074",
+      "sortNo": 64,
+      "title": "EVA · 原画集 · Groundworks of Evangelion Vol 2 · 第2/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】2.7z\\[线稿集]Groundworks of Evangelion Vol 2，共 253 页。本卷第 128-253 页（共 253 页，分 2 卷）。",
+      "pageCount": 126,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-06.pdf",
+      "pdfBytes": 47415498,
+      "coverKey": "library/covers/eva-20261117-eva-06.jpg",
+      "coverBytes": 129838
     },
     {
       "id": "lib-mwdhpdwe-d5365f",
@@ -4463,6 +4547,20 @@
       "coverBytes": 147920
     },
     {
+      "id": "lib-mwjlmjoo-0c79b1",
+      "sortNo": 65,
+      "title": "EVA · 原画集 · Groundwork of Evangelion Vol.3 · 第1/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】\\[线稿集]Groundwork of Evangelion Vol.3，共 314 页。本卷第 1-79 页（共 314 页，分 4 卷）。",
+      "pageCount": 79,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-07.pdf",
+      "pdfBytes": 69611223,
+      "coverKey": "library/covers/eva-20261117-eva-07.jpg",
+      "coverBytes": 353289
+    },
+    {
       "id": "lib-mwdhqzy6-197ca1",
       "sortNo": 66,
       "title": "国际插画大师惠特拉奇的动物画教程：艺用生物解剖",
@@ -4475,6 +4573,20 @@
       "pdfBytes": 167741970,
       "coverKey": "library/covers/067-animal-anatomy-art-cover.jpg",
       "coverBytes": 165289
+    },
+    {
+      "id": "lib-mwjln0b2-584f58",
+      "sortNo": 66,
+      "title": "EVA · 原画集 · Groundwork of Evangelion Vol.3 · 第2/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】\\[线稿集]Groundwork of Evangelion Vol.3，共 314 页。本卷第 80-158 页（共 314 页，分 4 卷）。",
+      "pageCount": 79,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-08.pdf",
+      "pdfBytes": 60318539,
+      "coverKey": "library/covers/eva-20261117-eva-08.jpg",
+      "coverBytes": 161659
     },
     {
       "id": "lib-mwdh5q74-e5ae92",
@@ -4491,6 +4603,20 @@
       "coverBytes": 349446
     },
     {
+      "id": "lib-mwjlnh0o-88b087",
+      "sortNo": 67,
+      "title": "EVA · 原画集 · Groundwork of Evangelion Vol.3 · 第3/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】\\[线稿集]Groundwork of Evangelion Vol.3，共 314 页。本卷第 159-237 页（共 314 页，分 4 卷）。",
+      "pageCount": 79,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-09.pdf",
+      "pdfBytes": 60215971,
+      "coverKey": "library/covers/eva-20261117-eva-09.jpg",
+      "coverBytes": 183741
+    },
+    {
       "id": "lib-mwdh6ghl-d71005",
       "sortNo": 68,
       "title": "游戏动漫人体结构造型手绘技法",
@@ -4503,6 +4629,20 @@
       "pdfBytes": 37586082,
       "coverKey": "library/covers/069-game-anime-anatomy-cover.jpg",
       "coverBytes": 102746
+    },
+    {
+      "id": "lib-mwjlnwca-e511b0",
+      "sortNo": 68,
+      "title": "EVA · 原画集 · Groundwork of Evangelion Vol.3 · 第4/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】\\[线稿集]Groundwork of Evangelion Vol.3，共 314 页。本卷第 238-314 页（共 314 页，分 4 卷）。",
+      "pageCount": 77,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-10.pdf",
+      "pdfBytes": 54044570,
+      "coverKey": "library/covers/eva-20261117-eva-10.jpg",
+      "coverBytes": 143081
     },
     {
       "id": "lib-mwdh8cta-43abf0",
@@ -4519,6 +4659,20 @@
       "coverBytes": 219625
     },
     {
+      "id": "lib-mwjlofm4-65122d",
+      "sortNo": 69,
+      "title": "EVA · 原画集 · 新世纪福音战士 原画集VOL1-3 · VOL1",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】\\[线稿集]新世纪福音战士 原画集VOL1-3\\VOL1，共 261 页。",
+      "pageCount": 261,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-11.pdf",
+      "pdfBytes": 68702966,
+      "coverKey": "library/covers/eva-20261117-eva-11.jpg",
+      "coverBytes": 361726
+    },
+    {
       "id": "lib-mwdl9q09-139e2f",
       "sortNo": 70,
       "title": "超级漫画素描技法：人物结构篇",
@@ -4531,6 +4685,20 @@
       "pdfBytes": 92904325,
       "coverKey": "library/covers/071-anime-anatomy-structure-cover.jpg",
       "coverBytes": 296721
+    },
+    {
+      "id": "lib-mwjloz6h-f9acb0",
+      "sortNo": 70,
+      "title": "EVA · 原画集 · 新世纪福音战士 原画集VOL1-3 · VOL2",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】\\[线稿集]新世纪福音战士 原画集VOL1-3\\VOL2，共 293 页。",
+      "pageCount": 293,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-12.pdf",
+      "pdfBytes": 70443860,
+      "coverKey": "library/covers/eva-20261117-eva-12.jpg",
+      "coverBytes": 337042
     },
     {
       "id": "lib-mwdl7p4u-67a562",
@@ -4547,6 +4715,20 @@
       "coverBytes": 245963
     },
     {
+      "id": "lib-mwjlpbxc-a0e935",
+      "sortNo": 71,
+      "title": "EVA · 原画集 · 新世纪福音战士 原画集VOL1-3 · VOL3 · 第1/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】\\[线稿集]新世纪福音战士 原画集VOL1-3\\VOL3，共 355 页。本卷第 1-178 页（共 355 页，分 2 卷）。",
+      "pageCount": 178,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-13.pdf",
+      "pdfBytes": 44593050,
+      "coverKey": "library/covers/eva-20261117-eva-13.jpg",
+      "coverBytes": 325544
+    },
+    {
       "id": "lib-mwdla9pb-fb4019",
       "sortNo": 72,
       "title": "超级漫画素描技法：运动篇",
@@ -4559,6 +4741,20 @@
       "pdfBytes": 98797857,
       "coverKey": "library/covers/073-motion-drawing-cover.jpg",
       "coverBytes": 223037
+    },
+    {
+      "id": "lib-mwjlpnvl-9c091b",
+      "sortNo": 72,
+      "title": "EVA · 原画集 · 新世纪福音战士 原画集VOL1-3 · VOL3 · 第2/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]GAINAX名作《新世纪福音战士》的动画原画集【包含了大量的设定草图、分镜线稿】\\[线稿集]新世纪福音战士 原画集VOL1-3\\VOL3，共 355 页。本卷第 179-355 页（共 355 页，分 2 卷）。",
+      "pageCount": 177,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-14.pdf",
+      "pdfBytes": 41588878,
+      "coverKey": "library/covers/eva-20261117-eva-14.jpg",
+      "coverBytes": 149263
     },
     {
       "id": "lib-mwdl3avo-35834b",
@@ -4575,6 +4771,20 @@
       "coverBytes": 407551
     },
     {
+      "id": "lib-mwjlqene-c8a056",
+      "sortNo": 73,
+      "title": "EVA · 原画集 · 动画《新世纪福音战士新剧场版：序（ヱヴァンゲリヲン新劇場版：序）… · 新世纪福音战士新剧场版序 动画原画集 · 第1/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]动画《新世纪福音战士新剧场版：序（ヱヴァンゲリヲン新劇場版：序）》的原画集【大量的线稿原画稿】\\[线稿集]新世纪福音战士新剧场版序 动画原画集\\[线稿集]新世纪福音战士新剧场版序 动画原画集，共 334 页。本卷第 1-112 页（共 334 页，分 3 卷）。",
+      "pageCount": 112,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-15.pdf",
+      "pdfBytes": 88710991,
+      "coverKey": "library/covers/eva-20261117-eva-15.jpg",
+      "coverBytes": 120487
+    },
+    {
       "id": "lib-mwdl44ab-0783bb",
       "sortNo": 74,
       "title": "SSbook 超人气绘师精讲教程：黑白线稿篇",
@@ -4587,6 +4797,20 @@
       "pdfBytes": 29790778,
       "coverKey": "library/covers/075-ssbook-lineart-cover.jpg",
       "coverBytes": 408195
+    },
+    {
+      "id": "lib-mwjlqvbb-7175bd",
+      "sortNo": 74,
+      "title": "EVA · 原画集 · 动画《新世纪福音战士新剧场版：序（ヱヴァンゲリヲン新劇場版：序）… · 新世纪福音战士新剧场版序 动画原画集 · 第2/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]动画《新世纪福音战士新剧场版：序（ヱヴァンゲリヲン新劇場版：序）》的原画集【大量的线稿原画稿】\\[线稿集]新世纪福音战士新剧场版序 动画原画集\\[线稿集]新世纪福音战士新剧场版序 动画原画集，共 334 页。本卷第 113-224 页（共 334 页，分 3 卷）。",
+      "pageCount": 112,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-16.pdf",
+      "pdfBytes": 60468948,
+      "coverKey": "library/covers/eva-20261117-eva-16.jpg",
+      "coverBytes": 73986
     },
     {
       "id": "lib-mwdlf9ws-27c6d7",
@@ -4603,6 +4827,20 @@
       "coverBytes": 251686
     },
     {
+      "id": "lib-mwjlrb9n-511264",
+      "sortNo": 75,
+      "title": "EVA · 原画集 · 动画《新世纪福音战士新剧场版：序（ヱヴァンゲリヲン新劇場版：序）… · 新世纪福音战士新剧场版序 动画原画集 · 第3/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]动画《新世纪福音战士新剧场版：序（ヱヴァンゲリヲン新劇場版：序）》的原画集【大量的线稿原画稿】\\[线稿集]新世纪福音战士新剧场版序 动画原画集\\[线稿集]新世纪福音战士新剧场版序 动画原画集，共 334 页。本卷第 225-334 页（共 334 页，分 3 卷）。",
+      "pageCount": 110,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-17.pdf",
+      "pdfBytes": 57409906,
+      "coverKey": "library/covers/eva-20261117-eva-17.jpg",
+      "coverBytes": 66955
+    },
+    {
       "id": "lib-mwdllhqc-e94173",
       "sortNo": 76,
       "title": "Paint！美少女彩绘的基本肌肤上色究极技巧",
@@ -4615,6 +4853,20 @@
       "pdfBytes": 345060363,
       "coverKey": "library/covers/077-paint-skin-coloring-cover.jpg",
       "coverBytes": 230231
+    },
+    {
+      "id": "lib-mwjlrz8i-9567df",
+      "sortNo": 76,
+      "title": "EVA · 原画集 · 动画《新世纪福音战士新剧场版：破（ヱヴァンゲリヲン新劇場版：破）… · 新世纪福音战士新剧场版破 动画原画集上卷 · 第1/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]动画《新世纪福音战士新剧场版：破（ヱヴァンゲリヲン新劇場版：破）》的原画集【大量的线稿原画稿】\\[线稿集]新世纪福音战士新剧场版破 动画原画集上卷\\[线稿集]新世纪福音战士新剧场版破 动画原画集上卷，共 334 页。本卷第 1-112 页（共 334 页，分 3 卷）。",
+      "pageCount": 112,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-18.pdf",
+      "pdfBytes": 87495530,
+      "coverKey": "library/covers/eva-20261117-eva-18.jpg",
+      "coverBytes": 131412
     },
     {
       "id": "lib-mwdligq4-84ade0",
@@ -4631,6 +4883,20 @@
       "coverBytes": 207598
     },
     {
+      "id": "lib-mwjlsixo-f876c2",
+      "sortNo": 77,
+      "title": "EVA · 原画集 · 动画《新世纪福音战士新剧场版：破（ヱヴァンゲリヲン新劇場版：破）… · 新世纪福音战士新剧场版破 动画原画集上卷 · 第2/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]动画《新世纪福音战士新剧场版：破（ヱヴァンゲリヲン新劇場版：破）》的原画集【大量的线稿原画稿】\\[线稿集]新世纪福音战士新剧场版破 动画原画集上卷\\[线稿集]新世纪福音战士新剧场版破 动画原画集上卷，共 334 页。本卷第 113-224 页（共 334 页，分 3 卷）。",
+      "pageCount": 112,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-19.pdf",
+      "pdfBytes": 66449438,
+      "coverKey": "library/covers/eva-20261117-eva-19.jpg",
+      "coverBytes": 120409
+    },
+    {
       "id": "lib-mwdldbuy-255f0d",
       "sortNo": 78,
       "title": "载具和少女的绘画方法：SAI 与 Photoshop 的完全教学",
@@ -4643,6 +4909,20 @@
       "pdfBytes": 189460387,
       "coverKey": "library/covers/079-vehicle-girl-drawing-cover.jpg",
       "coverBytes": 162432
+    },
+    {
+      "id": "lib-mwjlt1bn-51762f",
+      "sortNo": 78,
+      "title": "EVA · 原画集 · 动画《新世纪福音战士新剧场版：破（ヱヴァンゲリヲン新劇場版：破）… · 新世纪福音战士新剧场版破 动画原画集上卷 · 第3/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]动画《新世纪福音战士新剧场版：破（ヱヴァンゲリヲン新劇場版：破）》的原画集【大量的线稿原画稿】\\[线稿集]新世纪福音战士新剧场版破 动画原画集上卷\\[线稿集]新世纪福音战士新剧场版破 动画原画集上卷，共 334 页。本卷第 225-334 页（共 334 页，分 3 卷）。",
+      "pageCount": 110,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-20.pdf",
+      "pdfBytes": 66241551,
+      "coverKey": "library/covers/eva-20261117-eva-20.jpg",
+      "coverBytes": 124787
     },
     {
       "id": "lib-mwdlqznr-dd53c9",
@@ -4659,6 +4939,20 @@
       "coverBytes": 314520
     },
     {
+      "id": "lib-mwjlth7x-fa2c2c",
+      "sortNo": 79,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第1/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 1-31 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-21.pdf",
+      "pdfBytes": 57016409,
+      "coverKey": "library/covers/eva-20261117-eva-21.jpg",
+      "coverBytes": 152326
+    },
+    {
       "id": "lib-mwdl6mum-d86be4",
       "sortNo": 80,
       "title": "超级漫画素描技法：人物素描基础篇",
@@ -4671,6 +4965,20 @@
       "pdfBytes": 41203602,
       "coverKey": "library/covers/081-anime-sketch-basics-cover.jpg",
       "coverBytes": 255162
+    },
+    {
+      "id": "lib-mwjlu27c-175f4b",
+      "sortNo": 80,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第2/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 32-62 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-22.pdf",
+      "pdfBytes": 73301569,
+      "coverKey": "library/covers/eva-20261117-eva-22.jpg",
+      "coverBytes": 144948
     },
     {
       "id": "lib-mwdl3e7f-55de0e",
@@ -4687,6 +4995,20 @@
       "coverBytes": 164400
     },
     {
+      "id": "lib-mwjlum7x-6452e5",
+      "sortNo": 81,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第3/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 63-93 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-23.pdf",
+      "pdfBytes": 72542553,
+      "coverKey": "library/covers/eva-20261117-eva-23.jpg",
+      "coverBytes": 156528
+    },
+    {
       "id": "lib-mwdl1zbe-793b6c",
       "sortNo": 82,
       "title": "日系配色这样搭：平面设计更出色",
@@ -4699,6 +5021,20 @@
       "pdfBytes": 21123181,
       "coverKey": "library/covers/083-japanese-color-design-zh-cover.jpg",
       "coverBytes": 199646
+    },
+    {
+      "id": "lib-mwjlv7s4-9a78d0",
+      "sortNo": 82,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第4/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 94-124 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-24.pdf",
+      "pdfBytes": 76519395,
+      "coverKey": "library/covers/eva-20261117-eva-24.jpg",
+      "coverBytes": 205546
     },
     {
       "id": "lib-mwdlu11u-208550",
@@ -4715,6 +5051,20 @@
       "coverBytes": 297080
     },
     {
+      "id": "lib-mwjlvuqy-bc40c1",
+      "sortNo": 83,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第5/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 125-155 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-25.pdf",
+      "pdfBytes": 72288798,
+      "coverKey": "library/covers/eva-20261117-eva-25.jpg",
+      "coverBytes": 151899
+    },
+    {
       "id": "lib-mwdlnlyw-981842",
       "sortNo": 84,
       "title": "正太少年的绘画法",
@@ -4727,6 +5077,20 @@
       "pdfBytes": 348154619,
       "coverKey": "library/covers/085-shota-drawing-cover.jpg",
       "coverBytes": 247913
+    },
+    {
+      "id": "lib-mwjlwhrg-a558d7",
+      "sortNo": 84,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第6/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 156-186 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-26.pdf",
+      "pdfBytes": 71926744,
+      "coverKey": "library/covers/eva-20261117-eva-26.jpg",
+      "coverBytes": 168536
     },
     {
       "id": "lib-mwdl2ior-880990",
@@ -4743,6 +5107,20 @@
       "coverBytes": 227968
     },
     {
+      "id": "lib-mwjlx5pm-54fb23",
+      "sortNo": 85,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第7/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 187-217 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-27.pdf",
+      "pdfBytes": 73507584,
+      "coverKey": "library/covers/eva-20261117-eva-27.jpg",
+      "coverBytes": 146287
+    },
+    {
       "id": "lib-mwdl2lj0-db07a7",
       "sortNo": 86,
       "title": "动漫设计 超炫动态大图集：多彩人物篇",
@@ -4755,6 +5133,34 @@
       "pdfBytes": 26067771,
       "coverKey": "library/covers/087-dynamic-poses-colorful-cover.jpg",
       "coverBytes": 248874
+    },
+    {
+      "id": "lib-mwjlxqc6-a88ad8",
+      "sortNo": 86,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第8/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 218-248 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-28.pdf",
+      "pdfBytes": 68549187,
+      "coverKey": "library/covers/eva-20261117-eva-28.jpg",
+      "coverBytes": 149249
+    },
+    {
+      "id": "lib-mwjlyc98-651357",
+      "sortNo": 87,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第9/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 249-279 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-29.pdf",
+      "pdfBytes": 71326408,
+      "coverKey": "library/covers/eva-20261117-eva-29.jpg",
+      "coverBytes": 173410
     },
     {
       "id": "lib-mwdl83j7-462be1",
@@ -4771,6 +5177,20 @@
       "coverBytes": 174819
     },
     {
+      "id": "lib-mwjlyxy8-f5952c",
+      "sortNo": 88,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第10/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 280-310 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-30.pdf",
+      "pdfBytes": 67467136,
+      "coverKey": "library/covers/eva-20261117-eva-30.jpg",
+      "coverBytes": 152214
+    },
+    {
       "id": "lib-mwdl3cgt-e5d5ec",
       "sortNo": 89,
       "title": "漫画家大课堂：漫画人物绘画的基本法则",
@@ -4783,6 +5203,20 @@
       "pdfBytes": 28828712,
       "coverKey": "library/covers/090-manga-class-character-cover.jpg",
       "coverBytes": 176205
+    },
+    {
+      "id": "lib-mwjlzp95-ed4a52",
+      "sortNo": 89,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第11/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 311-341 页（共 371 页，分 12 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-31.pdf",
+      "pdfBytes": 69920593,
+      "coverKey": "library/covers/eva-20261117-eva-31.jpg",
+      "coverBytes": 125590
     },
     {
       "id": "lib-mwdl2olu-1113e2",
@@ -4799,6 +5233,20 @@
       "coverBytes": 204203
     },
     {
+      "id": "lib-mwjm06rk-0c82fe",
+      "sortNo": 90,
+      "title": "EVA · 原画集 · 剧场版：破 场面画集 · 第12/12卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[原画集]名作EVA（新世纪福音战士）剧场版：破的画集【主要是收录了动画中的一些场面截图】\\[萌绘图库][20200323]evapoartbook02，共 371 页。本卷第 342-371 页（共 371 页，分 12 卷）。",
+      "pageCount": 30,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-32.pdf",
+      "pdfBytes": 56164793,
+      "coverKey": "library/covers/eva-20261117-eva-32.jpg",
+      "coverBytes": 128273
+    },
+    {
       "id": "lib-mwdl81wa-45f7c8",
       "sortNo": 91,
       "title": "超级漫画 CG 技法完全自学教程：线稿+透视+光影+上色+质感",
@@ -4811,6 +5259,34 @@
       "pdfBytes": 44410160,
       "coverKey": "library/covers/092-cg-manga-self-study-cover.jpg",
       "coverBytes": 277753
+    },
+    {
+      "id": "lib-mwjm0jt8-0e0ae7",
+      "sortNo": 91,
+      "title": "EVA · 原画集 · Groundworks of Evangelion Vol 1 · 第1/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[线稿集]Groundworks of Evangelion Vol 1，共 217 页。本卷第 1-109 页（共 217 页，分 2 卷）。",
+      "pageCount": 109,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-33.pdf",
+      "pdfBytes": 43821165,
+      "coverKey": "library/covers/eva-20261117-eva-33.jpg",
+      "coverBytes": 176142
+    },
+    {
+      "id": "lib-mwjm0vyx-a86b9a",
+      "sortNo": 92,
+      "title": "EVA · 原画集 · Groundworks of Evangelion Vol 1 · 第2/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：原画集\\[线稿集]Groundworks of Evangelion Vol 1，共 217 页。本卷第 110-217 页（共 217 页，分 2 卷）。",
+      "pageCount": 108,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-34.pdf",
+      "pdfBytes": 39686328,
+      "coverKey": "library/covers/eva-20261117-eva-34.jpg",
+      "coverBytes": 221290
     },
     {
       "id": "lib-mwdl47c3-7d8d0c",
@@ -4827,6 +5303,20 @@
       "coverBytes": 264328
     },
     {
+      "id": "lib-mwjm1j5b-fc88d6",
+      "sortNo": 93,
+      "title": "EVA · 画集 · EVA新世纪福音战士剧场版画集2 · 剧场版画集 2 · 第1/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：画集\\[画集]EVA新世纪福音战士剧场版画集2\\[萌绘图库][20210702]EVA10\\[萌绘图库][20210702]EVA10，共 85 页。本卷第 1-29 页（共 85 页，分 3 卷）。",
+      "pageCount": 29,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-35.pdf",
+      "pdfBytes": 76730131,
+      "coverKey": "library/covers/eva-20261117-eva-35.jpg",
+      "coverBytes": 54922
+    },
+    {
       "id": "lib-mwdl6l8s-21207c",
       "sortNo": 94,
       "title": "最新卡通漫画技法 7：机械设定篇",
@@ -4839,6 +5329,20 @@
       "pdfBytes": 41800654,
       "coverKey": "library/covers/095-cartoon-tech-7-mecha-cover.jpg",
       "coverBytes": 282007
+    },
+    {
+      "id": "lib-mwjm20rv-a30ecf",
+      "sortNo": 94,
+      "title": "EVA · 画集 · EVA新世纪福音战士剧场版画集2 · 剧场版画集 2 · 第2/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：画集\\[画集]EVA新世纪福音战士剧场版画集2\\[萌绘图库][20210702]EVA10\\[萌绘图库][20210702]EVA10，共 85 页。本卷第 30-58 页（共 85 页，分 3 卷）。",
+      "pageCount": 29,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-36.pdf",
+      "pdfBytes": 57041751,
+      "coverKey": "library/covers/eva-20261117-eva-36.jpg",
+      "coverBytes": 208261
     },
     {
       "id": "lib-mwdl1xqy-20973f",
@@ -4855,6 +5359,20 @@
       "coverBytes": 227411
     },
     {
+      "id": "lib-mwjm2fg9-0e58c7",
+      "sortNo": 95,
+      "title": "EVA · 画集 · EVA新世纪福音战士剧场版画集2 · 剧场版画集 2 · 第3/3卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：画集\\[画集]EVA新世纪福音战士剧场版画集2\\[萌绘图库][20210702]EVA10\\[萌绘图库][20210702]EVA10，共 85 页。本卷第 59-85 页（共 85 页，分 3 卷）。",
+      "pageCount": 27,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-37.pdf",
+      "pdfBytes": 46729926,
+      "coverKey": "library/covers/eva-20261117-eva-37.jpg",
+      "coverBytes": 181693
+    },
+    {
       "id": "lib-mwdl45s4-d32c28",
       "sortNo": 96,
       "title": "最新卡通漫画技法 5：Q 版人物篇",
@@ -4867,6 +5385,20 @@
       "pdfBytes": 30173066,
       "coverKey": "library/covers/097-cartoon-tech-5-chibi-people-cover.jpg",
       "coverBytes": 284383
+    },
+    {
+      "id": "lib-mwjm2z3g-ff2a9a",
+      "sortNo": 96,
+      "title": "EVA · EVA新世纪福音战士剧场版画集 · 剧场版画集 1 · 第1/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：画集\\[画集]EVA新世纪福音战士剧场版画集\\[萌绘图库][20210702]EVA11\\[萌绘图库][20210702]EVA11，共 38 页。本卷第 1-19 页（共 38 页，分 2 卷）。",
+      "pageCount": 19,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-38.pdf",
+      "pdfBytes": 57622626,
+      "coverKey": "library/covers/eva-20261117-eva-38.jpg",
+      "coverBytes": 143616
     },
     {
       "id": "lib-mwdl1w5x-2e8949",
@@ -4883,6 +5415,20 @@
       "coverBytes": 317013
     },
     {
+      "id": "lib-mwjm3gyn-950479",
+      "sortNo": 97,
+      "title": "EVA · EVA新世纪福音战士剧场版画集 · 剧场版画集 1 · 第2/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：画集\\[画集]EVA新世纪福音战士剧场版画集\\[萌绘图库][20210702]EVA11\\[萌绘图库][20210702]EVA11，共 38 页。本卷第 20-38 页（共 38 页，分 2 卷）。",
+      "pageCount": 19,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-39.pdf",
+      "pdfBytes": 52334897,
+      "coverKey": "library/covers/eva-20261117-eva-39.jpg",
+      "coverBytes": 250883
+    },
+    {
       "id": "lib-mwdl6jq0-017d87",
       "sortNo": 98,
       "title": "最新卡通漫画技法 3：动态捕捉篇",
@@ -4895,6 +5441,34 @@
       "pdfBytes": 38784339,
       "coverKey": "library/covers/099-cartoon-tech-3-motion-cover.jpg",
       "coverBytes": 292195
+    },
+    {
+      "id": "lib-mwjm3lc8-fcc2fb",
+      "sortNo": 98,
+      "title": "EVA · 画集 · TV动画《EVA新世纪福音战士》两个剧场版《Death(死与新生… · Film book 画集 Death/Air · FILM BOOK 1",
+      "author": "GAINAX / khara",
+      "intro": "来源：画集\\[画集]TV动画《EVA新世纪福音战士》两个剧场版《Death(死与新生)》与《AIR，真心为你》的Film book画集【主要是一些动画剧情介绍、动画截图、台词等等】\\[萌绘图库][20230212]EVA17\\新世紀福音戰士EVANGELION 劇場版 Air真心爲你 Film Book 1，共 58 页。",
+      "pageCount": 58,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-40.pdf",
+      "pdfBytes": 11269364,
+      "coverKey": "library/covers/eva-20261117-eva-40.jpg",
+      "coverBytes": 122188
+    },
+    {
+      "id": "lib-mwjm3oqb-351a5f",
+      "sortNo": 99,
+      "title": "EVA · 画集 · TV动画《EVA新世纪福音战士》两个剧场版《Death(死与新生… · Film book 画集 Death/Air · FILM BOOK 2",
+      "author": "GAINAX / khara",
+      "intro": "来源：画集\\[画集]TV动画《EVA新世纪福音战士》两个剧场版《Death(死与新生)》与《AIR，真心为你》的Film book画集【主要是一些动画剧情介绍、动画截图、台词等等】\\[萌绘图库][20230212]EVA17\\新世紀福音戰士EVANGELION 劇場版 Air真心爲你 Film Book 2，共 58 页。",
+      "pageCount": 58,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-41.pdf",
+      "pdfBytes": 10107796,
+      "coverKey": "library/covers/eva-20261117-eva-41.jpg",
+      "coverBytes": 110694
     },
     {
       "id": "lib-mwdsi3w7-7b8e32",
@@ -4911,6 +5485,20 @@
       "coverBytes": 278787
     },
     {
+      "id": "lib-mwjm3u2h-c9a08a",
+      "sortNo": 100,
+      "title": "EVA · 画集 · TV动画《EVA新世纪福音战士》两个剧场版《Death(死与新生… · Film book 画集 Death/Air · 新世紀福音戰士EVANGELION 劇場版 Death篇 Fil…",
+      "author": "GAINAX / khara",
+      "intro": "来源：画集\\[画集]TV动画《EVA新世纪福音战士》两个剧场版《Death(死与新生)》与《AIR，真心为你》的Film book画集【主要是一些动画剧情介绍、动画截图、台词等等】\\[萌绘图库][20230212]EVA17\\新世紀福音戰士EVANGELION 劇場版 Death篇 Film Book，共 58 页。",
+      "pageCount": 58,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-42.pdf",
+      "pdfBytes": 12217180,
+      "coverKey": "library/covers/eva-20261117-eva-42.jpg",
+      "coverBytes": 108920
+    },
+    {
       "id": "lib-mwdshoyt-4bb150",
       "sortNo": 101,
       "title": "漫画绘制技法速成 2：校园人物百态",
@@ -4923,6 +5511,20 @@
       "pdfBytes": 15233608,
       "coverKey": "library/covers/102-quick-manga-2-school-cover.jpg",
       "coverBytes": 190558
+    },
+    {
+      "id": "lib-mwjm4caa-844c0e",
+      "sortNo": 101,
+      "title": "EVA · EVA新世纪福音战士的小设定集 · 小设定集 3.0",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]EVA新世纪福音战士的小设定集\\[萌绘图库][20200323]EVE3.0BL，共 27 页。",
+      "pageCount": 27,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-43.pdf",
+      "pdfBytes": 57729484,
+      "coverKey": "library/covers/eva-20261117-eva-43.jpg",
+      "coverBytes": 181490
     },
     {
       "id": "lib-mwdsh32i-6e190d",
@@ -4939,6 +5541,20 @@
       "coverBytes": 179141
     },
     {
+      "id": "lib-mwjm4zx4-4fe5a8",
+      "sortNo": 102,
+      "title": "EVA · 设定集 · GAINAX名作《新世纪福音战士》的机体概念设定，有一些动画中没… · 机体概念设定 · 第1/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]GAINAX名作《新世纪福音战士》的机体概念设定，有一些动画中没出现的设定\\[萌绘图库][20200823]EVA08，共 152 页。本卷第 1-38 页（共 152 页，分 4 卷）。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-44.pdf",
+      "pdfBytes": 75774634,
+      "coverKey": "library/covers/eva-20261117-eva-44.jpg",
+      "coverBytes": 297201
+    },
+    {
       "id": "lib-mwdsl51p-5ae955",
       "sortNo": 103,
       "title": "零基础学画漫画：SAI 超级漫画技法宝典",
@@ -4951,6 +5567,20 @@
       "pdfBytes": 51889820,
       "coverKey": "library/covers/104-zero-basis-sai-manga-cover.jpg",
       "coverBytes": 273003
+    },
+    {
+      "id": "lib-mwjm5fez-105e1f",
+      "sortNo": 103,
+      "title": "EVA · 设定集 · GAINAX名作《新世纪福音战士》的机体概念设定，有一些动画中没… · 机体概念设定 · 第2/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]GAINAX名作《新世纪福音战士》的机体概念设定，有一些动画中没出现的设定\\[萌绘图库][20200823]EVA08，共 152 页。本卷第 39-76 页（共 152 页，分 4 卷）。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-45.pdf",
+      "pdfBytes": 53009957,
+      "coverKey": "library/covers/eva-20261117-eva-45.jpg",
+      "coverBytes": 212593
     },
     {
       "id": "lib-mwdsigx9-c4b2a7",
@@ -5170,6 +5800,20 @@
       "pdfBytes": 31418773,
       "coverKey": "library/covers/105-sai-gufeng-watercolor-cover.jpg",
       "coverBytes": 198998
+    },
+    {
+      "id": "lib-mwjm5zlp-652a10",
+      "sortNo": 104,
+      "title": "EVA · 设定集 · GAINAX名作《新世纪福音战士》的机体概念设定，有一些动画中没… · 机体概念设定 · 第3/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]GAINAX名作《新世纪福音战士》的机体概念设定，有一些动画中没出现的设定\\[萌绘图库][20200823]EVA08，共 152 页。本卷第 77-114 页（共 152 页，分 4 卷）。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-46.pdf",
+      "pdfBytes": 58420660,
+      "coverKey": "library/covers/eva-20261117-eva-46.jpg",
+      "coverBytes": 305527
     },
     {
       "id": "lib-mwdsmhny-82afb6",
@@ -5691,6 +6335,20 @@
       "coverBytes": 380167
     },
     {
+      "id": "lib-mwjm6n0g-59b879",
+      "sortNo": 105,
+      "title": "EVA · 设定集 · GAINAX名作《新世纪福音战士》的机体概念设定，有一些动画中没… · 机体概念设定 · 第4/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]GAINAX名作《新世纪福音战士》的机体概念设定，有一些动画中没出现的设定\\[萌绘图库][20200823]EVA08，共 152 页。本卷第 115-152 页（共 152 页，分 4 卷）。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-47.pdf",
+      "pdfBytes": 55490047,
+      "coverKey": "library/covers/eva-20261117-eva-47.jpg",
+      "coverBytes": 315297
+    },
+    {
       "id": "lib-mwdsj947-e164dc",
       "sortNo": 106,
       "title": "上吧！漫画达人必修课：Q 版古风",
@@ -5703,6 +6361,20 @@
       "pdfBytes": 38168767,
       "coverKey": "library/covers/107-manga-master-class-q-gufeng-cover.jpg",
       "coverBytes": 330639
+    },
+    {
+      "id": "lib-mwjm6qbc-a72e80",
+      "sortNo": 106,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 1",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 1，共 42 页。",
+      "pageCount": 42,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-48.pdf",
+      "pdfBytes": 8507495,
+      "coverKey": "library/covers/eva-20261117-eva-48.jpg",
+      "coverBytes": 167691
     },
     {
       "id": "lib-mwdsl71l-c86b90",
@@ -5719,6 +6391,20 @@
       "coverBytes": 372306
     },
     {
+      "id": "lib-mwjm6twh-94b91b",
+      "sortNo": 107,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 2",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 2，共 42 页。",
+      "pageCount": 42,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-49.pdf",
+      "pdfBytes": 8919221,
+      "coverKey": "library/covers/eva-20261117-eva-49.jpg",
+      "coverBytes": 168946
+    },
+    {
       "id": "lib-mwdsx59i-0dc945",
       "sortNo": 108,
       "title": "为绘画角色注入生命力：插画·漫画进阶技法 5 总集篇",
@@ -5731,6 +6417,20 @@
       "pdfBytes": 298974259,
       "coverKey": "library/covers/109-inject-life-5-collection-cover.jpg",
       "coverBytes": 280153
+    },
+    {
+      "id": "lib-mwjm6xzp-99613f",
+      "sortNo": 108,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 3",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 3，共 42 页。",
+      "pageCount": 42,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-50.pdf",
+      "pdfBytes": 9167564,
+      "coverKey": "library/covers/eva-20261117-eva-50.jpg",
+      "coverBytes": 161975
     },
     {
       "id": "lib-mwdst2gk-6e0ad2",
@@ -5747,6 +6447,20 @@
       "coverBytes": 238655
     },
     {
+      "id": "lib-mwjm71cd-a562f6",
+      "sortNo": 109,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 4",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 4，共 42 页。",
+      "pageCount": 42,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-51.pdf",
+      "pdfBytes": 9201438,
+      "coverKey": "library/covers/eva-20261117-eva-51.jpg",
+      "coverBytes": 193711
+    },
+    {
       "id": "lib-mwdt19o2-6c5985",
       "sortNo": 110,
       "title": "为绘画角色注入生命力：插画·漫画进阶技法 3 妄想力提高篇",
@@ -5759,6 +6473,20 @@
       "pdfBytes": 424225913,
       "coverKey": "library/covers/111-inject-life-3-imagination-cover.jpg",
       "coverBytes": 131968
+    },
+    {
+      "id": "lib-mwjm752g-15fbe5",
+      "sortNo": 110,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 5",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 5，共 42 页。",
+      "pageCount": 42,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-52.pdf",
+      "pdfBytes": 9026133,
+      "coverKey": "library/covers/eva-20261117-eva-52.jpg",
+      "coverBytes": 192545
     },
     {
       "id": "lib-mwdt15gl-b4fc63",
@@ -5775,6 +6503,20 @@
       "coverBytes": 243205
     },
     {
+      "id": "lib-mwjm78nx-b09a15",
+      "sortNo": 111,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 6",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 6，共 38 页。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-53.pdf",
+      "pdfBytes": 7341393,
+      "coverKey": "library/covers/eva-20261117-eva-53.jpg",
+      "coverBytes": 177439
+    },
+    {
       "id": "lib-mwdstpez-e82856",
       "sortNo": 112,
       "title": "为绘画角色注入生命力：插画·漫画进阶技法 1",
@@ -5787,6 +6529,20 @@
       "pdfBytes": 268516492,
       "coverKey": "library/covers/113-inject-life-1-cover.jpg",
       "coverBytes": 112278
+    },
+    {
+      "id": "lib-mwjm7bot-5843ee",
+      "sortNo": 112,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 7",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 7，共 38 页。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-54.pdf",
+      "pdfBytes": 7017708,
+      "coverKey": "library/covers/eva-20261117-eva-54.jpg",
+      "coverBytes": 182251
     },
     {
       "id": "lib-mwdsvnmi-31caa0",
@@ -5803,6 +6559,20 @@
       "coverBytes": 208199
     },
     {
+      "id": "lib-mwjm7e6b-d9d1bd",
+      "sortNo": 113,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 8",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 8，共 38 页。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-55.pdf",
+      "pdfBytes": 7558705,
+      "coverKey": "library/covers/eva-20261117-eva-55.jpg",
+      "coverBytes": 184068
+    },
+    {
       "id": "lib-mwdsonah-c04d14",
       "sortNo": 114,
       "title": "唯美幻想世界与惊艳角色的描绘方法",
@@ -5815,6 +6585,20 @@
       "pdfBytes": 166499509,
       "coverKey": "library/covers/115-fantasy-world-characters-cover.jpg",
       "coverBytes": 276780
+    },
+    {
+      "id": "lib-mwjm7hbu-8c58df",
+      "sortNo": 114,
+      "title": "EVA · 设定集 · Film book 画集 · FILM BOOK 9",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]TV动画《EVA新世纪福音战士》的Film book画集【一些动画的图片、台词、设定等等】\\[萌绘图库][20230212]EVA16\\新世紀福音戰士EVANGELION FILM BOOK 9，共 50 页。",
+      "pageCount": 50,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-56.pdf",
+      "pdfBytes": 9729940,
+      "coverKey": "library/covers/eva-20261117-eva-56.jpg",
+      "coverBytes": 174820
     },
     {
       "id": "lib-mwdsjcdw-064219",
@@ -5831,6 +6615,20 @@
       "coverBytes": 244704
     },
     {
+      "id": "lib-mwjm7xil-a0c94f",
+      "sortNo": 115,
+      "title": "EVA · 设定集 · 动画《EVA新世纪福音战士（新世紀エヴァンゲリオン、NEON G… · EVA新世纪福音战士 动画资料设定线稿集 · 第1/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]动画《EVA新世纪福音战士（新世紀エヴァンゲリオン、NEON GENESIS EVANGELION）》的线稿设定集【主要收录了角色、道具与场景的设定稿】\\[线稿集]EVA新世纪福音战士 动画资料设定线稿集，共 133 页。本卷第 1-67 页（共 133 页，分 2 卷）。",
+      "pageCount": 67,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-57.pdf",
+      "pdfBytes": 58108367,
+      "coverKey": "library/covers/eva-20261117-eva-57.jpg",
+      "coverBytes": 136601
+    },
+    {
       "id": "lib-mwdshywz-8f5085",
       "sortNo": 116,
       "title": "动漫彩色绘：水彩手绘基础教程",
@@ -5843,6 +6641,20 @@
       "pdfBytes": 26738653,
       "coverKey": "library/covers/117-watercolor-handdrawn-basics-cover.jpg",
       "coverBytes": 248288
+    },
+    {
+      "id": "lib-mwjm8evm-accc25",
+      "sortNo": 116,
+      "title": "EVA · 设定集 · 动画《EVA新世纪福音战士（新世紀エヴァンゲリオン、NEON G… · EVA新世纪福音战士 动画资料设定线稿集 · 第2/2卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]动画《EVA新世纪福音战士（新世紀エヴァンゲリオン、NEON GENESIS EVANGELION）》的线稿设定集【主要收录了角色、道具与场景的设定稿】\\[线稿集]EVA新世纪福音战士 动画资料设定线稿集，共 133 页。本卷第 68-133 页（共 133 页，分 2 卷）。",
+      "pageCount": 66,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-58.pdf",
+      "pdfBytes": 62450613,
+      "coverKey": "library/covers/eva-20261117-eva-58.jpg",
+      "coverBytes": 87687
     },
     {
       "id": "lib-mwdsi12d-899fad",
@@ -5859,6 +6671,20 @@
       "coverBytes": 309965
     },
     {
+      "id": "lib-mwjm8woo-32b02d",
+      "sortNo": 117,
+      "title": "EVA · 设定集 · 名作EVA的设定集，里面有一些机甲的设定讲解 · Evangelion Anima - Visual Book · 第1/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA的设定集，里面有一些机甲的设定讲解\\[萌绘图库]Evangelion Anima - Visual Book，共 95 页。本卷第 1-24 页（共 95 页，分 4 卷）。",
+      "pageCount": 24,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-59.pdf",
+      "pdfBytes": 63690683,
+      "coverKey": "library/covers/eva-20261117-eva-59.jpg",
+      "coverBytes": 169760
+    },
+    {
       "id": "lib-mwdsjaub-56628b",
       "sortNo": 118,
       "title": "动漫彩色绘：漫画上色基础教程",
@@ -5871,6 +6697,20 @@
       "pdfBytes": 35553781,
       "coverKey": "library/covers/119-manga-coloring-basics-cover.jpg",
       "coverBytes": 279054
+    },
+    {
+      "id": "lib-mwjm9fju-3574d0",
+      "sortNo": 118,
+      "title": "EVA · 设定集 · 名作EVA的设定集，里面有一些机甲的设定讲解 · Evangelion Anima - Visual Book · 第2/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA的设定集，里面有一些机甲的设定讲解\\[萌绘图库]Evangelion Anima - Visual Book，共 95 页。本卷第 25-48 页（共 95 页，分 4 卷）。",
+      "pageCount": 24,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-60.pdf",
+      "pdfBytes": 67282935,
+      "coverKey": "library/covers/eva-20261117-eva-60.jpg",
+      "coverBytes": 192917
     },
     {
       "id": "lib-mwdsj5nr-f366af",
@@ -5887,6 +6727,20 @@
       "coverBytes": 259536
     },
     {
+      "id": "lib-mwjm9zuk-13d2df",
+      "sortNo": 119,
+      "title": "EVA · 设定集 · 名作EVA的设定集，里面有一些机甲的设定讲解 · Evangelion Anima - Visual Book · 第3/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA的设定集，里面有一些机甲的设定讲解\\[萌绘图库]Evangelion Anima - Visual Book，共 95 页。本卷第 49-72 页（共 95 页，分 4 卷）。",
+      "pageCount": 24,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-61.pdf",
+      "pdfBytes": 73473194,
+      "coverKey": "library/covers/eva-20261117-eva-61.jpg",
+      "coverBytes": 198819
+    },
+    {
       "id": "lib-mwdufjeg-f77af5",
       "sortNo": 120,
       "title": "动漫彩色绘：彩色铅笔绘制基础教程",
@@ -5899,6 +6753,20 @@
       "pdfBytes": 34859451,
       "coverKey": "library/covers/121-colored-pencil-basics-cover.jpg",
       "coverBytes": 283402
+    },
+    {
+      "id": "lib-mwjmagu6-521628",
+      "sortNo": 120,
+      "title": "EVA · 设定集 · 名作EVA的设定集，里面有一些机甲的设定讲解 · Evangelion Anima - Visual Book · 第4/4卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA的设定集，里面有一些机甲的设定讲解\\[萌绘图库]Evangelion Anima - Visual Book，共 95 页。本卷第 73-95 页（共 95 页，分 4 卷）。",
+      "pageCount": 23,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-62.pdf",
+      "pdfBytes": 59604677,
+      "coverKey": "library/covers/eva-20261117-eva-62.jpg",
+      "coverBytes": 269077
     },
     {
       "id": "lib-mwduicco-d14593",
@@ -6032,6 +6900,20 @@
       "coverBytes": 248722
     },
     {
+      "id": "lib-mwjmatve-45b4a2",
+      "sortNo": 121,
+      "title": "EVA · 剧场版：破 完全设定集 · 第1/6卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA（新世纪福音战士）剧场版：破的完全资料设定集【大量的设定线稿】\\[萌绘图库][20200323]evapoartbook，共 275 页。本卷第 1-46 页（共 275 页，分 6 卷）。",
+      "pageCount": 46,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-63.pdf",
+      "pdfBytes": 45788228,
+      "coverKey": "library/covers/eva-20261117-eva-63.jpg",
+      "coverBytes": 237017
+    },
+    {
       "id": "lib-mwdui6p8-9764a8",
       "sortNo": 122,
       "title": "日本漫画创作技法：肢体表情",
@@ -6044,6 +6926,20 @@
       "pdfBytes": 37461828,
       "coverKey": "library/covers/123-manga-body-expression-cover.jpg",
       "coverBytes": 250823
+    },
+    {
+      "id": "lib-mwjmb75j-c3f8fb",
+      "sortNo": 122,
+      "title": "EVA · 剧场版：破 完全设定集 · 第2/6卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA（新世纪福音战士）剧场版：破的完全资料设定集【大量的设定线稿】\\[萌绘图库][20200323]evapoartbook，共 275 页。本卷第 47-92 页（共 275 页，分 6 卷）。",
+      "pageCount": 46,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-64.pdf",
+      "pdfBytes": 46355554,
+      "coverKey": "library/covers/eva-20261117-eva-64.jpg",
+      "coverBytes": 208039
     },
     {
       "id": "lib-mwdum6ut-311be2",
@@ -6060,6 +6956,20 @@
       "coverBytes": 268457
     },
     {
+      "id": "lib-mwjmblru-5c272b",
+      "sortNo": 123,
+      "title": "EVA · 剧场版：破 完全设定集 · 第3/6卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA（新世纪福音战士）剧场版：破的完全资料设定集【大量的设定线稿】\\[萌绘图库][20200323]evapoartbook，共 275 页。本卷第 93-138 页（共 275 页，分 6 卷）。",
+      "pageCount": 46,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-65.pdf",
+      "pdfBytes": 52696076,
+      "coverKey": "library/covers/eva-20261117-eva-65.jpg",
+      "coverBytes": 140286
+    },
+    {
       "id": "lib-mwduk79t-752a5a",
       "sortNo": 124,
       "title": "日本漫画创作技法：嘻哈文化",
@@ -6072,6 +6982,20 @@
       "pdfBytes": 47139136,
       "coverKey": "library/covers/125-manga-hiphop-culture-cover.jpg",
       "coverBytes": 257273
+    },
+    {
+      "id": "lib-mwjmbz71-b4ea65",
+      "sortNo": 124,
+      "title": "EVA · 剧场版：破 完全设定集 · 第4/6卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA（新世纪福音战士）剧场版：破的完全资料设定集【大量的设定线稿】\\[萌绘图库][20200323]evapoartbook，共 275 页。本卷第 139-184 页（共 275 页，分 6 卷）。",
+      "pageCount": 46,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-66.pdf",
+      "pdfBytes": 47712025,
+      "coverKey": "library/covers/eva-20261117-eva-66.jpg",
+      "coverBytes": 153084
     },
     {
       "id": "lib-mwduq8n1-aef374",
@@ -6088,6 +7012,20 @@
       "coverBytes": 250692
     },
     {
+      "id": "lib-mwjmctip-e89785",
+      "sortNo": 125,
+      "title": "EVA · 剧场版：破 完全设定集 · 第5/6卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA（新世纪福音战士）剧场版：破的完全资料设定集【大量的设定线稿】\\[萌绘图库][20200323]evapoartbook，共 275 页。本卷第 185-230 页（共 275 页，分 6 卷）。",
+      "pageCount": 46,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-67.pdf",
+      "pdfBytes": 110630855,
+      "coverKey": "library/covers/eva-20261117-eva-67.jpg",
+      "coverBytes": 161064
+    },
+    {
       "id": "lib-mwduf2hb-00593f",
       "sortNo": 126,
       "title": "日本漫画创作技法：少女角色",
@@ -6102,6 +7040,20 @@
       "coverBytes": 249309
     },
     {
+      "id": "lib-mwjmdbcg-454987",
+      "sortNo": 126,
+      "title": "EVA · 剧场版：破 完全设定集 · 第6/6卷",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]名作EVA（新世纪福音战士）剧场版：破的完全资料设定集【大量的设定线稿】\\[萌绘图库][20200323]evapoartbook，共 275 页。本卷第 231-275 页（共 275 页，分 6 卷）。",
+      "pageCount": 45,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-68.pdf",
+      "pdfBytes": 64163088,
+      "coverKey": "library/covers/eva-20261117-eva-68.jpg",
+      "coverBytes": 214727
+    },
+    {
       "id": "lib-mwduprv5-d0aa6a",
       "sortNo": 127,
       "title": "日本漫画创作技法：色彩运用",
@@ -6114,6 +7066,20 @@
       "pdfBytes": 61476266,
       "coverKey": "library/covers/128-manga-color-usage-cover.jpg",
       "coverBytes": 246023
+    },
+    {
+      "id": "lib-mwjmdto3-ce4595",
+      "sortNo": 127,
+      "title": "EVA · 设定集 · 杂志《ニュータイプ(NewType)》推出的动画《EVA新世纪福… · NewType 设定画集",
+      "author": "GAINAX / khara",
+      "intro": "来源：设定集\\[设定集]杂志《ニュータイプ(NewType)》推出的动画《EVA新世纪福音战士》的设定画集\\[萌绘图库][20230127]eva14，共 179 页。",
+      "pageCount": 179,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/eva-20261117-eva-69.pdf",
+      "pdfBytes": 65981939,
+      "coverKey": "library/covers/eva-20261117-eva-69.jpg",
+      "coverBytes": 116000
     },
     {
       "id": "lib-mwdui8ek-545e73",
