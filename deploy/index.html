@@ -8775,6 +8775,39 @@ body.hm-light .hm-page-empty {
 
 .hm-history-acts { display: flex; gap: 2px; flex: none; }
 
+/* 关闭时间：与左侧创建时间同一行小字，过长时省略而不挤压右侧操作 */
+.hm-history-closed {
+  font-size: 9px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* 封面缺失 / 加载失败：中性灰底 + 文字占位，不出现裂图 */
+.hm-history-media.is-missing,
+.desk-media-inner.is-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, rgba(148, 163, 184, 0.14), rgba(17, 24, 39, 0.9));
+  color: #64748b;
+}
+.hm-history-media.is-missing::after,
+.desk-media-inner.is-missing::after {
+  content: '无封面';
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+body.hm-light .hm-history-media.is-missing,
+body.hm-light .desk-media-inner.is-missing {
+  background: #e2e8f0;
+  color: #94a3b8;
+}
+
 .hm-history-acts button {
   width: 22px;
   height: 22px;
