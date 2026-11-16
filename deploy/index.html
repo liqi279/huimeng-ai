@@ -17154,6 +17154,20 @@ body.rail-collapsed .hm-page {
   gap: 16px;
   padding: 18px 22px 26px;
 }
+.lib-dir-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+/* 母文件夹页里的子文件夹：卡片之间留出与第一层接近的疏密 */
+.lib-dirs.is-page {
+  gap: 26px;
+  padding: 20px 22px 30px;
+}
+.lib-dirs.is-page .lib-dir-row {
+  gap: 26px 22px;
+}
 /* 展开的书目是紧跟在目录卡后面的同级 flex 项：向右铺开，后面的目录继续顺延，空间不够才换行 */
 .lib-dir-items {
   display: flex;
@@ -57344,7 +57358,8 @@ window.HMChat = (function () {
       ? '<div class="lib-dir-bar"><button type="button" class="lib-dir-back" data-libback="1">← 返回</button>'
         + '<span class="lib-dir-title">' + esc(page) + '</span></div>'
       : '';
-    els.body.innerHTML = '<div class="lib-shelf-wrap">' + bar + '<div class="lib-dirs">' + rows + '</div></div>';
+    els.body.innerHTML = '<div class="lib-shelf-wrap">' + bar
+      + '<div class="lib-dirs' + (page ? ' is-page' : '') + '">' + rows + '</div></div>';
     if (els.pager) els.pager.hidden = true;
     renderStatus();
   }
