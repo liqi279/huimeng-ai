@@ -29488,7 +29488,7 @@ function renderRef() {
           ev.stopPropagation();
           if (act === 'del') removeRefAt(idx);
           else if (act === 'view') openRefFullscreen(idx);
-          else if (act === 'mention') insertPromptAt('图' + (idx + 1) + ' ');
+          else if (act === 'mention') insertPromptAt('@图' + (idx + 1) + ' ');
         });
         /* 保留 click 拦截：动作已在 pointerdown 执行，避免再冒泡到格子触发打开大图 */
         btn.addEventListener('click', function (ev) {
@@ -29679,8 +29679,9 @@ function renderPromptOverlay() {
   overlay.scrollTop = ta.scrollTop;
 
   var chips = _ensureChipCache(refs);
-  /* @图1 / 图1 / @1 都归一到同一枚胶囊，避免出现「@图1图1」这种重复文案 */
-  var html = _escPromptHtml(text).replace(/(?:@图|图|@)(\d+)(?![0-9])/g, function (match, n) {
+  /* 只把显式引用（@图N / @N）换成胶囊；正文里普通的「图2」保持原样，
+     否则 @ 之后整段提示词会被误识别成一串 chip，输入框看起来就变样了 */
+  var html = _escPromptHtml(text).replace(/(?:@图|@)(\d+)(?![0-9])/g, function (match, n) {
     return chips[Number(n) - 1] || match;
   });
   overlay.innerHTML = html || ' ';
@@ -29839,7 +29840,7 @@ function _commitRefAc(refIdx) {
   var atIdx = before.lastIndexOf('@');
   if (atIdx < 0) return;
   var val = ta.value;
-  var insert = '图' + (refIdx + 1) + ' ';
+  var insert = '@图' + (refIdx + 1) + ' ';
   ta.value = val.slice(0, atIdx) + insert + val.slice(pos);
   var newPos = atIdx + insert.length;
   ta.selectionStart = ta.selectionEnd = newPos;
