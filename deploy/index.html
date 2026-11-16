@@ -67585,6 +67585,7 @@ window.HMChat = (function () {
     positions: {},
     assigns: {},
     names: {},
+    tombstones: {},  /* 已删除的文件夹 id → 删除时间，用于跨设备合并时不把删掉的文件夹拉回来 */
     updatedAt: 0
   };
   /* 当前内存里的 desk 属于哪个 uid（换账号时防止把上个账号的布局写进新账号的键） */
@@ -67661,6 +67662,7 @@ window.HMChat = (function () {
     desk.positions = stored.positions && typeof stored.positions === 'object' ? stored.positions : {};
     desk.assigns = stored.assigns && typeof stored.assigns === 'object' ? stored.assigns : {};
     desk.names = stored.names && typeof stored.names === 'object' ? stored.names : {};
+    desk.tombstones = stored.tombstones && typeof stored.tombstones === 'object' ? stored.tombstones : {};
     desk.stacks = Array.isArray(stored.stacks) ? stored.stacks.filter(function (s) {
       return s && s.id;
     }).map(function (s) {
@@ -67728,6 +67730,7 @@ window.HMChat = (function () {
       positions: desk.positions,
       assigns: desk.assigns,
       names: desk.names,
+      tombstones: desk.tombstones,
       activeFolder: view.activeFolder || null,
       activeStack: view.activeStack || null,
       updatedAt: desk.updatedAt
@@ -67754,6 +67757,102 @@ window.HMChat = (function () {
     }, 260);
   }
 
+  /* ---------------- 云端合并 ----------------
+     旧实现是整包「谁 updatedAt 大听谁的」：另一台设备只要本地改动过（或时钟偏快），
+     拉取时判成云端更旧，就不拉、还把自己的整包推上去，两个设备从此各看各的。
+     这里改成按文件夹 id 合并 + 删除墓碑，新建/重命名/移动/删除四种操作都能收敛。 */
+  function folderTs(f) {
+    return Number(f && f.updatedAt) || Number(f && f.createdAt) || 0;
+  }
+
+  function mergeDesk(remote) {
+    if (!remote || !Array.isArray(remote.folders)) return false;
+    var changed = false;
+    var remoteFolders = {};
+    remote.folders.forEach(function (f) {
+      if (f && f.id && f.name) remoteFolders[f.id] = f;
+    });
+    var tombstones = Object.assign({}, desk.tombstones || {}, remote.tombstones || {});
+    var localIds = {};
+    var merged = desk.folders.map(function (f) {
+      localIds[f.id] = 1;
+      var r = remoteFolders[f.id];
+      if (r && folderTs(r) > folderTs(f)) {
+        changed = true;
+        return Object.assign({}, f, r, { parentId: r.parentId || null });
+      }
+      return f;
+    });
+    Object.keys(remoteFolders).forEach(function (id) {
+      if (!localIds[id]) {
+        var f = remoteFolders[id];
+        f.parentId = f.parentId || null;
+        f.createdAt = Number(f.createdAt) || 0;
+        merged.push(f);
+        changed = true;
+      }
+    });
+    /* 同一文件夹在两台设备都删过 / 一台删过：墓碑时间不早于该文件夹最后修改时间，就不再出现 */
+    var beforeLen = merged.length;
+    merged = merged.filter(function (f) {
+      var t = Number(tombstones[f.id]) || 0;
+      return !(t && t >= folderTs(f));
+    });
+    if (merged.length !== beforeLen) changed = true;
+    desk.folders = merged;
+
+    /* 叠放：按 id 合并，成员取并集（删除走墓碑） */
+    var stackMap = {};
+    desk.stacks.forEach(function (s) { stackMap[s.id] = s; });
+    (Array.isArray(remote.stacks) ? remote.stacks : []).forEach(function (rs) {
+      if (!rs || !rs.id) return;
+      var cur = stackMap[rs.id];
+      if (!cur) {
+        desk.stacks.push({
+          id: rs.id,
+          name: rs.name || '叠放',
+          createdAt: Number(rs.createdAt) || 0,
+          memberIds: Array.isArray(rs.memberIds) ? rs.memberIds.slice() : [],
+          panel: rs.panel || null
+        });
+        changed = true;
+        return;
+      }
+      if (!Array.isArray(cur.memberIds)) cur.memberIds = [];
+      (rs.memberIds || []).forEach(function (id) {
+        if (cur.memberIds.indexOf(id) < 0) { cur.memberIds.push(id); changed = true; }
+      });
+    });
+    var stackBefore = desk.stacks.length;
+    desk.stacks = desk.stacks.filter(function (s) {
+      var t = Number(tombstones[s.id]) || 0;
+      return !(t && t >= Number(s.createdAt || 0));
+    });
+    if (desk.stacks.length !== stackBefore) changed = true;
+
+    /* 作品归属 / 命名 / 位置：本地已有的值优先，缺的从云端补 */
+    ['assigns', 'names', 'positions'].forEach(function (k) {
+      var src = remote[k] || {};
+      if (!desk[k] || typeof desk[k] !== 'object') desk[k] = {};
+      Object.keys(src).forEach(function (key) {
+        if (desk[k][key] === undefined || desk[k][key] === null || desk[k][key] === '') {
+          desk[k][key] = src[key];
+          changed = true;
+        }
+      });
+    });
+
+    desk.tombstones = tombstones;
+    if (view.activeFolder && !desk.folders.some(function (f) { return f.id === view.activeFolder; })) {
+      view.activeFolder = null;
+    }
+    return changed;
+  }
+
+  function saveLocalNow() {
+    try { localStorage.setItem(getDeskLsKey(), JSON.stringify(payload())); } catch (err) {}
+  }
+
   function syncServer() {
     if (!api || !api.online || !api.getDesk) return;
     api.getDesk().then(function (d) {
@@ -67761,24 +67860,19 @@ window.HMChat = (function () {
       var remote = d.desk || d;
       if (!remote || !Array.isArray(remote.folders)) return;
       var remoteTime = Number(remote.updatedAt) || 0;
-      if (remoteTime > desk.updatedAt) {
-        desk.folders = remote.folders;
-        desk.stacks = Array.isArray(remote.stacks) ? remote.stacks : [];
-        desk.positions = remote.positions || {};
-        desk.assigns = remote.assigns || {};
-        desk.names = remote.names || {};
-        desk.updatedAt = remoteTime;
-        /* 云端可能还是旧版「叠放」文件夹：拉回来后再迁一次，避免它又变回项目 */
+      var changed = mergeDesk(remote);
+      if (changed) {
+        desk.updatedAt = Math.max(Number(desk.updatedAt) || 0, remoteTime, Date.now());
+        saveLocalNow();
         try { migrateStackFolders(); } catch (e) {}
-        /* 迁走旧「叠放」文件夹后，不要继续停留在那个已不存在的项目层（否则桌面会是空的） */
-        if (view.activeFolder && !desk.folders.some(function (f) { return f.id === view.activeFolder; })) {
-          view.activeFolder = null;
-        }
-        try {
-          localStorage.setItem(getDeskLsKey(), JSON.stringify(payload()));
-        } catch (err) {}
         renderAll();
-      } else if (desk.updatedAt) {
+        /* 合并结果回写云端，另一台设备下次同步就能看到同一份列表 */
+        persistNow();
+      } else if (remoteTime > (Number(desk.updatedAt) || 0)) {
+        desk.updatedAt = remoteTime;
+        saveLocalNow();
+        renderAll();
+      } else if ((Number(desk.updatedAt) || 0) > remoteTime) {
         persistNow();
       }
     }).catch(function () {});
@@ -67797,36 +67891,20 @@ window.HMChat = (function () {
       var remote = d.desk || d;
       if (!remote || !Array.isArray(remote.folders)) return false;
       var remoteTime = Number(remote.updatedAt) || 0;
-      var remoteHasData = remote.folders.length || (Array.isArray(remote.stacks) && remote.stacks.length) ||
-        Object.keys(remote.positions || {}).length ||
-        Object.keys(remote.assigns || {}).length || Object.keys(remote.names || {}).length;
-      var localEmpty = !desk.folders.length && !desk.stacks.length && !Object.keys(desk.positions || {}).length;
-      if (remoteTime > desk.updatedAt || (localEmpty && remoteHasData)) {
-        desk.folders = remote.folders.filter(function (f) { return f && f.id && f.name; }).map(function (f) {
-          f.parentId = f.parentId || null;
-          f.createdAt = Number(f.createdAt) || 0;
-          return f;
-        });
-        desk.stacks = Array.isArray(remote.stacks) ? remote.stacks.filter(function (s) {
-          return s && s.id && Array.isArray(s.memberIds);
-        }).map(function (s) {
-          return { id: s.id, name: s.name || '叠放', createdAt: Number(s.createdAt) || 0, memberIds: s.memberIds.slice(),
-                   panel: s.panel ? { x: Number(s.panel.x) || 0, y: Number(s.panel.y) || 0, userSet: !!s.panel.userSet } : null };
-        }) : [];
-        desk.positions = remote.positions || {};
-        desk.assigns = remote.assigns || {};
-        desk.names = remote.names || {};
-        desk.updatedAt = Math.max(remoteTime, Number(desk.updatedAt) || 0);
+      var changed = mergeDesk(remote);
+      if (changed) {
+        desk.updatedAt = Math.max(Number(desk.updatedAt) || 0, remoteTime, Date.now());
+        saveLocalNow();
         try { migrateStackFolders(); } catch (e) {}
-        if (view.activeFolder && !desk.folders.some(function (f) { return f.id === view.activeFolder; })) {
-          view.activeFolder = null;
-        }
-        try { localStorage.setItem(getDeskLsKey(), JSON.stringify(payload())); } catch (err) {}
         renderAll();
-        console.log('[HMDesk] 已从云端载入桌面布局', desk.folders.length, '个文件夹');
-        return true;
+        persistNow();  /* 合并结果回写，另一台设备随后也能看到 */
+        console.log('[HMDesk] 已合并云端桌面布局', desk.folders.length, '个文件夹');
+      } else if (remoteTime > (Number(desk.updatedAt) || 0)) {
+        desk.updatedAt = remoteTime;
+        saveLocalNow();
+        renderAll();
       }
-      return false;
+      return changed;
     }).catch(function () { return false; });
   }
 
@@ -68062,6 +68140,7 @@ window.HMChat = (function () {
     if (folderId === targetFolderId) return false;
     if (isDescendantOf(folderId, targetFolderId)) return false;  /* 禁止拖进自己的子树 */
     folder.parentId = targetFolderId || null;
+    folder.updatedAt = Date.now();
     persistNow();
     return true;
   }
@@ -68250,7 +68329,7 @@ window.HMChat = (function () {
       var name = base;
       var idx = 2;
       while (names.indexOf(name) >= 0) { name = base + ' ' + idx; idx++; }
-      var folder = { id: 'f' + A.uid(), name: name, parentId: parentId, createdAt: Date.now() };
+      var folder = { id: 'f' + A.uid(), name: name, parentId: parentId, createdAt: Date.now(), updatedAt: Date.now() };
       desk.folders.unshift(folder);
       if (parentId) view.expanded[parentId] = true;
       persistNow();
@@ -68261,6 +68340,7 @@ window.HMChat = (function () {
       var target = desk.folders.find(function (f) { return f.id === inline.rowId; });
       if (target) {
         target.name = value;
+        target.updatedAt = Date.now();
         persistNow();
         A.toast('已重命名为「' + value + '」', 'success');
       }
@@ -68294,7 +68374,7 @@ window.HMChat = (function () {
       var finalName = base;
       var dup = 2;
       while (names.indexOf(finalName) >= 0) { finalName = base + ' ' + dup; dup++; }
-      var folder = { id: 'f' + A.uid(), name: finalName, parentId: parentId || null, createdAt: Date.now() };
+      var folder = { id: 'f' + A.uid(), name: finalName, parentId: parentId || null, createdAt: Date.now(), updatedAt: Date.now() };
       desk.folders.unshift(folder);
       /* 自动展开父节点，让新子文件夹可见 */
       if (parentId) view.expanded[parentId] = true;
@@ -68322,6 +68402,9 @@ window.HMChat = (function () {
       if (!window.confirm(msg)) return;
     }
     desk.folders = desk.folders.filter(function (f) { return descendantIds.indexOf(f.id) < 0; });
+    /* 记录删除墓碑：跨设备合并时不会把已删的文件夹（含子孙）再拉回来 */
+    var delAt = Date.now();
+    descendantIds.forEach(function (fid) { desk.tombstones[fid] = delAt; });
     if (view.activeFolder && descendantIds.indexOf(view.activeFolder) >= 0) view.activeFolder = folder.parentId || null;
     persistNow();
     renderAll();
@@ -71578,6 +71661,12 @@ window.HMChat = (function () {
     renderDesktop();
     setTimeout(syncServer, 1200);
     setTimeout(syncServer, 4200);
+    /* 跨设备一致性：切回页面、窗口获得焦点、每 60s 各合并一次云端文件夹树 */
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') syncServer();
+    });
+    window.addEventListener('focus', function () { syncServer(); });
+    setInterval(syncServer, 60000);
     setTimeout(function () {
       renderPanel();
       if (deskDirty && document.body.getAttribute('data-view') === 'create') renderDesktop();
