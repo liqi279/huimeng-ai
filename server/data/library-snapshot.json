@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-16T16:48:16.750Z",
+  "generatedAt": "2026-11-16T16:59:47.749Z",
   "source": "huimeng_library.books",
-  "total": 768,
+  "total": 771,
   "areas": {
     "paint": 731,
-    "concept": 13,
+    "concept": 16,
     "ref": 24
   },
   "books": [
@@ -530,6 +530,20 @@
       "coverBytes": 319074
     },
     {
+      "id": "lib-mwji6zuz-9b0a28",
+      "sortNo": 14,
+      "title": "Air · 动画线稿原画集",
+      "author": "KEY / Visual Arts",
+      "intro": "来源：[线稿集]Air 动画线稿原画集.7z，共 72 页；原 PNG 转 JPEG(q90) 制 PDF。",
+      "pageCount": 72,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/air-20261117-air-genga.pdf",
+      "pdfBytes": 58053395,
+      "coverKey": "library/covers/air-20261117-air-genga.jpg",
+      "coverBytes": 119543
+    },
+    {
       "id": "lib-mwaz1m9h-0de22c",
       "sortNo": 15,
       "title": "萌之绘的教科书",
@@ -553,6 +567,20 @@
       "coverBytes": 231520
     },
     {
+      "id": "lib-mwji7p2n-6bd864",
+      "sortNo": 15,
+      "title": "Air · 剧场版 动画资料设定线稿集 · 上",
+      "author": "KEY / Visual Arts",
+      "intro": "来源：[线稿集]AIR剧场版 动画资料设定线稿集.zip，共 148 页，分 2 卷；本卷第 1-74 页。",
+      "pageCount": 74,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/air-20261117-air-movie-settei-1.pdf",
+      "pdfBytes": 65247822,
+      "coverKey": "library/covers/air-20261117-air-movie-settei-1.jpg",
+      "coverBytes": 73447
+    },
+    {
       "id": "lib-mwaz1n0z-3c8f75",
       "sortNo": 16,
       "title": "数码绘画进阶教程 背景插画的制作方法",
@@ -565,6 +593,20 @@
       "pdfBytes": 156654180,
       "coverKey": "library/covers/017-background-illustration-cover.jpg",
       "coverBytes": 303216
+    },
+    {
+      "id": "lib-mwji89yx-59c297",
+      "sortNo": 16,
+      "title": "Air · 剧场版 动画资料设定线稿集 · 下",
+      "author": "KEY / Visual Arts",
+      "intro": "来源：[线稿集]AIR剧场版 动画资料设定线稿集.zip，共 148 页，分 2 卷；本卷第 75-148 页。",
+      "pageCount": 74,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/air-20261117-air-movie-settei-2.pdf",
+      "pdfBytes": 67869768,
+      "coverKey": "library/covers/air-20261117-air-movie-settei-2.jpg",
+      "coverBytes": 81622
     },
     {
       "id": "lib-mwayx6h0-c502f0",
