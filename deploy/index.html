@@ -68791,6 +68791,22 @@ window.HMChat = (function () {
         grid.appendChild(existing);
       }
       existing.innerHTML = stackCardHtmlInner(s);
+      /* 叠放卡自己接右键：只靠 #resultGrid 的委托时，卡内缩略图/角标/信息条常常命中不到叠放分支，
+         会落到空白桌面的 deskCtx 或干脆没反应。直接绑在卡上并按鼠标坐标打开菜单，不再依赖委托 */
+      if (!existing._hmCtxBound) {
+        existing._hmCtxBound = true;
+        existing.addEventListener('contextmenu', function (ev) {
+          var sid = existing.dataset.stack;
+          if (!sid) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+          selectOnly(sid);
+          var th = ev.target.closest('.folder-t[data-stack-fp]');
+          var thWork = th ? findWork(th.dataset.stackFp) : null;
+          if (thWork) openWorkMenu(thWork, ev.clientX, ev.clientY);
+          else openStackPanel(sid);
+        });
+      }
       var pos = desk.positions[s.id];
       if (!pos || !pos.pxLeft) {
         pos = nextFreeSlot(works.length + folders.length + si, grid, occupied);
