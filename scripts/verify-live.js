@@ -133,9 +133,13 @@ async function liveChecks() {
       signal: AbortSignal.timeout(25000),
     });
     const text = await res.text();
-    const tag = (text.match(/window\.HM_BUILD\s*=\s*"([^"]+)"/) || [])[1] || '(未找到构建标记)';
-    if (res.status === 200 && /绘梦|HM_BUILD/.test(text)) pass('前端 Pages', res.status + '  ' + text.length + 'B  build=' + tag);
-    else fail('前端 Pages', 'status=' + res.status);
+    /* 构建标记是 window.HM_BUILD = (function(){...})(); 不是字符串字面量，只判断存在性 */
+    const hasBuild = /window\.HM_BUILD\s*=/.test(text);
+    if (res.status === 200 && /绘梦/.test(text)) {
+      pass('前端 Pages', res.status + '  ' + text.length + 'B  ' + (hasBuild ? 'HM_BUILD 已注入' : '无构建标记'));
+    } else {
+      fail('前端 Pages', 'status=' + res.status);
+    }
   } catch (e) {
     skip('前端 Pages', '本机网络探测不到（' + e.message + '），以 CI 结论为准');
   }

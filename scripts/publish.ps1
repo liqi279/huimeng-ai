@@ -46,6 +46,21 @@ function Invoke-Git {
     return [pscustomobject]@{ Code = $code; Text = (($out | ForEach-Object { "$_" }) -join "`n") }
 }
 
+# 出网到 GitHub 时好时坏（本机没走代理），网络类失败自动重试几次再判定失败
+function Invoke-GitRetry {
+    param([string[]]$GitArgs, [int]$Attempts = 4, [int]$DelaySeconds = 8)
+    $result = $null
+    for ($i = 1; $i -le $Attempts; $i++) {
+        $result = Invoke-Git $GitArgs
+        if ($result.Code -eq 0) { return $result }
+        if ($i -lt $Attempts) {
+            Write-Host ("  第 " + $i + " 次失败，等 " + $DelaySeconds + " 秒重试") -ForegroundColor Yellow
+            Start-Sleep -Seconds $DelaySeconds
+        }
+    }
+    return $result
+}
+
 function Resolve-Node {
     $c = Get-Command node -ErrorAction SilentlyContinue
     if ($c) { return $c.Source }
@@ -66,7 +81,10 @@ Write-Host ("  " + ($status.Text -split "`n")[0])
 $branch = (Invoke-Git @('rev-parse', '--abbrev-ref', 'HEAD')).Text.Trim()
 if ($branch -ne 'main') { Fail "当前分支是 '$branch'，本脚本只发布 main" }
 
-Invoke-Git @('fetch', 'origin', 'main') | Out-Null
+$who = (Invoke-Git @('config', 'user.email')).Text.Trim()
+if (-not $who) { Fail "没有配置提交身份，先执行：git config --local user.name / user.email" }
+
+Invoke-GitRetry @('fetch', 'origin', 'main') | Out-Null
 $counts = (Invoke-Git @('rev-list', '--left-right', '--count', 'main...origin/main')).Text.Trim() -split '\s+'
 $behind = [int]$counts[1]
 Write-Host ("  本地领先 " + $counts[0] + " 个提交，落后 " + $behind + " 个提交")
@@ -133,8 +151,8 @@ Write-Host ("  PASS  commit " + $sha + "  " + $subject) -ForegroundColor Green
 
 Write-Host ""
 Write-Host "=== 推送 ===" -ForegroundColor Cyan
-$push = Invoke-Git @('push', 'origin', 'main')
-if ($push.Code -ne 0) { Write-Host $push.Text; Fail "推送失败（未做任何强制覆盖）" }
+$push = Invoke-GitRetry @('push', 'origin', 'main')
+if ($push.Code -ne 0) { Write-Host $push.Text; Fail "推送失败（重试后仍失败，未做任何强制覆盖）" }
 $fullSha = (Invoke-Git @('rev-parse', 'HEAD')).Text.Trim()
 Write-Host ("  PASS  已推送到 origin/main  " + $fullSha.Substring(0, 7)) -ForegroundColor Green
 
