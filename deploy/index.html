@@ -68174,6 +68174,8 @@ window.HMChat = (function () {
         id: s.id,
         name: s.name || '叠放',
         createdAt: Number(s.createdAt) || 0,
+        /* 名字最后修改时间：云端合并时用它判断谁的名字更新，避免刷新后被旧名字盖回 */
+        updatedAt: Number(s.updatedAt) || 0,
         memberIds: Array.isArray(s.memberIds) ? s.memberIds.filter(Boolean) : [],
         panel: s.panel && typeof s.panel === 'object'
           ? { x: Number(s.panel.x) || 0, y: Number(s.panel.y) || 0, userSet: !!s.panel.userSet }
@@ -68316,11 +68318,20 @@ window.HMChat = (function () {
           id: rs.id,
           name: rs.name || '叠放',
           createdAt: Number(rs.createdAt) || 0,
+          updatedAt: Number(rs.updatedAt) || 0,
           memberIds: Array.isArray(rs.memberIds) ? rs.memberIds.slice() : [],
           panel: rs.panel || null
         });
         changed = true;
         return;
+      }
+      /* 名字按最后修改时间取新：重命名后刷新/多端同步都不会被旧名字盖回 */
+      var rTs = Number(rs.updatedAt) || 0;
+      var lTs = Number(cur.updatedAt) || 0;
+      if (rTs > lTs && rs.name) {
+        cur.name = rs.name;
+        cur.updatedAt = rTs;
+        changed = true;
       }
       if (!Array.isArray(cur.memberIds)) cur.memberIds = [];
       (rs.memberIds || []).forEach(function (id) {
@@ -71860,6 +71871,7 @@ window.HMChat = (function () {
         if (cmd === 'rename') {
           askName('重命名叠放', st.name || '叠放', function (value) {
             st.name = value || st.name;
+            st.updatedAt = Date.now();  /* 名字版本号：合并时据此保留较晚修改 */
             desk.updatedAt = Date.now();
             persistNow();
             renderDesktop();
