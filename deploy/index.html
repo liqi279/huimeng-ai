@@ -4296,6 +4296,9 @@ body.hm-resizing * {
   outline-offset: 2px;
 }
 .hm-ref-tool {
+  /* 归位为普通 flex 子项，否则会被上面共用的 absolute 抽出流、互相重叠只剩最上面那颗 */
+  position: static;
+  flex: 0 0 auto;
   width: 22px;
   height: 22px;
   border-radius: 50%;
