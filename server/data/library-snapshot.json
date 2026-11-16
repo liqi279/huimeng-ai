@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-16T17:19:18.398Z",
+  "generatedAt": "2026-11-16T17:27:14.839Z",
   "source": "huimeng_library.books",
-  "total": 792,
+  "total": 796,
   "areas": {
     "paint": 731,
-    "concept": 37,
+    "concept": 41,
     "ref": 24
   },
   "books": [
@@ -1401,6 +1401,20 @@
       "coverBytes": 251149
     },
     {
+      "id": "lib-mwjj5d5d-295a78",
+      "sortNo": 38,
+      "title": "灵能百分百 · 第二季 动画线稿原画集 · 第1/2卷",
+      "author": "Bones / 萌绘图库",
+      "intro": "来源：[线稿集]灵能百分百 第二季 动画线稿原画集.rar，共 63 页。本卷第 1-32 页（共 63 页，分 2 卷）。",
+      "pageCount": 32,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/mob-20261117-mob-s2-genga-v1.pdf",
+      "pdfBytes": 69756017,
+      "coverKey": "library/covers/mob-20261117-mob-s2-genga-v1.jpg",
+      "coverBytes": 112391
+    },
+    {
       "id": "lib-mwcfjkek-bbadd6",
       "sortNo": 39,
       "title": "Ikari Making Of：一套 SAI 上色教程",
@@ -1415,6 +1429,20 @@
       "coverBytes": 241146
     },
     {
+      "id": "lib-mwjj641u-f68340",
+      "sortNo": 39,
+      "title": "灵能百分百 · 第二季 动画线稿原画集 · 第2/2卷",
+      "author": "Bones / 萌绘图库",
+      "intro": "来源：[线稿集]灵能百分百 第二季 动画线稿原画集.rar，共 63 页。本卷第 33-63 页（共 63 页，分 2 卷）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/mob-20261117-mob-s2-genga-v2.pdf",
+      "pdfBytes": 70248784,
+      "coverKey": "library/covers/mob-20261117-mob-s2-genga-v2.jpg",
+      "coverBytes": 75277
+    },
+    {
       "id": "lib-mwcftukh-75f8c8",
       "sortNo": 40,
       "title": "Color 色彩狂热：SAI 插画上色技法",
@@ -1427,6 +1455,20 @@
       "pdfBytes": 24445211,
       "coverKey": "library/covers/041-color-sai-coloring-cover.jpg",
       "coverBytes": 215255
+    },
+    {
+      "id": "lib-mwjj6v3h-549888",
+      "sortNo": 40,
+      "title": "灵能百分百 · 原画集 · 第1/2卷",
+      "author": "Bones / 萌绘图库",
+      "intro": "来源：[线稿集]灵能百分百 原画集.rar，共 103 页。本卷第 1-52 页（共 103 页，分 2 卷）。",
+      "pageCount": 52,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/mob-20261117-mob-genga-v1.pdf",
+      "pdfBytes": 73805572,
+      "coverKey": "library/covers/mob-20261117-mob-genga-v1.jpg",
+      "coverBytes": 242419
     },
     {
       "id": "lib-mwcfutru-1bf370",
@@ -1578,6 +1620,20 @@
       "pdfBytes": 32753674,
       "coverKey": "library/covers/042-colored-pencil-manga-cover.jpg",
       "coverBytes": 318500
+    },
+    {
+      "id": "lib-mwjj7fve-d649c8",
+      "sortNo": 41,
+      "title": "灵能百分百 · 原画集 · 第2/2卷",
+      "author": "Bones / 萌绘图库",
+      "intro": "来源：[线稿集]灵能百分百 原画集.rar，共 103 页。本卷第 53-103 页（共 103 页，分 2 卷）。",
+      "pageCount": 51,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/mob-20261117-mob-genga-v2.pdf",
+      "pdfBytes": 71028028,
+      "coverKey": "library/covers/mob-20261117-mob-genga-v2.jpg",
+      "coverBytes": 146880
     },
     {
       "id": "lib-mwcfvi5x-755e36",
