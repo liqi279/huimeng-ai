@@ -5243,6 +5243,16 @@ body.hm-light .hm-slider-val {
   --hm-prompt-bg: #0d1827;
   --hm-prompt-border: rgba(96, 165, 250, 0.24);
   --hm-prompt-radius: 15px;
+  /* 引用胶囊：两处渲染共用同一套令牌 */
+  --hm-chip-bg: rgba(8, 30, 50, 0.88);
+  --hm-chip-border: rgba(56, 189, 248, 0.5);
+  --hm-chip-text: #bae6fd;
+  --hm-chip-glow: rgba(56, 189, 248, 0.18);
+  --hm-chip-radius: 7px;
+  --hm-chip-pad: 0.06em 0.24em;
+  --hm-chip-margin: 0 0.2em;
+  --hm-chip-thumb-gap: 0.3em;
+  --hm-chip-thumb: 0.92em;
 }
 .hm-prompt {
   position: relative;
@@ -5342,11 +5352,20 @@ body.hm-light .hm-slider-val {
   color: #dbe7f3;
   caret-color: #dbe7f3;
   font-family: inherit;
-  font-size: inherit;
-  line-height: 1.55;
+  font-size: var(--hm-prompt-fs);
+  line-height: var(--hm-prompt-lh);
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+/* 全屏「画面描述」编辑器里的富文本区：与提示词框完全同一套度量 */
+.hm-editor-rich {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  padding: 6px 2px;
 }
 .hm-prompt.has-rich .hm-prompt-rich { display: block; }
 .hm-prompt-rich:empty::before {
@@ -5364,25 +5383,25 @@ body.hm-light .hm-slider-val {
   align-items: center;
   gap: 0;            /* @ 与「图N」紧贴，作为一个整体 token */
   vertical-align: middle;
-  margin: 0 0.2em;
-  padding: 0.06em 0.24em;
-  border-radius: 7px;
-  background: rgba(8, 30, 50, 0.88);
-  border: 1px solid rgba(56, 189, 248, 0.5);
-  box-shadow: 0 1px 6px rgba(56, 189, 248, 0.18);
-  color: #bae6fd;
+  margin: var(--hm-chip-margin);
+  padding: var(--hm-chip-pad);
+  border-radius: var(--hm-chip-radius);
+  background: var(--hm-chip-bg);
+  border: 1px solid var(--hm-chip-border);
+  box-shadow: 0 1px 6px var(--hm-chip-glow);
+  color: var(--hm-chip-text);
   font-weight: 600;
   white-space: nowrap;
   user-select: none;
 }
 .hm-prompt-rich .rich-chip img {
-  width: 0.92em;
-  height: 0.92em;
+  width: var(--hm-chip-thumb);
+  height: var(--hm-chip-thumb);
   /* 缩略图与 @ 之间留出明显间隔，与「@图N」内部紧贴形成对比 */
-  margin-right: 0.3em;
+  margin-right: var(--hm-chip-thumb-gap);
   border-radius: 3px;
   object-fit: cover;
-  border: 1px solid rgba(56, 189, 248, 0.45);
+  border: 1px solid var(--hm-chip-border);
   pointer-events: none;
 }
 
@@ -7017,9 +7036,9 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   flex-direction: column;
   padding: 16px 18px 14px;
-  border-radius: 15px;
-  border: 1px solid rgba(96, 165, 250, 0.24);
-  background: #0d1827;
+  border-radius: var(--hm-prompt-radius);
+  border: 1px solid var(--hm-prompt-border);
+  background: var(--hm-prompt-bg);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
 }
 
@@ -7042,12 +7061,22 @@ input[type="range"]::-moz-range-thumb {
   outline: none;
   resize: none;
   background: transparent;
-  color: #e9f2fb;
-  font-size: 14px;
-  line-height: 1.9;
+  color: #dbe7f3;
+  font-size: var(--hm-prompt-fs);
+  line-height: var(--hm-prompt-lh);
 }
 
-.hm-editor-inner textarea::placeholder { color: #5d7186; }
+.hm-editor-inner textarea::placeholder { color: #5f7288; }
+
+/* 编辑器启用富文本后，textarea 只作隐藏数据源 */
+.hm-editor-inner.has-rich textarea {
+  position: absolute;
+  left: 0; top: 0;
+  width: 1px; height: 1px;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
 
 .hm-editor-foot {
   display: flex;
@@ -26182,6 +26211,7 @@ body.dv-open .hm-page {
         </button>
       </div>
       <textarea id="promptEditorInput" maxlength="1800" placeholder="描述你想生成的画面..."></textarea>
+      <div class="hm-prompt-rich hm-editor-rich" id="promptEditorRich" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="描述你想生成的画面..."></div>
       <div class="hm-editor-foot">
         <span id="promptEditorCount">0 / 1800</span>
         <span class="hm-editor-tip">支持中文，开启「中文」后自动英译</span>
@@ -29924,8 +29954,8 @@ function _richChipNode(n) {
 }
 
 /* 把富文本节点还原成纯文本：胶囊 → @图N，换行按 br/块级 div 还原 */
-function richSerialize() {
-  if (!_richEl) return '';
+function richSerializeIn(root) {
+  if (!root) return '';
   var out = '';
   (function walk(node) {
     var kids = node.childNodes || [];
@@ -29942,14 +29972,18 @@ function richSerialize() {
       }
       walk(c);
     }
-  })(_richEl);
+  })(root);
   return out.replace(/\n+$/, '');
 }
 
-/* 用 textarea 的值重建富文本 DOM（外部修改值后调用） */
-function richRenderFromValue() {
-  if (!_richEl) return;
-  var text = (els.promptInput && els.promptInput.value) || '';
+function richSerialize() {
+  return richSerializeIn(_richEl);
+}
+
+/* 用给定文本重建富文本 DOM（提示词框与全屏编辑器共用） */
+function richRenderText(root, text) {
+  if (!root) return;
+  text = text || '';
   var frag = document.createDocumentFragment();
   var re = /@图(\d+)/g;
   var last = 0, m;
@@ -29959,19 +29993,25 @@ function richRenderFromValue() {
     last = m.index + m[0].length;
   }
   if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
-  _richEl.innerHTML = '';
-  _richEl.appendChild(frag);
+  root.innerHTML = '';
+  root.appendChild(frag);
   /* 外部改动后的重建：光标放到末尾，避免落点悬空 */
-  if (document.activeElement === _richEl) {
+  if (document.activeElement === root) {
     try {
       var r = document.createRange();
-      r.selectNodeContents(_richEl);
+      r.selectNodeContents(root);
       r.collapse(false);
       var sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(r);
     } catch (e) {}
   }
+}
+
+/* 用 textarea 的值重建富文本 DOM（外部修改值后调用） */
+function richRenderFromValue() {
+  if (!_richEl) return;
+  richRenderText(_richEl, (els.promptInput && els.promptInput.value) || '');
 }
 
 /* 富文本输入后：文本回写 textarea，保持既有发送/持久化链路不变 */
@@ -63740,22 +63780,53 @@ window.HMChat = (function () {
   function bindEditor() {
     var panel = document.getElementById('promptEditor');
     var input = document.getElementById('promptEditorInput');
+    var rich = document.getElementById('promptEditorRich');
     var count = document.getElementById('promptEditorCount');
     var expand = document.getElementById('expandPrompt');
 
     if (!panel || !input) return;
 
+    if (rich) {
+      var inner = input.closest('.hm-editor-inner');
+      if (inner) inner.classList.add('has-rich');
+      /* 富文本编辑后：文本回写隐藏 textarea，长度上限与提示词框一致 */
+      rich.addEventListener('input', function () {
+        var v = richSerializeIn(rich);
+        if (v.length > 1800) {
+          v = v.slice(0, 1800);
+          richRenderText(rich, v);
+        }
+        input.value = v;
+        updateCount();
+      });
+      /* 粘贴一律纯文本，避免带进外部样式 */
+      rich.addEventListener('paste', function (ev) {
+        ev.preventDefault();
+        var txt = (ev.clipboardData || window.clipboardData).getData('text/plain') || '';
+        if (!txt) return;
+        document.execCommand('insertText', false, txt);
+        input.value = richSerializeIn(rich);
+        updateCount();
+      });
+    }
+
+    function currentValue() {
+      return rich ? richSerializeIn(rich) : input.value;
+    }
+
     function updateCount() {
-      if (count) count.textContent = input.value.length + ' / 1800';
+      if (count) count.textContent = currentValue().length + ' / 1800';
     }
 
     function open() {
-      input.value = A.els.promptInput.value;
+      var v = A.els.promptInput.value;
+      input.value = v;
+      if (rich) richRenderText(rich, v);
       updateCount();
       panel.classList.add('is-open');
       panel.setAttribute('aria-hidden', 'false');
       document.body.classList.add('no-scroll');
-      setTimeout(function () { input.focus(); }, 40);
+      setTimeout(function () { (rich || input).focus(); }, 40);
     }
 
     function close() {
@@ -63776,13 +63847,14 @@ window.HMChat = (function () {
     var apply = document.getElementById('promptEditorApply');
     if (apply) {
       apply.addEventListener('click', function () {
-        A.els.promptInput.value = input.value;
+        A.els.promptInput.value = currentValue();
         A.updateCharCount();
+        richRenderFromValue();
         close();
       });
     }
 
-    input.addEventListener('input', updateCount);
+    if (!rich) input.addEventListener('input', updateCount);
     panel.addEventListener('click', function (event) {
       if (event.target === panel) close();
     });
