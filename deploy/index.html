@@ -17220,6 +17220,29 @@ body.rail-collapsed .hm-page {
 .lib-dir-items.is-anim-out .lib-book:nth-child(4) { animation-delay: 70ms; }
 .lib-dir-items.is-anim-out .lib-book:nth-child(5) { animation-delay: 35ms; }
 .lib-dir-items.is-anim-out .lib-book:nth-child(n+6) { animation-delay: 0ms; }
+.lib-dir-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px 0;
+}
+.lib-dir-back {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  background: rgba(29, 51, 80, 0.9);
+  color: #dbe7f3;
+  font-size: 12px;
+  cursor: pointer;
+}
+.lib-dir-back:hover {
+  border-color: rgba(96, 165, 250, 0.9);
+}
+.lib-dir-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8f1ff;
+}
 /* 原画资料：条目用文件夹形态呈现（只是外观，点开仍是原来的书籍入口） */
 .lib-book.is-dir {
   width: 168px;
@@ -56766,7 +56789,7 @@ window.HMChat = (function () {
     booted: false,
     loading: false,
     pdfTocCollapsed: false, /* 目录折叠状态：本次阅读内记住 */
-    libDirOpen: {},         /* 原画资料里就地展开的目录集合（纯展示，不持久化，可同时展开多个） */
+    libDirPage: '',         /* 原画资料当前进入的作品母文件夹（纯展示页面状态） */
     storeUsedBytes: null,   /* 全库已用字节数（GET /library/books 的 store.usedBytes） */
     storeLimitLabel: ''     /* 全库上限文案（store.limitLabel，如 "500G"） */
   };
@@ -57276,34 +57299,47 @@ window.HMChat = (function () {
     return pick && pick.coverUrl ? mediaFile(pick.coverUrl) : '';
   }
 
-  /* 原画资料区域的目录视图：文件夹卡 + 就地展开的书目，点击书目仍走 openBook */
+  /* 原画资料的两级页面：第一层只列作品母文件夹；点进去整块换成子文件夹页面（带返回） */
   function renderConceptDirs() {
     var groups = conceptDirGroups(state.shelfBooks);
-    var openMap = state.libDirOpen || {};
+    var page = state.libDirPage || '';
     var rows = '';
-    groups.forEach(function (g) {
-      var isGroup = !!g.name && g.books.length > 1;
-      if (!isGroup) {
-        rows += g.books.map(function (b, i) { return bookCardHtml(b, i); }).join('');
-        return;
+    if (page) {
+      var cur = null;
+      groups.forEach(function (g) { if (g.name === page) cur = g; });
+      var books = cur ? cur.books : [];
+      if (books.length) {
+        rows = '<div class="lib-dir-row">'
+          + books.map(function (b, i) { return bookCardHtml(b, i); }).join('')
+          + '</div>';
       }
-      var open = !!openMap[g.name];
-      var cover = conceptDirCover(g.books);
-      rows += '<button type="button" class="lib-book is-dir' + (open ? ' is-open' : '') + '" data-libdir="' + esc(g.name) + '"'
-        + ' title="' + esc(g.name) + ' · ' + g.books.length + ' 册">'
-        + '<span class="lib-dir-body">'
-        + (cover
-          ? '<img class="lib-dir-cover" src="' + esc(cover) + '" alt="' + esc(g.name) + '" loading="lazy">'
-          : '<span class="lib-dir-ico">' + (open ? '📂' : '📁') + '</span>')
-        + '<span class="lib-dir-name">' + esc(g.name) + '</span>'
-        + '<span class="lib-dir-meta">' + g.books.length + ' 册 · ' + (open ? '点击收起' : '点击展开') + '</span>'
-        + '</span></button>'
-        + '<div class="lib-dir-items' + (open ? '' : ' is-hidden') + '">'
-        + g.books.map(function (b, i) { return bookCardHtml(b, i); }).join('')
-        + '</div>';
-    });
+    } else {
+      groups.forEach(function (g) {
+        var isGroup = !!g.name && g.books.length > 1;
+        if (!isGroup) {
+          rows += '<div class="lib-dir-row">'
+            + g.books.map(function (b, i) { return bookCardHtml(b, i); }).join('')
+            + '</div>';
+          return;
+        }
+        var cover = conceptDirCover(g.books);
+        rows += '<div class="lib-dir-row">'
+          + '<button type="button" class="lib-book is-dir" data-libdir="' + esc(g.name) + '"'
+          + ' title="' + esc(g.name) + ' · ' + g.books.length + ' 册">'
+          + '<span class="lib-dir-body">'
+          + (cover
+            ? '<img class="lib-dir-cover" src="' + esc(cover) + '" alt="' + esc(g.name) + '" loading="lazy">'
+            : '<span class="lib-dir-ico">📁</span>')
+          + '<span class="lib-dir-name">' + esc(g.name) + '</span>'
+          + '<span class="lib-dir-meta">' + g.books.length + ' 册 · 点击进入</span>'
+          + '</span></button>'
+          + '</div>';
+      });
+    }
     if (!rows) {
-      els.body.innerHTML = '<div class="lib-shelf-wrap"><div class="lib-empty lib-shelf-empty">'
+      els.body.innerHTML = '<div class="lib-shelf-wrap">'
+        + (page ? '<div class="lib-dir-bar"><button type="button" class="lib-dir-back" data-libback="1">← 返回</button><span class="lib-dir-title">' + esc(page) + '</span></div>' : '')
+        + '<div class="lib-empty lib-shelf-empty">'
         + '<div class="lib-empty-icon">📁</div><h3>' + (state.query ? '没有找到相关资料' : '这个区域还没有资料') + '</h3>'
         + '<p>' + (state.query ? '换个关键词试试，或清空搜索查看全部资料。' : '上传资料后会自动按标题前缀归入对应文件夹。') + '</p>'
         + '</div></div>';
@@ -57311,7 +57347,11 @@ window.HMChat = (function () {
       renderStatus();
       return;
     }
-    els.body.innerHTML = '<div class="lib-shelf-wrap"><div class="lib-dirs">' + rows + '</div></div>';
+    var bar = page
+      ? '<div class="lib-dir-bar"><button type="button" class="lib-dir-back" data-libback="1">← 返回</button>'
+        + '<span class="lib-dir-title">' + esc(page) + '</span></div>'
+      : '';
+    els.body.innerHTML = '<div class="lib-shelf-wrap">' + bar + '<div class="lib-dirs">' + rows + '</div></div>';
     if (els.pager) els.pager.hidden = true;
     renderStatus();
   }
@@ -59258,36 +59298,19 @@ window.HMChat = (function () {
         }, 150);
       });
       els.body.addEventListener('click', function (event) {
-        /* 原画资料的目录卡：只做局部显隐与动画，不重绘（避免闪）。
-           多个目录可同时展开；再次点击同一个才收起。展开内容紧跟目录卡同级顺延 */
+        /* 原画资料：母文件夹 → 子文件夹页面（整块替换），返回按钮回到母文件夹列表 */
         var dirCard = event.target.closest('[data-libdir]');
         if (dirCard) {
-          var dirName = dirCard.getAttribute('data-libdir');
-          state.libDirOpen = state.libDirOpen || {};
-          var willOpen = !state.libDirOpen[dirName];
-          var box = dirCard.nextElementSibling;
-          if (willOpen) state.libDirOpen[dirName] = true;
-          else delete state.libDirOpen[dirName];
-          dirCard.classList.toggle('is-open', willOpen);
-          var meta = dirCard.querySelector('.lib-dir-meta');
-          if (meta) meta.textContent = meta.textContent.replace(/点击(展开|收起)$/, willOpen ? '点击收起' : '点击展开');
-          if (box && box.classList && box.classList.contains('lib-dir-items')) {
-            box.classList.remove('is-anim-in', 'is-anim-out');
-            void box.offsetWidth; /* 重启 CSS 动画 */
-            if (willOpen) {
-              box.classList.remove('is-hidden');
-              box.classList.add('is-anim-in');
-            } else {
-              box.classList.add('is-anim-out');
-              /* 动画结束后再真正隐藏；期间重新展开会移除 is-anim-out，不会误隐藏 */
-              setTimeout(function () {
-                if (!box.classList.contains('is-anim-in')) {
-                  box.classList.remove('is-anim-out');
-                  box.classList.add('is-hidden');
-                }
-              }, 320);
-            }
-          }
+          state.libDirPage = dirCard.getAttribute('data-libdir') || '';
+          state.shelfPage = 1;
+          renderShelf();
+          return;
+        }
+        var backBtn = event.target.closest('[data-libback]');
+        if (backBtn) {
+          state.libDirPage = '';
+          state.shelfPage = 1;
+          renderShelf();
           return;
         }
         var card = event.target.closest('.lib-book');
