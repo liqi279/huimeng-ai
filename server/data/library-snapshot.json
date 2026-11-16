@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-16T18:58:58.149Z",
+  "generatedAt": "2026-11-17T03:52:22.799Z",
   "source": "huimeng_library.books",
-  "total": 882,
+  "total": 920,
   "areas": {
     "paint": 731,
-    "concept": 127,
+    "concept": 165,
     "ref": 24
   },
   "books": [
@@ -17,10 +17,10 @@
       "pageCount": 146,
       "area": "paint",
       "toc": [],
-      "pdfKey": "library/books/mw819v2a-001-kawaii.pdf",
-      "pdfBytes": 83500919,
-      "coverKey": "library/covers/mw80yetl-001-kawaii-cover.jpg",
-      "coverBytes": 601836
+      "pdfKey": "api/library/file/library/books/mw819v2a-001-kawaii.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw80yetl-001-kawaii-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw86nrb0-363dff",
@@ -31,10 +31,10 @@
       "pageCount": 177,
       "area": "paint",
       "toc": [],
-      "pdfKey": "library/books/mw86menn-002-mini-chara.pdf",
-      "pdfBytes": 118452960,
-      "coverKey": "library/covers/mw86m7g0-002-mini-chara-cover.jpg",
-      "coverBytes": 888273
+      "pdfKey": "api/library/file/library/books/mw86menn-002-mini-chara.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw86m7g0-002-mini-chara-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjgvqx7-e224f2",
@@ -45,10 +45,10 @@
       "pageCount": 48,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/clannad-20261117-clannad-huaji-1.pdf",
-      "pdfBytes": 71615023,
-      "coverKey": "library/covers/clannad-20261117-clannad-huaji-1.jpg",
-      "coverBytes": 255756
+      "pdfKey": "api/library/file/library/books/clannad-20261117-clannad-huaji-1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/clannad-20261117-clannad-huaji-1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw97y0mu-d5ff0e",
@@ -59,10 +59,10 @@
       "pageCount": 10,
       "area": "paint",
       "toc": [],
-      "pdfKey": "library/books/mw97uyyt-003-momoko.pdf",
-      "pdfBytes": 8361528,
-      "coverKey": "library/covers/mw97uyjw-003-momoko-cover.jpg",
-      "coverBytes": 100807
+      "pdfKey": "api/library/file/library/books/mw97uyyt-003-momoko.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw97uyjw-003-momoko-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjgwo4u-5e34e0",
@@ -73,10 +73,10 @@
       "pageCount": 48,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/clannad-20261117-clannad-huaji-2.pdf",
-      "pdfBytes": 80247438,
-      "coverKey": "library/covers/clannad-20261117-clannad-huaji-2.jpg",
-      "coverBytes": 215236
+      "pdfKey": "api/library/file/library/books/clannad-20261117-clannad-huaji-2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/clannad-20261117-clannad-huaji-2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9882jp-5ee852",
@@ -124,10 +124,10 @@
           "page": 63
         }
       ],
-      "pdfKey": "library/books/mw985riv-004-qiansui-pixel.pdf",
-      "pdfBytes": 43324555,
-      "coverKey": "library/covers/mw985qu5-004-qiansui-cover.jpg",
-      "coverBytes": 82552
+      "pdfKey": "api/library/file/library/books/mw985riv-004-qiansui-pixel.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw985qu5-004-qiansui-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjgxfeg-1ae31d",
@@ -138,10 +138,10 @@
       "pageCount": 48,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/clannad-20261117-clannad-huaji-3.pdf",
-      "pdfBytes": 84285455,
-      "coverKey": "library/covers/clannad-20261117-clannad-huaji-3.jpg",
-      "coverBytes": 275518
+      "pdfKey": "api/library/file/library/books/clannad-20261117-clannad-huaji-3.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/clannad-20261117-clannad-huaji-3.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9a8pu5-763209",
@@ -152,10 +152,10 @@
       "pageCount": 204,
       "area": "paint",
       "toc": [],
-      "pdfKey": "library/books/mw9a5uhb-005-pixel-bg.pdf",
-      "pdfBytes": 245340260,
-      "coverKey": "library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
-      "coverBytes": 148947
+      "pdfKey": "api/library/file/library/books/mw9a5uhb-005-pixel-bg.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9a55nr-005-pixel-bg-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjgxnn9-e4896c",
@@ -166,10 +166,10 @@
       "pageCount": 7,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/clannad-20261117-clannad-calendar-2009.pdf",
-      "pdfBytes": 23052777,
-      "coverKey": "library/covers/clannad-20261117-clannad-calendar-2009.jpg",
-      "coverBytes": 171369
+      "pdfKey": "api/library/file/library/books/clannad-20261117-clannad-calendar-2009.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/clannad-20261117-clannad-calendar-2009.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9ak57x-423ad7",
@@ -217,10 +217,10 @@
           "page": 1671
         }
       ],
-      "pdfKey": "library/books/mw9ahk53-006-girls-pose-9vol.pdf",
-      "pdfBytes": 232280809,
-      "coverKey": "library/covers/mw9ahcng-006-girls-pose-cover.jpg",
-      "coverBytes": 89670
+      "pdfKey": "api/library/file/library/books/mw9ahk53-006-girls-pose-9vol.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9ahcng-006-girls-pose-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjgxt67-541f00",
@@ -231,10 +231,10 @@
       "pageCount": 7,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/clannad-20261117-clannad-calendar-2010.pdf",
-      "pdfBytes": 10235753,
-      "coverKey": "library/covers/clannad-20261117-clannad-calendar-2010.jpg",
-      "coverBytes": 325917
+      "pdfKey": "api/library/file/library/books/clannad-20261117-clannad-calendar-2010.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/clannad-20261117-clannad-calendar-2010.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9bj5qo-f39210",
@@ -262,10 +262,10 @@
           "page": 856
         }
       ],
-      "pdfKey": "library/books/mw9bhcmo-007-dress-pose-4vol.pdf",
-      "pdfBytes": 141071323,
-      "coverKey": "library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
-      "coverBytes": 99073
+      "pdfKey": "api/library/file/library/books/mw9bhcmo-007-dress-pose-4vol.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9bhc7f-007-dress-pose-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjgylh5-bf43ec",
@@ -276,10 +276,10 @@
       "pageCount": 35,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/clannad-20261117-clannad-xiankao.pdf",
-      "pdfBytes": 87975848,
-      "coverKey": "library/covers/clannad-20261117-clannad-xiankao.jpg",
-      "coverBytes": 117649
+      "pdfKey": "api/library/file/library/books/clannad-20261117-clannad-xiankao.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/clannad-20261117-clannad-xiankao.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9bovcf-c4aa7a",
@@ -311,10 +311,10 @@
           "page": 872
         }
       ],
-      "pdfKey": "library/books/mw9bn7yf-008-boys-pose-5vol.pdf",
-      "pdfBytes": 157482527,
-      "coverKey": "library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
-      "coverBytes": 202662
+      "pdfKey": "api/library/file/library/books/mw9bn7yf-008-boys-pose-5vol.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9bn7e8-008-boys-pose-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjhs6ux-223757",
@@ -325,10 +325,10 @@
       "pageCount": 25,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/lwa-20261117-lwa-storyboard-vol1.pdf",
-      "pdfBytes": 36136251,
-      "coverKey": "library/covers/lwa-20261117-lwa-storyboard-vol1.jpg",
-      "coverBytes": 57116
+      "pdfKey": "api/library/file/library/books/lwa-20261117-lwa-storyboard-vol1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/lwa-20261117-lwa-storyboard-vol1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9ler9s-e9679b",
@@ -339,10 +339,10 @@
       "pageCount": 163,
       "area": "paint",
       "toc": [],
-      "pdfKey": "library/books/mw9leg53-009-paint-income.pdf",
-      "pdfBytes": 38661990,
-      "coverKey": "library/covers/mw9lecyl-009-paint-income-cover.jpg",
-      "coverBytes": 455437
+      "pdfKey": "api/library/file/library/books/mw9leg53-009-paint-income.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9lecyl-009-paint-income-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjhsb74-4ca228",
@@ -353,10 +353,10 @@
       "pageCount": 23,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/lwa-20261117-lwa-creators-sketchbook.pdf",
-      "pdfBytes": 8658315,
-      "coverKey": "library/covers/lwa-20261117-lwa-creators-sketchbook.jpg",
-      "coverBytes": 161426
+      "pdfKey": "api/library/file/library/books/lwa-20261117-lwa-creators-sketchbook.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/lwa-20261117-lwa-creators-sketchbook.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9mgki5-4f1173",
@@ -367,10 +367,10 @@
       "pageCount": 130,
       "area": "paint",
       "toc": [],
-      "pdfKey": "library/books/mw9mfr0i-010-sai-paint-tech.pdf",
-      "pdfBytes": 42187172,
-      "coverKey": "library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
-      "coverBytes": 773362
+      "pdfKey": "api/library/file/library/books/mw9mfr0i-010-sai-paint-tech.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9m47ov-010-sai-paint-tech-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjht8as-1cdc7b",
@@ -381,10 +381,10 @@
       "pageCount": 76,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/lwa-20261117-lwa-genga.pdf",
-      "pdfBytes": 109496185,
-      "coverKey": "library/covers/lwa-20261117-lwa-genga.jpg",
-      "coverBytes": 126960
+      "pdfKey": "api/library/file/library/books/lwa-20261117-lwa-genga.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/lwa-20261117-lwa-genga.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mw9mna4r-02d065",
@@ -412,10 +412,10 @@
           "page": 390
         }
       ],
-      "pdfKey": "library/books/mw9mlkok-011-fantasy-tech.pdf",
-      "pdfBytes": 192109125,
-      "coverKey": "library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
-      "coverBytes": 1645914
+      "pdfKey": "api/library/file/library/books/mw9mlkok-011-fantasy-tech.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mw9mlk1c-011-fantasy-tech-cover.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjhtke4-33d34b",
@@ -426,10 +426,10 @@
       "pageCount": 38,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/lwa-20261117-lwa-settei.pdf",
-      "pdfBytes": 31422317,
-      "coverKey": "library/covers/lwa-20261117-lwa-settei.jpg",
-      "coverBytes": 100336
+      "pdfKey": "api/library/file/library/books/lwa-20261117-lwa-settei.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/lwa-20261117-lwa-settei.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwaz6plf-33b5a3",
@@ -454,10 +454,10 @@
       "pageCount": 44,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/lwa-20261117-lwa-yoshigaki-bootleg-1.pdf",
-      "pdfBytes": 10050954,
-      "coverKey": "library/covers/lwa-20261117-lwa-yoshigaki-bootleg-1.jpg",
-      "coverBytes": 129834
+      "pdfKey": "api/library/file/library/books/lwa-20261117-lwa-yoshigaki-bootleg-1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/lwa-20261117-lwa-yoshigaki-bootleg-1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwaz6oot-51cd86",
@@ -482,10 +482,10 @@
       "pageCount": 51,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/lwa-20261117-lwa-yoshigaki-bootleg-2.pdf",
-      "pdfBytes": 13748179,
-      "coverKey": "library/covers/lwa-20261117-lwa-yoshigaki-bootleg-2.jpg",
-      "coverBytes": 186238
+      "pdfKey": "api/library/file/library/books/lwa-20261117-lwa-yoshigaki-bootleg-2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/lwa-20261117-lwa-yoshigaki-bootleg-2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwaz6p5h-14e0b7",
@@ -510,10 +510,10 @@
       "pageCount": 34,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/lwa-20261117-lwa-yoshigaki-bootleg-3.pdf",
-      "pdfBytes": 6431589,
-      "coverKey": "library/covers/lwa-20261117-lwa-yoshigaki-bootleg-3.jpg",
-      "coverBytes": 98846
+      "pdfKey": "api/library/file/library/books/lwa-20261117-lwa-yoshigaki-bootleg-3.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/lwa-20261117-lwa-yoshigaki-bootleg-3.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwaz1nu4-0f8795",
@@ -538,10 +538,10 @@
       "pageCount": 72,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/air-20261117-air-genga.pdf",
-      "pdfBytes": 58053395,
-      "coverKey": "library/covers/air-20261117-air-genga.jpg",
-      "coverBytes": 119543
+      "pdfKey": "api/library/file/library/books/air-20261117-air-genga.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/air-20261117-air-genga.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwaz1m9h-0de22c",
@@ -575,10 +575,10 @@
       "pageCount": 74,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/air-20261117-air-movie-settei-1.pdf",
-      "pdfBytes": 65247822,
-      "coverKey": "library/covers/air-20261117-air-movie-settei-1.jpg",
-      "coverBytes": 73447
+      "pdfKey": "api/library/file/library/books/air-20261117-air-movie-settei-1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/air-20261117-air-movie-settei-1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwaz1n0z-3c8f75",
@@ -603,10 +603,10 @@
       "pageCount": 74,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/air-20261117-air-movie-settei-2.pdf",
-      "pdfBytes": 67869768,
-      "coverKey": "library/covers/air-20261117-air-movie-settei-2.jpg",
-      "coverBytes": 81622
+      "pdfKey": "api/library/file/library/books/air-20261117-air-movie-settei-2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/air-20261117-air-movie-settei-2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwayx6h0-c502f0",
@@ -631,10 +631,10 @@
       "pageCount": 175,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-1.pdf",
-      "pdfBytes": 53653095,
-      "coverKey": "library/covers/klk-20261117-klk-genga-1.jpg",
-      "coverBytes": 227608
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwayx6xa-dedae3",
@@ -659,10 +659,10 @@
       "pageCount": 65,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-2-v1.pdf",
-      "pdfBytes": 69119618,
-      "coverKey": "library/covers/klk-20261117-klk-genga-2-v1.jpg",
-      "coverBytes": 276183
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-2-v1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-2-v1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwayvg4t-50ac21",
@@ -687,10 +687,10 @@
       "pageCount": 65,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-2-v2.pdf",
-      "pdfBytes": 67836742,
-      "coverKey": "library/covers/klk-20261117-klk-genga-2-v2.jpg",
-      "coverBytes": 165523
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-2-v2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-2-v2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwc2tup6-944e1c",
@@ -715,10 +715,10 @@
       "pageCount": 65,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-2-v3.pdf",
-      "pdfBytes": 71133389,
-      "coverKey": "library/covers/klk-20261117-klk-genga-2-v3.jpg",
-      "coverBytes": 243663
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-2-v3.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-2-v3.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwc315wl-84a192",
@@ -743,10 +743,10 @@
       "pageCount": 65,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-2-v4.pdf",
-      "pdfBytes": 72877701,
-      "coverKey": "library/covers/klk-20261117-klk-genga-2-v4.jpg",
-      "coverBytes": 173509
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-2-v4.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-2-v4.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwc44r85-9b47ac",
@@ -771,10 +771,10 @@
       "pageCount": 65,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-2-v5.pdf",
-      "pdfBytes": 78200489,
-      "coverKey": "library/covers/klk-20261117-klk-genga-2-v5.jpg",
-      "coverBytes": 221878
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-2-v5.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-2-v5.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwc5rjlx-7f7a96",
@@ -868,10 +868,10 @@
       "pageCount": 61,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-3-v1.pdf",
-      "pdfBytes": 64699873,
-      "coverKey": "library/covers/klk-20261117-klk-genga-3-v1.jpg",
-      "coverBytes": 297145
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-3-v1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-3-v1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwc64zt9-fe9dcd",
@@ -913,10 +913,10 @@
       "pageCount": 61,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-3-v2.pdf",
-      "pdfBytes": 67385679,
-      "coverKey": "library/covers/klk-20261117-klk-genga-3-v2.jpg",
-      "coverBytes": 179099
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-3-v2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-3-v2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwc9g6lo-139124",
@@ -974,10 +974,10 @@
       "pageCount": 61,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-3-v3.pdf",
-      "pdfBytes": 68889234,
-      "coverKey": "library/covers/klk-20261117-klk-genga-3-v3.jpg",
-      "coverBytes": 224167
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-3-v3.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-3-v3.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcaluzz-03657d",
@@ -1023,10 +1023,10 @@
       "pageCount": 61,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-3-v4.pdf",
-      "pdfBytes": 72747778,
-      "coverKey": "library/covers/klk-20261117-klk-genga-3-v4.jpg",
-      "coverBytes": 281118
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-3-v4.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-3-v4.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcb67r0-241ff0",
@@ -1080,10 +1080,10 @@
       "pageCount": 61,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-3-v5.pdf",
-      "pdfBytes": 76118607,
-      "coverKey": "library/covers/klk-20261117-klk-genga-3-v5.jpg",
-      "coverBytes": 206681
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-3-v5.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-3-v5.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcde99q-996620",
@@ -1129,10 +1129,10 @@
       "pageCount": 56,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-genga-3-v6.pdf",
-      "pdfBytes": 67253052,
-      "coverKey": "library/covers/klk-20261117-klk-genga-3-v6.jpg",
-      "coverBytes": 234818
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-genga-3-v6.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-genga-3-v6.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcdzptv-d8cbb1",
@@ -1157,10 +1157,10 @@
       "pageCount": 25,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-1-v1.pdf",
-      "pdfBytes": 66212897,
-      "coverKey": "library/covers/klk-20261117-klk-art-1-v1.jpg",
-      "coverBytes": 89446
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-1-v1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-1-v1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcew9yi-4e0bef",
@@ -1185,10 +1185,10 @@
       "pageCount": 25,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-1-v2.pdf",
-      "pdfBytes": 86639826,
-      "coverKey": "library/covers/klk-20261117-klk-art-1-v2.jpg",
-      "coverBytes": 152933
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-1-v2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-1-v2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcex4nv-a32ab3",
@@ -1213,10 +1213,10 @@
       "pageCount": 25,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-1-v3.pdf",
-      "pdfBytes": 57754322,
-      "coverKey": "library/covers/klk-20261117-klk-art-1-v3.jpg",
-      "coverBytes": 115060
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-1-v3.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-1-v3.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcezg94-23414f",
@@ -1241,10 +1241,10 @@
       "pageCount": 25,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-1-v4.pdf",
-      "pdfBytes": 65202272,
-      "coverKey": "library/covers/klk-20261117-klk-art-1-v4.jpg",
-      "coverBytes": 126188
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-1-v4.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-1-v4.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcf112b-697568",
@@ -1269,10 +1269,10 @@
       "pageCount": 25,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-1-v5.pdf",
-      "pdfBytes": 72071354,
-      "coverKey": "library/covers/klk-20261117-klk-art-1-v5.jpg",
-      "coverBytes": 99674
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-1-v5.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-1-v5.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfcjex-7ea985",
@@ -1297,10 +1297,10 @@
       "pageCount": 25,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-1-v6.pdf",
-      "pdfBytes": 61987585,
-      "coverKey": "library/covers/klk-20261117-klk-art-1-v6.jpg",
-      "coverBytes": 141223
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-1-v6.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-1-v6.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfd9jn-386ddd",
@@ -1325,10 +1325,10 @@
       "pageCount": 48,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-2-v1.pdf",
-      "pdfBytes": 60007282,
-      "coverKey": "library/covers/klk-20261117-klk-art-2-v1.jpg",
-      "coverBytes": 103439
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-2-v1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-2-v1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcffaen-471ff9",
@@ -1353,10 +1353,10 @@
       "pageCount": 48,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-2-v2.pdf",
-      "pdfBytes": 59005653,
-      "coverKey": "library/covers/klk-20261117-klk-art-2-v2.jpg",
-      "coverBytes": 102434
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-2-v2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-2-v2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfhyc6-9b1324",
@@ -1381,10 +1381,10 @@
       "pageCount": 48,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/klk-20261117-klk-art-2-v3.pdf",
-      "pdfBytes": 54278643,
-      "coverKey": "library/covers/klk-20261117-klk-art-2-v3.jpg",
-      "coverBytes": 87392
+      "pdfKey": "api/library/file/library/books/klk-20261117-klk-art-2-v3.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/klk-20261117-klk-art-2-v3.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfj81f-80ba9e",
@@ -1409,10 +1409,10 @@
       "pageCount": 32,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/mob-20261117-mob-s2-genga-v1.pdf",
-      "pdfBytes": 69756017,
-      "coverKey": "library/covers/mob-20261117-mob-s2-genga-v1.jpg",
-      "coverBytes": 112391
+      "pdfKey": "api/library/file/library/books/mob-20261117-mob-s2-genga-v1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mob-20261117-mob-s2-genga-v1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfjkek-bbadd6",
@@ -1437,10 +1437,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/mob-20261117-mob-s2-genga-v2.pdf",
-      "pdfBytes": 70248784,
-      "coverKey": "library/covers/mob-20261117-mob-s2-genga-v2.jpg",
-      "coverBytes": 75277
+      "pdfKey": "api/library/file/library/books/mob-20261117-mob-s2-genga-v2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mob-20261117-mob-s2-genga-v2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcftukh-75f8c8",
@@ -1465,10 +1465,10 @@
       "pageCount": 52,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/mob-20261117-mob-genga-v1.pdf",
-      "pdfBytes": 73805572,
-      "coverKey": "library/covers/mob-20261117-mob-genga-v1.jpg",
-      "coverBytes": 242419
+      "pdfKey": "api/library/file/library/books/mob-20261117-mob-genga-v1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mob-20261117-mob-genga-v1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfutru-1bf370",
@@ -1630,10 +1630,10 @@
       "pageCount": 51,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/mob-20261117-mob-genga-v2.pdf",
-      "pdfBytes": 71028028,
-      "coverKey": "library/covers/mob-20261117-mob-genga-v2.jpg",
-      "coverBytes": 146880
+      "pdfKey": "api/library/file/library/books/mob-20261117-mob-genga-v2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/mob-20261117-mob-genga-v2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfvi5x-755e36",
@@ -2195,10 +2195,10 @@
       "pageCount": 30,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-genga-v1.pdf",
-      "pdfBytes": 16446084,
-      "coverKey": "library/covers/86-20261117-86-genga-v1.jpg",
-      "coverBytes": 122646
+      "pdfKey": "api/library/file/library/books/86-20261117-86-genga-v1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-genga-v1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfx56y-c2c2fe",
@@ -2788,10 +2788,10 @@
       "pageCount": 29,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-genga-v2.pdf",
-      "pdfBytes": 16194303,
-      "coverKey": "library/covers/86-20261117-86-genga-v2.jpg",
-      "coverBytes": 113988
+      "pdfKey": "api/library/file/library/books/86-20261117-86-genga-v2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-genga-v2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfxt2d-ceef4f",
@@ -3349,10 +3349,10 @@
       "pageCount": 59,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-settei.pdf",
-      "pdfBytes": 43408685,
-      "coverKey": "library/covers/86-20261117-86-settei.jpg",
-      "coverBytes": 109980
+      "pdfKey": "api/library/file/library/books/86-20261117-86-settei.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-settei.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfzasy-13daf2",
@@ -3614,10 +3614,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v1.pdf",
-      "pdfBytes": 75692343,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v1.jpg",
-      "coverBytes": 127421
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v1.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v1.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcfzw9m-32b3dc",
@@ -4023,10 +4023,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v2.pdf",
-      "pdfBytes": 59636008,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v2.jpg",
-      "coverBytes": 74585
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v2.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v2.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcg0v72-df5dc0",
@@ -4051,10 +4051,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v3.pdf",
-      "pdfBytes": 86563545,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v3.jpg",
-      "coverBytes": 121301
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v3.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v3.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcg4btr-b69805",
@@ -4079,10 +4079,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v4.pdf",
-      "pdfBytes": 64493148,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v4.jpg",
-      "coverBytes": 127062
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v4.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v4.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwcg5gtj-063176",
@@ -4107,10 +4107,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v5.pdf",
-      "pdfBytes": 73200208,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v5.jpg",
-      "coverBytes": 240829
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v5.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v5.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdg5o1u-1183a7",
@@ -4135,10 +4135,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v6.pdf",
-      "pdfBytes": 83080298,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v6.jpg",
-      "coverBytes": 115001
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v6.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v6.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdg6l2n-9d41ce",
@@ -4163,10 +4163,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v7.pdf",
-      "pdfBytes": 63098128,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v7.jpg",
-      "coverBytes": 41584
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v7.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v7.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdg7u45-9eb800",
@@ -4191,10 +4191,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v8.pdf",
-      "pdfBytes": 78260355,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v8.jpg",
-      "coverBytes": 109282
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v8.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v8.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdg9em4-bbe478",
@@ -4219,10 +4219,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v9.pdf",
-      "pdfBytes": 58881430,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v9.jpg",
-      "coverBytes": 127591
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v9.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v9.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgc0c8-f66272",
@@ -4247,10 +4247,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v10.pdf",
-      "pdfBytes": 80756728,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v10.jpg",
-      "coverBytes": 107788
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v10.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v10.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgdlbp-f9afbe",
@@ -4275,10 +4275,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v11.pdf",
-      "pdfBytes": 73464771,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v11.jpg",
-      "coverBytes": 121813
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v11.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v11.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgjbwl-a95b28",
@@ -4303,10 +4303,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v12.pdf",
-      "pdfBytes": 67051361,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v12.jpg",
-      "coverBytes": 112445
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v12.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v12.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgm3fj-299c56",
@@ -4331,10 +4331,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v13.pdf",
-      "pdfBytes": 85099370,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v13.jpg",
-      "coverBytes": 300856
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v13.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v13.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgpdu1-0b8abb",
@@ -4359,10 +4359,10 @@
       "pageCount": 22,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/86-20261117-86-bdbooklet-v14.pdf",
-      "pdfBytes": 64263738,
-      "coverKey": "library/covers/86-20261117-86-bdbooklet-v14.jpg",
-      "coverBytes": 109741
+      "pdfKey": "api/library/file/library/books/86-20261117-86-bdbooklet-v14.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/86-20261117-86-bdbooklet-v14.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgpz8m-e93783",
@@ -4387,10 +4387,10 @@
       "pageCount": 203,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-01.pdf",
-      "pdfBytes": 56050400,
-      "coverKey": "library/covers/eva-20261117-eva-01.jpg",
-      "coverBytes": 424458
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-01.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-01.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgv6z5-720268",
@@ -4415,10 +4415,10 @@
       "pageCount": 202,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-02.pdf",
-      "pdfBytes": 52317335,
-      "coverKey": "library/covers/eva-20261117-eva-02.jpg",
-      "coverBytes": 222838
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-02.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-02.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgw6sd-c014fe",
@@ -4443,10 +4443,10 @@
       "pageCount": 197,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-03.pdf",
-      "pdfBytes": 51686915,
-      "coverKey": "library/covers/eva-20261117-eva-03.jpg",
-      "coverBytes": 374154
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-03.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-03.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdgxxso-7d5e7d",
@@ -4471,10 +4471,10 @@
       "pageCount": 196,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-04.pdf",
-      "pdfBytes": 51848136,
-      "coverKey": "library/covers/eva-20261117-eva-04.jpg",
-      "coverBytes": 197177
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-04.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-04.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdh00qm-3ee87f",
@@ -4499,10 +4499,10 @@
       "pageCount": 127,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-05.pdf",
-      "pdfBytes": 44893360,
-      "coverKey": "library/covers/eva-20261117-eva-05.jpg",
-      "coverBytes": 101633
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-05.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-05.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdh1yt3-d6340b",
@@ -4527,10 +4527,10 @@
       "pageCount": 126,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-06.pdf",
-      "pdfBytes": 47415498,
-      "coverKey": "library/covers/eva-20261117-eva-06.jpg",
-      "coverBytes": 129838
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-06.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-06.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdhpdwe-d5365f",
@@ -4555,10 +4555,10 @@
       "pageCount": 79,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-07.pdf",
-      "pdfBytes": 69611223,
-      "coverKey": "library/covers/eva-20261117-eva-07.jpg",
-      "coverBytes": 353289
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-07.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-07.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdhqzy6-197ca1",
@@ -4583,10 +4583,10 @@
       "pageCount": 79,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-08.pdf",
-      "pdfBytes": 60318539,
-      "coverKey": "library/covers/eva-20261117-eva-08.jpg",
-      "coverBytes": 161659
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-08.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-08.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdh5q74-e5ae92",
@@ -4611,10 +4611,10 @@
       "pageCount": 79,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-09.pdf",
-      "pdfBytes": 60215971,
-      "coverKey": "library/covers/eva-20261117-eva-09.jpg",
-      "coverBytes": 183741
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-09.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-09.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdh6ghl-d71005",
@@ -4639,10 +4639,10 @@
       "pageCount": 77,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-10.pdf",
-      "pdfBytes": 54044570,
-      "coverKey": "library/covers/eva-20261117-eva-10.jpg",
-      "coverBytes": 143081
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-10.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-10.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdh8cta-43abf0",
@@ -4667,10 +4667,10 @@
       "pageCount": 261,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-11.pdf",
-      "pdfBytes": 68702966,
-      "coverKey": "library/covers/eva-20261117-eva-11.jpg",
-      "coverBytes": 361726
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-11.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-11.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl9q09-139e2f",
@@ -4695,10 +4695,10 @@
       "pageCount": 293,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-12.pdf",
-      "pdfBytes": 70443860,
-      "coverKey": "library/covers/eva-20261117-eva-12.jpg",
-      "coverBytes": 337042
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-12.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-12.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl7p4u-67a562",
@@ -4723,10 +4723,10 @@
       "pageCount": 178,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-13.pdf",
-      "pdfBytes": 44593050,
-      "coverKey": "library/covers/eva-20261117-eva-13.jpg",
-      "coverBytes": 325544
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-13.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-13.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdla9pb-fb4019",
@@ -4751,10 +4751,10 @@
       "pageCount": 177,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-14.pdf",
-      "pdfBytes": 41588878,
-      "coverKey": "library/covers/eva-20261117-eva-14.jpg",
-      "coverBytes": 149263
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-14.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-14.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl3avo-35834b",
@@ -4779,10 +4779,10 @@
       "pageCount": 112,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-15.pdf",
-      "pdfBytes": 88710991,
-      "coverKey": "library/covers/eva-20261117-eva-15.jpg",
-      "coverBytes": 120487
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-15.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-15.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl44ab-0783bb",
@@ -4807,10 +4807,10 @@
       "pageCount": 112,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-16.pdf",
-      "pdfBytes": 60468948,
-      "coverKey": "library/covers/eva-20261117-eva-16.jpg",
-      "coverBytes": 73986
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-16.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-16.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdlf9ws-27c6d7",
@@ -4835,10 +4835,10 @@
       "pageCount": 110,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-17.pdf",
-      "pdfBytes": 57409906,
-      "coverKey": "library/covers/eva-20261117-eva-17.jpg",
-      "coverBytes": 66955
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-17.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-17.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdllhqc-e94173",
@@ -4863,10 +4863,10 @@
       "pageCount": 112,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-18.pdf",
-      "pdfBytes": 87495530,
-      "coverKey": "library/covers/eva-20261117-eva-18.jpg",
-      "coverBytes": 131412
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-18.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-18.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdligq4-84ade0",
@@ -4891,10 +4891,10 @@
       "pageCount": 112,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-19.pdf",
-      "pdfBytes": 66449438,
-      "coverKey": "library/covers/eva-20261117-eva-19.jpg",
-      "coverBytes": 120409
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-19.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-19.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdldbuy-255f0d",
@@ -4919,10 +4919,10 @@
       "pageCount": 110,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-20.pdf",
-      "pdfBytes": 66241551,
-      "coverKey": "library/covers/eva-20261117-eva-20.jpg",
-      "coverBytes": 124787
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-20.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-20.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdlqznr-dd53c9",
@@ -4947,10 +4947,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-21.pdf",
-      "pdfBytes": 57016409,
-      "coverKey": "library/covers/eva-20261117-eva-21.jpg",
-      "coverBytes": 152326
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-21.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-21.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl6mum-d86be4",
@@ -4975,10 +4975,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-22.pdf",
-      "pdfBytes": 73301569,
-      "coverKey": "library/covers/eva-20261117-eva-22.jpg",
-      "coverBytes": 144948
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-22.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-22.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl3e7f-55de0e",
@@ -5003,10 +5003,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-23.pdf",
-      "pdfBytes": 72542553,
-      "coverKey": "library/covers/eva-20261117-eva-23.jpg",
-      "coverBytes": 156528
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-23.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-23.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl1zbe-793b6c",
@@ -5031,10 +5031,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-24.pdf",
-      "pdfBytes": 76519395,
-      "coverKey": "library/covers/eva-20261117-eva-24.jpg",
-      "coverBytes": 205546
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-24.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-24.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdlu11u-208550",
@@ -5059,10 +5059,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-25.pdf",
-      "pdfBytes": 72288798,
-      "coverKey": "library/covers/eva-20261117-eva-25.jpg",
-      "coverBytes": 151899
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-25.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-25.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdlnlyw-981842",
@@ -5087,10 +5087,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-26.pdf",
-      "pdfBytes": 71926744,
-      "coverKey": "library/covers/eva-20261117-eva-26.jpg",
-      "coverBytes": 168536
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-26.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-26.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl2ior-880990",
@@ -5115,10 +5115,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-27.pdf",
-      "pdfBytes": 73507584,
-      "coverKey": "library/covers/eva-20261117-eva-27.jpg",
-      "coverBytes": 146287
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-27.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-27.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl2lj0-db07a7",
@@ -5143,10 +5143,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-28.pdf",
-      "pdfBytes": 68549187,
-      "coverKey": "library/covers/eva-20261117-eva-28.jpg",
-      "coverBytes": 149249
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-28.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-28.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjlyc98-651357",
@@ -5157,10 +5157,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-29.pdf",
-      "pdfBytes": 71326408,
-      "coverKey": "library/covers/eva-20261117-eva-29.jpg",
-      "coverBytes": 173410
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-29.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-29.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl83j7-462be1",
@@ -5185,10 +5185,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-30.pdf",
-      "pdfBytes": 67467136,
-      "coverKey": "library/covers/eva-20261117-eva-30.jpg",
-      "coverBytes": 152214
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-30.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-30.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl3cgt-e5d5ec",
@@ -5213,10 +5213,10 @@
       "pageCount": 31,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-31.pdf",
-      "pdfBytes": 69920593,
-      "coverKey": "library/covers/eva-20261117-eva-31.jpg",
-      "coverBytes": 125590
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-31.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-31.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl2olu-1113e2",
@@ -5241,10 +5241,10 @@
       "pageCount": 30,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-32.pdf",
-      "pdfBytes": 56164793,
-      "coverKey": "library/covers/eva-20261117-eva-32.jpg",
-      "coverBytes": 128273
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-32.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-32.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl81wa-45f7c8",
@@ -5269,10 +5269,10 @@
       "pageCount": 109,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-33.pdf",
-      "pdfBytes": 43821165,
-      "coverKey": "library/covers/eva-20261117-eva-33.jpg",
-      "coverBytes": 176142
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-33.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-33.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjm0vyx-a86b9a",
@@ -5283,10 +5283,10 @@
       "pageCount": 108,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-34.pdf",
-      "pdfBytes": 39686328,
-      "coverKey": "library/covers/eva-20261117-eva-34.jpg",
-      "coverBytes": 221290
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-34.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-34.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl47c3-7d8d0c",
@@ -5311,10 +5311,10 @@
       "pageCount": 29,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-35.pdf",
-      "pdfBytes": 76730131,
-      "coverKey": "library/covers/eva-20261117-eva-35.jpg",
-      "coverBytes": 54922
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-35.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-35.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl6l8s-21207c",
@@ -5339,10 +5339,10 @@
       "pageCount": 29,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-36.pdf",
-      "pdfBytes": 57041751,
-      "coverKey": "library/covers/eva-20261117-eva-36.jpg",
-      "coverBytes": 208261
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-36.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-36.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl1xqy-20973f",
@@ -5367,10 +5367,10 @@
       "pageCount": 27,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-37.pdf",
-      "pdfBytes": 46729926,
-      "coverKey": "library/covers/eva-20261117-eva-37.jpg",
-      "coverBytes": 181693
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-37.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-37.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl45s4-d32c28",
@@ -5395,10 +5395,10 @@
       "pageCount": 19,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-38.pdf",
-      "pdfBytes": 57622626,
-      "coverKey": "library/covers/eva-20261117-eva-38.jpg",
-      "coverBytes": 143616
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-38.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-38.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl1w5x-2e8949",
@@ -5423,10 +5423,10 @@
       "pageCount": 19,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-39.pdf",
-      "pdfBytes": 52334897,
-      "coverKey": "library/covers/eva-20261117-eva-39.jpg",
-      "coverBytes": 250883
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-39.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-39.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdl6jq0-017d87",
@@ -5451,10 +5451,10 @@
       "pageCount": 58,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-40.pdf",
-      "pdfBytes": 11269364,
-      "coverKey": "library/covers/eva-20261117-eva-40.jpg",
-      "coverBytes": 122188
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-40.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-40.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwjm3oqb-351a5f",
@@ -5465,10 +5465,10 @@
       "pageCount": 58,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-41.pdf",
-      "pdfBytes": 10107796,
-      "coverKey": "library/covers/eva-20261117-eva-41.jpg",
-      "coverBytes": 110694
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-41.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-41.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsi3w7-7b8e32",
@@ -5493,10 +5493,10 @@
       "pageCount": 58,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-42.pdf",
-      "pdfBytes": 12217180,
-      "coverKey": "library/covers/eva-20261117-eva-42.jpg",
-      "coverBytes": 108920
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-42.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-42.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdshoyt-4bb150",
@@ -5521,10 +5521,10 @@
       "pageCount": 27,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-43.pdf",
-      "pdfBytes": 57729484,
-      "coverKey": "library/covers/eva-20261117-eva-43.jpg",
-      "coverBytes": 181490
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-43.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-43.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsh32i-6e190d",
@@ -5549,10 +5549,10 @@
       "pageCount": 38,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-44.pdf",
-      "pdfBytes": 75774634,
-      "coverKey": "library/covers/eva-20261117-eva-44.jpg",
-      "coverBytes": 297201
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-44.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-44.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsl51p-5ae955",
@@ -5577,10 +5577,10 @@
       "pageCount": 38,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-45.pdf",
-      "pdfBytes": 53009957,
-      "coverKey": "library/covers/eva-20261117-eva-45.jpg",
-      "coverBytes": 212593
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-45.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-45.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsigx9-c4b2a7",
@@ -5810,10 +5810,10 @@
       "pageCount": 38,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-46.pdf",
-      "pdfBytes": 58420660,
-      "coverKey": "library/covers/eva-20261117-eva-46.jpg",
-      "coverBytes": 305527
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-46.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-46.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsmhny-82afb6",
@@ -6343,10 +6343,10 @@
       "pageCount": 38,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-47.pdf",
-      "pdfBytes": 55490047,
-      "coverKey": "library/covers/eva-20261117-eva-47.jpg",
-      "coverBytes": 315297
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-47.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-47.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsj947-e164dc",
@@ -6371,10 +6371,10 @@
       "pageCount": 42,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-48.pdf",
-      "pdfBytes": 8507495,
-      "coverKey": "library/covers/eva-20261117-eva-48.jpg",
-      "coverBytes": 167691
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-48.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-48.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsl71l-c86b90",
@@ -6399,10 +6399,10 @@
       "pageCount": 42,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-49.pdf",
-      "pdfBytes": 8919221,
-      "coverKey": "library/covers/eva-20261117-eva-49.jpg",
-      "coverBytes": 168946
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-49.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-49.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsx59i-0dc945",
@@ -6427,10 +6427,10 @@
       "pageCount": 42,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-50.pdf",
-      "pdfBytes": 9167564,
-      "coverKey": "library/covers/eva-20261117-eva-50.jpg",
-      "coverBytes": 161975
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-50.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-50.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdst2gk-6e0ad2",
@@ -6455,10 +6455,10 @@
       "pageCount": 42,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-51.pdf",
-      "pdfBytes": 9201438,
-      "coverKey": "library/covers/eva-20261117-eva-51.jpg",
-      "coverBytes": 193711
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-51.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-51.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdt19o2-6c5985",
@@ -6483,10 +6483,10 @@
       "pageCount": 42,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-52.pdf",
-      "pdfBytes": 9026133,
-      "coverKey": "library/covers/eva-20261117-eva-52.jpg",
-      "coverBytes": 192545
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-52.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-52.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdt15gl-b4fc63",
@@ -6511,10 +6511,10 @@
       "pageCount": 38,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-53.pdf",
-      "pdfBytes": 7341393,
-      "coverKey": "library/covers/eva-20261117-eva-53.jpg",
-      "coverBytes": 177439
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-53.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-53.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdstpez-e82856",
@@ -6539,10 +6539,10 @@
       "pageCount": 38,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-54.pdf",
-      "pdfBytes": 7017708,
-      "coverKey": "library/covers/eva-20261117-eva-54.jpg",
-      "coverBytes": 182251
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-54.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-54.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsvnmi-31caa0",
@@ -6567,10 +6567,10 @@
       "pageCount": 38,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-55.pdf",
-      "pdfBytes": 7558705,
-      "coverKey": "library/covers/eva-20261117-eva-55.jpg",
-      "coverBytes": 184068
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-55.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-55.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsonah-c04d14",
@@ -6595,10 +6595,10 @@
       "pageCount": 50,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-56.pdf",
-      "pdfBytes": 9729940,
-      "coverKey": "library/covers/eva-20261117-eva-56.jpg",
-      "coverBytes": 174820
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-56.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-56.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsjcdw-064219",
@@ -6623,10 +6623,10 @@
       "pageCount": 67,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-57.pdf",
-      "pdfBytes": 58108367,
-      "coverKey": "library/covers/eva-20261117-eva-57.jpg",
-      "coverBytes": 136601
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-57.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-57.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdshywz-8f5085",
@@ -6651,10 +6651,10 @@
       "pageCount": 66,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-58.pdf",
-      "pdfBytes": 62450613,
-      "coverKey": "library/covers/eva-20261117-eva-58.jpg",
-      "coverBytes": 87687
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-58.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-58.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsi12d-899fad",
@@ -6679,10 +6679,10 @@
       "pageCount": 24,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-59.pdf",
-      "pdfBytes": 63690683,
-      "coverKey": "library/covers/eva-20261117-eva-59.jpg",
-      "coverBytes": 169760
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-59.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-59.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsjaub-56628b",
@@ -6707,10 +6707,10 @@
       "pageCount": 24,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-60.pdf",
-      "pdfBytes": 67282935,
-      "coverKey": "library/covers/eva-20261117-eva-60.jpg",
-      "coverBytes": 192917
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-60.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-60.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdsj5nr-f366af",
@@ -6735,10 +6735,10 @@
       "pageCount": 24,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-61.pdf",
-      "pdfBytes": 73473194,
-      "coverKey": "library/covers/eva-20261117-eva-61.jpg",
-      "coverBytes": 198819
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-61.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-61.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdufjeg-f77af5",
@@ -6763,10 +6763,10 @@
       "pageCount": 23,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-62.pdf",
-      "pdfBytes": 59604677,
-      "coverKey": "library/covers/eva-20261117-eva-62.jpg",
-      "coverBytes": 269077
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-62.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-62.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduicco-d14593",
@@ -6908,10 +6908,10 @@
       "pageCount": 46,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-63.pdf",
-      "pdfBytes": 45788228,
-      "coverKey": "library/covers/eva-20261117-eva-63.jpg",
-      "coverBytes": 237017
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-63.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-63.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdui6p8-9764a8",
@@ -6936,10 +6936,10 @@
       "pageCount": 46,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-64.pdf",
-      "pdfBytes": 46355554,
-      "coverKey": "library/covers/eva-20261117-eva-64.jpg",
-      "coverBytes": 208039
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-64.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-64.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdum6ut-311be2",
@@ -6964,10 +6964,10 @@
       "pageCount": 46,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-65.pdf",
-      "pdfBytes": 52696076,
-      "coverKey": "library/covers/eva-20261117-eva-65.jpg",
-      "coverBytes": 140286
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-65.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-65.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduk79t-752a5a",
@@ -6992,10 +6992,10 @@
       "pageCount": 46,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-66.pdf",
-      "pdfBytes": 47712025,
-      "coverKey": "library/covers/eva-20261117-eva-66.jpg",
-      "coverBytes": 153084
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-66.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-66.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduq8n1-aef374",
@@ -7020,10 +7020,10 @@
       "pageCount": 46,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-67.pdf",
-      "pdfBytes": 110630855,
-      "coverKey": "library/covers/eva-20261117-eva-67.jpg",
-      "coverBytes": 161064
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-67.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-67.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduf2hb-00593f",
@@ -7048,10 +7048,10 @@
       "pageCount": 45,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-68.pdf",
-      "pdfBytes": 64163088,
-      "coverKey": "library/covers/eva-20261117-eva-68.jpg",
-      "coverBytes": 214727
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-68.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-68.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduprv5-d0aa6a",
@@ -7076,10 +7076,10 @@
       "pageCount": 179,
       "area": "concept",
       "toc": [],
-      "pdfKey": "library/books/eva-20261117-eva-69.pdf",
-      "pdfBytes": 65981939,
-      "coverKey": "library/covers/eva-20261117-eva-69.jpg",
-      "coverBytes": 116000
+      "pdfKey": "api/library/file/library/books/eva-20261117-eva-69.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/eva-20261117-eva-69.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdui8ek-545e73",
@@ -7096,6 +7096,20 @@
       "coverBytes": 222342
     },
     {
+      "id": "lib-mwjnrf4f-ee2b04",
+      "sortNo": 128,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第1/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 1-12 页（共 106 页，分 9 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-01.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-01.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwduf5h1-871d92",
       "sortNo": 129,
       "title": "日本漫画创作技法：变形金刚",
@@ -7108,6 +7122,20 @@
       "pdfBytes": 33014972,
       "coverKey": "library/covers/130-manga-transformers-cover.jpg",
       "coverBytes": 244875
+    },
+    {
+      "id": "lib-mwjnrybx-eb20db",
+      "sortNo": 129,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第2/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 13-24 页（共 106 页，分 9 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-02.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-02.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduen31-bfd39f",
@@ -7124,6 +7152,20 @@
       "coverBytes": 241648
     },
     {
+      "id": "lib-mwjnsh0x-1b0129",
+      "sortNo": 130,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第3/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 25-36 页（共 106 页，分 9 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-03.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-03.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwduo0f4-97094a",
       "sortNo": 131,
       "title": "卡通漫画绘画技法：衣服的画法·学校制服少女篇",
@@ -7136,6 +7178,20 @@
       "pdfBytes": 60701506,
       "coverKey": "library/covers/132-clothing-school-uniform-cover.jpg",
       "coverBytes": 224028
+    },
+    {
+      "id": "lib-mwjnsz4w-cf3ef7",
+      "sortNo": 131,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第4/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 37-48 页（共 106 页，分 9 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-04.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-04.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdunwoh-80f18b",
@@ -7152,6 +7208,20 @@
       "coverBytes": 221250
     },
     {
+      "id": "lib-mwjntlkx-aaa45a",
+      "sortNo": 132,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第5/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 49-60 页（共 106 页，分 9 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-05.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-05.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdulzgc-ca2985",
       "sortNo": 133,
       "title": "卡通漫画绘画技法：世界各地美少女的画法",
@@ -7164,6 +7234,20 @@
       "pdfBytes": 53957425,
       "coverKey": "library/covers/134-worldwide-bishojo-cover.jpg",
       "coverBytes": 351208
+    },
+    {
+      "id": "lib-mwjnu9ni-ff449b",
+      "sortNo": 133,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第6/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 61-72 页（共 106 页，分 9 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-06.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-06.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdulo13-f1e9d9",
@@ -7180,6 +7264,20 @@
       "coverBytes": 248851
     },
     {
+      "id": "lib-mwjnutfz-b3fe5f",
+      "sortNo": 134,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第7/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 73-84 页（共 106 页，分 9 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-07.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-07.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdugaw1-da318d",
       "sortNo": 135,
       "title": "卡通漫画绘画技法：身体的画法",
@@ -7192,6 +7290,20 @@
       "pdfBytes": 35737315,
       "coverKey": "library/covers/136-body-drawing-cover.jpg",
       "coverBytes": 254181
+    },
+    {
+      "id": "lib-mwjnvgzq-343370",
+      "sortNo": 135,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第8/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 85-96 页（共 106 页，分 9 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-08.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-08.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdugffs-5a1c1f",
@@ -7208,6 +7320,20 @@
       "coverBytes": 241752
     },
     {
+      "id": "lib-mwjnvza6-cdafb9",
+      "sortNo": 136,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 剧场版 设定画集 · 第9/9卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集剧场版动画《紫罗兰永恒花园（Violet Evergarden）》的设定画集，共 106 页。本卷第 97-106 页（共 106 页，分 9 卷）。",
+      "pageCount": 10,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-09.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-09.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwduf8fq-2dadb7",
       "sortNo": 137,
       "title": "卡通漫画绘画技法：男孩子的画法",
@@ -7220,6 +7346,20 @@
       "pdfBytes": 29627313,
       "coverKey": "library/covers/138-boys-drawing-cover.jpg",
       "coverBytes": 174476
+    },
+    {
+      "id": "lib-mwjnwibj-b98819",
+      "sortNo": 137,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · DVD 附带小册子 · 第1/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《剧场版 紫罗兰永恒花园，薇尔莉特·伊芙加登》的DVD附带小册子和其他相关内容的扫图画集，一些包装图片和剧情介绍与原画稿，共 115 页。本卷第 1-23 页（共 115 页，分 5 卷）。",
+      "pageCount": 23,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-10.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-10.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduk0mv-9a9a54",
@@ -7236,6 +7376,20 @@
       "coverBytes": 237426
     },
     {
+      "id": "lib-mwjnx25w-a3361f",
+      "sortNo": 138,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · DVD 附带小册子 · 第2/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《剧场版 紫罗兰永恒花园，薇尔莉特·伊芙加登》的DVD附带小册子和其他相关内容的扫图画集，一些包装图片和剧情介绍与原画稿，共 115 页。本卷第 24-46 页（共 115 页，分 5 卷）。",
+      "pageCount": 23,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-11.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-11.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdupvh4-218fb5",
       "sortNo": 139,
       "title": "卡通漫画绘画技法：漫画入门·画笔和网点纸的使用技巧",
@@ -7248,6 +7402,20 @@
       "pdfBytes": 61862787,
       "coverKey": "library/covers/140-manga-intro-tools-cover.jpg",
       "coverBytes": 246603
+    },
+    {
+      "id": "lib-mwjnxmgn-40fedf",
+      "sortNo": 139,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · DVD 附带小册子 · 第3/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《剧场版 紫罗兰永恒花园，薇尔莉特·伊芙加登》的DVD附带小册子和其他相关内容的扫图画集，一些包装图片和剧情介绍与原画稿，共 115 页。本卷第 47-69 页（共 115 页，分 5 卷）。",
+      "pageCount": 23,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-12.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-12.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduqaim-a34cf8",
@@ -7264,6 +7432,20 @@
       "coverBytes": 223278
     },
     {
+      "id": "lib-mwjny3ed-44cf5c",
+      "sortNo": 140,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · DVD 附带小册子 · 第4/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《剧场版 紫罗兰永恒花园，薇尔莉特·伊芙加登》的DVD附带小册子和其他相关内容的扫图画集，一些包装图片和剧情介绍与原画稿，共 115 页。本卷第 70-92 页（共 115 页，分 5 卷）。",
+      "pageCount": 23,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-13.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-13.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdum3e0-ecd880",
       "sortNo": 141,
       "title": "卡通漫画绘画技法：漫画的创作·故事情节篇",
@@ -7276,6 +7458,20 @@
       "pdfBytes": 50610493,
       "coverKey": "library/covers/142-manga-story-creation-cover.jpg",
       "coverBytes": 241331
+    },
+    {
+      "id": "lib-mwjnyhbs-a9762e",
+      "sortNo": 141,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · DVD 附带小册子 · 第5/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《剧场版 紫罗兰永恒花园，薇尔莉特·伊芙加登》的DVD附带小册子和其他相关内容的扫图画集，一些包装图片和剧情介绍与原画稿，共 115 页。本卷第 93-115 页（共 115 页，分 5 卷）。",
+      "pageCount": 23,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-14.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-14.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdujxm0-b43089",
@@ -7292,6 +7488,20 @@
       "coverBytes": 212573
     },
     {
+      "id": "lib-mwjnz0n1-641a02",
+      "sortNo": 142,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 外传 设定画集 · 第1/6卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《紫罗兰永恒花园外传-永远与自动手记人偶》外传的设定画集，共 69 页。本卷第 1-12 页（共 69 页，分 6 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-15.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-15.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdug8fj-ae1d01",
       "sortNo": 143,
       "title": "卡通漫画绘画技法：格斗的画法·运动竞技篇",
@@ -7304,6 +7514,20 @@
       "pdfBytes": 35174940,
       "coverKey": "library/covers/144-fight-sports-cover.jpg",
       "coverBytes": 214348
+    },
+    {
+      "id": "lib-mwjnzhys-e7d858",
+      "sortNo": 143,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 外传 设定画集 · 第2/6卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《紫罗兰永恒花园外传-永远与自动手记人偶》外传的设定画集，共 69 页。本卷第 13-24 页（共 69 页，分 6 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-16.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-16.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwduiaey-376cc0",
@@ -7649,6 +7873,20 @@
       "coverBytes": 255668
     },
     {
+      "id": "lib-mwjo008p-20e03b",
+      "sortNo": 144,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 外传 设定画集 · 第3/6卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《紫罗兰永恒花园外传-永远与自动手记人偶》外传的设定画集，共 69 页。本卷第 25-36 页（共 69 页，分 6 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-17.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-17.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdugcql-8b65ad",
       "sortNo": 145,
       "title": "卡通漫画绘画技法：动物的画法",
@@ -7988,6 +8226,20 @@
       "coverBytes": 227776
     },
     {
+      "id": "lib-mwjo0moe-aa6c4c",
+      "sortNo": 145,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 外传 设定画集 · 第4/6卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《紫罗兰永恒花园外传-永远与自动手记人偶》外传的设定画集，共 69 页。本卷第 37-48 页（共 69 页，分 6 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-18.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-18.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdur4r2-01a5ec",
       "sortNo": 146,
       "title": "古风漫画技法从入门到精通",
@@ -8000,6 +8252,20 @@
       "pdfBytes": 137777034,
       "coverKey": "library/covers/147-gufeng-comic-mastery-cover.jpg",
       "coverBytes": 246496
+    },
+    {
+      "id": "lib-mwjo17q7-099ea2",
+      "sortNo": 146,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 外传 设定画集 · 第5/6卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《紫罗兰永恒花园外传-永远与自动手记人偶》外传的设定画集，共 69 页。本卷第 49-60 页（共 69 页，分 6 卷）。",
+      "pageCount": 12,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-19.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-19.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdujvh0-a86394",
@@ -8016,6 +8282,20 @@
       "coverBytes": 205226
     },
     {
+      "id": "lib-mwjo1rtz-5a150b",
+      "sortNo": 147,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 外传 设定画集 · 第6/6卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]动画《紫罗兰永恒花园外传-永远与自动手记人偶》外传的设定画集，共 69 页。本卷第 61-69 页（共 69 页，分 6 卷）。",
+      "pageCount": 9,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-20.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-20.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdunqw5-dfbc66",
       "sortNo": 148,
       "title": "日本经典动漫技法教程：个性角色造型",
@@ -8028,6 +8308,20 @@
       "pdfBytes": 56584588,
       "coverKey": "library/covers/149-classic-character-styling-cover.jpg",
       "coverBytes": 188437
+    },
+    {
+      "id": "lib-mwjo289q-4a2071",
+      "sortNo": 148,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 公式设定全集 · 第1/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰永恒花园 公式设定全集【不仅包含人物设定，小物品设定、机械设定，背景美术设定等基本资料，还囊括了风土人情，货币以及大陆版图，社会形态等丰富考据和详尽世界观设定】，共 186 页。本卷第 1-38 页（共 186 页，分 5 卷）。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-21.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-21.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdunj98-226364",
@@ -8044,6 +8338,20 @@
       "coverBytes": 176145
     },
     {
+      "id": "lib-mwjo2ofh-ee15fa",
+      "sortNo": 149,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 公式设定全集 · 第2/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰永恒花园 公式设定全集【不仅包含人物设定，小物品设定、机械设定，背景美术设定等基本资料，还囊括了风土人情，货币以及大陆版图，社会形态等丰富考据和详尽世界观设定】，共 186 页。本卷第 39-76 页（共 186 页，分 5 卷）。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-22.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-22.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdvf9sy-8102ba",
       "sortNo": 150,
       "title": "幻想速写：全球 50 位天才画家的私房创作手稿",
@@ -8056,6 +8364,20 @@
       "pdfBytes": 79389678,
       "coverKey": "library/covers/151-fantasy-sketchbook-50-artists-cover.jpg",
       "coverBytes": 263467
+    },
+    {
+      "id": "lib-mwjo34ke-c11652",
+      "sortNo": 150,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 公式设定全集 · 第3/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰永恒花园 公式设定全集【不仅包含人物设定，小物品设定、机械设定，背景美术设定等基本资料，还囊括了风土人情，货币以及大陆版图，社会形态等丰富考据和详尽世界观设定】，共 186 页。本卷第 77-114 页（共 186 页，分 5 卷）。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-23.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-23.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdvyrij-42c25c",
@@ -8072,6 +8394,20 @@
       "coverBytes": 269664
     },
     {
+      "id": "lib-mwjo3niw-1f71db",
+      "sortNo": 151,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 公式设定全集 · 第4/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰永恒花园 公式设定全集【不仅包含人物设定，小物品设定、机械设定，背景美术设定等基本资料，还囊括了风土人情，货币以及大陆版图，社会形态等丰富考据和详尽世界观设定】，共 186 页。本卷第 115-152 页（共 186 页，分 5 卷）。",
+      "pageCount": 38,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-24.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-24.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdv62bf-76207e",
       "sortNo": 152,
       "title": "幻想艺术创作技法系列：科幻风格绘画教程",
@@ -8084,6 +8420,20 @@
       "pdfBytes": 34258947,
       "coverKey": "library/covers/153-sci-fi-style-drawing-cover.jpg",
       "coverBytes": 156235
+    },
+    {
+      "id": "lib-mwjo473g-ee8896",
+      "sortNo": 152,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 公式设定全集 · 第5/5卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰永恒花园 公式设定全集【不仅包含人物设定，小物品设定、机械设定，背景美术设定等基本资料，还囊括了风土人情，货币以及大陆版图，社会形态等丰富考据和详尽世界观设定】，共 186 页。本卷第 153-186 页（共 186 页，分 5 卷）。",
+      "pageCount": 34,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-25.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-25.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdv9qg2-143d02",
@@ -8100,6 +8450,20 @@
       "coverBytes": 189551
     },
     {
+      "id": "lib-mwjo4nxc-348979",
+      "sortNo": 153,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 动画资料设定线稿集 · 第1/7卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰的永恒花园 动画资料设定线稿集【包含了人物、道具、场景的各种线稿】，共 255 页。本卷第 1-37 页（共 255 页，分 7 卷）。",
+      "pageCount": 37,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-26.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-26.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdvblwi-62c5bf",
       "sortNo": 154,
       "title": "幻想艺术创作技法系列：幻想艺术 CG 游戏教程",
@@ -8112,6 +8476,20 @@
       "pdfBytes": 63805489,
       "coverKey": "library/covers/155-fantasy-cg-game-art-cover.jpg",
       "coverBytes": 271227
+    },
+    {
+      "id": "lib-mwjo563j-278c32",
+      "sortNo": 154,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 动画资料设定线稿集 · 第2/7卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰的永恒花园 动画资料设定线稿集【包含了人物、道具、场景的各种线稿】，共 255 页。本卷第 38-74 页（共 255 页，分 7 卷）。",
+      "pageCount": 37,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-27.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-27.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdv8cz1-888a8f",
@@ -8128,6 +8506,20 @@
       "coverBytes": 142095
     },
     {
+      "id": "lib-mwjo5n7z-ff2d3e",
+      "sortNo": 155,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 动画资料设定线稿集 · 第3/7卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰的永恒花园 动画资料设定线稿集【包含了人物、道具、场景的各种线稿】，共 255 页。本卷第 75-111 页（共 255 页，分 7 卷）。",
+      "pageCount": 37,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-28.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-28.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdvdvnb-e051ad",
       "sortNo": 156,
       "title": "设计师圣经：人体的机理",
@@ -8140,6 +8532,20 @@
       "pdfBytes": 75217900,
       "coverKey": "library/covers/157-human-body-mechanics-cover.jpg",
       "coverBytes": 151692
+    },
+    {
+      "id": "lib-mwjo675p-e1cac7",
+      "sortNo": 156,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 动画资料设定线稿集 · 第4/7卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰的永恒花园 动画资料设定线稿集【包含了人物、道具、场景的各种线稿】，共 255 页。本卷第 112-148 页（共 255 页，分 7 卷）。",
+      "pageCount": 37,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-29.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-29.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdv2uoj-faab7c",
@@ -8156,6 +8562,20 @@
       "coverBytes": 317150
     },
     {
+      "id": "lib-mwjo6pin-efa0a0",
+      "sortNo": 157,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 动画资料设定线稿集 · 第5/7卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰的永恒花园 动画资料设定线稿集【包含了人物、道具、场景的各种线稿】，共 255 页。本卷第 149-185 页（共 255 页，分 7 卷）。",
+      "pageCount": 37,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-30.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-30.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdv4pvx-4c62c3",
       "sortNo": 158,
       "title": "日本漫画手绘技法经典教程 16：漫画技法的应用",
@@ -8168,6 +8588,20 @@
       "pdfBytes": 30338032,
       "coverKey": "library/covers/159-manga-technique-application-cover.jpg",
       "coverBytes": 277063
+    },
+    {
+      "id": "lib-mwjo7b50-3ece31",
+      "sortNo": 158,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 动画资料设定线稿集 · 第6/7卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰的永恒花园 动画资料设定线稿集【包含了人物、道具、场景的各种线稿】，共 255 页。本卷第 186-222 页（共 255 页，分 7 卷）。",
+      "pageCount": 37,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-31.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-31.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdv3otq-52a64a",
@@ -8184,6 +8618,20 @@
       "coverBytes": 206427
     },
     {
+      "id": "lib-mwjo7yqa-37111b",
+      "sortNo": 159,
+      "title": "紫罗兰永恒花园 · 动画原画线稿集 · 动画资料设定线稿集 · 第7/7卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：动画原画线稿集\\[线稿集]紫罗兰的永恒花园 动画资料设定线稿集【包含了人物、道具、场景的各种线稿】，共 255 页。本卷第 223-255 页（共 255 页，分 7 卷）。",
+      "pageCount": 33,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-32.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-32.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdv6463-ad4bea",
       "sortNo": 160,
       "title": "日本漫画手绘技法经典教程 14：透视的画法",
@@ -8196,6 +8644,20 @@
       "pdfBytes": 33237456,
       "coverKey": "library/covers/161-perspective-drawing-cover.jpg",
       "coverBytes": 345545
+    },
+    {
+      "id": "lib-mwjo8kgp-e615f8",
+      "sortNo": 160,
+      "title": "紫罗兰永恒花园 · 画集 · 剧场版 小册子",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：画集\\[画集]动画《Violet Evergarden the Movie，紫罗兰永恒花园 剧场版)》的小册子，粉丝向，共 40 页。",
+      "pageCount": 40,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-33.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-33.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdv5rv0-5e0bc1",
@@ -8212,6 +8674,20 @@
       "coverBytes": 283896
     },
     {
+      "id": "lib-mwjo93d7-2ab3c3",
+      "sortNo": 161,
+      "title": "紫罗兰永恒花园 · 画集 · 主创摸鱼画集 · 第1/2卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：画集\\[画集]动画《紫罗兰永恒花园（Violet Evergarden）》的主创人员的摸鱼画集，粉丝向，共 129 页。本卷第 1-65 页（共 129 页，分 2 卷）。",
+      "pageCount": 65,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-34.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-34.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdv4nso-071730",
       "sortNo": 162,
       "title": "日本漫画手绘技法经典教程 12：机械的画法",
@@ -8224,6 +8700,20 @@
       "pdfBytes": 28570841,
       "coverKey": "library/covers/163-machine-drawing-cover.jpg",
       "coverBytes": 302543
+    },
+    {
+      "id": "lib-mwjo9n3m-6a5481",
+      "sortNo": 162,
+      "title": "紫罗兰永恒花园 · 画集 · 主创摸鱼画集 · 第2/2卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：画集\\[画集]动画《紫罗兰永恒花园（Violet Evergarden）》的主创人员的摸鱼画集，粉丝向，共 129 页。本卷第 66-129 页（共 129 页，分 2 卷）。",
+      "pageCount": 64,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-35.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-35.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdv79rc-0c87c6",
@@ -8240,6 +8730,20 @@
       "coverBytes": 266688
     },
     {
+      "id": "lib-mwjoa6mb-0353cd",
+      "sortNo": 163,
+      "title": "紫罗兰永恒花园 · 色见本 · 上色指南 · 第1/3卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：色见本\\[色见本]紫罗兰永恒花园 上色指南【涵盖主要角色及道具】，共 228 页。本卷第 1-76 页（共 228 页，分 3 卷）。",
+      "pageCount": 76,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-36.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-36.jpg",
+      "coverBytes": null
+    },
+    {
       "id": "lib-mwdv2r7h-8e0d6d",
       "sortNo": 164,
       "title": "日本漫画手绘技法经典教程 10：人物角色的画法",
@@ -8252,6 +8756,20 @@
       "pdfBytes": 25094710,
       "coverKey": "library/covers/165-character-drawing-classic-cover.jpg",
       "coverBytes": 325190
+    },
+    {
+      "id": "lib-mwjoaiiw-f4cd62",
+      "sortNo": 164,
+      "title": "紫罗兰永恒花园 · 色见本 · 上色指南 · 第2/3卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：色见本\\[色见本]紫罗兰永恒花园 上色指南【涵盖主要角色及道具】，共 228 页。本卷第 77-152 页（共 228 页，分 3 卷）。",
+      "pageCount": 76,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-37.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-37.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdv56su-47d219",
@@ -8635,6 +9153,20 @@
       "pdfBytes": 32837933,
       "coverKey": "library/covers/166-clothing-drawing-classic-cover.jpg",
       "coverBytes": 264521
+    },
+    {
+      "id": "lib-mwjoau8c-5d6a4f",
+      "sortNo": 165,
+      "title": "紫罗兰永恒花园 · 色见本 · 上色指南 · 第3/3卷",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：色见本\\[色见本]紫罗兰永恒花园 上色指南【涵盖主要角色及道具】，共 228 页。本卷第 153-228 页（共 228 页，分 3 卷）。",
+      "pageCount": 76,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/violet-20261117-violet-38.pdf",
+      "pdfBytes": null,
+      "coverKey": "api/library/file/library/covers/violet-20261117-violet-38.jpg",
+      "coverBytes": null
     },
     {
       "id": "lib-mwdva7lg-6d62e4",
@@ -29174,7 +29706,7 @@
       "area": "paint",
       "toc": [
         {
-          "title": "表紙",
+          "title": "﻿表紙",
           "page": 2
         },
         {
