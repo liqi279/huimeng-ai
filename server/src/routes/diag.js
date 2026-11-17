@@ -173,4 +173,27 @@ router.get('/diag/scf', wrap(async (req, res) => {
   res.json(out);
 }));
 
+/* 直接打一次 Invoke API（InvocationType=Event），把腾讯云的原始回执原样带回：
+   异步触发失败时，这里能看到真实错误码（AuthFailure / UnauthorizedOperation / ResourceNotFound）。
+   被触发的这一次调用带 __diag 标记，入口会直接返回，不跑业务。 */
+router.get('/diag/invoke', wrap(async (req, res) => {
+  if (String(req.get('x-hm-diag') || '') !== '1') {
+    res.status(404).json({ error: { message: 'not found' } });
+    return;
+  }
+  try {
+    const { callScfApi } = require('../scf-invoke');
+    const resp = await callScfApi('Invoke', {
+      FunctionName: process.env.SCF_FUNCTION || 'huimeng-api',
+      Namespace: process.env.SCF_NAMESPACE || 'default',
+      InvocationType: 'Event',
+      Payload: Buffer.from(JSON.stringify({ __diag: true })).toString('base64'),
+    });
+    const r = (resp && resp.Response) || {};
+    res.json({ error: r.Error || null, requestId: r.RequestId || '', status: r.StatusCode || null });
+  } catch (err) {
+    res.status(502).json({ error: { message: (err && err.message) || String(err) } });
+  }
+}));
+
 module.exports = router;

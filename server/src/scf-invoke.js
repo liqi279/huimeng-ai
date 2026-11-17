@@ -122,7 +122,9 @@ function callScfApi(action, payloadObj) {
   const secretKey = config.COS_SECRET_KEY || config.S3_SECRET_ACCESS_KEY || '';
   if (!secretId || !secretKey) return Promise.reject(new Error('缺少 COS_SECRET_ID/COS_SECRET_KEY'));
   const body = JSON.stringify(payloadObj || {});
-  const headers = tc3Headers(action, body);
+  /* 签名必须带密钥：漏传会把 Credential 写成 undefined/...，
+     腾讯云会报 AuthFailure.SecretIdNotFound（非常容易误判成密钥无效）。 */
+  const headers = tc3Headers(action, body, secretId, secretKey);
   return new Promise((resolve, reject) => {
     const req = https.request({
       method: 'POST',
