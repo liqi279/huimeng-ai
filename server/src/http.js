@@ -100,36 +100,12 @@ async function httpsJson(url, opts = {}) {
     throw jsonError(400, '上游地址格式不正确', url);
   }
 
-  /* 同一域名常有多条 A 记录，出网侧有时只对其中某条黑洞（表现为建连 15 秒无响应）。
-     先解析全部 IPv4，逐个尝试；只有「建连阶段」的失败才换下一个地址，
-     请求一旦发出就绝不换——避免同一张图被上游扣两次费。
-     强制 IPv4：SCF 无 IPv6 出口时，优先解析到 AAAA 会一直卡到超时。 */
-  let addresses = [];
-  if (net.isIP(target.hostname)) {
-    addresses = [target.hostname];
-  } else {
-    addresses = await new Promise((resolve) => {
-      dns.lookup(target.hostname, { all: true, family: 4 }, (err, list) => {
-        resolve(err || !list ? [] : list.map((item) => item.address));
-      });
-    });
-  }
-  if (!addresses.length) addresses = [''];
-  /* 同一域名 A 记录可能很多，全试会让单次请求拖到几分钟：最多取前 6 条 */
-  if (addresses.length > 6) addresses = addresses.slice(0, 6);
-
-  let lastErr = null;
-  for (let i = 0; i < addresses.length; i += 1) {
-    try {
-      return await httpsJsonVia(target, addresses[i], {
-        method, headers, body, connectTimeoutMs, headersTimeoutMs, totalTimeoutMs,
-      });
-    } catch (err) {
-      lastErr = err;
-      if (!(err && err.preSend)) throw err;
-    }
-  }
-  throw lastErr || jsonError(502, '上游网络请求失败', 'no-address');
+  /* 实测：该域名 20 条 A 记录里只有 1 条不可达，TCP/TLS/HTTPS 从函数内均正常。
+     因此不再自己强行指定单 IP（会与 Node 的 happy-eyeballs 冲突），
+     改为交给 Node 原生多地址并发生连：IPv4 优先，2.5 秒换下一条。 */
+  return httpsJsonVia(target, '', {
+    method, headers, body, connectTimeoutMs, headersTimeoutMs, totalTimeoutMs,
+  });
 }
 
 function httpsJsonVia(target, address, {
@@ -170,7 +146,11 @@ function httpsJsonVia(target, address, {
       lookup: address
         ? ((hostname, options, cb) => cb(null, address, 4))
         : undefined,
-      family: address ? 4 : undefined,
+      family: 4,
+      /* 原生 happy-eyeballs：多条 A 记录并发生连，单条 2.5s 无响应就换下一条。
+         该域名实测有 1/20 的地址不可达，串行等满 15s 才会失败。 */
+      autoSelectFamily: address ? undefined : true,
+      autoSelectFamilyAttemptTimeout: address ? undefined : 2500,
       headers: Object.assign(
         {
           'Content-Type': 'application/json',
