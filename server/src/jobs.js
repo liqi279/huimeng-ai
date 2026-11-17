@@ -158,9 +158,20 @@ async function listDone(userId, limit) {
   }));
 }
 
-/* 僵尸任务收尾：超过 staleMs 仍停在 pending/running 的任务不可能还活着
-   （函数自身最长 300s），统一标失败，避免前端永远转圈、也避免队列里
-   永远躺着一批 claim 不到的记录。只动超时行，正常任务不受影响。 */
+/* 进度心跳：worker 还活着就定期刷新 updated_at。
+   failStale 按「最近一次进度更新」判断，正在跑的任务不会被误杀；
+   worker 被平台终止后心跳停止，超时才会被收尾。 */
+async function touch(id) {
+  try {
+    await q(
+      `UPDATE \`${TABLE}\` SET updated_at = ? WHERE id = ? AND status IN ('pending', 'running')`,
+      [Date.now(), id],
+    );
+  } catch (err) {}
+}
+
+/* 僵尸任务收尾：超过 staleMs 没有任何进度更新、仍停在 pending/running 的任务
+   不可能还活着（函数自身最长 300s），统一标失败，避免前端永远转圈。 */
 async function failStale(staleMs) {
   const before = Date.now() - Math.max(60000, Number(staleMs) || 480000);
   const error = {
@@ -192,4 +203,4 @@ async function claimNextPending(limit) {
   return null;
 }
 
-module.exports = { create, markRunning, complete, fail, get, getByIdem, listDone, claimNextPending, failStale };
+module.exports = { create, markRunning, complete, fail, get, getByIdem, listDone, claimNextPending, failStale, touch };

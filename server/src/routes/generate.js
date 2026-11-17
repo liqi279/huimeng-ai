@@ -388,34 +388,90 @@ async function mapLimited(items, limit, task) {
   return results;
 }
 
-/* 验证远端 URL 是否返回有效图片，并决定是否需要下载本地代理
- * 策略：先 HEAD/GET 检查 content-type
- *   - 是图片：直接返回原 URL（Pollinations 等支持 CORS 的 CDN 前端可直连）
- *   - 非图片：报错（Pollinations 限流 "Free limit reached"）
- * 兼容：未来若接入不支持 CORS 的图源，可在这里加下载代理逻辑 */
-async function validateImageUrl(url) {
-  if (!url || typeof url !== 'string') return { ok: false, url: '' };
-  if (url.startsWith('data:') || url.startsWith('/uploads/')) return { ok: true, url };
+/* 出图结果落盘：把上游图片下载后转存对象存储，失败也绝不判整次生成失败。
+ * 现场教训（2026-11-18）：上游已出图并扣费，但函数内校验该图 URL 时网络层
+ * 失败，整条任务被标 failed，用户既看不到图又已被扣费。
+ * 因此这里的原则是「结果优先」：
+ *   - 上游给 data: → 转存；转存失败保留 data URL；
+ *   - 上游给相对地址 → 按接入 base 补全成绝对地址；
+ *   - 拿到图片字节 → 转存 COS；转存失败回退上游原地址；
+ *   - 下载/校验失败 → 直接把上游地址透传给前端，只记 warning，不抛错。
+ * 返回 { url, stored?, warning? }，调用方只用 url。 */
+async function persistRemoteImage(url, base, key) {
+  if (!url || typeof url !== 'string') return { url, warning: '上游未返回图片地址' };
+  if (url.startsWith('data:')) {
+    const saved = await persistInlineImage(url);
+    return saved.startsWith('data:')
+      ? { url: saved, warning: '内联图转存失败，已直接返回 base64' }
+      : { url: saved, stored: 'object' };
+  }
 
-  let res;
+  /* 候选地址：上游给相对路径时，按接入 base / 站点根 / base+路径 三种拼法都试一次。
+     实测该上游只回 /api/uploads/media/...（相对），外部一律 404，
+     所以这里把所有可能的主机拼法都走一遍，能取到字节就能转存。 */
+  const candidates = [];
+  if (/^https?:\/\//i.test(url)) {
+    candidates.push(url);
+  } else if (url.charAt(0) === '/') {
+    const bases = [base, 'https://www.rayinai.com/v1', 'https://www.rayinai.com'];
+    bases.forEach((b) => {
+      if (!b) return;
+      try {
+        const u = new URL(url, b).href;
+        if (candidates.indexOf(u) < 0) candidates.push(u);
+      } catch (e) {}
+      const joined = String(b).replace(/\/+$/, '') + url;
+      if (candidates.indexOf(joined) < 0) candidates.push(joined);
+    });
+  } else {
+    /* 不是可访问的地址（相对路径补全失败等）：原样透传，让前端/历史记录至少留痕 */
+    return { url, warning: '上游图片地址不可直接访问' };
+  }
+
+  const tryLoad = async (candidate, withAuth) => {
+    const headers = { Accept: 'image/*, */*;q=0.8' };
+    if (withAuth && key) headers.Authorization = `Bearer ${key}`;
+    const res = await fetchWithTimeout(candidate, { method: 'GET', headers }, 45000);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const mime = String(res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (!mime.startsWith('image/')) throw new Error(`非图片内容(${mime || 'unknown'})`);
+    if (!buffer.length) throw new Error('图片内容为空');
+    return { mime, buffer, candidate };
+  };
+
+  let loaded;
+  let lastError = '';
+  for (const candidate of candidates) {
+    for (const withAuth of [false, true]) {
+      try {
+        loaded = await tryLoad(candidate, withAuth);
+        break;
+      } catch (err) {
+        lastError = (err && err.message) || String(err);
+      }
+    }
+    if (loaded) break;
+  }
+  if (!loaded) {
+    /* 图已出（上游可能已扣费），只是取不到字节：地址透传 + 真实原因留痕，绝不判任务失败 */
+    return { url: candidates[0], warning: '图片下载失败，已透传上游地址：' + lastError };
+  }
+  const target = loaded.candidate;
+
   try {
-    res = await fetchWithTimeout(url, {
-      method: 'GET',
-      headers: { Accept: 'image/*, */*;q=0.8' },
-    }, 60000);
+    const ext = extFromMime(loaded.mime) || 'png';
+    const saved = await mediaStore.put(
+      'media',
+      `${Date.now()}-${randomToken(6)}.${ext}`,
+      loaded.buffer,
+      loaded.mime,
+    );
+    return { url: saved.url.replace(/^\/uploads\//, '/api/uploads/'), stored: 'object' };
   } catch (err) {
-    return { ok: false, url, reason: err.message };
+    /* 转存失败不影响出图：前端直接加载上游地址 */
+    return { url: target, warning: '转存失败，已透传上游地址：' + ((err && err.message) || err) };
   }
-  if (!res.ok) return { ok: false, url, reason: `HTTP ${res.status}` };
-
-  const contentType = String(res.headers.get('content-type') || '').toLowerCase();
-  if (!contentType.startsWith('image/')) {
-    return { ok: false, url, reason: '上游返回非图片内容' };
-  }
-
-  /* 把 body 读掉释放连接（不存本地，Pollinations 等 CDN 前端可直连） */
-  try { await res.arrayBuffer(); } catch (e) {}
-  return { ok: true, url };
 }
 
 async function runFlux(prompt, seed, width, height, steps, options) {
@@ -484,13 +540,21 @@ async function generateOpenAICompat({ base, key, model, prompt, width, height, s
   return url;
 }
 
+/* 取图优先级：base64 字节优先，其次绝对 URL，最后相对路径（由持久化环节补全）。
+ * 现场（2026-11-18）：上游只回了相对路径 /api/uploads/media/xxx.png，
+ * 外部访问一律 404，等于把图丢了；只要响应里带 b64 就必须优先用 b64。 */
 function extractOpenAIImage(data) {
-  const first = data && Array.isArray(data.data) ? data.data[0] : null;
-  if (first) {
-    if (typeof first.url === 'string' && first.url) return first.url;
-    if (typeof first.b64_json === 'string' && first.b64_json) {
-      return `data:image/png;base64,${first.b64_json}`;
+  const list = data && Array.isArray(data.data) ? data.data : [];
+  for (const item of list) {
+    if (item && typeof item.b64_json === 'string' && item.b64_json) {
+      return `data:image/png;base64,${item.b64_json}`;
     }
+  }
+  for (const item of list) {
+    if (!item) continue;
+    if (typeof item.url === 'string' && item.url) return item.url;
+    if (typeof item.image_url === 'string' && item.image_url) return item.image_url;
+    if (item.image_url && typeof item.image_url.url === 'string' && item.image_url.url) return item.image_url.url;
   }
   throw jsonError(502, '图片接口未返回图片', '请检查模型 ID 与账号权限');
 }
@@ -539,6 +603,7 @@ async function generateGptImage({ base, key, model, prompt, size, ref, timing })
     form.append('model', model);
     form.append('prompt', prompt);
     form.append('size', size);
+    form.append('response_format', 'b64_json');
     const blob = new Blob([ref.buffer], { type: ref.mime || 'image/png' });
     form.append('image', blob, `reference.${ref.ext || 'png'}`);
 
@@ -554,7 +619,10 @@ async function generateGptImage({ base, key, model, prompt, size, ref, timing })
     return persistInlineImage(extractOpenAIImage(data));
   }
 
-  const payload = JSON.stringify({ model, prompt, n: 1, size });
+  /* response_format=b64_json：实测该上游返回的图片 URL 指向其站内
+     /api/uploads/media/...，外部访问 404（2026-11-18 现场），
+     拿地址等于拿不到图。直接要 base64，字节随响应一起回来，不依赖图床。 */
+  const payload = JSON.stringify({ model, prompt, n: 1, size, response_format: 'b64_json' });
   const data = await withPreSendRetry(deadline, async () => {
     const r = await httpsJson(`${base}/images/generations`, {
       method: 'POST',
@@ -740,51 +808,65 @@ async function generateImages(body) {
   return mapLimited(seeds, 2, async (seed) => {
     let url;
     let timing = null;
-    if (engine === 'flux') {
-      url = await runFlux(styled.prompt, seed, width, height, steps, {
-        model: model || 'sana',
-        negative: styled.negative,
-      });
-    } else if (engine === 'openai') {
-      url = await generateOpenAICompat({
-        base: provider.base,
-        key: provider.key,
-        model: provider.model,
-        prompt: styled.prompt,
-        width,
-        height,
-        sizeMode: provider.sizeMode,
-        negative: styled.negative,
-      });
-    } else if (engine === 'gpt-image') {
-      /* GPT-image → /images/generations，不支持多 reference 图 */
-      const t = {};
-      url = await withKeyFallback(gptKeys, (key) => generateGptImage({
-        base: rayin.base,
-        key,
-        model: model || rayin.gptModel,
-        prompt: styled.prompt,
-        size,
-        ref: refs[0],
-        timing: t,
-      }));
-      timing = t;
-    } else {
-      /* Banana → /chat/completions，支持多图引用 */
-      url = await generateBanana({
-        base: rayin.base,
-        key: rayin.geminiKey,
-        model: model || rayin.bananaModel,
-        prompt: styled.prompt,
-        refs,
-      });
+    const t = {};
+    try {
+      if (engine === 'flux') {
+        url = await runFlux(styled.prompt, seed, width, height, steps, {
+          model: model || 'sana',
+          negative: styled.negative,
+        });
+      } else if (engine === 'openai') {
+        url = await generateOpenAICompat({
+          base: provider.base,
+          key: provider.key,
+          model: provider.model,
+          prompt: styled.prompt,
+          width,
+          height,
+          sizeMode: provider.sizeMode,
+          negative: styled.negative,
+        });
+      } else if (engine === 'gpt-image') {
+        /* GPT-image → /images/generations，不支持多 reference 图 */
+        url = await withKeyFallback(gptKeys, (key) => generateGptImage({
+          base: rayin.base,
+          key,
+          model: model || rayin.gptModel,
+          prompt: styled.prompt,
+          size,
+          ref: refs[0],
+          timing: t,
+        }));
+      } else {
+        /* Banana → /chat/completions，支持多图引用 */
+        url = await generateBanana({
+          base: rayin.base,
+          key: rayin.geminiKey,
+          model: model || rayin.bananaModel,
+          prompt: styled.prompt,
+          refs,
+        });
+      }
+    } catch (err) {
+      /* 把断点时间戳挂到错误上，失败也能定位是「发上游前」还是「收到图后」断的 */
+      err.timing = t;
+      throw err;
     }
-    /* 验证图片 URL 有效性（检测上游限流/404），并返回给前端直连 */
-    const verified = await validateImageUrl(url);
-    if (!verified.ok) {
-      throw jsonError(502, '图片生成失败', verified.reason || '免费算力暂不可用或已达上限，请稍后重试');
-    }
-    return { type: 'image', url: verified.url, width, height, seed, timing };
+    timing = engine === 'gpt-image' ? t : timing;
+    /* 结果优先：下载/校验/转存失败都只记 warning，绝不把已出图的任务判失败 */
+    const persisted = await persistRemoteImage(url, rayin.base, rayin.openaiKey);
+    return {
+      type: 'image',
+      url: persisted.url,
+      width,
+      height,
+      seed,
+      timing,
+      warning: persisted.warning || undefined,
+      stored: persisted.stored || undefined,
+      /* 上游原始图址留痕：转存失败时能直接看出上游给的地址是什么 */
+      upstreamUrl: persisted.warning && !url.startsWith('data:') ? String(url).slice(0, 300) : undefined,
+    };
   });
 }
 
@@ -1403,6 +1485,8 @@ async function runJob(jobId) {
     body: job.payload || {},
   };
   const res = fakeResponse();
+  /* 心跳：worker 每 45s 刷一次 updated_at，正在跑的长任务不会被 failStale 误杀 */
+  const heartbeat = setInterval(() => { jobs.touch(jobId).catch(() => {}); }, 45000);
   try {
     await handleGenerate(req, res);
     const code = Number(res.statusCode) || 200;
@@ -1436,8 +1520,12 @@ async function runJob(jobId) {
       retrySkipped: (err && err.retrySkipped) || '',
       /* 只记主机名，不含任何凭据；下次失败能一眼看出打的是哪个接入点 */
       upstreamHost: (err && err.upstreamHost) || '',
+      /* 断点时间戳：收到请求 / 发上游 / 响应头 / 响应体，失败也能看出断在哪一段 */
+      timing: (err && err.timing) || null,
       category: status === 504 ? 'timeout' : (status === 502 ? 'network' : 'upstream'),
     }, Date.now() - started);
+  } finally {
+    clearInterval(heartbeat);
   }
 }
 
