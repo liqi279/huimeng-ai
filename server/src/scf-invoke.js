@@ -156,4 +156,64 @@ function triggerJob(jobId) {
   return scfInvoke({ __job: jobId });
 }
 
-module.exports = { triggerJob, callScfApi };
+/* 不依赖 CAM 的 worker 触发：用函数自己的公网地址再发一次 HTTP 请求，
+   平台会为这次请求新建一次独立调用（和浏览器访问完全同一条链路，不需要
+   scf:InvokeFunction 权限）。SCF 事件调用在线上实测「接口返回成功但事件
+   从未执行」，所以提交接口不能再把生图指望在它身上。
+   这里只负责把请求交给平台，不等响应体：worker 要跑完整张图才回包。 */
+function workerBase() {
+  const raw = process.env.PUBLIC_BASE_URL || process.env.API_BASE ||
+    'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com';
+  try { return new URL(raw).origin; } catch (err) { return ''; }
+}
+
+/* worker 身份：HMAC(TOKEN_SECRET, jobId)，外部拿不到 token 就调不动入口 */
+function workerToken(jobId) {
+  return crypto.createHmac('sha256', String(config.TOKEN_SECRET || '')).update(String(jobId)).digest('hex');
+}
+
+function triggerWorker(jobId) {
+  const base = workerBase();
+  if (!base) return Promise.resolve(false);
+  let url;
+  try {
+    url = new URL(base + '/api/generate/jobs/' + encodeURIComponent(jobId) + '/run');
+  } catch (err) {
+    return Promise.resolve(false);
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = (ok) => { if (!settled) { settled = true; resolve(ok); } };
+    const req = https.request({
+      method: 'POST',
+      hostname: url.hostname,
+      port: url.port || 443,
+      path: url.pathname,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': 0,
+        'X-Worker-Token': workerToken(jobId),
+      },
+      timeout: 8000,
+    }, (res) => {
+      /* 走到这里说明平台已经受理并开始执行 worker；任务结果走数据库，不看响应体 */
+      res.resume();
+      done(true);
+    });
+    req.on('finish', () => {
+      /* 请求已经完整交给平台：连接失败会走 error，其余情况到这里就算派活成功 */
+      setTimeout(() => done(true), 0);
+    });
+    req.on('timeout', () => {
+      console.error('[scf-invoke] worker 触发超时');
+      req.destroy(new Error('worker trigger timeout'));
+    });
+    req.on('error', (err) => {
+      console.error('[scf-invoke] worker 触发失败：' + ((err && err.message) || err));
+      done(false);
+    });
+    req.end();
+  });
+}
+
+module.exports = { triggerJob, triggerWorker, callScfApi };

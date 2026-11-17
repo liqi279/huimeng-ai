@@ -158,6 +158,25 @@ async function listDone(userId, limit) {
   }));
 }
 
+/* 僵尸任务收尾：超过 staleMs 仍停在 pending/running 的任务不可能还活着
+   （函数自身最长 300s），统一标失败，避免前端永远转圈、也避免队列里
+   永远躺着一批 claim 不到的记录。只动超时行，正常任务不受影响。 */
+async function failStale(staleMs) {
+  const before = Date.now() - Math.max(60000, Number(staleMs) || 480000);
+  const error = {
+    status: 504,
+    message: '任务已失效，请重试',
+    hint: '任务超时未完成（worker 未启动或被平台终止），已自动结束',
+    category: 'stale',
+  };
+  const [res] = await q(
+    `UPDATE \`${TABLE}\` SET status = 'failed', error = ?, updated_at = ?
+     WHERE status IN ('pending', 'running') AND updated_at < ?`,
+    [JSON.stringify(error), Date.now(), before],
+  );
+  return Number(res && res.affectedRows) || 0;
+}
+
 /* 队列兜底：事件调用没能把 jobId 带进来时，worker 自己从表里领一条 pending。
    两步走：先按 created_at 取最老的几条，再靠 markRunning 的原子抢占确认，
    抢不到就换下一条。并发多个 worker 也不会把同一条任务跑两次（不会重复扣费）。 */
@@ -173,4 +192,4 @@ async function claimNextPending(limit) {
   return null;
 }
 
-module.exports = { create, markRunning, complete, fail, get, getByIdem, listDone, claimNextPending };
+module.exports = { create, markRunning, complete, fail, get, getByIdem, listDone, claimNextPending, failStale };

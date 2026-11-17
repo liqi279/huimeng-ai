@@ -8,7 +8,7 @@ const catalog = require('../catalog');
 const mediaStore = require('../media-store');
 const userData = require('../user-data');
 const jobs = require('../jobs');
-const { triggerJob } = require('../scf-invoke');
+const { triggerWorker } = require('../scf-invoke');
 const { authOptional } = require('../auth');
 const {
   jsonError,
@@ -1441,6 +1441,28 @@ async function runJob(jobId) {
   }
 }
 
+/* 不依赖 CAM 的 worker 入口：提交接口用函数公网地址回调本函数，
+   平台会为这次请求新建一次独立调用。token 是 HMAC(TOKEN_SECRET, jobId)，
+   外部不知道密钥就调不动。必须等 runJob 跑完再回包：handler 一返回，
+   SCF 实例就被冻结，后台任务会断在半路。 */
+function workerToken(jobId) {
+  return crypto.createHmac('sha256', String(config.TOKEN_SECRET || '')).update(String(jobId)).digest('hex');
+}
+
+router.post('/generate/jobs/:id/run', wrap(async (req, res) => {
+  const id = String(req.params.id || '');
+  const got = String(req.headers['x-worker-token'] || '');
+  const want = workerToken(id);
+  const pass = !!id && got.length === want.length &&
+    crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want));
+  if (!pass) {
+    res.status(403).json({ error: { message: 'forbidden' } });
+    return;
+  }
+  await runJob(id);
+  res.status(202).json({ id, ok: true });
+}));
+
 router.post('/generate/jobs', authOptional, wrap(async (req, res) => {
   const user = req.user ? {
     id: req.user.id,
@@ -1466,6 +1488,15 @@ router.post('/generate/jobs', authOptional, wrap(async (req, res) => {
     }
   }
 
+  /* 每次提交顺手做一次僵尸收尾：超过 8 分钟还停在 pending/running 的
+     任务不可能还活着（函数自身最长 300s），统一标失败，避免一直转圈。 */
+  try {
+    const swept = await jobs.failStale(8 * 60 * 1000);
+    if (swept) console.warn('[generate] 僵尸任务收尾 ' + swept + ' 条');
+  } catch (err) {
+    console.warn('[generate] 僵尸任务收尾失败: ' + (err && err.message));
+  }
+
   const id = randomToken(12);
   let created;
   try {
@@ -1487,21 +1518,53 @@ router.post('/generate/jobs', authOptional, wrap(async (req, res) => {
     res.status(202).json({ id: created.id, status: created.status, reused: true });
     return;
   }
-  const invoked = await triggerJob(id);
-  if (!invoked) {
-    /* 没拿到平台凭据时不能假装排队：直接同步执行并返回结果，保证功能不消失 */
-    await runJob(id);
-    const done = await jobs.get(id);
-    res.status(done && done.status === 'done' ? 200 : 502).json({
-      id,
-      status: done ? done.status : 'failed',
-      result: done ? done.result : null,
-      error: done ? done.error : { message: '异步触发不可用，同步执行失败' },
-    });
-    return;
+  /* 派活给独立调用：不经过 SCF Invoke（线上实测事件调用返回成功但从不执行），
+     改用函数自己的公网地址回调，等价于浏览器再请求一次。 */
+  const dispatched = await triggerWorker(id);
+  if (dispatched) {
+    /* 请求发出去≠worker 真的起来了：给 4s 看状态有没有从 pending 变成 running
+       （worker 冷启动可能要 1~3s）。runJob 内部是原子领取，即使 worker 已经
+       开始也不会重复执行、不会重复扣费。 */
+    const deadline = Date.now() + 4000;
+    let claimed = false;
+    while (Date.now() < deadline) {
+      await sleep(400);
+      const now = await jobs.get(id);
+      if (!now || now.status !== 'pending') { claimed = true; break; }
+    }
+    if (claimed) {
+      res.status(202).json({ id, status: 'pending' });
+      return;
+    }
   }
-  res.status(202).json({ id, status: 'pending' });
+  /* worker 没起来（自调用发不出去或平台没接住）：本请求内兜底执行，
+     会慢，但任务一定能跑；前端照旧按 id 轮询结果。 */
+  await runJob(id);
+  const done = await jobs.get(id);
+  res.status(done && done.status === 'done' ? 200 : 502).json({
+    id,
+    status: done ? done.status : 'failed',
+    result: done ? done.result : null,
+    error: done ? done.error : { message: '后台任务启动失败，同步执行未完成' },
+  });
 }));
+
+/* 任务超时判定：函数自身最长 300s，超过这个时间还停在 pending/running
+   说明 worker 没起来或已被平台终止，判失败并给出可重试的提示。 */
+const STALE_JOB_MS = 8 * 60 * 1000;
+const STALE_JOB_ERROR = {
+  status: 504,
+  message: '任务已失效，请重试',
+  hint: '任务超时未完成（worker 未启动或被平台终止），已自动结束',
+  category: 'stale',
+};
+
+async function settleStale(job) {
+  if (!job || (job.status !== 'pending' && job.status !== 'running')) return false;
+  if (Date.now() - job.updatedAt <= STALE_JOB_MS) return false;
+  await jobs.fail(job.id, STALE_JOB_ERROR, Date.now() - job.createdAt);
+  return true;
+}
 
 /* 按幂等键取任务：提交请求被长连接掐断时，前端仍能找回结果 */
 router.get('/generate/jobs/by-key/:key', authOptional, wrap(async (req, res) => {
@@ -1509,6 +1572,13 @@ router.get('/generate/jobs/by-key/:key', authOptional, wrap(async (req, res) => 
   const job = await jobs.getByIdem(decodeURIComponent(req.params.key), userId);
   if (!job) {
     res.status(404).json({ error: { message: '任务不存在或已过期' } });
+    return;
+  }
+  if (await settleStale(job)) {
+    res.json({
+      id: job.id, status: 'failed', result: null, error: STALE_JOB_ERROR,
+      durationMs: Date.now() - job.createdAt,
+    });
     return;
   }
   res.json(job);
@@ -1521,17 +1591,9 @@ router.get('/generate/jobs/:id', authOptional, wrap(async (req, res) => {
     res.status(404).json({ error: { message: '任务不存在或已过期' } });
     return;
   }
-  /* 兜底：后台事件调用没能真正起来时，任务会一直停在 pending/running。
-     超过 6 分钟判定为失败，并持久化错误类别，便于下次一眼定位。 */
-  if ((job.status === 'pending' || job.status === 'running') && Date.now() - job.updatedAt > 360000) {
-    const error = {
-      status: 504,
-      message: '后台任务未启动或已中断',
-      hint: 'SCF 事件调用未执行（检查函数权限/并发），任务记录见 generate_jobs',
-      category: 'worker',
-    };
-    await jobs.fail(job.id, error, Date.now() - job.createdAt);
-    res.json({ id: job.id, status: 'failed', result: null, error, durationMs: Date.now() - job.createdAt });
+  /* 兜底：worker 没起来时任务会一直停在 pending/running，超时判失败 */
+  if (await settleStale(job)) {
+    res.json({ id: job.id, status: 'failed', result: null, error: STALE_JOB_ERROR, durationMs: Date.now() - job.createdAt });
     return;
   }
   res.json({
