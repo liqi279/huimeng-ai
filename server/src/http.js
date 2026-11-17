@@ -115,6 +115,8 @@ async function httpsJson(url, opts = {}) {
     });
   }
   if (!addresses.length) addresses = [''];
+  /* 同一域名 A 记录可能很多，全试会让单次请求拖到几分钟：最多取前 6 条 */
+  if (addresses.length > 6) addresses = addresses.slice(0, 6);
 
   let lastErr = null;
   for (let i = 0; i < addresses.length; i += 1) {
