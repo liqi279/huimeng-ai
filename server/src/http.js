@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const https = require('https');
 const config = require('./config');
 
 class HttpError extends Error {
@@ -66,6 +67,137 @@ async function readJsonResponse(res, hint) {
   } catch (err) {
     throw jsonError(502, '上游返回非 JSON 响应', hint);
   }
+}
+
+/* 显式 https.request 传输：不让 fetch/undici 的默认连接与响应头超时悄悄掐断长任务。
+   三段超时分开：连接、响应头、整体；错误带 retryable 标记供上层决定是否重试。 */
+const NETWORK_CODES = new Set([
+  'ECONNRESET', 'ECONNREFUSED', 'ECONNABORTED', 'EPIPE', 'ETIMEDOUT',
+  'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_SOCKET',
+]);
+
+function httpsJson(url, opts = {}) {
+  const {
+    method = 'POST',
+    headers = {},
+    body = '',
+    connectTimeoutMs = 15000,
+    headersTimeoutMs = 90000,
+    totalTimeoutMs = 120000,
+  } = opts;
+  return new Promise((resolve, reject) => {
+    let target;
+    try {
+      target = new URL(url);
+    } catch (err) {
+      reject(jsonError(400, '上游地址格式不正确', url));
+      return;
+    }
+    const payload = Buffer.isBuffer(body) ? body : Buffer.from(String(body || ''), 'utf8');
+    const startedAt = Date.now();
+    let settled = false;
+    const finish = (err, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(totalTimer);
+      if (err) reject(err);
+      else resolve(value);
+    };
+    const makeTimeout = (message, hint, code) => {
+      const err = jsonError(504, message, hint);
+      err.retryable = true;
+      err.code = code;
+      return err;
+    };
+    const totalTimer = setTimeout(() => {
+      req.destroy(makeTimeout('上游整体超时', `超过 ${Math.round(totalTimeoutMs / 1000)} 秒`, 'UPSTREAM_TOTAL_TIMEOUT'));
+    }, Math.max(1000, totalTimeoutMs));
+
+    const req = https.request({
+      method,
+      protocol: target.protocol,
+      hostname: target.hostname,
+      port: target.port || 443,
+      path: `${target.pathname}${target.search || ''}`,
+      headers: Object.assign(
+        {
+          'Content-Type': 'application/json',
+          'Content-Length': payload.length,
+          'Accept-Encoding': 'identity',
+        },
+        headers,
+      ),
+      /* 连接阶段超时（建立 TCP/TLS） */
+      timeout: connectTimeoutMs,
+    }, (res) => {
+      res.setTimeout(headersTimeoutMs, () => {
+        req.destroy(makeTimeout('上游响应超时',
+          `${Math.round(headersTimeoutMs / 1000)} 秒内未读完响应`, 'UPSTREAM_HEADERS_TIMEOUT'));
+      });
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => finish(null, {
+        status: res.statusCode || 0,
+        headers: res.headers,
+        text: Buffer.concat(chunks).toString('utf8'),
+        elapsedMs: Date.now() - startedAt,
+      }));
+      res.on('error', (err) => {
+        const e = jsonError(502, '上游响应读取中断', err && err.message);
+        e.retryable = true;
+        e.code = (err && err.code) || 'UPSTREAM_BODY_ERROR';
+        finish(e);
+      });
+    });
+
+    req.on('timeout', () => {
+      /* 只覆盖「连接+首字节」阶段；整体与读响应另有定时器 */
+      if (Date.now() - startedAt >= connectTimeoutMs) {
+        req.destroy(makeTimeout('上游连接超时',
+          `${Math.round(connectTimeoutMs / 1000)} 秒内未建立连接`, 'UPSTREAM_CONNECT_TIMEOUT'));
+      }
+    });
+    req.on('error', (err) => {
+      if (err && err.expose) {
+        finish(err);
+        return;
+      }
+      const code = (err && err.code) || 'UPSTREAM_NETWORK';
+      const e = jsonError(502, '上游网络请求失败', (err && err.message) || code);
+      e.retryable = NETWORK_CODES.has(code) || /socket|reset|network/i.test(String((err && err.message) || ''));
+      e.code = code;
+      finish(e);
+    });
+
+    if (payload.length) req.write(payload);
+    req.end();
+  });
+}
+
+/* 网络类失败重试一次；401/403/400/内容审核不重试。
+   总预算由 deadline 控制，避免函数超时被无限拉长。 */
+function isRetryableUpstream(err) {
+  if (!err) return false;
+  const status = Number(err.status || 0);
+  if (status === 401 || status === 403 || status === 400 || status === 422) return false;
+  if (err.retryable) return true;
+  if (status === 502 || status === 503 || status === 504) return true;
+  return /ECONNRESET|ETIMEDOUT|socket|network|timeout|超时/i.test(String(err.message || '') + ' ' + String(err.code || ''));
+}
+
+async function withOneRetry(deadline, fn) {
+  let lastErr;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await fn(attempt);
+    } catch (err) {
+      lastErr = err;
+      if (attempt === 1 || !isRetryableUpstream(err)) throw err;
+      /* 剩余预算不足 20 秒就不再重试 */
+      if (Date.now() + 20000 > deadline) throw err;
+    }
+  }
+  throw lastErr;
 }
 
 async function fetchJson(url, options = {}, timeoutMs = 30000, hint) {
@@ -172,4 +304,7 @@ module.exports = {
   randomToken,
   randomSeed,
   sleep,
+  httpsJson,
+  withOneRetry,
+  isRetryableUpstream,
 };

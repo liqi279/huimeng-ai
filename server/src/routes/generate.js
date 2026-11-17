@@ -17,6 +17,9 @@ const {
   fetchWithTimeout,
   fetchJson,
   readJsonResponse,
+  httpsJson,
+  withOneRetry,
+  isRetryableUpstream,
   dataUrlToBuffer,
   extFromMime,
   randomToken,
@@ -501,7 +504,12 @@ async function persistInlineImage(url) {
   }
 }
 
+/* 生图上游调用：显式 https.request（连接 15s / 响应头 100s / 整体 120s），
+   网络类失败自动重试 1 次，总预算 240s（函数超时 300s 兜底）。 */
+const IMAGE_DEADLINE_MS = 240000;
+
 async function generateGptImage({ base, key, model, prompt, size, ref }) {
+  const deadline = Date.now() + IMAGE_DEADLINE_MS;
   if (ref) {
     const form = new FormData();
     form.append('model', model);
@@ -510,25 +518,40 @@ async function generateGptImage({ base, key, model, prompt, size, ref }) {
     const blob = new Blob([ref.buffer], { type: ref.mime || 'image/png' });
     form.append('image', blob, `reference.${ref.ext || 'png'}`);
 
-    const res = await fetchWithTimeout(
-      `${base}/images/edits`,
-      { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form },
-      IMAGE_TIMEOUT,
-    );
-    const data = await readJsonResponse(res, '请检查模型 ID、参考图与账号权限');
+    const data = await withOneRetry(deadline, async () => {
+      const res = await fetchWithTimeout(
+        `${base}/images/edits`,
+        { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form },
+        IMAGE_TIMEOUT,
+      );
+      return readJsonResponse(res, '请检查模型 ID、参考图与账号权限');
+    });
     return persistInlineImage(extractOpenAIImage(data));
   }
 
-  const data = await fetchJson(
-    `${base}/images/generations`,
-    {
+  const payload = JSON.stringify({ model, prompt, n: 1, size });
+  const data = await withOneRetry(deadline, async () => {
+    const r = await httpsJson(`${base}/images/generations`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, prompt, n: 1, size }),
-    },
-    IMAGE_TIMEOUT,
-    '请检查模型 ID 与账号权限',
-  );
+      headers: { Authorization: `Bearer ${key}` },
+      body: payload,
+      connectTimeoutMs: 15000,
+      headersTimeoutMs: 100000,
+      totalTimeoutMs: IMAGE_TIMEOUT,
+    });
+    if (r.status < 200 || r.status >= 300) {
+      const err = jsonError(r.status, apiErrorText(r.status, r.text), '请检查模型 ID 与账号权限');
+      err.retryable = r.status === 502 || r.status === 503 || r.status === 504;
+      throw err;
+    }
+    try {
+      return JSON.parse(r.text);
+    } catch (e) {
+      const err = jsonError(502, '上游返回非 JSON 响应', 'HTTP ' + r.status);
+      err.retryable = true;
+      throw err;
+    }
+  });
   return persistInlineImage(extractOpenAIImage(data));
 }
 

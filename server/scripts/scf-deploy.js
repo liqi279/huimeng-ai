@@ -254,7 +254,32 @@ async function getFunction() {
   const r = await tc3Request('GetFunction', { FunctionName: CFG.functionName, Namespace: CFG.namespace });
   const env = {};
   for (const v of (r.Environment && r.Environment.Variables) || []) env[v.Key] = v.Value;
-  return { modTime: r.ModTime || '', status: r.Status || '', env };
+  return {
+    modTime: r.ModTime || '',
+    status: r.Status || '',
+    env,
+    timeout: Number(r.Timeout || 0),
+    memory: Number(r.MemorySize || 0),
+  };
+}
+
+/* 生图是同步长任务：函数超时必须显著大于上游 120s 超时 + 一次重试，
+   否则请求会在函数层被提前掐断（线上 28~31s 的「上游网络请求失败」就是这个）。
+   发布时统一抬到 300s，避免只在控制台手改、下次发布又被覆盖。 */
+async function ensureRuntimeLimits(current) {
+  const want = Number(process.env.SCF_TIMEOUT || 300);
+  const now = current && current.timeout ? current.timeout : 0;
+  if (now >= want) {
+    log('scf', '函数超时已是 ' + now + 's（≥' + want + 's），无需调整');
+    return;
+  }
+  log('scf', 'UpdateFunctionConfiguration Timeout ' + (now || '未知') + 's → ' + want + 's');
+  await tc3Request('UpdateFunctionConfiguration', {
+    FunctionName: CFG.functionName,
+    Namespace: CFG.namespace,
+    Timeout: want,
+  });
+  log('scf', '函数超时已更新为 ' + want + 's');
 }
 
 async function updateCode(objectKey) {
@@ -448,6 +473,7 @@ async function doRollback() {
   if (!/^scf\/releases\//.test(key)) key = key.replace(/^\/+/, '');
   const before = await getFunction();
   log('rollback', '当前 ModTime=' + before.modTime);
+  await ensureRuntimeLimits(before);
   await updateCode(key);
   const after = await waitUpdated(before.modTime, 120000);
   const ok = await selfCheck();
@@ -488,6 +514,7 @@ async function doDeploy() {
 
   /* 3) 更新函数 + 轮询 */
   try {
+    await ensureRuntimeLimits(before);
     await updateCode(CFG.objectKey);
     await waitUpdated(before ? before.modTime : '', 120000);
   } catch (err) {

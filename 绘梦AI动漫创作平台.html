@@ -31894,7 +31894,16 @@ async function runBackendImage(job, prompt) {
   /* 日志要记录「真实发出的模型名」，而不是界面上的展示名 */
   job.sentModel = String(payload.model || (payload.provider && payload.provider.model) || '');
 
-  const data = await window.HM.api.generate(payload, 180000);
+  /* 长任务进度反馈：上游出图常见 20~60s，期间不能一直停在「提交任务…」 */
+  var waitTip1 = setTimeout(function () { updateJobStatus(job, '已提交，正在等待上游出图…'); }, 10000);
+  var waitTip2 = setTimeout(function () { updateJobStatus(job, '上游仍在生成（最长约 4 分钟），请稍候…'); }, 45000);
+  var data;
+  try {
+    data = await window.HM.api.generate(payload, 280000);
+  } finally {
+    clearTimeout(waitTip1);
+    clearTimeout(waitTip2);
+  }
   const item = data && data.items && data.items[0];
   if (!item || !item.url) throw new Error('后端未返回图片');
   if (item.width && item.height) applyActualSize(job, item.width, item.height);
