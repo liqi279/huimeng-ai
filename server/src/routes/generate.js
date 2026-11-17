@@ -20,7 +20,7 @@ const {
   fetchJson,
   readJsonResponse,
   httpsJson,
-  withOneRetry,
+  withPreSendRetry,
   isRetryableUpstream,
   dataUrlToBuffer,
   extFromMime,
@@ -506,12 +506,17 @@ async function persistInlineImage(url) {
   }
 }
 
-/* 生图上游调用：显式 https.request（连接 15s / 响应头 100s / 整体 120s），
-   网络类失败自动重试 1 次，总预算 240s（函数超时 300s 兜底）。 */
+/* 生图上游调用：显式 https.request（连接 15s / 响应头 100s / 整体 120s）。
+   计费安全：只有「请求确定没发到上游」（DNS/建连失败）才重试一次；
+   一旦请求已发出、等响应时断开，一律不重试——用户已在 RayinAI 后台看到
+   「调用成功且扣费」，说明上游其实受理了，重试就是二次扣费。
+   timing 由调用方传入，用于落库定位断点（收到请求 / 发出上游 / 响应头 / 完整响应体）。 */
 const IMAGE_DEADLINE_MS = 240000;
 
-async function generateGptImage({ base, key, model, prompt, size, ref }) {
+async function generateGptImage({ base, key, model, prompt, size, ref, timing }) {
   const deadline = Date.now() + IMAGE_DEADLINE_MS;
+  const t = timing || {};
+  t.upstreamStartAt = Date.now();
   if (ref) {
     const form = new FormData();
     form.append('model', model);
@@ -520,19 +525,20 @@ async function generateGptImage({ base, key, model, prompt, size, ref }) {
     const blob = new Blob([ref.buffer], { type: ref.mime || 'image/png' });
     form.append('image', blob, `reference.${ref.ext || 'png'}`);
 
-    const data = await withOneRetry(deadline, async () => {
-      const res = await fetchWithTimeout(
-        `${base}/images/edits`,
-        { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form },
-        IMAGE_TIMEOUT,
-      );
-      return readJsonResponse(res, '请检查模型 ID、参考图与账号权限');
-    });
+    /* edits 不做任何重试：请求体已发出，失败可能已被上游受理计费 */
+    const res = await fetchWithTimeout(
+      `${base}/images/edits`,
+      { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form },
+      IMAGE_TIMEOUT,
+    );
+    t.upstreamEndAt = Date.now();
+    t.upstreamMs = t.upstreamEndAt - t.upstreamStartAt;
+    const data = await readJsonResponse(res, '请检查模型 ID、参考图与账号权限');
     return persistInlineImage(extractOpenAIImage(data));
   }
 
   const payload = JSON.stringify({ model, prompt, n: 1, size });
-  const data = await withOneRetry(deadline, async () => {
+  const data = await withPreSendRetry(deadline, async () => {
     const r = await httpsJson(`${base}/images/generations`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}` },
@@ -541,16 +547,24 @@ async function generateGptImage({ base, key, model, prompt, size, ref }) {
       headersTimeoutMs: 100000,
       totalTimeoutMs: IMAGE_TIMEOUT,
     });
+    /* 断点时间戳：发出上游 → 收到响应头 → 收到完整响应体 */
+    t.upstreamEndAt = Date.now();
+    t.upstreamMs = t.upstreamEndAt - t.upstreamStartAt;
+    t.headersMs = r.headersMs;
+    t.bodyMs = r.elapsedMs;
+    t.upstreamStatus = r.status;
     if (r.status < 200 || r.status >= 300) {
       const err = jsonError(r.status, apiErrorText(r.status, r.text), '请检查模型 ID 与账号权限');
-      err.retryable = r.status === 502 || r.status === 503 || r.status === 504;
+      err.preSend = false;
+      err.retryable = false;
       throw err;
     }
     try {
       return JSON.parse(r.text);
     } catch (e) {
       const err = jsonError(502, '上游返回非 JSON 响应', 'HTTP ' + r.status);
-      err.retryable = true;
+      err.preSend = false;
+      err.retryable = false;
       throw err;
     }
   });
@@ -708,6 +722,7 @@ async function generateImages(body) {
 
   return mapLimited(seeds, 2, async (seed) => {
     let url;
+    let timing = null;
     if (engine === 'flux') {
       url = await runFlux(styled.prompt, seed, width, height, steps, {
         model: model || 'sana',
@@ -726,6 +741,7 @@ async function generateImages(body) {
       });
     } else if (engine === 'gpt-image') {
       /* GPT-image → /images/generations，不支持多 reference 图 */
+      const t = {};
       url = await withKeyFallback(gptKeys, (key) => generateGptImage({
         base: rayin.base,
         key,
@@ -733,7 +749,9 @@ async function generateImages(body) {
         prompt: styled.prompt,
         size,
         ref: refs[0],
+        timing: t,
       }));
+      timing = t;
     } else {
       /* Banana → /chat/completions，支持多图引用 */
       url = await generateBanana({
@@ -749,7 +767,7 @@ async function generateImages(body) {
     if (!verified.ok) {
       throw jsonError(502, '图片生成失败', verified.reason || '免费算力暂不可用或已达上限，请稍后重试');
     }
-    return { type: 'image', url: verified.url, width, height, seed };
+    return { type: 'image', url: verified.url, width, height, seed, timing };
   });
 }
 
@@ -1269,6 +1287,8 @@ function absolutizeItems(items, req) {
 
 /* 生图/视频/配音的核心处理：HTTP 路由与异步任务（SCF 事件调用）共用同一份实现 */
 async function handleGenerate(req, res) {
+  /* 断点定位用：请求进入本函数的时间戳（函数冷启动/网关排队都在这之前） */
+  const receivedAt = Date.now();
   const body = req.body || {};
   const mode = body.mode;
   assert(['image', 'video', 'audio'].includes(mode), 400, '未知生成模式', 'mode 仅支持 image / video / audio');
@@ -1305,7 +1325,13 @@ async function handleGenerate(req, res) {
       durationMs: elapsed,
       responseSummary: callLog.summarizeItems(items),
     }));
-    res.json({ items, elapsed });
+    res.json({
+      items,
+      elapsed,
+      /* 关键断点：receivedAt（函数内收到请求）→ items[].timing（发上游/响应头/响应体）
+         → respondedAt（函数返回）。与浏览器端耗时对比即可判定断在哪一层。 */
+      timings: { receivedAt, respondedAt: Date.now(), elapsedMs: Date.now() - receivedAt },
+    });
   } catch (err) {
     const elapsed = Date.now() - started;
     await callLog.record(Object.assign({}, logBase, {
@@ -1349,8 +1375,10 @@ function publicHost() {
 async function runJob(jobId) {
   const job = await jobs.get(jobId);
   if (!job) return;
-  if (job.status === 'done' || job.status === 'failed') return;
-  await jobs.markRunning(jobId);
+  /* 原子领取：pending → running 只有一次能成功。
+     事件调用重复投递、或前端重复提交，都不会让上游被调用第二次（避免重复扣费）。 */
+  const claimed = await jobs.markRunning(jobId);
+  if (!claimed) return;
   const started = Date.now();
   const req = {
     user: job.user || null,
@@ -1387,13 +1415,43 @@ async function runJob(jobId) {
 }
 
 router.post('/generate/jobs', authOptional, wrap(async (req, res) => {
-  const id = randomToken(12);
   const user = req.user ? {
     id: req.user.id,
     username: req.user.username,
     role: req.user.role,
   } : null;
-  await jobs.create({ id, userId: user ? String(user.id) : '', payload: req.body || {}, user });
+  const userId = user ? String(user.id) : '';
+  /* 幂等键：客户端每次「点生成」生成一个 requestId，网络重试/重复点击都复用同一个。
+     同一用户 + 同一 requestId 只会有一个任务、一次上游调用（不会重复扣费）。 */
+  const requestId = String((req.body && (req.body.requestId || req.body.jobId)) || '').slice(0, 100);
+  const idemKey = requestId ? `${userId || 'anon'}:${requestId}` : '';
+  if (idemKey) {
+    const existing = await jobs.getByIdem(idemKey, userId);
+    if (existing) {
+      res.status(existing.status === 'done' ? 200 : 202).json({
+        id: existing.id,
+        status: existing.status,
+        result: existing.result,
+        error: existing.error,
+        reused: true,
+      });
+      return;
+    }
+  }
+
+  const id = randomToken(12);
+  const created = await jobs.create({
+    id,
+    userId,
+    payload: req.body || {},
+    user,
+    idemKey,
+  });
+  if (created && created.created === false) {
+    /* 并发撞车：另一个请求刚建好同一个幂等任务，直接复用 */
+    res.status(202).json({ id: created.id, status: created.status, reused: true });
+    return;
+  }
   const invoked = await triggerJob(id);
   if (!invoked) {
     /* 没拿到平台凭据时不能假装排队：直接同步执行并返回结果，保证功能不消失 */

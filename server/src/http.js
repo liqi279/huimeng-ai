@@ -70,10 +70,16 @@ async function readJsonResponse(res, hint) {
 }
 
 /* 显式 https.request 传输：不让 fetch/undici 的默认连接与响应头超时悄悄掐断长任务。
-   三段超时分开：连接、响应头、整体；错误带 retryable 标记供上层决定是否重试。 */
-const NETWORK_CODES = new Set([
-  'ECONNRESET', 'ECONNREFUSED', 'ECONNABORTED', 'EPIPE', 'ETIMEDOUT',
-  'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_SOCKET',
+   三段超时分开：连接、响应头、整体；错误带 preSend 标记供上层决定是否重试。 */
+
+/* 只有「请求确定没有发出去」的错误才允许重试：
+   这些错误发生在 DNS/建连阶段，上游根本没收到请求，重试不会重复计费。
+   一旦 TCP/TLS 建好、请求体已写出，之后的任何断开（ECONNRESET/EPIPE/
+   响应头超时/整体超时/5xx）都视为「上游可能已受理」，一律不重试——
+   否则同一张图会被上游扣两次费（用户已在 RayinAI 后台看到成功扣费）。 */
+const PRESEND_CODES = new Set([
+  'ENOTFOUND', 'ECONNREFUSED', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH',
+  'UPSTREAM_CONNECT_TIMEOUT', 'CERT_HAS_EXPIRED', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
 ]);
 
 function httpsJson(url, opts = {}) {
@@ -103,14 +109,16 @@ function httpsJson(url, opts = {}) {
       if (err) reject(err);
       else resolve(value);
     };
-    const makeTimeout = (message, hint, code) => {
+    let connected = false;
+    const makeTimeout = (message, hint, code, preSend) => {
       const err = jsonError(504, message, hint);
-      err.retryable = true;
+      err.retryable = Boolean(preSend);
+      err.preSend = Boolean(preSend);
       err.code = code;
       return err;
     };
     const totalTimer = setTimeout(() => {
-      req.destroy(makeTimeout('上游整体超时', `超过 ${Math.round(totalTimeoutMs / 1000)} 秒`, 'UPSTREAM_TOTAL_TIMEOUT'));
+      req.destroy(makeTimeout('上游整体超时', `超过 ${Math.round(totalTimeoutMs / 1000)} 秒`, 'UPSTREAM_TOTAL_TIMEOUT', false));
     }, Math.max(1000, totalTimeoutMs));
 
     const req = https.request({
@@ -130,9 +138,11 @@ function httpsJson(url, opts = {}) {
       /* 连接阶段超时（建立 TCP/TLS） */
       timeout: connectTimeoutMs,
     }, (res) => {
+      connected = true;
+      const headersMs = Date.now() - startedAt;
       res.setTimeout(headersTimeoutMs, () => {
         req.destroy(makeTimeout('上游响应超时',
-          `${Math.round(headersTimeoutMs / 1000)} 秒内未读完响应`, 'UPSTREAM_HEADERS_TIMEOUT'));
+          `${Math.round(headersTimeoutMs / 1000)} 秒内未读完响应`, 'UPSTREAM_HEADERS_TIMEOUT', false));
       });
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
@@ -140,12 +150,16 @@ function httpsJson(url, opts = {}) {
         status: res.statusCode || 0,
         headers: res.headers,
         text: Buffer.concat(chunks).toString('utf8'),
+        headersMs,
         elapsedMs: Date.now() - startedAt,
       }));
       res.on('error', (err) => {
         const e = jsonError(502, '上游响应读取中断', err && err.message);
-        e.retryable = true;
+        e.retryable = false;
+        e.preSend = false;
         e.code = (err && err.code) || 'UPSTREAM_BODY_ERROR';
+        e.elapsedMs = Date.now() - startedAt;
+        e.headersMs = headersMs;
         finish(e);
       });
     });
@@ -161,20 +175,25 @@ function httpsJson(url, opts = {}) {
 
     req.on('timeout', () => {
       /* 只覆盖「连接+首字节」阶段；整体与读响应另有定时器 */
-      if (Date.now() - startedAt >= connectTimeoutMs) {
+      if (Date.now() - startedAt >= connectTimeoutMs && !connected) {
         req.destroy(makeTimeout('上游连接超时',
-          `${Math.round(connectTimeoutMs / 1000)} 秒内未建立连接`, 'UPSTREAM_CONNECT_TIMEOUT'));
+          `${Math.round(connectTimeoutMs / 1000)} 秒内未建立连接`, 'UPSTREAM_CONNECT_TIMEOUT', true));
       }
     });
     req.on('error', (err) => {
       if (err && err.expose) {
+        err.elapsedMs = err.elapsedMs || (Date.now() - startedAt);
         finish(err);
         return;
       }
       const code = (err && err.code) || 'UPSTREAM_NETWORK';
       const e = jsonError(502, '上游网络请求失败', (err && err.message) || code);
-      e.retryable = NETWORK_CODES.has(code) || /socket|reset|network/i.test(String((err && err.message) || ''));
+      /* 建连之前就失败 = 上游确定没收到请求，可安全重试；
+         建连之后断开（含 30s 被中间层掐断）= 上游可能已受理，绝不重试 */
+      e.preSend = !connected && PRESEND_CODES.has(code);
+      e.retryable = e.preSend;
       e.code = code;
+      e.elapsedMs = Date.now() - startedAt;
       finish(e);
     });
 
@@ -183,18 +202,15 @@ function httpsJson(url, opts = {}) {
   });
 }
 
-/* 网络类失败重试一次；401/403/400/内容审核不重试。
-   总预算由 deadline 控制，避免函数超时被无限拉长。 */
+/* 只对「确定没发出去」的失败重试（见 PRESEND_CODES）。
+   401/403/400/内容审核、响应超时、连接被重置、上游 5xx 一律不重试，
+   避免同一张图被上游扣两次费。 */
 function isRetryableUpstream(err) {
   if (!err) return false;
-  const status = Number(err.status || 0);
-  if (status === 401 || status === 403 || status === 400 || status === 422) return false;
-  if (err.retryable) return true;
-  if (status === 502 || status === 503 || status === 504) return true;
-  return /ECONNRESET|ETIMEDOUT|socket|network|timeout|超时/i.test(String(err.message || '') + ' ' + String(err.code || ''));
+  return err.preSend === true;
 }
 
-async function withOneRetry(deadline, fn) {
+async function withPreSendRetry(deadline, fn) {
   /* 每次尝试的耗时/错误码都记下来，失败时随任务一起落库：
      下次出问题能直接看到「有没有重试、两次各花多久、各自什么错误」。 */
   const attempts = [];
@@ -214,6 +230,7 @@ async function withOneRetry(deadline, fn) {
         code: String((err && err.code) || ''),
         message: String((err && err.message) || '').slice(0, 200),
         retryable: isRetryableUpstream(err),
+        preSend: Boolean(err && err.preSend),
       });
       lastErr = err;
       if (attempt === 1 || !isRetryableUpstream(err)) {
@@ -336,6 +353,6 @@ module.exports = {
   randomSeed,
   sleep,
   httpsJson,
-  withOneRetry,
+  withPreSendRetry,
   isRetryableUpstream,
 };

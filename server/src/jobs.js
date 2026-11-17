@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS \`${TABLE}\` (
   \`id\` VARCHAR(40) NOT NULL,
   \`user_id\` VARCHAR(64) NOT NULL DEFAULT '',
   \`status\` VARCHAR(16) NOT NULL DEFAULT 'pending',
+  \`idem_key\` VARCHAR(120) NULL,
   \`payload\` LONGTEXT NULL,
   \`user_info\` LONGTEXT NULL,
   \`result\` LONGTEXT NULL,
@@ -64,6 +65,7 @@ CREATE TABLE IF NOT EXISTS \`${TABLE}\` (
   \`updated_at\` BIGINT NOT NULL DEFAULT 0,
   \`duration_ms\` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (\`id\`),
+  UNIQUE KEY \`uk_generate_jobs_idem\` (\`idem_key\`),
   KEY \`idx_generate_jobs_created\` (\`created_at\`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`;
 
@@ -85,6 +87,10 @@ function connect() {
       try {
         dbName = safeDbName((await conn.query('SELECT DATABASE() AS db'))[0][0].db);
         await conn.query(CREATE_SQL);
+        /* 老表补列/补唯一键：已有部署建过不带 idem_key 的表时自动升级，
+           失败（列/键已存在）忽略即可。幂等键是「一次提交只调一次上游」的保证。 */
+        try { await conn.query(`ALTER TABLE \`${TABLE}\` ADD COLUMN \`idem_key\` VARCHAR(120) NULL`); } catch (e) {}
+        try { await conn.query(`ALTER TABLE \`${TABLE}\` ADD UNIQUE KEY \`uk_generate_jobs_idem\` (\`idem_key\`)`); } catch (e) {}
       } finally {
         conn.release();
       }
@@ -106,23 +112,36 @@ function parseJson(text) {
   }
 }
 
-async function create({ id, userId, payload, user }) {
+async function create({ id, userId, payload, user, idemKey }) {
   const p = await connect();
   const now = Date.now();
-  await p.query(
-    `INSERT INTO \`${TABLE}\` (id, user_id, status, payload, user_info, created_at, updated_at)
-     VALUES (?, ?, 'pending', ?, ?, ?, ?)`,
-    [id, userId || '', JSON.stringify(payload || {}), JSON.stringify(user || null), now, now],
-  );
-  return { id, status: 'pending' };
+  try {
+    await p.query(
+      `INSERT INTO \`${TABLE}\` (id, user_id, status, idem_key, payload, user_info, created_at, updated_at)
+       VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)`,
+      [id, userId || '', idemKey || null, JSON.stringify(payload || {}), JSON.stringify(user || null), now, now],
+    );
+  } catch (err) {
+    /* 幂等键撞车 = 同一份提交重复到达，直接返回已有任务，不再建新任务 */
+    if (err && err.code === 'ER_DUP_ENTRY' && idemKey) {
+      const existing = await getByIdem(idemKey, userId);
+      if (existing) return existing;
+    }
+    throw err;
+  }
+  return { id, status: 'pending', created: true };
 }
 
+/* 领取任务：只有 pending → running 这一次能成功。
+   返回 false 表示别的执行实例已经领走，本次必须直接退出，
+   避免同一次提交被上游调用两次（会重复扣费）。 */
 async function markRunning(id) {
   const p = await connect();
-  await p.query(
-    `UPDATE \`${TABLE}\` SET status = 'running', updated_at = ? WHERE id = ? AND status IN ('pending','running')`,
+  const [res] = await p.query(
+    `UPDATE \`${TABLE}\` SET status = 'running', updated_at = ? WHERE id = ? AND status = 'pending'`,
     [Date.now(), id],
   );
+  return Number(res && res.affectedRows) === 1;
 }
 
 async function complete(id, result, durationMs) {
@@ -141,11 +160,14 @@ async function fail(id, error, durationMs) {
   );
 }
 
-async function get(id, userId) {
-  if (!id) return null;
+async function getByIdem(idemKey, userId) {
+  if (!idemKey) return null;
   const p = await connect();
-  const [rows] = await p.query(`SELECT * FROM \`${TABLE}\` WHERE id = ? LIMIT 1`, [String(id)]);
-  const row = rows && rows[0];
+  const [rows] = await p.query(`SELECT * FROM \`${TABLE}\` WHERE idem_key = ? LIMIT 1`, [String(idemKey)]);
+  return shape(rows && rows[0], userId);
+}
+
+function shape(row, userId) {
   if (!row) return null;
   if (userId !== undefined && String(row.user_id || '') !== String(userId || '')) return null;
   return {
@@ -162,4 +184,11 @@ async function get(id, userId) {
   };
 }
 
-module.exports = { create, markRunning, complete, fail, get };
+async function get(id, userId) {
+  if (!id) return null;
+  const p = await connect();
+  const [rows] = await p.query(`SELECT * FROM \`${TABLE}\` WHERE id = ? LIMIT 1`, [String(id)]);
+  return shape(rows && rows[0], userId);
+}
+
+module.exports = { create, markRunning, complete, fail, get, getByIdem };

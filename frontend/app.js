@@ -4003,6 +4003,10 @@ async function runBackendImage(job, prompt) {
     if (channelKey) payload.rayin = Object.assign({}, state.api, { key: channelKey });
   }
 
+  /* 幂等键：一次「点生成」只对应一个任务/一次上游调用；
+     网络重试或重复点击复用同一个 requestId，避免重复扣费 */
+  payload.requestId = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
   /* 日志要记录「真实发出的模型名」，而不是界面上的展示名 */
   job.sentModel = String(payload.model || (payload.provider && payload.provider.model) || '');
 
