@@ -119,10 +119,14 @@ function httpsJsonVia(target, address, {
       if (settled) return;
       settled = true;
       clearTimeout(totalTimer);
+      clearTimeout(connectTimer);
+      clearTimeout(headersTimer);
       if (err) reject(err);
       else resolve(value);
     };
     let connected = false;
+    let connectTimer = null;
+    let headersTimer = null;
     const makeTimeout = (message, hint, code, preSend) => {
       const err = jsonError(504, message, hint);
       err.retryable = Boolean(preSend);
@@ -135,6 +139,14 @@ function httpsJsonVia(target, address, {
     const totalTimer = setTimeout(() => {
       req.destroy(makeTimeout('上游整体超时', `超过 ${Math.round(totalTimeoutMs / 1000)} 秒`, 'UPSTREAM_TOTAL_TIMEOUT', false));
     }, Math.max(1000, totalTimeoutMs));
+    /* 建连超时只覆盖「建立 TCP/TLS」这一段。连上之后上游出图要几十秒，
+       绝不能用这个时限去卡等待响应——那会把正在生成的请求提前掐断（并误判为建连失败）。 */
+    connectTimer = setTimeout(() => {
+      if (!connected) {
+        req.destroy(makeTimeout('上游连接超时',
+          `${Math.round(connectTimeoutMs / 1000)} 秒内未建立连接`, 'UPSTREAM_CONNECT_TIMEOUT', true));
+      }
+    }, Math.max(1000, connectTimeoutMs));
 
     const req = https.request({
       method,
@@ -159,10 +171,10 @@ function httpsJsonVia(target, address, {
         },
         headers,
       ),
-      /* 连接阶段超时（建立 TCP/TLS） */
-      timeout: connectTimeoutMs,
     }, (res) => {
       connected = true;
+      clearTimeout(connectTimer);
+      clearTimeout(headersTimer);
       const headersMs = Date.now() - startedAt;
       res.setTimeout(headersTimeoutMs, () => {
         req.destroy(makeTimeout('上游响应超时',
@@ -195,15 +207,20 @@ function httpsJsonVia(target, address, {
         socket.setKeepAlive(true, 15000);
         socket.setNoDelay(true);
       } catch (err) {}
+      const onConnected = () => {
+        if (connected) return;
+        connected = true;
+        clearTimeout(connectTimer);
+        /* 连上之后到首个响应字节：这是上游真在出图的阶段，给足时间 */
+        headersTimer = setTimeout(() => {
+          req.destroy(makeTimeout('上游响应超时',
+            `${Math.round(headersTimeoutMs / 1000)} 秒内未收到响应头`, 'UPSTREAM_HEADERS_TIMEOUT', false));
+        }, Math.max(1000, headersTimeoutMs));
+      };
+      socket.once('secureConnect', onConnected);
+      socket.once('connect', onConnected);
     });
 
-    req.on('timeout', () => {
-      /* 只覆盖「连接+首字节」阶段；整体与读响应另有定时器 */
-      if (Date.now() - startedAt >= connectTimeoutMs && !connected) {
-        req.destroy(makeTimeout('上游连接超时',
-          `${Math.round(connectTimeoutMs / 1000)} 秒内未建立连接`, 'UPSTREAM_CONNECT_TIMEOUT', true));
-      }
-    });
     req.on('error', (err) => {
       if (err && err.expose) {
         err.elapsedMs = err.elapsedMs || (Date.now() - startedAt);
