@@ -1,7 +1,9 @@
 'use strict';
 
 const crypto = require('crypto');
+const dns = require('dns');
 const https = require('https');
+const net = require('net');
 const config = require('./config');
 
 class HttpError extends Error {
@@ -82,7 +84,7 @@ const PRESEND_CODES = new Set([
   'UPSTREAM_CONNECT_TIMEOUT', 'CERT_HAS_EXPIRED', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
 ]);
 
-function httpsJson(url, opts = {}) {
+async function httpsJson(url, opts = {}) {
   const {
     method = 'POST',
     headers = {},
@@ -91,14 +93,47 @@ function httpsJson(url, opts = {}) {
     headersTimeoutMs = 90000,
     totalTimeoutMs = 120000,
   } = opts;
-  return new Promise((resolve, reject) => {
-    let target;
+  let target;
+  try {
+    target = new URL(url);
+  } catch (err) {
+    throw jsonError(400, '上游地址格式不正确', url);
+  }
+
+  /* 同一域名常有多条 A 记录，出网侧有时只对其中某条黑洞（表现为建连 15 秒无响应）。
+     先解析全部 IPv4，逐个尝试；只有「建连阶段」的失败才换下一个地址，
+     请求一旦发出就绝不换——避免同一张图被上游扣两次费。
+     强制 IPv4：SCF 无 IPv6 出口时，优先解析到 AAAA 会一直卡到超时。 */
+  let addresses = [];
+  if (net.isIP(target.hostname)) {
+    addresses = [target.hostname];
+  } else {
+    addresses = await new Promise((resolve) => {
+      dns.lookup(target.hostname, { all: true, family: 4 }, (err, list) => {
+        resolve(err || !list ? [] : list.map((item) => item.address));
+      });
+    });
+  }
+  if (!addresses.length) addresses = [''];
+
+  let lastErr = null;
+  for (let i = 0; i < addresses.length; i += 1) {
     try {
-      target = new URL(url);
+      return await httpsJsonVia(target, addresses[i], {
+        method, headers, body, connectTimeoutMs, headersTimeoutMs, totalTimeoutMs,
+      });
     } catch (err) {
-      reject(jsonError(400, '上游地址格式不正确', url));
-      return;
+      lastErr = err;
+      if (!(err && err.preSend)) throw err;
     }
+  }
+  throw lastErr || jsonError(502, '上游网络请求失败', 'no-address');
+}
+
+function httpsJsonVia(target, address, {
+  method, headers, body, connectTimeoutMs, headersTimeoutMs, totalTimeoutMs,
+}) {
+  return new Promise((resolve, reject) => {
     const payload = Buffer.isBuffer(body) ? body : Buffer.from(String(body || ''), 'utf8');
     const startedAt = Date.now();
     let settled = false;
@@ -115,6 +150,8 @@ function httpsJson(url, opts = {}) {
       err.retryable = Boolean(preSend);
       err.preSend = Boolean(preSend);
       err.code = code;
+      err.upstreamHost = target.hostname;
+      err.address = address;
       return err;
     };
     const totalTimer = setTimeout(() => {
@@ -127,6 +164,11 @@ function httpsJson(url, opts = {}) {
       hostname: target.hostname,
       port: target.port || 443,
       path: `${target.pathname}${target.search || ''}`,
+      /* 指定这一轮要连的具体 IPv4；SNI / Host 仍用原域名 */
+      lookup: address
+        ? ((hostname, options, cb) => cb(null, address, 4))
+        : undefined,
+      family: address ? 4 : undefined,
       headers: Object.assign(
         {
           'Content-Type': 'application/json',
@@ -193,6 +235,8 @@ function httpsJson(url, opts = {}) {
       e.preSend = !connected && PRESEND_CODES.has(code);
       e.retryable = e.preSend;
       e.code = code;
+      e.upstreamHost = target.hostname;
+      e.address = address;
       e.elapsedMs = Date.now() - startedAt;
       finish(e);
     });

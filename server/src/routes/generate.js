@@ -1434,6 +1434,8 @@ async function runJob(jobId) {
       code: (err && err.code) || '',
       attempts: (err && err.attempts) || null,
       retrySkipped: (err && err.retrySkipped) || '',
+      /* 只记主机名，不含任何凭据；下次失败能一眼看出打的是哪个接入点 */
+      upstreamHost: (err && err.upstreamHost) || '',
       category: status === 504 ? 'timeout' : (status === 502 ? 'network' : 'upstream'),
     }, Date.now() - started);
   }
