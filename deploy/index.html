@@ -27012,7 +27012,110 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return !!(api.config && api.config.rayin && api.config.rayin.hasKey);
   };
 
-  api.generate = function (payload, timeoutMs) {
+  /* 生图改走异步任务（提交 → 轮询）：单次 HTTP 长连接不会再被 SCF 的 300 秒上限掐断。
+     旧后端没有 /generate/jobs 时自动退回同步调用，功能不消失。
+     提交响应丢失时按幂等键找回任务，不重新提交（避免同一张图被上游扣两次费）。 */
+  async function jobByRequestId(requestId, headers) {
+    try {
+      var res = await fetch(apiUrl('/generate/jobs/by-key/' + encodeURIComponent(requestId)), { headers: headers });
+      if (res.status === 404) return null;
+      if (!res.ok) return undefined;
+      var text = await res.text();
+      try { return JSON.parse(text); } catch (e) { return undefined; }
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  function jobFailure(job) {
+    var err = new Error((job.error && job.error.message) || '生成失败');
+    err.hint = (job.error && job.error.hint) || '';
+    err.category = (job.error && job.error.category) || '';
+    err.status = (job.error && job.error.status) || 502;
+    return err;
+  }
+
+  async function requestGenerateJob(payload, timeoutMs, onProgress) {
+    var budget = timeoutMs || 360000;
+    var requestId = 'rq-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    var token = authToken();
+    var headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    var startedAt = Date.now();
+    function notify(status) {
+      if (typeof onProgress !== 'function') return;
+      try { onProgress({ status: status || 'pending', elapsedMs: Date.now() - startedAt }); } catch (e) {}
+    }
+
+    var data = null;
+    var submit = null;
+    try {
+      submit = await fetch(apiUrl('/generate/jobs'), {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(Object.assign({}, payload, { requestId: requestId }))
+      });
+    } catch (err) {
+      /* 提交可能已到后端、只是响应没回来：先按幂等键找回，绝不重新提交 */
+      var found = null;
+      for (var i = 0; i < 3 && found === null; i++) {
+        await new Promise(function (r) { setTimeout(r, 1200); });
+        found = await jobByRequestId(requestId, headers);
+      }
+      if (found === null) return request('/generate', { method: 'POST', body: payload }, budget);
+      if (found === undefined) {
+        var unknown = new Error('网络中断，无法确认任务是否已提交；任务可能仍在后台运行，请稍后到历史记录查看，避免重复提交');
+        unknown.timeout = true;
+        throw unknown;
+      }
+      data = found;
+    }
+
+    if (submit) {
+      if (submit.status === 404 || submit.status === 405 || submit.status === 501) {
+        /* 旧后端没有异步任务接口：退回同步调用 */
+        return request('/generate', { method: 'POST', body: payload }, budget);
+      }
+      var raw = await submit.text();
+      if (raw) { try { data = JSON.parse(raw); } catch (err) { data = null; } }
+      if (!submit.ok && submit.status !== 202) throw normalizeError(data, submit.status);
+    }
+
+    if (data && data.status === 'done' && data.result) return data.result;
+    if (data && data.error) throw jobFailure(data);
+
+    var id = data && data.id;
+    if (!id) throw new Error('任务创建失败：后端未返回任务 ID');
+    notify(data.status || 'pending');
+
+    while (Date.now() - startedAt < budget) {
+      await new Promise(function (r) { setTimeout(r, 2000); });
+      var poll, body;
+      try {
+        poll = await fetch(apiUrl('/generate/jobs/' + encodeURIComponent(id)), { headers: headers });
+        body = await poll.text();
+      } catch (err) {
+        continue; /* 单次轮询抖动不判失败，继续等到预算耗尽 */
+      }
+      var job = null;
+      if (body) { try { job = JSON.parse(body); } catch (err) { job = null; } }
+      if (!poll.ok) throw normalizeError(job, poll.status);
+      if (!job) continue;
+      if (job.status === 'done') return job.result;
+      if (job.status === 'failed' || job.status === 'error') throw jobFailure(job);
+      /* 只透传后端的真实任务状态，不做假进度 */
+      notify(job.status || 'running');
+    }
+    var timeoutError = new Error('请求已等待 ' + Math.round(budget / 1000) + ' 秒仍未完成，任务可能仍在后台运行，请稍后到历史记录查看');
+    timeoutError.timeout = true;
+    throw timeoutError;
+  }
+
+  api.generate = function (payload, timeoutMs, onProgress) {
+    /* 只把生图切到异步任务；视频/音频仍走原来的同步链路，链路不动 */
+    if (payload && payload.mode === 'image') {
+      return requestGenerateJob(payload, timeoutMs || 360000, onProgress);
+    }
     return request('/generate', { method: 'POST', body: payload }, timeoutMs || 180000);
   };
 
@@ -31813,7 +31916,11 @@ async function runBackendImage(job, prompt) {
   /* 日志要记录「真实发出的模型名」，而不是界面上的展示名 */
   job.sentModel = String(payload.model || (payload.provider && payload.provider.model) || '');
 
-  const data = await window.HM.api.generate(payload, 180000);
+  /* 预算必须大于后端整条链路：上游 120s/次 + 重试到 240s + 校验/落盘余量。
+     等待期间只显示后端真实任务状态，耗时由卡片上的计时器给出。 */
+  const data = await window.HM.api.generate(payload, 360000, function (p) {
+    updateJobStatus(job, p.status === 'running' ? '上游绘制中…' : '已提交，排队中…');
+  });
   const item = data && data.items && data.items[0];
   if (!item || !item.url) throw new Error('后端未返回图片');
   if (item.width && item.height) applyActualSize(job, item.width, item.height);
@@ -32348,6 +32455,13 @@ function errorHint(err) {
 
 function friendlyError(err) {
   const message = String((err && err.message) || '');
+  /* 「请求超时」与「上游失败」要分开：前者任务可能还在后台跑，后者是上游真的报错 */
+  if (err && (err.timeout || err.category === 'timeout')) {
+    return message || '请求超时：任务可能仍在后台运行，请稍后查看';
+  }
+  if (err && err.category === 'network') {
+    return message || '上游网络失败，请稍后重试';
+  }
   if (/exhausted|暂满/i.test(message)) return '该模型上游额度暂满，请稍后重试或换模型';
   if (/429|quota|exceeded|ZeroGPU|limit/i.test(message)) return '免费算力额度暂满，请稍后重试';
   if (/Failed to fetch|NetworkError|network|load failed/i.test(message)) return '免费通道连接失败，请检查网络后重试';
@@ -56818,7 +56932,7 @@ window.HMChat = (function () {
     var refs = collectRefs(node);
     var appState = app().state || {};
     var payload;
-    var timeoutMs = 180000;
+    var timeoutMs = 360000;
 
     if (node.type === 'genImage') {
       payload = {
