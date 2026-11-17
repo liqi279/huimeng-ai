@@ -11,6 +11,7 @@ const mediaStore = require('./media-store');
 const certUtil = require('./cert');
 
 const healthRoutes = require('./routes/health');
+const diagRoutes = require('./routes/diag');
 const translateRoutes = require('./routes/translate');
 const ocrRoutes = require('./routes/ocr');
 const worksRoutes = require('./routes/works');
@@ -66,6 +67,7 @@ app.use('/api/ollama', ollamaRoutes);
 app.use(express.json({ limit: '25mb' }));
 
 app.use('/api', healthRoutes);
+app.use('/api', diagRoutes);
 app.use('/api', authRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', translateRoutes);
