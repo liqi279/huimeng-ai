@@ -151,7 +151,8 @@ async function resolveDownloadSource(src, req) {
   if (src.charAt(0) === '/') {
     const m = src.match(DOWNLOAD_ASSET_RE);
     if (!m) throw jsonError(400, '不支持的下载地址');
-    const key = (m[1] === 'assets' ? 'assets' : 'media') + '/' + decodeURIComponent(m[2]);
+    /* 与 serveUpload → mediaStore.send 共用同一个 objectKey()，不再各写一套拼装 */
+    const key = mediaStore.objectKey(m[1], decodeURIComponent(m[2]));
     return { key, mime: mediaStore.mimeByName(key) };
   }
   let target;
@@ -195,10 +196,16 @@ app.get('/api/download', wrap(async (req, res) => {
   if (String(req.query.meta || '') === '1') {
     let size = resolved.buffer ? resolved.buffer.length : 0;
     if (resolved.key && storage.status().mode === 's3') {
+      /* 签名是按 GET 生成的，不能拿 HEAD 去探（COS 会按签名不匹配拒绝）；
+         用 Range: bytes=0-0 的 GET 探测，只取 1 字节，200/206 都算存在 */
       const probe = storage.signatureUrl(resolved.key, { method: 'GET', ttl: 300 });
-      const check = await fetch(probe, { method: 'HEAD' });
-      if (!check.ok) throw jsonError(404, '原文件不存在或已失效', 'HTTP ' + check.status);
-      size = Number(check.headers.get('content-length') || 0);
+      const check = await fetch(probe, { headers: { Range: 'bytes=0-0' } });
+      if (!check.ok) {
+        throw jsonError(check.status === 404 ? 404 : 502, '原文件读取失败', 'HTTP ' + check.status);
+      }
+      const range = check.headers.get('content-range') || '';
+      if (range.indexOf('/') >= 0) size = Number(range.split('/')[1]) || 0;
+      else size = Number(check.headers.get('content-length') || 0);
     }
     res.setHeader('Cache-Control', 'no-store');
     res.json({ ok: true, name, mime: resolved.mime, size });

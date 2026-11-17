@@ -115,4 +115,5 @@ module.exports = {
   remove,
   absoluteUrl,
   mimeByName,
+  objectKey,
 };
