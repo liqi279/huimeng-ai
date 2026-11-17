@@ -187,7 +187,7 @@ router.get('/diag/invoke', wrap(async (req, res) => {
       FunctionName: process.env.SCF_FUNCTION || 'huimeng-api',
       Namespace: process.env.SCF_NAMESPACE || 'default',
       InvocationType: 'Event',
-      Payload: Buffer.from(JSON.stringify({ __diag: true })).toString('base64'),
+      ClientContext: Buffer.from(JSON.stringify({ __diag: true }), 'utf8').toString('base64'),
     });
     const r = (resp && resp.Response) || {};
     res.json({ error: r.Error || null, requestId: r.RequestId || '', status: r.StatusCode || null });

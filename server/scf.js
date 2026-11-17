@@ -139,10 +139,28 @@ exports.main_handler = async (event, context) => {
   if (context) context.callbackWaitsForEmptyEventLoop = false;
   await waitReady();
 
-  /* 异步任务入口：提交接口通过 SCF Invoke(Event) 再调一次本函数，
-     携带 {"__job":"<jobId>"}。这类调用不是 HTTP 请求，
-     直接跑生成任务并把结果写回 generate_jobs，然后立即返回。 */
-  const jobId = (event && typeof event === 'object' && event.__job) || jobIdFromContext(context);
+  /* 异步任务入口：提交接口通过 SCF Invoke(Event) 再调一次本函数。
+     这类调用不是 HTTP 请求，直接跑生成任务并把结果写回 generate_jobs。
+     jobId 三个来源，从可靠到兜底：
+       1) event.__job                —— 老写法，SCF 已不支持传 Payload，仅兼容
+       2) context.clientContext      —— Invoke 接口唯一能带数据的通道（base64 JSON）
+       3) 队列兜底：自己从 generate_jobs 领一条 pending
+     第 3 条是保险：即使上下文格式变了、或上一次事件调用丢了，任务也不会卡在 pending。 */
+  const looksHttp = !!(event && (event.path || event.rawPath || event.httpMethod ||
+    event.requestContext || event.queryString || event.headers));
+  let jobId = (event && typeof event === 'object' && event.__job) || jobIdFromContext(context);
+  if (!jobId && !looksHttp) {
+    try {
+      const jobs = require('./src/jobs');
+      const claimed = await jobs.claimNextPending(3);
+      if (claimed) {
+        jobId = claimed.id;
+        console.error('[scf] worker 从队列领到任务 ' + jobId);
+      }
+    } catch (err) {
+      console.error('[scf] 队列认领失败：' + (err && err.message));
+    }
+  }
   if (jobId) {
     const { runJob } = require('./src/routes/generate');
     try {

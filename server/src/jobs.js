@@ -158,4 +158,19 @@ async function listDone(userId, limit) {
   }));
 }
 
-module.exports = { create, markRunning, complete, fail, get, getByIdem, listDone };
+/* 队列兜底：事件调用没能把 jobId 带进来时，worker 自己从表里领一条 pending。
+   两步走：先按 created_at 取最老的几条，再靠 markRunning 的原子抢占确认，
+   抢不到就换下一条。并发多个 worker 也不会把同一条任务跑两次（不会重复扣费）。 */
+async function claimNextPending(limit) {
+  const n = Math.max(1, Math.min(5, Number(limit) || 3));
+  const [rows] = await q(
+    `SELECT * FROM \`${TABLE}\` WHERE status = 'pending' ORDER BY created_at ASC LIMIT ${n}`,
+  );
+  for (const row of rows || []) {
+    const claimed = await markRunning(row.id);
+    if (claimed) return shape(row);
+  }
+  return null;
+}
+
+module.exports = { create, markRunning, complete, fail, get, getByIdem, listDone, claimNextPending };
