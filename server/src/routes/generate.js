@@ -253,15 +253,21 @@ async function resolveRayin(input, engine) {
   const needDb = !userKey && !prov;
   const fallback = needDb ? await appConfig.getGemini() : null;
   const openaiFallback = needDb ? await appConfig.getOpenAI() : null;
+  let openaiKey = userKey
+    || (engine === 'gpt-image' && prov && prov.key)
+    || config.OPENAI_KEY
+    || (openaiFallback && openaiFallback.key)
+    || '';
+  /* 访客 / 未配置时的平台兜底：直接取库里平台所有者那把 Key（只对 gpt-image 与 edits 生效）。
+     Key 只在服务端内存流转，不进响应、不进日志。 */
+  if (!openaiKey && (engine === 'gpt-image' || engine === '' || !engine)) {
+    openaiKey = (await appConfig.platformOpenAIKey()) || '';
+  }
   return {
     base: normalizeBase(
       (prov && prov.base) || rayin.base || (fallback && fallback.base) || (openaiFallback && openaiFallback.base)
     ),
-    openaiKey: userKey
-      || (engine === 'gpt-image' && prov && prov.key)
-      || config.OPENAI_KEY
-      || (openaiFallback && openaiFallback.key)
-      || '',
+    openaiKey,
     geminiKey: userKey
       || (engine === 'banana' && prov && prov.key)
       || config.GEMINI_KEY

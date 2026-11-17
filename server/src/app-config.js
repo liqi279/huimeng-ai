@@ -137,8 +137,41 @@ async function getOpenAI() {
   };
 }
 
+/* 平台所有者的 gpt-image Key（未登录访客兜底用）。
+ * 来源：user_documents 里带 providers['__rayin__:gpt-image'].key 的 api 文档。
+ * 等价于过去 OPENAI_KEY 环境变量的用途，但不再把密钥复制到第二个位置。
+ * 只在服务端内存里流转：不返回前端、不写日志、不回显、不落盘。 */
+let platformKey = { key: '', at: 0 };
+const PLATFORM_TTL_MS = 10 * 60 * 1000;
+
+async function platformOpenAIKey() {
+  const now = Date.now();
+  if (platformKey.key && now - platformKey.at < PLATFORM_TTL_MS) return platformKey.key;
+  try {
+    const [list] = await userStore.q(
+      `SELECT data FROM user_documents WHERE data LIKE '%__rayin__:gpt-image%' ORDER BY updated_at DESC LIMIT 50`,
+    );
+    for (const row of list || []) {
+      let doc = row && row.data;
+      if (typeof doc === 'string') {
+        try { doc = JSON.parse(doc); } catch (err) { continue; }
+      }
+      const prov = doc && doc.providers && doc.providers['__rayin__:gpt-image'];
+      const key = prov && typeof prov.key === 'string' ? prov.key.trim() : '';
+      if (key) {
+        platformKey = { key, at: now };
+        return key;
+      }
+    }
+  } catch (err) {
+    console.error('[app-config] 平台 Key 读取失败：' + (err && err.code || 'query-error'));
+  }
+  return '';
+}
+
 module.exports = {
   getGemini,
   getOpenAI,
   normalizeBase,
+  platformOpenAIKey,
 };
