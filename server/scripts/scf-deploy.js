@@ -309,6 +309,10 @@ async function ensureFunctionCredentials(current) {
     Environment: { Variables: Object.keys(merged).map((k) => ({ Key: k, Value: String(merged[k]) })) },
   });
   log('scf', '函数凭据已同步（共 ' + Object.keys(merged).length + ' 个环境变量，值不打印）');
+  /* 只打指纹：和线上 /api/diag/scf 的 credFingerprint 对齐即可确认是否真的写进去了 */
+  const crypto = require('crypto');
+  const fp = (v) => crypto.createHash('sha256').update(String(v || ''), 'utf8').digest('hex').slice(0, 8) + '/len' + String(v || '').length;
+  log('scf', '凭据指纹 ID=' + fp(wantId) + ' KEY=' + fp(wantKey));
 }
 
 async function updateCode(objectKey) {

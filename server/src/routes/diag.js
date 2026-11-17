@@ -131,6 +131,26 @@ router.get('/diag/scf', wrap(async (req, res) => {
       vpc: { hasVpc: Boolean(vpc.VpcId || vpc.SubnetId), vpcId: vpc.VpcId || '', subnetId: vpc.SubnetId || '' },
       envNames: Object.keys(vars).sort(),
       envEmpty: Object.keys(vars).filter((k) => !String(vars[k] || '').trim()).sort(),
+      /* 只报指纹和长度：用来和发布方打印的指纹对齐，判断「函数实际读到的密钥
+         是不是 CI 里那一个」。明文一律不出函数。 */
+      credFingerprint: (function () {
+        const crypto = require('crypto');
+        const fp = (v) => {
+          const s = String(v == null ? '' : v);
+          if (!s) return 'empty';
+          return crypto.createHash('sha256').update(s, 'utf8').digest('hex').slice(0, 8) + '/len' + s.length;
+        };
+        return {
+          COS_SECRET_ID: fp(vars.COS_SECRET_ID),
+          COS_SECRET_KEY: fp(vars.COS_SECRET_KEY),
+          S3_ACCESS_KEY_ID: fp(vars.S3_ACCESS_KEY_ID),
+          S3_SECRET_ACCESS_KEY: fp(vars.S3_SECRET_ACCESS_KEY),
+          SCF_REGION: String(vars.SCF_REGION || '<未设置>'),
+          SCF_FUNCTION: String(vars.SCF_FUNCTION || '<未设置>'),
+          effectiveId: fp(require('../config').COS_SECRET_ID),
+          effectiveKey: fp(require('../config').COS_SECRET_KEY),
+        };
+      })(),
       mysqlUrlHost: (function () {
         try {
           const u = new URL(String(vars.MYSQL_URL || ''));
