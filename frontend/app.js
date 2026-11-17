@@ -4006,24 +4006,65 @@ async function runBackendImage(job, prompt) {
   /* 日志要记录「真实发出的模型名」，而不是界面上的展示名 */
   job.sentModel = String(payload.model || (payload.provider && payload.provider.model) || '');
 
-  /* 长任务进度反馈：上游出图常见 20~60s，期间不能一直停在「提交任务…」 */
+  /* 提交即返回 + 轮询取结果：上游出图常 20~60s，单次长连接被中间层在 30s
+     掐断也不影响任务，后台跑完写库，前端从任务表取回。 */
+  updateJobStatus(job, '已提交，等待后端接单…');
+  var submitted = await window.HM.api.submitGenerateJob(payload);
   var waitTip1 = setTimeout(function () { updateJobStatus(job, '已提交，正在等待上游出图…'); }, 10000);
-  var waitTip2 = setTimeout(function () { updateJobStatus(job, '上游仍在生成（最长约 4 分钟），请稍候…'); }, 45000);
-  var data;
+  var waitTip2 = setTimeout(function () { updateJobStatus(job, '上游仍在生成（最长约 5 分钟），请稍候…'); }, 45000);
+  var settled;
   try {
-    data = await window.HM.api.generate(payload, 280000);
+    settled = await waitGenerateJob(submitted);
   } finally {
     clearTimeout(waitTip1);
     clearTimeout(waitTip2);
   }
+  var data = settled.result;
   const item = data && data.items && data.items[0];
-  if (!item || !item.url) throw new Error('后端未返回图片');
+  if (!item || !item.url) throw new Error((settled.error && settled.error.message) || '后端未返回图片');
   if (item.width && item.height) applyActualSize(job, item.width, item.height);
   return {
     url: window.HM.api.mediaUrl ? window.HM.api.mediaUrl(item.url) : item.url,
     seed: item.seed || job.seed
   };
 }
+
+/* 轮询任务直到 done/failed。兼容两种返回：
+   1) 异步排队：{id, status:'pending'} → 每 2s 查一次；
+   2) 后端没拿到平台凭据时的同步兜底：直接带 result/error 返回。 */
+async function waitGenerateJob(submitted) {
+  if (!submitted) throw new Error('后端未返回任务号');
+  if (submitted.status === 'done') return submitted;
+  if (submitted.status === 'failed') throw jobError(submitted.error);
+  var id = submitted.id;
+  if (!id) throw new Error('后端未返回任务号');
+  var deadline = Date.now() + 300000;
+  while (Date.now() < deadline) {
+    await new Promise(function (resolve) { setTimeout(resolve, 2000); });
+    var st;
+    try {
+      st = await window.HM.api.getGenerateJob(id);
+    } catch (err) {
+      /* 单次查询失败（网关抖动）不代表任务失败，继续轮询 */
+      if (err && err.status === 404) throw err;
+      continue;
+    }
+    if (!st) continue;
+    if (st.status === 'done') return st;
+    if (st.status === 'failed') throw jobError(st.error);
+  }
+  throw new Error('生成超时（5 分钟未完成），请稍后重试');
+}
+
+/* 把任务表里持久化的错误类别还原成可展示的错误 */
+function jobError(info) {
+  var err = new Error((info && info.message) || '生成失败');
+  if (info && info.hint) err.hint = info.hint;
+  if (info && info.category) err.category = info.category;
+  if (info && info.status) err.status = info.status;
+  return err;
+}
+
 
 /* ---------------- 模型名自愈 ----------------
  * 上游报 Model "x" is not found 时，用这条接入配置自己的 Key 拉一次真实模型清单，

@@ -150,6 +150,15 @@ function httpsJson(url, opts = {}) {
       });
     });
 
+    /* 30s 空闲断链的补充防护：中间层常在链路空闲 30s 时回收连接，
+       开启 TCP keepalive（15s 探测一次）让链路始终有报文，避免被判定空闲。 */
+    req.on('socket', (socket) => {
+      try {
+        socket.setKeepAlive(true, 15000);
+        socket.setNoDelay(true);
+      } catch (err) {}
+    });
+
     req.on('timeout', () => {
       /* 只覆盖「连接+首字节」阶段；整体与读响应另有定时器 */
       if (Date.now() - startedAt >= connectTimeoutMs) {
@@ -186,15 +195,37 @@ function isRetryableUpstream(err) {
 }
 
 async function withOneRetry(deadline, fn) {
+  /* 每次尝试的耗时/错误码都记下来，失败时随任务一起落库：
+     下次出问题能直接看到「有没有重试、两次各花多久、各自什么错误」。 */
+  const attempts = [];
   let lastErr;
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    const startedAt = Date.now();
     try {
-      return await fn(attempt);
+      const value = await fn(attempt);
+      attempts.push({ attempt: attempt + 1, ok: true, elapsedMs: Date.now() - startedAt });
+      return value;
     } catch (err) {
+      attempts.push({
+        attempt: attempt + 1,
+        ok: false,
+        elapsedMs: Date.now() - startedAt,
+        status: Number((err && (err.status || err.statusCode)) || 0),
+        code: String((err && err.code) || ''),
+        message: String((err && err.message) || '').slice(0, 200),
+        retryable: isRetryableUpstream(err),
+      });
       lastErr = err;
-      if (attempt === 1 || !isRetryableUpstream(err)) throw err;
+      if (attempt === 1 || !isRetryableUpstream(err)) {
+        err.attempts = attempts;
+        throw err;
+      }
       /* 剩余预算不足 20 秒就不再重试 */
-      if (Date.now() + 20000 > deadline) throw err;
+      if (Date.now() + 20000 > deadline) {
+        err.attempts = attempts;
+        err.retrySkipped = 'budget';
+        throw err;
+      }
     }
   }
   throw lastErr;

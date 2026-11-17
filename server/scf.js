@@ -123,6 +123,21 @@ exports.main_handler = async (event, context) => {
   /* 别让 mysql2 / ali-oss 的句柄把事件循环挂住导致超时 */
   if (context) context.callbackWaitsForEmptyEventLoop = false;
   await waitReady();
+
+  /* 异步任务入口：提交接口通过 SCF Invoke(Event) 再调一次本函数，
+     payload 形如 {"__job":"<jobId>"}。这类调用不是 HTTP 请求，
+     直接跑生成任务并把结果写回 generate_jobs，然后立即返回。 */
+  if (event && typeof event === 'object' && event.__job) {
+    const { runJob } = require('./src/routes/generate');
+    try {
+      await runJob(event.__job);
+    } catch (err) {
+      /* 失败已由 runJob 写入任务表，这里只保证事件调用本身不抛错重试 */
+      console.error('[scf] job failed', event.__job, err && err.message);
+    }
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: '{"ok":true}' };
+  }
+
   const out = await handler(normalizeEvent(event), context);
   return withInlineDisposition(out);
 };

@@ -7,6 +7,8 @@ const appConfig = require('../app-config');
 const catalog = require('../catalog');
 const mediaStore = require('../media-store');
 const userData = require('../user-data');
+const jobs = require('../jobs');
+const { triggerJob } = require('../scf-invoke');
 const { authOptional } = require('../auth');
 const {
   jsonError,
@@ -1265,7 +1267,8 @@ function absolutizeItems(items, req) {
   });
 }
 
-router.post('/generate', authOptional, wrap(async (req, res) => {
+/* 生图/视频/配音的核心处理：HTTP 路由与异步任务（SCF 事件调用）共用同一份实现 */
+async function handleGenerate(req, res) {
   const body = req.body || {};
   const mode = body.mode;
   assert(['image', 'video', 'audio'].includes(mode), 400, '未知生成模式', 'mode 仅支持 image / video / audio');
@@ -1313,6 +1316,130 @@ router.post('/generate', authOptional, wrap(async (req, res) => {
     }));
     throw err;
   }
+}
+
+router.post('/generate', authOptional, wrap(handleGenerate));
+
+/* -------------------------------------------------------------
+ * 异步生成任务：提交立即返回 jobId，真正的生成在 SCF 事件调用里跑，
+ * 结果落 generate_jobs 表，前端轮询。用于绕开单次长连接被掐断。
+ * ------------------------------------------------------------- */
+function fakeResponse() {
+  return {
+    statusCode: 200,
+    headers: {},
+    body: null,
+    status(code) { this.statusCode = code; return this; },
+    setHeader(k, v) { this.headers[k] = v; return this; },
+    json(obj) { this.body = obj; this.statusCode = this.statusCode || 200; return this; },
+    send(obj) { this.body = obj; return this; },
+    end() { return this; },
+  };
+}
+
+function publicHost() {
+  try {
+    return new URL(process.env.API_BASE || 'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com').host;
+  } catch (err) {
+    return '';
+  }
+}
+
+/* 事件调用入口：由 scf.js 在识别到 __job 时调用 */
+async function runJob(jobId) {
+  const job = await jobs.get(jobId);
+  if (!job) return;
+  if (job.status === 'done' || job.status === 'failed') return;
+  await jobs.markRunning(jobId);
+  const started = Date.now();
+  const req = {
+    user: job.user || null,
+    headers: { host: publicHost() },
+    body: job.payload || {},
+  };
+  const res = fakeResponse();
+  try {
+    await handleGenerate(req, res);
+    const code = Number(res.statusCode) || 200;
+    if (code >= 400 || !res.body || res.body.error) {
+      const err = (res.body && res.body.error) || {};
+      await jobs.fail(jobId, {
+        status: code,
+        message: err.message || '生成失败',
+        hint: err.hint || '',
+        category: code === 504 ? 'timeout' : (code === 502 ? 'network' : (code >= 500 ? 'upstream' : 'request')),
+      }, Date.now() - started);
+      return;
+    }
+    await jobs.complete(jobId, res.body, Date.now() - started);
+  } catch (err) {
+    const status = Number((err && (err.status || err.statusCode)) || 500);
+    await jobs.fail(jobId, {
+      status,
+      message: (err && err.message) || '生成失败',
+      hint: (err && err.hint) || '',
+      code: (err && err.code) || '',
+      attempts: (err && err.attempts) || null,
+      retrySkipped: (err && err.retrySkipped) || '',
+      category: status === 504 ? 'timeout' : (status === 502 ? 'network' : 'upstream'),
+    }, Date.now() - started);
+  }
+}
+
+router.post('/generate/jobs', authOptional, wrap(async (req, res) => {
+  const id = randomToken(12);
+  const user = req.user ? {
+    id: req.user.id,
+    username: req.user.username,
+    role: req.user.role,
+  } : null;
+  await jobs.create({ id, userId: user ? String(user.id) : '', payload: req.body || {}, user });
+  const invoked = await triggerJob(id);
+  if (!invoked) {
+    /* 没拿到平台凭据时不能假装排队：直接同步执行并返回结果，保证功能不消失 */
+    await runJob(id);
+    const done = await jobs.get(id);
+    res.status(done && done.status === 'done' ? 200 : 502).json({
+      id,
+      status: done ? done.status : 'failed',
+      result: done ? done.result : null,
+      error: done ? done.error : { message: '异步触发不可用，同步执行失败' },
+    });
+    return;
+  }
+  res.status(202).json({ id, status: 'pending' });
+}));
+
+router.get('/generate/jobs/:id', authOptional, wrap(async (req, res) => {
+  const userId = req.user ? String(req.user.id) : '';
+  const job = await jobs.get(req.params.id, userId);
+  if (!job) {
+    res.status(404).json({ error: { message: '任务不存在或已过期' } });
+    return;
+  }
+  /* 兜底：后台事件调用没能真正起来时，任务会一直停在 pending/running。
+     超过 6 分钟判定为失败，并持久化错误类别，便于下次一眼定位。 */
+  if ((job.status === 'pending' || job.status === 'running') && Date.now() - job.updatedAt > 360000) {
+    const error = {
+      status: 504,
+      message: '后台任务未启动或已中断',
+      hint: 'SCF 事件调用未执行（检查函数权限/并发），任务记录见 generate_jobs',
+      category: 'worker',
+    };
+    await jobs.fail(job.id, error, Date.now() - job.createdAt);
+    res.json({ id: job.id, status: 'failed', result: null, error, durationMs: Date.now() - job.createdAt });
+    return;
+  }
+  res.json({
+    id: job.id,
+    status: job.status,
+    result: job.result,
+    error: job.error,
+    durationMs: job.durationMs,
+    updatedAt: job.updatedAt,
+  });
 }));
 
 module.exports = router;
+module.exports.handleGenerate = handleGenerate;
+module.exports.runJob = runJob;

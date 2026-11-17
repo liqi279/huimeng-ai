@@ -1,0 +1,103 @@
+'use strict';
+
+/* =============================================================
+ * 触发自身异步执行（SCF InvocationType=Event）
+ * -------------------------------------------------------------
+ * 生图长任务不能挂在用户的单次 HTTP 连接上（30s 左右会被中间层掐断）。
+ * 提交接口把任务落库后，用平台自带的异步调用再跑一次本函数，
+ * 由那次调用承担重活，结果写回 jobs 表，前端轮询取结果。
+ *
+ * 只复用函数已有的环境变量（COS_SECRET_ID/COS_SECRET_KEY + COS_REGION），
+ * 不引入任何新服务；缺少凭据时返回 false，调用方退化为同步执行。
+ * ============================================================= */
+
+const crypto = require('crypto');
+const https = require('https');
+const config = require('./config');
+
+const HOST = 'scf.tencentcloudapi.com';
+const SERVICE = 'scf';
+const VERSION = '2018-04-16';
+
+function sha256Hex(data) {
+  return crypto.createHash('sha256').update(data, 'utf8').digest('hex');
+}
+
+function hmac(key, data, enc) {
+  return crypto.createHmac('sha256', key).update(data, 'utf8').digest(enc);
+}
+
+function tc3Headers(action, payload, secretId, secretKey) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const date = new Date(timestamp * 1000).toISOString().slice(0, 10);
+  const contentType = 'application/json; charset=utf-8';
+  const signedHeaders = 'content-type;host';
+  const canonicalRequest = [
+    'POST',
+    '/',
+    '',
+    `content-type:${contentType}\nhost:${HOST}\n`,
+    signedHeaders,
+    sha256Hex(payload),
+  ].join('\n');
+  const scope = `${date}/${SERVICE}/tc3_request`;
+  const stringToSign = ['TC3-HMAC-SHA256', String(timestamp), scope, sha256Hex(canonicalRequest)].join('\n');
+  const kDate = hmac('TC3' + secretKey, date);
+  const kService = hmac(kDate, SERVICE);
+  const kSigning = hmac(kService, 'tc3_request');
+  const signature = hmac(kSigning, stringToSign, 'hex');
+  return {
+    Authorization: `TC3-HMAC-SHA256 Credential=${secretId}/${scope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
+    'Content-Type': contentType,
+    Host: HOST,
+    'X-TC-Action': action,
+    'X-TC-Timestamp': String(timestamp),
+    'X-TC-Version': VERSION,
+    'X-TC-Region': config.COS_REGION || 'ap-guangzhou',
+  };
+}
+
+function scfInvoke(payloadObj) {
+  const secretId = config.COS_SECRET_ID || config.S3_ACCESS_KEY_ID || '';
+  const secretKey = config.COS_SECRET_KEY || config.S3_SECRET_ACCESS_KEY || '';
+  if (!secretId || !secretKey) return Promise.resolve(false);
+  const body = JSON.stringify({
+    FunctionName: process.env.SCF_FUNCTION || 'huimeng-api',
+    Namespace: process.env.SCF_NAMESPACE || 'default',
+    InvocationType: 'Event',
+    Payload: Buffer.from(JSON.stringify(payloadObj)).toString('base64'),
+  });
+  const headers = tc3Headers('Invoke', body, secretId, secretKey);
+  return new Promise((resolve) => {
+    const req = https.request({
+      method: 'POST',
+      hostname: HOST,
+      path: '/',
+      headers: Object.assign({ 'Content-Length': Buffer.byteLength(body) }, headers),
+      timeout: 15000,
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        const text = Buffer.concat(chunks).toString('utf8');
+        let ok = res.statusCode >= 200 && res.statusCode < 300;
+        try {
+          const json = JSON.parse(text);
+          if (json && json.Response && json.Response.Error) ok = false;
+        } catch (err) {}
+        resolve(ok);
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('invoke timeout')));
+    req.on('error', () => resolve(false));
+    req.write(body);
+    req.end();
+  });
+}
+
+/* SCF 事件调用时，业务负载放在 event 顶层；这里塞一个标记，入口据此分流 */
+function triggerJob(jobId) {
+  return scfInvoke({ __job: jobId });
+}
+
+module.exports = { triggerJob };

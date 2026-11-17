@@ -175,6 +175,15 @@
     return request('/generate', { method: 'POST', body: payload }, timeoutMs || 180000);
   };
 
+  /* 异步生成：提交立即返回 jobId（不占长连接），结果靠轮询取回。
+     单次 HTTP 连接在 30s 左右被中间层掐断时，任务仍在后台跑完。 */
+  api.submitGenerateJob = function (payload) {
+    return request('/generate/jobs', { method: 'POST', body: payload }, 20000);
+  };
+  api.getGenerateJob = function (id) {
+    return request('/generate/jobs/' + encodeURIComponent(id), {}, 15000);
+  };
+
   /* 工作流 TTS：声音设计（Edge-TTS 免费） */
   api.ttsDesign = function (payload, timeoutMs) {
     return request('/tts/design', { method: 'POST', body: payload }, timeoutMs || 60000);
