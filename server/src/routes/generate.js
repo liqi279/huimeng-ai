@@ -429,7 +429,7 @@ async function persistRemoteImage(url, base, key) {
   }
 
   const tryLoad = async (candidate, withAuth) => {
-    const headers = { Accept: 'image/*, */*;q=0.8' };
+    const headers = Object.assign({ Accept: 'image/*, */*;q=0.8' }, UPSTREAM_BROWSER_HEADERS);
     if (withAuth && key) headers.Authorization = `Bearer ${key}`;
     const res = await fetchWithTimeout(candidate, { method: 'GET', headers }, 45000);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -594,6 +594,15 @@ async function persistInlineImage(url) {
    timing 由调用方传入，用于落库定位断点（收到请求 / 发出上游 / 响应头 / 完整响应体）。 */
 const IMAGE_DEADLINE_MS = 240000;
 
+/* 上游前置 Cloudflare 会按客户端指纹分流（实测 2026-11-18）：
+ *   带浏览器 UA、且不额外声明 Accept → 正常回 data[0].b64_json（字节随响应到，能落 COS）
+ *   无 UA 或 显式声明 Accept → 回站内相对路径 /api/uploads/media/xxx.png，外部 404
+ * 因此生成请求只伪装 UA，其余头保持极简，与实测成功那次完全一致。 */
+const UPSTREAM_BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+    + '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+};
+
 async function generateGptImage({ base, key, model, prompt, size, ref, timing }) {
   const deadline = Date.now() + IMAGE_DEADLINE_MS;
   const t = timing || {};
@@ -610,7 +619,11 @@ async function generateGptImage({ base, key, model, prompt, size, ref, timing })
     /* edits 不做任何重试：请求体已发出，失败可能已被上游受理计费 */
     const res = await fetchWithTimeout(
       `${base}/images/edits`,
-      { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form },
+      {
+        method: 'POST',
+        headers: Object.assign({ Authorization: `Bearer ${key}` }, UPSTREAM_BROWSER_HEADERS),
+        body: form,
+      },
       IMAGE_TIMEOUT,
     );
     t.upstreamEndAt = Date.now();
@@ -626,7 +639,7 @@ async function generateGptImage({ base, key, model, prompt, size, ref, timing })
   const data = await withPreSendRetry(deadline, async () => {
     const r = await httpsJson(`${base}/images/generations`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${key}` },
+      headers: Object.assign({ Authorization: `Bearer ${key}` }, UPSTREAM_BROWSER_HEADERS),
       body: payload,
       connectTimeoutMs: 6000,
       headersTimeoutMs: 100000,
@@ -773,6 +786,19 @@ function applyStyle(prompt, lora) {
   };
 }
 
+/* 取图能力差异（实测 2026-11-18，同一把 Key 同一接入点）：
+ *   gpt-image-2            → 只回相对路径 /api/uploads/media/xxx.png，外部 404，拿不到图
+ *   gpt-image-2.5/2.6-*    → 直接回 data[0].b64_json，字节随响应一起到，可落 COS
+ * 前端可能还记着旧模型名（gpt-image-2 / gpt-image-1），这里统一改写成能出字节的模型，
+ * 避免「上游扣了费、我们却拿不到图」。 */
+const B64_IMAGE_MODEL = 'gpt-image-2.5-flare';
+function effectiveImageModel(requested) {
+  const m = String(requested || '').trim();
+  if (!m) return B64_IMAGE_MODEL;
+  if (/^gpt-image-(1|2)$/i.test(m)) return B64_IMAGE_MODEL;
+  return m;
+}
+
 async function generateImages(body) {
   const engine = ['flux', 'openai', 'gpt-image', 'banana'].includes(body.engine) ? body.engine : 'flux';
   const prompt = readPrompt(body.prompt, '提示词');
@@ -831,7 +857,7 @@ async function generateImages(body) {
         url = await withKeyFallback(gptKeys, (key) => generateGptImage({
           base: rayin.base,
           key,
-          model: model || rayin.gptModel,
+          model: effectiveImageModel(model || rayin.gptModel),
           prompt: styled.prompt,
           size,
           ref: refs[0],
@@ -864,6 +890,7 @@ async function generateImages(body) {
       timing,
       warning: persisted.warning || undefined,
       stored: persisted.stored || undefined,
+      model: engine === 'gpt-image' ? effectiveImageModel(model || rayin.gptModel) : undefined,
       /* 上游原始图址留痕：转存失败时能直接看出上游给的地址是什么 */
       upstreamUrl: persisted.warning && !url.startsWith('data:') ? String(url).slice(0, 300) : undefined,
     };
