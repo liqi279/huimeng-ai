@@ -1514,6 +1514,32 @@ router.get('/upstream/probe', wrap(async (req, res) => {
     return;
   }
   const port = Number(req.query.port) || 443;
+  /* https=1：不只测 TCP，而是从函数内真的发一次 HTTPS GET（无凭据，预期 401），
+     用来区分「TCP 不通」与「TLS/HTTP 层被断」 */
+  if (String(req.query.https || '') === '1') {
+    const t0 = Date.now();
+    try {
+      const r = await httpsJson(`https://${host}/v1/models`, {
+        method: 'GET',
+        body: '',
+        connectTimeoutMs: 8000,
+        headersTimeoutMs: 15000,
+        totalTimeoutMs: 25000,
+      });
+      res.json({
+        mode: 'https', host, ok: true, status: r.status,
+        elapsedMs: Date.now() - t0, headersMs: r.headersMs, sample: String(r.text || '').slice(0, 200),
+      });
+    } catch (err) {
+      res.json({
+        mode: 'https', host, ok: false, elapsedMs: Date.now() - t0,
+        code: (err && err.code) || '', status: (err && err.status) || 0,
+        message: (err && err.message) || '', hint: (err && err.hint) || '',
+        address: (err && err.address) || '',
+      });
+    }
+    return;
+  }
   const list = await new Promise((resolve) => {
     dns.lookup(host, { all: true, family: 4 }, (err, a) => {
       resolve(err || !a ? [] : a.map((x) => x.address));
