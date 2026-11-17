@@ -146,7 +146,7 @@ const PLATFORM_TTL_MS = 10 * 60 * 1000;
 
 async function platformOpenAIKey() {
   const now = Date.now();
-  if (platformKey.key && now - platformKey.at < PLATFORM_TTL_MS) return platformKey.key;
+  if (platformKey.key && now - platformKey.at < PLATFORM_TTL_MS) return platformKey;
   try {
     const [list] = await userStore.q(
       `SELECT data FROM user_documents WHERE data LIKE '%__rayin__:gpt-image%' ORDER BY updated_at DESC LIMIT 50`,
@@ -159,14 +159,16 @@ async function platformOpenAIKey() {
       const prov = doc && doc.providers && doc.providers['__rayin__:gpt-image'];
       const key = prov && typeof prov.key === 'string' ? prov.key.trim() : '';
       if (key) {
-        platformKey = { key, at: now };
-        return key;
+        const base = prov && typeof prov.base === 'string' ? normalizeBase(prov.base.trim()) : '';
+        const model = prov && typeof prov.model === 'string' ? prov.model.trim() : '';
+        platformKey = { key, base, model, at: now };
+        return platformKey;
       }
     }
   } catch (err) {
     console.error('[app-config] 平台 Key 读取失败：' + (err && err.code || 'query-error'));
   }
-  return '';
+  return { key: '', base: '', model: '', at: now };
 }
 
 module.exports = {

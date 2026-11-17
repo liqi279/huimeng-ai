@@ -259,13 +259,22 @@ async function resolveRayin(input, engine) {
     || (openaiFallback && openaiFallback.key)
     || '';
   /* 访客 / 未配置时的平台兜底：直接取库里平台所有者那把 Key（只对 gpt-image 与 edits 生效）。
-     Key 只在服务端内存流转，不进响应、不进日志。 */
+     Key 只在服务端内存流转，不进响应、不进日志。
+     如果库里同时存了这个通道的 base / model，一并采用——它才是账号实际能连通的接入点。 */
+  let platformBase = '';
+  let platformModel = '';
   if (!openaiKey && (engine === 'gpt-image' || engine === '' || !engine)) {
-    openaiKey = (await appConfig.platformOpenAIKey()) || '';
+    const platform = await appConfig.platformOpenAIKey();
+    if (platform && platform.key) {
+      openaiKey = platform.key;
+      platformBase = platform.base || '';
+      platformModel = platform.model || '';
+    }
   }
   return {
     base: normalizeBase(
-      (prov && prov.base) || rayin.base || (fallback && fallback.base) || (openaiFallback && openaiFallback.base)
+      (prov && prov.base) || rayin.base || platformBase
+        || (fallback && fallback.base) || (openaiFallback && openaiFallback.base)
     ),
     openaiKey,
     geminiKey: userKey
@@ -274,7 +283,9 @@ async function resolveRayin(input, engine) {
       || (fallback && fallback.key)
       || '',
     gptModel: (prov && prov.model)
-      || (typeof rayin.gptModel === 'string' && rayin.gptModel.trim() ? rayin.gptModel.trim() : config.GPT_MODEL),
+      || (typeof rayin.gptModel === 'string' && rayin.gptModel.trim() ? rayin.gptModel.trim() : '')
+      || platformModel
+      || config.GPT_MODEL,
     bananaModel: (engine === 'banana' && prov && prov.model)
       || (typeof rayin.bananaModel === 'string' && rayin.bananaModel.trim()
         ? rayin.bananaModel.trim()
