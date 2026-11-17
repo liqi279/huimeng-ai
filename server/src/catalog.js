@@ -61,6 +61,28 @@ const RAYIN_MODELS = [
     desc: 'GPT Image 2.5 Sunburst 细节增强版，画面锐利、纹理丰富。',
     tags: ['GPT', 'Sunburst', '细节'],
   },
+  {
+    id: 'gpt-image-2.6-flare',
+    engine: 'gpt-image',
+    keyGroup: 'openai',
+    model: 'gpt-image-2.6-flare',
+    name: 'GPT Image 2.6 Flare',
+    badge: 'GPT · 2.6 光影',
+    hint: '新一代光影 · 氛围渲染',
+    desc: 'GPT Image 2.6 Flare 光影增强版，新一代模型，擅长逆光与氛围渲染。',
+    tags: ['GPT', 'Flare', '2.6'],
+  },
+  {
+    id: 'gpt-image-2.6-sunburst',
+    engine: 'gpt-image',
+    keyGroup: 'openai',
+    model: 'gpt-image-2.6-sunburst',
+    name: 'GPT Image 2.6 Sunburst',
+    badge: 'GPT · 2.6 细节',
+    hint: '新一代高细节 · 锐度爆发',
+    desc: 'GPT Image 2.6 Sunburst 细节增强版，新一代模型，纹理更丰富。',
+    tags: ['GPT', 'Sunburst', '2.6'],
+  },
 ];
 
 /* 动漫 LoRA 风格包：把 LoRA 触发词写进提示词，兼容所有通道 */
