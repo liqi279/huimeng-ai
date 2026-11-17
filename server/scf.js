@@ -119,21 +119,37 @@ function withInlineDisposition(out) {
   return out;
 }
 
+/* 异步任务的 jobId 可能来自两处：
+   1) 事件体 event.__job（老写法，Invoke 传 Payload 时才有；当前 SCF 不支持 Payload）
+   2) context.clientContext —— base64 的 JSON，这是 Invoke 接口唯一能带数据的通道 */
+function jobIdFromContext(context) {
+  try {
+    const raw = context && (context.clientContext || context.ClientContext);
+    if (!raw) return '';
+    const text = Buffer.from(String(raw), 'base64').toString('utf8');
+    const json = JSON.parse(text);
+    return json && json.__job ? String(json.__job) : '';
+  } catch (e) {
+    return '';
+  }
+}
+
 exports.main_handler = async (event, context) => {
   /* 别让 mysql2 / ali-oss 的句柄把事件循环挂住导致超时 */
   if (context) context.callbackWaitsForEmptyEventLoop = false;
   await waitReady();
 
   /* 异步任务入口：提交接口通过 SCF Invoke(Event) 再调一次本函数，
-     payload 形如 {"__job":"<jobId>"}。这类调用不是 HTTP 请求，
+     携带 {"__job":"<jobId>"}。这类调用不是 HTTP 请求，
      直接跑生成任务并把结果写回 generate_jobs，然后立即返回。 */
-  if (event && typeof event === 'object' && event.__job) {
+  const jobId = (event && typeof event === 'object' && event.__job) || jobIdFromContext(context);
+  if (jobId) {
     const { runJob } = require('./src/routes/generate');
     try {
-      await runJob(event.__job);
+      await runJob(jobId);
     } catch (err) {
       /* 失败已由 runJob 写入任务表，这里只保证事件调用本身不抛错重试 */
-      console.error('[scf] job failed', event.__job, err && err.message);
+      console.error('[scf] job failed', jobId, err && err.message);
     }
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: '{"ok":true}' };
   }

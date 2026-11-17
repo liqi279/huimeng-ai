@@ -70,7 +70,11 @@ function scfInvoke(payloadObj) {
     FunctionName: process.env.SCF_FUNCTION || 'huimeng-api',
     Namespace: process.env.SCF_NAMESPACE || 'default',
     InvocationType: 'Event',
-    Payload: Buffer.from(JSON.stringify(payloadObj)).toString('base64'),
+    /* 不能传 Payload：SCF 的 Invoke 接口不认这个参数，会直接回
+       UnknownParameter（实测 2026-11-17，RequestId 可查），
+       于是每次「异步触发」都失败、退化成同步跑完整张图。
+       数据走 ClientContext：base64 的 JSON，函数里从 context.clientContext 取。 */
+    ClientContext: Buffer.from(JSON.stringify(payloadObj), 'utf8').toString('base64'),
   });
   const headers = tc3Headers('Invoke', body, secretId, secretKey);
   return new Promise((resolve) => {
