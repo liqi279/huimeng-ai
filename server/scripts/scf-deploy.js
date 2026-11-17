@@ -282,6 +282,35 @@ async function ensureRuntimeLimits(current) {
   log('scf', '函数超时已更新为 ' + want + 's');
 }
 
+/* 函数的腾讯云凭据必须与发布方一致。
+   线上事故：函数环境里的 COS_SECRET_ID 是已经轮换掉的旧值，表现是
+   AuthFailure.SecretIdNotFound —— 于是「异步触发自己」每次都失败（退化成
+   同步跑 30~60s 的长请求），图片回写 COS 也会失败。发布时顺手对齐，
+   避免只在控制台手改、下次又漂移。只写不读，日志不打印任何密钥。 */
+async function ensureFunctionCredentials(current) {
+  const wantId = process.env.COS_SECRET_ID || process.env.S3_ACCESS_KEY_ID || '';
+  const wantKey = process.env.COS_SECRET_KEY || process.env.S3_SECRET_ACCESS_KEY || '';
+  if (!wantId || !wantKey) {
+    log('scf', '发布方未提供 COS 密钥，跳过函数凭据同步');
+    return;
+  }
+  const env = (current && current.env) || {};
+  const idOk = String(env.COS_SECRET_ID || '') === wantId;
+  const keyOk = String(env.COS_SECRET_KEY || '') === wantKey;
+  if (idOk && keyOk) {
+    log('scf', '函数凭据与发布密钥一致，无需调整');
+    return;
+  }
+  log('scf', '函数凭据已过期/不一致（SecretId ' + (idOk ? '一致' : '不一致') + '，SecretKey ' + (keyOk ? '一致' : '不一致') + '）→ 同步');
+  const merged = Object.assign({}, env, { COS_SECRET_ID: wantId, COS_SECRET_KEY: wantKey });
+  await tc3Request('UpdateFunctionConfiguration', {
+    FunctionName: CFG.functionName,
+    Namespace: CFG.namespace,
+    Environment: { Variables: Object.keys(merged).map((k) => ({ Key: k, Value: String(merged[k]) })) },
+  });
+  log('scf', '函数凭据已同步（共 ' + Object.keys(merged).length + ' 个环境变量，值不打印）');
+}
+
 async function updateCode(objectKey) {
   const t0 = Date.now();
   log('scf', 'UpdateFunctionCode → ' + CFG.bucket + '/' + objectKey);
@@ -506,6 +535,7 @@ async function doRollback() {
   const before = await getFunction();
   log('rollback', '当前 ModTime=' + before.modTime);
   await ensureRuntimeLimits(before);
+  await ensureFunctionCredentials(before);
   await waitActive(120000);
   await updateCodeWithRetry(key);
   const after = await waitUpdated(before.modTime, 120000);
@@ -548,6 +578,7 @@ async function doDeploy() {
   /* 3) 更新函数 + 轮询 */
   try {
     await ensureRuntimeLimits(before);
+    await ensureFunctionCredentials(before);
     await waitActive(120000);
     await updateCodeWithRetry(CFG.objectKey);
     await waitUpdated(before ? before.modTime : '', 120000);
