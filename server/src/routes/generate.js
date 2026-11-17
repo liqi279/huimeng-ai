@@ -2,8 +2,6 @@
 
 const express = require('express');
 const crypto = require('crypto');
-const dns = require('dns');
-const net = require('net');
 const config = require('../config');
 const appConfig = require('../app-config');
 const catalog = require('../catalog');
@@ -1505,65 +1503,7 @@ router.post('/generate/jobs', authOptional, wrap(async (req, res) => {
   res.status(202).json({ id, status: 'pending' });
 }));
 
-/* 出网诊断：从函数内部看某个域名的每条 A 记录能不能建连（不涉及任何凭据） */
-router.get('/upstream/probe', wrap(async (req, res) => {
-  const host = String(req.query.host || '').trim().toLowerCase();
-  const ALLOW = new Set(['www.rayinai.com']);
-  if (!ALLOW.has(host)) {
-    res.status(400).json({ error: { message: 'host 不在白名单' } });
-    return;
-  }
-  const port = Number(req.query.port) || 443;
-  /* https=1：不只测 TCP，而是从函数内真的发一次 HTTPS GET（无凭据，预期 401），
-     用来区分「TCP 不通」与「TLS/HTTP 层被断」 */
-  if (String(req.query.https || '') === '1') {
-    const t0 = Date.now();
-    try {
-      const r = await httpsJson(`https://${host}/v1/models`, {
-        method: 'GET',
-        body: '',
-        connectTimeoutMs: 8000,
-        headersTimeoutMs: 15000,
-        totalTimeoutMs: 25000,
-      });
-      res.json({
-        mode: 'https', host, ok: true, status: r.status,
-        elapsedMs: Date.now() - t0, headersMs: r.headersMs, sample: String(r.text || '').slice(0, 200),
-      });
-    } catch (err) {
-      res.json({
-        mode: 'https', host, ok: false, elapsedMs: Date.now() - t0,
-        code: (err && err.code) || '', status: (err && err.status) || 0,
-        message: (err && err.message) || '', hint: (err && err.hint) || '',
-        address: (err && err.address) || '',
-      });
-    }
-    return;
-  }
-  const list = await new Promise((resolve) => {
-    dns.lookup(host, { all: true, family: 4 }, (err, a) => {
-      resolve(err || !a ? [] : a.map((x) => x.address));
-    });
-  });
-  const started = Date.now();
-  const results = await Promise.all(list.map((ip) => new Promise((resolve) => {
-    const t0 = Date.now();
-    const socket = net.connect({ host: ip, port, family: 4 });
-    let done = false;
-    const finish = (ok, extra) => {
-      if (done) return;
-      done = true;
-      try { socket.destroy(); } catch (e) {}
-      resolve(Object.assign({ ip, ok, ms: Date.now() - t0 }, extra || {}));
-    };
-    socket.setTimeout(5000, () => finish(false, { code: 'CONNECT_TIMEOUT' }));
-    socket.once('connect', () => finish(true));
-    socket.once('error', (err) => finish(false, { code: (err && err.code) || 'ERROR' }));
-  })));
-  res.json({ host, port, total: list.length, elapsedMs: Date.now() - started, results });
-}));
-
-/* 按幂等键取任务：提交请求被长连接掐断时，前端/自测仍能找回结果 */
+/* 按幂等键取任务：提交请求被长连接掐断时，前端仍能找回结果 */
 router.get('/generate/jobs/by-key/:key', authOptional, wrap(async (req, res) => {
   const userId = req.user ? String(req.user.id) : '';
   const job = await jobs.getByIdem(decodeURIComponent(req.params.key), userId);
