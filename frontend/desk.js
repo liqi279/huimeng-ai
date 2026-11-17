@@ -4073,7 +4073,7 @@
                     fetched++; checkDone(); return;
                   }
                 }
-                fetch(A.proxyMediaUrl ? A.proxyMediaUrl(url) : url).then(function (r) { return r.blob(); }).then(function (blob) {
+                (A.fetchImageBlob ? A.fetchImageBlob(url) : fetch(A.proxyMediaUrl ? A.proxyMediaUrl(url) : url).then(function (r) { return r.blob(); })).then(function (blob) {
                   if (!/\.([a-z0-9]+)$/i.test(fname)) {
                     var extFromType = (blob.type || '').split('/')[1] || 'png';
                     fname += '.' + extFromType;
@@ -4173,7 +4173,7 @@
           members.forEach(function (w) {
             var url = w.url || w.thumb;
             var fname = A.fileNameFor(w);
-            fetch(A.proxyMediaUrl ? A.proxyMediaUrl(url) : url).then(function (r) { return r.blob(); }).then(function (blob) {
+            (A.fetchImageBlob ? A.fetchImageBlob(url) : fetch(A.proxyMediaUrl ? A.proxyMediaUrl(url) : url).then(function (r) { return r.blob(); })).then(function (blob) {
               if (!/\.([a-z0-9]+)$/i.test(fname)) fname += '.' + ((blob.type || '').split('/')[1] || 'png');
               sub.file(fname, blob);
             }).catch(function () {}).then(done);

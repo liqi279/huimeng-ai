@@ -216,12 +216,18 @@
   api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
   /* 逐项写桌面（云端权威）：ops 为增量的单条操作，服务端应用后返回新 rev 与整份文档 */
   /* 下载代理：浏览器直连 COS 预签名直链没有 CORS 头，fetch 会被拦；
-     统一走后端 /download 回源取字节（带 Content-Disposition）。 */
+     统一走后端 /download（默认 302 到带附件的直链，b64=1 走 JSON 供打包）。 */
   api.downloadUrl = function (url, name) {
     var src = String(url || '');
     var q = '/download?url=' + encodeURIComponent(src);
     if (name) q += '&name=' + encodeURIComponent(String(name));
     return apiUrl(q);
+  };
+  api.downloadMetaUrl = function (url, name) {
+    return api.downloadUrl(url, name) + '&meta=1';
+  };
+  api.downloadB64Url = function (url, name) {
+    return api.downloadUrl(url, name) + '&b64=1';
   };
   api.deskOps = function (ops, rev) {
     return request('/desk/ops', { method: 'POST', body: { ops: ops, rev: rev } }, 25000);

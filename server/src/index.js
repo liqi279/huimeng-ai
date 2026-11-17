@@ -36,7 +36,7 @@ const libraryRoutes = require('./routes/library');
 const imageProxyRoutes = require('./routes/image-proxy');
 const objectStore = require('./object-store');
 const storage = require('./storage');
-const { wrap } = require('./http');
+const { wrap, jsonError } = require('./http');
 
 const app = express();
 
@@ -124,9 +124,11 @@ app.get(/^\/api\/uploads\/(assets|media)\/([^/]+)$/, (req, res) => (
   serveUpload(req.params[0], req.params[1], res)
 ));
 
-/* 下载代理：浏览器直连 COS 预签名直链会被跨域（无 ACAO）拦掉，<img> 能显示但 fetch 取不到字节。
-   这里由服务端回源取原始字节，带 Content-Disposition: attachment 返回，
-   前端只需请求本接口，历史作品（绝对 COS 地址）也走同一条路。 */
+/* 下载代理：浏览器直连 COS 预签名直链没有 ACAO，<img> 能显示但 fetch 取不到字节。
+   单个下载 → 302 到当次签发的直链（带 response-content-disposition=attachment），
+   浏览器按普通下载处理，不经 SCF 回传大文件（函数 URL 回传二进制会被截断）。
+   批量打包 → ?b64=1 返回 JSON+base64（SCF 对大 JSON 已验证可用）。
+   ?meta=1 只做存在性探测，供前端先判失败再触发下载。 */
 const DOWNLOAD_ASSET_RE = /^\/(?:api\/)?uploads\/(assets|media)\/([^/?#]+)$/;
 function downloadName(raw, mime) {
   const base = path.basename(String(raw || '')).replace(/[\\/:*?"<>|\r\n]+/g, '_').trim().slice(0, 120);
@@ -143,80 +145,98 @@ function downloadName(raw, mime) {
   else if (/wav/i.test(mime || '')) ext = 'wav';
   return ext ? name + '.' + ext : name;
 }
-app.get('/api/download', wrap(async (req, res) => {
-  const src = String(req.query.url || '').trim();
-  if (!src) {
-    res.status(400).json({ error: { message: '缺少 url 参数' } });
-    return;
-  }
-  let buffer;
-  let mime = '';
+
+/* 把 url 归一成「对象 key」或「外部字节」；命中本站/COS 一律换算成 key，重新签名/读取 */
+async function resolveDownloadSource(src, req) {
   if (src.charAt(0) === '/') {
     const m = src.match(DOWNLOAD_ASSET_RE);
-    if (!m) {
-      res.status(400).json({ error: { message: '不支持的下载地址' } });
-      return;
-    }
-    const out = await mediaStore.read(m[1], decodeURIComponent(m[2]));
-    buffer = out.buffer;
-    mime = out.mime;
-  } else {
-    let target;
-    try {
-      target = new URL(src);
-    } catch (err) {
-      res.status(400).json({ error: { message: '下载地址格式不正确' } });
-      return;
-    }
-    if (target.protocol !== 'https:' && target.protocol !== 'http:') {
-      res.status(400).json({ error: { message: '不支持的下载协议' } });
-      return;
-    }
-    const host = target.hostname.toLowerCase();
-    const ownHost = String(req.headers.host || '').split(':')[0].toLowerCase();
-    /* 历史作品存的是对象存储绝对地址（可能已过期/未签名），
-       命中 COS 域名时按 object key 重新读取，而不是拿旧链接去撞 403 */
-    if (/\.myqcloud\.com$/.test(host)) {
-      const key = decodeURIComponent(target.pathname.replace(/^\/+/, ''));
-      if (!key) {
-        res.status(400).json({ error: { message: '下载地址缺少对象路径' } });
-        return;
-      }
-      buffer = await storage.read(key);
-      mime = mediaStore.mimeByName(key);
-      res.setHeader('Content-Type', mime);
-      res.setHeader('Content-Disposition', `attachment; filename="${downloadName(String(req.query.name || '') || path.basename(key), mime)}"`);
-      res.setHeader('Cache-Control', 'no-store');
-      res.send(buffer);
-      return;
-    }
-    const allowed = host === ownHost
-      || /\.myqcloud\.com$/.test(host)
-      || /\.aliyuncs\.com$/.test(host)
-      || host === 'localhost'
-      || /^127\./.test(host);
-    if (!allowed) {
-      res.status(400).json({ error: { message: '不允许的下载来源' } });
-      return;
-    }
-    const upstream = await fetch(target.toString(), { redirect: 'follow' });
-    if (!upstream.ok) {
-      res.status(upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502)
-        .json({ error: { message: '原文件读取失败', hint: 'HTTP ' + upstream.status } });
-      return;
-    }
-    mime = upstream.headers.get('content-type') || '';
-    buffer = Buffer.from(await upstream.arrayBuffer());
+    if (!m) throw jsonError(400, '不支持的下载地址');
+    const key = (m[1] === 'assets' ? 'assets' : 'media') + '/' + decodeURIComponent(m[2]);
+    return { key, mime: mediaStore.mimeByName(key) };
   }
-  if (!buffer || !buffer.length) {
-    res.status(404).json({ error: { message: '原文件为空或不存在' } });
+  let target;
+  try {
+    target = new URL(src);
+  } catch (err) {
+    throw jsonError(400, '下载地址格式不正确');
+  }
+  if (target.protocol !== 'https:' && target.protocol !== 'http:') {
+    throw jsonError(400, '不支持的下载协议');
+  }
+  const host = target.hostname.toLowerCase();
+  const ownHost = String(req.headers.host || '').split(':')[0].toLowerCase();
+  if (/\.myqcloud\.com$/.test(host)) {
+    const key = decodeURIComponent(target.pathname.replace(/^\/+/, ''));
+    if (!key) throw jsonError(400, '下载地址缺少对象路径');
+    return { key, mime: mediaStore.mimeByName(key) };
+  }
+  const allowed = host === ownHost
+    || /\.aliyuncs\.com$/.test(host)
+    || host === 'localhost'
+    || /^127\./.test(host);
+  if (!allowed) throw jsonError(400, '不允许的下载来源');
+  const upstream = await fetch(target.toString(), { redirect: 'follow' });
+  if (!upstream.ok) {
+    throw jsonError(upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502,
+      '原文件读取失败', 'HTTP ' + upstream.status);
+  }
+  return {
+    buffer: Buffer.from(await upstream.arrayBuffer()),
+    mime: upstream.headers.get('content-type') || '',
+  };
+}
+
+app.get('/api/download', wrap(async (req, res) => {
+  const src = String(req.query.url || '').trim();
+  if (!src) throw jsonError(400, '缺少 url 参数', '参数形如 ?url=<图片地址>&name=<文件名>');
+  const resolved = await resolveDownloadSource(src, req);
+  const name = downloadName(String(req.query.name || '') || path.basename(String(src).split('?')[0]), resolved.mime);
+
+  if (String(req.query.meta || '') === '1') {
+    let size = resolved.buffer ? resolved.buffer.length : 0;
+    if (resolved.key && storage.status().mode === 's3') {
+      const probe = storage.signatureUrl(resolved.key, { method: 'GET', ttl: 300 });
+      const check = await fetch(probe, { method: 'HEAD' });
+      if (!check.ok) throw jsonError(404, '原文件不存在或已失效', 'HTTP ' + check.status);
+      size = Number(check.headers.get('content-length') || 0);
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ ok: true, name, mime: resolved.mime, size });
     return;
   }
-  const name = downloadName(String(req.query.name || '') || path.basename(String(src).split('?')[0]), mime);
-  res.setHeader('Content-Type', mime || 'application/octet-stream');
+
+  if (resolved.key) {
+    if (storage.status().mode === 's3') {
+      if (String(req.query.b64 || '') !== '1') {
+        /* 浏览器直接 302 到 COS：带下载头、不经函数回传，避免响应体被截断 */
+        const url = storage.signatureUrl(resolved.key, {
+          method: 'GET',
+          ttl: 600,
+          contentDisposition: `attachment; filename="${name}"`,
+        });
+        res.redirect(302, url);
+        return;
+      }
+      resolved.buffer = await storage.read(resolved.key);
+    } else {
+      resolved.buffer = await storage.read(resolved.key);
+    }
+  }
+
+  if (!resolved.buffer || !resolved.buffer.length) throw jsonError(404, '原文件为空或不存在');
+  if (String(req.query.b64 || '') === '1') {
+    /* 打包用：base64 走 JSON，单张上限 4MB（base64 后约 5.4MB，仍在函数响应限制内） */
+    if (resolved.buffer.length > 4 * 1024 * 1024) {
+      throw jsonError(413, '原图过大，无法打包', '请单张下载');
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ ok: true, name, mime: resolved.mime, size: resolved.buffer.length, data: resolved.buffer.toString('base64') });
+    return;
+  }
+  res.setHeader('Content-Type', resolved.mime || 'application/octet-stream');
   res.setHeader('Content-Disposition', `attachment; filename="${name}"`);
   res.setHeader('Cache-Control', 'no-store');
-  res.send(buffer);
+  res.send(resolved.buffer);
 }));
 
 app.use('/api', (req, res) => {

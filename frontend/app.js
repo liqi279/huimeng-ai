@@ -5556,6 +5556,26 @@ function proxyMediaUrl(url) {
   return src;
 }
 
+/* 打包用：取回图片二进制。后端以 base64 JSON 返回（SCF 回传二进制会被截断），
+   旧后端则回退到直接 fetch。 */
+function fetchImageBlob(url) {
+  var api = window.HM && HM.api;
+  if (api && typeof api.downloadB64Url === 'function') {
+    return fetch(api.downloadB64Url(url), { credentials: 'omit', cache: 'no-store' }).then(function (r) {
+      return r.json().then(function (body) {
+        if (!r.ok || !body || !body.data) {
+          throw new Error((body && body.error && body.error.message) || ('HTTP ' + r.status));
+        }
+        var bin = window.atob(body.data);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+        return new Blob([bytes], { type: body.mime || 'application/octet-stream' });
+      });
+    });
+  }
+  return fetch(proxyMediaUrl(url)).then(function (r) { return r.blob(); });
+}
+
 async function downloadImage(url, filename) {
   if (!url) {
     toast('图片地址不可用', 'error');
@@ -5564,6 +5584,29 @@ async function downloadImage(url, filename) {
 
   var target = proxyMediaUrl(url);
   try {
+    /* 新后端：先 meta 探测存在性（小 JSON，可捕获失败），再让浏览器直接访问
+       /download 的 302 直链（响应带 attachment，不依赖 CORS）。
+       不再把大文件经 fetch 取进页面，避免 SCF 回传二进制被截断。 */
+    const api = window.HM && HM.api;
+    if (api && typeof api.downloadMetaUrl === 'function') {
+      const metaRes = await fetch(api.downloadMetaUrl(url, filename), { credentials: 'omit', cache: 'no-store' });
+      let meta = null;
+      try { meta = await metaRes.json(); } catch (e) {}
+      if (!metaRes.ok) {
+        const metaErr = new Error((meta && meta.error && meta.error.message) || ('HTTP ' + metaRes.status));
+        metaErr.status = metaRes.status;
+        throw metaErr;
+      }
+      const a = document.createElement('a');
+      a.href = api.downloadUrl(url, filename);
+      a.rel = 'noopener';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast('原图已开始下载', 'success');
+      return;
+    }
     const res = await fetch(target, { mode: 'cors', credentials: 'omit', cache: 'no-store' });
     if (!res.ok) {
       let detail = 'HTTP ' + res.status;
@@ -7925,6 +7968,7 @@ window.HMApp = {
   markJobError: markJobError,
   downloadImage: downloadImage,
   proxyMediaUrl: proxyMediaUrl,
+  fetchImageBlob: fetchImageBlob,
   fileNameFor: fileNameFor,
   openLightbox: openLightbox,
   errorText: errorText,
