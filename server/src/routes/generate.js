@@ -180,42 +180,58 @@ function pickChannelProvider(rayin, engine, model) {
 async function withCloudRayinKey(req, rayin, engine) {
   const out = Object.assign({}, rayin && typeof rayin === 'object' ? rayin : {});
   const existing = typeof out.key === 'string' ? out.key.trim() : '';
-  if (existing || !req || !req.user) return out;
-  try {
-    const doc = await userData.getDoc(req.user.id, 'api');
-    const data = doc && doc.data;
-    if (!data || typeof data !== 'object') return out;
-    let key = '';
-    const provs = data.providers && typeof data.providers === 'object' ? data.providers : null;
-    if (provs) {
-      const ids = Object.keys(provs);
-      const keyOf = (id) => {
-        const p = provs[id];
-        return p && typeof p.key === 'string' ? p.key.trim() : '';
-      };
-      const pick = (predict) => {
-        for (const id of ids) {
-          const p = provs[id];
-          if (p && predict(p, id)) {
-            const k = keyOf(id);
-            if (k) return k;
-          }
+  const keys = [];
+  const push = (k) => {
+    const v = typeof k === 'string' ? k.trim() : '';
+    if (v && keys.indexOf(v) < 0) keys.push(v);
+  };
+  if (req && req.user) {
+    try {
+      const doc = await userData.getDoc(req.user.id, 'api');
+      const data = doc && doc.data;
+      if (data && typeof data === 'object') {
+        const provs = data.providers && typeof data.providers === 'object' ? data.providers : null;
+        if (provs) {
+          const ids = Object.keys(provs);
+          const keyOf = (id) => {
+            const p = provs[id];
+            return p && typeof p.key === 'string' ? p.key.trim() : '';
+          };
+          const pick = (predict) => {
+            for (const id of ids) {
+              const p = provs[id];
+              if (p && predict(p, id)) {
+                const k = keyOf(id);
+                if (k) return k;
+              }
+            }
+            return '';
+          };
+          push(pick((p) => String(p.engine || '') === engine));
+          push(pick((p) => engine === 'gpt-image' && /^gpt-image/i.test(String(p.model || ''))));
+          push(pick((p) => engine === 'banana' && /^gemini/i.test(String(p.model || ''))));
+          push(engine === 'gpt-image' ? keyOf('__rayin__:gpt-image') : '');
+          push(engine === 'banana' ? keyOf('__rayin__:banana') : '');
         }
-        return '';
-      };
-      key = pick((p) => String(p.engine || '') === engine)
-        || pick((p) => engine === 'gpt-image' && /^gpt-image/i.test(String(p.model || '')))
-        || pick((p) => engine === 'banana' && /^gemini/i.test(String(p.model || '')))
-        || (engine === 'gpt-image' ? keyOf('__rayin__:gpt-image') : '')
-        || (engine === 'banana' ? keyOf('__rayin__:banana') : '');
+        if (data.rayin && typeof data.rayin.key === 'string') push(data.rayin.key);
+        if (typeof data.key === 'string') push(data.key);
+        /* 所有通道的 key 都收进来当后备，兼容通道 id 改过名的历史数据 */
+        if (provs) Object.keys(provs).forEach((id) => push(provs[id] && provs[id].key));
+      }
+    } catch (err) {
+      /* 读文档失败不阻断：继续走请求里的 key / 环境变量 / app_config 兜底 */
     }
-    if (!key && data.rayin && typeof data.rayin.key === 'string') key = data.rayin.key.trim();
-    if (!key && typeof data.key === 'string') key = data.key.trim();
-    /* 只补 key，不改用户已选的 base / 模型 */
-    if (key) out.key = key;
-  } catch (err) {
-    /* 读文档失败不阻断：继续走环境变量 / app_config 兜底 */
   }
+  /* 云端文档是权威副本：优先用它。浏览器本地缓存可能还是轮换前的旧 key，
+     旧 key 非空会把云端的新 key 挡住（线上 401 Invalid API key 就是这么来的），
+     所以这里让云端 key 排第一，请求里的旧 key 降级为备用。 */
+  const requestKey = existing;
+  const primary = keys[0] || requestKey;
+  if (primary) out.key = primary;
+  const alts = [];
+  if (requestKey && requestKey !== primary) alts.push(requestKey);
+  keys.forEach((k) => { if (k !== primary && alts.indexOf(k) < 0) alts.push(k); });
+  out.altKeys = alts;
   return out;
 }
 
@@ -252,7 +268,37 @@ async function resolveRayin(input, engine) {
       || (typeof rayin.bananaModel === 'string' && rayin.bananaModel.trim()
         ? rayin.bananaModel.trim()
         : (fallback && fallback.model) || config.BANANA_MODEL),
+    /* 云端 /docs/api 里的后备 key（主 key 被上游判 401 时依次重试） */
+    altKeys: Array.isArray(rayin.altKeys) ? rayin.altKeys.filter((k) => typeof k === 'string' && k.trim()) : [],
   };
+}
+
+/* 上游对「key 无效 / 未授权」的判定：401/403，或错误文案里明确提到 key。
+   只有这一类才换下一把 key 重试；超时、限流、内容审核等一律原样抛出。 */
+function isKeyRejected(err) {
+  const status = Number((err && err.status) || 0);
+  const msg = String((err && err.message) || '');
+  if (status === 401 || status === 403) return true;
+  return /invalid\s*api\s*key|incorrect\s*api\s*key|无效的?令牌|api.?key.*(无效|不合法|错误)/i.test(msg);
+}
+
+/* 逐个 key 尝试；主 key 是云端权威值，备用 key 兼容浏览器旧缓存 / 轮换前的 key */
+async function withKeyFallback(keys, fn) {
+  const list = [];
+  keys.forEach((k) => {
+    const v = typeof k === 'string' ? k.trim() : '';
+    if (v && list.indexOf(v) < 0) list.push(v);
+  });
+  let lastErr = null;
+  for (let i = 0; i < list.length; i += 1) {
+    try {
+      return await fn(list[i]);
+    } catch (err) {
+      lastErr = err;
+      if (!isKeyRejected(err) || i === list.length - 1) throw err;
+    }
+  }
+  throw lastErr || new Error('未配置 RayinAPI Key');
 }
 
 function requireKey(key) {
@@ -626,6 +672,8 @@ async function generateImages(body) {
 
   const { width, height } = scaledImageSize(ratio, scale);
   const size = gptSize(ratio);
+  /* 主 key 取云端 /docs/api；被上游判无效时按备用 key（浏览器旧缓存等）重试 */
+  const gptKeys = [rayin.openaiKey].concat(rayin.altKeys || []).slice(0, 4);
   const seeds = Array.from({ length: count }, (_, index) => (
     seedInput ? Math.min(seedInput + index, 2147483647) : randomSeed()
   ));
@@ -650,14 +698,14 @@ async function generateImages(body) {
       });
     } else if (engine === 'gpt-image') {
       /* GPT-image → /images/generations，不支持多 reference 图 */
-      url = await generateGptImage({
+      url = await withKeyFallback(gptKeys, (key) => generateGptImage({
         base: rayin.base,
-        key: rayin.openaiKey,
+        key,
         model: model || rayin.gptModel,
         prompt: styled.prompt,
         size,
         ref: refs[0],
-      });
+      }));
     } else {
       /* Banana → /chat/completions，支持多图引用 */
       url = await generateBanana({

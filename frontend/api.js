@@ -112,9 +112,11 @@
       try {
         res = await fetch(apiUrl(path), init);
       } catch (err) {
+        var isLocal = false;
+        try { isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname); } catch (e) { isLocal = false; }
         var netError = new Error(err && err.name === 'AbortError'
           ? '后端请求超时，请稍后重试'
-          : '无法连接后端服务。请确认：\n1. 已拉取最新代码（git pull）\n2. 后端服务正常运行\n3. 本地开发请访问 https://localhost:8443 信任自签证书');
+          : ('无法连接后端服务，请检查网络后重试' + (isLocal ? '（本地开发请确认后端已启动）' : '')));
         netError.offline = true;
         throw netError;
       }

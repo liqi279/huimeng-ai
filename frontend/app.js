@@ -3850,6 +3850,13 @@ async function generateOne(job, prompt) {
 
   updateJobStatus(job, '提交任务…');
 
+  /* 后端可用性只在启动时探测一次；一次网络抖动会让整个会话都降级到浏览器直连，
+     而直连用的是本地缓存的旧 Key（线上 401 Invalid API key 的来源）。
+     真正生成前补探测一次，探测失败才判定后端不可用。 */
+  if (window.HM && window.HM.api && !window.HM.api.online && typeof window.HM.api.ping === 'function') {
+    try { await window.HM.api.ping(); } catch (err) {}
+  }
+
   // 已连接后端时优先走服务端代理（前后端分离）
   if (window.HM && window.HM.api && window.HM.api.online) {
     try {
@@ -3895,6 +3902,15 @@ async function generateOne(job, prompt) {
   }
 
   if (job.engine === 'gpt-image' || job.engine === 'banana') {
+    /* 云端引擎必须走后端：后端不可用时明确报「网络不可达」，
+       绝不降级到浏览器直连（那边只有本地旧 Key，会报上游 401） */
+    if (!window.HM || !window.HM.api || !window.HM.api.online) {
+      const offlineError = new Error('无法连接后端服务，请检查网络后重试');
+      offlineError.offline = true;
+      offlineError.hint = '云端生成需要后端代理：请确认网络可访问后端服务，稍后重试';
+      markJobError(job, offlineError);
+      throw offlineError;
+    }
     const image = job.engine === 'gpt-image'
       ? await runRayinImage(job, prompt)
       : await runRayinBanana(job, prompt);
@@ -4492,6 +4508,17 @@ function errorText(err) {
   /* 优先后端透传的中文主错误 err.message，否则再走 friendlyError 规则 */
   var message = (err && err.message) ? String(err.message) : friendlyError(err);
   var code = (err && err.code) || '';
+  var status = Number((err && err.status) || 0);
+  /* 401 分两类：上游 Key 被拒 / 本站登录失效，不能混成同一句 */
+  if (status === 401) {
+    if (/上游|invalid\s*api\s*key|incorrect\s*api\s*key/i.test(message)) {
+      return '上游 API Key 无效或未授权（HTTP 401）';
+    }
+    if (code === 'TOKEN_INVALID' || /登录|令牌|token/i.test(message)) {
+      return '登录状态已失效（HTTP 401）';
+    }
+    return '未授权（HTTP 401）';
+  }
   if (code === 'group_unavailable' || isGroupUnavailableError(message)) {
     var blocked = modelNameFromText(message);
     return '该分组不支持 Gemini 图像' + (blocked ? '：' + blocked : '') + '，请改用 GPT-image 配置';
@@ -4508,16 +4535,34 @@ function errorText(err) {
 }
 
 function errorHint(err) {
-  if (err && err.hint) return String(err.hint);
+  var status = Number((err && err.status) || 0);
   var message = String((err && err.message) || '');
   var code = (err && err.code) || '';
-  if (code === 'group_unavailable' || isGroupUnavailableError(message)) {
+  /* 按类别给提示：上游 Key 被拒 / 本站未登录 / 网络不可达，三者不混用 */
+  if (status === 401) {
+    if (/上游|invalid\s*api\s*key|incorrect\s*api\s*key/i.test(message)) {
+      return '这是上游（RayinAI）判定 Key 无效，不是网络问题：请到「接入设置」重新保存 GPT-image 的 Key，保存后会写入云端 /docs/api，服务端下次生成直接读库使用。';
+    }
+    if (code === 'TOKEN_INVALID' || /登录|令牌|token/i.test(message)) {
+      return '登录状态已失效，请重新登录后再生成（与 API Key 无关）';
+    }
+    return '未授权：请重新登录，或在「接入设置」核对 Key';
+  }
+  if (status === 403) {
+    return 'Key 没有该模型的调用权限，请到「接入设置」确认账号 / 分组是否开通 gpt-image';
+  }
+  if (err && err.offline) {
+    return '这是网络不可达，不是 Key 问题：请检查网络后重试';
+  }
+  if (err && err.hint) return String(err.hint);
+  var code0 = code;
+  if (code0 === 'group_unavailable' || isGroupUnavailableError(message)) {
     return '这是分组 / 账号问题，不是模型名拼错：请在「接入设置」改用 GPT-image 那条配置（模型 gpt-image-2.5-flare，走 /images/generations）。';
   }
-  if (code === 'model_not_found' || isModelNameError(message)) {
+  if (code0 === 'model_not_found' || isModelNameError(message)) {
     return '这是「模型名」问题，不是尺寸问题：请在「接入设置」把这条配置的模型名改成上游真实存在的图像模型 ID。';
   }
-  if (code === 'size_unsupported' || isSizeUnsupportedError(message)) {
+  if (code0 === 'size_unsupported' || isSizeUnsupportedError(message)) {
     return '这是「尺寸」问题，不是模型名问题：请在尺寸 / 比例里换一个更小的值。';
   }
   return '';
@@ -4527,7 +4572,7 @@ function friendlyError(err) {
   const message = String((err && err.message) || '');
   if (/exhausted|暂满/i.test(message)) return '该模型上游额度暂满，请稍后重试或换模型';
   if (/429|quota|exceeded|ZeroGPU|limit/i.test(message)) return '免费算力额度暂满，请稍后重试';
-  if (/Failed to fetch|NetworkError|network|load failed/i.test(message)) return '免费通道连接失败，请检查网络后重试';
+  if (/Failed to fetch|NetworkError|network|load failed|无法连接后端/i.test(message)) return '无法连接后端服务，请检查网络后重试';
   if (/abort|timeout|超时/i.test(message)) return '生成超时，请重试';
   if (/HTTP 5\d\d/.test(message)) return '免费算力繁忙，请稍后重试';
   /* 兜底：如果 message 本身有内容（后端中文直传），原样返回 */
@@ -6220,26 +6265,56 @@ function closeApiModal() {
 
 function saveRayinConfig() {
   /* 服务端已内置 GPT / Gemini 默认密钥，前端 key 留空即使用服务端默认值；
-     用户也可填自己的 key 覆盖。base / 模型 ID 留空则用内置默认。 */
+     用户也可填自己的 key 覆盖。base / 模型 ID 留空则用内置默认。
+     关键：这里必须把 Key 真正写进云端 /docs/api（服务端 /generate 以库里的值为准），
+     键名统一用 providers['__rayin__:<engine>'].key，避免再出现前端写 key、后端读不到。 */
   const key = els.apiKeyInput.value.trim();
   const base = normalizeBase(els.apiBaseInput.value) || RAYIN_DEFAULT.base;
   const gptModel = els.gptModelInput.value.trim() || RAYIN_DEFAULT.gptModel;
   const bananaModel = (els.bananaModelInput ? els.bananaModelInput.value.trim() : '') || RAYIN_DEFAULT.bananaModel;
 
-  state.api = {
+  let prev = {};
+  try { prev = loadJSON('anidream.api.v1', {}) || {}; } catch (err) { prev = {}; }
+  const doc = Object.assign({}, prev);
+  doc.base = base;
+  doc.key = key || prev.key || '';
+  doc.gptModel = gptModel;
+  doc.bananaModel = bananaModel;
+  doc.providers = Object.assign({}, prev.providers || {});
+  const gid = '__rayin__:gpt-image';
+  const bid = '__rayin__:banana';
+  const prevG = doc.providers[gid] || {};
+  const prevB = doc.providers[bid] || {};
+  /* 留空表示「沿用已有密钥」，不要把库里已有的 Key 覆盖成空串 */
+  doc.providers[gid] = Object.assign({}, prevG, {
+    engine: 'gpt-image', model: gptModel, base: base, key: key || prevG.key || '',
+  });
+  doc.providers[bid] = Object.assign({}, prevB, {
+    engine: 'banana', model: bananaModel, base: base, key: key || prevB.key || '',
+  });
+  doc.updatedAt = Date.now();
+
+  state.api = Object.assign({}, prev, {
     base: base,
-    key: key,
+    key: doc.key,
     gptModel: gptModel,
-    bananaModel: bananaModel
-  };
+    bananaModel: bananaModel,
+    providers: doc.providers,
+  });
   saveJSON(LS_API, state.api);
   syncEngineUI();
   closeApiModal();
-  if (key) {
-    toast('接入信息已保存 · 使用自定义密钥', 'success');
-  } else {
-    toast('已保存 · 将使用服务端默认 GPT-image 密钥', 'success');
+
+  const push = window.HMSync && window.HMSync.pushApi;
+  if (!push) {
+    toast('已保存到本机；云同步模块未加载，刷新后可能丢失', 'error', 6000);
+    return;
   }
+  push(doc).then(function () {
+    toast(key ? '接入信息已保存到云端 · 使用自定义密钥' : '接入信息已保存到云端', 'success');
+  }).catch(function (err) {
+    toast('本机已保存，云端保存失败：' + ((err && err.message) || '网络异常'), 'error', 6000);
+  });
 }
 
 async function fetchRayinModels() {
