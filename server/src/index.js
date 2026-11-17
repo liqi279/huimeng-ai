@@ -174,6 +174,22 @@ app.get('/api/download', wrap(async (req, res) => {
     }
     const host = target.hostname.toLowerCase();
     const ownHost = String(req.headers.host || '').split(':')[0].toLowerCase();
+    /* 历史作品存的是对象存储绝对地址（可能已过期/未签名），
+       命中 COS 域名时按 object key 重新读取，而不是拿旧链接去撞 403 */
+    if (/\.myqcloud\.com$/.test(host)) {
+      const key = decodeURIComponent(target.pathname.replace(/^\/+/, ''));
+      if (!key) {
+        res.status(400).json({ error: { message: '下载地址缺少对象路径' } });
+        return;
+      }
+      buffer = await storage.read(key);
+      mime = mediaStore.mimeByName(key);
+      res.setHeader('Content-Type', mime);
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadName(String(req.query.name || '') || path.basename(key), mime)}"`);
+      res.setHeader('Cache-Control', 'no-store');
+      res.send(buffer);
+      return;
+    }
     const allowed = host === ownHost
       || /\.myqcloud\.com$/.test(host)
       || /\.aliyuncs\.com$/.test(host)
