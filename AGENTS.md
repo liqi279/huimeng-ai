@@ -1,7 +1,8 @@
 # 交付规则（每次改动都必须遵守）
 
-每次完成任何代码/需求/bug 修复后，**必须自动把改动送到线上，不要等用户提醒**。
-推送 `main` 就是发布，仓库里已有两条 GitHub Actions 流水线接管后续动作。
+**改完就推，不要停下来等验证。** 用户明确要求（2026-11-17）：代码一改好立刻提交、推送、上传，
+不做 CI 等待、不做线上自检，也不要为了"确认一下"再额外跑一轮部署。
+推送 `main` 就是发布，仓库里两条 GitHub Actions 流水线会接管后续动作。
 
 ## 标准动作
 
@@ -9,22 +10,22 @@
 2. **构建**：`node scripts/build-deploy.js`
    （等价于 `npm run build`，生成 `deploy/index.html` 与根目录 `绘梦AI动漫创作平台.html`）
 3. **提交**：`git add` 本次改动的前端源码 + 两个构建产物，提交信息写清"改了什么/为什么"
-4. **推送**：`git push origin main`
-5. **等待 CI 跑完并核对结论**（见下方"推送之后"）
-6. 在回复末尾固定给出三行信息：
+4. **推送**：`git push origin main` —— 推完即交付完成，立刻回到用户面前
+5. 在回复末尾固定给出三行信息：
    - GitHub 仓库：https://github.com/liqi279/huimeng-ai
    - 本次 commit：<短 hash + 标题>（已推送到 main）
    - 前端页面：https://liqi279.github.io/huimeng-ai/
 
-一条命令完成上述 1–5：
+一条命令完成上述 1–4：
 
 ```powershell
-pwsh -File scripts/publish.ps1 "feat: 改了什么/为什么"
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish.ps1 "feat: 改了什么/为什么" -NoWait
 ```
 
-它会自动判断改动范围（只有动了 `frontend/` 才重建、动了 `server/` 才等后端流水线），
-在本地落后远程、语法检查失败、构建失败时直接中止，**不会**做任何强制覆盖。
-推送后由 `scripts/verify-live.js` 做线上自检（CI 结论 + 后端 health + 数据库 books + 前端 Pages）。
+它会自动判断改动范围（只有动了 `frontend/` 才重建），在本地落后远程、语法检查失败、
+构建失败时直接中止，**不会**做任何强制覆盖。`-NoWait` = 推送后不轮询 CI。
+
+需要人工核对线上时，再单独跑一次 `node scripts/verify-live.js`，不要把它塞进每次交付。
 
 ## 推送之后：三条线各自怎么上线
 
