@@ -286,7 +286,12 @@ app.use((err, req, res, next) => {
   const payload = { error: { message } };
   if (err && err.code) payload.error.code = err.code;
   if (err && err.hint) payload.error.hint = err.hint;
-  if (status >= 500) console.error('[server-error]', err && err.message);
+  if (status >= 500) {
+    /* 500 必须可定位：给内部标识 + 一行原因（不含堆栈、不含凭据） */
+    if (!payload.error.code) payload.error.code = 'INTERNAL_ERROR';
+    payload.error.detail = String((err && err.message) || '').slice(0, 200);
+    console.error('[server-error]', err && err.message);
+  }
 
   res.status(status).json(payload);
 });

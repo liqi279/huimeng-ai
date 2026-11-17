@@ -53,14 +53,19 @@ function tc3Headers(action, payload, secretId, secretKey) {
     'X-TC-Action': action,
     'X-TC-Timestamp': String(timestamp),
     'X-TC-Version': VERSION,
-    'X-TC-Region': config.COS_REGION || 'ap-guangzhou',
+    /* 被调用函数所在地域：SCF_FUNCTION 与 SCF_REGION 必须指向本函数，
+       用 COS_REGION 兜底只适用于两者同地域的老部署 */
+    'X-TC-Region': process.env.SCF_REGION || 'ap-guangzhou',
   };
 }
 
 function scfInvoke(payloadObj) {
   const secretId = config.COS_SECRET_ID || config.S3_ACCESS_KEY_ID || '';
   const secretKey = config.COS_SECRET_KEY || config.S3_SECRET_ACCESS_KEY || '';
-  if (!secretId || !secretKey) return Promise.resolve(false);
+  if (!secretId || !secretKey) {
+    console.error('[scf-invoke] 缺少 COS_SECRET_ID/COS_SECRET_KEY，无法自我调用');
+    return Promise.resolve(false);
+  }
   const body = JSON.stringify({
     FunctionName: process.env.SCF_FUNCTION || 'huimeng-api',
     Namespace: process.env.SCF_NAMESPACE || 'default',
@@ -83,8 +88,15 @@ function scfInvoke(payloadObj) {
         let ok = res.statusCode >= 200 && res.statusCode < 300;
         try {
           const json = JSON.parse(text);
-          if (json && json.Response && json.Response.Error) ok = false;
+          if (json && json.Response && json.Response.Error) {
+            ok = false;
+            console.error('[scf-invoke] 平台拒绝：' +
+              (json.Response.Error.Code || '') + ' ' + (json.Response.Error.Message || ''));
+          }
         } catch (err) {}
+        if (!ok && res.statusCode >= 300) {
+          console.error('[scf-invoke] HTTP ' + res.statusCode + ': ' + text.slice(0, 200));
+        }
         resolve(ok);
       });
     });

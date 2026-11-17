@@ -1440,13 +1440,21 @@ router.post('/generate/jobs', authOptional, wrap(async (req, res) => {
   }
 
   const id = randomToken(12);
-  const created = await jobs.create({
-    id,
-    userId,
-    payload: req.body || {},
-    user,
-    idemKey,
-  });
+  let created;
+  try {
+    created = await jobs.create({
+      id,
+      userId,
+      payload: req.body || {},
+      user,
+      idemKey,
+    });
+  } catch (err) {
+    /* 任务表不可用需要可定位：给出内部标识与数据库错误码，不透传堆栈/凭据 */
+    const e = jsonError(503, '任务表不可用', 'generate_jobs 建表或写入失败（' + ((err && err.code) || 'unknown') + '）');
+    e.code = 'JOBS_DB_ERROR';
+    throw e;
+  }
   if (created && created.created === false) {
     /* 并发撞车：另一个请求刚建好同一个幂等任务，直接复用 */
     res.status(202).json({ id: created.id, status: created.status, reused: true });
