@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-16T19:53:10.853Z",
+  "generatedAt": "2026-11-17T15:37:38.446Z",
   "source": "huimeng_library.books",
-  "total": 920,
+  "total": 924,
   "areas": {
     "paint": 731,
-    "concept": 165,
+    "concept": 169,
     "ref": 24
   },
   "books": [
@@ -21,6 +21,48 @@
       "pdfBytes": 83500919,
       "coverKey": "library/covers/mw80yetl-001-kawaii-cover.jpg",
       "coverBytes": 601836
+    },
+    {
+      "id": "lib-mwku4081-5e876c",
+      "sortNo": 0,
+      "title": "白箱 · 动画线稿原画集 · 第1/2卷",
+      "author": "P.A.WORKS / 萌绘图库",
+      "intro": "来源：动画《SHIROBAKO（白箱）》动画线稿原画集，共 142 页，分 2 卷；本卷第 1-71 页。",
+      "pageCount": 71,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/shirobako-20261117-shirobako-genga-1.pdf",
+      "pdfBytes": 65235035,
+      "coverKey": "library/covers/shirobako-20261117-shirobako-genga-1.jpg",
+      "coverBytes": 62015
+    },
+    {
+      "id": "lib-mwku4rd1-5b1ffd",
+      "sortNo": 0,
+      "title": "白箱 · Fanbook 原画集",
+      "author": "P.A.WORKS / 萌绘图库",
+      "intro": "来源：TV动画《白箱》的 Fanbook 画集，主要是原画图，共 50 页。",
+      "pageCount": 50,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/shirobako-20261117-shirobako-fanbook.pdf",
+      "pdfBytes": 69861064,
+      "coverKey": "library/covers/shirobako-20261117-shirobako-fanbook.jpg",
+      "coverBytes": 261242
+    },
+    {
+      "id": "lib-mwku4w9o-62ca52",
+      "sortNo": 0,
+      "title": "白箱 · 画集（彩图版）",
+      "author": "P.A.WORKS / 萌绘图库",
+      "intro": "来源：TV动画《白箱》画集，只保留彩图的版本，共 31 页。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/shirobako-20261117-shirobako-art.pdf",
+      "pdfBytes": 45086312,
+      "coverKey": "library/covers/shirobako-20261117-shirobako-art.jpg",
+      "coverBytes": 286370
     },
     {
       "id": "lib-mw86nrb0-363dff",
@@ -49,6 +91,20 @@
       "pdfBytes": 71615023,
       "coverKey": "library/covers/clannad-20261117-clannad-huaji-1.jpg",
       "coverBytes": 255756
+    },
+    {
+      "id": "lib-mwkul4gz-4f29da",
+      "sortNo": 1,
+      "title": "白箱 · 动画线稿原画集 · 第2/2卷",
+      "author": "P.A.WORKS / 萌绘图库",
+      "intro": "来源：动画《SHIROBAKO（白箱）》动画线稿原画集，共 142 页，分 2 卷；本卷第 72-142 页。",
+      "pageCount": 71,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "library/books/shirobako-20261117-shirobako-genga-2.pdf",
+      "pdfBytes": 60152842,
+      "coverKey": "library/covers/shirobako-20261117-shirobako-genga-2.jpg",
+      "coverBytes": 68697
     },
     {
       "id": "lib-mw97y0mu-d5ff0e",
