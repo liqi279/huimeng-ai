@@ -296,6 +296,38 @@ async function updateCode(objectKey) {
   return resp;
 }
 
+/* 改完配置后函数会进入 Updating，此时 UpdateFunctionCode 会被拒，
+   必须等回到 Active 再切代码；仍被拒则退避重试。 */
+async function waitActive(maxMs) {
+  const deadline = Date.now() + (maxMs || 120000);
+  while (Date.now() < deadline) {
+    try {
+      const g = await getFunction();
+      if (String(g.status).toLowerCase() !== 'updating') return g;
+      log('scf', '函数 Updating，等待中…');
+    } catch (err) {
+      log('scf', 'GetFunction 失败：' + err.message);
+    }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  return null;
+}
+
+async function updateCodeWithRetry(objectKey) {
+  for (let i = 0; i < 6; i += 1) {
+    try {
+      return await updateCode(objectKey);
+    } catch (err) {
+      const msg = String((err && err.message) || '');
+      if (!/Updating/i.test(msg) || i === 5) throw err;
+      log('scf', '函数仍在 Updating，' + (i + 1) + '/5 次等待后重试');
+      await waitActive(120000);
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+  throw new Error('updateCode 重试耗尽');
+}
+
 async function waitUpdated(beforeModTime, maxMs) {
   const deadline = Date.now() + (maxMs || 90000);
   while (Date.now() < deadline) {
@@ -474,7 +506,8 @@ async function doRollback() {
   const before = await getFunction();
   log('rollback', '当前 ModTime=' + before.modTime);
   await ensureRuntimeLimits(before);
-  await updateCode(key);
+  await waitActive(120000);
+  await updateCodeWithRetry(key);
   const after = await waitUpdated(before.modTime, 120000);
   const ok = await selfCheck();
   console.log('\n[rollback] 目标快照=' + key + ' 耗时=' + Math.round((Date.now() - t0) / 1000) + 's 结果=' + (ok ? 'SUCCESS' : 'SELF-CHECK FAILED'));
@@ -515,7 +548,8 @@ async function doDeploy() {
   /* 3) 更新函数 + 轮询 */
   try {
     await ensureRuntimeLimits(before);
-    await updateCode(CFG.objectKey);
+    await waitActive(120000);
+    await updateCodeWithRetry(CFG.objectKey);
     await waitUpdated(before ? before.modTime : '', 120000);
   } catch (err) {
     console.error('\n[FAIL] 更新函数失败：' + (err.code ? err.code + ' ' : '') + err.message);
