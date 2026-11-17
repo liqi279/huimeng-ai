@@ -115,9 +115,39 @@ function scfInvoke(payloadObj) {
   });
 }
 
+/* 只读调用其它 SCF OpenAPI（例如 GetFunction），供体检接口复用同一套签名与凭据。
+   不改线上状态；失败时 reject，由调用方决定怎么处理。 */
+function callScfApi(action, payloadObj) {
+  const secretId = config.COS_SECRET_ID || config.S3_ACCESS_KEY_ID || '';
+  const secretKey = config.COS_SECRET_KEY || config.S3_SECRET_ACCESS_KEY || '';
+  if (!secretId || !secretKey) return Promise.reject(new Error('缺少 COS_SECRET_ID/COS_SECRET_KEY'));
+  const body = JSON.stringify(payloadObj || {});
+  const headers = tc3Headers(action, body);
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      method: 'POST',
+      hostname: HOST,
+      path: '/',
+      headers: Object.assign({ 'Content-Length': Buffer.byteLength(body) }, headers),
+      timeout: 10000,
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        const text = Buffer.concat(chunks).toString('utf8');
+        try { resolve(JSON.parse(text)); } catch (e) { reject(new Error('非 JSON 响应: ' + text.slice(0, 200))); }
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('SCF API 超时')));
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 /* SCF 事件调用时，业务负载放在 event 顶层；这里塞一个标记，入口据此分流 */
 function triggerJob(jobId) {
   return scfInvoke({ __job: jobId });
 }
 
-module.exports = { triggerJob };
+module.exports = { triggerJob, callScfApi };

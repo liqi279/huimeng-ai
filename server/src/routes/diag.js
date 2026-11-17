@@ -101,4 +101,46 @@ router.get('/diag/net', wrap(async (req, res) => {
   res.json(out);
 }));
 
+/* 读自身函数配置：只需要知道「有没有绑 VPC」和「有哪些环境变量名」，
+   值一律不返回（仓库和日志都是公开的）。 */
+router.get('/diag/scf', wrap(async (req, res) => {
+  if (String(req.get('x-hm-diag') || '') !== '1') {
+    res.status(404).json({ error: { message: 'not found' } });
+    return;
+  }
+  try {
+    const { callScfApi } = require('../scf-invoke');
+    const resp = await callScfApi('GetFunction', {
+      FunctionName: process.env.SCF_FUNCTION || 'huimeng-api',
+      Namespace: process.env.SCF_NAMESPACE || 'default',
+    });
+    const r = (resp && resp.Response) || {};
+    if (r.Error) {
+      res.status(502).json({ error: { message: r.Error.Code + ' ' + r.Error.Message } });
+      return;
+    }
+    const vpc = r.VpcConfig || {};
+    const vars = (r.Environment && r.Environment.Variables) || {};
+    res.json({
+      functionName: r.FunctionName,
+      runtime: r.Runtime,
+      handler: r.Handler,
+      timeout: r.Timeout,
+      memorySize: r.MemorySize,
+      modTime: r.ModTime,
+      vpc: { hasVpc: Boolean(vpc.VpcId || vpc.SubnetId), vpcId: vpc.VpcId || '', subnetId: vpc.SubnetId || '' },
+      envNames: Object.keys(vars).sort(),
+      envEmpty: Object.keys(vars).filter((k) => !String(vars[k] || '').trim()).sort(),
+      mysqlUrlHost: (function () {
+        try {
+          const u = new URL(String(vars.MYSQL_URL || ''));
+          return u.hostname + ':' + (u.port || '3306') + u.pathname;
+        } catch (e) { return vars.MYSQL_URL ? '<无法解析>' : '<未设置>'; }
+      })(),
+    });
+  } catch (err) {
+    res.status(502).json({ error: { message: (err && err.message) || String(err) } });
+  }
+}));
+
 module.exports = router;
