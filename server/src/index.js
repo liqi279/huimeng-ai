@@ -93,28 +93,18 @@ app.use('/api', libraryRoutes);
 /* 鍥剧墖浠ｅ彇锛堝弬鑰冧富浣撳尯璺ㄥ煙鍏滃簳锛夛細蹇呴』鏃╀簬 /api 404 鍏滃簳 */
 app.use('/api', imageProxyRoutes);
 
-app.use('/api', (req, res) => {
-  res.status(404).json({
-    error: { message: '接口不存在', hint: `${req.method} ${req.originalUrl}` },
-  });
-});
-
-app.use('/uploads/assets', express.static(store.dirs.assets, { index: false, maxAge: '1h' }));
-app.use('/uploads/media', express.static(store.dirs.media, { index: false, maxAge: '1h' }));
-
-/* 新文件的兜底读取：本地盘静态未命中时，按同名 object key 回对象存储取。
-   这样 /uploads/... 这套历史 URL 同时兼容旧数据（本地盘，静态直接命中）
-   与新数据（对象存储），前端与历史记录里的链接都不需要改。
-   s3 模式 302 到预签名直链；本地模式（OBJECT_STORE=local）直接回读内容。 */
-app.get(/^\/uploads\/(assets|media)\/([^/]+)$/, async (req, res) => {
-  const kind = req.params[0];
-  const name = path.basename(req.params[1]);
-  if (!name) {
+/* 媒体兜底读取：本地盘静态未命中时，按同名 object key 回对象存储取。
+   s3 模式 302 到预签名直链；本地模式（OBJECT_STORE=local）直接回读内容。
+   同时接受 /uploads/... 与 /api/uploads/...：SCF 入口会给非 /api 路径补 /api 前缀，
+   所以经函数 URL 访问时实际到达的是 /api/uploads/...。 */
+async function serveUpload(kind, name, res) {
+  const safeName = path.basename(String(name || ''));
+  if (!safeName) {
     res.status(404).json({ error: { message: '文件不存在' } });
     return;
   }
   try {
-    const out = await mediaStore.send(kind, name);
+    const out = await mediaStore.send(kind, safeName);
     if (out.mode === 's3') {
       res.redirect(302, out.url);
       return;
@@ -123,9 +113,24 @@ app.get(/^\/uploads\/(assets|media)\/([^/]+)$/, async (req, res) => {
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.send(out.buffer);
   } catch (err) {
-    res.status(404).json({ error: { message: '文件不存在', hint: `${kind}/${name}` } });
+    res.status(404).json({ error: { message: '文件不存在', hint: `${kind}/${safeName}` } });
   }
+}
+app.get(/^\/uploads\/(assets|media)\/([^/]+)$/, (req, res) => (
+  serveUpload(req.params[0], req.params[1], res)
+));
+app.get(/^\/api\/uploads\/(assets|media)\/([^/]+)$/, (req, res) => (
+  serveUpload(req.params[0], req.params[1], res)
+));
+
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    error: { message: '接口不存在', hint: `${req.method} ${req.originalUrl}` },
+  });
 });
+
+app.use('/uploads/assets', express.static(store.dirs.assets, { index: false, maxAge: '1h' }));
+app.use('/uploads/media', express.static(store.dirs.media, { index: false, maxAge: '1h' }));
 
 app.use(express.static(config.FRONTEND_DIR, { index: 'index.html', extensions: ['html'] }));
 

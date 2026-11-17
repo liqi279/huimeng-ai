@@ -492,7 +492,10 @@ async function persistInlineImage(url) {
       buffer,
       mime,
     );
-    return saved.url;
+    /* 用 /api/uploads/... 而不是 /uploads/...：SCF 入口会给非 /api 路径补前缀，
+       前端 mediaUrl 也会把 /api 开头的相对地址拼成后端绝对地址。
+       该路由按请求即时签发直链，所以保存下来的 URL 不会因为签名过期变破图。 */
+    return saved.url.replace(/^\/uploads\//, '/api/uploads/');
   } catch (err) {
     return url;
   }
@@ -1217,6 +1220,28 @@ router.get('/media-models', wrap(async (req, res) => {
   });
 }));
 
+/* 生成结果里的 /api/uploads/... 是相对地址：补成绝对地址再返回，
+   避免前端在 Pages 域名下把它拼成 liqi279.github.io/api/uploads/... 而 404。 */
+function requestOrigin(req) {
+  const proto = String((req.headers && req.headers['x-forwarded-proto']) || req.protocol || 'https').split(',')[0].trim();
+  const host = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
+  if (!host) return '';
+  return proto + '://' + host;
+}
+
+function absolutizeItems(items, req) {
+  if (!Array.isArray(items)) return;
+  const origin = requestOrigin(req);
+  if (!origin) return;
+  const fix = (v) => (typeof v === 'string' && v.charAt(0) === '/' ? origin + v : v);
+  items.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    if (item.url) item.url = fix(item.url);
+    if (item.thumb) item.thumb = fix(item.thumb);
+    if (item.poster) item.poster = fix(item.poster);
+  });
+}
+
 router.post('/generate', authOptional, wrap(async (req, res) => {
   const body = req.body || {};
   const mode = body.mode;
@@ -1247,6 +1272,7 @@ router.post('/generate', authOptional, wrap(async (req, res) => {
       items = result.items;
     }
     const elapsed = Date.now() - started;
+    absolutizeItems(items, req);
     await callLog.record(Object.assign({}, logBase, {
       status: 'success',
       httpStatus: 200,
