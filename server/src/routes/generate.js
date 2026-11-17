@@ -1477,6 +1477,12 @@ router.post('/generate/jobs', authOptional, wrap(async (req, res) => {
   if (idemKey) {
     const existing = await jobs.getByIdem(idemKey, userId);
     if (existing) {
+      /* 上次提交建了任务但 worker 没接住（或请求在这里断了）：同一 requestId
+         重试时再派一次活。任务仍是 pending 才会真的跑，runJob 原子领取保证
+         不会重复调用上游。 */
+      if (existing.status === 'pending') {
+        try { await triggerWorker(existing.id); } catch (err) { /* 派活失败交给超时收尾 */ }
+      }
       res.status(existing.status === 'done' ? 200 : 202).json({
         id: existing.id,
         status: existing.status,
