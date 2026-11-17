@@ -26958,10 +26958,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       } catch (err) {
         var isLocal = false;
         try { isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname); } catch (e) { isLocal = false; }
-        var netError = new Error(err && err.name === 'AbortError'
+        var isAbort = err && err.name === 'AbortError';
+        var netError = new Error(isAbort
           ? '后端请求超时，请稍后重试'
           : ('无法连接后端服务，请检查网络后重试' + (isLocal ? '（本地开发请确认后端已启动）' : '')));
         netError.offline = true;
+        netError.timeout = !!isAbort;
         throw netError;
       }
 
@@ -27020,9 +27022,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   };
 
   /* 异步生成：提交立即返回 jobId（不占长连接），结果靠轮询取回。
-     单次 HTTP 连接在 30s 左右被中间层掐断时，任务仍在后台跑完。 */
+     单次 HTTP 连接在 30s 左右被中间层掐断时，任务仍在后台跑完。
+     注意：平台异步触发不可用时会退化成「同步执行」，整次提交要等到出图
+     （实测 50~60s），所以这里必须给足 75s，否则会把正常生图误判成超时。 */
   api.submitGenerateJob = function (payload) {
-    return request('/generate/jobs', { method: 'POST', body: payload }, 20000);
+    return request('/generate/jobs', { method: 'POST', body: payload }, 75000);
   };
   api.getGenerateJob = function (id) {
     return request('/generate/jobs/' + encodeURIComponent(id), {}, 15000);
@@ -32507,6 +32511,11 @@ function errorHint(err) {
     return 'Key 没有该模型的调用权限，请到「接入设置」确认账号 / 分组是否开通 gpt-image';
   }
   if (err && err.offline) {
+    /* 超时 ≠ 网络不可达：平台异步触发不可用时，后端会同步跑完整张图（50~60s），
+       前端提前放弃就会误报成网络问题。 */
+    if (err.timeout) {
+      return '后端这次处理时间较长，前端等待到上限就中断了：生图通常 20~60 秒，任务多半仍在后台执行，稍后刷新「作品」看结果，或再点一次重试（同一请求幂等，不会重复扣费）。';
+    }
     return '这是网络不可达，不是 Key 问题：请检查网络后重试';
   }
   if (err && err.hint) return String(err.hint);

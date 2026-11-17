@@ -4606,6 +4606,11 @@ function errorHint(err) {
     return 'Key 没有该模型的调用权限，请到「接入设置」确认账号 / 分组是否开通 gpt-image';
   }
   if (err && err.offline) {
+    /* 超时 ≠ 网络不可达：平台异步触发不可用时，后端会同步跑完整张图（50~60s），
+       前端提前放弃就会误报成网络问题。 */
+    if (err.timeout) {
+      return '后端这次处理时间较长，前端等待到上限就中断了：生图通常 20~60 秒，任务多半仍在后台执行，稍后刷新「作品」看结果，或再点一次重试（同一请求幂等，不会重复扣费）。';
+    }
     return '这是网络不可达，不是 Key 问题：请检查网络后重试';
   }
   if (err && err.hint) return String(err.hint);

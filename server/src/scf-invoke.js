@@ -79,7 +79,9 @@ function scfInvoke(payloadObj) {
       hostname: HOST,
       path: '/',
       headers: Object.assign({ 'Content-Length': Buffer.byteLength(body) }, headers),
-      timeout: 15000,
+      /* 只是「派活」，正常几百毫秒就返回。给太长会让提交接口白等：
+         触发失败时调用方要退化成同步执行，等待时间会叠加到用户身上。 */
+      timeout: 5000,
     }, (res) => {
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
@@ -100,8 +102,14 @@ function scfInvoke(payloadObj) {
         resolve(ok);
       });
     });
-    req.on('timeout', () => req.destroy(new Error('invoke timeout')));
-    req.on('error', () => resolve(false));
+    req.on('timeout', () => {
+      console.error('[scf-invoke] 触发超时（5s），退化为同步执行');
+      req.destroy(new Error('invoke timeout'));
+    });
+    req.on('error', (err) => {
+      console.error('[scf-invoke] 触发失败：' + ((err && err.message) || err) + '，退化为同步执行');
+      resolve(false);
+    });
     req.write(body);
     req.end();
   });

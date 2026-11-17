@@ -114,10 +114,12 @@
       } catch (err) {
         var isLocal = false;
         try { isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname); } catch (e) { isLocal = false; }
-        var netError = new Error(err && err.name === 'AbortError'
+        var isAbort = err && err.name === 'AbortError';
+        var netError = new Error(isAbort
           ? '后端请求超时，请稍后重试'
           : ('无法连接后端服务，请检查网络后重试' + (isLocal ? '（本地开发请确认后端已启动）' : '')));
         netError.offline = true;
+        netError.timeout = !!isAbort;
         throw netError;
       }
 
@@ -176,9 +178,11 @@
   };
 
   /* 异步生成：提交立即返回 jobId（不占长连接），结果靠轮询取回。
-     单次 HTTP 连接在 30s 左右被中间层掐断时，任务仍在后台跑完。 */
+     单次 HTTP 连接在 30s 左右被中间层掐断时，任务仍在后台跑完。
+     注意：平台异步触发不可用时会退化成「同步执行」，整次提交要等到出图
+     （实测 50~60s），所以这里必须给足 75s，否则会把正常生图误判成超时。 */
   api.submitGenerateJob = function (payload) {
-    return request('/generate/jobs', { method: 'POST', body: payload }, 20000);
+    return request('/generate/jobs', { method: 'POST', body: payload }, 75000);
   };
   api.getGenerateJob = function (id) {
     return request('/generate/jobs/' + encodeURIComponent(id), {}, 15000);
