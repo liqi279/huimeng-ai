@@ -81,6 +81,14 @@ async function send(kind, name) {
   return { mode: 'local', buffer, mime: mimeByName(key) };
 }
 
+/* 读取原始字节：供下载代理使用（本地模式读盘，对象存储模式回源下载），
+   不经过 302，保证能带 Content-Disposition 返回给浏览器。 */
+async function read(kind, name) {
+  const key = objectKey(kind, name);
+  const buffer = await storage.read(key);
+  return { buffer, mime: mimeByName(key) };
+}
+
 /* 删除：对象存储与历史本地盘都尝试，全部容错（文件不存在视为已删除）。 */
 async function remove(kind, name) {
   const safeName = path.basename(String(name || ''));
@@ -103,6 +111,7 @@ function absoluteUrl(kind, name, origin) {
 module.exports = {
   put,
   send,
+  read,
   remove,
   absoluteUrl,
   mimeByName,

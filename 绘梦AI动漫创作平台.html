@@ -27059,6 +27059,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   };
   api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
   /* 逐项写桌面（云端权威）：ops 为增量的单条操作，服务端应用后返回新 rev 与整份文档 */
+  /* 下载代理：浏览器直连 COS 预签名直链没有 CORS 头，fetch 会被拦；
+     统一走后端 /download 回源取字节（带 Content-Disposition）。 */
+  api.downloadUrl = function (url, name) {
+    var src = String(url || '');
+    var q = '/download?url=' + encodeURIComponent(src);
+    if (name) q += '&name=' + encodeURIComponent(String(name));
+    return apiUrl(q);
+  };
   api.deskOps = function (ops, rev) {
     return request('/desk/ops', { method: 'POST', body: { ops: ops, rev: rev } }, 25000);
   };
@@ -33414,19 +33422,41 @@ async function makeThumb(url) {
 }
 
 /* ---------------- 下载 ---------------- */
-/* 下载原图：一律取回二进制后用 Blob 保存，页面不跳转、不打开新标签页。
+/* 下载原图：一律经后端 /download 代理取回二进制后用 Blob 保存，页面不跳转、不打开新标签页。
+   - 不再让浏览器直连 COS 预签名直链（那边没有 CORS 头，fetch 必被拦）
    - 保存的是原始字节，不做格式转换/二次压缩
-   - 跨域（COS 签名链接）若被 CORS 拦截，直接给出失败提示，不退回「打开新地址」
    - 同名文件由浏览器自动追加 (1)/(2)，不会静默覆盖 */
+/* 图片下载/打包统一走后端代理：浏览器直连 COS 预签名直链没有 CORS 头，
+   <img> 能显示但 fetch 取不到字节（线上「原图读取被拦截」的根因）。
+   后端 /download 回源取字节并带 Content-Disposition 返回，历史作品同样适用。 */
+function proxyMediaUrl(url) {
+  var src = String(url || '');
+  if (!src) return src;
+  if (window.HM && HM.api && typeof HM.api.downloadUrl === 'function') {
+    return HM.api.downloadUrl(src);
+  }
+  return src;
+}
+
 async function downloadImage(url, filename) {
   if (!url) {
     toast('图片地址不可用', 'error');
     return;
   }
 
+  var target = proxyMediaUrl(url);
   try {
-    const res = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const res = await fetch(target, { mode: 'cors', credentials: 'omit', cache: 'no-store' });
+    if (!res.ok) {
+      let detail = 'HTTP ' + res.status;
+      try {
+        const body = await res.json();
+        if (body && body.error && body.error.message) detail = String(body.error.message);
+      } catch (e) {}
+      const httpErr = new Error(detail);
+      httpErr.status = res.status;
+      throw httpErr;
+    }
 
     const blob = await res.blob();
 
@@ -33458,8 +33488,20 @@ async function downloadImage(url, filename) {
 
     toast(ext.toUpperCase() + ' 原图已开始下载', 'success');
   } catch (err) {
-    /* 失败就明确报错：绝不回退到打开新标签页/跳转地址 */
-    toast('下载失败：原图读取被拦截（多为跨域限制），请刷新后重试', 'error', 6000);
+    /* 失败按类别提示：网络 / 权限 / 文件不存在，不再一律说「被拦截」 */
+    const status = Number((err && err.status) || 0);
+    const msg = String((err && err.message) || '');
+    if (status === 401 || status === 403) {
+      toast('下载失败：没有原图读取权限（HTTP ' + status + '）', 'error', 6000);
+    } else if (status === 404) {
+      toast('下载失败：原图不存在或已失效（HTTP 404）', 'error', 6000);
+    } else if (err && err.offline) {
+      toast('下载失败：无法连接后端服务，请检查网络后重试', 'error', 6000);
+    } else if (/Failed to fetch|NetworkError|load failed/i.test(msg)) {
+      toast('下载失败：网络不可达，请刷新后重试', 'error', 6000);
+    } else {
+      toast('下载失败：' + (msg || '后端返回异常') + '，请刷新后重试', 'error', 6000);
+    }
   }
 }
 
@@ -35764,6 +35806,7 @@ window.HMApp = {
   markJobDone: markJobDone,
   markJobError: markJobError,
   downloadImage: downloadImage,
+  proxyMediaUrl: proxyMediaUrl,
   fileNameFor: fileNameFor,
   openLightbox: openLightbox,
   errorText: errorText,
@@ -73207,7 +73250,7 @@ window.HMChat = (function () {
                     fetched++; checkDone(); return;
                   }
                 }
-                fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
+                fetch(A.proxyMediaUrl ? A.proxyMediaUrl(url) : url).then(function (r) { return r.blob(); }).then(function (blob) {
                   if (!/\.([a-z0-9]+)$/i.test(fname)) {
                     var extFromType = (blob.type || '').split('/')[1] || 'png';
                     fname += '.' + extFromType;
@@ -73307,7 +73350,7 @@ window.HMChat = (function () {
           members.forEach(function (w) {
             var url = w.url || w.thumb;
             var fname = A.fileNameFor(w);
-            fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
+            fetch(A.proxyMediaUrl ? A.proxyMediaUrl(url) : url).then(function (r) { return r.blob(); }).then(function (blob) {
               if (!/\.([a-z0-9]+)$/i.test(fname)) fname += '.' + ((blob.type || '').split('/')[1] || 'png');
               sub.file(fname, blob);
             }).catch(function () {}).then(done);
