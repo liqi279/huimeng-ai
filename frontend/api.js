@@ -3,7 +3,7 @@
 /* =============================================================
  * 绘梦 · 后端 API 客户端（前后端分离）
  * 默认使用同源 /api；也可用 ?api= 指定后端地址，例如：
- *   GitHub Pages 默认指向腾讯云 SCF（函数 URL）：
+ *   GitHub Pages 默认指向腾讯云 SCF 后端：
  *     https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api
  *   本地开发可覆盖为本地后端：
  *     ?api=https://localhost:8443/api   （首次需访问 https://localhost:8443 信任自签证书）
@@ -19,7 +19,7 @@
     override = new URLSearchParams(location.search).get('api') || '';
   } catch (err) { override = ''; }
 
-  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向腾讯云 SCF 函数 URL，
+  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向腾讯云 SCF 后端，
    * 本地运行时仍走同源 /api。可用 ?api= 覆盖。 */
   var isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(location.hostname);
   var autoBase = isLocalHost ? '/api' : 'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api';
@@ -67,6 +67,7 @@
     var error = new Error(message || ('后端请求失败（HTTP ' + status + '）'));
     if (hint) error.hint = hint;
     error.status = status;
+    error.data = data;
     /* 保留后端错误码：前端要区分 TOKEN_INVALID / ACCOUNT_PENDING / ACCOUNT_UNDEFINED，
        不能只靠中文文案猜。 */
     if (data && typeof data === 'object' && data.error && typeof data.error === 'object' && data.error.code) {
@@ -97,15 +98,12 @@
 
     try {
       var token = authToken();
-      var method = opts.method || 'GET';
       var init = {
-        method: method,
+        method: opts.method || 'GET',
         headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}, opts.headers || {}),
         signal: controller.signal
       };
-      /* GET/HEAD 不允许带 body（浏览器会直接抛 TypeError），null 也视为无体 */
-      var hasBody = opts.body !== undefined && opts.body !== null && method !== 'GET' && method !== 'HEAD';
-      if (hasBody) {
+      if (opts.body !== undefined) {
         init.headers['Content-Type'] = 'application/json';
         init.body = JSON.stringify(opts.body);
       }
@@ -143,7 +141,7 @@
   };
 
   /* 探测后端；返回是否可用 */
-  async function doPing() {
+  api.ping = async function () {
     if (typeof location !== 'undefined' && location.protocol === 'file:') {
       api.checked = true;
       api.online = false;
@@ -165,25 +163,6 @@
       } catch (err) { api.config = null; }
     }
     return api.online;
-  }
-
-  /* 首屏 app.js 与 ui.js 会各探测一次：进行中的请求共用同一个 Promise，
-     5 秒内的重复调用直接复用结果，少打一次 /health + /config。
-     失败不缓存——下一次调用仍会真正重试。 */
-  var pingInFlight = null;
-  var pingAt = 0;
-  api.ping = function () {
-    if (pingInFlight) return pingInFlight;
-    if (api.checked && pingAt && Date.now() - pingAt < 5000) return Promise.resolve(api.online);
-    pingInFlight = doPing().then(function (online) {
-      pingInFlight = null;
-      pingAt = Date.now();
-      return online;
-    }, function (err) {
-      pingInFlight = null;
-      throw err;
-    });
-    return pingInFlight;
   };
 
   api.hasServerKey = function () {
@@ -222,7 +201,21 @@
   api.clearWorks = function () { return request('/works', { method: 'DELETE' }, 15000); };
 
   api.getDesk = function () { return request('/desk', {}, 20000); };
+  /* 轻量变更探测：只回 rev/updatedAt；带 If-None-Match，未变化时服务端 304 */
+  api.getDeskRev = function (etag) {
+    var opts = { headers: etag ? { 'If-None-Match': etag } : {} };
+    return request('/desk/rev', opts, 12000).then(function (d) {
+      return d || { notModified: true };
+    }, function (err) {
+      if (err && Number(err.status) === 304) return { notModified: true };
+      throw err;
+    });
+  };
   api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
+  /* 逐项写桌面（云端权威）：ops 为增量的单条操作，服务端应用后返回新 rev 与整份文档 */
+  api.deskOps = function (ops, rev) {
+    return request('/desk/ops', { method: 'POST', body: { ops: ops, rev: rev } }, 25000);
+  };
 
   api.listAssets = function (filter) {
     var qs = [];
@@ -346,16 +339,6 @@
   api.bulkImportArts = function (items) { return request('/art/bulk', { method: 'POST', body: { items: items } }, 30000); };
   api.exportArtBoard = function (id, format) { return request('/art/' + encodeURIComponent(id) + '/export?format=' + encodeURIComponent(format), null, 15000); };
 
-  /* ===== 原画（OUA / Original Animation）===== */
-  api.listOua = function (q) { return request('/oua' + (q || ''), null, 20000); };
-  api.getOua = function (id) { return request('/oua/' + encodeURIComponent(id), null, 20000); };
-  api.createOua = function (payload) { return request('/oua', { method: 'POST', body: payload }, 20000); };
-  api.updateOua = function (id, payload) { return request('/oua/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
-  api.deleteOua = function (id) { return request('/oua/' + encodeURIComponent(id), { method: 'DELETE', body: null }, 15000); };
-  api.duplicateOua = function (id) { return request('/oua/' + encodeURIComponent(id) + '/duplicate', { method: 'POST', body: null }, 20000); };
-  api.bulkOua = function (items) { return request('/oua/bulk', { method: 'POST', body: { items: items } }, 30000); };
-  api.exportOua = function (team) { return '/api/oua/export' + (team ? '?team=' + encodeURIComponent(team) : ''); };
-  api.dictOua = function () { return request('/oua/dict', null, 10000); };
 
   /* ===== 动画（Animation / Tweening）===== */
   api.listAnimation = function (q) { return request('/animation' + (q || ''), null, 20000); };
@@ -395,6 +378,41 @@
     if (/^(https?:|data:|blob:)/i.test(value)) return value;
     if (value.charAt(0) === '/' && origin) return origin + value;
     return value;
+  };
+
+  /* 跨域图片代理：上游图没有 CORS 头时，由后端代取字节（服务端不受浏览器跨域限制） */
+  api.origin = origin || '';
+  api.base = base;
+  api.imageProxyUrl = function (url) {
+    var raw = String(url || '');
+    if (!raw) return '';
+    var target = /^https?:\/\//i.test(raw) ? raw : api.mediaUrl(raw);
+    /* SCF 函数 URL 不透传二进制响应体（200 空 body），走 JSON 通道拿 dataUrl */
+    var path = '/api/image-proxy?url=' + encodeURIComponent(target) + '&format=json';
+    return origin ? origin + path : path;
+  };
+
+  /* 历史数据里保存的旧域名绝对地址（后端已迁移）统一改写到当前 API origin。
+     - 仅改写已知旧域名前缀，新域名/第三方地址原样返回
+     - 相对地址先按 mediaUrl 补全；file:// 下没有同源 origin，则保持原值交给浏览器 */
+  var LEGACY_ORIGINS = ['https://huimeng-ai-backend.onrender.com'];
+  api.fileUrl = function (url) {
+    var value = api.mediaUrl(url);
+    if (!value || !origin) return value;
+    for (var i = 0; i < LEGACY_ORIGINS.length; i++) {
+      if (value.indexOf(LEGACY_ORIGINS[i]) === 0) {
+        return origin + value.slice(LEGACY_ORIGINS[i].length);
+      }
+    }
+    return value;
+  };
+  /* 是否是迁移前旧域名的历史地址（可用来判断缓存是否过期） */
+  api.isLegacyFileUrl = function (url) {
+    var value = String(url || '');
+    for (var i = 0; i < LEGACY_ORIGINS.length; i++) {
+      if (value.indexOf(LEGACY_ORIGINS[i]) === 0) return true;
+    }
+    return false;
   };
 
   /* -------------- 用户认证 -------------- */

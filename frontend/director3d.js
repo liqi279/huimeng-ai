@@ -494,10 +494,6 @@ window.HMDirector3D = (function () {
     if (tControls.mode !== mode) tControls.setMode(mode);
     syncGizmoBar();
     renderInspector();
-    if (opts && opts.announce) {
-      var label = mode === 'translate' ? '移动（M）' : mode === 'rotate' ? '旋转（R）' : '缩放（S）';
-      toast('模式：' + label);
-    }
   }
 
   /* 选中物体时，在视口右上角显示 M/R/S 切换浮条 */

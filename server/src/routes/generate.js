@@ -6,6 +6,8 @@ const config = require('../config');
 const appConfig = require('../app-config');
 const catalog = require('../catalog');
 const mediaStore = require('../media-store');
+const userData = require('../user-data');
+const { authOptional } = require('../auth');
 const {
   jsonError,
   assert,
@@ -136,28 +138,126 @@ function readRefImages(value) {
   });
 }
 
-async function resolveRayin(input) {
+/* 从「接入设置」整包里按通道取密钥。
+ * 前端把各通道的 Key 存在 rayin.providers['__rayin__:gpt-image'].key，
+ * 老页面不会再单独传 rayin.key；以前后端只认 rayin.key，于是即便用户在
+ * 设置里填过 Key，服务端也认为没配置（线上实测返回「未配置 RayinAPI Key」）。 */
+function pickChannelProvider(rayin, engine, model) {
+  const providers = rayin && rayin.providers;
+  if (!providers || typeof providers !== 'object' || Array.isArray(providers)) return null;
+  const keyOf = (p) => (p && typeof p.key === 'string' && p.key.trim() ? p.key.trim() : '');
+  const ids = Object.keys(providers);
+  let hit = null;
+  /* 1) 模型 ID 精确匹配（同一通道可能配了多个模型） */
+  ids.forEach((id) => {
+    const p = providers[id];
+    if (!hit && keyOf(p) && model && String(p.model || '') === model) hit = p;
+  });
+  /* 2) 引擎匹配：gpt-image / banana */
+  if (!hit) {
+    ids.forEach((id) => {
+      const p = providers[id];
+      if (!hit && keyOf(p) && String(p.engine || '') === engine) hit = p;
+    });
+  }
+  /* 3) 通道固定 id 兜底 */
+  if (!hit) {
+    const guess = engine === 'gpt-image' ? '__rayin__:gpt-image' : '__rayin__:banana';
+    if (providers[guess] && keyOf(providers[guess])) hit = providers[guess];
+  }
+  if (!hit) return null;
+  return {
+    key: keyOf(hit),
+    base: typeof hit.base === 'string' ? hit.base.trim() : '',
+    model: typeof hit.model === 'string' ? hit.model.trim() : '',
+  };
+}
+
+/* 云端 /docs/api 是「接入设置」的权威副本：providers 里按通道存 key，
+   另有历史遗留的 rayin.key / 顶层 key。前端的 state.api 只在页面启动时读一次
+   本地缓存，云端这份不会回灌到内存，所以请求里经常不带 key。
+   这里由服务端直接读当前登录用户的 api 文档，把 key 补进 rayin，保证一定能取到。 */
+async function withCloudRayinKey(req, rayin, engine) {
+  const out = Object.assign({}, rayin && typeof rayin === 'object' ? rayin : {});
+  const existing = typeof out.key === 'string' ? out.key.trim() : '';
+  if (existing || !req || !req.user) return out;
+  try {
+    const doc = await userData.getDoc(req.user.id, 'api');
+    const data = doc && doc.data;
+    if (!data || typeof data !== 'object') return out;
+    let key = '';
+    const provs = data.providers && typeof data.providers === 'object' ? data.providers : null;
+    if (provs) {
+      const ids = Object.keys(provs);
+      const keyOf = (id) => {
+        const p = provs[id];
+        return p && typeof p.key === 'string' ? p.key.trim() : '';
+      };
+      const pick = (predict) => {
+        for (const id of ids) {
+          const p = provs[id];
+          if (p && predict(p, id)) {
+            const k = keyOf(id);
+            if (k) return k;
+          }
+        }
+        return '';
+      };
+      key = pick((p) => String(p.engine || '') === engine)
+        || pick((p) => engine === 'gpt-image' && /^gpt-image/i.test(String(p.model || '')))
+        || pick((p) => engine === 'banana' && /^gemini/i.test(String(p.model || '')))
+        || (engine === 'gpt-image' ? keyOf('__rayin__:gpt-image') : '')
+        || (engine === 'banana' ? keyOf('__rayin__:banana') : '');
+    }
+    if (!key && data.rayin && typeof data.rayin.key === 'string') key = data.rayin.key.trim();
+    if (!key && typeof data.key === 'string') key = data.key.trim();
+    /* 只补 key，不改用户已选的 base / 模型 */
+    if (key) out.key = key;
+  } catch (err) {
+    /* 读文档失败不阻断：继续走环境变量 / app_config 兜底 */
+  }
+  return out;
+}
+
+async function resolveRayin(input, engine) {
   const rayin = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
   /* 两套 key 共存：
    *   openaiKey  → engine=gpt-image → /images/generations
    *   geminiKey  → engine=banana   → /chat/completions
-   * 前端可传 rayin.key 覆盖（单 key 兼容老版），否则用后端默认：
-   * 环境变量优先，其次 app_config 表（跨设备共享），最后内置默认。 */
+   * 前端可传 rayin.key 覆盖（单 key 兼容老版）；否则依次取：
+   * 通道密钥（rayin.providers）→ 环境变量 → app_config 表 → 内置默认。 */
   const userKey = typeof rayin.key === 'string' && rayin.key.trim() ? rayin.key.trim() : '';
-  const fallback = userKey ? null : await appConfig.getGemini();
+  const modelHint = typeof rayin.model === 'string' && rayin.model.trim() ? rayin.model.trim() : '';
+  const prov = userKey ? null : pickChannelProvider(rayin, engine || '', modelHint || (rayin.gptModel || ''));
+  const needDb = !userKey && !prov;
+  const fallback = needDb ? await appConfig.getGemini() : null;
+  const openaiFallback = needDb ? await appConfig.getOpenAI() : null;
   return {
-    base: normalizeBase(rayin.base || (fallback && fallback.base)),
-    openaiKey: userKey || config.OPENAI_KEY,
-    geminiKey: userKey || config.GEMINI_KEY || (fallback && fallback.key) || '',
-    gptModel: typeof rayin.gptModel === 'string' && rayin.gptModel.trim() ? rayin.gptModel.trim() : config.GPT_MODEL,
-    bananaModel: typeof rayin.bananaModel === 'string' && rayin.bananaModel.trim()
-      ? rayin.bananaModel.trim()
-      : (fallback && fallback.model) || config.BANANA_MODEL,
+    base: normalizeBase(
+      (prov && prov.base) || rayin.base || (fallback && fallback.base) || (openaiFallback && openaiFallback.base)
+    ),
+    openaiKey: userKey
+      || (engine === 'gpt-image' && prov && prov.key)
+      || config.OPENAI_KEY
+      || (openaiFallback && openaiFallback.key)
+      || '',
+    geminiKey: userKey
+      || (engine === 'banana' && prov && prov.key)
+      || config.GEMINI_KEY
+      || (fallback && fallback.key)
+      || '',
+    gptModel: (prov && prov.model)
+      || (typeof rayin.gptModel === 'string' && rayin.gptModel.trim() ? rayin.gptModel.trim() : config.GPT_MODEL),
+    bananaModel: (engine === 'banana' && prov && prov.model)
+      || (typeof rayin.bananaModel === 'string' && rayin.bananaModel.trim()
+        ? rayin.bananaModel.trim()
+        : (fallback && fallback.model) || config.BANANA_MODEL),
   };
 }
 
 function requireKey(key) {
-  assert(key, 400, '未配置 RayinAPI Key', '在设置中填写 Key 或配置服务端 RAYIN_KEY');
+  assert(key, 400, '未配置 RayinAPI Key',
+    '已依次检查：请求 rayin.key、rayin.providers、云端 /docs/api、环境变量 OPENAI_KEY、app_config(openai.apiKey)');
 }
 
 function scaledImageSize(ratio, scale) {
@@ -327,6 +427,31 @@ function extractOpenAIImage(data) {
   throw jsonError(502, '图片接口未返回图片', '请检查模型 ID 与账号权限');
 }
 
+/* GPT-image（/images/generations）默认返回 b64_json，单张约 2MB；
+   直接塞进 /generate 的 JSON 会把响应撑到数 MB，SCF 函数 URL 与浏览器
+   localStorage 都容易被拖垮。这里落对象存储，改成普通媒体 URL 返回；
+   存储失败时保留 data URL，不阻断出图。 */
+async function persistInlineImage(url) {
+  if (!url || typeof url !== 'string' || !url.startsWith('data:')) return url;
+  const match = url.match(/^data:([^;,]+)?(;base64)?,([\s\S]*)$/);
+  if (!match || !match[2]) return url;
+  try {
+    const mime = match[1] || 'image/png';
+    const buffer = Buffer.from(match[3], 'base64');
+    if (!buffer.length) return url;
+    const ext = extFromMime(mime) || 'png';
+    const saved = await mediaStore.put(
+      'media',
+      `${Date.now()}-${randomToken(6)}.${ext}`,
+      buffer,
+      mime,
+    );
+    return saved.url;
+  } catch (err) {
+    return url;
+  }
+}
+
 async function generateGptImage({ base, key, model, prompt, size, ref }) {
   if (ref) {
     const form = new FormData();
@@ -342,7 +467,7 @@ async function generateGptImage({ base, key, model, prompt, size, ref }) {
       IMAGE_TIMEOUT,
     );
     const data = await readJsonResponse(res, '请检查模型 ID、参考图与账号权限');
-    return extractOpenAIImage(data);
+    return persistInlineImage(extractOpenAIImage(data));
   }
 
   const data = await fetchJson(
@@ -355,7 +480,7 @@ async function generateGptImage({ base, key, model, prompt, size, ref }) {
     IMAGE_TIMEOUT,
     '请检查模型 ID 与账号权限',
   );
-  return extractOpenAIImage(data);
+  return persistInlineImage(extractOpenAIImage(data));
 }
 
 function extractChatImage(message) {
@@ -484,7 +609,7 @@ async function generateImages(body) {
   const steps = readSteps(body.steps);
   const seedInput = readSeed(body.seed);
   const refs = readRefImages(body.refImages);
-  const rayin = await resolveRayin(body.rayin);
+  const rayin = await resolveRayin(body.rayin, engine);
 
   const lora = catalog.findLora(body.style);
   const styled = applyStyle(prompt, lora);
@@ -1044,10 +1169,14 @@ router.get('/media-models', wrap(async (req, res) => {
   });
 }));
 
-router.post('/generate', wrap(async (req, res) => {
+router.post('/generate', authOptional, wrap(async (req, res) => {
   const body = req.body || {};
   const mode = body.mode;
   assert(['image', 'video', 'audio'].includes(mode), 400, '未知生成模式', 'mode 仅支持 image / video / audio');
+
+  /* 前端内存里的 state.api 可能没有 Key（只在页面启动读一次本地缓存），
+     先按登录用户读云端 /docs/api 补全 Key，再做「是否用服务器 Key」的额度判定 */
+  body.rayin = await withCloudRayinKey(req, body.rayin, body.engine);
 
   /* 没带自己的 Key → 会消耗平台 Key，按天限额防刷 */
   const rayinInput = body.rayin && typeof body.rayin === 'object' && !Array.isArray(body.rayin) ? body.rayin : {};

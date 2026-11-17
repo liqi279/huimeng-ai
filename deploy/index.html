@@ -26911,6 +26911,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     var error = new Error(message || ('后端请求失败（HTTP ' + status + '）'));
     if (hint) error.hint = hint;
     error.status = status;
+    error.data = data;
     /* 保留后端错误码：前端要区分 TOKEN_INVALID / ACCOUNT_PENDING / ACCOUNT_UNDEFINED，
        不能只靠中文文案猜。 */
     if (data && typeof data === 'object' && data.error && typeof data.error === 'object' && data.error.code) {
@@ -27044,7 +27045,21 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.clearWorks = function () { return request('/works', { method: 'DELETE' }, 15000); };
 
   api.getDesk = function () { return request('/desk', {}, 20000); };
+  /* 轻量变更探测：只回 rev/updatedAt；带 If-None-Match，未变化时服务端 304 */
+  api.getDeskRev = function (etag) {
+    var opts = { headers: etag ? { 'If-None-Match': etag } : {} };
+    return request('/desk/rev', opts, 12000).then(function (d) {
+      return d || { notModified: true };
+    }, function (err) {
+      if (err && Number(err.status) === 304) return { notModified: true };
+      throw err;
+    });
+  };
   api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
+  /* 逐项写桌面（云端权威）：ops 为增量的单条操作，服务端应用后返回新 rev 与整份文档 */
+  api.deskOps = function (ops, rev) {
+    return request('/desk/ops', { method: 'POST', body: { ops: ops, rev: rev } }, 25000);
+  };
 
   api.listAssets = function (filter) {
     var qs = [];
@@ -29505,7 +29520,33 @@ function rayinCfg() {
 }
 
 function hasRayinKey() {
-  return !!String(rayinCfg().key || '').trim();
+  return !!String(rayinCfg().key || '').trim() || !!rayinChannelKey(state.engine);
+}
+
+/* 「接入设置」把每个通道的 Key 存在 providers 里（__rayin__:gpt-image / __rayin__:banana），
+   过去只从 state.api.key 取值，换过通道后这里为空，请求就不带 Key，
+   服务端只能靠环境变量 OPENAI_KEY —— 没配时 gpt-image 直接报「未配置 RayinAPI Key」。
+   这里按通道把真实 Key 找出来，随生成请求一起带给后端。 */
+function rayinChannelKey(engine) {
+  var api = rayinCfg();
+  var provs = api && api.providers;
+  if (!provs || typeof provs !== 'object') return '';
+  var ids = Object.keys(provs);
+  var found = '';
+  var keyOf = function (p) { return p && typeof p.key === 'string' ? p.key.trim() : ''; };
+  /* 与当前选择模型同名的最优先，其次按引擎匹配 */
+  var picked = String(state.channelModel || '');
+  ids.forEach(function (id) {
+    var p = provs[id];
+    if (!found && keyOf(p) && picked && String(p.model || '') === picked) found = keyOf(p);
+  });
+  ids.forEach(function (id) {
+    var p = provs[id];
+    if (!found && keyOf(p) && String(p.engine || '') === engine) found = keyOf(p);
+  });
+  if (!found && engine === 'gpt-image') found = keyOf(provs['__rayin__:gpt-image']);
+  if (!found && engine === 'banana') found = keyOf(provs['__rayin__:banana']);
+  return found;
 }
 
 /* ---------------- 免费模型目录 ---------------- */
@@ -31808,6 +31849,10 @@ async function runBackendImage(job, prompt) {
       payload.model = /^gemini/i.test(picked) ? picked : (rayinCfg().bananaModel || 'gemini-3.1-flash-image');
     }
     if (payload.model !== picked) state.channelModel = payload.model;
+    /* 通道密钥显式带上：state.api.key 为空时用 providers 里对应通道的 Key，
+       避免后端只依赖环境变量而报「未配置 RayinAPI Key」 */
+    var channelKey = String(rayinCfg().key || '').trim() || rayinChannelKey(job.engine);
+    if (channelKey) payload.rayin = Object.assign({}, state.api, { key: channelKey });
   }
 
   /* 日志要记录「真实发出的模型名」，而不是界面上的展示名 */
@@ -69213,13 +69258,26 @@ window.HMChat = (function () {
 
   function persistNow() {
     desk.updatedAt = Date.now();
+    /* 本地只做展示缓存：改动先标记 pending，再拆成逐项 op 提交云端 */
+    pendingLocal = true;
     try {
       localStorage.setItem(getDeskLsKey(), JSON.stringify(payload()));
     } catch (err) {
       /* 存储空间不足时静默失败 */
     }
-    if (api && api.online && api.saveDesk) {
-      api.saveDesk(payload()).catch(function () {});
+    if (!api || !api.online) return;
+    if (api.deskOps) {
+      /* 云端权威：/desk/ops 逐项落库；还没有云端基线时先拉一次，再在该版本上重放本地改动 */
+      if (lastCloud) flushOps();
+      else syncServer();
+      return;
+    }
+    /* 旧后端没有逐项接口时才整包写，服务端 mergeAndSave 会兜底合并，不会抹掉别的设备的数据 */
+    if (api.saveDesk) {
+      api.saveDesk(payload()).then(function (r) {
+        if (r && r.rev != null) setSyncMeta(r.rev, r.updatedAt);
+        pendingLocal = false;
+      }).catch(function () {});
     }
   }
 
@@ -69246,7 +69304,10 @@ window.HMChat = (function () {
     remote.folders.forEach(function (f) {
       if (f && f.id && f.name) remoteFolders[f.id] = f;
     });
-    var tombstones = Object.assign({}, desk.tombstones || {}, remote.tombstones || {});
+    var tombstones = Object.assign({}, desk.tombstones || {});
+    Object.keys(remote.tombstones || {}).forEach(function (k) {
+      tombstones[k] = Math.max(Number(tombstones[k]) || 0, Number(remote.tombstones[k]) || 0);
+    });
     var localIds = {};
     var merged = desk.folders.map(function (f) {
       localIds[f.id] = 1;
@@ -69326,6 +69387,19 @@ window.HMChat = (function () {
     });
 
     desk.tombstones = tombstones;
+    /* 作品归属墓碑 a:<workId>：只有「仍带该归属的文档」比墓碑旧时才移除，
+       避免把删除后重新归入文件夹的作品又踢回桌面 */
+    var remoteAssigns = remote.assigns || {};
+    var remoteDocTs = Number(remote.updatedAt) || 0;
+    var localDocTs = Number(desk.updatedAt) || 0;
+    Object.keys(desk.assigns).forEach(function (wid) {
+      var t = Number(tombstones['a:' + wid]) || 0;
+      if (!t) return;
+      var ownerTs = 0;
+      if (Object.prototype.hasOwnProperty.call(desk.assigns, wid)) ownerTs = Math.max(ownerTs, localDocTs);
+      if (Object.prototype.hasOwnProperty.call(remoteAssigns, wid)) ownerTs = Math.max(ownerTs, remoteDocTs);
+      if (t > ownerTs) { delete desk.assigns[wid]; changed = true; }
+    });
     if (view.activeFolder && !desk.folders.some(function (f) { return f.id === view.activeFolder; })) {
       view.activeFolder = null;
     }
@@ -69336,58 +69410,260 @@ window.HMChat = (function () {
     try { localStorage.setItem(getDeskLsKey(), JSON.stringify(payload())); } catch (err) {}
   }
 
+  /* 云端缺、本地有的文件夹/叠放数量。旧逻辑只在「本地被云端补到了东西」时才回写，
+     于是被别的设备旧快照覆盖掉的文件夹永远补不回云端，两台电脑各看各的。
+     这里把「本地独有」也算作需要回写的情况，用于修复已经分裂的数据。 */
+  function localOnlyCount(remote) {
+    if (!remote || typeof remote !== 'object') return 0;
+    var ids = Object.create(null);
+    var stackIds = Object.create(null);
+    (Array.isArray(remote.folders) ? remote.folders : []).forEach(function (f) {
+      if (f && f.id) ids[f.id] = 1;
+    });
+    (Array.isArray(remote.stacks) ? remote.stacks : []).forEach(function (s) {
+      if (s && s.id) stackIds[s.id] = 1;
+    });
+    var n = 0;
+    desk.folders.forEach(function (f) { if (f && f.id && !ids[f.id]) n += 1; });
+    desk.stacks.forEach(function (s) { if (s && s.id && !stackIds[s.id]) n += 1; });
+    return n;
+  }
+
+  /* ---------------- 云端权威同步 ----------------
+     · 云端 desk 是唯一权威：进入页面 / 切回前台 / rev 变化 → 拉全量覆盖本地缓存
+     · 本地只做展示缓存；用户改动拆成逐项 op（POST /desk/ops）提交，不再整包写
+     · 有未确认操作时先记 pendingLocal，拿到新 rev 后在云端版本上重放，避免互相覆盖
+     · 轻量探测 /desk/rev：可见时 9s 一次，ETag/304；隐藏不探测 */
+  var syncMeta = { rev: null, etag: null, lastPoll: 0, polling: false, timer: null };
+  var lastCloud = null;      /* 最近一次云端返回的 desk（权威快照） */
+  var pendingLocal = false;  /* 本地有尚未确认写入的改动 */
+  var flushState = { sending: false, again: false };
+
+  function cloneDoc(v) {
+    try { return v == null ? v : JSON.parse(JSON.stringify(v)); } catch (e) { return v; }
+  }
+
+  function setSyncMeta(rev, updatedAt) {
+    if (rev == null) return;
+    syncMeta.rev = Number(rev) || 0;
+    syncMeta.etag = '"' + syncMeta.rev + '-' + (Number(updatedAt) || 0) + '"';
+  }
+
+  /* 用云端文档替换本地展示缓存 */
+  function adoptCloudDoc(doc) {
+    if (!doc || typeof doc !== 'object') return;
+    lastCloud = cloneDoc(doc);
+    desk.folders = Array.isArray(doc.folders) ? cloneDoc(doc.folders) : [];
+    desk.stacks = Array.isArray(doc.stacks) ? cloneDoc(doc.stacks) : [];
+    desk.positions = cloneDoc(doc.positions) || {};
+    desk.assigns = cloneDoc(doc.assigns) || {};
+    desk.names = cloneDoc(doc.names) || {};
+    desk.tombstones = cloneDoc(doc.tombstones) || {};
+    desk.updatedAt = Number(doc.updatedAt) || Date.now();
+    if (view.activeFolder) {
+      var still = false;
+      for (var i = 0; i < desk.folders.length; i += 1) {
+        if (desk.folders[i] && desk.folders[i].id === view.activeFolder) { still = true; break; }
+      }
+      if (!still) view.activeFolder = null;
+    }
+    if (view.activeStack) {
+      var hasStack = false;
+      for (var j = 0; j < desk.stacks.length; j += 1) {
+        if (desk.stacks[j] && desk.stacks[j].id === view.activeStack) { hasStack = true; break; }
+      }
+      if (!hasStack) view.activeStack = null;
+    }
+    pendingLocal = false;
+    saveLocalNow();
+    /* 云端可能还带着旧版「叠放 (N)」文件夹（旧客户端写进来的）：
+       立刻迁成 stacks，迁移结果会作为逐项 op 提交，避免叠放被当成普通文件夹平铺 */
+    try { migrateStackFolders(); } catch (e) {}
+    renderAll();
+  }
+
+  function sameMembers(a, b) { return (a || []).join(',') === (b || []).join(','); }
+
+  /* 本地→云端的逐项差异（新建/改名/移动/删除/归入/移出/位置），不整包 */
+  function buildOps(prev, next) {
+    var ops = [];
+    if (!prev || !next) return ops;
+    var pf = {}, nf = {}, ps = {}, ns = {};
+    (prev.folders || []).forEach(function (f) { if (f && f.id) pf[f.id] = f; });
+    (next.folders || []).forEach(function (f) { if (f && f.id) nf[f.id] = f; });
+    (prev.stacks || []).forEach(function (s) { if (s && s.id) ps[s.id] = s; });
+    (next.stacks || []).forEach(function (s) { if (s && s.id) ns[s.id] = s; });
+    var tombs = next.tombstones || {};
+
+    Object.keys(nf).forEach(function (id) {
+      var a = pf[id], b = nf[id];
+      if (!a) { ops.push({ type: 'folder.add', folder: b }); return; }
+      if (a.name !== b.name || (a.parentId || null) !== (b.parentId || null) || (a.mode || '') !== (b.mode || '')) {
+        ops.push({
+          type: 'folder.update', id: id,
+          patch: { name: b.name, parentId: b.parentId || null, mode: b.mode, updatedAt: Number(b.updatedAt) || Date.now() }
+        });
+      }
+    });
+    Object.keys(pf).forEach(function (id) {
+      if (!nf[id]) ops.push({ type: 'folder.delete', id: id, ts: Number(tombs[id]) || Date.now() });
+    });
+
+    Object.keys(ns).forEach(function (id) {
+      var a = ps[id], b = ns[id];
+      if (!a) { ops.push({ type: 'stack.add', stack: b }); return; }
+      var patch = {};
+      if ((a.name || '') !== (b.name || '')) patch.name = b.name;
+      if (!sameMembers(a.memberIds, b.memberIds)) patch.memberIds = b.memberIds || [];
+      if (patch.name !== undefined || patch.memberIds !== undefined) {
+        patch.updatedAt = Number(b.updatedAt) || Date.now();
+        ops.push({ type: 'stack.update', id: id, patch: patch });
+      }
+    });
+    Object.keys(ps).forEach(function (id) {
+      if (!ns[id]) ops.push({ type: 'stack.delete', id: id, ts: Number(tombs[id]) || Date.now() });
+    });
+
+    var pa = prev.assigns || {}, na = next.assigns || {};
+    Object.keys(na).forEach(function (wid) {
+      if (!pa[wid] || pa[wid] !== na[wid]) ops.push({ type: 'assign.set', workId: wid, folderId: na[wid] });
+    });
+    Object.keys(pa).forEach(function (wid) {
+      if (!na[wid]) ops.push({ type: 'assign.del', workId: wid, ts: Number(tombs['a:' + wid]) || Date.now() });
+    });
+
+    var pn = prev.names || {}, nn = next.names || {};
+    Object.keys(nn).forEach(function (wid) {
+      if (pn[wid] !== nn[wid]) ops.push({ type: 'name.set', workId: wid, name: nn[wid] });
+    });
+    Object.keys(pn).forEach(function (wid) {
+      if (nn[wid] === undefined) ops.push({ type: 'name.del', workId: wid });
+    });
+
+    var pp = prev.positions || {}, np = next.positions || {};
+    Object.keys(np).forEach(function (wid) {
+      if (JSON.stringify(pp[wid]) !== JSON.stringify(np[wid])) {
+        ops.push({ type: 'position.set', workId: wid, position: np[wid] });
+      }
+    });
+    Object.keys(pp).forEach(function (wid) {
+      if (np[wid] === undefined) ops.push({ type: 'position.del', workId: wid });
+    });
+
+    return ops;
+  }
+
+  function flushOps() {
+    if (!lastCloud || !api || !api.deskOps) return;
+    if (flushState.sending) { flushState.again = true; return; }
+    var ops = buildOps(lastCloud, payload());
+    if (!ops.length) { pendingLocal = false; return; }
+    /* 服务端单次最多应用 2000 条；这里按 300 条分批，剩下的在成功返回后继续 diff */
+    var batch = ops.slice(0, 300);
+    flushState.sending = true;
+    flushState.again = false;
+    api.deskOps(batch, syncMeta.rev).then(function (r) {
+      flushState.sending = false;
+      if (!r) return;
+      var doc = r.desk || (r.doc && r.doc.data);
+      if (r.rev != null) setSyncMeta(r.rev, r.updatedAt);
+      if (doc) lastCloud = cloneDoc(doc);
+      pendingLocal = false;
+      if (flushState.again || (doc && buildOps(doc, payload()).length)) { flushOps(); return; }
+      if (doc) adoptCloudDoc(doc);
+    }).catch(function (err) {
+      flushState.sending = false;
+      if (err && Number(err.status) === 409 && err.data && err.data.desk) {
+        /* 别的设备先写了：以它的版本为新基线，把本地操作重放上去 */
+        lastCloud = cloneDoc(err.data.desk);
+        if (err.data.rev != null) setSyncMeta(err.data.rev, err.data.updatedAt);
+        flushOps();
+        return;
+      }
+      /* 网络失败：保留本地缓存，等下一次改动/探测再试 */
+    });
+  }
+
+  /* 拉到云端全量：没有待确认操作就直接覆盖本地；有就先重放再说 */
+  function applyCloud(doc) {
+    if (!doc) return false;
+    lastCloud = cloneDoc(doc);
+    if (pendingLocal) { flushOps(); return true; }
+    /* 云端压根没有桌面文档（新账号/旧库为空）而本地缓存有内容：
+       本地是唯一来源，先回写云端，避免「第一次拉取就被空文档清空」 */
+    var cloudEmpty = !(Array.isArray(doc.folders) && doc.folders.length) &&
+      !(Array.isArray(doc.stacks) && doc.stacks.length);
+    var noTomb = !doc.tombstones || !Object.keys(doc.tombstones).length;
+    if (cloudEmpty && noTomb && (desk.folders.length || desk.stacks.length || Object.keys(desk.assigns).length)) {
+      pendingLocal = true;
+      flushOps();
+      return true;
+    }
+    adoptCloudDoc(doc);
+    return true;
+  }
+
+  function pollDeskRev(force) {
+    if (!api || !api.online || !api.getDeskRev) {
+      if (force) syncServer();
+      return;
+    }
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+    if (syncMeta.polling) return;
+    var now = Date.now();
+    if (!force && now - syncMeta.lastPoll < 8500) return;
+    syncMeta.lastPoll = now;
+    syncMeta.polling = true;
+    api.getDeskRev(syncMeta.etag).then(function (r) {
+      syncMeta.polling = false;
+      if (!r || r.notModified) return;
+      var rev = Number(r.rev) || 0;
+      var differs = syncMeta.rev == null || rev !== syncMeta.rev;
+      setSyncMeta(rev, r.updatedAt);
+      if (differs) syncServer();
+    }).catch(function () { syncMeta.polling = false; });
+  }
+
+  function startRealtimeSync() {
+    if (syncMeta.timer) return;
+    syncMeta.timer = setInterval(pollDeskRev, 9000);
+  }
+
+  /* 换账号/登出时必须清掉同步游标：否则会把上一个账号的云端快照当成基线，
+     用新账号的本地状态去和它做 diff，甚至把 op 写到新账号名下 */
+  function resetSyncState() {
+    syncMeta.rev = null;
+    syncMeta.etag = null;
+    syncMeta.lastPoll = 0;
+    lastCloud = null;
+    pendingLocal = false;
+    flushState.sending = false;
+    flushState.again = false;
+  }
+
   function syncServer() {
     if (!api || !api.online || !api.getDesk) return;
     api.getDesk().then(function (d) {
       if (!d || typeof d !== 'object') return;
       var remote = d.desk || d;
       if (!remote || !Array.isArray(remote.folders)) return;
-      var remoteTime = Number(remote.updatedAt) || 0;
-      var changed = mergeDesk(remote);
-      if (changed) {
-        desk.updatedAt = Math.max(Number(desk.updatedAt) || 0, remoteTime, Date.now());
-        saveLocalNow();
-        try { migrateStackFolders(); } catch (e) {}
-        renderAll();
-        /* 合并结果回写云端，另一台设备下次同步就能看到同一份列表 */
-        persistNow();
-      } else if (remoteTime > (Number(desk.updatedAt) || 0)) {
-        desk.updatedAt = remoteTime;
-        saveLocalNow();
-        renderAll();
-      } else if ((Number(desk.updatedAt) || 0) > remoteTime) {
-        persistNow();
-      }
+      if (d.rev != null) setSyncMeta(d.rev, d.updatedAt);
+      applyCloud(remote);
     }).catch(function () {});
   }
 
-  /* 登录即见：登录后直接返回「拉回云端桌面布局」的 Promise，
-     云端比本地新、或本地桌面是空的而云端有内容时采用云端（避免空桌面盖掉旧数据）。 */
+  /* 登录即见：以云端为准拉取；返回是否拿到云端文档 */
   function pullNow() {
     if (!api || !api.online || !api.getDesk) return Promise.resolve(false);
-    /* 换账号时内存里的布局可能还属于上一个 uid：先跳过，等 reloadForUser 按新 uid 重载后再拉，
-       避免把别人的布局写进当前账号的键 */
+    /* 换账号时内存里的布局可能还属于上一个 uid：先跳过，等 reloadForUser 按新 uid 重载后再拉 */
     var uidNow = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
     if (String(deskUid) !== String(uidNow)) return Promise.resolve(false);
     return api.getDesk().then(function (d) {
       if (!d || typeof d !== 'object') return false;
       var remote = d.desk || d;
       if (!remote || !Array.isArray(remote.folders)) return false;
-      var remoteTime = Number(remote.updatedAt) || 0;
-      var changed = mergeDesk(remote);
-      if (changed) {
-        desk.updatedAt = Math.max(Number(desk.updatedAt) || 0, remoteTime, Date.now());
-        saveLocalNow();
-        try { migrateStackFolders(); } catch (e) {}
-        renderAll();
-        persistNow();  /* 合并结果回写，另一台设备随后也能看到 */
-        console.log('[HMDesk] 已合并云端桌面布局', desk.folders.length, '个文件夹');
-      } else if (remoteTime > (Number(desk.updatedAt) || 0)) {
-        desk.updatedAt = remoteTime;
-        saveLocalNow();
-        renderAll();
-      }
-      return changed;
+      if (d.rev != null) setSyncMeta(d.rev, d.updatedAt);
+      return applyCloud(remote);
     }).catch(function () { return false; });
   }
 
@@ -69409,15 +69685,38 @@ window.HMChat = (function () {
       if (!f || !f.id || !f.name) return;
       var sig = String(f.parentId || '') + '|' + String(f.name || '');
       if (haveId[f.id] || haveName[sig]) return;
-      desk.folders.push({
+      /* 整条复制（含 mode 等扩展字段），避免把叠放降级成普通文件夹 */
+      desk.folders.push(Object.assign({}, f, {
         id: f.id,
         name: f.name,
         parentId: f.parentId || null,
         createdAt: Number(f.createdAt) || 0
-      });
+      }));
       haveId[f.id] = 1;
       haveName[sig] = 1;
       added += 1;
+    });
+    /* 旧键里若已有 stacks（新版叠放），按 id 合并成员，避免认领时丢掉叠放 */
+    (Array.isArray(item.stacks) ? item.stacks : []).forEach(function (s) {
+      if (!s || !s.id) return;
+      var cur = null;
+      for (var si = 0; si < desk.stacks.length; si += 1) {
+        if (desk.stacks[si].id === s.id) { cur = desk.stacks[si]; break; }
+      }
+      if (!cur) {
+        desk.stacks.push(Object.assign({}, s, {
+          id: s.id,
+          name: s.name || '叠放',
+          createdAt: Number(s.createdAt) || 0,
+          memberIds: Array.isArray(s.memberIds) ? s.memberIds.slice() : []
+        }));
+        added += 1;
+        return;
+      }
+      if (!Array.isArray(cur.memberIds)) cur.memberIds = [];
+      (s.memberIds || []).forEach(function (m) {
+        if (m && cur.memberIds.indexOf(m) < 0) { cur.memberIds.push(m); added += 1; }
+      });
     });
     ['positions', 'assigns', 'names'].forEach(function (k) {
       var src = item[k];
@@ -69435,8 +69734,16 @@ window.HMChat = (function () {
       desk.updatedAt = Math.max(Number(desk.updatedAt) || 0, Number(item.updatedAt) || 0, Date.now());
       try { localStorage.setItem(getDeskLsKey(), JSON.stringify(payload())); } catch (err) {}
       renderAll();
-      /* 标记待同步：直接推回云端，让其它设备也能看到 */
-      if (api && api.online && api.saveDesk) { api.saveDesk(payload()).catch(function () {}); }
+      /* 云端权威：认领结果算本地改动，走逐项 op 提交，不再整包写 */
+      pendingLocal = true;
+      if (api && api.online) {
+        if (api.deskOps) {
+          if (lastCloud) flushOps();
+          else syncServer();
+        } else if (api.saveDesk) {
+          api.saveDesk(payload()).catch(function () {});
+        }
+      }
       console.log('[HMDesk] 已认领历史桌面条目', added, '项');
     }
     return added;
@@ -69503,6 +69810,14 @@ window.HMChat = (function () {
 
   function folderOf(id) {
     return desk.assigns[id] || null;
+  }
+
+  /* 作品「移出文件夹 / 删除」时写归属墓碑：多端合并时删除才不会被另一台设备补回来 */
+  function unassign(wid) {
+    if (!wid) return;
+    delete desk.assigns[wid];
+    if (!desk.tombstones || typeof desk.tombstones !== 'object') desk.tombstones = {};
+    desk.tombstones['a:' + wid] = Date.now();
   }
 
   function folderName(id) {
@@ -69639,7 +69954,7 @@ window.HMChat = (function () {
   function moveWorksFolder(workIds, targetFolderId) {
     workIds.forEach(function (wid) {
       if (targetFolderId) desk.assigns[wid] = targetFolderId;
-      else delete desk.assigns[wid];
+      else unassign(wid);
     });
     persistNow();
   }
@@ -69882,7 +70197,7 @@ window.HMChat = (function () {
     var totalWorks = 0;
     descendantIds.forEach(function (fid) {
       Object.keys(desk.assigns).forEach(function (wid) {
-        if (desk.assigns[wid] === fid) { delete desk.assigns[wid]; totalWorks++; }
+        if (desk.assigns[wid] === fid) { unassign(wid); totalWorks++; }
       });
     });
     if (!silent) {
@@ -70396,22 +70711,22 @@ window.HMChat = (function () {
      如果不迁移，这些文件夹就"消失"了。 */
   function migrateGuestToUser() {
     var uid = (window.HMApp && window.HMApp.user && window.HMApp.user.id) || '';
-    if (!uid) return;
+    if (!uid) return false;
     var guestKey = 'anidream.desk.v1';
     var userKey = 'anidream.desk.v1.' + uid;
-    if (guestKey === userKey) return;
+    if (guestKey === userKey) return false;
     var guest = null;
     try { guest = JSON.parse(localStorage.getItem(guestKey) || 'null'); } catch (e) { guest = null; }
-    if (!guest || typeof guest !== 'object') return;
+    if (!guest || typeof guest !== 'object') return false;
     /* 仅当访客数据里有内容（文件夹或作品归属）时才迁移，避免空数据覆盖用户已有数据 */
     var hasGuestContent = (Array.isArray(guest.folders) && guest.folders.length > 0) ||
       (guest.assigns && Object.keys(guest.assigns).length > 0);
-    if (!hasGuestContent) return;
+    if (!hasGuestContent) return false;
     var user = null;
     try { user = JSON.parse(localStorage.getItem(userKey) || 'null'); } catch (e) { user = null; }
     var hasUserContent = user && ((Array.isArray(user.folders) && user.folders.length > 0) ||
       (user.assigns && Object.keys(user.assigns).length > 0));
-    if (hasUserContent) return; /* 用户 key 已有内容，不覆盖 */
+    if (hasUserContent) return false; /* 用户 key 已有内容，不覆盖 */
     /* 把访客数据写入用户 key（合并：访客文件夹追加到用户文件夹前） */
     var merged = {
       folders: (guest.folders || []).slice(),
@@ -70424,12 +70739,14 @@ window.HMChat = (function () {
     try { localStorage.setItem(userKey, JSON.stringify(merged)); } catch (e) {}
     /* 迁移后清空访客 key，避免下次重复迁移 */
     try { localStorage.removeItem(guestKey); } catch (e) {}
+    return true;
   }
 
   /* 登录后：从当前用户的专属 key 重新加载桌面布局（切换账号时调用） */
   function reloadForUser() {
     /* 先把访客态下创建的文件夹迁移到用户专属 key，防止"刷新后文件夹消失" */
-    migrateGuestToUser();
+    var guestMigrated = migrateGuestToUser();
+    resetSyncState();
     desk.folders = [];
     desk.stacks = [];
     desk.positions = {};
@@ -70440,6 +70757,8 @@ window.HMChat = (function () {
     view.activeStack = null;
     view.selected = {};
     load();
+    /* 访客期新建的文件夹从没上过云：标记 pending，pullNow 拉回云端版本后重放成 op */
+    if (guestMigrated) pendingLocal = true;
     renderAll();
     /* 登录即见：立即拉云端桌面（返回 Promise，供登录流程 await），不再延迟 800ms */
     return pullNow();
@@ -70447,6 +70766,7 @@ window.HMChat = (function () {
 
   /* 登出时：清空桌面内存数据，避免下个账号看到上个账号的文件夹布局 */
   function resetForLogout() {
+    resetSyncState();
     desk.folders = [];
     desk.stacks = [];
     desk.positions = {};
@@ -71492,7 +71812,7 @@ window.HMChat = (function () {
       var left = Math.max(0, Math.min(Math.max(1, grid.clientWidth - cardWidth() - 4),
         clientX - rect.left + grid.scrollLeft));
       var top = Math.max(0, clientY - rect.top + grid.scrollTop);
-      delete desk.assigns[wid];
+      unassign(wid);
       desk.positions[wid] = { pxLeft: left, pxTop: top, _userSet: true };
     }
     st.memberIds = (st.memberIds || []).filter(function (id) { return id !== wid; });
@@ -71578,7 +71898,7 @@ window.HMChat = (function () {
         try { A.idbDelBlob(w.id); } catch (e) {}
       }
       delete desk.positions[w.id];
-      delete desk.assigns[w.id];
+      unassign(w.id);
       delete desk.names[w.id];
       if (view.cut === w.id) view.cut = null;
       delete view.selected[w.id];
@@ -71710,7 +72030,7 @@ window.HMChat = (function () {
         /* 放到目标位置 */
         state.works.push(orig);
         if (targetFolder) desk.assigns[orig.id] = targetFolder;
-        else delete desk.assigns[orig.id];
+        else unassign(orig.id);
         grid = byId('resultGrid');
         desk.positions[orig.id] = compactSlot(state.works.length - 1, grid);
       });
@@ -73406,12 +73726,13 @@ window.HMChat = (function () {
     renderDesktop();
     setTimeout(syncServer, 1200);
     setTimeout(syncServer, 4200);
-    /* 跨设备一致性：切回页面、窗口获得焦点、每 60s 各合并一次云端文件夹树 */
+    /* 跨设备一致性：先探测 rev（9s 一次），变了才整包合并；切回/聚焦/联网立即探测 */
     document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible') syncServer();
+      if (document.visibilityState === 'visible') pollDeskRev(true);
     });
-    window.addEventListener('focus', function () { syncServer(); });
-    setInterval(syncServer, 60000);
+    window.addEventListener('focus', function () { pollDeskRev(true); });
+    window.addEventListener('online', function () { pollDeskRev(true); });
+    startRealtimeSync();
     setTimeout(function () {
       renderPanel();
       if (deskDirty && document.body.getAttribute('data-view') === 'create') renderDesktop();

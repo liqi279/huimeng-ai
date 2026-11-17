@@ -9,6 +9,8 @@
   var api = (window.HM && window.HM.api) ? window.HM.api : null;
 
   var submitting = false;
+  /* 首次打开登录框时清空一次，避免浏览器密码管理器把「接口地址 + API Key」填进来 */
+  var loginFieldsCleared = false;
 
   var els = {};
   function cache() {
@@ -46,7 +48,13 @@
     if (!els.auth) return;
     els.auth.hidden = false;
     els.auth.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('hm-auth-open');
     clearError();
+    if (!loginFieldsCleared) {
+      loginFieldsCleared = true;
+      if (els.username) els.username.value = '';
+      if (els.password) els.password.value = '';
+    }
     setTimeout(function () { els.username && els.username.focus(); }, 50);
     /* Render 免费层休眠后首个请求要 20~60 秒唤醒：
        打开登录框就先预热，用户输入账号密码的时间足够服务器醒来 */
@@ -58,6 +66,7 @@
     if (!els.auth) return;
     els.auth.hidden = true;
     els.auth.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('hm-auth-open');
   }
 
   function setError(msg) {

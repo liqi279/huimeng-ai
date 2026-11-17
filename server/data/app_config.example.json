@@ -1,5 +1,8 @@
 {
   "gemini.baseUrl": "https://www.rayinai.com",
   "gemini.apiKey": "",
-  "gemini.defaultModel": "gemini-3.1-flash-image"
+  "gemini.defaultModel": "gemini-3.1-flash-image",
+  "openai.baseUrl": "https://www.rayinai.com/v1",
+  "openai.apiKey": "",
+  "openai.defaultModel": "gpt-image-2"
 }

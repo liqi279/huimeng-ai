@@ -39,6 +39,10 @@
 
   function closeAdmin() {
     destroyAllCharts();
+    if (window.HMSettingsToggle && window.HMSettingsToggle.isOpen()) {
+      window.HMSettingsToggle.exit();
+      return;
+    }
     if (HM.switchView) HM.switchView('create');
   }
 
@@ -102,6 +106,15 @@
       var subBtn = e.target.closest('[data-tab]');
       if (subBtn) {
         var tab = subBtn.dataset.tab;
+        /* 消耗日志已独立成页：设置里这一项只作入口，点击直接打开该页 */
+        if (tab === 'usage') {
+          currentSubTab = 'overview';
+          page.querySelectorAll('.hm-admin-tab').forEach(function (t) {
+            t.classList.toggle('is-active', t.dataset.tab === 'overview');
+          });
+          if (HM.switchView) HM.switchView('usage');
+          return;
+        }
         page.querySelectorAll('.hm-admin-tab').forEach(function (t) {
           t.classList.toggle('is-active', t.dataset.tab === tab);
         });
@@ -124,6 +137,44 @@
       if (actionBtn && !actionBtn.disabled) {
         handleAccountAction(actionBtn.dataset.uid, actionBtn.dataset.accmd);
       }
+    });
+
+    /* 调用日志：筛选 / 分页 / 401 重新登录 / 失败重试（事件委托，表格重绘后依然有效） */
+    page.addEventListener('click', function (e) {
+      if (e.target.closest('[data-logsubmit]')) {
+        readLogFilters();
+        logState.page = 1;
+        renderLogsPage(document.getElementById('adminBody'));
+        return;
+      }
+      if (e.target.closest('[data-logreset]')) {
+        logState.status = ''; logState.model = ''; logState.user = ''; logState.q = '';
+        logState.from = ''; logState.to = ''; logState.page = 1;
+        renderLogsPage(document.getElementById('adminBody'));
+        return;
+      }
+      if (e.target.closest('[data-logretry]')) { loadCallLogs(); return; }
+      if (e.target.closest('[data-logsignin]')) {
+        if (window.showLogin) window.showLogin();
+        else HM.toast && HM.toast('请点击右上角头像登录管理员账号', 'info');
+        return;
+      }
+      var pgBtn = e.target.closest('[data-logpage]');
+      if (pgBtn && !pgBtn.disabled) {
+        var dir = pgBtn.dataset.logpage;
+        if (dir === 'prev' && logState.page > 1) logState.page -= 1;
+        else if (dir === 'next' && logState.page < logState.pages) logState.page += 1;
+        else return;
+        loadCallLogs();
+      }
+    });
+    page.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      if (!e.target.closest || !e.target.closest('.hm-log-toolbar')) return;
+      e.preventDefault();
+      readLogFilters();
+      logState.page = 1;
+      renderLogsPage(document.getElementById('adminBody'));
     });
 
     /* 新注册申请提醒弹框 */
@@ -156,6 +207,10 @@
   var _origOnView = A.onView;
   A.onView = function (view) {
     if (_origOnView) _origOnView(view);
+    if (view === 'usage') {
+      renderUsageView();
+      return;
+    }
     if (view === 'admin') {
       if (!eventsBound) bindAdminEvents();
       /* 非超管看不到「账号管理」入口；若残留指向该 Tab，回落到概览 */
@@ -207,6 +262,63 @@
 
   var loadSeq = 0;
 
+  /* ============ 消耗日志（与调用日志同一张 api_call_logs 表） ============ */
+  function usageTime(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    function p(n) { return String(n).padStart(2, '0'); }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  function usageKindLabel(kind) {
+    return kind === 'video' ? '视频生成' : kind === 'audio' ? '音频合成'
+      : kind === 'chat' ? 'AI 对话' : '桌面';
+  }
+
+  function usageRow(r) {
+    var ok = r.rawStatus === 'ok';
+    var sec = Number(r.duration) || 0;
+    var durText = sec >= 60
+      ? (Math.floor(sec / 60) + 'm ' + Math.round(sec % 60) + 's')
+      : (Math.round(sec) + 's');
+    return '<tr>' +
+      '<td class="hm-usage-time">' + usageTime(r.createdAt) + '</td>' +
+      '<td class="hm-usage-time">' + usageTime(r.finishedAt) + '</td>' +
+      '<td>' + hmEsc(r.userId || '—') + '</td>' +
+      '<td><b>' + hmEsc(r.model || '未标注模型') + '</b><small>' + hmEsc(usageKindLabel(r.kind)) + '</small></td>' +
+      '<td><span class="hm-usage-status ' + (ok ? 'is-ok' : 'is-fail') + '">' + (ok ? '成功' : '失败') + '</span>' +
+        '<small class="hm-usage-job">' + hmEsc(r.taskId || '') + '</small>' +
+        (ok ? '' : '<small class="hm-usage-err">' + hmEsc(r.errorMsg || '—') + '</small>') +
+      '</td>' +
+      '<td class="hm-usage-dim">个人空间</td>' +
+      '<td class="hm-usage-dim">' + usageKindLabel(r.kind) + '</td>' +
+      '<td class="hm-usage-time">' + durText + '</td>' +
+      '<td class="hm-usage-cost">⚡ ' + (Number(r.cost) || 0).toFixed(2) + '</td>' +
+      '</tr>';
+  }
+
+  function renderUsageLogs(data, body) {
+    var rows = (data && data.rows) || [];
+    var okCount = rows.filter(function (r) { return r.rawStatus === 'ok'; }).length;
+    var totalCost = rows.reduce(function (s, r) { return s + (Number(r.cost) || 0); }, 0);
+    var html = '<div class="hm-admin-panel hm-usage-panel">' +
+      '<div class="hm-admin-panel-head"><h3>消耗日志</h3>' +
+      '<span>共 ' + rows.length + ' 条 · 成功 ' + okCount + ' · 合计 ⚡' + totalCost.toFixed(2) + '</span></div>';
+    if (!rows.length) {
+      html += '<div class="hm-admin-empty">还没有消耗记录：出图成功或失败后会自动写入这张表。</div>';
+    } else {
+      html += '<div class="hm-usage-wrap"><table class="hm-usage-table"><thead><tr>' +
+        '<th>点击时间</th><th>结束时间</th><th>成员</th><th>模型</th><th>状态</th>' +
+        '<th>项目</th><th>生成方式</th><th>耗时</th><th>消耗积分</th>' +
+        '</tr></thead><tbody>';
+      rows.slice(0, 200).forEach(function (r) { html += usageRow(r); });
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+    body.innerHTML = html;
+  }
+
   function loadTab(tab) {
     /* 当前不在「管理台」顶 Tab 时不要渲染，否则会把「API接入管理」等面板覆盖成加载中/仪表盘 */
     if (currentTopTab !== 'admin') return;
@@ -214,12 +326,13 @@
     var body = document.getElementById('adminBody');
     if (!body) return;
     var seq = ++loadSeq;
+    if (tab === 'logs') { renderLogsPage(body); return; }
     body.innerHTML = '<div class="hm-admin-loading"><span>加载中…</span></div>';
 
     var apiMap = {
       overview: HM.api.admin.overview,
       ranking:  HM.api.admin.ranking,
-      logs:     HM.api.admin.logs,
+      usage:    HM.api.admin.logs,
       accounts: function () { return HM.api.listUsers(); },
       projects: HM.api.admin.projects,
     };
@@ -230,7 +343,8 @@
       if (seq !== loadSeq || currentTopTab !== 'admin') return;
       body.innerHTML = '';
       var renderers = { overview: renderOverview, ranking: renderRanking,
-                        logs: renderLogs, accounts: renderAccounts, projects: renderProjects };
+                        usage: renderUsageLogs,
+                        accounts: renderAccounts, projects: renderProjects };
       if (renderers[tab]) renderers[tab](data, body);
     }).catch(function (err) {
       if (seq !== loadSeq || currentTopTab !== 'admin') return;
@@ -443,41 +557,434 @@
     ].join('');
   }
 
-  /* ============ 调用日志 ============ */
-  function renderLogs(data, body) {
-    var rows = data.rows || [];
-    var statusColor = { '成功': '#10b981', '失败': '#ef4444', '重试中': '#f59e0b' };
-    body.innerHTML = [
-      '<div class="hm-admin-panel hm-admin-panel-wide">',
-        '<div class="hm-admin-panel-head"><h3>调用日志</h3><span>' + rows.length + ' 条记录</span></div>',
-        '<div class="hm-admin-log-table-wrap">',
-          '<table class="hm-admin-log-table">',
-            '<thead><tr>' +
-              '<th>时间</th><th>账号</th><th>模型</th><th>任务 ID</th>' +
-              '<th>耗时</th><th>状态</th><th>Token</th><th>响应码</th><th>费用</th>' +
-            '</tr></thead>',
-            '<tbody>' +
-              rows.map(function (x) {
-                var t = new Date(x.createdAt);
-                var timeStr = t.toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-').replace('T', ' ').slice(0, 19);
-                return '<tr>' +
-                  '<td class="hm-td-time">' + timeStr + '</td>' +
-                  '<td class="hm-td-acc">' + x.account + '</td>' +
-                  '<td class="hm-td-model">' + x.model + '</td>' +
-                  '<td class="hm-td-code">' + x.taskId + '</td>' +
-                  '<td>' + x.duration + 's</td>' +
-                  '<td><span class="hm-td-status" style="color:' + statusColor[x.status] + '">' + x.status + '</span></td>' +
-                  '<td>' + fmt(x.tokens) + '</td>' +
-                  '<td class="hm-td-code">' + x.responseCode + '</td>' +
-                  '<td>¥' + x.cost + '</td>' +
-                '</tr>';
-              }).join(''),
-            '</tbody>',
-          '</table>',
-        '</div>',
-      '</div>',
-    ].join('');
+  /* ============ 调用日志（真实接口 /admin/call-logs，兼容 /admin/logs） ============ */
+  var logState = {
+    page: 1, pageSize: 50, status: '', model: '', user: '', q: '', from: '', to: '',
+    rows: [], total: 0, pages: 1, source: '', seq: 0
+  };
+
+  function logStatusOf(raw) {
+    var s = String(raw == null ? '' : raw).toLowerCase();
+    if (s === 'success' || s === 'ok' || s === '成功') return 'success';
+    if (s === 'failed' || s === 'fail' || s === 'error' || s === '失败') return 'failed';
+    return 'other';
   }
+
+  function logTimeText(v) {
+    if (v == null || v === '') return '—';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    function p(n) { return n < 10 ? '0' + n : String(n); }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  function normalizeLogRow(x) {
+    x = x || {};
+    var raw = x.status != null ? x.status : x.state;
+    var dur = x.duration != null ? Number(x.duration)
+      : (x.latency != null ? Number(x.latency) : null);
+    var durText = '—';
+    if (dur != null && !isNaN(dur)) {
+      durText = dur >= 1000 ? (dur / 1000).toFixed(1) + 's' : (Math.round(dur * 10) / 10) + 's';
+    }
+    var tokens = x.tokens != null ? Number(x.tokens) : (x.totalTokens != null ? Number(x.totalTokens) : null);
+    var code = x.responseCode != null && x.responseCode !== '' ? x.responseCode
+      : (x.statusCode != null ? x.statusCode : '');
+    return {
+      rawStatus: raw == null ? '' : String(raw),
+      status: logStatusOf(raw),
+      timeText: logTimeText(x.createdAt || x.created_at || x.time || x.timestamp),
+      user: x.user || x.username || x.account || x.userId || x.accountId || '—',
+      model: x.model || x.modelName || x.modelKey || '—',
+      modelKey: x.modelKey || '',
+      taskId: x.taskId || x.task_id || x.jobId || x.id || '—',
+      durationText: durText,
+      tokensText: tokens == null || isNaN(tokens) ? '—' : fmt(tokens),
+      codeText: code === '' ? '—' : String(code),
+      costText: (Number(x.cost) || 0).toFixed(2),
+      error: x.error || x.errorMsg || x.errorMessage || ''
+    };
+  }
+
+  function logQueryString() {
+    var p = [];
+    if (logState.from) p.push('from=' + encodeURIComponent(logState.from));
+    if (logState.to) p.push('to=' + encodeURIComponent(logState.to));
+    if (logState.status) p.push('status=' + encodeURIComponent(logState.status));
+    if (logState.model) p.push('model=' + encodeURIComponent(logState.model));
+    if (logState.user) p.push('user=' + encodeURIComponent(logState.user));
+    if (logState.q) p.push('q=' + encodeURIComponent(logState.q));
+    p.push('page=' + logState.page);
+    p.push('pageSize=' + logState.pageSize);
+    return p.join('&');
+  }
+
+  function logToolbarHtml() {
+    function opt(v, label, cur) {
+      return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>';
+    }
+    return '<div class="hm-log-toolbar">' +
+      '<label>状态<select id="logStatus">' + opt('', '全部', logState.status) +
+        opt('success', '成功', logState.status) + opt('failed', '失败', logState.status) + '</select></label>' +
+      '<label>模型<input id="logModel" value="' + esc(logState.model) + '" placeholder="模型名"></label>' +
+      '<label>用户<input id="logUser" value="' + esc(logState.user) + '" placeholder="用户"></label>' +
+      '<label>关键词<input id="logQ" value="' + esc(logState.q) + '" placeholder="任务 / 错误"></label>' +
+      '<label>起始<input id="logFrom" type="datetime-local" value="' + esc(logState.from) + '"></label>' +
+      '<label>结束<input id="logTo" type="datetime-local" value="' + esc(logState.to) + '"></label>' +
+      '<label>每页<select id="logPageSize">' +
+        [20, 50, 100, 200].map(function (n) { return opt(String(n), n + ' 条', String(logState.pageSize)); }).join('') +
+      '</select></label>' +
+      '<button type="button" class="hm-log-btn is-primary" data-logsubmit>查询</button>' +
+      '<button type="button" class="hm-log-btn" data-logreset>重置</button>' +
+      '</div>';
+  }
+
+  function readLogFilters() {
+    function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    function iso(v) {
+      if (!v) return '';
+      var d = new Date(v);
+      return isNaN(d.getTime()) ? v : d.toISOString();
+    }
+    logState.status = val('logStatus');
+    logState.model = String(val('logModel') || '').trim();
+    logState.user = String(val('logUser') || '').trim();
+    logState.q = String(val('logQ') || '').trim();
+    logState.from = iso(val('logFrom'));
+    logState.to = iso(val('logTo'));
+    var ps = Number(val('logPageSize'));
+    logState.pageSize = ps > 0 ? Math.min(200, ps) : 50;
+  }
+
+  function renderLogsPage(body) {
+    body = body || document.getElementById('adminBody');
+    if (!body) return;
+    body.innerHTML = logToolbarHtml() +
+      '<div class="hm-admin-panel hm-admin-panel-wide">' +
+        '<div class="hm-admin-panel-head"><h3>调用日志</h3><span id="logMeta">加载中…</span></div>' +
+        '<div id="logTable"></div>' +
+        '<div class="hm-log-pager" id="logPager"></div>' +
+      '</div>';
+    loadCallLogs();
+  }
+
+  function renderLogTable() {
+    var wrap = document.getElementById('logTable');
+    if (!wrap) return;
+    var meta = document.getElementById('logMeta');
+    if (meta) {
+      meta.textContent = '共 ' + logState.total + ' 条 · 第 ' + logState.page + '/' + logState.pages + ' 页' +
+        (logState.source === 'logs' ? '（兼容接口 /admin/logs）' : '');
+    }
+    if (!logState.rows.length) {
+      wrap.innerHTML = '<div class="hm-admin-empty">当前筛选条件下没有调用记录。</div>';
+      return;
+    }
+    var trs = logState.rows.map(function (r) {
+      var cls = r.status === 'success' ? 'is-success' : (r.status === 'failed' ? 'is-failed' : '');
+      var label = r.status === 'success' ? '成功' : (r.status === 'failed' ? '失败' : (r.rawStatus || '—'));
+      return '<tr>' +
+        '<td class="hm-td-time">' + esc(r.timeText) + '</td>' +
+        '<td class="hm-td-acc">' + esc(r.user) + '</td>' +
+        '<td class="hm-td-model">' + esc(r.model) +
+          (r.modelKey && r.modelKey !== r.model ? '<span class="hm-log-src">' + esc(r.modelKey) + '</span>' : '') + '</td>' +
+        '<td class="hm-td-code">' + esc(r.taskId) + '</td>' +
+        '<td>' + esc(r.durationText) + '</td>' +
+        '<td><span class="hm-log-state ' + cls + '">' + esc(label) + '</span>' +
+          (r.error ? '<small class="hm-log-err-text" title="' + esc(r.error) + '">' + esc(r.error) + '</small>' : '') + '</td>' +
+        '<td>' + esc(r.tokensText) + '</td>' +
+        '<td class="hm-td-code">' + esc(r.codeText) + '</td>' +
+        '<td>¥' + esc(r.costText) + '</td>' +
+      '</tr>';
+    }).join('');
+    wrap.innerHTML = '<div class="hm-admin-log-table-wrap"><table class="hm-admin-log-table">' +
+      '<thead><tr><th>时间</th><th>用户</th><th>模型</th><th>任务 ID</th><th>耗时</th>' +
+      '<th>状态</th><th>Tokens</th><th>响应码</th><th>费用</th></tr></thead>' +
+      '<tbody>' + trs + '</tbody></table></div>';
+  }
+
+  function renderLogPager() {
+    var el = document.getElementById('logPager');
+    if (!el) return;
+    el.innerHTML = '<span>第 ' + logState.page + ' / ' + logState.pages + ' 页 · 共 ' + logState.total + ' 条</span>' +
+      '<button type="button" class="hm-log-btn" data-logpage="prev"' + (logState.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+      '<button type="button" class="hm-log-btn" data-logpage="next"' + (logState.page >= logState.pages ? ' disabled' : '') + '>下一页</button>';
+  }
+
+  function applyLogData(data, source) {
+    var rows = Array.isArray(data) ? data : ((data && (data.rows || data.items || data.list)) || []);
+    var total = data && !Array.isArray(data) && data.total != null ? Number(data.total) : rows.length;
+    var pages = data && !Array.isArray(data) && data.pages != null ? Number(data.pages) : 0;
+    logState.source = source;
+    logState.rows = rows.map(normalizeLogRow);
+    logState.total = isNaN(total) ? rows.length : total;
+    logState.pages = pages > 0 ? pages : Math.max(1, Math.ceil(logState.total / logState.pageSize));
+    if (logState.page > logState.pages) logState.page = logState.pages;
+    renderLogTable();
+    renderLogPager();
+  }
+
+  function loadCallLogs() {
+    var wrap = document.getElementById('logTable');
+    if (!wrap) return;
+    if (currentTopTab !== 'admin' || currentSubTab !== 'logs') return;
+    var api = HM.api;
+    if (!api) return;
+    var seq = ++logState.seq;
+    wrap.innerHTML = '<div class="hm-admin-loading"><span>加载中…</span></div>';
+    var meta = document.getElementById('logMeta');
+    if (meta) meta.textContent = '加载中…';
+    var pager = document.getElementById('logPager');
+    if (pager) pager.innerHTML = '';
+
+    function stale() { return seq !== logState.seq; }
+
+    function fail(err) {
+      if (stale()) return;
+      var status = Number(err && err.status || 0);
+      var msg = (err && err.message) || String(err);
+      var title = status === 401 ? '未登录或登录已过期（HTTP 401）' : '调用日志加载失败';
+      var hint = status === 401
+        ? '请用管理员账号重新登录；密码只在这里输入，不会写进代码或日志。'
+        : (err && err.offline ? '无法连接后端服务，请检查网络后重试。' : '');
+      wrap.innerHTML = '<div class="hm-admin-error">' +
+        '<h3>' + esc(title) + '</h3>' +
+        '<p>' + esc(msg) + '</p>' +
+        (hint ? '<p class="hm-log-hint">' + esc(hint) + '</p>' : '') +
+        '<div class="hm-log-err-actions">' +
+          (status !== 401 ? '' : '<button type="button" class="hm-log-btn is-primary" data-logsignin>管理员登录</button>') +
+          '<button type="button" class="hm-log-btn" data-logretry>重试</button>' +
+        '</div>' +
+      '</div>';
+      if (meta) meta.textContent = status === 401 ? '未登录（401）' : '加载失败';
+    }
+
+    var primary = api.admin && api.admin.callLogs
+      ? api.admin.callLogs(logQueryString())
+      : Promise.reject(new Error('日志接口未注册'));
+    primary.then(function (data) {
+      if (stale()) return;
+      applyLogData(data, 'call-logs');
+    }).catch(function (err) {
+      if (stale()) return;
+      /* /admin/call-logs 不存在（404）时才退回旧表 /admin/logs；其余错误直接报出来 */
+      if (Number(err && err.status) === 404 && api.admin && api.admin.legacyLogs) {
+        api.admin.legacyLogs().then(function (data) {
+          if (stale()) return;
+          applyLogData(data, 'logs');
+        }).catch(function (err2) {
+          if (stale()) return;
+          fail(Number(err2 && err2.status) === 404 ? err : err2);
+        });
+        return;
+      }
+      fail(err);
+    });
+  }
+
+  /* ============ 消耗日志独立页（走同一真实接口，不造假数据） ============ */
+  var usagePageState = {
+    from: '', to: '', status: '', page: 1, pageSize: 50,
+    total: 0, pages: 1, rows: [], source: '', seq: 0
+  };
+
+  function usagePageQueryString() {
+    var p = [];
+    if (usagePageState.from) p.push('from=' + encodeURIComponent(usagePageState.from));
+    if (usagePageState.to) p.push('to=' + encodeURIComponent(usagePageState.to));
+    if (usagePageState.status) p.push('status=' + encodeURIComponent(usagePageState.status));
+    p.push('page=' + usagePageState.page);
+    p.push('pageSize=' + usagePageState.pageSize);
+    return p.join('&');
+  }
+
+  function usagePageFilterHtml() {
+    function opt(v, label, cur) {
+      return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>';
+    }
+    return '<label>起始<input id="usageFrom" type="datetime-local" value="' + esc(usagePageState.from) + '"></label>' +
+      '<label>结束<input id="usageTo" type="datetime-local" value="' + esc(usagePageState.to) + '"></label>' +
+      '<label>状态<select id="usageStatus">' + opt('', '全部', usagePageState.status) +
+        opt('success', '成功', usagePageState.status) + opt('failed', '失败', usagePageState.status) + '</select></label>' +
+      '<label>每页<select id="usagePageSize">' +
+        [20, 50, 100, 200].map(function (n) { return opt(String(n), n + ' 条', String(usagePageState.pageSize)); }).join('') +
+      '</select></label>' +
+      '<button type="button" class="hm-log-btn is-primary" data-usage-submit>查询</button>' +
+      '<button type="button" class="hm-log-btn" data-usage-reset>重置</button>';
+  }
+
+  function readUsageFilters() {
+    function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    function iso(v) {
+      if (!v) return '';
+      var d = new Date(v);
+      return isNaN(d.getTime()) ? v : d.toISOString();
+    }
+    usagePageState.from = iso(val('usageFrom'));
+    usagePageState.to = iso(val('usageTo'));
+    usagePageState.status = val('usageStatus');
+    var ps = Number(val('usagePageSize'));
+    usagePageState.pageSize = ps > 0 ? Math.min(200, ps) : 50;
+  }
+
+  function usagePageStatsHtml() {
+    var rows = usagePageState.rows;
+    var ok = 0, fail = 0, cost = 0, tokens = 0, durSum = 0, durN = 0;
+    rows.forEach(function (r) {
+      if (r.status === 'success') ok += 1;
+      else if (r.status === 'failed') fail += 1;
+      cost += Number(r.costText) || 0;
+      var t = parseFloat(String(r.tokensText).replace(/[^\d.]/g, ''));
+      if (!isNaN(t)) tokens += t;
+      var d = parseFloat(String(r.durationText).replace(/[^\d.]/g, ''));
+      if (!isNaN(d)) { durSum += d; durN += 1; }
+    });
+    var avg = durN ? (durSum / durN) : 0;
+    return '<div class="hm-usage-stat is-cost"><span>当前页消耗积分</span><strong>⚡ ' + cost.toFixed(2) + '</strong></div>' +
+      '<div class="hm-usage-stat is-ok"><span>成功</span><strong>' + ok + '</strong></div>' +
+      '<div class="hm-usage-stat is-fail"><span>失败</span><strong>' + fail + '</strong></div>' +
+      '<div class="hm-usage-stat"><span>当前页 Tokens</span><strong>' + (tokens >= 10000 ? (tokens / 1000).toFixed(1) + 'k' : String(Math.round(tokens))) + '</strong></div>' +
+      '<div class="hm-usage-stat"><span>平均耗时</span><strong>' + (durN ? avg.toFixed(1) + 's' : '—') + '</strong></div>';
+  }
+
+  function renderUsageTable() {
+    var wrap = document.getElementById('usageList');
+    if (!wrap) return;
+    var stats = document.getElementById('usageStats');
+    if (stats) stats.innerHTML = usagePageStatsHtml();
+    var rows = usagePageState.rows;
+    if (!rows.length) {
+      wrap.innerHTML = '<div class="hm-admin-empty">当前筛选条件下没有消耗记录。</div>';
+      return;
+    }
+    var trs = rows.map(function (r) {
+      var cls = r.status === 'success' ? 'is-success' : (r.status === 'failed' ? 'is-failed' : '');
+      var label = r.status === 'success' ? '成功' : (r.status === 'failed' ? '失败' : (r.rawStatus || '—'));
+      return '<tr>' +
+        '<td class="hm-td-time">' + esc(r.timeText) + '</td>' +
+        '<td>' + esc(r.user) + '</td>' +
+        '<td class="hm-td-model">' + esc(r.model) + '</td>' +
+        '<td><span class="hm-log-state ' + cls + '">' + esc(label) + '</span></td>' +
+        '<td>' + esc(r.durationText) + '</td>' +
+        '<td>' + esc(r.tokensText) + '</td>' +
+        '<td class="hm-td-code">' + esc(r.codeText) + '</td>' +
+        '<td class="hm-usage-cost">⚡ ' + esc(r.costText) + '</td>' +
+        '<td class="hm-td-code">' + esc(r.taskId) + '</td>' +
+        '<td>' + (r.error ? '<small class="hm-log-err-text" title="' + esc(r.error) + '">' + esc(r.error) + '</small>' : '—') + '</td>' +
+      '</tr>';
+    }).join('');
+    wrap.innerHTML = '<div class="hm-usage-wrap"><table class="hm-usage-log-table">' +
+      '<thead><tr><th>时间</th><th>用户</th><th>模型</th><th>状态</th><th>耗时</th>' +
+      '<th>Tokens</th><th>响应码</th><th>消耗积分</th><th>任务 ID</th><th>错误</th></tr></thead>' +
+      '<tbody>' + trs + '</tbody></table></div>' +
+      '<div class="hm-log-pager">' +
+        '<span>第 ' + usagePageState.page + ' / ' + usagePageState.pages + ' 页 · 共 ' + usagePageState.total + ' 条' +
+        (usagePageState.source === 'logs' ? '（兼容接口 /admin/logs）' : '') + '</span>' +
+        '<button type="button" class="hm-log-btn" data-usage-page="prev"' + (usagePageState.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+        '<button type="button" class="hm-log-btn" data-usage-page="next"' + (usagePageState.page >= usagePageState.pages ? ' disabled' : '') + '>下一页</button>' +
+      '</div>';
+  }
+
+  function loadUsagePage() {
+    var wrap = document.getElementById('usageList');
+    if (!wrap) return;
+    var api = HM.api;
+    if (!api) return;
+    var seq = ++usagePageState.seq;
+    wrap.innerHTML = '<div class="hm-admin-loading"><span>加载中…</span></div>';
+    var stats = document.getElementById('usageStats');
+    if (stats) stats.innerHTML = '';
+    function stale() { return seq !== usagePageState.seq; }
+    function fail(err) {
+      if (stale()) return;
+      var status = Number(err && err.status || 0);
+      var title = status === 401 ? '未登录或登录已过期（HTTP 401）' : '消耗日志加载失败';
+      var hint = status === 401
+        ? '请用管理员账号重新登录；密码只在登录框输入，不会写进代码或日志。'
+        : (err && err.offline ? '无法连接后端服务，请检查网络后重试。' : '');
+      wrap.innerHTML = '<div class="hm-admin-error">' +
+        '<h3>' + esc(title) + '</h3>' +
+        '<p>' + esc((err && err.message) || String(err)) + '</p>' +
+        (hint ? '<p class="hm-log-hint">' + esc(hint) + '</p>' : '') +
+        '<div class="hm-log-err-actions">' +
+          (status !== 401 ? '' : '<button type="button" class="hm-log-btn is-primary" data-usage-signin>管理员登录</button>') +
+          '<button type="button" class="hm-log-btn" data-usage-retry>重试</button>' +
+        '</div>' +
+      '</div>';
+      if (stats) stats.innerHTML = '';
+    }
+    function apply(data, source) {
+      if (stale()) return;
+      var rows = Array.isArray(data) ? data : ((data && (data.rows || data.items || data.list)) || []);
+      var total = data && !Array.isArray(data) && data.total != null ? Number(data.total) : rows.length;
+      var pages = data && !Array.isArray(data) && data.pages != null ? Number(data.pages) : 0;
+      usagePageState.source = source;
+      usagePageState.rows = rows.map(normalizeLogRow);
+      usagePageState.total = isNaN(total) ? rows.length : total;
+      usagePageState.pages = pages > 0 ? pages : Math.max(1, Math.ceil(usagePageState.total / usagePageState.pageSize));
+      renderUsageTable();
+    }
+    var primary = api.admin && api.admin.callLogs
+      ? api.admin.callLogs(usagePageQueryString())
+      : Promise.reject(new Error('日志接口未注册'));
+    primary.then(function (data) { apply(data, 'call-logs'); }).catch(function (err) {
+      if (stale()) return;
+      if (Number(err && err.status) === 404 && api.admin && api.admin.legacyLogs) {
+        api.admin.legacyLogs().then(function (data) { apply(data, 'logs'); }).catch(function (err2) {
+          if (stale()) return;
+          fail(Number(err2 && err2.status) === 404 ? err : err2);
+        });
+        return;
+      }
+      fail(err);
+    });
+  }
+
+  function renderUsageView() {
+    var host = document.getElementById('usageFilter');
+    if (host) host.innerHTML = usagePageFilterHtml();
+    loadUsagePage();
+  }
+
+  (function bindUsagePageEvents() {
+    document.addEventListener('click', function (e) {
+      var page = document.getElementById('view-usage');
+      if (!page || page.hidden) return;
+      if (e.target.closest('[data-usage-refresh]')) { loadUsagePage(); return; }
+      if (e.target.closest('[data-usage-submit]')) {
+        readUsageFilters(); usagePageState.page = 1; loadUsagePage(); return;
+      }
+      if (e.target.closest('[data-usage-reset]')) {
+        usagePageState.from = ''; usagePageState.to = ''; usagePageState.status = '';
+        usagePageState.page = 1; renderUsageView(); return;
+      }
+      if (e.target.closest('[data-usage-retry]')) { loadUsagePage(); return; }
+      if (e.target.closest('[data-usage-signin]')) {
+        if (window.showLogin) window.showLogin();
+        else HM.toast && HM.toast('请点击右上角头像登录管理员账号', 'info');
+        return;
+      }
+      var pg = e.target.closest('[data-usage-page]');
+      if (pg && !pg.disabled) {
+        var dir = pg.dataset.usagePage;
+        if (dir === 'prev' && usagePageState.page > 1) usagePageState.page -= 1;
+        else if (dir === 'next' && usagePageState.page < usagePageState.pages) usagePageState.page += 1;
+        else return;
+        loadUsagePage();
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      var page = document.getElementById('view-usage');
+      if (!page || page.hidden) return;
+      if (!e.target.closest || !e.target.closest('#usageFilter')) return;
+      e.preventDefault();
+      readUsageFilters();
+      usagePageState.page = 1;
+      loadUsagePage();
+    });
+  })();
 
   /* ============ 账号管理（真实账号 + 注册审批） ============ */
   var accountCache = { users: [], pendingCount: 0 };
@@ -830,7 +1337,7 @@
         '<div class="hm-admin-project-grid">',
           projs.map(function (p) {
             var spentPct = Math.round(p.spent / Math.max(1, p.budget) * 100);
-            var statusColor = { '进行中': '#10b981', '暂停': '#f59e0b', '已完成': '#64748b' }[p.status] || '#64748b';
+            var statusColor = { '进行中': '#ef4444', '暂停': '#ef4444', '已完成': '#10b981' }[p.status] || '#ef4444';
             return '<div class="hm-admin-project-card">' +
               '<div class="hm-admin-project-top">' +
                 '<strong>' + p.name + '</strong>' +
@@ -884,6 +1391,13 @@
         projects: function () { return HM.api.get('/admin/projects'); },
       };
     }
+    /* 调用日志主接口（新表）+ 兼容接口（旧表） */
+    HM.api.admin.callLogs = function (qs) {
+      return HM.api.get('/admin/call-logs' + (qs ? '?' + qs : ''), 30000);
+    };
+    HM.api.admin.legacyLogs = function () {
+      return HM.api.get('/admin/logs', 30000);
+    };
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', ensureAdminApi);
@@ -900,6 +1414,115 @@
 
   var apiTestState = {}; // {providerId: 'ok' | 'fail' | 'loading'}
 
+  /* 类型筛选与平台下拉的当前选择（会话内保留，不写磁盘） */
+  var API_TYPES = [
+    { id: 'image', label: '生图' },
+    { id: 'video', label: '生视频' },
+    { id: 'chat', label: 'AI 对话' },
+    { id: 'audio', label: '生音频' }
+  ];
+  var apiFilter = { platform: '', types: [], billing: '' };
+  /* 调用日志的筛选：只按真实记录里出现过的平台/类型来筛 */
+  var apiLogFilter = { platform: '', type: '' };
+  var apiDocCache = null;
+
+  /* 接入配置文档：providers / bindings / rayin，随 /docs/api 同步，换设备可恢复。
+     旧数据只在本地 localStorage 时按需合并，不覆盖云端已有值。 */
+  function getApiDoc() {
+    if (apiDocCache) return apiDocCache;
+    var doc = null;
+    try { doc = JSON.parse(localStorage.getItem('anidream.api.v1') || 'null'); } catch (e) { doc = null; }
+    if (!doc || typeof doc !== 'object') doc = {};
+    if (!doc.providers || typeof doc.providers !== 'object') doc.providers = {};
+    if (!doc.bindings || typeof doc.bindings !== 'object') doc.bindings = {};
+    if (!doc.billing || typeof doc.billing !== 'object') doc.billing = {};
+    if (!doc.rayin || typeof doc.rayin !== 'object') doc.rayin = {};
+    /* Banana/Gemini 三个模型已下架：接入管理只保留 GPT-image 一张卡，历史 banana 配置清掉 */
+    if (!doc.providers['__rayin__:gpt-image']) {
+      var oldGpt = doc.providers['__rayin__'] || {};
+      var oldBan = doc.providers['__rayin_banana__'] || {};
+      var rb = oldGpt.base || oldBan.base || doc.rayin.base || 'https://www.rayinai.com/v1';
+      var rk = oldGpt.key || oldBan.key || doc.rayin.key || '';
+      var gpt = Object.assign({}, oldGpt);
+      gpt.name = 'RayinAPI'; gpt.platform = '__rayin__'; gpt.series = 'GPT-image'; gpt.engine = 'gpt-image';
+      gpt.base = oldGpt.base || rb; gpt.key = oldGpt.key || rk;
+      var gptModel = String(oldGpt.model || doc.gptModel || '');
+      gpt.model = /^gpt-image/i.test(gptModel) ? gptModel : 'gpt-image-2';
+      gpt.model2 = '';
+      doc.providers['__rayin__:gpt-image'] = gpt;
+      if (doc.bindings['__rayin__'] != null) doc.bindings['__rayin__:gpt-image'] = doc.bindings['__rayin__'];
+      if (doc.billing['__rayin__'] != null) doc.billing['__rayin__:gpt-image'] = doc.billing['__rayin__'];
+    }
+    /* 无论是否刚迁移，历史伪平台 id 与 Banana 配置一律清掉 */
+    ['__rayin__', '__rayin__:banana', '__rayin_banana__'].forEach(function (pid) {
+      delete doc.providers[pid];
+      delete doc.bindings[pid];
+      delete doc.billing[pid];
+    });
+    /* 接入管理只保留 RayinAPI：清掉其它平台的历史记录（不显示、不参与模型推导） */
+    Object.keys(doc.providers).forEach(function (pid) {
+      if (pid.indexOf('__rayin') !== 0) {
+        delete doc.providers[pid];
+        delete doc.bindings[pid];
+        delete doc.billing[pid];
+      }
+    });
+    doc.updatedAt = Number(doc.updatedAt) || 0;
+    apiDocCache = doc;
+    return doc;
+  }
+  function resetApiDoc() {
+    apiDocCache = null;
+    var body = document.getElementById('adminBody');
+    if (body && body.querySelector('.hm-api-body')) renderApiPanel(body);
+  }
+  function apiBinding(id) {
+    var v = getApiDoc().bindings[id];
+    return API_TYPES.some(function (t) { return t.id === v; }) ? v : '';
+  }
+  function apiTypeLabel(t) {
+    var hit = API_TYPES.filter(function (x) { return x.id === t; })[0];
+    return hit ? hit.label : '';
+  }
+  function apiTypeOptionsHtml(selected) {
+    var html = '<option value="">未分类</option>';
+    API_TYPES.forEach(function (t) {
+      html += '<option value="' + t.id + '"' + (t.id === selected ? ' selected' : '') + '>' + t.label + '</option>';
+    });
+    return html;
+  }
+
+  /* 计费方式：每条接入记录一个值，未选择时为「未绑定」，不默认归到免费或收费 */
+  var API_BILLING = [
+    { id: 'free', label: '免费' },
+    { id: 'paid', label: '收费' }
+  ];
+  function apiBilling(id) {
+    var v = getApiDoc().billing[id];
+    return v === 'free' || v === 'paid' ? v : '';
+  }
+  function apiBillingLabel(v) { return v === 'free' ? '免费' : (v === 'paid' ? '收费' : '未绑定'); }
+  function apiBillingKey(p) { return p.billing === 'free' || p.billing === 'paid' ? p.billing : 'unbound'; }
+  function apiBillingOptionsHtml(selected) {
+    var html = '<option value="">未绑定</option>';
+    API_BILLING.forEach(function (b) {
+      html += '<option value="' + b.id + '"' + (b.id === selected ? ' selected' : '') + '>' + b.label + '</option>';
+    });
+    return html;
+  }
+  function apiBillingFilterOptionsHtml(selected) {
+    var html = '<option value="">全部计费</option><option value="unbound"' + (selected === 'unbound' ? ' selected' : '') + '>未绑定</option>';
+    API_BILLING.forEach(function (b) {
+      html += '<option value="' + b.id + '"' + (b.id === selected ? ' selected' : '') + '>' + b.label + '</option>';
+    });
+    return html;
+  }
+  function apiBillingBadgeHtml(v) {
+    return v === 'free' ? '<span class="hm-api-billing-badge is-free">免费</span>'
+      : (v === 'paid' ? '<span class="hm-api-billing-badge is-paid">收费</span>'
+        : '<span class="hm-api-billing-badge is-none">未绑定</span>');
+  }
+
   function hmEsc(str) {
     return String(str == null ? '' : str).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -915,126 +1538,455 @@
   function getProviders() {
     var App = window.HMApp;
     if (!App) return [];
-    var catalog = (App.state && App.state.catalog && App.state.catalog.providers) || [];
-    var saved = (App.state && App.state.providers) || {};
-    var list = catalog.map(function (p) {
-      var s = saved[p.id] || {};
-      return {
-        id: p.id,
-        name: p.name,
-        base: s.base || p.base || '',
-        key: s.key || '',
-        model: s.model || (p.models && p.models[0] ? p.models[0].id : ''),
-        enabled: p.id === (App.state && App.state.providerId) || !!s.key,
-        preset: p
-      };
-    });
-    // RayinAPI 单独一条
+    var doc = getApiDoc();
+    /* 接入管理只保留 RayinAPI：catalog.providers 不再参与（第三方平台预设已删），
+       本地旧平台配置也不再回显，只保留 GPT-image 一条接入（Banana/Gemini 已下架） */
+    var list = [];
     var prefs = (App.state && App.state.prefs) || {};
-    var rayinPrefs = prefs.rayin || {};
+    var gptRec = doc.providers['__rayin__:gpt-image'] || {};
+    var rayinModels = (App.state && App.state.catalog && App.state.catalog.rayin) || [];
     list.push({
-      id: '__rayin__',
-      name: 'RayinAPI（GPT-image / Gemini Banana）',
-      base: rayinPrefs.base || 'https://www.rayinai.com/v1',
-      key: rayinPrefs.key || '',
-      model: prefs.gptModel || 'gpt-image-2',
-      model2: prefs.bananaModel || 'gemini-3.1-flash-image',
-      enabled: !!rayinPrefs.key || true,
-      isRayin: true
+      id: '__rayin__:gpt-image',
+      platform: '__rayin__',
+      platformName: 'RayinAPI',
+      name: 'RayinAPI',
+      series: 'GPT-image',
+      base: gptRec.base || 'https://www.rayinai.com/v1',
+      key: gptRec.key || '',
+      model: gptRec.model || doc.gptModel || prefs.gptModel || 'gpt-image-2',
+      models: rayinModels.filter(function (m) { return m.engine === 'gpt-image'; }),
+      enabled: true,
+      isRayin: true,
+      rayinVariant: 'gpt',
+      type: apiBinding('__rayin__:gpt-image'),
+      billing: apiBilling('__rayin__:gpt-image')
     });
     // 自定义已填但 catalog 里没有的
-    Object.keys(saved).forEach(function (id) {
-      if (id === '__rayin__') return;
-      if (!list.find(function (p) { return p.id === id; })) {
-        list.push({
-          id: id, name: id,
-          base: saved[id].base || '',
-          key: saved[id].key || '',
-          model: saved[id].model || '',
-          enabled: !!saved[id].key,
-          isCustom: true
-        });
-      }
-    });
+    /* 非 Rayin 的历史配置一律不再展示（读盘时已过滤，这里再兜一层） */
     return list;
   }
 
-  function saveApiCard(id, base, key, model, model2, enabled) {
-    var App = window.HMApp;
-    if (!App) return;
-    var prefs = App.state.prefs = App.state.prefs || {};
-    var providers = App.state.providers = App.state.providers || {};
-
-    if (id === '__rayin__') {
-      prefs.rayin = prefs.rayin || {};
-      prefs.rayin.base = base;
-      prefs.rayin.key = key;
-      prefs.gptModel = model;
-      prefs.bananaModel = model2 || prefs.bananaModel;
-      if (enabled) App.state.engine = 'gpt-image';
-      // 持久化
-      try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(prefs.rayin)); } catch (e) {}
-      try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
-    } else {
-      providers[id] = { base: base, key: key, model: model };
-      if (enabled) App.state.providerId = id;
-      try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
-      try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
+  /* 一条接入记录对应的模型列表：Rayin 用后端 catalog 的全量模型，
+     其他平台用配置里保存的模型，保证表格里每个模型都属于当前平台。 */
+  function apiModelsOf(p) {
+    var out = [];
+    var seen = {};
+    function push(id, name, configured) {
+      id = String(id || '').trim();
+      if (!id || seen[id]) return;
+      seen[id] = 1;
+      out.push({ id: id, name: name || id, configured: !!configured });
     }
-    if (App.toast) App.toast('已保存 ' + id, 'success');
+    (p.models || []).forEach(function (m) {
+      push(m.id || m.model, m.name || m.id || m.model, p.isRayin ? (m.id === p.model || m.id === p.model2) : ((m.id || m.model) === p.model));
+    });
+    if (p.isRayin) {
+      push(p.model, p.model, true);
+      push(p.model2, p.model2, true);
+    } else {
+      push(p.model, p.model, true);
+    }
+    return out;
+  }
+
+  /* 同系列识别：仅按已有模型名/ID 的明确前缀归组，认不出来的保持自己的名字，
+     不凭空编造系列；同一系列只保留一条接入记录展示。 */
+  function apiSeriesOf(m) {
+    var s = String(m.name || m.id || '');
+    var low = s.toLowerCase();
+    if (low.indexOf('flux') >= 0) return 'FLUX.1';
+    if (low.indexOf('kolors') >= 0) return 'Kolors';
+    if (low.indexOf('sdxl') >= 0 || low.indexOf('sd 3') >= 0 || low.indexOf('stable-diffusion') >= 0) return 'Stable Diffusion';
+    if (low.indexOf('gemini') >= 0) return 'Gemini';
+    if (low.indexOf('gpt-image') >= 0) return 'GPT-image';
+    if (low.indexOf('imagen') >= 0) return 'Imagen';
+    if (s.indexOf('通义万相') >= 0) return '通义万相';
+    if (s.indexOf('豆包') >= 0) return '豆包';
+    if (s.indexOf('混元') >= 0) return '混元';
+    return s || '未命名';
+  }
+
+  function apiSeriesGroups(models) {
+    var map = {}, order = [];
+    models.forEach(function (m) {
+      var name = apiSeriesOf(m);
+      if (!map[name]) { map[name] = []; order.push(name); }
+      map[name].push(m);
+    });
+    return order.map(function (name) { return { name: name, models: map[name] }; });
+  }
+
+  /* 平台/类型互相约束：先按平台过滤可选类型，再按已选类型收敛平台，
+     保证不会出现「平台 A + 类型 B 永远空表」的死角。 */
+  function normalizeApiFilter(providers) {
+    if (apiFilter.platform && !providers.some(function (p) { return (p.platform || p.id) === apiFilter.platform; })) {
+      apiFilter.platform = '';
+    }
+    var scope = apiFilter.platform
+      ? providers.filter(function (p) { return (p.platform || p.id) === apiFilter.platform; })
+      : providers;
+    if (apiFilter.billing) {
+      scope = scope.filter(function (p) { return apiBillingKey(p) === apiFilter.billing; });
+    }
+    var supported = {};
+    scope.forEach(function (p) { if (p.type) supported[p.type] = 1; });
+    apiFilter.types = apiFilter.types.filter(function (t) { return supported[t]; });
+    if (apiFilter.types.length) {
+      var cur = providers.filter(function (p) { return (p.platform || p.id) === apiFilter.platform; })[0];
+      if (cur && apiFilter.types.indexOf(cur.type) < 0) apiFilter.platform = '';
+    }
+    return supported;
+  }
+
+  /* 保存一条接入记录：先落本机，再 PUT /docs/api；
+     云端失败必须把原因带回界面，不能静默成功。 */
+  function saveApiCard(p) {
+    var App = window.HMApp;
+    if (!App) return Promise.reject(new Error('应用未就绪'));
+    /* 接口地址归一化：误填 /models、/chat/completions 等端点时剥到根地址再存 */
+    var nb = apiBaseNormalize(p.base);
+    p.base = nb.base;
+    var id = p.id;
+    var name = String(p.name || '').trim() || id;
+    /* 保存前先拉云端最新文档：本机缓存可能过期，直接 push 会把云端类型/计费/Key 覆盖成空 */
+    var fresh = (window.HMSync && window.HMSync.pullApi)
+      ? window.HMSync.pullApi().catch(function () { return null; })
+      : Promise.resolve(null);
+    return fresh.then(function () {
+      /* 模型留空时按真实清单自动选（不覆盖用户已填的模型名） */
+      return autoPickModelIfNeeded(p);
+    }).then(function () {
+      var doc = getApiDoc();
+      var prefs = App.state.prefs = App.state.prefs || {};
+      var providers = App.state.providers = App.state.providers || {};
+      var prevProvider = doc.providers[id] || {};
+      var nextProvider = Object.assign({}, prevProvider, {
+        name: name,
+        base: p.base,
+        key: p.key,
+        model: p.model,
+        model2: p.model2 || ''
+      });
+      if (!nextProvider.key) nextProvider.key = prevProvider.key || '';
+      doc.providers[id] = nextProvider;
+      /* 空值不覆盖已有类型/计费，避免旧页面把云端值冲掉 */
+      if (p.type) doc.bindings[id] = p.type;
+      else if (doc.bindings[id] == null) doc.bindings[id] = '';
+      if (p.billing === 'free' || p.billing === 'paid') doc.billing[id] = p.billing;
+
+      if (id.indexOf('__rayin__') === 0) {
+        /* 通道跟着模型名/地址形态走，而不是跟着卡片 id：
+         * /v1beta 且 Gemini 模型 → banana；gpt-image* → OpenAI 兼容出图 */
+        var modelIsGemini = /^gemini/i.test(String(p.model || ''));
+        var baseIsNative = /\/v\d+(alpha|beta)\d*$/i.test(String(p.base || ''));
+        var isBanana = modelIsGemini && (baseIsNative || !/^gpt-image/i.test(String(p.model || '')));
+        var prevRayin = doc.rayin || {};
+        var rayinKey = p.key || prevProvider.key || '';
+        prefs.rayin = { base: p.base, key: rayinKey };
+        if (isBanana) {
+          prefs.bananaModel = p.model;
+          doc.bananaModel = p.model;
+          if (p.enabled) App.state.engine = 'banana';
+        } else {
+          prefs.gptModel = p.model;
+          doc.gptModel = p.model;
+          if (p.enabled) App.state.engine = 'gpt-image';
+        }
+        doc.rayin = { base: p.base, key: rayinKey };
+        nextProvider.model = p.model;
+        nextProvider.model2 = '';
+        nextProvider.engine = isBanana ? 'banana' : 'gpt-image';
+        nextProvider.platform = '__rayin__';
+        nextProvider.series = isBanana ? 'Gemini Banana' : 'GPT-image';
+        nextProvider.name = 'RayinAPI';
+        doc.providers[id] = nextProvider;
+        /* 切通道必须同时换模型：只改 engine 会把旧通道的模型名发到新端点（404）。
+         * 同时把运行时 state.api 补全，避免本地存储被覆盖成只剩 {base,key}。 */
+        var nextApi = Object.assign({}, App.state.api || {}, {
+          base: p.base,
+          key: rayinKey
+        });
+        if (isBanana) nextApi.bananaModel = p.model;
+        else nextApi.gptModel = p.model;
+        App.state.api = nextApi;
+        if (p.enabled) {
+          App.state.channelModel = p.model;
+          prefs.engine = isBanana ? 'banana' : 'gpt-image';
+          prefs.channelModel = p.model;
+        }
+        try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(nextApi)); } catch (e) {}
+      } else {
+        providers[id] = { base: p.base, key: nextProvider.key, model: p.model };
+        if (p.enabled) App.state.providerId = id;
+        try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
+      }
+      try { localStorage.setItem('anidream.prefs.v1', JSON.stringify(prefs)); } catch (e) {}
+      doc.updatedAt = Date.now();
+      try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
+      apiDocCache = doc;
+
+      var push = window.HMSync && window.HMSync.pushApi;
+      if (!push) {
+        var noSync = new Error('云同步模块未加载，请刷新页面重试');
+        noSync.localSaved = true;
+        return Promise.reject(noSync);
+      }
+      return push(doc).then(function (res) {
+        /* 回读校验：后端返回的文档里必须仍带这次填的 Key，防止被服务端过滤后只剩本机 */
+        var cloud = res && res.doc && res.doc.data;
+        var expectKey = String(nextProvider.key || '');
+        var gotKey = null;
+        if (cloud) {
+          if (cloud.providers && cloud.providers[id]) gotKey = cloud.providers[id].key;
+          else if (id.indexOf('__rayin__') === 0 && cloud.rayin) gotKey = cloud.rayin.key;
+        }
+        if (cloud && gotKey != null && String(gotKey) !== expectKey) {
+          throw new Error('云端未保存 API Key，请重试');
+        }
+        /* 再主动 GET 一次 /docs/api，确认这条记录真的能读回来，而不是只看写入返回 200 */
+        var verify = (window.HMSync && window.HMSync.pullApi)
+          ? window.HMSync.pullApi().catch(function () { return null; })
+          : Promise.resolve(null);
+        return verify.then(function () {
+          var after = getApiDoc();
+          var rec = (after.providers && after.providers[id]) || null;
+          if (!rec) throw new Error('云端回读失败：没有找到这条接入记录');
+          if (String(rec.key || '') !== expectKey) throw new Error('云端回读失败：API Key 不一致');
+          if (p.model && String(rec.model || '') !== String(p.model)) throw new Error('云端回读失败：模型名不一致');
+          /* 保存成功后刷新同步面板：连接状态、最近同步时间一起更新 */
+          if (window.HMSync && window.HMSync.refreshPanel) {
+            try { window.HMSync.refreshPanel(); } catch (e) {}
+          }
+          return res;
+        });
+      }).catch(function (err) {
+        err.localSaved = true;
+        throw err;
+      });
+    });
   }
 
   function deleteApiCard(id) {
     var App = window.HMApp;
     if (!App) return;
-    if (!confirm('确定删除这个 API 接入配置？密钥将从本地清除。')) return;
+    if (!confirm('确定删除这个 API 接入配置？密钥会从本机与云端一起清除。')) return;
+    var doc = getApiDoc();
     if (id === '__rayin__') {
       try { localStorage.removeItem('anidream.rayin.v1'); } catch (e) {}
       App.state.prefs = App.state.prefs || {};
       App.state.prefs.rayin = { base: 'https://www.rayinai.com/v1', key: '' };
+      delete doc.rayin;
+      delete doc.gptModel;
+      delete doc.bananaModel;
+      delete doc.bindings[id];
+      delete doc.billing[id];
     } else {
       delete App.state.providers[id];
       try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
       if (App.state.providerId === id) App.state.providerId = null;
+      delete doc.providers[id];
+      delete doc.bindings[id];
+      delete doc.billing[id];
     }
+    doc.updatedAt = Date.now();
+    try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
+    apiDocCache = doc;
     if (App.toast) App.toast('已删除 ' + id, 'info');
+    var push = window.HMSync && window.HMSync.pushApi;
+    if (push) {
+      push(doc).catch(function (err) {
+        if (App.toast) App.toast('本机已删除；云端删除失败：' + ((err && err.message) || '网络异常'), 'error');
+      });
+    }
     renderApiPanel(document.getElementById('adminBody'));
   }
 
-  /* 简单 ping 测试（用 models endpoint 或 /v1/models） */
-  function testApi(id, base, key) {
+  /* 连接测试：不再只验证「地址 + 密钥」，而是分三层判断真实可用性
+   *   1) /models 401/403/网络失败        → 密钥或地址不对（红）
+   *   2) 模型不在账号清单里              → 模型不可用（红，给出可用图像模型）
+   *   3) 真实发一次最小出图请求          → 分组/通道不可用也拦得住（红）
+   * 只有真正拿到图片字节才显示绿色「可用」。 */
+  /* 接口地址归一化：用户常把具体端点（/models、/chat/completions、
+   * /images/generations…）当根地址填进来，直接拼会变成 /v1/models/models，
+   * 上游会把 models 当成模型名报 404。这里统一剥到 API 根地址。 */
+  var API_ENDPOINT_TAIL = /\/(models|chat\/completions|completions|responses|images\/generations|images\/edits|images\/variations|embeddings)\/?$/i;
+  function apiBaseNormalize(raw) {
+    /* 容忍从文档复制的格式：反引号 / 引号 / 全角引号 / 首尾空格，以及多余结尾斜杠 */
+    var s = String(raw || '').trim().replace(/^[`'"“”‘’\s]+|[`'"“”‘’\s]+$/g, '');
+    var stripped = s.replace(/\/+$/, '').replace(API_ENDPOINT_TAIL, '').replace(/\/+$/, '');
+    return { base: stripped, changed: stripped !== s };
+  }
+
+  function apiProbeText(status, body) {
+    var msg = '';
+    try {
+      var j = JSON.parse(body);
+      msg = (j && j.error && (j.error.message || j.error.type)) || '';
+    } catch (e) { msg = String(body || '').slice(0, 120); }
+    return msg || ('HTTP ' + status);
+  }
+
+  function isImageModelId(id) { return /image|imagen|dall|flux|seedream|banana/i.test(String(id || '')); }
+
+  /* 保存时模型留空：按这条 Key 的真实 /models 清单自动选一个能出图的模型。
+   * 只填空值，用户手填的模型（含 gpt-image-2）一律不覆盖。 */
+  var API_IMG_PREF = ['gpt-image-2.5-flare', 'gpt-image-2', 'gpt-image-2.6-flare',
+    'gpt-image-2.6-sunburst', 'gpt-image-2.5-sunburst',
+    'gemini-3.1-flash-image', 'gemini-2.5-flash-image', 'gemini-3-pro-image'];
+
+  function autoPickModelIfNeeded(p) {
+    if (String((p && p.model) || '').trim() || !p || !p.base) return Promise.resolve();
+    var root = apiBaseNormalize(p.base).base;
+    var native = /\/v\d+(alpha|beta)\d*$/i.test(root);
+    if (!native && !/\/v\d+[a-z]*$/i.test(root)) root = root.replace(/\/+$/, '') + '/v1';
+    var headers = p.key ? (native ? { 'x-goog-api-key': p.key } : { 'Authorization': 'Bearer ' + p.key }) : {};
+    return fetch(root + '/models', { method: 'GET', headers: headers }).then(function (r) {
+      if (!r.ok) return null;
+      return r.json();
+    }).then(function (data) {
+      var ids = ((data && (data.data || data.models)) || []).map(function (m) {
+        return String((m && (m.id || m.name)) || '').replace(/^models\//, '');
+      }).filter(Boolean);
+      var imgs = ids.filter(isImageModelId);
+      if (!imgs.length) return;
+      var chosen = '';
+      for (var i = 0; i < API_IMG_PREF.length && !chosen; i += 1) {
+        if (imgs.indexOf(API_IMG_PREF[i]) >= 0) chosen = API_IMG_PREF[i];
+      }
+      if (!chosen) chosen = imgs[0];
+      p.model = chosen;
+    }).catch(function () {});
+  }
+
+  function testApi(id, base, key, model, engine) {
     var App = window.HMApp;
     if (!App || !base) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
-    var url = base.replace(/\/+$/, '') + '/models';
-    var headers = key ? { 'Authorization': 'Bearer ' + key } : {};
-    return new Promise(function (resolve) {
-      var timeout = setTimeout(function () { resolve({ ok: false, msg: '请求超时' }); }, 8000);
-      fetch(url, { method: 'GET', headers: headers })
-        .then(function (r) {
-          clearTimeout(timeout);
-          if (r.ok) return r.json();
+    var root = apiBaseNormalize(base).base;
+    if (!root) return Promise.resolve({ ok: false, msg: '请先填接口地址' });
+    /* 地址形态决定调用方式：/v1beta、/v1alpha → Gemini 原生；其余 → OpenAI 兼容 */
+    var native = /\/v\d+(alpha|beta)\d*$/i.test(root);
+    if (!native && !/\/v\d+[a-z]*$/i.test(root)) root = root.replace(/\/+$/, '') + '/v1';
+    var headers = key ? (native ? { 'x-goog-api-key': key } : { 'Authorization': 'Bearer ' + key }) : {};
+    var want = String(model || '').trim();
+    var modeLabel = native ? 'Gemini 原生接口' : 'OpenAI 兼容接口';
+
+    function fetchT(url, opts, ms) {
+      return new Promise(function (resolve) {
+        var timer = setTimeout(function () { resolve({ timeout: true }); }, ms);
+        fetch(url, opts).then(function (r) {
           return r.text().then(function (txt) {
-            try { var j = JSON.parse(txt); resolve({ ok: false, msg: (j && j.error && j.error.message) || ('HTTP ' + r.status) }); }
-            catch (e) { resolve({ ok: false, msg: 'HTTP ' + r.status }); }
+            clearTimeout(timer);
+            resolve({ status: r.status, ok: r.ok, text: txt });
           });
-        })
-        .then(function (data) {
-          if (Array.isArray(data.data) && data.data.length) {
-            resolve({ ok: true, msg: '连接成功 · ' + data.data.length + ' 个模型' });
-          } else {
-            resolve({ ok: true, msg: '连接成功' });
-          }
-        })
-        .catch(function (err) {
-          clearTimeout(timeout);
-          resolve({ ok: false, msg: err.message || '网络错误' });
+        }).catch(function (err) {
+          clearTimeout(timer);
+          resolve({ status: 0, ok: false, text: (err && err.message) || '网络错误' });
         });
+      });
+    }
+
+    return fetchT(root + '/models', { method: 'GET', headers: headers }, 12000).then(function (r) {
+      if (r.timeout) return { ok: false, msg: '请求超时：地址不可达' };
+      if (r.status === 401 || r.status === 403) {
+        return { ok: false, msg: '密钥无效或没有权限（HTTP ' + r.status + '）：请核对 API Key' };
+      }
+      if (!r.ok) {
+        return { ok: false, msg: modeLabel + '地址不可用（HTTP ' + r.status + '）：' + apiProbeText(r.status, r.text) };
+      }
+      var ids = [];
+      try {
+        var j = JSON.parse(r.text);
+        ids = ((j && (j.data || j.models)) || []).map(function (m) {
+          return String((m && (m.id || m.name)) || '').replace(/^models\//, '');
+        }).filter(Boolean);
+      } catch (e) { ids = []; }
+
+      if (!want) return { ok: false, msg: '密钥/地址正常，但这条配置还没有模型 ID' };
+      if (ids.length && ids.indexOf(want) < 0) {
+        var imgs = ids.filter(isImageModelId);
+        return {
+          ok: false,
+          msg: '密钥/地址正常，但模型「' + want + '」不在该账号清单里' +
+            (imgs.length ? '；可用图像模型：' + imgs.slice(0, 8).join('、') : '；清单里没有图像模型')
+        };
+      }
+      /* 文字模型：地址与密钥都对，但这条通道不能出图，不能给绿灯 */
+      if (!isImageModelId(want)) {
+        return {
+          ok: false,
+          msg: '密钥有效（' + modeLabel + '），但模型「' + want + '」是文字模型，不能生成图片；出图请改用 GPT-image 配置（模型 gpt-image-2.5-flare）'
+        };
+      }
+      /* 真实最小出图：原生走 :generateContent，兼容走 /images/generations 或 /chat/completions */
+      var isBanana = engine === 'banana';
+      var postHeaders = Object.assign({ 'Content-Type': 'application/json' }, headers);
+      var req = native
+        ? fetchT(root + '/models/' + encodeURIComponent(want) + ':generateContent', {
+          method: 'POST',
+          headers: postHeaders,
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'ping' }] }] })
+        }, 90000)
+        : (isBanana
+          ? fetchT(root + '/chat/completions', {
+            method: 'POST',
+            headers: postHeaders,
+            body: JSON.stringify({ model: want, messages: [{ role: 'user', content: [{ type: 'text', text: 'ping' }] }] })
+          }, 90000)
+          : fetchT(root + '/images/generations', {
+            method: 'POST',
+            headers: postHeaders,
+            body: JSON.stringify({ model: want, prompt: 'ping', n: 1, size: '1024x1024' })
+          }, 90000));
+
+      return req.then(function (g) {
+        if (g.timeout) return { ok: false, msg: '地址/密钥正常，但真实出图超时（>90s）' };
+        if (g.status === 404) {
+          var m = apiProbeText(404, g.text);
+          var geminiModel = engine === 'banana' || /^gemini/i.test(want);
+          if (geminiModel || /not supported by any configured account|no available (account|channel)/i.test(m)) {
+            return { ok: false, msg: '密钥有效，但该分组未承接 Gemini 图像（模型「' + want + '」）；请改用 GPT-image 配置（模型 gpt-image-2.5-flare，走 /images/generations）' };
+          }
+          return { ok: false, msg: '密钥有效，但模型「' + want + '」不可用：' + m };
+        }
+        if (g.status === 401 || g.status === 403) {
+          return { ok: false, msg: '密钥无效或没有出图权限（HTTP ' + g.status + '）' };
+        }
+        if (!g.ok) return { ok: false, msg: '真实出图失败（HTTP ' + g.status + '）：' + apiProbeText(g.status, g.text) };
+        var bytes = 0;
+        try {
+          var d = JSON.parse(g.text);
+          if (native) {
+            var parts = (d && d.candidates && d.candidates[0] && d.candidates[0].content
+              && d.candidates[0].content.parts) || [];
+            for (var i = 0; i < parts.length; i++) {
+              var inline = parts[i].inlineData || parts[i].inline_data;
+              if (inline && inline.data) {
+                bytes = Math.floor(String(inline.data).replace(/\s+/g, '').length * 3 / 4);
+                break;
+              }
+            }
+          } else {
+            var first = (d && d.data && d.data[0]) || (d && d.choices && d.choices[0] && d.choices[0].message) || {};
+            var b64 = first.b64_json;
+            if (!b64 && typeof first.content === 'string') {
+              var mm = /data:image\/[^;]+;base64,([A-Za-z0-9+/=\r\n]+)/.exec(first.content);
+              if (mm) b64 = mm[1];
+            }
+            if (b64) bytes = Math.floor(b64.replace(/\s+/g, '').length * 3 / 4);
+            else if (first.url || (d && d.data && d.data[0] && d.data[0].url)) bytes = -1;
+          }
+        } catch (e) { bytes = 0; }
+        if (!bytes) return { ok: false, msg: '接口返回 200 但没有拿到图片内容：请检查模型是否支持该端点' };
+        return { ok: true, msg: '可用 · 实测出图成功' + (bytes > 0 ? '（约 ' + Math.round(bytes / 1024) + ' KB）' : '') };
+      });
     });
   }
 
   function apiCardHtml(p) {
     var state = apiTestState[p.id] || '';
     var stateHtml = '';
+    var nb = apiBaseNormalize(p.base || '');
+    var baseHint = nb.changed ? ('将自动使用根地址：' + nb.base + '（已去掉端点后缀）') : '';
     if (state === 'loading') stateHtml = '<span class="hm-api-state is-testing"><i></i>测试中…</span>';
     else if (state === 'ok') stateHtml = '<span class="hm-api-state is-ok">● 在线</span>';
     else if (state === 'fail') stateHtml = '<span class="hm-api-state is-bad">● 离线</span>';
@@ -1043,19 +1995,19 @@
     var keyMask = p._showKey ? hmEsc(p.key) : maskKey(p.key);
     var keyEye = p._showKey ? '👁‍🗨' : '👁';
 
-    var extraField = '';
-    if (p.isRayin) {
-      extraField =
-        '<label class="hm-api-field"><span>Gemini Banana 模型</span>' +
-        '<input class="hm-api-input" data-ik="model2" value="' + hmEsc(p.model2 || '') + '" placeholder="gemini-3.1-flash-image"></label>';
-    }
+    var nameField = p.isCustom
+      ? '<label class="hm-api-field"><span>平台名称</span>' +
+        '<input class="hm-api-input" data-ik="name" value="' + hmEsc(p.name) + '" placeholder="例如 OpenAI / 硅基流动"></label>'
+      : '';
 
     return '<div class="hm-api-card" data-api="' + hmEsc(p.id) + '">' +
       '<div class="hm-api-card-head">' +
         '<div class="hm-api-card-title">' +
           '<span class="hm-api-card-dot" style="background:' + (p.isRayin ? '#a78bfa' : (p.preset && p.preset.color) || '#60a5fa') + '"></span>' +
           '<strong>' + hmEsc(p.name) + '</strong>' +
+          (p.series ? '<em class="hm-api-tag">' + hmEsc(p.series) + '</em>' : '') +
           (p.isCustom ? '<em class="hm-api-tag">自定义</em>' : '') +
+          (p.type ? '<span class="hm-api-type-badge">' + apiTypeLabel(p.type) + '</span>' : '<span class="hm-api-type-none">未分类</span>') +
         '</div>' +
         '<div class="hm-api-card-head-right">' +
           stateHtml +
@@ -1066,34 +2018,177 @@
         '</div>' +
       '</div>' +
       '<div class="hm-api-card-body">' +
+        nameField +
         '<label class="hm-api-field"><span>接口地址</span>' +
-          '<input class="hm-api-input" data-ik="base" value="' + hmEsc(p.base) + '" placeholder="https://.../v1"></label>' +
+          '<input class="hm-api-input" data-ik="base" value="' + hmEsc(p.base) + '" placeholder="https://.../v1">' +
+          '<small data-base-hint style="display:block;margin-top:4px;font-size:11px;color:#fbbf24;">' + hmEsc(baseHint) + '</small></label>' +
         '<label class="hm-api-field"><span>API Key</span>' +
           '<div class="hm-api-key-row">' +
             '<input class="hm-api-input" data-ik="key" type="' + (p._showKey ? 'text' : 'password') + '" value="' + hmEsc(p.key) + '" placeholder="sk-...">' +
             '<button class="hm-api-eye" data-eye title="显示/隐藏">' + keyEye + '</button>' +
           '</div></label>' +
-        '<label class="hm-api-field"><span>' + (p.isRayin ? 'GPT-image 模型' : '默认模型 ID') + '</span>' +
+        '<label class="hm-api-field"><span>' + (p.isRayin ? (p.rayinVariant === 'banana' ? 'Gemini Banana 模型' : 'GPT-image 模型') : '默认模型 ID') + '</span>' +
           '<input class="hm-api-input" data-ik="model" value="' + hmEsc(p.model) + '" placeholder="..."></label>' +
-        extraField +
+        apiModelNamesHtml(p) +
       '</div>' +
       '<div class="hm-api-card-foot">' +
-        '<div class="hm-api-foot-msg" data-msg></div>' +
+        '<div class="hm-api-foot-left">' +
+          '<label class="hm-api-type-bind" title="绑定后，上方类型筛选按这里归类">类型' +
+            '<select class="hm-api-select sm" data-ik="type">' + apiTypeOptionsHtml(p.type) + '</select>' +
+          '</label>' +
+          '<label class="hm-api-type-bind" title="计费方式会随这条接入配置一起保存到云端">计费' +
+            '<select class="hm-api-select sm" data-ik="billing">' + apiBillingOptionsHtml(p.billing) + '</select>' +
+          '</label>' +
+          '<div class="hm-api-foot-msg" data-msg></div>' +
+        '</div>' +
         '<div class="hm-api-foot-btns">' +
-          '<button class="hm-api-btn hm-api-btn-ghost" data-test>测试连接</button>' +
+          '<button class="hm-api-btn hm-api-btn-ghost" data-test title="会真实生成 1 张 1024 图校验模型/分组是否可出图（按量计费）">测试连接</button>' +
           '<button class="hm-api-btn hm-api-btn-primary" data-save>保存</button>' +
-          (!p.preset && p.id !== '__rayin__' ? '<button class="hm-api-btn hm-api-btn-danger" data-del>删除</button>' : '') +
+          (!p.preset && !p.isRayin ? '<button class="hm-api-btn hm-api-btn-danger" data-del>删除</button>' : '') +
         '</div>' +
       '</div>' +
     '</div>';
   }
 
+  /* 这条配置绑定的模型名（展示用）：优先取该系列下的目录模型，其次取已填的模型 ID。
+     不写入数据，只用于卡片下方那行小字。 */
+  function apiModelNames(p) {
+    var names = [];
+    function add(v) {
+      var s = String(v == null ? '' : v).trim();
+      if (s && names.indexOf(s) < 0) names.push(s);
+    }
+    (p.models || []).forEach(function (m) {
+      var id = String(m.id || m.model || '').trim();
+      var series = String(m.series || m.group || '').trim();
+      if (p.series && series && series !== p.series) return;
+      add(id || m.name);
+    });
+    add(p.model);
+    add(p.model2);
+    return names;
+  }
+  function apiModelNamesHtml(p) {
+    var names = apiModelNames(p);
+    if (!names.length) return '';
+    var full = names.join('、');
+    return '<div class="hm-api-model-names" title="' + hmEsc(full) + '">' + hmEsc(full) + '</div>';
+  }
+
+  function apiSectionControlsHtml(providers, supported) {
+    var opts = '<option value="">全部平台</option>';
+    var seenPlat = {};
+    providers.forEach(function (p) {
+      var pid = p.platform || p.id;
+      if (seenPlat[pid]) return;
+      seenPlat[pid] = 1;
+      var match = (!apiFilter.types.length || apiFilter.types.indexOf(p.type) >= 0) &&
+        (!apiFilter.billing || apiBillingKey(p) === apiFilter.billing);
+      if (p.platform) {
+        match = providers.some(function (q) {
+          return (q.platform || q.id) === pid &&
+            (!apiFilter.types.length || apiFilter.types.indexOf(q.type) >= 0) &&
+            (!apiFilter.billing || apiBillingKey(q) === apiFilter.billing);
+        });
+      }
+      opts += '<option value="' + hmEsc(pid) + '"' +
+        (apiFilter.platform === pid ? ' selected' : '') +
+        (match ? '' : ' disabled') + '>' +
+        hmEsc(p.platformName || p.name) + (match ? '' : '（无匹配记录）') + '</option>';
+    });
+    var chips = API_TYPES.map(function (t) {
+      var on = apiFilter.types.indexOf(t.id) >= 0;
+      var enabled = !!supported[t.id];
+      return '<label class="hm-api-type-chip' + (enabled ? '' : ' is-disabled') + '"' +
+        ' title="' + (enabled ? '按 ' + t.label + ' 筛选' : '当前平台没有该类型的接入记录') + '">' +
+        '<input type="checkbox" data-api-type="' + t.id + '"' + (on ? ' checked' : '') + (enabled ? '' : ' disabled') + '>' +
+        t.label + '</label>';
+    }).join('');
+    var anyType = Object.keys(supported).length > 0;
+    return '<div class="hm-api-sec-controls">' +
+      '<select class="hm-api-select" data-api-platform title="按接入平台筛选">' + opts + '</select>' +
+      '<select class="hm-api-select" data-api-billing title="按计费方式筛选（未绑定单独一类）">' + apiBillingFilterOptionsHtml(apiFilter.billing) + '</select>' +
+      '<div class="hm-api-types">' + chips + '</div>' +
+      (anyType ? '' : '<span class="hm-api-type-hint">先给接入记录绑定类型</span>') +
+      '<button class="hm-api-tool-btn" data-api-act="add-api">＋ 新增 API</button>' +
+      '</div>';
+  }
+
+  /* 一条接入记录 = 一行；同系列模型归并在同一格的系列标签下，不再一个模型一行 */
+  function apiModelTableHtml(rows) {
+    if (!rows.length) return '<div class="hm-api-model-empty">当前筛选下没有模型</div>';
+    var body = rows.map(function (r) {
+      var groups = apiSeriesGroups(r.models);
+      var modelsHtml = groups.map(function (g) {
+        var chips = g.models.map(function (m) {
+          return '<span class="hm-api-model-chip" title="' + hmEsc(m.id) + '">' + hmEsc(m.name) + '</span>';
+        }).join('');
+        var showLabel = !(g.models.length === 1 && g.models[0].name === g.name);
+        return '<div class="hm-api-series">' +
+          (showLabel ? '<span class="hm-api-series-name">' + hmEsc(g.name) + '</span>' : '') +
+          chips + '</div>';
+      }).join('');
+      var rowName = r.p.name + (r.p.series ? ' · ' + r.p.series : '');
+      return '<tr>' +
+        '<td class="hm-api-model-platform" title="' + hmEsc(rowName) + '">' + hmEsc(rowName) + '</td>' +
+        '<td class="hm-api-log-model">' + modelsHtml + '</td>' +
+        '<td>' + (r.p.type ? '<span class="hm-api-type-badge">' + apiTypeLabel(r.p.type) + '</span>'
+          : '<span class="hm-api-type-none">未分类</span>') + '</td>' +
+        '<td>' + apiBillingBadgeHtml(r.p.billing) + '</td>' +
+        '<td class="hm-api-model-state">' + (r.p.enabled ? '<span class="is-on">● 已启用</span>'
+          : '<span class="is-off">○ 未启用</span>') + '</td>' +
+        '</tr>';
+    }).join('');
+    return '<div class="hm-api-model-wrap"><table class="hm-api-log-table hm-api-model-table">' +
+      '<thead><tr><th>平台</th><th>模型（按系列归并）</th><th>类型</th><th>计费</th><th>状态</th></tr></thead>' +
+      '<tbody>' + body + '</tbody></table></div>';
+  }
+
   function renderApiPanel(body) {
     var App = window.HMApp;
     if (!body || !App) return;
+    /* 模型名小字实时跟随输入：改模型 ID 时不用等保存/重渲染 */
+    if (!body._hmModelLineBound) {
+      body._hmModelLineBound = true;
+      body.addEventListener('input', function (e) {
+        var el = e.target;
+        var ik = el && el.getAttribute ? el.getAttribute('data-ik') : '';
+        if (ik === 'base') {
+          var card0 = el.closest('.hm-api-card');
+          var hint0 = card0 && card0.querySelector('[data-base-hint]');
+          if (hint0) {
+            var n0 = apiBaseNormalize(el.value);
+            hint0.textContent = n0.changed ? ('将自动使用根地址：' + n0.base + '（已去掉端点后缀）') : '';
+          }
+          return;
+        }
+        if (ik !== 'model') return;
+        var card = el.closest('.hm-api-card');
+        if (!card) return;
+        var line = card.querySelector('.hm-api-model-names');
+        if (!line) return;
+        var v = String(el.value || '').trim();
+        if (!v) return;
+        var parts = (line.textContent || '').split('、').filter(Boolean);
+        if (parts.indexOf(v) < 0) parts.push(v);
+        line.textContent = parts.join('、');
+        line.title = parts.join('、');
+      });
+      body.addEventListener('change', function (e) {
+        var el = e.target;
+        if (!el || el.getAttribute('data-ik') !== 'base') return;
+        var n = apiBaseNormalize(el.value);
+        if (!n.changed) return;
+        el.value = n.base;
+        var card = el.closest('.hm-api-card');
+        var hint = card && card.querySelector('[data-base-hint]');
+        if (hint) hint.textContent = '已自动归一化为根地址：' + n.base;
+      });
+    }
     var providers = getProviders();
     var total = providers.length;
     var enabledCount = providers.filter(function (p) { return p.enabled; }).length;
+    var supported = normalizeApiFilter(providers);
 
     /* ---- 读取调用日志 ---- */
     var apiLogs = [];
@@ -1114,16 +2209,64 @@
       '      <button class="hm-api-tool-btn" data-api-act="test-all">🔍 测试全部</button>' +
       '      <button class="hm-api-tool-btn" data-api-act="export">📤 导出配置</button>' +
       '      <button class="hm-api-tool-btn" data-api-act="import">📥 导入配置</button>' +
-      '      <button class="hm-api-tool-btn" data-api-act="add-custom">＋ 新增接入</button>' +
       '    </div>' +
       '  </header>';
 
+    /* 平台 + 类型共同作用：只显示交集；平台下拉与类型勾选互相收敛 */
+    var platformProviders = providers.filter(function (p) {
+      return !apiFilter.platform || (p.platform || p.id) === apiFilter.platform;
+    });
+    var rows = platformProviders.map(function (p) {
+      return { p: p, models: apiModelsOf(p) };
+    });
+    if (apiFilter.types.length) {
+      rows = rows.filter(function (r) { return apiFilter.types.indexOf(r.p.type) >= 0; });
+    }
+    if (apiFilter.billing) {
+      rows = rows.filter(function (r) { return apiBillingKey(r.p) === apiFilter.billing; });
+    }
+    var unclassified = rows.filter(function (r) { return !r.p.type; }).length;
+    var modelCount = rows.reduce(function (n, r) { return n + r.models.length; }, 0);
+    var seriesCount = rows.reduce(function (n, r) { return n + apiSeriesGroups(r.models).length; }, 0);
+    /* 接入配置与列表共用同一组筛选条件：平台 ∩ 类型 ∩ 计费 */
+    var filteredProviders = platformProviders.filter(function (p) {
+      if (apiFilter.types.length && apiFilter.types.indexOf(p.type) < 0) return false;
+      if (apiFilter.billing && apiBillingKey(p) !== apiFilter.billing) return false;
+      return true;
+    });
+    var cardsHtml = '';
+    filteredProviders.forEach(function (p) { cardsHtml += apiCardHtml(p); });
+
     html += '  <section class="hm-api-sec">' +
-      '    <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>API 接入列表</h3>' +
-      '    <div class="hm-api-grid">';
-    providers.forEach(function (p) { html += apiCardHtml(p); });
-    html += '    </div>' +
+      '    <div class="hm-api-sec-head">' +
+      '      <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>API 接入列表</h3>' +
+      apiSectionControlsHtml(providers, supported) +
+      '    </div>' +
+      '    <div class="hm-api-listbox">' +
+      '      <div class="hm-api-subhead">模型列表 <span>' + rows.length + ' 条接入记录 · ' +
+        seriesCount + ' 个系列 · ' + modelCount + ' 个模型' +
+        (unclassified ? ' · 未分类 ' + unclassified + ' 条' : '') + '</span></div>' +
+      apiModelTableHtml(rows) +
+      '      <div class="hm-api-subhead">接入配置 <span>' + filteredProviders.length + ' 条</span></div>' +
+      (filteredProviders.length
+        ? '<div class="hm-api-grid">' + cardsHtml + '</div>'
+        : '<div class="hm-api-model-empty">当前筛选下没有接入记录</div>') +
+      '    </div>' +
       '  </section>';
+
+    /* 日志筛选：选项只来自真实记录里出现过的平台/类型 */
+    var logPlatforms = [];
+    var logTypes = [];
+    apiLogs.forEach(function (l) {
+      if (l.provider && logPlatforms.indexOf(l.provider) < 0) logPlatforms.push(l.provider);
+      var lt = l.type || 'image';
+      if (logTypes.indexOf(lt) < 0) logTypes.push(lt);
+    });
+    var shownLogs = apiLogs.filter(function (l) {
+      if (apiLogFilter.platform && l.provider !== apiLogFilter.platform) return false;
+      if (apiLogFilter.type && (l.type || 'image') !== apiLogFilter.type) return false;
+      return true;
+    });
 
     html += '  <section class="hm-api-sec">' +
       '    <h3 class="hm-api-sec-title"><span class="hm-api-sec-bar"></span>调用日志 <span class="hm-api-sec-sub">成功 ' + okCount + ' · 失败 ' + failCount + ' · 最多保留 500 条</span></h3>' +
@@ -1131,6 +2274,19 @@
       '      <button class="hm-api-tool-btn small" data-log-act="clear">🗑 清空日志</button>' +
       '      <button class="hm-api-tool-btn small" data-log-act="export">📤 导出日志 CSV</button>' +
       '    </div>';
+    if (apiLogs.length) {
+      html += '<div class="hm-api-log-filters">' +
+        '<select data-log-filter="platform"><option value="">全部平台</option>' +
+        logPlatforms.map(function (p) {
+          return '<option value="' + hmEsc(p) + '"' + (apiLogFilter.platform === p ? ' selected' : '') + '>' + hmEsc(p) + '</option>';
+        }).join('') + '</select>' +
+        '<select data-log-filter="type"><option value="">全部类型</option>' +
+        logTypes.map(function (t) {
+          return '<option value="' + hmEsc(t) + '"' + (apiLogFilter.type === t ? ' selected' : '') + '>' + hmEsc(apiLogTypeLabel(t)) + '</option>';
+        }).join('') + '</select>' +
+        '<span class="hm-api-log-filter-count">当前 ' + shownLogs.length + ' 条</span>' +
+        '</div>';
+    }
 
     if (!apiLogs.length) {
       html += '<div class="hm-api-log-empty">' +
@@ -1138,17 +2294,19 @@
         '<p>还没有调用记录</p>' +
         '<small>在「生成」页出图成功或失败后会自动写日志</small>' +
         '</div>';
+    } else if (!shownLogs.length) {
+      html += '<div class="hm-api-log-empty"><p>当前筛选下没有调用记录</p><small>换个平台或类型试试</small></div>';
     } else {
       html += '<div class="hm-api-log-wrap"><table class="hm-api-log-table"><thead><tr>' +
-        '<th>时间</th><th>状态</th><th>Provider</th><th>模型</th><th>耗时</th><th>提示词</th><th>错误</th>' +
+        '<th>时间</th><th>结果</th><th>类型</th><th>平台 / 接入配置</th><th>模型</th><th>耗时</th><th>提示词</th><th>失败原因</th>' +
         '</tr></thead><tbody>';
-      apiLogs.slice(0, 200).forEach(function (l) { html += logRowHtml(l); });
+      shownLogs.slice(0, 200).forEach(function (l) { html += logRowHtml(l); });
       html += '</tbody></table></div>';
-      if (apiLogs.length > 200) html += '<p class="hm-api-log-more">仅显示最近 200 条（共 ' + apiLogs.length + '）</p>';
+      if (shownLogs.length > 200) html += '<p class="hm-api-log-more">仅显示最近 200 条（筛选后共 ' + shownLogs.length + '）</p>';
     }
     html += '  </section>';
 
-    html += '  <p class="hm-api-footer">密钥仅保存在本浏览器（localStorage），不会上传服务器。调用日志同样仅本地，可随时清空。</p>';
+    html += '  <p class="hm-api-footer">接入配置与密钥会随账号保存到云端（/docs/api），换设备登录后可恢复；未登录时只保存在本机。调用日志仍仅本地，可随时清空。</p>';
     html += '</div>';
 
     body.innerHTML = html;
@@ -1162,15 +2320,16 @@
     var ss = String(d.getSeconds()).padStart(2, '0');
     var dateStr = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hh + ':' + mm + ':' + ss;
     var statusClass = l.status === 'ok' ? 'is-ok' : 'is-fail';
-    var statusIcon = l.status === 'ok' ? '✓' : '✗';
+    var statusIcon = l.status === 'ok' ? '✓ 成功' : '✗ 失败';
     var provider = hmEsc(l.provider || '');
-    var model = hmEsc(l.model || '');
+    var model = hmEsc(l.model || '—');
     var latency = (l.latencyMs != null ? Math.round(l.latencyMs) + ' ms' : '—');
     var prompt = hmEsc((l.promptPreview || '').slice(0, 55));
     var err = hmEsc((l.errorMsg || '').slice(0, 60));
     return '<tr class="' + statusClass + '">' +
       '<td class="hm-api-log-ts">' + dateStr + '</td>' +
       '<td class="hm-api-log-status ' + statusClass + '">' + statusIcon + '</td>' +
+      '<td>' + hmEsc(apiLogTypeLabel(l.type)) + '</td>' +
       '<td class="hm-api-log-provider">' + provider + '</td>' +
       '<td class="hm-api-log-model">' + model + '</td>' +
       '<td class="hm-api-log-latency">' + latency + '</td>' +
@@ -1179,8 +2338,45 @@
       '</tr>';
   }
 
+  function apiLogTypeLabel(t) {
+    return t === 'video' ? '生视频' : t === 'audio' ? '生音频' : t === 'chat' ? 'AI对话' : '生图';
+  }
+
   function bindApiPanel(body) {
     if (!body) return;
+    /* 面板会反复重渲染，事件只绑一次，避免重复保存/重复请求 */
+    if (body.dataset.apiBound === '1') return;
+    body.dataset.apiBound = '1';
+
+    body.addEventListener('change', function (e) {
+      var logSel = e.target.closest('[data-log-filter]');
+      if (logSel) {
+        var lk = logSel.getAttribute('data-log-filter');
+        apiLogFilter[lk === 'platform' ? 'platform' : 'type'] = logSel.value;
+        renderApiPanel(body);
+        return;
+      }
+      var plat = e.target.closest('[data-api-platform]');
+      if (plat) {
+        apiFilter.platform = plat.value;
+        renderApiPanel(body);
+        return;
+      }
+      var billingSel = e.target.closest('[data-api-billing]');
+      if (billingSel) {
+        apiFilter.billing = billingSel.value;
+        renderApiPanel(body);
+        return;
+      }
+      var typeInput = e.target.closest('[data-api-type]');
+      if (typeInput) {
+        var typeId = typeInput.dataset.apiType;
+        var idx = apiFilter.types.indexOf(typeId);
+        if (typeInput.checked && idx < 0) apiFilter.types.push(typeId);
+        else if (!typeInput.checked && idx >= 0) apiFilter.types.splice(idx, 1);
+        renderApiPanel(body);
+      }
+    });
 
     /* 全局按钮 */
     body.addEventListener('click', function (e) {
@@ -1193,6 +2389,7 @@
         } else if (act === 'export') {
           var data = { providers: (window.HMApp.state && window.HMApp.state.providers) || {} };
           data.rayin = (window.HMApp.state && window.HMApp.state.prefs && window.HMApp.state.prefs.rayin) || {};
+          data.api = getApiDoc();
           var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
           var a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
@@ -1209,14 +2406,44 @@
               try {
                 var j = JSON.parse(r.result);
                 var App = window.HMApp;
+                /* 导入时同样只收 RayinAPI：其他平台的旧配置直接丢弃 */
+                function rayinOnly(src) {
+                  var out = {};
+                  Object.keys(src || {}).forEach(function (k2) {
+                    if (k2.indexOf('__rayin') === 0) out[k2] = src[k2];
+                  });
+                  return out;
+                }
                 if (j.providers) {
-                  App.state.providers = j.providers;
-                  try { localStorage.setItem('anidream.providers.v1', JSON.stringify(j.providers)); } catch (e) {}
+                  var pv = rayinOnly(j.providers);
+                  App.state.providers = pv;
+                  try { localStorage.setItem('anidream.providers.v1', JSON.stringify(pv)); } catch (e) {}
                 }
                 if (j.rayin) {
                   App.state.prefs = App.state.prefs || {};
                   App.state.prefs.rayin = j.rayin;
                   try { localStorage.setItem('anidream.rayin.v1', JSON.stringify(j.rayin)); } catch (e) {}
+                }
+                if (j.api && typeof j.api === 'object') {
+                  apiDocCache = null;
+                  var imported = getApiDoc();
+                  ['providers', 'bindings'].forEach(function (k) {
+                    if (j.api[k] && typeof j.api[k] === 'object') {
+                      imported[k] = (k === 'providers') ? rayinOnly(j.api[k]) : j.api[k];
+                    }
+                  });
+                  if (j.api.billing && typeof j.api.billing === 'object') imported.billing = j.api.billing;
+                  if (j.api.rayin) imported.rayin = j.api.rayin;
+                  if (j.api.gptModel) imported.gptModel = j.api.gptModel;
+                  if (j.api.bananaModel) imported.bananaModel = j.api.bananaModel;
+                  imported.updatedAt = Date.now();
+                  try { localStorage.setItem('anidream.api.v1', JSON.stringify(imported)); } catch (e) {}
+                  apiDocCache = imported;
+                  if (window.HMSync && HMSync.pushApi) {
+                    HMSync.pushApi(imported).catch(function (e2) {
+                      if (App.toast) App.toast('已导入本机；云端同步失败：' + ((e2 && e2.message) || '网络异常'), 'error');
+                    });
+                  }
                 }
                 if (App.toast) App.toast('导入成功', 'success');
                 renderApiPanel(document.getElementById('adminBody'));
@@ -1225,14 +2452,8 @@
             r.readAsText(f);
           };
           inp.click();
-        } else if (act === 'add-custom') {
-          var id = prompt('请输入新接入的唯一 ID（例如 my-provider）', 'custom-' + Date.now());
-          if (!id) return;
-          var App = window.HMApp;
-          App.state.providers = App.state.providers || {};
-          App.state.providers[id] = { base: '', key: '', model: '' };
-          try { localStorage.setItem('anidream.providers.v1', JSON.stringify(App.state.providers)); } catch (e) {}
-          renderApiPanel(document.getElementById('adminBody'));
+        } else if (act === 'add-custom' || act === 'add-api') {
+          addApiRecord();
         }
         return;
       }
@@ -1296,7 +2517,28 @@
         return;
       }
       if (e.target.closest('[data-save]')) {
-        saveFromCard(card, p);
+        var saveBtn = e.target.closest('[data-save]');
+        if (saveBtn.disabled) return;
+        saveBtn.disabled = true;
+        var msgEl = card.querySelector('[data-msg]');
+        if (msgEl) { msgEl.textContent = '保存中…'; msgEl.className = 'hm-api-foot-msg'; }
+        saveFromCard(card, p).then(function () {
+          if (window.HMApp && HMApp.toast) HMApp.toast('已保存 ' + p.name, 'success');
+          renderApiPanel(body);
+        }).catch(function (err) {
+          var reason = (err && err.message) || '网络异常';
+          if (err && err.localSaved) {
+            /* 本机已写入，重渲染让绑定/表格立即生效，同时把云端失败原因留在卡片上 */
+            renderApiPanel(body);
+            var msg2 = document.querySelector('.hm-api-card[data-api="' + p.id + '"] [data-msg]');
+            if (msg2) { msg2.textContent = '仅本机生效：已保存到本机，云端失败：' + reason; msg2.className = 'hm-api-foot-msg is-bad'; }
+            if (window.HMApp && HMApp.toast) HMApp.toast('仅本机生效：已保存到本机，云端失败：' + reason, 'error');
+          } else {
+            saveBtn.disabled = false;
+            if (msgEl) { msgEl.textContent = '保存失败：' + reason; msgEl.className = 'hm-api-foot-msg is-bad'; }
+            if (window.HMApp && HMApp.toast) HMApp.toast('保存失败：' + reason, 'error');
+          }
+        });
         return;
       }
       if (e.target.closest('[data-del]')) {
@@ -1308,13 +2550,53 @@
 
   function saveFromCard(card, p) {
     var inputs = card.querySelectorAll('[data-ik]');
-    var payload = { base: p.base, key: p.key, model: p.model, model2: p.model2, enabled: p.enabled };
+    var payload = {
+      id: p.id,
+      name: p.name,
+      base: p.base,
+      key: p.key,
+      model: p.model,
+      model2: p.model2,
+      enabled: p.enabled,
+      type: apiBinding(p.id),
+      billing: p.billing || ''
+    };
     inputs.forEach(function (el) {
       var k = el.dataset.ik;
       if (k === 'enabled') payload.enabled = el.checked;
+      else if (k === 'type') payload.type = el.value;
       else payload[k] = el.value.trim();
     });
-    saveApiCard(p.id, payload.base, payload.key, payload.model, payload.model2, payload.enabled);
+    if (!payload.base) return Promise.reject(new Error('接口地址不能为空'));
+    /* 模型可以留空：保存时会按这条 Key 的真实清单自动选一个能出图的模型 */
+    return saveApiCard(payload);
+  }
+
+  /* 新增一条空白接入记录：先进输入态，点保存才写后端 */
+  function addApiRecord() {
+    var App = window.HMApp;
+    if (!App) return;
+    var providers = App.state.providers = App.state.providers || {};
+    var doc = getApiDoc();
+    var seq = 1;
+    var id = 'custom-' + seq;
+    while (providers[id] || doc.providers[id]) { seq += 1; id = 'custom-' + seq; }
+    var name = '新接入 ' + seq;
+    providers[id] = { base: '', key: '', model: '' };
+    doc.providers[id] = { name: name, base: '', key: '', model: '', model2: '' };
+    doc.bindings[id] = '';
+    doc.billing[id] = '';
+    doc.updatedAt = Date.now();
+    try { localStorage.setItem('anidream.providers.v1', JSON.stringify(providers)); } catch (e) {}
+    try { localStorage.setItem('anidream.api.v1', JSON.stringify(doc)); } catch (e) {}
+    apiDocCache = doc;
+    apiFilter.platform = '';
+    renderApiPanel(document.getElementById('adminBody'));
+    setTimeout(function () {
+      var el = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-ik="name"]');
+      if (!el) el = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-ik="base"]');
+      if (el) { try { el.focus(); } catch (e) {} }
+    }, 30);
   }
 
   function testAndUpdate(id) {
@@ -1327,7 +2609,16 @@
 
     var base = p.base;
     var key = p.key;
-    testApi(id, base, key).then(function (res) {
+    var nbTest = apiBaseNormalize(base);
+    if (nbTest.changed) {
+      base = nbTest.base;
+      var baseInput = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-ik="base"]');
+      if (baseInput) baseInput.value = base;
+      var baseHintEl = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-base-hint]');
+      if (baseHintEl) baseHintEl.textContent = '已自动归一化为根地址：' + base;
+    }
+    var engine = p.rayinVariant === 'banana' ? 'banana' : (p.rayinVariant === 'gpt' ? 'gpt-image' : ((p.preset && p.preset.engine) || ''));
+    testApi(id, base, key, p.model, engine).then(function (res) {
       apiTestState[id] = res.ok ? 'ok' : 'fail';
       var c = document.querySelector('.hm-api-card[data-api="' + id + '"] [data-msg]');
       if (c) { c.textContent = res.msg; c.className = 'hm-api-foot-msg ' + (res.ok ? 'is-ok' : 'is-bad'); }
@@ -1335,13 +2626,17 @@
       var stateEl = document.querySelector('.hm-api-card[data-api="' + id + '"] .hm-api-state');
       if (stateEl) {
         stateEl.className = 'hm-api-state is-' + (res.ok ? 'ok' : 'bad');
-        stateEl.textContent = (res.ok ? '● 在线' : '● 离线');
+        stateEl.textContent = (res.ok ? '● 可用' : '● 不可用');
       }
     });
   }
 
+  /* 云端 /docs/api 拉回后：刷新缓存并按需重渲染接入面板 */
+  window.HMCloudReload = window.HMCloudReload || {};
+  window.HMCloudReload.api = function () { resetApiDoc(); };
+
   /* 全局暴露 */
-  window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin };
+  window.HMAdmin = { open: openAdmin, close: closeAdmin, isAdmin: isAdmin, testApi: testApi, saveApiCard: saveApiCard, autoPickModelIfNeeded: autoPickModelIfNeeded };
 })();
 
 

@@ -46,8 +46,56 @@
     { id: 'custom-free', name: '自由关键词', category: '自定义', keywords: '', tag: '自由', accent: '#8a93a6' }
   ];
 
-  var W_TEMPLATES = {
-    storyboard: '【分镜脚本】\n镜头 01 · 全景：\n场景：\n动作：\n情绪：\n\n镜头 02 · 特写：\n场景：\n动作：\n情绪：\n',
+  /* LoRA 风格并入「预设」：模型选择弹窗不再单独列 LoRA。
+     预设里选中一条时，既把触发词写进提示词，也把 loraId 落到 state.lora
+     （请求 payload 的 style 字段），保证不是只显示名字。offline 时用内置兜底。 */
+  var LORA_FALLBACK = [
+    { id: 'cel-anime', name: '赛璐璐番剧', tag: 'LoRA · 番剧质感', prompt: 'anime screencap, TV anime key visual, cel shading, clean crisp lineart, flat colors, detailed eyes' },
+    { id: 'kyoani-soft', name: '京阿尼柔光', tag: 'LoRA · 柔和光影', prompt: 'kyoto animation style, soft diffused lighting, delicate highlights, expressive detailed eyes, gentle atmosphere' },
+    { id: 'shinkai-sky', name: '新海诚天空', tag: 'LoRA · 逆光天空', prompt: 'makoto shinkai style, dramatic cumulus sky, lens flare, vivid saturated colors, glowing backlight, cinematic anime' },
+    { id: 'ghibli-hand', name: '吉卜力手绘', tag: 'LoRA · 水彩手绘', prompt: 'studio ghibli style, hand drawn animation, watercolor background, warm natural lighting, nostalgic gentle mood' },
+    { id: 'thick-paint', name: '厚涂插画', tag: 'LoRA · 厚涂笔触', prompt: 'thick paint anime illustration, impasto brush strokes, painterly rendering, dramatic rim light, rich color depth' },
+    { id: 'retro-90s', name: '90s 赛璐璐', tag: 'LoRA · 复古胶片', prompt: '1990s anime screenshot, retro cel animation, film grain, VHS color bleed, vintage television look' },
+    { id: 'chibi-sticker', name: 'Q版贴纸', tag: 'LoRA · 盲盒潮玩', prompt: 'chibi character, thick outline sticker style, pastel macaron colors, big glossy eyes, white plain background' },
+    { id: 'guofeng-anime', name: '国风动漫', tag: 'LoRA · 东方美学', prompt: 'chinese oriental anime illustration, hanfu costume, ink wash accents, gold ornament details, elegant oriental aesthetic' }
+  ];
+
+  function loraPresets() {
+    var src = (A.state && A.state.catalog && Array.isArray(A.state.catalog.loras) && A.state.catalog.loras.length)
+      ? A.state.catalog.loras
+      : LORA_FALLBACK;
+    var seen = {};
+    presetList.forEach(function (p) {
+      seen[String(p.name || '').trim()] = true;
+      seen[String(p.keywords || '').trim()] = true;
+    });
+    var out = [];
+    src.forEach(function (l) {
+      if (!l || !l.id || !l.prompt) return;
+      var name = String(l.name || '').trim();
+      var kw = String(l.prompt || '').trim();
+      if (!name || !kw) return;
+      if (seen[name] || seen[kw]) return;   /* 与既有预设同名/同词的合并，不出现两个一样的名字 */
+      seen[name] = true;
+      seen[kw] = true;
+      out.push({
+        id: 'lora-' + l.id,
+        name: name,
+        category: 'LoRA',
+        keywords: kw,
+        tag: l.tag || 'LoRA',
+        accent: '#a78bfa',
+        loraId: l.id
+      });
+    });
+    return out;
+  }
+
+  function allPresets() {
+    return presetList.concat(loraPresets());
+  }
+
+  var W_TEMPLATES = {    storyboard: '【分镜脚本】\n镜头 01 · 全景：\n场景：\n动作：\n情绪：\n\n镜头 02 · 特写：\n场景：\n动作：\n情绪：\n',
     character: '【角色设定】\n姓名：\n年龄：\n外貌（发型 / 瞳色 / 服装）：\n性格：\n标志性道具：\n常用动作：\n',
     scene: '【场景描述】\n地点：\n时间：\n天气：\n光线：\n主要物件：\n氛围关键词：\n',
     camera: '【镜头语言】\n景别：特写 / 近景 / 中景 / 全景\n机位：平视 / 俯拍 / 仰拍\n运动：推 / 拉 / 摇 / 移 / 环绕\n焦距与景深：\n构图要点：\n'
@@ -143,6 +191,60 @@
     });
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') closeHomeMenu();
+    });
+  }
+
+  /* 作画母入口：原画 / 动画 / 背景 选择菜单（与桌面模式菜单同款交互） */
+  function toggleArtworkMenu() {
+    var menu = document.getElementById('artworkModeMenu');
+    if (!menu) return;
+    syncArtworkMenu();
+    if (menu.hidden) {
+      var btn = document.getElementById('railArtworkBtn');
+      if (btn && btn.getBoundingClientRect) {
+        var r = btn.getBoundingClientRect();
+        menu.style.left = (r.right + 8) + 'px';
+        menu.style.top = r.top + 'px';
+      }
+      menu.hidden = false;
+    } else {
+      menu.hidden = true;
+    }
+  }
+
+  function closeArtworkMenu() {
+    var menu = document.getElementById('artworkModeMenu');
+    if (menu) menu.hidden = true;
+  }
+
+  function syncArtworkMenu() {
+    var menu = document.getElementById('artworkModeMenu');
+    if (!menu) return;
+    var view = document.body.dataset.view || '';
+    menu.querySelectorAll('[data-amode]').forEach(function (el) {
+      el.classList.toggle('is-current', el.getAttribute('data-amode') === view);
+    });
+  }
+
+  function bindArtworkMenu() {
+    var menu = document.getElementById('artworkModeMenu');
+    if (menu) {
+      menu.addEventListener('click', function (event) {
+        var item = event.target.closest('[data-amode]');
+        if (!item) return;
+        event.stopPropagation();
+        closeArtworkMenu();
+        A.switchView(item.getAttribute('data-amode'));
+      });
+    }
+    document.addEventListener('click', function (event) {
+      var m = document.getElementById('artworkModeMenu');
+      if (!m || m.hidden) return;
+      if (event.target.closest('#artworkModeMenu') || event.target.closest('#railArtworkBtn')) return;
+      closeArtworkMenu();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeArtworkMenu();
     });
   }
 
@@ -419,6 +521,20 @@
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r * 2.2, 0, Math.PI * 2);
       ctx.fill();
+    } else if (type === 'dust') {
+      /* 默认主题的中性星尘：冷白偏蓝，中心亮核 + 柔光晕，深底上清晰可见 */
+      var gd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 5.5);
+      gd.addColorStop(0, 'rgba(235,245,255,' + p.alpha + ')');
+      gd.addColorStop(0.35, 'rgba(180,212,255,' + (p.alpha * 0.55) + ')');
+      gd.addColorStop(1, 'rgba(140,180,255,0)');
+      ctx.fillStyle = gd;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(250,253,255,' + p.alpha + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.9, p.r * 0.6), 0, Math.PI * 2);
+      ctx.fill();
     } else {
       var g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 7);
       g2.addColorStop(0, 'rgba(190,255,225,' + p.alpha + ')');
@@ -436,7 +552,7 @@
   }
 
   /* ===== 场景（天空 / 光晕 / 山峦） ===== */
-  function drawSeasonScene(ctx, W, H, s, t) {
+  function drawSeasonScene(ctx, W, H, s, t, noGlow) {
     var sky = ctx.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, s.sky[0]);
     sky.addColorStop(0.38, s.sky[1]);
@@ -445,18 +561,20 @@
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H);
 
-    /* 光晕 */
-    var cx = W * 0.62, cy = H * 0.34;
-    var rad = Math.max(W, H) * 0.28;
-    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-    g.addColorStop(0, 'rgba(255,255,255,.55)');
-    g.addColorStop(0.12, hexA(s.glow, 0.55));
-    g.addColorStop(0.42, hexA(s.accent, 0.10));
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rad, 0, Math.PI * 2);
-    ctx.fill();
+    /* 光晕（noGlow 时跳过，其余渐变与粒子不受影响） */
+    if (!noGlow) {
+      var cx = W * 0.62, cy = H * 0.34;
+      var rad = Math.max(W, H) * 0.28;
+      var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      g.addColorStop(0, 'rgba(255,255,255,.55)');
+      g.addColorStop(0.12, hexA(s.glow, 0.55));
+      g.addColorStop(0.42, hexA(s.accent, 0.10));
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     /* 云层 / 光束 */
     ctx.save();
@@ -521,24 +639,48 @@
 
     var t0 = performance.now();
     var raf = 0;
+    var running = false;
+    var pausedAt = 0;
     function frame(now) {
+      if (document.hidden) { running = false; return; }
       var t = (now - t0) / 1000;
       ctx.clearRect(0, 0, W, H);
-      drawSeasonScene(ctx, W, H, s, t);
+      /* 环境粒子层只画粒子（bg:false），四季天空只用于全屏 CG */
+      if (opts.bg !== false) drawSeasonScene(ctx, W, H, s, t, opts.noGlow);
       for (var j = 0; j < ps.length; j++) {
         updateSeasonParticle(ps[j], s.type, W, H, t);
         drawSeasonParticle(ctx, ps[j], s.type);
       }
       raf = requestAnimationFrame(frame);
     }
-    raf = requestAnimationFrame(frame);
+    function play() {
+      if (running || document.hidden) return;
+      running = true;
+      /* 扣除后台停留的时间，切回时不出现粒子瞬移 */
+      if (pausedAt) { t0 += performance.now() - pausedAt; pausedAt = 0; }
+      raf = requestAnimationFrame(frame);
+    }
+    /* 页面不可见时停止 RAF，切回再继续，避免后台常驻烧 CPU */
+    function onVisibility() {
+      if (document.hidden) {
+        pausedAt = performance.now();
+        running = false;
+        cancelAnimationFrame(raf);
+      } else {
+        play();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility);
+    play();
 
     function onResize() { resize(); }
     window.addEventListener('resize', onResize);
 
     return function stop() {
+      running = false;
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }
 
@@ -582,7 +724,13 @@
   function startSeasonAmbient() {
     stopSeasonAmbient();
     var key = currentSeason();
-    if (!SEASONS[key]) return;
+    /* 默认主题（未选季节）也要有背景粒子：用一套中性星尘，不画四季天空，
+       否则「none」直接 return，默认桌面永远看不到粒子 */
+    var preset = SEASONS[key] || {
+      key: 'none', type: 'dust',
+      sky: ['#0a111c', '#0a111c', '#0a111c', '#0a111c'],
+      accent: '#93c5fd', glow: '#cfe7ff'
+    };
     if (!readJSON(LS.seasonFx, true)) return;
     var cv = document.getElementById('hmSeasonAmbient');
     if (!cv) {
@@ -591,7 +739,8 @@
       cv.className = 'hm-season-ambient';
       document.body.appendChild(cv);
     }
-    seasonAmbientStop = runSeasonCanvas(cv, SEASONS[key], { count: 42 });
+    /* bg:false → 只画粒子，透明背景，不盖住应用本身 */
+    seasonAmbientStop = runSeasonCanvas(cv, preset, { count: 60, noGlow: true, bg: false });
   }
 
   function stopSeasonAmbient() {
@@ -657,7 +806,7 @@
           }).join('') +
         '</div>' +
         '<div class="hm-season-options">' +
-          '<label class="hm-season-switch"><input type="checkbox" id="hmSeasonAmbient" ' + (ambientOn ? 'checked' : '') + '><span>环境粒子常驻</span></label>' +
+          '<label class="hm-season-switch"><input type="checkbox" id="hmSeasonAmbientToggle" ' + (ambientOn ? 'checked' : '') + '><span>环境粒子常驻</span></label>' +
           '<label class="hm-season-switch"><input type="checkbox" id="hmSeasonAuto" ' + (autoOn ? 'checked' : '') + '><span>四季自动轮回（30s）</span></label>' +
           '<button class="hm-season-theme-btn" id="hmSeasonLight">' + (theme === 'light' ? '☀️ 浅色模式' : '🌙 深色模式') + '</button>' +
         '</div>' +
@@ -677,17 +826,13 @@
         overlay.querySelectorAll('.hm-season-card').forEach(function (c) {
           c.classList.toggle('is-active', c === card);
         });
-        if (key === 'none') {
-          stopSeasonAmbient();
-          A.toast && A.toast('已切换为经典夜色主题', 'info');
-        } else {
-          restartSeasonAmbient();
-          A.toast && A.toast('已切换为「' + SEASONS[key].label + '」主题', 'success');
-        }
+        /* 选「无」也要保留默认星尘粒子；是否显示统一由 restartSeasonAmbient 判断开关 */
+        restartSeasonAmbient();
       });
     });
 
-    var fx = overlay.querySelector('#hmSeasonAmbient');
+    /* 复选框 id 必须与模板里的 hmSeasonAmbientToggle 一致，避免和粒子 canvas 的 id 冲突 */
+    var fx = overlay.querySelector('#hmSeasonAmbientToggle');
     fx.addEventListener('change', function () {
       writeJSON(LS.seasonFx, fx.checked);
       if (fx.checked) restartSeasonAmbient(); else stopSeasonAmbient();
@@ -709,7 +854,6 @@
       applyTheme(theme === 'light' ? 'dark' : 'light');
       writeJSON(LS.theme, theme);
       lightBtn.textContent = theme === 'light' ? '☀️ 浅色模式' : '🌙 深色模式';
-      A.toast && A.toast(theme === 'light' ? '已切换到浅色模式' : '已切换到深色模式', 'info');
     });
   }
 
@@ -789,7 +933,15 @@
         /* 桌面/画布双模式按钮：点击同时切回桌面布局并弹出模式菜单 */
         event.preventDefault();
         setHomeMode('create');
+        closeArtworkMenu();
         toggleHomeMenu();
+        return;
+      }
+      if (item.id === 'railArtworkBtn') {
+        /* 作画母入口：点开 原画 / 动画 / 背景 选择菜单 */
+        event.preventDefault();
+        closeHomeMenu();
+        toggleArtworkMenu();
         return;
       }
       var view = item.getAttribute('data-rail');
@@ -800,6 +952,7 @@
       }
       event.preventDefault();
       closeHomeMenu();
+      closeArtworkMenu();
       A.switchView(view);
     });
   }
@@ -811,33 +964,40 @@
 
     var items = railTop.querySelectorAll('.hm-rail-item[data-rail]');
 
-    // 恢复保存的顺序（旧数据里的「作画」母入口按原位置拆成 原画 / 动画 / 着色）
+    // 恢复保存的顺序（旧数据里的「作画」母入口按原位置换成合并后的「作画」）
     try {
       var order = readJSON(LS.railOrder, null);
       if (Array.isArray(order) && order.length) {
         var map = {};
         items.forEach(function (el) { map[el.getAttribute('data-rail')] = el; });
+        var artworkPlaced = false;
         order.forEach(function (rail) {
-          if (rail === 'oua') {
-            ['oua', 'animation', 'paint'].forEach(function (key) {
-              if (map[key]) railTop.appendChild(map[key]);
-            });
+          /* 旧数据里的 原画 / 动画 两个入口已合并为「作画」，首次遇到时原位放回 */
+          if (!artworkPlaced && (rail === 'oua' || rail === 'animation' || rail === 'artwork')) {
+            if (map.artwork) { railTop.appendChild(map.artwork); artworkPlaced = true; }
+            if (rail === 'oua' && map.paint) railTop.appendChild(map.paint);
             return;
           }
+          if (rail === 'oua' || rail === 'animation' || rail === 'artwork') return;
           if (map[rail]) railTop.appendChild(map[rail]);
         });
-        /* 旧顺序里没有的新入口跟随「原画」，避免被排到最前或最末。
-           倒序插入，保证最终排列为 原画 → 动画 → 着色 */
-        ['paint', 'animation'].forEach(function (key) {
-          if (!map[key] || order.indexOf(key) >= 0) return;
-          var anchor = map.oua;
-          if (anchor && anchor.parentNode === railTop) {
-            railTop.insertBefore(map[key], anchor.nextSibling);
-          }
-        });
+        /* 旧顺序里完全没有作画入口时，补在末尾，避免停留在最前 */
+        if (!artworkPlaced && map.artwork) railTop.appendChild(map.artwork);
+        /* 旧顺序里没有着色时，让它跟随「作画」 */
+        if (map.paint && order.indexOf('paint') < 0 && map.artwork && map.artwork.parentNode === railTop) {
+          railTop.insertBefore(map.paint, map.artwork.nextSibling);
+        }
         /* 旧顺序里没有 layout 时，默认排在「美术设定」之后 */
         if (map.layout && order.indexOf('layout') < 0 && map.art && map.art.parentNode === railTop) {
           railTop.insertBefore(map.layout, map.art.nextSibling);
+        }
+        /* 旧顺序里没有背景入口时，默认紧挨在 Layout 之前；缓存里已有 bg 则按缓存位置 */
+        if (map.bg && order.indexOf('bg') < 0) {
+          if (map.layout && map.layout.parentNode === railTop) {
+            railTop.insertBefore(map.bg, map.layout);
+          } else if (map.artwork && map.artwork.parentNode === railTop) {
+            railTop.insertBefore(map.bg, map.artwork.nextSibling);
+          }
         }
         /* 旧顺序里没有 edit 时，默认排在「摄影」之后 */
         if (map.edit && order.indexOf('edit') < 0 && map.director && map.director.parentNode === railTop) {
@@ -907,8 +1067,8 @@
   var prevView = null;
 
   function onView(view) {
-    /* 原画 / 动画 / 着色 已是一级入口，各自高亮自己的侧栏按钮 */
-    var railView = view;
+    /* 原画 / 动画 收进「作画」入口，统一高亮作画按钮；背景已是独立入口 */
+    var railView = (view === 'oua' || view === 'animation') ? 'artwork' : view;
     document.querySelectorAll('[data-rail]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-rail') === railView);
     });
@@ -980,6 +1140,9 @@
     if (prevView === 'tooltoon' && view !== 'tooltoon' && window.HMToon) {
       try { window.HMToon.leave(); } catch (e) { /* ignore */ }
     }
+    if (prevView === 'tooltoon2' && view !== 'tooltoon2' && window.HMToon2) {
+      try { window.HMToon2.leave(); } catch (e) { /* ignore */ }
+    }
     prevView = view;
 
     if (view === 'canvas' && window.HMCanvas) {
@@ -1012,9 +1175,6 @@
     if (view === 'art' && window.HMArt) {
       try { window.HMArt.enter(); } catch (e) { console.error('[Art] enter failed', e); }
     }
-    if (view === 'oua' && window.HMOUA) {
-      try { window.HMOUA.enter(); } catch (e) { console.error('[OUA] enter failed', e); }
-    }
     if (view === 'animation' && window.HMAnimation) {
       try { window.HMAnimation.enter(); } catch (e) { console.error('[Animation] enter failed', e); }
     }
@@ -1033,12 +1193,6 @@
         if (!btn) return;
         setMode(btn.dataset.mode);
         A.closeAllMenus();
-        A.toast(
-          state.mode === 'image' ? '已切换到图片生成'
-            : state.mode === 'video' ? '已切换到视频生成 · 需启动后端'
-              : '已切换到音频合成 · 需启动后端',
-          'info'
-        );
       });
     }
 
@@ -1188,7 +1342,7 @@
       }
     } else {
       if (emptyText) emptyText.textContent = '拖入或上传参考图（最多 10 张）· 支持多张批量';
-      if (hintText) hintText.textContent = '参考图可指定主体 · 提示词中用 @1 @2 … 引用';
+      if (hintText) hintText.textContent = '参考图可指定主体 · 提示词中用 图1 图2 … 引用';
       if (input) input.setAttribute('accept', 'image/*');
       if (limits) limits.hidden = true;
     }
@@ -1578,22 +1732,53 @@
   function bindEditor() {
     var panel = document.getElementById('promptEditor');
     var input = document.getElementById('promptEditorInput');
+    var rich = document.getElementById('promptEditorRich');
     var count = document.getElementById('promptEditorCount');
     var expand = document.getElementById('expandPrompt');
 
     if (!panel || !input) return;
 
+    if (rich) {
+      var inner = input.closest('.hm-editor-inner');
+      if (inner) inner.classList.add('has-rich');
+      /* 富文本编辑后：文本回写隐藏 textarea，长度上限与提示词框一致 */
+      rich.addEventListener('input', function () {
+        var v = richSerializeIn(rich);
+        if (v.length > 1800) {
+          v = v.slice(0, 1800);
+          richRenderText(rich, v);
+        }
+        input.value = v;
+        updateCount();
+      });
+      /* 粘贴一律纯文本，避免带进外部样式 */
+      rich.addEventListener('paste', function (ev) {
+        ev.preventDefault();
+        var txt = (ev.clipboardData || window.clipboardData).getData('text/plain') || '';
+        if (!txt) return;
+        document.execCommand('insertText', false, txt);
+        input.value = richSerializeIn(rich);
+        updateCount();
+      });
+    }
+
+    function currentValue() {
+      return rich ? richSerializeIn(rich) : input.value;
+    }
+
     function updateCount() {
-      if (count) count.textContent = input.value.length + ' / 1800';
+      if (count) count.textContent = currentValue().length + ' / 1800';
     }
 
     function open() {
-      input.value = A.els.promptInput.value;
+      var v = A.els.promptInput.value;
+      input.value = v;
+      if (rich) richRenderText(rich, v);
       updateCount();
       panel.classList.add('is-open');
       panel.setAttribute('aria-hidden', 'false');
       document.body.classList.add('no-scroll');
-      setTimeout(function () { input.focus(); }, 40);
+      setTimeout(function () { (rich || input).focus(); }, 40);
     }
 
     function close() {
@@ -1614,13 +1799,14 @@
     var apply = document.getElementById('promptEditorApply');
     if (apply) {
       apply.addEventListener('click', function () {
-        A.els.promptInput.value = input.value;
+        A.els.promptInput.value = currentValue();
         A.updateCharCount();
+        richRenderFromValue();
         close();
       });
     }
 
-    input.addEventListener('input', updateCount);
+    if (!rich) input.addEventListener('input', updateCount);
     panel.addEventListener('click', function (event) {
       if (event.target === panel) close();
     });
@@ -1679,6 +1865,11 @@
       presetActive = saved;
       var chip = document.getElementById('presetChipText');
       if (chip) chip.textContent = saved.name;
+      /* 重开页面后 LoRA 预设要把风格参数一起恢复，不能只恢复名字 */
+      if (saved.loraId && state.lora !== saved.loraId) {
+        state.lora = saved.loraId;
+        try { A.persistPrefs(); } catch (err) {}
+      }
     }
   }
 
@@ -1703,7 +1894,7 @@
     var grid = document.getElementById('presetGrid');
     if (!grid) return;
 
-    var list = presetList.filter(function (item) {
+    var list = allPresets().filter(function (item) {
       if (item.category !== presetCat) return false;
       if (!presetSearch) return true;
       return [item.name, item.tag, item.keywords, item.category].join(' ').toLowerCase().indexOf(presetSearch) >= 0;
@@ -1727,7 +1918,7 @@
   }
 
   function applyPreset(id) {
-    var preset = presetList.find(function (item) { return item.id === id; });
+    var preset = allPresets().find(function (item) { return item.id === id; });
     if (!preset) return;
 
     if (!preset.keywords) {
@@ -1740,6 +1931,12 @@
     var text = input.value.trim();
     if (text.toLowerCase().indexOf(preset.keywords.toLowerCase()) < 0) {
       input.value = text ? text.replace(/[，,\s]+$/, '') + ', ' + preset.keywords : preset.keywords;
+    }
+
+    /* LoRA 预设：除了触发词，还要把风格参数真正挂到请求上 */
+    if (preset.loraId) {
+      state.lora = preset.loraId;
+      try { A.persistPrefs(); } catch (err) {}
     }
 
     presetActive = preset;
@@ -1768,7 +1965,9 @@
       }
     }
     presetActive = null;
+    state.lora = '';
     writeJSON(LS.preset, null);
+    try { A.persistPrefs(); } catch (err) {}
     var chip = document.getElementById('presetChipText');
     if (chip) chip.textContent = '预设';
     A.toast('已清除预设关键词', 'info');
@@ -2302,11 +2501,17 @@
     var label = document.getElementById('writingSaved');
     if (!input) return;
     var at = Date.now();
-    writeJSON(LS.draft, { text: input.value, at: at });
+    var data = { text: input.value, at: at };
+    writeJSON(LS.draft, data);
     if (label) {
       label.textContent = '已保存 ' + new Date(at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     }
     if (!silent) A.toast('草稿已保存', 'success');
+    /* 输入时 700ms 自动保存，同步到账号再慢一点，避免每敲一次就发请求 */
+    if (window.HMSync && window.HMSync.pushDraftDoc) {
+      clearTimeout(saveDraft._push);
+      saveDraft._push = setTimeout(function () { window.HMSync.pushDraftDoc(data); }, 3000);
+    }
   }
 
   /* ---------------- 论坛（本地） ---------------- */
@@ -2417,6 +2622,7 @@
     if (tool === 'toolworkflow') { A.switchView('toolworkflow'); return; }
     if (tool === 'toolopenvideo') { A.switchView('toolopenvideo'); return; }
     if (tool === 'tooltoon') { A.switchView('tooltoon'); return; }
+    if (tool === 'tooltoon2') { A.switchView('tooltoon2'); return; }
     if (tool === 'translate') return translateTool();
     if (tool === 'inspire') { A.els.inspireBtn.click(); return; }
     if (tool === 'presets') { openPresetModal(); return; }
@@ -2531,6 +2737,7 @@
     readPrefs();
     bindRail();
     bindHomeSwitch();
+    bindArtworkMenu();
     initHomeMode();
     bindRailToggle();
     initRailCollapsed();
@@ -5475,936 +5682,6 @@
   window.HMArt = { enter: enter, state: state };
 })();
 
-/* ========================================================================
- * HMOUA — Original Animation 原画（第一原画 / 第二原画 · 中割り）
- * ======================================================================== */
-(function () {
-  var A = window.HMApp;
-  var state = {
-    list: [], team: 'first', sortBy: 'updatedAt',
-    editing: null, draft: null, saveTimer: null,
-  };
-  var ST_LABELS = { todo: '未开始', wip: '进行中', review: '审图中', final: '定稿' };
-  var FB_LABELS = { pending: '待提交', submitted: '已提交', reviewing: '审图中', fixing: '修正中', approved: '已通过' };
-
-  function $(id) { return document.getElementById(id); }
-
-  function enter() {
-    bindTop();
-    bindTeamTabs();
-    bindFilters();
-    loadList();
-  }
-
-  /* ============ 事件绑定 ============ */
-  function bindTop() {
-    var btn = $('ouaNewBtn');
-    if (btn && !btn.__bound) {
-      btn.__bound = true;
-      btn.addEventListener('click', createNew);
-    }
-    var imp = $('ouaImportBtn');
-    if (imp && !imp.__bound) {
-      imp.__bound = true;
-      imp.addEventListener('click', openImportWizard);
-    }
-    var exp = $('ouaExportBtn');
-    if (exp && !exp.__bound) {
-      exp.__bound = true;
-      exp.addEventListener('click', exportCsv);
-    }
-  }
-  function bindTeamTabs() {
-    document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (el) {
-      if (el.__bound) return;
-      el.__bound = true;
-      el.addEventListener('click', function () {
-        document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (x) { x.classList.remove('active'); });
-        el.classList.add('active');
-        state.team = el.getAttribute('data-team');
-        // 如果有正在编辑的镜头，也要把它的 team 同步
-        if (state.editing) { state.editing.team = state.team; }
-        loadList();
-      });
-    });
-  }
-  function bindFilters() {
-    ['ouaSearch', 'ouaStatusFilter', 'ouaShotFilter'].forEach(function (id) {
-      var el = $(id); if (!el || el.__bound) return;
-      el.__bound = true;
-      var deb;
-      el.addEventListener('input', function () {
-        clearTimeout(deb); deb = setTimeout(loadList, 300);
-      });
-      el.addEventListener('change', function () { clearTimeout(deb); loadList(); });
-    });
-    document.querySelectorAll('.hm-oua-list-sort .hm-pill').forEach(function (el) {
-      if (el.__bound) return;
-      el.__bound = true;
-      el.addEventListener('click', function () {
-        state.sortBy = el.getAttribute('data-sort');
-        renderGrid();
-      });
-    });
-  }
-
-  /* ============ 列表 ============ */
-  function loadList() {
-    var qp = new URLSearchParams();
-    qp.set('team', state.team);
-    var kw = $('ouaSearch').value.trim(); if (kw) qp.set('keyword', kw);
-    var sf = $('ouaStatusFilter').value; if (sf !== 'all') qp.set('status', sf);
-    var shot = $('ouaShotFilter').value.trim(); if (shot) qp.set('shotNo', shot);
-    state.list = [];
-    api.listOua('?' + qp.toString()).then(function (res) {
-      state.list = res.items || [];
-      renderGrid();
-    }).catch(function (err) {
-      A.toast && A.toast('加载镜头失败: ' + (err.message || err), 'error');
-    });
-  }
-
-  function renderGrid() {
-    var grid = $('ouaGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    var items = state.list.slice();
-    items.sort(function (a, b) {
-      if (state.sortBy === 'shotNo') return (a.shotNo || '').localeCompare(b.shotNo || '');
-      return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
-    });
-    items.forEach(function (s) {
-      var card = document.createElement('div');
-      card.className = 'hm-oua-card hm-oua-st-' + s.status;
-      var first = s.first || {}; var second = s.second || {};
-      var kCount = (first.poseKeyframes || []).length;
-      var tCount = (second.tweens || []).length;
-      var teamLabel = (s.team === 'second') ? '🎬 第二原画' : '🎨 第一原画';
-      card.innerHTML =
-        '<div class="hm-oua-card-head">' +
-          '<span class="hm-oua-shotno">' + (s.shotNo || '—') + '</span>' +
-          '<span class="hm-oua-status">' + ST_LABELS[s.status] + '</span>' +
-        '</div>' +
-        '<div class="hm-oua-card-title">' + (s.title || '(无标题)') + '</div>' +
-        '<div class="hm-oua-card-info">' +
-          '<div>🏷 ' + teamLabel + '</div>' +
-          '<div>👤 ' + (first.director || first.animator || '—') + '</div>' +
-          '<div>🎥 ' + (first.cameraMove || '固定') + '</div>' +
-        '</div>' +
-        '<div class="hm-oua-card-foot">' +
-          '<span>🔢 K帧 ' + kCount + '</span>' +
-          '<span>🎞 中割 ' + tCount + '</span>' +
-        '</div>';
-      card.addEventListener('click', function () { openEditor(s.id); });
-      grid.appendChild(card);
-    });
-    $('ouaListCount').textContent = items.length + ' 镜头 · ' + teamLabelFor(state.team);
-  }
-  function teamLabelFor(t) { return t === 'second' ? '第二原画（動画）' : '第一原画（本番原画）'; }
-
-  /* ============ 新建 ============ */
-  function createNew() {
-    var shotNo = window.prompt('镜号（如: 1-01）', ('1-' + (state.list.filter(function (s) { return s.team === state.team; }).length + 1)));
-    if (shotNo === null) return;
-    var payload = { shotNo: shotNo, team: state.team, status: 'todo', title: '' };
-    api.createOua(payload).then(function (res) {
-      openEditor(res.shot.id);
-    }).catch(function (err) {
-      A.toast && A.toast('新建失败: ' + (err.message || err), 'error');
-    });
-  }
-
-  /* ============ 编辑器 ============ */
-  function openEditor(id) {
-    var listView = $('ouaListView');
-    var editView = $('ouaEditorView');
-    listView.hidden = true; editView.hidden = false;
-    api.getOua(id).then(function (res) {
-      state.editing = res.shot;
-      state.draft = JSON.parse(JSON.stringify(res.shot));
-      populateEditor();
-      A.toast && A.toast('已加载镜号 ' + res.shot.shotNo);
-    }).catch(function (err) {
-      A.toast && A.toast('加载失败: ' + (err.message || err), 'error');
-    });
-  }
-
-  function populateEditor() {
-    var s = state.editing;
-    var f = s.first = s.first || {};
-    var sec = s.second = s.second || {};
-    f.poseKeyframes = f.poseKeyframes || [];
-    sec.tweens = sec.tweens || [];
-    sec.shapeCheck = sec.shapeCheck || [];
-    sec.motionCheck = sec.motionCheck || [];
-
-    $('ouaBackBtn').onclick = function () {
-      editView.hidden = true; listView.hidden = false;
-      loadList(); state.editing = null; state.draft = null;
-    };
-    $('ouaDeleteBtn').onclick = function () {
-      if (!window.confirm('确定删除 ' + s.shotNo + ' ' + (s.title || '') + ' ?')) return;
-      api.deleteOua(s.id).then(function () {
-        editView.hidden = true; listView.hidden = false;
-        loadList(); state.editing = null; state.draft = null;
-        A.toast && A.toast('已删除');
-      });
-    };
-    $('ouaSaveBtn').onclick = function () { saveShot(); };
-
-    // 元信息
-    $('ouaShotNo').value = s.shotNo || '';
-    $('ouaTitle').value = s.title || '';
-    $('ouaSceneRef').value = s.sceneRef || '';
-    $('ouaStatus').value = s.status || 'todo';
-    $('ouaVersion').value = s.version || 'Ver1.0';
-    $('ouaTags').value = (s.tags || []).join(', ');
-    $('ouaEditorTitle').textContent = (s.title || '(无标题)') + ' — ' + (s.shotNo || '—');
-    $('ouaShotTag').textContent = s.shotNo || '—';
-    $('ouaStatusTag').textContent = ST_LABELS[s.status] || '未开始';
-
-    // 团队 block 切换
-    $('ouaFirstBlock').hidden = (s.team === 'second');
-    $('ouaSecondBlock').hidden = (s.team !== 'second');
-    // 同步 team tab
-    document.querySelectorAll('#ouaTeamTabs .hm-oua-team-tab').forEach(function (x) { x.classList.toggle('active', x.getAttribute('data-team') === s.team); });
-    state.team = s.team;
-
-    // 第一原画字段
-    $('ouaDirector').value = f.director || '';
-    $('ouaCameraMove').value = f.cameraMove || '固定';
-    $('ouaCameraDuration').value = f.cameraDuration || '';
-    $('ouaTimeSheet').value = f.timeSheet || '';
-    $('ouaActionFlow').value = f.actionFlow || '';
-    $('ouaDialoguePoint').value = f.dialoguePoint || '';
-    $('ouaSfxPoint').value = f.sfxPoint || '';
-    $('ouaLayoutRef').value = (f.layoutRef || []).join(', ');
-    $('ouaDrawingNotes').value = f.drawingNotes || '';
-
-    // 第二原画字段
-    $('ouaAnimator').value = sec.animator || '';
-    $('ouaTotalFrames').value = sec.totalFrames || 0;
-    $('ouaFeedbackStatus').value = sec.feedbackStatus || 'pending';
-    $('ouaRevisionCount').value = sec.revisionCount || 0;
-    $('ouaFeedbackNote').value = sec.feedbackNote || '';
-    $('ouaShapeCheck').value = (Array.isArray(sec.shapeCheck) ? sec.shapeCheck.map(function (c) { return (c.frameNum ? '帧' + c.frameNum + ' ' : '') + (c.note || ''); }).join('\n') : (sec.shapeCheckText || ''));
-    $('ouaMotionCheck').value = (Array.isArray(sec.motionCheck) ? sec.motionCheck.map(function (c) { return (c.frameNum ? '帧' + c.frameNum + ' ' : '') + (c.note || ''); }).join('\n') : (sec.motionCheckText || ''));
-
-    // 公用
-    $('ouaCharacterRef').value = (f.characterRef || []).map(function (r) { return r.characterId || r.name || ''; }).filter(Boolean).join(', ');
-
-    // K帧列表 + 下拉
-    renderKeyframesList();
-    renderKeyframeSelects();
-    renderTweensList();
-
-    // 绑定输入 → 自动保存
-    bindAutoSave();
-
-    // 添加按钮
-    $('ouaAddKeyframe').onclick = function () {
-      f.poseKeyframes.push({
-        frame: f.poseKeyframes.length * 4 + 0,
-        second: (f.poseKeyframes.length * 0.4).toFixed(1),
-        pose: 'K 帧 ' + (f.poseKeyframes.length + 1),
-        url: '', note: '', keyType: 'key',
-      });
-      renderKeyframesList(); renderKeyframeSelects(); saveShot();
-    };
-    $('ouaAddTween').onclick = function () {
-      var total = (sec.totalFrames || 0) + sec.tweens.length + 1;
-      sec.tweens.push({
-        frameNum: total,
-        ratio: (sec.tweens.length + 1) / (sec.totalFrames || 12),
-        url: '', note: '', issue: '',
-      });
-      sec.totalFrames = total;
-      renderTweensList(); saveShot();
-    };
-  }
-
-  function renderKeyframesList() {
-    var list = $('ouaKeyframesList');
-    var f = state.editing.first;
-    list.innerHTML = '';
-    (f.poseKeyframes || []).forEach(function (k, idx) {
-      var row = document.createElement('div');
-      row.className = 'hm-oua-kframe-row';
-      var typeOpts = [
-        ['layout', 'Layout'], ['key', 'K帧/本番'], ['breakdown', '分解帧'], ['pose', 'Pose参考']
-      ].map(function (t) { return '<option value="' + t[0] + '"' + (k.keyType === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
-      var imgCell = '';
-      if (k.url) {
-        imgCell = '<div class="hm-oua-kframe-img"><img src="' + api.mediaUrl(k.url) + '" alt="" data-preview-click></div>';
-      } else {
-        imgCell = '<div class="hm-oua-kframe-img hm-oua-kframe-empty" data-kf-upload="' + idx + '">＋</div>';
-      }
-      row.innerHTML =
-        '<div class="hm-oua-kframe-idx">#' + (idx + 1) + '</div>' +
-        imgCell +
-        '<div class="hm-oua-kframe-fields">' +
-          '<input class="hm-oua-kf-f" placeholder="帧" type="number" min="0" value="' + (k.frame || '') + '" data-kf-frame="' + idx + '">' +
-          '<input class="hm-oua-kf-s" placeholder="秒" type="number" min="0" step="0.1" value="' + (k.second || '') + '" data-kf-sec="' + idx + '">' +
-          '<select class="hm-oua-kf-type" data-kf-type="' + idx + '">' + typeOpts + '</select>' +
-          '<input class="hm-oua-kf-pose" placeholder="Pose 名称" value="' + (k.pose || '').replace(/"/g, '&quot;') + '" data-kf-pose="' + idx + '">' +
-          '<input class="hm-oua-kf-note" placeholder="备注" value="' + (k.note || '').replace(/"/g, '&quot;') + '" data-kf-note="' + idx + '">' +
-        '</div>' +
-        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-kf-del="' + idx + '">✕</button>';
-      row.querySelectorAll('[data-kf-del]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          f.poseKeyframes.splice(idx, 1);
-          renderKeyframesList(); renderKeyframeSelects(); saveShot();
-        });
-      });
-      row.querySelectorAll('[data-kf-frame],[data-kf-sec],[data-kf-type],[data-kf-pose],[data-kf-note]').forEach(function (el) {
-        el.addEventListener('input', function () {
-          var key = el.getAttribute('data-kf-frame') !== null ? 'frame' :
-                    el.getAttribute('data-kf-sec') !== null ? 'second' :
-                    el.getAttribute('data-kf-type') !== null ? 'keyType' :
-                    el.getAttribute('data-kf-pose') !== null ? 'pose' : 'note';
-          if (key === 'frame') k.frame = Number(el.value) || 0;
-          else if (key === 'second') k.second = Number(el.value) || 0;
-          else k[key] = el.value;
-          scheduleSave();
-        });
-      });
-      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
-        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
-      });
-      row.querySelectorAll('[data-kf-upload]').forEach(function (el) {
-        el.addEventListener('click', function () { uploadKeyframe(idx); });
-      });
-      list.appendChild(row);
-    });
-  }
-
-  function renderKeyframeSelects() {
-    var f = state.editing.first;
-    var selA = $('ouaKeyASelect'); var selB = $('ouaKeyBSelect');
-    if (!selA || !selB) return;
-    var opts = '<option value="-1">（未选择）</option>';
-    (f.poseKeyframes || []).forEach(function (k, i) {
-      opts += '<option value="' + i + '">#' + (i + 1) + ' ' + (k.pose || '') + ' @' + (k.second || '0') + 's</option>';
-    });
-    selA.innerHTML = opts; selB.innerHTML = opts;
-    secBind('ouaKeyASelect'); secBind('ouaKeyBSelect');
-  }
-  function secBind(id) {
-    var sel = $(id);
-    if (!sel) return;
-    var sec = state.editing.second;
-    var val = (id === 'ouaKeyASelect') ? (sec.keyA_idx || -1) : (sec.keyB_idx || -1);
-    sel.value = String(val);
-    sel.onchange = function () {
-      var s = state.editing.second;
-      if (id === 'ouaKeyASelect') s.keyA_idx = Number(sel.value) || -1;
-      else s.keyB_idx = Number(sel.value) || -1;
-      saveShot();
-    };
-  }
-
-  function renderTweensList() {
-    var list = $('ouaTweensList');
-    var sec = state.editing.second;
-    list.innerHTML = '';
-    (sec.tweens || []).forEach(function (t, idx) {
-      var row = document.createElement('div');
-      row.className = 'hm-oua-tween-row';
-      var imgCell = '';
-      if (t.url) {
-        imgCell = '<div class="hm-oua-tween-img"><img src="' + api.mediaUrl(t.url) + '" alt="" data-preview-click></div>';
-      } else {
-        imgCell = '<div class="hm-oua-tween-img hm-oua-tween-empty" data-tween-upload="' + idx + '">＋</div>';
-      }
-      row.innerHTML =
-        '<div class="hm-oua-tween-num">' + (idx + 1) + '</div>' +
-        imgCell +
-        '<div class="hm-oua-tween-fields">' +
-          '<input class="hm-oua-tf-f" placeholder="帧" type="number" min="0" value="' + (t.frameNum || '') + '" data-tw-f="' + idx + '">' +
-          '<input class="hm-oua-tf-r" placeholder="比例" type="number" min="0" max="1" step="0.01" value="' + (t.ratio || '') + '" data-tw-r="' + idx + '">' +
-          '<input class="hm-oua-tf-note" placeholder="备注" value="' + (t.note || '').replace(/"/g, '&quot;') + '" data-tw-note="' + idx + '">' +
-          '<input class="hm-oua-tf-issue" placeholder="问题" value="' + (t.issue || '').replace(/"/g, '&quot;') + '" data-tw-issue="' + idx + '">' +
-        '</div>' +
-        '<button class="hm-pill hm-pill-mini hm-pill-danger" data-tw-del="' + idx + '">✕</button>';
-      row.querySelectorAll('[data-tw-del]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          sec.tweens.splice(idx, 1); renderTweensList(); saveShot();
-        });
-      });
-      row.querySelectorAll('[data-tw-f],[data-tw-r],[data-tw-note],[data-tw-issue]').forEach(function (el) {
-        el.addEventListener('input', function () {
-          var key = el.getAttribute('data-tw-f') !== null ? 'frameNum' :
-                    el.getAttribute('data-tw-r') !== null ? 'ratio' :
-                    el.getAttribute('data-tw-note') !== null ? 'note' : 'issue';
-          if (key === 'frameNum' || key === 'ratio') t[key] = Number(el.value) || 0;
-          else t[key] = el.value;
-          scheduleSave();
-        });
-      });
-      row.querySelectorAll('[data-preview-click]').forEach(function (img) {
-        img.addEventListener('click', function () { window.HMArt && window.HMArt.openLightbox && window.HMArt.openLightbox(img.src); });
-      });
-      row.querySelectorAll('[data-tween-upload]').forEach(function (el) {
-        el.addEventListener('click', function () { uploadTween(idx); });
-      });
-      list.appendChild(row);
-    });
-  }
-
-  /* ============ 图片上传（K帧 / 中割帧） ============ */
-  function uploadKeyframe(idx) {
-    var input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/*';
-    input.onchange = function () {
-      var f = input.files && input.files[0]; if (!f) return;
-      var reader = new FileReader();
-      reader.onload = function () {
-        A.toast && A.toast('上传中...');
-        api.uploadArtMedia(reader.result).then(function (res) {
-          state.editing.first.poseKeyframes[idx].url = res.url;
-          renderKeyframesList(); saveShot();
-          A.toast && A.toast('✅ 已上传', 'success');
-        }).catch(function (err) {
-          A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
-        });
-      };
-      reader.readAsDataURL(f);
-    };
-    input.click();
-  }
-  function uploadTween(idx) {
-    var input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/*';
-    input.onchange = function () {
-      var f = input.files && input.files[0]; if (!f) return;
-      var reader = new FileReader();
-      reader.onload = function () {
-        A.toast && A.toast('上传中...');
-        api.uploadArtMedia(reader.result).then(function (res) {
-          state.editing.second.tweens[idx].url = res.url;
-          renderTweensList(); saveShot();
-          A.toast && A.toast('✅ 已上传', 'success');
-        }).catch(function (err) {
-          A.toast && A.toast('上传失败: ' + (err.message || err), 'error');
-        });
-      };
-      reader.readAsDataURL(f);
-    };
-    input.click();
-  }
-
-  /* ============ 自动保存绑定 ============ */
-  function bindAutoSave() {
-    var ids = [
-      'ouaShotNo', 'ouaTitle', 'ouaSceneRef', 'ouaStatus', 'ouaVersion', 'ouaTags',
-      'ouaDirector', 'ouaCameraMove', 'ouaCameraDuration', 'ouaTimeSheet', 'ouaActionFlow',
-      'ouaDialoguePoint', 'ouaSfxPoint', 'ouaLayoutRef', 'ouaDrawingNotes',
-      'ouaAnimator', 'ouaTotalFrames', 'ouaFeedbackStatus', 'ouaRevisionCount',
-      'ouaFeedbackNote', 'ouaShapeCheck', 'ouaMotionCheck', 'ouaCharacterRef',
-    ];
-    ids.forEach(function (id) {
-      var el = $(id); if (!el || el.__as) return;
-      el.__as = true;
-      el.addEventListener('input', scheduleSave);
-      el.addEventListener('change', scheduleSave);
-    });
-  }
-
-  function scheduleSave() {
-    clearTimeout(state.saveTimer);
-    state.saveTimer = setTimeout(saveShot, 1200);
-  }
-
-  function saveShot() {
-    if (!state.editing) return;
-    var s = state.editing;
-    var f = s.first = s.first || {};
-    var sec = s.second = s.second || {};
-    s.shotNo = $('ouaShotNo').value;
-    s.title = $('ouaTitle').value;
-    s.sceneRef = $('ouaSceneRef').value;
-    s.status = $('ouaStatus').value;
-    s.version = $('ouaVersion').value;
-    s.team = state.team;
-    s.tags = ($('ouaTags').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
-    f.director = $('ouaDirector').value;
-    f.cameraMove = $('ouaCameraMove').value;
-    f.cameraDuration = $('ouaCameraDuration').value;
-    f.timeSheet = $('ouaTimeSheet').value;
-    f.actionFlow = $('ouaActionFlow').value;
-    f.dialoguePoint = $('ouaDialoguePoint').value;
-    f.sfxPoint = $('ouaSfxPoint').value;
-    f.layoutRef = ($('ouaLayoutRef').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
-    f.drawingNotes = $('ouaDrawingNotes').value;
-    sec.animator = $('ouaAnimator').value;
-    sec.totalFrames = Number($('ouaTotalFrames').value) || 0;
-    sec.feedbackStatus = $('ouaFeedbackStatus').value;
-    sec.revisionCount = Number($('ouaRevisionCount').value) || 0;
-    sec.feedbackNote = $('ouaFeedbackNote').value;
-    sec.shapeCheckText = $('ouaShapeCheck').value;
-    sec.motionCheckText = $('ouaMotionCheck').value;
-    var chars = ($('ouaCharacterRef').value || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
-    f.characterRef = chars.map(function (c) { return { characterId: c, expression: '', outfit: '' }; });
-
-    api.updateOua(s.id, s).then(function () {
-      var tag = $('ouaStatusTag');
-      tag.textContent = ST_LABELS[s.status] || '未开始';
-      $('ouaEditorTitle').textContent = (s.title || '(无标题)') + ' — ' + (s.shotNo || '—');
-    }).catch(function (err) {
-      A.toast && A.toast('保存失败: ' + (err.message || err), 'error');
-    });
-  }
-
-  /* ============ 导出 ============ */
-  function exportCsv() {
-    var url = api.exportOua(state.team);
-    window.open(url, '_blank');
-  }
-
-  /* ============ 批量导入向导 ============ */
-  function openImportWizard() {
-    var overlay = document.createElement('div');
-    overlay.className = 'hm-import-overlay';
-    overlay.id = 'hmOuaImportOverlay';
-    overlay.innerHTML = buildImportMarkup();
-    document.body.appendChild(overlay);
-
-    var step = 1, parsed = null, inputTextarea, inputDrop, inputFile, curTab = 'json';
-
-    // 关闭
-    overlay.querySelector('.hm-import-close').onclick = closeAll;
-    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeAll(); });
-    function closeAll() { overlay.remove(); }
-
-    // Tab 切换
-    overlay.querySelectorAll('.hm-import-tab').forEach(function (t) {
-      t.addEventListener('click', function () {
-        curTab = t.getAttribute('data-tab');
-        overlay.querySelectorAll('.hm-import-tab').forEach(function (x) { x.classList.remove('active'); });
-        t.classList.add('active');
-        overlay.querySelectorAll('.hm-import-pane').forEach(function (p) { p.hidden = p.id !== 'hmOuaPane-' + curTab; });
-      });
-    });
-
-    // JSON textarea
-    inputTextarea = overlay.querySelector('#hmOuaPane-json .hm-import-ta');
-
-    // 文件 drop zone
-    inputDrop = overlay.querySelector('#hmOuaPane-file .hm-import-drop');
-    inputFile = overlay.querySelector('#hmOuaPane-file input[type=file]');
-    inputDrop.addEventListener('click', function () { inputFile.click(); });
-    inputDrop.addEventListener('dragover', function (e) { e.preventDefault(); inputDrop.classList.add('active'); });
-    inputDrop.addEventListener('dragleave', function () { inputDrop.classList.remove('active'); });
-    inputDrop.addEventListener('drop', function (e) {
-      e.preventDefault(); inputDrop.classList.remove('active');
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-    });
-    inputFile.addEventListener('change', function () {
-      if (inputFile.files && inputFile.files[0]) handleFile(inputFile.files[0]);
-    });
-
-    // 模板下载
-    overlay.querySelector('#hmOuaTemplateJson').onclick = function () {
-      downloadTemplate(getTemplateJson(), 'shot-import-template.json');
-    };
-    overlay.querySelector('#hmOuaTemplateCsv').onclick = function () {
-      downloadTemplate(getTemplateCsv(), 'shot-import-template.csv');
-    };
-
-    function handleFile(f) {
-      var reader = new FileReader();
-      reader.onload = function () {
-        var ext = (f.name.split('.').pop() || '').toLowerCase();
-        if (ext === 'csv') {
-          parsed = parseCsvToShots(reader.result);
-        } else {
-          try { parsed = normalizeShots(JSON.parse(reader.result)); }
-          catch (e) { alert('JSON 解析失败: ' + e.message); return; }
-        }
-        step = 2; renderStep();
-      };
-      reader.readAsText(f, 'utf-8');
-    }
-
-    function renderStep() {
-      overlay.querySelectorAll('.hm-import-step').forEach(function (s, i) {
-        s.classList.toggle('current', i + 1 === step);
-        s.classList.toggle('active', i + 1 < step);
-      });
-      var body = overlay.querySelector('.hm-import-body');
-      if (step === 1) { body.innerHTML = getStep1Html(); }
-      else if (step === 2) { body.innerHTML = getStep2Html(); }
-      else { body.innerHTML = getStep3Html(); }
-
-      // rebind
-      overlay.querySelectorAll('.hm-import-tab').forEach(function (t) {
-        t.addEventListener('click', function () {
-          curTab = t.getAttribute('data-tab');
-          overlay.querySelectorAll('.hm-import-tab').forEach(function (x) { x.classList.remove('active'); });
-          t.classList.add('active');
-          overlay.querySelectorAll('.hm-import-pane').forEach(function (p) { p.hidden = p.id !== 'hmOuaPane-' + curTab; });
-        });
-      });
-
-      // 文件 drop zone rebind
-      inputFile = body.querySelector('#hmOuaPane-file input[type=file]');
-      inputDrop = body.querySelector('#hmOuaPane-file .hm-import-drop');
-      if (inputDrop) {
-        inputDrop.addEventListener('click', function () { inputFile.click(); });
-        inputDrop.addEventListener('dragover', function (e) { e.preventDefault(); inputDrop.classList.add('active'); });
-        inputDrop.addEventListener('dragleave', function () { inputDrop.classList.remove('active'); });
-        inputDrop.addEventListener('drop', function (e) {
-          e.preventDefault(); inputDrop.classList.remove('active');
-          if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-        });
-        inputFile.addEventListener('change', function () {
-          if (inputFile.files && inputFile.files[0]) handleFile(inputFile.files[0]);
-        });
-      }
-
-      // Step 2 buttons
-      if (step === 2) {
-        overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = 1; renderStep(); };
-        overlay.querySelector('#hmOuaNextBtn').onclick = function () { step = 3; renderStep(); };
-        renderPreviewTable();
-      }
-      // Step 3 buttons
-      if (step === 3) {
-        overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = 2; renderStep(); };
-        overlay.querySelector('#hmOuaImportBtn').onclick = doImport;
-      }
-    }
-
-    function doImport() {
-      var items = parsed.slice(0, 500);
-      api.bulkOua(items).then(function (res) {
-        A.toast && A.toast('✅ 成功导入 ' + res.inserted + ' 条', 'success');
-        closeAll();
-        loadList();
-      }).catch(function (err) {
-        A.toast && A.toast('导入失败: ' + (err.message || err), 'error');
-      });
-    }
-
-    // 上一步按钮
-    overlay.querySelector('#hmOuaBackBtn').onclick = function () { step = Math.max(1, step - 1); renderStep(); };
-    // 下一步按钮
-    overlay.querySelector('#hmOuaNextBtn').onclick = function () {
-      if (step === 1) {
-        var raw;
-        if (curTab === 'json') {
-          raw = inputTextarea.value.trim();
-          if (!raw) { alert('请输入 JSON'); return; }
-          try { parsed = normalizeShots(JSON.parse(raw)); }
-          catch (e) { alert('JSON 解析失败: ' + e.message); return; }
-        } else {
-          var file = inputFile && inputFile.files && inputFile.files[0];
-          if (!file) { alert('请选择或拖入文件'); return; }
-          return; // file reader 会自动进 step 2
-        }
-        step = 2; renderStep();
-      }
-    };
-
-    renderStep();
-  }
-
-  function buildImportMarkup() {
-    return '<div class="hm-import-modal">' +
-      '<div class="hm-import-header">' +
-        '<h3>🎬 原画批量导入 — 镜头表</h3>' +
-        '<button class="hm-import-close">✕</button>' +
-      '</div>' +
-      '<div class="hm-import-body">' +
-        '<div class="hm-import-steps">' +
-          '<div class="hm-import-step current">① 准备数据</div>' +
-          '<div class="hm-import-step">② 解析预览</div>' +
-          '<div class="hm-import-step">③ 确认导入</div>' +
-        '</div>' +
-        '<div class="hm-import-tabs">' +
-          '<button class="hm-import-tab active" data-tab="json">📄 JSON 粘贴</button>' +
-          '<button class="hm-import-tab" data-tab="file">📁 文件上传</button>' +
-          '<button class="hm-import-tab" data-tab="tpl">📑 下载模板</button>' +
-        '</div>' +
-
-        '<div class="hm-import-pane" id="hmOuaPane-json">' +
-          '<div class="hm-import-pane-title">粘贴 JSON 数组（支持 {items: [...]} 或纯数组）</div>' +
-          '<textarea class="hm-import-ta" placeholder=\'[{"shotNo":"1-01","team":"first","title":"主角奔跑","director":"山田太郎","cameraMove":"前 DOLLY IN","status":"todo"}]\'></textarea>' +
-          '<div class="hm-import-hint">支持字段：shotNo / team(first|second) / title / sceneRef / status / version / director / cameraMove / cameraDuration / timeSheet / actionFlow / animator / totalFrames / feedbackStatus</div>' +
-        '</div>' +
-
-        '<div class="hm-import-pane" id="hmOuaPane-file" hidden>' +
-          '<div class="hm-import-pane-title">选择或拖入 .json / .csv 文件</div>' +
-          '<div class="hm-import-drop">' +
-            '<div style="font-size:40px;margin-bottom:10px">📂</div>' +
-            '<div style="font-size:14px;font-weight:600">点击选择文件</div>' +
-            '<div style="font-size:12px;margin-top:6px">或拖入到此处</div>' +
-            '<input type="file" accept=".json,.csv" style="display:none">' +
-          '</div>' +
-          '<div class="hm-import-hint">CSV 列头：shotNo, team, title, sceneRef, status, director, cameraMove, actionFlow, animator, totalFrames...</div>' +
-        '</div>' +
-
-        '<div class="hm-import-pane" id="hmOuaPane-tpl" hidden>' +
-          '<div class="hm-import-pane-title">下载 Excel 兼容模板，填完后在 📁 文件上传 里导入</div>' +
-          '<div class="hm-import-templates">' +
-            '<button class="hm-pill hm-pill-primary" id="hmOuaTemplateJson">📥 下载 JSON 完整模板</button>' +
-            '<button class="hm-pill" id="hmOuaTemplateCsv">📥 下载 CSV 简易清单</button>' +
-          '</div>' +
-          '<div class="hm-import-hint" style="margin-top:14px">CSV 支持列头：shotNo, team(first/second), title, sceneRef, status(todo/wip/review/final), version, director, cameraMove(固定/PAN→/TILT/DOLLY IN/DOLLY OUT/回転/组合), cameraDuration, timeSheet, actionFlow, animator, totalFrames, feedbackStatus(pending/submitted/reviewing/fixing/approved), layoutRef(逗号分隔), drawingNotes</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="hm-import-footer">' +
-        '<button class="hm-pill hm-pill-ghost" id="hmOuaBackBtn" disabled>← 上一步</button>' +
-        '<button class="hm-pill hm-pill-primary" id="hmOuaNextBtn">下一步 →</button>' +
-      '</div>' +
-    '</div>';
-  }
-
-  function getStep1Html() { return ''; }
-  function getStep2Html() {
-    var items = parsed.slice(0, 50);
-    var body = '';
-    var totalTeam = { first: 0, second: 0 };
-    parsed.forEach(function (s) { if (s.team === 'second') totalTeam.second++; else totalTeam.first++; });
-    if (!parsed || !parsed.length) {
-      body = '<div class="hm-import-empty">❌ 未解析到任何镜头</div>';
-    } else {
-      var html = '<table><thead><tr><th>镜号</th><th>团队</th><th>标题</th><th>状态</th><th>担当</th><th>运镜/帧数</th></tr></thead><tbody>';
-      items.forEach(function (s) {
-        var dir = (s.first && s.first.director) || (s.second && s.second.animator) || '—';
-        var cam = (s.first && s.first.cameraMove) || ((s.second && s.second.totalFrames) ? (s.second.totalFrames + ' 帧') : '—');
-        var teamLabel = s.team === 'second' ? '第二原画' : '第一原画';
-        html += '<tr><td>' + (s.shotNo || '—') + '</td><td>' + teamLabel + '</td><td>' + (s.title || '') + '</td><td>' + (ST_LABELS[s.status] || s.status || '未开始') + '</td><td>' + dir + '</td><td>' + cam + '</td></tr>';
-      });
-      html += '</tbody></table>';
-      body = html + '<div class="hm-import-summary">共解析到 ' + parsed.length + ' 个镜头 · 第一原画 ' + totalTeam.first + ' · 第二原画 ' + totalTeam.second + (parsed.length > 50 ? '（表格只显示前 50 条）' : '') + '</div>';
-    }
-    return '<div class="hm-import-pane-title">② 预览前 50 条</div>' +
-           '<div class="hm-import-table">' + body + '</div>';
-  }
-  function renderPreviewTable() { /* 已在上一个函数直接生成 */ }
-  function getStep3Html() {
-    var items = parsed.slice(0, 500);
-    var totalTeam = { first: 0, second: 0 };
-    items.forEach(function (s) { if (s.team === 'second') totalTeam.second++; else totalTeam.first++; });
-    return '<div class="hm-import-pane-title">③ 确认导入</div>' +
-           '<div class="hm-import-confirm-box">' +
-             '<div class="hm-import-confirm-row"><span>📋 总条数</span><b>' + items.length + '</b></div>' +
-             '<div class="hm-import-confirm-row"><span>🎨 第一原画</span><b>' + totalTeam.first + ' 镜头</b></div>' +
-             '<div class="hm-import-confirm-row"><span>🎬 第二原画</span><b>' + totalTeam.second + ' 镜头</b></div>' +
-             '<div class="hm-import-confirm-row"><span>🔢 单次上限</span><b>500 条</b></div>' +
-             '<div class="hm-import-confirm-warn">⚠️ 导入后无法撤销。请确认以上数据正确。</div>' +
-           '</div>' +
-           '<button class="hm-pill hm-pill-primary" id="hmOuaImportBtn" style="margin-top:14px;padding:10px 30px">🚀 开始导入</button>';
-  }
-
-  /* CSV 解析 → Shot 数组 */
-  function parseCsvToShots(text) {
-    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim(); });
-    if (!lines.length) return [];
-    var header = splitCsv(lines[0]).map(function (h) { return h.trim().toLowerCase(); });
-    var items = [];
-    for (var i = 1; i < lines.length; i++) {
-      var cells = splitCsv(lines[i]);
-      var row = {};
-      header.forEach(function (h, idx) { row[h] = (cells[idx] || '').trim(); });
-      var shot = buildShotFromRow(row);
-      if (shot.shotNo || shot.title) items.push(shot);
-    }
-    return normalizeShots(items);
-  }
-  function splitCsv(line) {
-    var out = [], cur = '', inQ = false;
-    for (var i = 0; i < line.length; i++) {
-      var c = line[i];
-      if (inQ) {
-        if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
-        else if (c === '"') inQ = false;
-        else cur += c;
-      } else {
-        if (c === ',') { out.push(cur); cur = ''; }
-        else if (c === '"') inQ = true;
-        else cur += c;
-      }
-    }
-    out.push(cur); return out;
-  }
-  function buildShotFromRow(r) {
-    var team = (r.team || 'first').toLowerCase();
-    if (team.indexOf('sec') >= 0 || team.indexOf('動画') >= 0 || team === '2') team = 'second';
-    else team = 'first';
-
-    var shot = {
-      shotNo: r.shotno || r.shot_no || '',
-      team: team,
-      title: r.title || '',
-      sceneRef: r.sceneref || r.scene_ref || '',
-      status: r.status || 'todo',
-      version: r.version || 'Ver1.0',
-      first: {
-        director: r.director || '',
-        cameraMove: r.cameramove || r.camera_move || '固定',
-        cameraDuration: r.cameraduration || r.camera_duration || '',
-        timeSheet: r.timesheet || r.time_sheet || '',
-        actionFlow: r.actionflow || r.action_flow || '',
-        dialoguePoint: r.dialoguepoint || r.dialogue_point || '',
-        sfxPoint: r.sfxpoint || r.sfx_point || '',
-        layoutRef: (r.layoutref || r.layout_ref || '').split(/[,|]/).map(function (x) { return x.trim(); }).filter(Boolean),
-        drawingNotes: r.drawingnotes || r.drawing_notes || '',
-        poseKeyframes: [],
-        characterRef: [],
-      },
-      second: {
-        animator: r.animator || r.second_animator || '',
-        totalFrames: Number(r.totalframes || r.total_frames || 0) || 0,
-        feedbackStatus: r.feedbackstatus || r.feedback_status || 'pending',
-        revisionCount: Number(r.revisioncount || r.revision_count || 0) || 0,
-        feedbackNote: r.feedbacknote || r.feedback_note || '',
-        tweens: [],
-      },
-      tags: (r.tags || '').split(/[,|]/).map(function (x) { return x.trim(); }).filter(Boolean),
-    };
-    return shot;
-  }
-
-  function normalizeShots(raw) {
-    var arr = Array.isArray(raw) ? raw : (raw.items || []);
-    return arr.map(function (r) {
-      var team = (r.team || 'first').toLowerCase();
-      if (team.indexOf('sec') >= 0 || team.indexOf('second') >= 0) team = 'second'; else team = 'first';
-      return {
-        shotNo: r.shotNo || r.shotno || '',
-        team: team,
-        title: r.title || '',
-        sceneRef: r.sceneRef || r.sceneref || '',
-        status: r.status || 'todo',
-        version: r.version || 'Ver1.0',
-        first: Object.assign({
-          director: '', cameraMove: '固定', cameraDuration: '', timeSheet: '',
-          actionFlow: '', dialoguePoint: '', sfxPoint: '', layoutRef: [], drawingNotes: '',
-          poseKeyframes: [], characterRef: [],
-        }, r.first || {}),
-        second: Object.assign({
-          animator: '', totalFrames: 0, feedbackStatus: 'pending', revisionCount: 0,
-          feedbackNote: '', tweens: [],
-        }, r.second || {}),
-        tags: r.tags || [],
-      };
-    });
-  }
-
-  function getTemplateJson() {
-    return JSON.stringify({
-      _comment: '原画模块批量导入模板 — Shot 对象数组',
-      items: [
-        {
-          shotNo: '1-01', team: 'first', title: '主角奔跑入场', sceneRef: 'scene_001',
-          status: 'todo', version: 'Ver1.0', tags: ['主角', '奔跑'],
-          first: {
-            director: '山田太郎', cameraMove: '前 DOLLY IN', cameraDuration: '3.0',
-            timeSheet: '0:00 起始Pose → 0:1.2 中间Pose → 0:2.8 结束Pose',
-            actionFlow: '角色从左到右奔跑，途中跃过障碍...',
-            dialoguePoint: '0:03.5', sfxPoint: '0:00.0', layoutRef: [], drawingNotes: '',
-            poseKeyframes: [
-              { frame: 0, second: 0, pose: '起始Pose', keyType: 'key', url: '', note: '' },
-              { frame: 12, second: 0.5, pose: '中间Pose', keyType: 'breakdown', url: '', note: '' },
-              { frame: 24, second: 1.0, pose: '结束Pose', keyType: 'key', url: '', note: '' }
-            ]
-          }
-        },
-        {
-          shotNo: '1-02', team: 'second', title: '第二原画中割', status: 'wip',
-          second: {
-            animator: '佐々木花子', totalFrames: 12, feedbackStatus: 'pending', revisionCount: 0,
-            feedbackNote: '',
-            tweens: [
-              { frameNum: 2, ratio: 0.25, url: '', note: '', issue: '' },
-              { frameNum: 4, ratio: 0.5, url: '', note: '', issue: '' },
-              { frameNum: 6, ratio: 0.75, url: '', note: '', issue: '' }
-            ]
-          }
-        }
-      ]
-    }, null, 2);
-  }
-  function getTemplateCsv() {
-    var header = 'shotNo,team,title,sceneRef,status,version,director,cameraMove,cameraDuration,timeSheet,actionFlow,animator,totalFrames,feedbackStatus';
-    var row1 = '1-01,first,主角奔跑入场,scene_001,todo,Ver1.0,山田太郎,前 DOLLY IN,3.0,"0:00 Pose→0:1.2中间→0:2.8结束","角色从左到右奔跑",,,,';
-    var row2 = '1-02,second,第二原画中割,scene_001,wip,Ver1.0,,,,"主角奔跑-中割",佐々木花子,12,pending';
-    return '\ufeff' + header + '\n' + row1 + '\n' + row2 + '\n';
-  }
-
-  function downloadTemplate(text, filename) {
-    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  window.HMOUA = { enter: enter };
-})();
-
-/* ========================================================================
- * 原画「图层面板」导入：纯前端最小实现
- * ---------------------------------------------------------------
- * 该面板目前是静态外观（不参与画布渲染）。这里只做：
- *   点「导入」→ 选一张本地图片 → 在图层列表顶部插入一行（显示文件名与缩略图）。
- * 不接后端、不写入任何数据、不影响画布。
- * ===================================================================== */
-(function bindOuaLayerImport() {
-  function init() {
-    var btn = document.getElementById('ouaLyrImportBtn');
-    var input = document.getElementById('ouaLyrImportInput');
-    var list = document.getElementById('ouaLyrList');
-    if (!btn || !input || !list) return;
-
-    function updateCount() {
-      var count = document.getElementById('ouaLyrCount');
-      if (count) count.textContent = String(list.querySelectorAll('.hm-oua-lyr-row').length);
-    }
-
-    btn.addEventListener('click', function () {
-      input.value = '';
-      input.click();
-    });
-
-    input.addEventListener('change', function () {
-      var file = input.files && input.files[0];
-      if (!file) return;
-      if (!/^image\//.test(file.type)) {
-        if (typeof toast === 'function') toast('请选择图片文件', 'info');
-        return;
-      }
-      var url = URL.createObjectURL(file);
-      var row = document.createElement('div');
-      row.className = 'hm-oua-lyr-row';
-      row.innerHTML =
-        '<button class="hm-oua-lyr-eye" type="button" title="显示 / 隐藏图层" aria-label="显示 / 隐藏图层">' +
-        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M1.6 8S4.1 4.2 8 4.2 14.4 8 14.4 8 11.9 11.8 8 11.8 1.6 8 1.6 8Z"/><circle cx="8" cy="8" r="1.9"/></svg>' +
-        '</button>' +
-        '<span class="hm-oua-lyr-thumb is-imported"><i></i></span>' +
-        '<span class="hm-oua-lyr-name"></span>' +
-        '<button class="hm-oua-lyr-lock is-unlocked" type="button" title="锁定图层" aria-label="锁定图层">' +
-        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><rect x="4" y="7" width="8" height="6.2" rx="1.2"/><path d="M5.7 7V5.4a2.3 2.3 0 0 1 4.3-1"/></svg>' +
-        '</button>';
-      row.querySelector('.hm-oua-lyr-name').textContent = file.name;
-      row.querySelector('.hm-oua-lyr-thumb > i').style.backgroundImage = 'url("' + url + '")';
-      var active = list.querySelector('.hm-oua-lyr-row.is-active');
-      if (active) active.classList.remove('is-active');
-      row.classList.add('is-active');
-      list.insertBefore(row, list.firstChild);
-      updateCount();
-      if (typeof toast === 'function') toast('已导入图层：' + file.name, 'success');
-    });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
-})();
-
-
 
 /* ========================================================================
  * HMAnimation —— 动画中间帧处理（Tweening · 帧序列 · 节奏曲线）
@@ -6414,7 +5691,9 @@
   var ST_LABELS = { todo: '未开始', wip: '进行中', review: '审图中', final: '定稿' };
   function $(id) { return document.getElementById(id); }
 
-  function enter() { bindTop(); bindFilters(); loadList(); }
+  function enter() {
+    /* 静态壳：动画数据功能已下线；旧 DOM 已移除，这里不再触发任何绑定 */
+  }
 
   function bindTop() {
     var btn = $('animNewBtn');
@@ -6774,220 +6053,4 @@
   }
 
   window.HMAnimation = { enter: enter };
-})();
-
-/* ============ 【原画】尺寸选择：派系 → 纸型 + 画框 + 定位孔，另加 Field 档位 ============
-   仅作用于 #view-oua；动画 / 背景 / Layout 保持静态同款样式。
-   参数持久化在 localStorage，不涉及后端。 */
-(function () {
-  var root = document.getElementById('view-oua');
-  if (!root) return;
-
-  var STORE_KEY = 'hm.oua.size.v1';
-  var RATIO = { '4:3': 4 / 3, '16:9': 16 / 9, '1.85:1': 1.85, '254×142.875': 254 / 142.875 };
-  var DEFAULT = { faction: 'toei', paper: 'b4v', frame: '4:3', peg: '3', field: '12' };
-
-  var FACTIONS = {
-    toei: {
-      label: '东映',
-      papers: [
-        { id: 'b4v', label: 'B4 257×364', w: 257, h: 364 },
-        { id: 'b4h', label: 'B4横 364×257', w: 364, h: 257 }
-      ],
-      frames: ['4:3', '16:9']
-    },
-    ghibli: {
-      label: '剧场版手绘（吉卜力）',
-      papers: [{ id: 'b4h', label: 'B4横 364×257', w: 364, h: 257 }],
-      frames: ['1.85:1']
-    },
-    sunrise: {
-      label: '日升',
-      papers: [{ id: 'b4v', label: 'B4 257×364', w: 257, h: 364 }],
-      frames: ['16:9']
-    },
-    comix: {
-      label: 'CoMix Wave',
-      papers: [{ id: 'b4v', label: 'B4 257×364', w: 257, h: 364 }],
-      frames: ['16:9']
-    },
-    mush: {
-      label: '虫制作',
-      papers: [{ id: 'ap', label: 'A判 176×250', w: 176, h: 250 }],
-      frames: ['4:3']
-    },
-    aja: {
-      label: 'AJA Fr01',
-      papers: [{ id: 'a4h', label: 'A4横 297×210', w: 297, h: 210 }],
-      frames: ['254×142.875']
-    }
-  };
-
-  var FIELDS = [
-    { id: '8', label: '8', mm: [203.2, 152.4], inch: '8×6' },
-    { id: '9', label: '9', mm: [228.6, 171.45], inch: '9×6.75' },
-    { id: '10', label: '10', mm: [254, 190.5], inch: '10×7.5' },
-    { id: '12', label: '12', mm: [304.8, 228.6], inch: '12×9' },
-    { id: '13', label: '13', mm: [330.2, 247.65], inch: '13×9.75' },
-    { id: '15', label: '15', mm: [381, 285.75], inch: '15×11.25' },
-    { id: '16', label: '16', mm: [406.4, 304.8], inch: '16×12' },
-    { id: 'pan', label: 'PAN', mm: [304.8, 457.2], inch: '12×18' }
-  ];
-
-  var PGS = [
-    { id: '3', label: '三孔（长孔 + 圆孔）' },
-    { id: '2', label: '双孔（双圆孔）' },
-    { id: '0', label: '无孔' }
-  ];
-
-  var paperEl = root.querySelector('.oua-paper');
-  var stripEl = root.querySelector('.oua-pegstrip');
-  var selFaction = root.querySelector('[data-oua-size="faction"]');
-  var selPaper = root.querySelector('[data-oua-size="paper"]');
-  var selFrame = root.querySelector('[data-oua-size="frame"]');
-  var selPeg = root.querySelector('[data-oua-size="peg"]');
-  var selField = root.querySelector('[data-oua-size="field"]');
-  var btnReset = root.querySelector('[data-oua-size="reset"]');
-  var chipPaper = root.querySelector('[data-oua-chip="paper"]');
-  var chipField = root.querySelector('[data-oua-chip="field"]');
-  var chipFrame = root.querySelector('[data-oua-chip="frame"]');
-  var chipOverride = root.querySelector('[data-oua-chip="override"]');
-  if (!paperEl || !stripEl || !selFaction) return;
-
-  var state = load();
-
-  function load() {
-    var raw = null;
-    try { raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { raw = null; }
-    var s = {};
-    for (var k in DEFAULT) s[k] = (raw && raw[k] != null) ? String(raw[k]) : DEFAULT[k];
-    if (!FACTIONS[s.faction]) s.faction = DEFAULT.faction;
-    return s;
-  }
-
-  function save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
-  }
-
-  function fillSelect(sel, items) {
-    var buf = '';
-    for (var i = 0; i < items.length; i++) {
-      buf += '<option value="' + items[i].value + '">' + items[i].label + '</option>';
-    }
-    sel.innerHTML = buf;
-  }
-
-  function currentPaper() {
-    var papers = FACTIONS[state.faction].papers;
-    for (var i = 0; i < papers.length; i++) {
-      if (papers[i].id === state.paper) return papers[i];
-    }
-    return papers[0];
-  }
-
-  function currentField() {
-    for (var i = 0; i < FIELDS.length; i++) {
-      if (FIELDS[i].id === state.field) return FIELDS[i];
-    }
-    return FIELDS[3];
-  }
-
-  function normalize() {
-    var f = FACTIONS[state.faction];
-    var hitPaper = false;
-    for (var i = 0; i < f.papers.length; i++) if (f.papers[i].id === state.paper) hitPaper = true;
-    if (!hitPaper) state.paper = f.papers[0].id;
-    if (f.frames.indexOf(state.frame) < 0) state.frame = f.frames[0];
-    var hitField = false;
-    for (var j = 0; j < FIELDS.length; j++) if (FIELDS[j].id === state.field) hitField = true;
-    if (!hitField) state.field = DEFAULT.field;
-    var hitPeg = false;
-    for (var p = 0; p < PGS.length; p++) if (PGS[p].id === state.peg) hitPeg = true;
-    if (!hitPeg) state.peg = DEFAULT.peg;
-  }
-
-  function renderControls() {
-    var f = FACTIONS[state.faction];
-    fillSelect(selFaction, Object.keys(FACTIONS).map(function (id) {
-      return { value: id, label: FACTIONS[id].label };
-    }));
-    fillSelect(selPaper, f.papers.map(function (p) {
-      return { value: p.id, label: p.label };
-    }));
-    fillSelect(selFrame, f.frames.map(function (r) {
-      return { value: r, label: r };
-    }));
-    fillSelect(selPeg, PGS.map(function (p) {
-      return { value: p.id, label: p.label };
-    }));
-    fillSelect(selField, FIELDS.map(function (fd) {
-      return { value: fd.id, label: fd.label };
-    }));
-    selFaction.value = state.faction;
-    selPaper.value = state.paper;
-    selFrame.value = state.frame;
-    selPeg.value = state.peg;
-    selField.value = state.field;
-  }
-
-  function apply() {
-    normalize();
-    renderControls();
-
-    var paper = currentPaper();
-    var field = currentField();
-    var ratio = RATIO[state.frame] || 16 / 9;
-
-    /* 画框比例：直接作用在纸张（画面区）上，切换后画面区比例真的改变 */
-    paperEl.style.setProperty('--oua-paper-ratio', String(ratio));
-
-    /* Field：视野相对纸面越小，画面区四周留白越多（上限 8%，避免压扁画面） */
-    var pad = (1 - field.mm[0] / paper.w) * 100;
-    if (!isFinite(pad) || pad < 0) pad = 0;
-    if (pad > 8) pad = 8;
-    paperEl.style.setProperty('--oua-field-pad', pad.toFixed(2) + '%');
-
-    /* 定位孔类型：只在原画里覆盖 */
-    stripEl.setAttribute('data-peg', state.peg);
-
-    if (chipPaper) chipPaper.textContent = paper.label;
-    if (chipField) chipField.textContent = 'FIELD ' + field.label + ' · ' + field.mm[0] + '×' + field.mm[1] + 'mm';
-    if (chipFrame) chipFrame.textContent = state.frame;
-    if (chipOverride) chipOverride.hidden = (state.peg === DEFAULT.peg);
-
-    /* 供绘画工作台读取：纸面 mm 尺寸 / 画框比例 / Field */
-    var info = {
-      faction: state.faction,
-      frame: state.frame,
-      peg: state.peg,
-      paper: { id: paper.id, label: paper.label, w: paper.w, h: paper.h },
-      field: { id: field.id, label: field.label, mm: field.mm.slice() },
-      ratio: ratio
-    };
-    window.HMOuaSize = {
-      get: function () { return info; }
-    };
-    try {
-      document.dispatchEvent(new CustomEvent('hm:oua-size', { detail: info }));
-    } catch (e) { /* 老浏览器忽略 */ }
-  }
-
-  function commit() {
-    save();
-    apply();
-  }
-
-  selFaction.addEventListener('change', function () { state.faction = this.value; commit(); });
-  selPaper.addEventListener('change', function () { state.paper = this.value; commit(); });
-  selFrame.addEventListener('change', function () { state.frame = this.value; commit(); });
-  selPeg.addEventListener('change', function () { state.peg = this.value; commit(); });
-  selField.addEventListener('change', function () { state.field = this.value; commit(); });
-  if (btnReset) {
-    btnReset.addEventListener('click', function () {
-      for (var k in DEFAULT) state[k] = DEFAULT[k];
-      commit();
-    });
-  }
-
-  apply();
 })();

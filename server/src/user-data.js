@@ -100,6 +100,12 @@ function clearWorks(userId) { return impl().clearWorks(userId); }
 
 /* ---------------- 文档 ---------------- */
 function getDoc(userId, kind) { return impl().getDoc(userId, kind); }
+function getDocMeta(userId, kind) {
+  if (typeof impl().getDocMeta === 'function') return impl().getDocMeta(userId, kind);
+  return impl().getDoc(userId, kind).then(function (doc) {
+    return { kind, rev: doc.rev, updatedAt: doc.updatedAt };
+  });
+}
 function putDoc(userId, kind, data, baseRev) { return impl().putDoc(userId, kind, data, baseRev); }
 
 /* ---------------- 资产（图片二进制） ---------------- */
@@ -280,6 +286,7 @@ module.exports = {
   deleteWork,
   clearWorks,
   getDoc,
+  getDocMeta,
   putDoc,
   saveWorkAsset,
   getAsset,

@@ -29,8 +29,9 @@ function makeBuildId() {
   return stamp + '-' + commit;
 }
 
+/* 构建 ID 已由 index.html 内联（取页面 Last-Modified），只在缺失时兜底注入 */
 function injectBuildId(html, buildId) {
-  /* 注入 const HM_BUILD = 'xxx' 到 <head> 末尾 */
+  if (/window\.HM_BUILD\s*=/.test(html)) return html;
   const injection =
     '<script>window.HM_BUILD = "' + buildId + '";</script>';
   html = html.replace(
@@ -69,7 +70,7 @@ if (!html.includes(styleAdminTag.slice(0, 40))) {
   throw new Error('未找到 styles-admin.css 的 link 标签');
 }
 
-const scripts = ['three.min.js', 'HMOrbitControls.js', 'HMTransformControls.js', 'HMDRACOLoader.js', 'HMGLTFLoader.js', 'female-mannequin-glb.js', 'miku-player.js', 'miku-chat.js', 'jszip.min.js', 'chart.umd.min.js', 'api.js', 'auth-ui.js', 'app.js', 'storyboard.js', 'director3d.js', 'paint.js', 'toolimage.js', 'toolreference.js', 'tooltraining.js', 'toolrestore.js', 'toolworkflow.js', 'toolvideo.js', 'chat.js', 'canvas.js', 'library.js', 'voice.js', 'toon.js', 'ui.js', 'dimverse.js', 'desk.js', 'admin.js'];
+const scripts = ['jszip.min.js', 'chart.umd.min.js', 'api.js', 'auth-ui.js', 'app.js', 'three.min.js', 'HMOrbitControls.js', 'HMTransformControls.js', 'HMDRACOLoader.js', 'HMGLTFLoader.js', 'female-mannequin-glb.js', 'miku-player.js', 'miku-chat.js', 'storyboard.js', 'director3d.js', 'paint.js', 'toolimage.js', 'toolreference.js', 'tooltraining.js', 'toolrestore.js', 'toolworkflow.js', 'toolvideo.js', 'chat.js', 'canvas.js', 'library.js', 'voice.js', 'toon.js', 'ui.js', 'dimverse.js', 'desk.js', 'admin.js'];
 for (const file of scripts) {
   const re = new RegExp('<script[^>]*src=["\']' + file.replace(/\./g, '\\.') + '["\'][^>]*></script>', 'i');
   if (!re.test(html)) throw new Error('未找到脚本标签：' + file);
@@ -100,9 +101,10 @@ try {
 const seedTag = '<script>window.HM_LIBRARY_SEED = '
   + inlineScript(JSON.stringify(seedData))
   + ';</script>\n</head>';
-html = html.replace('</head>', seedTag);
+if (!/window\.HM_LIBRARY_SEED\s*=/.test(html)) html = html.replace('</head>', seedTag);
 
-if (/<script[^>]+src=|<link[^>]+href=/i.test(html)) {
+/* 允许部署目录内的 vendor 资源（如 ./vendor/oua-canvas.js）保持外链 */
+if (/<script[^>]+src=["'](?!\.\/vendor\/)/i.test(html) || /<link[^>]+href=/i.test(html)) {
   throw new Error('仍有未内联的外部资源引用');
 }
 

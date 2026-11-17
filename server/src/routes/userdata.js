@@ -22,6 +22,7 @@ const { Readable } = require('stream');
 const { wrap, assert, jsonError, extFromMime } = require('../http');
 const { authRequired } = require('../auth');
 const userData = require('../user-data');
+const { mergeAndSave } = require('../desk-merge');
 
 const router = express.Router();
 
@@ -182,6 +183,12 @@ router.post('/user-data/migrate', authRequired, wrap(async (req, res) => {
     if (!incoming || incoming.data == null) continue;
     try {
       const existing = await userData.getDoc(userId, kind);
+      if (kind === 'desk') {
+        /* 桌面文档不做「谁新听谁的」整包覆盖，统一合并后写入 */
+        await mergeAndSave(userData, userId, incoming.data || {});
+        result.docs.written.push(kind);
+        continue;
+      }
       const incomingTs = Number(incoming.updatedAt) || 0;
       if (!existing.rev || incomingTs > existing.updatedAt) {
         await userData.putDoc(userId, kind, incoming.data, null);
@@ -314,6 +321,13 @@ router.get('/docs/:kind', authRequired, wrap(async (req, res) => {
 router.put('/docs/:kind', authRequired, wrap(async (req, res) => {
   const kind = String(req.params.kind || '');
   const body = req.body || {};
+  /* desk 文档可能来自不同版本的前端：先与已存内容合并，避免整包覆盖
+     把另一份实现写入的文件夹或叠放抹掉 */
+  if (kind === 'desk') {
+    const saved = await mergeAndSave(userData, currentUserId(req), body.data || {});
+    res.json({ ok: true, doc: saved });
+    return;
+  }
   const saved = await userData.putDoc(currentUserId(req), kind, body.data, body.rev);
   res.json({ ok: true, doc: saved });
 }));

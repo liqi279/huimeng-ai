@@ -194,6 +194,15 @@ async function getDoc(userId, kind) {
   return { kind, data: doc.data == null ? null : doc.data, rev: Number(doc.rev) || 1, updatedAt: Number(doc.updatedAt) || 0 };
 }
 
+/* 只取变更号：轮询探测用 */
+async function getDocMeta(userId, kind) {
+  assertKind(kind);
+  const store = await readStore(userId);
+  const doc = store.docs[kind];
+  if (!doc) return { kind, rev: 0, updatedAt: 0 };
+  return { kind, rev: Number(doc.rev) || 1, updatedAt: Number(doc.updatedAt) || 0 };
+}
+
 function putDoc(userId, kind, data, baseRev) {
   assertKind(kind);
   return enqueue(async () => {
@@ -338,6 +347,7 @@ module.exports = {
   deleteWork,
   clearWorks,
   getDoc,
+  getDocMeta,
   putDoc,
   saveAsset,
   getAsset,

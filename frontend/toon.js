@@ -16,13 +16,16 @@
     apiBase: 'http://127.0.0.1:7861',
     apiOk: false,
     busy: false,
-    probing: false,
     xhr: null,
     videoUrl: '',
     frames: [],
     idx: 0,
     playing: false,
-    timer: null
+    timer: null,
+    rec: null,
+    localCancel: false,
+    localDuration: 0,
+    isLocalVideo: false
   };
 
   function toast(msg, type) {
@@ -98,35 +101,20 @@
   }
 
   /* ---------------- 服务连通性 ---------------- */
-  /* 失败时给出可执行的排查步骤：区分「服务未启动」与「浏览器本地网络访问权限被拒」 */
-  function showDisconnectHelp(base) {
-    var help = $('tcApiHelp');
-    if (!help) return;
-    var httpsPage = window.location.protocol === 'https:';
-    var lines = ['<b>排查步骤：</b>'];
-    lines.push('① 确认本机服务已启动：<code>cd 插件/09-ToonCrafter首尾帧补间/服务 && python server.py --port 7861</code>');
-    if (httpsPage) {
-      lines.push('② 允许「本地网络访问」：点地址栏左侧图标 → 网站设置 → 本地网络访问 → 允许（Chrome/Edge 138+ 默认拦截网页访问 127.0.0.1）；也可在 chrome://settings/content/localNetworkAccess 中添加本站。');
-      lines.push('③ 若没有②的权限项：直接双击本地单文件版 deploy/index.html 打开本页，本地打开不受该限制。');
-    }
-    lines.push('④ 按 F12 看控制台确切原因：ERR_CONNECTION_REFUSED＝服务未启动；"Permission was denied … loopback"＝本地网络访问被拒。');
-    help.innerHTML = lines.join('<br>');
-    help.hidden = false;
-  }
-
   function testApi(silent) {
     var base = apiBase();
     var el = $('tcApiState');
-    var help = $('tcApiHelp');
-    if (!base) {
-      if (el) el.textContent = '请填写推理服务地址';
-      return Promise.resolve(false);
+    if (!base) { toast('请填写推理服务地址', 'error'); return; }
+    if (window.location.protocol === 'https:' && base.indexOf('http://') === 0) {
+      if (el) el.textContent = '被浏览器拦截（https 页面不能访问 http 本地服务）· 可本地补间生成';
+      setBadge(false, '本地补间可用（未连 GPU）');
+      if (!silent) toast('https 页面无法访问 http 本地推理服务，已启用本地快速补间；真实推理请用本地版打开', 'error');
+      return;
     }
-    if (el) { el.textContent = '检测中…'; el.classList.remove('is-ok'); }
-    if (help) help.hidden = true;
+    if (el) el.textContent = '检测中…';
     var ctrl = window.AbortController ? new AbortController() : null;
-    var timer = ctrl ? window.setTimeout(function () { ctrl.abort(); }, 8000) : null;
-    return fetch(base + '/api/health', { cache: 'no-store', signal: ctrl && ctrl.signal })
+    var timer = ctrl ? window.setTimeout(function () { ctrl.abort(); }, 6000) : null;
+    fetch(base + '/api/health', { signal: ctrl && ctrl.signal })
       .then(function (r) { return r.json(); })
       .then(function (info) {
         if (timer) window.clearTimeout(timer);
@@ -140,25 +128,26 @@
           toast('推理服务已连接' + (info.device === 'cuda' ? '（' + (info.gpu || 'GPU') + '）' : ''), 'success');
           if (!ok512) toast('提示：512 权重尚未下载，首次生成会自动拉取', 'info');
         }
-        return true;
       })
       .catch(function (err) {
         if (timer) window.clearTimeout(timer);
         var timeout = err && err.name === 'AbortError';
+        var httpsPage = window.location.protocol === 'https:';
+        var reason = timeout ? '超时' : (httpsPage ? '被浏览器拦截 / 服务未启动' : '拒绝连接');
         if (el) {
-          el.textContent = timeout ? '未连接（8s 超时）' : '未连接（请求失败）';
+          el.textContent = '未连接（' + reason + '）' + (httpsPage ? ' · 见下方提示' : '');
           el.classList.remove('is-ok');
         }
         setBadge(false, '服务未连接');
-        showDisconnectHelp(base);
         if (!silent) {
-          if (timeout) {
+          if (httpsPage) {
+            toast('线上 https 页面直连本机 http 服务常被拦截：请下载本地单文件版打开，或改用 HTTPS 推理服务', 'error');
+          } else if (timeout) {
             toast('连接超时：确认 server.py 已启动且端口为 ' + base.split(':').pop(), 'error');
           } else {
-            toast('无法连接推理服务：见「推理服务」下的排查步骤（服务未启动 / 本地网络访问被拒）', 'error');
+            toast('无法连接推理服务：请先运行 server.py，并确认地址 ' + base, 'error');
           }
         }
-        return false;
       });
   }
 
@@ -166,27 +155,167 @@
   function setBusy(busy) {
     state.busy = busy;
     var gen = $('tcGenBtn'), stop = $('tcStopBtn');
-    if (gen) { gen.disabled = busy; gen.textContent = busy ? '推理中…' : '✨ 生成补间（真实推理）'; }
+    if (gen) { gen.disabled = busy; gen.textContent = busy ? '推理中…' : (localTweenBlocked() ? '✨ 生成补间（本地快速）' : '✨ 生成补间（真实推理）'); }
     if (stop) stop.hidden = !busy;
+  }
+
+  /* https 页面无法访问 http://127.0.0.1（Chrome 直接按 loopback 地址空间拦截），
+     此时改用浏览器内交叉淡化生成，不再把按钮做成「看起来能点、实际必然失败」。 */
+  function localTweenBlocked() {
+    return window.location.protocol === 'https:' && /^http:\/\//i.test(apiBase());
+  }
+
+  var TC_RES = { '320_512': [512, 320], '256_256': [256, 256], '576_1024': [1024, 576] };
+
+  function loadImg(src) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('关键帧读取失败')); };
+      img.src = src;
+    });
+  }
+
+  function drawCover(ctx, img, w, h) {
+    var s = Math.max(w / img.width, h / img.height);
+    var dw = img.width * s, dh = img.height * s;
+    ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  }
+
+  /* 线上兜底：首尾帧交叉淡化 → canvas 逐帧 → MediaRecorder 编码为视频 */
+  function generateLocalTween() {
+    if (!state.firstFile || !state.lastFile) { toast('请先上传首帧与尾帧', 'error'); return; }
+    var first = $('tcThumbFirst'), last = $('tcThumbLast');
+    if (!first || !last || !first.src || !last.src) { toast('关键帧尚未载入', 'error'); return; }
+    if (state.busy) return;
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+      toast('当前浏览器不支持本地视频编码，请下载本地版连接 GPU 推理服务', 'error');
+      return;
+    }
+
+    var fps = Math.max(5, Math.min(30, parseInt(($('tcFs') || {}).value, 10) || 10));
+    var resKey = ($('tcRes') || {}).value || '320_512';
+    var size = TC_RES[resKey] || TC_RES['320_512'];
+    var W = size[0], H = size[1];
+
+    setBusy(true);
+    state.localCancel = false;
+    var t0 = Date.now();
+    var meta = $('tcMeta');
+    if (meta) meta.textContent = '本地补间生成中…';
+
+    Promise.all([loadImg(first.src), loadImg(last.src)]).then(function (imgs) {
+      var attempt = 0;
+      var thumbs = [];
+      function buildThumbs() {
+        var tcv = document.createElement('canvas');
+        tcv.width = Math.max(2, Math.round(W / 2));
+        tcv.height = Math.max(2, Math.round(H / 2));
+        var tctx = tcv.getContext('2d');
+        thumbs = [];
+        for (var j = 0; j < 9; j++) {
+          var kk = (j / 8) * (j / 8) * (3 - 2 * (j / 8));
+          tctx.fillStyle = '#000';
+          tctx.fillRect(0, 0, tcv.width, tcv.height);
+          tctx.globalAlpha = 1;
+          drawCover(tctx, imgs[0], tcv.width, tcv.height);
+          tctx.globalAlpha = kk;
+          drawCover(tctx, imgs[1], tcv.width, tcv.height);
+          tctx.globalAlpha = 1;
+          thumbs.push(tcv.toDataURL('image/jpeg', 0.72));
+        }
+      }
+      /* 浏览器首次 canvas 录制常拿不到帧（空 blob），失败自动重试 */
+      function recordOnce() {
+        attempt++;
+        var cv = document.createElement('canvas');
+        cv.width = W; cv.height = H;
+        /* 挂到屏幕外并保持真实尺寸，否则部分 Chrome 版本 captureStream 一帧都录不到 */
+        cv.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + W + 'px;height:' + H + 'px;pointer-events:none;';
+        document.body.appendChild(cv);
+        var ctx = cv.getContext('2d');
+        var stream = cv.captureStream(fps);
+        var mime = '';
+        ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].some(function (m) {
+          if (window.MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; return true; }
+          return false;
+        });
+        var chunks = [];
+        var rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 4000000 } : undefined);
+        state.rec = rec;
+        var total = Math.max(6, Math.round(fps * 1.6));
+        var i = 0;
+        var step = Math.ceil(1000 / fps);
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+        rec.onstop = function () {
+          state.rec = null;
+          try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+          if (cv.parentNode) cv.parentNode.removeChild(cv);
+          if (state.localCancel) {
+            state.localCancel = false;
+            setBusy(false);
+            if (meta) meta.textContent = '已停止生成';
+            toast('已停止生成', 'info');
+            return;
+          }
+          var blob = new Blob(chunks, { type: (mime || 'video/webm').split(';')[0] });
+          if (blob.size < 2000) {
+            if (attempt < 3) {
+              if (meta) meta.textContent = '本地补间生成中…（重试 ' + attempt + '/3）';
+              window.setTimeout(recordOnce, 150);
+              return;
+            }
+            setBusy(false);
+            if (meta) meta.textContent = '本地补间未生成：浏览器未录到帧，请再点一次「生成补间」';
+            toast('本地补间未生成，请再点一次「生成补间」重试', 'error');
+            return;
+          }
+          /* 录制期间不能对同一 canvas 调 toDataURL（会让 captureStream 丢帧），停止后再生成缩略图 */
+          buildThumbs();
+          var url = URL.createObjectURL(blob);
+          setBusy(false);
+          onGenerated(url, {
+            elapsed: ((Date.now() - t0) / 1000).toFixed(1),
+            resolution: resKey,
+            steps: '本地',
+            fps: fps,
+            duration: total / fps,
+            thumbs: thumbs.slice(),
+            local: true
+          }, apiBase());
+          toast('未连接 GPU 推理服务，已用本地交叉淡化生成补间', 'info');
+        };
+        function frame() {
+          var t = total <= 1 ? 1 : i / (total - 1);
+          var k = t * t * (3 - 2 * t); /* 缓入缓出 */
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, W, H);
+          ctx.globalAlpha = 1;
+          drawCover(ctx, imgs[0], W, H);
+          ctx.globalAlpha = k;
+          drawCover(ctx, imgs[1], W, H);
+          ctx.globalAlpha = 1;
+          if (++i >= total) { window.setTimeout(function () { try { rec.stop(); } catch (e) {} }, step); return; }
+          window.setTimeout(frame, step);
+        }
+        rec.start();
+        frame();
+      }
+      recordOnce();
+    }).catch(function (err) {
+      setBusy(false);
+      if (meta) meta.textContent = '生成失败：' + (err && err.message || err);
+      toast('本地补间失败：' + (err && err.message || err), 'error');
+    });
   }
 
   function generate() {
     if (!state.firstFile || !state.lastFile) { toast('请先上传首帧与尾帧', 'error'); return; }
     if (state.busy) return;
-    if (state.apiOk) { doGenerate(); return; }
-    if (state.probing) return;
-    state.probing = true;
-    var meta0 = $('tcMeta');
-    if (meta0) meta0.textContent = '正在检测推理服务…';
-    testApi(false).then(function (ok) {
-      state.probing = false;
-      if (ok) { doGenerate(); return; }
-      if (meta0) meta0.textContent = '未发送生成请求：推理服务未连接（见左侧排查步骤）';
-      toast('推理服务未连接，已停止发送生成请求', 'error');
-    });
-  }
+    /* https 线上页访问 http 本机服务必被浏览器拦截，直接走本地补间，避免「点了没反应」 */
+    if (localTweenBlocked()) { generateLocalTween(); return; }
+    if (!state.apiOk) { testApi(true); }
 
-  function doGenerate() {
     var base = apiBase();
     var fd = new FormData();
     fd.append('first', state.firstFile);
@@ -238,7 +367,7 @@
       setBusy(false);
       state.xhr = null;
       if (meta) meta.textContent = '连接中断';
-      toast('生成请求失败：服务未启动或本地网络访问被拒，见「推理服务」排查步骤', 'error');
+      toast('连接推理服务失败（检查地址 / CORS / 服务是否运行）', 'error');
     };
     xhr.onabort = function () {
       window.clearInterval(timer);
@@ -251,11 +380,18 @@
   }
 
   function stopGenerate() {
+    if (state.rec) {
+      state.localCancel = true;
+      try { state.rec.stop(); } catch (e) {}
+      return;
+    }
     if (state.xhr) { try { state.xhr.abort(); } catch (e) {} }
   }
 
   function onGenerated(url, data, base) {
     state.videoUrl = url;
+    state.isLocalVideo = !!data.local;
+    state.localDuration = data.local ? (data.duration || 0) : 0;
     var video = $('tcVideo'), cv = $('tcCanvas'), empty = $('tcStageEmpty');
     if (cv) cv.hidden = true;
     if (empty) empty.hidden = true;
@@ -267,11 +403,18 @@
     }
     var meta = $('tcMeta');
     if (meta) {
-      meta.textContent = '完成 · ' + data.elapsed + 's · ' + data.resolution.replace('_', '×')
-        + ' · ' + data.steps + ' 步 · ' + data.fps + ' fps';
+      meta.textContent = (data.local ? '本地补间（未连 GPU）' : '完成') + ' · ' + data.elapsed + 's · ' + data.resolution.replace('_', '×')
+        + ' · ' + (data.local ? '交叉淡化' : data.steps + ' 步') + ' · ' + data.fps + ' fps';
     }
-    toast('真实推理完成，用时 ' + data.elapsed + 's', 'success');
-    extractFrames(base);
+    toast(data.local ? ('本地补间已生成，用时 ' + data.elapsed + 's') : ('真实推理完成，用时 ' + data.elapsed + 's'), 'success');
+    if (data.local && data.thumbs && data.thumbs.length) {
+      /* 本地视频没有 duration 元数据，直接用生成时截下的帧做时间轴 */
+      state.frames = data.thumbs.slice();
+      state.idx = 0;
+      renderTimeline();
+    } else {
+      extractFrames(base);
+    }
   }
 
   /* 从生成的真实视频抽帧，做时间轴缩略图 */
@@ -328,6 +471,11 @@
     var v = $('tcVideo');
     if (!v || !state.frames.length) return;
     var meta = $('tcMeta');
+    if (meta && state.isLocalVideo) {
+      meta.textContent = '本地补间（未连 GPU） · ' + state.frames.length + ' 帧缩略 · '
+        + (v.videoWidth || 0) + '×' + (v.videoHeight || 0) + ' · ' + (state.localDuration || 0).toFixed(1) + 's';
+      return;
+    }
     if (meta) {
       meta.textContent = state.frames.length + ' 帧缩略 · ' + (v.videoWidth || 0) + '×' + (v.videoHeight || 0)
         + ' · ' + (v.duration ? v.duration.toFixed(2) : '0') + 's';
@@ -348,7 +496,7 @@
     fetch(state.videoUrl).then(function (r) { return r.blob(); }).then(function (blob) {
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'tooncrafter_' + Date.now() + '.mp4';
+      a.download = 'tooncrafter_' + Date.now() + (/mp4/.test(blob.type || '') ? '.mp4' : '.webm');
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       toast('视频已下载', 'success');
     }).catch(function () {
@@ -430,10 +578,31 @@
 
     var api = $('tcApi');
     if (api) {
-      try { var saved = localStorage.getItem(API_LS); if (saved) api.value = saved; } catch (e) {}
+      var applySaved = function () {
+        var A = window.HMApp;
+        var cloud = (A && A.state && A.state.toonApi) || '';
+        var saved = cloud || localStorage.getItem(API_LS) || '';
+        if (saved) api.value = saved;
+        if (saved) state.apiBase = saved;
+      };
+      try { applySaved(); } catch (e) {}
       api.addEventListener('change', function () {
-        try { localStorage.setItem(API_LS, api.value.trim()); } catch (e) {}
-        testApi(true);
+        var v = api.value.trim();
+        state.apiBase = v;
+        try { localStorage.setItem(API_LS, v); } catch (e) {}
+        var A = window.HMApp;
+        if (A && A.state) A.state.toonApi = v;
+        if (A && A.persistPrefs) A.persistPrefs();
+        if (!state.busy) setBusy(false);
+        if (v) testApi(true); else setBadge(false, '服务未连接');
+      });
+      /* 云端 prefs 到达时刷新地址 */
+      document.addEventListener('hm:prefs', function () {
+        try {
+          var A = window.HMApp;
+          var v = (A && A.state && A.state.toonApi) || '';
+          if (v && v !== api.value) { api.value = v; state.apiBase = v; testApi(true); }
+        } catch (e) {}
       });
     }
 
@@ -456,8 +625,9 @@
       if (!b) return;
       var v = $('tcVideo');
       var i = parseInt(b.dataset.i, 10);
-      if (v && v.duration && state.frames.length > 1) {
-        v.currentTime = (v.duration * i) / (state.frames.length - 1);
+      var dur = (v && isFinite(v.duration) && v.duration) ? v.duration : (state.localDuration || 0);
+      if (v && dur && state.frames.length > 1) {
+        v.currentTime = (dur * i) / (state.frames.length - 1);
       }
       var items = timeline.querySelectorAll('.tc-frame');
       for (var k = 0; k < items.length; k++) items[k].classList.toggle('is-active', k === i);
@@ -477,6 +647,11 @@
     if (booted) return;
     booted = true;
     bind();
+    setBusy(false);
+    if (localTweenBlocked()) {
+      var empty = $('tcStageEmpty');
+      if (empty) empty.textContent = '上传首尾帧后点击「生成补间」：线上版用本地补间，本地版用 GPU 真实推理';
+    }
     testApi(true);
   }
 
@@ -495,6 +670,321 @@
     },
     leave: function () {
       var v = $('tcVideo');
+      if (v && !v.paused) v.pause();
+    }
+  };
+})();
+
+/* =============================================================
+ * 首尾帧补间 Pro（AnimateDiff 扩散补间 + 纯插帧）
+ * 服务：GET /api/health · POST /api/warmup
+ *       POST /api/interpolate（multipart：first/last/prompt/steps/cfg/eta/fs/seed/resolution/mode）
+ *       GET  /results/<name>.mp4
+ * 默认地址 http://127.0.0.1:7862，与 :7861 的 ToonCrafter 并存
+ * ============================================================= */
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var LS = 'anidream.toon2.api.v1';
+  var DEFAULT_BASE = 'http://127.0.0.1:7862';
+  var state = { mode: 'diffusion', first: null, last: null, apiOk: false, busy: false, xhr: null, url: '' };
+
+  function toast(msg, type) {
+    if (window.HMApp && window.HMApp.toast) window.HMApp.toast(msg, type || 'info');
+  }
+  function base() {
+    var el = $('t2Api');
+    var A = window.HMApp;
+    var v = String((el && el.value) || (A && A.state && A.state.toon2Api) ||
+      localStorage.getItem(LS) || DEFAULT_BASE).trim().replace(/\/+$/, '');
+    return v || DEFAULT_BASE;
+  }
+  function setMeta(text) { var el = $('t2Meta'); if (el) el.textContent = text; }
+  function setBadge(ok, text) {
+    state.apiOk = ok;
+    var b = $('t2Badge');
+    if (b) { b.textContent = text; b.classList.toggle('is-ok', ok); }
+  }
+
+  function setMode(mode) {
+    state.mode = mode === 'interp' ? 'interp' : 'diffusion';
+    document.querySelectorAll('#view-tooltoon2 [data-t2-mode]').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-t2-mode') === state.mode);
+    });
+    var view = $('view-tooltoon2');
+    if (view) view.classList.toggle('is-interp', state.mode === 'interp');
+    ['t2Prompt', 't2Steps', 't2Cfg', 't2Eta'].forEach(function (id) {
+      var el = $(id);
+      if (el) el.disabled = state.mode === 'interp';
+    });
+    var hint = $('t2ModeHint');
+    if (hint) hint.textContent = state.mode === 'interp'
+      ? '纯插帧：不生成新内容，只按光流补中间帧，速度快、保留原画；提示词 / 步数 / CFG / ETA 不生效。'
+      : 'AnimateDiff 扩散生成中间帧，动作更自然；需 GPU 与模型权重。';
+  }
+
+  function loadImage(file, key, thumbId) {
+    if (!file || !/^image\//.test(file.type)) { toast('请选择图片文件', 'error'); return; }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      if (key === 'first') state.first = file; else state.last = file;
+      var th = $(thumbId);
+      if (th) { th.src = url; th.classList.add('is-loaded'); }
+      var drop = th && th.closest('.tc-drop');
+      if (drop) drop.classList.add('has-img');
+      toast('已载入' + (key === 'first' ? '首帧' : '尾帧') + '（' + img.width + '×' + img.height + '）', 'success');
+    };
+    img.onerror = function () { toast('图片读取失败', 'error'); };
+    img.src = url;
+  }
+
+  function bindDrop(dropId, fileId, key, thumbId) {
+    var drop = $(dropId), input = $(fileId);
+    if (!drop || !input) return;
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) loadImage(input.files[0], key, thumbId);
+    });
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('is-over'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('is-over'); });
+    });
+    drop.addEventListener('drop', function (e) {
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) loadImage(f, key, thumbId);
+    });
+  }
+
+  function testApi(silent) {
+    var b = base();
+    var el = $('t2ApiState');
+    if (window.location.protocol === 'https:' && b.indexOf('http://') === 0) {
+      if (el) el.textContent = 'https 页面无法访问 http 本地服务，请用本地版打开';
+      setBadge(false, '服务未连接');
+      if (!silent) toast('https 页面访问 http 本地服务会被浏览器拦截', 'error');
+      return;
+    }
+    if (el) el.textContent = '检测中…';
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var timer = ctrl ? window.setTimeout(function () { ctrl.abort(); }, 6000) : null;
+    fetch(b + '/api/health', { signal: ctrl && ctrl.signal })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (info) {
+        if (timer) window.clearTimeout(timer);
+        if (!info) throw new Error('服务无响应');
+        var dev = info.device === 'cuda' ? (info.gpu || 'GPU') : 'CPU（较慢）';
+        var modes = info.modes ? ' · 模式 ' + [].concat(info.modes).join('/') : '';
+        if (el) el.textContent = '已连接 · ' + dev + modes;
+        setBadge(true, '服务已连接');
+        if (!silent) toast('已连接补间服务（' + dev + '）', 'success');
+        if (state.mode === 'diffusion') {
+          fetch(b + '/api/warmup', { method: 'POST' }).catch(function () {});
+        }
+      })
+      .catch(function () {
+        if (timer) window.clearTimeout(timer);
+        if (el) el.textContent = '未连接 · 请先启动 :7862 服务';
+        setBadge(false, '服务未连接');
+        if (!silent) toast('连接失败：请确认本机已启动 python server.py --port 7862', 'error');
+      });
+  }
+
+  function setBusy(busy) {
+    state.busy = busy;
+    var gen = $('t2GenBtn'), stop = $('t2StopBtn');
+    if (gen) gen.disabled = busy;
+    if (stop) stop.hidden = !busy;
+  }
+
+  function generate() {
+    if (state.busy) return;
+    if (!state.first || !state.last) { toast('请先上传首帧和尾帧', 'error'); return; }
+    var b = base();
+    var fd = new FormData();
+    fd.append('mode', state.mode);
+    fd.append('first', state.first);
+    fd.append('last', state.last);
+    fd.append('prompt', ($('t2Prompt') && $('t2Prompt').value) || '');
+    fd.append('steps', ($('t2Steps') && $('t2Steps').value) || '25');
+    fd.append('cfg', ($('t2Cfg') && $('t2Cfg').value) || '7.5');
+    fd.append('eta', ($('t2Eta') && $('t2Eta').value) || '0');
+    fd.append('fs', ($('t2Fs') && $('t2Fs').value) || '8');
+    fd.append('seed', ($('t2Seed') && $('t2Seed').value) || '123');
+    fd.append('resolution', ($('t2Res') && $('t2Res').value) || '320_512');
+
+    var xhr = new XMLHttpRequest();
+    state.xhr = xhr;
+    xhr.open('POST', b + '/api/interpolate', true);
+    xhr.responseType = 'json';
+    var started = Date.now();
+    var tick = window.setInterval(function () {
+      setMeta('生成中… ' + Math.round((Date.now() - started) / 1000) + 's（' +
+        (state.mode === 'interp' ? '纯插帧' : '扩散补间') + '）');
+    }, 500);
+    setBusy(true);
+    xhr.upload.onprogress = function (e) {
+      if (e.lengthComputable) setMeta('上传关键帧 ' + Math.round((e.loaded / e.total) * 100) + '%');
+    };
+    xhr.onload = function () {
+      window.clearInterval(tick);
+      setBusy(false);
+      state.xhr = null;
+      var data = xhr.response;
+      if (!data) { try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; } }
+      if (xhr.status >= 200 && xhr.status < 300 && data && data.ok !== false) {
+        var name = data.name || data.file ||
+          (data.video ? String(data.video).split('/').pop() : '');
+        var url = data.video
+          ? (String(data.video).indexOf('http') === 0 ? data.video : b + data.video)
+          : (name ? b + '/results/' + name + '.mp4' : '');
+        if (!url) {
+          setMeta('生成失败：服务未返回视频地址');
+          toast('生成失败：服务未返回视频地址', 'error');
+          return;
+        }
+        state.url = url;
+        var video = $('t2Video'), empty = $('t2Empty');
+        if (empty) empty.hidden = true;
+        if (video) {
+          video.hidden = false;
+          video.src = url;
+          var pr = video.play();
+          if (pr && pr.catch) pr.catch(function () {});
+        }
+        setMeta('完成 · ' + (data.elapsed ? data.elapsed + 's · ' : '') +
+          (state.mode === 'interp' ? '纯插帧' : (data.steps ? data.steps + ' 步' : '扩散补间')) +
+          (data.fps ? ' · ' + data.fps + ' fps' : ''));
+        toast('补间完成', 'success');
+      } else {
+        var msg = (data && (data.error || data.message)) || ('HTTP ' + xhr.status);
+        setMeta('生成失败：' + msg);
+        toast('生成失败：' + msg, 'error');
+      }
+    };
+    xhr.onerror = function () {
+      window.clearInterval(tick);
+      setBusy(false);
+      state.xhr = null;
+      setMeta('无法连接 ' + b + ' · 请先启动本地补间服务');
+      setBadge(false, '服务未连接');
+      toast('无法连接本地补间服务，请确认 :7862 已启动', 'error');
+    };
+    xhr.onabort = function () {
+      window.clearInterval(tick);
+      setBusy(false);
+      state.xhr = null;
+      setMeta('已停止生成');
+    };
+    xhr.send(fd);
+  }
+
+  function play() {
+    var video = $('t2Video');
+    if (!state.url && video) state.url = video.src || '';
+    if (!state.url) { toast('还没有可播放的视频', 'info'); return; }
+    if (video) {
+      video.hidden = false;
+      var pr = video.play();
+      if (pr && pr.catch) pr.catch(function () { toast('浏览器阻止了自动播放，请点视频上的播放键', 'info'); });
+    }
+  }
+
+  function save() {
+    var video = $('t2Video');
+    if (!state.url && video) state.url = video.src || '';
+    if (!state.url) { toast('还没有可下载的视频', 'info'); return; }
+    var a = document.createElement('a');
+    a.href = state.url;
+    a.download = 'first-last-' + Date.now() + '.mp4';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast('已开始下载视频', 'success');
+  }
+
+  function bind() {
+    document.querySelectorAll('#view-tooltoon2 [data-t2-mode]').forEach(function (btn) {
+      btn.addEventListener('click', function () { setMode(btn.getAttribute('data-t2-mode')); });
+    });
+    bindDrop('t2DropFirst', 't2FileFirst', 'first', 't2ThumbFirst');
+    bindDrop('t2DropLast', 't2FileLast', 'last', 't2ThumbLast');
+
+    [['t2Steps', 't2StepsVal'], ['t2Cfg', 't2CfgVal'], ['t2Eta', 't2EtaVal'], ['t2Fs', 't2FsVal'], ['t2Seed', 't2SeedVal']].forEach(function (pair) {
+      var input = $(pair[0]), out = $(pair[1]);
+      if (!input || !out) return;
+      var sync = function () { out.textContent = input.value; };
+      input.addEventListener('input', sync);
+      sync();
+    });
+
+    var apiInput = $('t2Api');
+    if (apiInput) {
+      var applySaved = function () {
+        var A = window.HMApp;
+        var cloud = (A && A.state && A.state.toon2Api) || '';
+        var saved = cloud || localStorage.getItem(LS) || '';
+        if (saved) apiInput.value = saved;
+      };
+      try { applySaved(); } catch (e) {}
+      apiInput.addEventListener('change', function () {
+        var v = apiInput.value.trim().replace(/\/+$/, '');
+        apiInput.value = v;
+        try { localStorage.setItem(LS, v); } catch (e) {}
+        var A = window.HMApp;
+        if (A && A.state) A.state.toon2Api = v;
+        if (A && A.persistPrefs) A.persistPrefs();
+        if (!v) { setBadge(false, '服务未连接'); var st = $('t2ApiState'); if (st) st.textContent = '请填写服务地址'; return; }
+        if (!state.busy) testApi(true);
+      });
+      /* 云端 prefs 到达时刷新地址 */
+      document.addEventListener('hm:prefs', function () {
+        try {
+          var A = window.HMApp;
+          var v = (A && A.state && A.state.toon2Api) || '';
+          if (v && v !== apiInput.value) { apiInput.value = v; testApi(true); }
+        } catch (e) {}
+      });
+    }
+
+    var testBtn = $('t2ApiTest');
+    if (testBtn) testBtn.addEventListener('click', function () { testApi(false); });
+    var genBtn = $('t2GenBtn');
+    if (genBtn) genBtn.addEventListener('click', generate);
+    var stopBtn = $('t2StopBtn');
+    if (stopBtn) stopBtn.addEventListener('click', function () {
+      if (state.xhr) { try { state.xhr.abort(); } catch (e) {} }
+    });
+    var playBtn = $('t2PlayBtn');
+    if (playBtn) playBtn.addEventListener('click', play);
+    var saveBtn = $('t2SaveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', save);
+  }
+
+  var booted = false;
+  function boot() {
+    if (booted || !document.getElementById('view-tooltoon2')) return;
+    booted = true;
+    bind();
+    setMode('diffusion');
+    setBusy(false);
+    testApi(true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+  window.HMToon2 = {
+    leave: function () {
+      var v = $('t2Video');
       if (v && !v.paused) v.pause();
     }
   };

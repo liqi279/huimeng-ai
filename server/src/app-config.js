@@ -110,7 +110,35 @@ async function getGemini() {
   };
 }
 
+/* GPT 图像通道（engine=gpt-image）的最终生效配置
+ * 与 Gemini 通道一致：环境变量 > app_config 表 > 内置默认。
+ * 之前这条通道只读环境变量 OPENAI_KEY，表里配了 Key 也不生效，
+ * 于是 SCF 上没配 OPENAI_KEY 时 gpt-image 直接报「未配置 RayinAPI Key」。 */
+async function getOpenAI() {
+  const map = await rows();
+  const dbKey = pick(map, ['openai.apiKey', 'OPENAI_API_KEY', 'OPENAI_KEY', 'rayin.openaiKey']);
+  const dbBase = normalizeBase(pick(map, ['openai.baseUrl', 'OPENAI_BASE_URL']));
+  const dbModel = pick(map, ['openai.defaultModel', 'OPENAI_IMAGE_MODEL']);
+
+  const envKey = config.OPENAI_KEY || '';
+  const key = envKey || dbKey;
+  const base = envBase() || dbBase || config.RAYIN_BASE;
+  const model = dbModel || config.GPT_MODEL;
+
+  return {
+    key,
+    base,
+    model,
+    source: {
+      key: envKey ? 'env' : (dbKey ? 'db' : 'none'),
+      base: envBase() ? 'env' : (dbBase ? 'db' : 'default'),
+      model: dbModel ? 'db' : 'default',
+    },
+  };
+}
+
 module.exports = {
   getGemini,
+  getOpenAI,
   normalizeBase,
 };

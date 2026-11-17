@@ -261,6 +261,21 @@ async function getDoc(userId, kind) {
   };
 }
 
+/* 只取变更号：轮询探测用，不把整个 JSON 拉出来 */
+async function getDocMeta(userId, kind) {
+  assertKind(kind);
+  const [rows] = await q(
+    'SELECT rev, updated_at FROM user_documents WHERE user_id = ? AND doc_kind = ? LIMIT 1',
+    [userId, kind]
+  );
+  if (!rows[0]) return { kind, rev: 0, updatedAt: 0 };
+  return {
+    kind,
+    rev: Number(rows[0].rev) || 1,
+    updatedAt: Number(rows[0].updated_at) || 0,
+  };
+}
+
 async function putDoc(userId, kind, data, baseRev) {
   assertKind(kind);
   const payload = JSON.stringify(data == null ? null : data);
@@ -427,6 +442,7 @@ module.exports = {
   deleteWork,
   clearWorks,
   getDoc,
+  getDocMeta,
   putDoc,
   saveAsset,
   getAsset,
