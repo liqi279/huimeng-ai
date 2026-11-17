@@ -549,6 +549,16 @@ async function doRollback() {
   process.exit(ok ? 0 : 2);
 }
 
+/* 任何一步都不允许无限期挂着：TiDB 抖一下就会让整条发布流水线卡死
+   （实测卡满 10 分钟被迫手动取消）。超时按「该步失败」处理，不影响后续发布。 */
+function withTimeout(promise, timeoutMs, label) {
+  let timer = null;
+  const guard = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(label + ' 超过 ' + Math.round(timeoutMs / 1000) + 's 未完成')), timeoutMs);
+  });
+  return Promise.race([promise, guard]).finally(() => clearTimeout(timer));
+}
+
 async function doDeploy() {
   const t0 = Date.now();
   log('start', '发布开始（快照 → 打包 → 上传 → 更新函数 → 自检）');
@@ -562,7 +572,7 @@ async function doDeploy() {
   }
   const snap = await snapshotCode();
   try {
-    await snapshotDb((before && before.env) || {});
+    await withTimeout(snapshotDb((before && before.env) || {}), 120000, '数据库快照');
   } catch (err) {
     log('db', '数据库快照失败：' + err.message + '（继续发布，但本次无 DB 备份）');
   }

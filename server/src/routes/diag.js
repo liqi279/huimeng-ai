@@ -101,13 +101,51 @@ router.get('/diag/net', wrap(async (req, res) => {
   res.json(out);
 }));
 
-/* 读自身函数配置：只需要知道「有没有绑 VPC」和「有哪些环境变量名」，
-   值一律不返回（仓库和日志都是公开的）。 */
+/* 读自身函数配置：只需要知道「有没有绑 VPC」和「凭据指纹对不对」，
+   值一律不返回（仓库和日志都是公开的）。
+   关键：process.env 是「这台实例真正读到的值」，GetFunction 是「控制台里配的值」，
+   两边分开报，才能区分「配置没生效」和「配置就是错的」。 */
 router.get('/diag/scf', wrap(async (req, res) => {
   if (String(req.get('x-hm-diag') || '') !== '1') {
     res.status(404).json({ error: { message: 'not found' } });
     return;
   }
+  const crypto = require('crypto');
+  const fp = (v) => {
+    const s = String(v == null ? '' : v);
+    if (!s) return 'empty';
+    return crypto.createHash('sha256').update(s, 'utf8').digest('hex').slice(0, 8) + '/len' + s.length;
+  };
+  const pick = (env) => ({
+    COS_SECRET_ID: fp(env.COS_SECRET_ID),
+    COS_SECRET_KEY: fp(env.COS_SECRET_KEY),
+    S3_ACCESS_KEY_ID: fp(env.S3_ACCESS_KEY_ID),
+    S3_SECRET_ACCESS_KEY: fp(env.S3_SECRET_ACCESS_KEY),
+  });
+
+  const out = {
+    node: process.version,
+    /* 实例实际读到的凭据 */
+    runtimeEnv: Object.assign(pick(process.env), {
+      SCF_REGION: String(process.env.SCF_REGION || '<未设置>'),
+      SCF_FUNCTION: String(process.env.SCF_FUNCTION || '<未设置>'),
+      SCF_NAMESPACE: String(process.env.SCF_NAMESPACE || '<未设置>'),
+      MYSQL_URL: (function () {
+        try {
+          const u = new URL(String(process.env.MYSQL_URL || ''));
+          return u.hostname + ':' + (u.port || '3306') + u.pathname;
+        } catch (e) { return process.env.MYSQL_URL ? '<无法解析>' : '<未设置>'; }
+      })(),
+    }),
+    /* config.js 实际生效的值（可能来自别名） */
+    effective: (function () {
+      const cfg = require('../config');
+      return { COS_SECRET_ID: fp(cfg.COS_SECRET_ID), COS_SECRET_KEY: fp(cfg.COS_SECRET_KEY) };
+    })(),
+    console: null,
+  };
+
+  /* 控制台配置（拿不到不影响上面那部分结论） */
   try {
     const { callScfApi } = require('../scf-invoke');
     const resp = await callScfApi('GetFunction', {
@@ -116,51 +154,23 @@ router.get('/diag/scf', wrap(async (req, res) => {
     });
     const r = (resp && resp.Response) || {};
     if (r.Error) {
-      res.status(502).json({ error: { message: r.Error.Code + ' ' + r.Error.Message } });
-      return;
+      out.console = { error: r.Error.Code + ' ' + r.Error.Message };
+    } else {
+      const vpc = r.VpcConfig || {};
+      const vars = (r.Environment && r.Environment.Variables) || {};
+      out.console = {
+        functionName: r.FunctionName,
+        timeout: r.Timeout,
+        modTime: r.ModTime,
+        vpc: { hasVpc: Boolean(vpc.VpcId || vpc.SubnetId), vpcId: vpc.VpcId || '', subnetId: vpc.SubnetId || '' },
+        envNames: Object.keys(vars).sort(),
+        fingerprints: pick(vars),
+      };
     }
-    const vpc = r.VpcConfig || {};
-    const vars = (r.Environment && r.Environment.Variables) || {};
-    res.json({
-      functionName: r.FunctionName,
-      runtime: r.Runtime,
-      handler: r.Handler,
-      timeout: r.Timeout,
-      memorySize: r.MemorySize,
-      modTime: r.ModTime,
-      vpc: { hasVpc: Boolean(vpc.VpcId || vpc.SubnetId), vpcId: vpc.VpcId || '', subnetId: vpc.SubnetId || '' },
-      envNames: Object.keys(vars).sort(),
-      envEmpty: Object.keys(vars).filter((k) => !String(vars[k] || '').trim()).sort(),
-      /* 只报指纹和长度：用来和发布方打印的指纹对齐，判断「函数实际读到的密钥
-         是不是 CI 里那一个」。明文一律不出函数。 */
-      credFingerprint: (function () {
-        const crypto = require('crypto');
-        const fp = (v) => {
-          const s = String(v == null ? '' : v);
-          if (!s) return 'empty';
-          return crypto.createHash('sha256').update(s, 'utf8').digest('hex').slice(0, 8) + '/len' + s.length;
-        };
-        return {
-          COS_SECRET_ID: fp(vars.COS_SECRET_ID),
-          COS_SECRET_KEY: fp(vars.COS_SECRET_KEY),
-          S3_ACCESS_KEY_ID: fp(vars.S3_ACCESS_KEY_ID),
-          S3_SECRET_ACCESS_KEY: fp(vars.S3_SECRET_ACCESS_KEY),
-          SCF_REGION: String(vars.SCF_REGION || '<未设置>'),
-          SCF_FUNCTION: String(vars.SCF_FUNCTION || '<未设置>'),
-          effectiveId: fp(require('../config').COS_SECRET_ID),
-          effectiveKey: fp(require('../config').COS_SECRET_KEY),
-        };
-      })(),
-      mysqlUrlHost: (function () {
-        try {
-          const u = new URL(String(vars.MYSQL_URL || ''));
-          return u.hostname + ':' + (u.port || '3306') + u.pathname;
-        } catch (e) { return vars.MYSQL_URL ? '<无法解析>' : '<未设置>'; }
-      })(),
-    });
   } catch (err) {
-    res.status(502).json({ error: { message: (err && err.message) || String(err) } });
+    out.console = { error: (err && err.message) || String(err) };
   }
+  res.json(out);
 }));
 
 module.exports = router;
