@@ -599,6 +599,21 @@
     }).catch(function () {});
   }
 
+  /* 测试生图补录：每个会话只跑一次。只新增作品，不动文件夹/叠放/归属/位置；
+     补录成功后重新拉一次云端数据，新图立刻出现在桌面根层（自动紧凑排到空位）。 */
+  var deskBackfillDone = false;
+  function runDeskBackfill() {
+    if (deskBackfillDone || !api || !api.backfillDesk) return;
+    deskBackfillDone = true;
+    api.backfillDesk().then(function (r) {
+      if (!r || !r.added) return;
+      if (window.HMSync && window.HMSync.pullDocs) window.HMSync.pullDocs().catch(function () {});
+      if (window.HMApp && window.HMApp.toast) {
+        window.HMApp.toast('已把 ' + r.added + ' 张测试图补进桌面', 'ok', 4000);
+      }
+    }).catch(function () {});
+  }
+
   /* 登录即见：以云端为准拉取；返回是否拿到云端文档 */
   function pullNow() {
     if (!api || !api.online || !api.getDesk) return Promise.resolve(false);
@@ -610,6 +625,7 @@
       var remote = d.desk || d;
       if (!remote || !Array.isArray(remote.folders)) return false;
       if (d.rev != null) setSyncMeta(d.rev, d.updatedAt);
+      runDeskBackfill();
       return applyCloud(remote);
     }).catch(function () { return false; });
   }

@@ -13,6 +13,7 @@ const { wrap, assert } = require('../http');
 const store = require('../store');
 const userData = require('../user-data');
 const { mergeDesk, mergeAndSave, applyOps } = require('../desk-merge');
+const { backfillUser } = require('../desk-backfill');
 const { authOptional } = require('../auth');
 
 const router = express.Router();
@@ -126,6 +127,20 @@ router.post('/desk/ops', authOptional, wrap(async (req, res) => {
       throw err;
     }
   }
+}));
+
+/* 测试生图补录：把该账号最近已完成任务里的图片补成作品。
+   只新增 user_works 记录，不写 folders / stacks / assigns / names / positions，
+   因此桌面文档一个字节都不改（rev 不变），已有条目不可能被覆盖。
+   未归入文件夹的作品本来就显示在桌面根层，前端会自动紧凑排到空位。
+   幂等：作品 id = gen-<jobId>，并按图片文件名与已有作品去重，可重复调用。 */
+router.post('/desk/backfill', authOptional, wrap(async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: { message: '请先登录', hint: '补录需要确定图片归属的账号' } });
+    return;
+  }
+  const report = await backfillUser(req.user.id, { limit: (req.body && req.body.limit) || 60 });
+  res.json(report);
 }));
 
 module.exports = router;

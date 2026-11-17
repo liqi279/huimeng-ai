@@ -212,6 +212,10 @@
   api.clearWorks = function () { return request('/works', { method: 'DELETE' }, 15000); };
 
   api.getDesk = function () { return request('/desk', {}, 20000); };
+  /* 测试生图补录：把已完成任务里的图片补进桌面（只新增作品，不动已有布局） */
+  api.backfillDesk = function (limit) {
+    return request('/desk/backfill', { method: 'POST', body: { limit: limit || 60 } }, 60000);
+  };
   /* 轻量变更探测：只回 rev/updatedAt；带 If-None-Match，未变化时服务端 304 */
   api.getDeskRev = function (etag) {
     var opts = { headers: etag ? { 'If-None-Match': etag } : {} };

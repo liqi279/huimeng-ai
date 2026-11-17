@@ -1400,6 +1400,14 @@ async function runJob(jobId) {
       return;
     }
     await jobs.complete(jobId, res.body, Date.now() - started);
+    /* 以后每次生成（含测试）产出后默认进该用户个人空间桌面：
+       只新增作品，不动桌面结构；失败不影响任务结果，下次补录还会兜一次。 */
+    try {
+      const { addJobToDesk } = require('../desk-backfill');
+      if (job.userId) await addJobToDesk(job.userId, jobId, res.body, job.createdAt);
+    } catch (e) {
+      console.warn('[generate] 写入桌面失败: ' + (e && e.message));
+    }
   } catch (err) {
     const status = Number((err && (err.status || err.statusCode)) || 500);
     await jobs.fail(jobId, {
