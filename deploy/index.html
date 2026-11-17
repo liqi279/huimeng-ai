@@ -57650,6 +57650,15 @@ window.HMChat = (function () {
   ];
   var DEFAULT_AREA = 'all';   /* 首次进入默认展示汇总；已有分区选择的用户保持原选择 */
 
+  /* 「插画作画过程PSD源文件」在库里的 area 是 paint，只有 category 能标识这个分类；
+     区域 = psd 时按 category 命中，其余区域仍严格按 area 过滤（其它区域规则不变）。 */
+  var PSD_CATEGORY = '插画作画过程PSD源文件';
+  function bookInArea(b, area) {
+    if (area === 'all') return true;
+    if (area === 'psd') return b.category === PSD_CATEGORY || b.area === 'psd';
+    return b.area === area;
+  }
+
   var state = {
     mode: 'local',        /* local | remote */
     area: 'all',          /* 当前图书馆区域 id（无历史记录时默认全部藏书） */
@@ -57884,9 +57893,7 @@ window.HMChat = (function () {
 
   function markShelf() {
     /* all 为汇总区：不过滤 area，包含全部区域的书；其余区域严格按 area 过滤 */
-    var areaBooks = state.area === 'all'
-      ? state.books.slice()
-      : state.books.filter(function (b) { return b.area === state.area; });
+    var areaBooks = state.books.filter(function (b) { return bookInArea(b, state.area); });
     /* 排序：sortNo 升序（001=0、002=1）；同 sortNo 按 createdAt 升序，新书排后面 */
     areaBooks.sort(function (a, b) {
       var sa = Number(a.sortNo), sb = Number(b.sortNo);
@@ -58181,7 +58188,7 @@ window.HMChat = (function () {
     var inner = probe.clientWidth - padL - padR;
     els.body.removeChild(probe);
     if (!(inner > 0)) return shelfPerRowCache || 1;
-    var bookW = state.area === 'concept' ? 168 : SHELF_BOOK_WIDTH; /* 原画资料按文件夹形态的宽度算每层容量 */
+    var bookW = (state.area === 'concept' || state.area === 'psd') ? 168 : SHELF_BOOK_WIDTH; /* 原画资料/PSD 按文件夹形态的宽度算每层容量 */
     shelfPerRowCache = Math.max(1, Math.floor((inner + gap) / (bookW + gap)));
     return shelfPerRowCache;
   }
@@ -58230,6 +58237,28 @@ window.HMChat = (function () {
       map[key].books.push(b);
     });
     order.forEach(function (g) { g.name = conceptWorkName(g.prefix, g.books); });
+    return order;
+  }
+
+  /* PSD 分类：按作者归母文件夹（作者字段可能带来源后缀「焦茶 / 萌绘图库」，展示只取作者名）。
+     分组结构与原画资料完全一致，直接复用同一套母文件夹卡与进入/返回逻辑。 */
+  function psdAuthorName(b) {
+    var a = String((b && b.author) || '').trim();
+    if (!a) return '佚名';
+    return a.split(/\s*[/／]\s*/)[0] || a;
+  }
+
+  function psdDirGroups(list) {
+    var map = {}, order = [];
+    list.forEach(function (b) {
+      var name = psdAuthorName(b);
+      var key = 'a:' + name;
+      if (!map[key]) {
+        map[key] = { key: key, prefix: '', name: name, books: [] };
+        order.push(map[key]);
+      }
+      map[key].books.push(b);
+    });
     return order;
   }
 
@@ -58332,10 +58361,12 @@ window.HMChat = (function () {
   }
 
   /* 原画资料的两级页面：第一层只列作品母文件夹；点进去整块换成子文件夹页面（带返回）。
+     PSD 分类复用同一套页面与卡片，只是分组口径换成「作者」。
      同组子文件夹连续排在同一条 flex 流里（组间才有间距），卡片外层可拖动换序。 */
   function renderConceptDirs() {
     var order = conceptOrderRead();
-    var groups = orderConceptGroups(conceptDirGroups(state.shelfBooks), order);
+    var sourceGroups = state.area === 'psd' ? psdDirGroups(state.shelfBooks) : conceptDirGroups(state.shelfBooks);
+    var groups = orderConceptGroups(sourceGroups, order);
     var page = state.libDirPage || '';
     var cur = null;
     groups.forEach(function (g) { if (g.key === page) cur = g; });
@@ -58349,7 +58380,7 @@ window.HMChat = (function () {
       }).join('');
     } else {
       groups.forEach(function (g) {
-        var isGroup = !!g.name && g.books.length > 1;
+        var isGroup = !!g.name && (state.area === 'psd' || g.books.length > 1);
         var card = isGroup ? conceptDirCardHtml(g) : bookCardHtml(g.books[0], 0);
         rows += '<div class="lib-drag-item" draggable="true" data-drag-key="' + esc(conceptGroupKey(g)) + '">'
           + card + '</div>';
@@ -58378,7 +58409,7 @@ window.HMChat = (function () {
 
   function renderShelf() {
     if (!els.body) return;
-    if (state.area === 'concept' && state.shelfBooks.length) { renderConceptDirs(); return; }
+    if ((state.area === 'concept' || state.area === 'psd') && state.shelfBooks.length) { renderConceptDirs(); return; }
     var perRow = measureShelfPerRow();
     var pageSize = perRow * SHELF_ROWS_PER_PAGE;
     var total = state.shelfBooks.length;
@@ -60091,13 +60122,17 @@ window.HMChat = (function () {
 
   function currentArea() { return areaById(state.area); }
 
-  /* 各区域书籍数量：all = 全库总数，其余按 area 字段前端统计 */
+  /* 各区域书籍数量：all = 全库总数，其余按 area 字段前端统计；
+     psd 是「按分类」的视图（书的 area 仍是 paint），额外按 category 统计一份，
+     保证每个区域按钮上的数字与该区域书架实际册数一致。 */
   function areaCounts() {
     var counts = { all: state.books.length };
     for (var i = 0; i < state.books.length; i++) {
-      var a = state.books[i] && state.books[i].area;
-      if (!a) continue;
-      counts[a] = (counts[a] || 0) + 1;
+      var b = state.books[i];
+      if (!b) continue;
+      var a = b.area;
+      if (a) counts[a] = (counts[a] || 0) + 1;
+      if (b.area !== 'psd' && bookInArea(b, 'psd')) counts.psd = (counts.psd || 0) + 1;
     }
     return counts;
   }
@@ -60119,6 +60154,7 @@ window.HMChat = (function () {
   function setArea(id) {
     state.area = areaById(id).id;
     state.shelfPage = 1;
+    state.libDirPage = '';   /* 换区域时退出母文件夹，回到该区域第一层 */
     writeJSON(LS.area, state.area);
     if (window.HMSync && window.HMSync.pushLibraryPrefs) {
       clearTimeout(libPrefsPushTimer);
@@ -60133,6 +60169,7 @@ window.HMChat = (function () {
   window.HMLibrary = {
     applyRemotePrefs: function () {
       state.area = areaById(readJSON(LS.area, DEFAULT_AREA)).id;
+      state.libDirPage = '';
       state.pdfZoom = readPdfMode();
       syncAreaBtn();
       updatePdfZoomLabel();
