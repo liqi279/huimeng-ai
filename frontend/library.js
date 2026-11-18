@@ -310,6 +310,8 @@
       });
       state.fav = cached.fav || {};
       state.hist = cached.hist || [];
+      /* 上次成功拉取的存储用量也一起恢复：接口暂时失败时底栏不会退回 "-- / 500G" */
+      if (cached.store) applyStore(cached.store);
       pruneHistory(true);
       state.booted = true;
       state.loading = false;
@@ -343,7 +345,10 @@
 
   function saveRemoteMeta() {
     try {
-      writeJSON(LS.meta, { at: Date.now(), books: state.books, fav: state.fav, hist: state.hist });
+      writeJSON(LS.meta, {
+        at: Date.now(), books: state.books, fav: state.fav, hist: state.hist,
+        store: { usedBytes: state.storeUsedBytes, limitLabel: state.storeLimitLabel }
+      });
     } catch (e) {}
   }
 
@@ -936,12 +941,12 @@
     syncAreaBtn(); /* 书目变化后同步区域按钮上的数量 */
   }
 
-  /* 全库存储用量：store.usedBytes / store.limitLabel，缺字段时保持降级显示 */
+  /* 全库存储用量：store.usedBytes / store.limitLabel；字段缺失时保留上一次的值 */
   function applyStore(store) {
-    store = store || {};
+    if (!store || typeof store !== 'object') return;
     var used = Number(store.usedBytes);
-    state.storeUsedBytes = isFinite(used) && used >= 0 ? used : null;
-    state.storeLimitLabel = typeof store.limitLabel === 'string' && store.limitLabel ? store.limitLabel : '';
+    if (isFinite(used) && used >= 0) state.storeUsedBytes = used;
+    if (typeof store.limitLabel === 'string' && store.limitLabel) state.storeLimitLabel = store.limitLabel;
   }
 
   /* 字节数 → KB/MB/GB，保留 1 位小数 */
