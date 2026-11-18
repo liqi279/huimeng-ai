@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-18T19:24:18.000Z",
+  "generatedAt": "2026-11-18T19:25:55.000Z",
   "source": "huimeng_library.books",
-  "total": 966,
+  "total": 967,
   "areas": {
     "paint": 749,
-    "concept": 193,
+    "concept": 194,
     "ref": 24
   },
   "books": [
@@ -398,6 +398,20 @@
       "pdfKey": "api/library/file/library/books/fate-20261119-015.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/fate-20261119-015.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwmiheef-ae59c0",
+      "sortNo": 0,
+      "title": "Fate · 设定集（魔法少女伊莉雅）",
+      "author": "Fate / 萌绘图库",
+      "intro": "来源：本机原画资料《fate》魔法少女伊莉雅设定集（外层内嵌压缩包）；共 140 页。",
+      "pageCount": 140,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/fate-20261119-i1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/fate-20261119-i1.jpg",
       "coverBytes": 0
     },
     {
