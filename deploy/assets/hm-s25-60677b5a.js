@@ -642,7 +642,7 @@
   /* 原画资料：母文件夹标题用作品全称。优先取条目的 category（若它是「前缀 + 更长全称」），
      否则用下面这张常见缩写映射补全；都没有时才沿用前缀本身。只影响展示，不改书目数据。 */
   var CONCEPT_WORK_NAMES = {
-    '86': '86－不存在的战区－',
+    '86': '86－不存在的战区',
     'eva': '新世纪福音战士',
     'air': 'AIR',
     'clannad': 'CLANNAD',
@@ -650,8 +650,23 @@
     '斩服少女': '斩服少女',
     '灵能百分百': '灵能百分百',
     '紫罗兰永恒花园': '紫罗兰永恒花园',
-    '白箱': '白箱（SHIROBAKO）'
+    '白箱': '白箱'
   };
+
+  /* 母文件夹卡只显示动画名：去掉卷号、区间页码、括号补充、作者后缀与尾部标点。
+     仅用于展示，分组 key 仍用原始前缀，不会把同一作品拆成多个文件夹。 */
+  function conceptDisplayName(name) {
+    var s = String(name || '').trim();
+    var prev;
+    do {
+      prev = s;
+      s = s.replace(/\s*[（(【\[][^（）()【】\[\]]*[）)】\]]\s*$/g, '');
+      s = s.replace(/\s*(第\s*\d+\s*[\/／]?\s*\d*\s*卷|\d+\s*[-–—~至]\s*\d+\s*卷?)\s*$/g, '');
+      s = s.replace(/\s*[\/／]\s*[^\/／]+$/g, '');
+      s = s.replace(/[\s·•・|｜\-—－_]+$/g, '');
+    } while (s && s !== prev);
+    return s || String(name || '').trim();
+  }
 
   function conceptWorkName(prefix, books) {
     var p = String(prefix || '').trim();
@@ -680,7 +695,7 @@
       }
       map[key].books.push(b);
     });
-    order.forEach(function (g) { g.name = conceptWorkName(g.prefix, g.books); });
+    order.forEach(function (g) { g.name = conceptDisplayName(conceptWorkName(g.prefix, g.books)); });
     return order;
   }
 
@@ -858,7 +873,7 @@
       });
     } else {
       groups.forEach(function (g) {
-        var isGroup = !!g.name && (state.area === 'psd' || g.books.length > 1);
+        var isGroup = !!g.name;
         items.push({
           key: 'g:' + conceptGroupKey(g),
           sig: dirSig(g),
