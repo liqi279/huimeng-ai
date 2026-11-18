@@ -399,6 +399,11 @@ async function mapLimited(items, limit, task) {
  * 返回 { url, stored?, warning? }，调用方只用 url。 */
 async function persistRemoteImage(url, base, key) {
   if (!url || typeof url !== 'string') return { url, warning: '上游未返回图片地址' };
+  /* 已经是自家存储地址（上游直接给了绝对图床、或 generateGptImage 已把 b64 落地）：
+     直接判定成功，绝不能再拿这个相对路径去上游下载一遍（2026-11-19 白扣事故根因）。 */
+  if (url.charAt(0) === '/' && (url.indexOf('/api/uploads/') === 0 || url.indexOf('/uploads/') === 0)) {
+    return { url, ours: true, stored: 'object' };
+  }
   if (url.startsWith('data:')) {
     const saved = await persistInlineImage(url);
     return saved.startsWith('data:')
