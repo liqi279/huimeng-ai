@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-18T18:17:46.000Z",
+  "generatedAt": "2026-11-18T18:19:30.000Z",
   "source": "huimeng_library.books",
-  "total": 945,
+  "total": 946,
   "areas": {
     "paint": 749,
-    "concept": 172,
+    "concept": 173,
     "ref": 24
   },
   "books": [
@@ -104,6 +104,20 @@
       "pdfKey": "api/library/file/library/books/fumoffu-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/fumoffu-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwmg34p4-d16135",
+      "sortNo": 0,
+      "title": "甘城光辉游乐园 · 原画集",
+      "author": "京都アニメーション / 萌绘图库",
+      "intro": "来源：本机原画资料《甘城光辉游乐园》；原压缩包《[画集]动画《甘城ブリリアントパーク(甘城辉煌乐园救世主、Amagi Brilliant Park、甘城光辉游乐园)》的2015年日历画集.zip》。第 1-7 页（共 7 页）。",
+      "pageCount": 7,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/amagi-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/amagi-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
