@@ -1,8 +1,10 @@
 'use strict';
 
 /* 把 frontend/ 下的分文件源码打包成单文件 HTML：
- *   deploy/index.html（GitHub Pages / Vercel / Netlify 静态托管）
+ *   deploy/index.html（本地预览产物，不是发布链路）
  *   绘梦AI动漫创作平台.html（本地双击打开）
+ * 发布不走构建：GitHub Pages 与 CloudBase 均直接发布 deploy/ 现有产物，
+ * 本脚本仅供本地预览/重建参考，不要用它覆盖线上已发布的 deploy/。
  * 用法：node scripts/build-deploy.js
  */
 
