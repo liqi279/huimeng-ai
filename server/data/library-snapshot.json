@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-18T18:24:54.000Z",
+  "generatedAt": "2026-11-18T18:26:31.000Z",
   "source": "huimeng_library.books",
-  "total": 950,
+  "total": 951,
   "areas": {
     "paint": 749,
-    "concept": 177,
+    "concept": 178,
     "ref": 24
   },
   "books": [
@@ -165,7 +165,7 @@
     {
       "id": "lib-mwmg9wgn-b285b6",
       "sortNo": 0,
-      "title": "死亡笔记 · デスノート( 、DEATH NOTE)》的动画线稿设定集",
+      "title": "死亡笔记 · 动画线稿设定集",
       "author": "MADHOUSE / 萌绘图库",
       "intro": "来源：本机原画资料《死亡笔记》；原压缩包《[设定集]デスノート(死亡笔记、DEATH NOTE)》的动画线稿设定集【一些角色、道具、场景的设定图】.zip》。第 1-112 页（共 112 页）。",
       "pageCount": 112,
@@ -174,6 +174,20 @@
       "pdfKey": "api/library/file/library/books/death-note-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/death-note-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwmgcgfr-b19043",
+      "sortNo": 0,
+      "title": "桥本敬史 特效线稿集 · 日本动画特效大神桥本敬史 （Hashimoto Takashi）的特效线稿集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《日本动画特效大神桥本敬史 （Hashimoto Takashi）的特效线稿集》；原压缩包《[线稿集]日本动画特效大神桥本敬史 （Hashimoto Takashi）的特效线稿集.rar》。第 1-150 页（共 150 页）。",
+      "pageCount": 150,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/hashimoto-takashi-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/hashimoto-takashi-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
