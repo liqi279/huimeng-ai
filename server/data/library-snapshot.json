@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-18T18:11:05.000Z",
+  "generatedAt": "2026-11-18T18:12:47.000Z",
   "source": "huimeng_library.books",
-  "total": 943,
+  "total": 944,
   "areas": {
     "paint": 749,
-    "concept": 170,
+    "concept": 171,
     "ref": 24
   },
   "books": [
@@ -76,6 +76,20 @@
       "pdfKey": "api/library/file/library/books/azumanga-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/azumanga-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwmfumjr-452ed2",
+      "sortNo": 0,
+      "title": "未闻花名 · 上色指南",
+      "author": "A-1 Pictures / 萌绘图库",
+      "intro": "来源：本机原画资料《未闻花名》；原压缩包《[色见本]未闻花名 上色指南【涵盖主要角色及道具】.7z》。第 1-84 页（共 84 页）。",
+      "pageCount": 84,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/anohana-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/anohana-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
