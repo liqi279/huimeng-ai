@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-18T18:12:47.000Z",
+  "generatedAt": "2026-11-18T18:17:46.000Z",
   "source": "huimeng_library.books",
-  "total": 944,
+  "total": 945,
   "areas": {
     "paint": 749,
-    "concept": 171,
+    "concept": 172,
     "ref": 24
   },
   "books": [
@@ -90,6 +90,20 @@
       "pdfKey": "api/library/file/library/books/anohana-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/anohana-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwmg11og-af6997",
+      "sortNo": 0,
+      "title": "全金属狂潮 · 动画资料设定线稿集",
+      "author": "GONZO / 萌绘图库",
+      "intro": "来源：本机原画资料《全金属狂潮》；原压缩包《[线稿集]全金属狂潮 动画资料设定线稿集【包含了人物、机甲的各种线稿】.zip》。第 1-67 页（共 67 页）。",
+      "pageCount": 67,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/fumoffu-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/fumoffu-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
