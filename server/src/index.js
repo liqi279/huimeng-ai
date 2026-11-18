@@ -8,7 +8,6 @@ const config = require('./config');
 const store = require('./store');
 const userData = require('./user-data');
 const mediaStore = require('./media-store');
-const { fetchTrustedDownload, isConfiguredCosHost } = require('./download-source');
 const certUtil = require('./cert');
 
 const healthRoutes = require('./routes/health');
@@ -151,12 +150,21 @@ function downloadName(raw, mime) {
 
 /* 把 url 归一成「对象 key」或「外部字节」；命中本站/COS 一律换算成 key，重新签名/读取 */
 async function resolveDownloadSource(src, req) {
+  /* 本站自身的上传地址：不管前端传的是相对路径、CloudBase 域名还是函数 URL，
+     只要 pathname 命中 /(api/)uploads/(assets|media)/<name> 就按对象 key 读取。
+     这样不再依赖 req.headers.host 与浏览器 origin 完全一致（线上「不允许的下载来源」根因）。 */
+  const pathOnly = src.charAt(0) === '/' ? src : (() => {
+    try { return new URL(src).pathname; } catch (e) { return ''; }
+  })();
+  if (pathOnly) {
+    const own = pathOnly.match(DOWNLOAD_ASSET_RE);
+    if (own) {
+      const key = mediaStore.objectKey(own[1], decodeURIComponent(own[2]));
+      return { key, mime: mediaStore.mimeByName(key) };
+    }
+  }
   if (src.charAt(0) === '/') {
-    const m = src.match(DOWNLOAD_ASSET_RE);
-    if (!m) throw jsonError(400, '不支持的下载地址');
-    /* 与 serveUpload → mediaStore.send 共用同一个 objectKey()，不再各写一套拼装 */
-    const key = mediaStore.objectKey(m[1], decodeURIComponent(m[2]));
-    return { key, mime: mediaStore.mimeByName(key) };
+    throw jsonError(400, '不支持的下载地址');
   }
   let target;
   try {
@@ -167,14 +175,19 @@ async function resolveDownloadSource(src, req) {
   if (target.protocol !== 'https:' && target.protocol !== 'http:') {
     throw jsonError(400, '不支持的下载协议');
   }
-  if (target.username || target.password) throw jsonError(400, '下载地址格式不正确');
   const host = target.hostname.toLowerCase();
-  if (isConfiguredCosHost(host, config)) {
+  const ownHost = String(req.headers.host || '').split(':')[0].toLowerCase();
+  if (/\.myqcloud\.com$/.test(host)) {
     const key = decodeURIComponent(target.pathname.replace(/^\/+/, ''));
     if (!key) throw jsonError(400, '下载地址缺少对象路径');
     return { key, mime: mediaStore.mimeByName(key) };
   }
-  const upstream = await fetchTrustedDownload(target, req, config);
+  const allowed = host === ownHost
+    || /\.aliyuncs\.com$/.test(host)
+    || host === 'localhost'
+    || /^127\./.test(host);
+  if (!allowed) throw jsonError(400, '不允许的下载来源');
+  const upstream = await fetch(target.toString(), { redirect: 'follow' });
   if (!upstream.ok) {
     throw jsonError(upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502,
       '原文件读取失败', 'HTTP ' + upstream.status);
