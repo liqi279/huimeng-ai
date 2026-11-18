@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-18T18:19:30.000Z",
+  "generatedAt": "2026-11-18T18:20:49.000Z",
   "source": "huimeng_library.books",
-  "total": 946,
+  "total": 948,
   "areas": {
     "paint": 749,
-    "concept": 173,
+    "concept": 175,
     "ref": 24
   },
   "books": [
@@ -118,6 +118,34 @@
       "pdfKey": "api/library/file/library/books/amagi-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/amagi-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwmg50gp-e893a9",
+      "sortNo": 0,
+      "title": "作画mad · 学生会也有洞",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《作画mad》 / 学生会也有洞；共 2 页。",
+      "pageCount": 2,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/sakuga-mad-20261119-d-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/sakuga-mad-20261119-d-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwmg53a7-4d0836",
+      "sortNo": 0,
+      "title": "作画mad · D",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《作画mad》 / 学生会也有洞\\D；共 9 页。",
+      "pageCount": 9,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/sakuga-mad-20261119-d-2.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/sakuga-mad-20261119-d-2.jpg",
       "coverBytes": 0
     },
     {
