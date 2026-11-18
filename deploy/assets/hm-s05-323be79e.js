@@ -1443,8 +1443,27 @@ function renderWorks() {
           '<button data-waction="delete" title="删除">' + ICONS.trash + '</button>' +
         '</div>' +
         '<div class="work-meta"><span>' + esc(work.modelName || 'AI') + '</span><span>' + esc(work.seed || '') + '</span></div>' +
+        (isFailed ? '<span class="work-lost-badge" style="position:absolute;left:8px;top:8px;z-index:4;' +
+          'padding:2px 8px;border-radius:999px;background:rgba(220,60,60,.92);color:#fff;font-size:11px">' +
+          (work.broken ? '未出图 · 可重试' : '生成失败') + '</span>' : '') +
       '</article>';
     }).join('');
+
+    /* 缩略图加载失败：标记「未出图」并给出重试入口，不允许空白占位 */
+    els.worksGrid.querySelectorAll('.work-card img').forEach(function (img) {
+      img.onerror = function () {
+        var card = img.closest('.work-card');
+        var id = card && card.dataset.work;
+        var work = state.works.find(function (w) { return String(w.id) === String(id); });
+        if (work && !work.broken) {
+          work.broken = true;
+          work.ok = false;
+          saveWork(work);
+          renderWorks();
+        }
+        toast('作品图片加载失败：地址不可访问', 'error', 6000);
+      };
+    });
   }
 
   if (window.HMUI && window.HMUI.onRenderWorks) window.HMUI.onRenderWorks(total);
@@ -4833,6 +4852,30 @@ function markJobDone(job, url, seed, elapsed) {
     '</div>';
 
   job.rawUrl = job.rawUrl || url;
+  /* 结果图加载失败绝不留白：卡片上直接标出「未出图」并提示重试 */
+  var resImg = card.querySelector('.result-media img');
+  if (resImg) {
+    resImg.onerror = function () {
+      var wrap = card.querySelector('.result-media');
+      if (wrap && !wrap.querySelector('.media-broken')) {
+        var tip = document.createElement('div');
+        tip.className = 'media-broken';
+        tip.setAttribute('style', 'position:absolute;inset:0;display:flex;flex-direction:column;' +
+          'align-items:center;justify-content:center;gap:6px;background:rgba(10,10,14,.86);' +
+          'color:#ff8a8a;font-size:12px;text-align:center;padding:12px;z-index:3');
+        tip.innerHTML = '<strong style="font-size:13px">图片未能加载</strong>' +
+          '<span>原图地址不可访问，本次可能已扣费</span><span>可点作品上的「重新生成」再试</span>';
+        wrap.appendChild(tip);
+      }
+      if (!job.broken) {
+        job.broken = true;
+        job.ok = false;
+        saveWork(job);
+        renderWorks();
+      }
+      toast('生成结果图片加载失败：地址不可访问', 'error', 6000);
+    };
+  }
   saveWork(job);
   /* 出图后按目标像素异步校准：先显示返回图，完成后无缝替换 */
   calibrateJobImage(job);
@@ -5702,6 +5745,46 @@ function syncLbBarSpace() {
   document.documentElement.style.setProperty('--lb-top-h', topH + 'px');
 }
 
+/* 原图加载失败：探测真实原因（404/403/CORS），给出明确文案和「重新生成」，不留空白 */
+function lbShowBrokenImage(item) {
+  if (!els.lbStage) return;
+  var old = els.lbStage.querySelector('.lb-broken');
+  if (old) old.remove();
+  els.lbImage.style.display = 'none';
+  els.lbImage.removeAttribute('src');
+
+  var box = document.createElement('div');
+  box.className = 'lb-media-el lb-failed lb-broken';
+  var detail = '图片地址不可访问';
+  box.innerHTML = '<div class="lb-failed-ico">!</div>' +
+    '<strong>图片加载失败</strong>' +
+    '<p class="lb-broken-msg">正在确认原因…</p>' +
+    '<p class="lb-failed-hint">' + esc(String(item.url || '').slice(0, 180)) + '</p>' +
+    '<p class="lb-failed-hint">本次可能已扣费，但结果没有存到我们自己的存储里。</p>' +
+    '<button type="button" class="lb-retry-btn" style="margin-top:12px;padding:8px 22px;border-radius:999px;' +
+    'border:0;background:#7b5cff;color:#fff;cursor:pointer;font-size:13px">重新生成</button>';
+  els.lbStage.appendChild(box);
+
+  var msgEl = box.querySelector('.lb-broken-msg');
+  fetch(String(item.url || ''), { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' })
+    .then(function (res) {
+      detail = '图片请求返回 HTTP ' + res.status;
+      if (msgEl) msgEl.textContent = detail;
+    })
+    .catch(function () {
+      detail = '图片请求失败：多为跨域限制或被上游防盗链拦截';
+      if (msgEl) msgEl.textContent = detail;
+    });
+
+  var btn = box.querySelector('.lb-retry-btn');
+  if (btn) btn.onclick = function () {
+    closeLightbox();
+    if (item.work) retryWork(item.work);
+    else toast('请在作品列表里点「重新生成」', 'info');
+  };
+  toast('原图加载失败：' + detail, 'error', 6000);
+}
+
 function openLightbox(item) {
   state.activeItem = item;
   var type = item.type || 'image';
@@ -5744,9 +5827,11 @@ function openLightbox(item) {
       if (item.thumb && els.lbImage.src !== item.thumb) {
         els.lbImage.src = item.thumb;
         toast('云端原图暂不可达，已显示本地缩略图', 'warn', 5000);
-      } else {
-        els.lbImage.style.visibility = '';
+        return;
       }
+      /* 原图地址不可访问时绝不允许静默留白：探测真实原因并明确提示 */
+      els.lbImage.style.visibility = '';
+      lbShowBrokenImage(item);
     };
     els.lbImage.onload = function () {
       lbReset(); /* 每次打开都从 100% 起，不再按窗口大小自适应缩小 */
