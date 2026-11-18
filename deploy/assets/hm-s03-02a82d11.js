@@ -237,6 +237,10 @@
      统一走后端 /download（默认 302 到带附件的直链，b64=1 走 JSON 供打包）。 */
   api.downloadUrl = function (url, name) {
     var src = String(url || '');
+    /* 自家上传地址统一传相对路径：后端按 pathname 直接读对象，
+       避免浏览器 origin 与函数 Host 不一致时被判「不允许的下载来源」 */
+    var m = /^https?:\/\/[^/]+(\/(?:api\/)?uploads\/(?:assets|media)\/[^/?#]+)/i.exec(src);
+    if (m) src = m[1];
     var q = '/download?url=' + encodeURIComponent(src);
     if (name) q += '&name=' + encodeURIComponent(String(name));
     return apiUrl(q);
