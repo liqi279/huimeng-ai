@@ -21,7 +21,7 @@ if (!fs.existsSync(assets)) {
 }
 
 const html = fs.readFileSync(idx, 'utf8');
-const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"]+)"/g)].map((m) => m[1]);
+const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
 const miss = refs.filter((f) => !fs.existsSync(path.join(assets, f)));
 if (miss.length) {
   console.error('[publish] deploy/assets 缺失：' + miss.join(', '));
