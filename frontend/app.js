@@ -1030,6 +1030,10 @@ function filteredWorks() {
     list = list.filter(function (w) { return (w.engine || 'flux') === 'flux'; });
   } else if (state.worksFilter === 'paid') {
     list = list.filter(function (w) { return (w.engine || 'flux') !== 'flux'; });
+  } else if (state.worksFilter === 'image') {
+    list = list.filter(function (w) { return !w.failed && w.ok !== false && w.type !== 'video' && w.type !== 'audio'; });
+  } else if (state.worksFilter === 'video') {
+    list = list.filter(function (w) { return !w.failed && w.ok !== false && w.type === 'video'; });
   }
   /* 时间筛选：与筛选/排序叠加，不改变原有排序能力 */
   const tr = tm.applied;
