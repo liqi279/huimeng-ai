@@ -8,6 +8,7 @@ const config = require('./config');
 const store = require('./store');
 const userData = require('./user-data');
 const mediaStore = require('./media-store');
+const { fetchTrustedDownload, isConfiguredCosHost } = require('./download-source');
 const certUtil = require('./cert');
 
 const healthRoutes = require('./routes/health');
@@ -166,19 +167,14 @@ async function resolveDownloadSource(src, req) {
   if (target.protocol !== 'https:' && target.protocol !== 'http:') {
     throw jsonError(400, '不支持的下载协议');
   }
+  if (target.username || target.password) throw jsonError(400, '下载地址格式不正确');
   const host = target.hostname.toLowerCase();
-  const ownHost = String(req.headers.host || '').split(':')[0].toLowerCase();
-  if (/\.myqcloud\.com$/.test(host)) {
+  if (isConfiguredCosHost(host, config)) {
     const key = decodeURIComponent(target.pathname.replace(/^\/+/, ''));
     if (!key) throw jsonError(400, '下载地址缺少对象路径');
     return { key, mime: mediaStore.mimeByName(key) };
   }
-  const allowed = host === ownHost
-    || /\.aliyuncs\.com$/.test(host)
-    || host === 'localhost'
-    || /^127\./.test(host);
-  if (!allowed) throw jsonError(400, '不允许的下载来源');
-  const upstream = await fetch(target.toString(), { redirect: 'follow' });
+  const upstream = await fetchTrustedDownload(target, req, config);
   if (!upstream.ok) {
     throw jsonError(upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502,
       '原文件读取失败', 'HTTP ' + upstream.status);

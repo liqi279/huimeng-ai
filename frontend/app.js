@@ -4883,7 +4883,7 @@ function saveFailedWork(job, err) {
 
 function markJobDone(job, url, seed, elapsed) {
   job.status = 'done';
-  job.url = url;
+  job.url = normalizeGeneratedImageUrl(url);
   job.seed = seed;
   job.elapsed = elapsed;
 
@@ -4904,7 +4904,7 @@ function markJobDone(job, url, seed, elapsed) {
 
   /* 先落盘再管界面：卡片可能已被切换视图/重排移除，
      但作品不能因此不保存（这是「刷新后新图不见」的一条静默丢失路径） */
-  job.rawUrl = job.rawUrl || url;
+  job.rawUrl = job.rawUrl || job.url;
   saveWork(job);
 
   const card = document.querySelector('[data-job="' + job.id + '"]');
@@ -4916,12 +4916,12 @@ function markJobDone(job, url, seed, elapsed) {
   var ratio = job.width + ' / ' + job.height;
   var inner;
   if (job.type === 'video') {
-    inner = '<video src="' + esc(url) + '" controls playsinline preload="metadata"></video>';
+    inner = '<video src="' + esc(job.url) + '" controls playsinline preload="metadata"></video>';
   } else if (job.type === 'audio') {
     inner = '<div class="hm-audio-result"><strong>语音合成完成</strong>' +
-      '<audio src="' + esc(url) + '" controls preload="metadata"></audio></div>';
+      '<audio src="' + esc(job.url) + '" controls preload="metadata"></audio></div>';
   } else {
-    inner = '<img src="' + esc(url) + '" alt="' + esc(job.prompt) + '">';
+    inner = '<img src="' + esc(job.url) + '" alt="' + esc(job.prompt) + '">';
   }
 
   card.innerHTML =
@@ -4940,10 +4940,29 @@ function markJobDone(job, url, seed, elapsed) {
       '<div class="result-meta"><span>' + esc(job.modelName) + '</span><span>' + job.width + '×' + job.height + '</span><span>#' + esc(seed) + '</span><span>' + elapsed.toFixed(1) + 's</span></div>' +
     '</div>';
 
-  job.rawUrl = job.rawUrl || url;
+  job.rawUrl = job.rawUrl || job.url;
   saveWork(job);
   /* 出图后按目标像素异步校准：先显示返回图，完成后无缝替换 */
   calibrateJobImage(job);
+}
+
+/* 生图中转偶尔返回 /api/uploads/... 这类相对路径。
+   GitHub Pages 上的相对地址会落到静态站自身，图片因此 404；
+   按当前图像 API 的 origin 补全，data/blob 与完整 URL 保持原样。 */
+function normalizeGeneratedImageUrl(value) {
+  var raw = String(value || '').trim();
+  if (!raw || /^(?:https?:|data:|blob:)/i.test(raw)) return raw;
+  var api = window.HM && window.HM.api;
+  if (api && typeof api.mediaUrl === 'function') {
+    var mediaUrl = api.mediaUrl(raw);
+    if (mediaUrl !== raw) return mediaUrl;
+  }
+  try {
+    var base = rayinBase().replace(/\/+$/, '') + '/';
+    return new URL(raw, base).href;
+  } catch (e) {
+    return raw;
+  }
 }
 
 /* ---------------- 生成结果尺寸校准 ----------------
@@ -5622,7 +5641,13 @@ function proxyMediaUrl(url) {
 /* 打包用：取回图片二进制。后端以 base64 JSON 返回（SCF 回传二进制会被截断），
    旧后端则回退到直接 fetch。 */
 function fetchImageBlob(url) {
-  var api = window.HM && HM.api;
+   var api = window.HM && HM.api;
+   if (/^(?:data:|blob:)/i.test(String(url || ''))) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.blob();
+    });
+  }
   if (api && typeof api.downloadB64Url === 'function') {
     return fetch(api.downloadB64Url(url), { credentials: 'omit', cache: 'no-store' }).then(function (r) {
       return r.json().then(function (body) {
@@ -5645,13 +5670,14 @@ async function downloadImage(url, filename) {
     return;
   }
 
-  var target = proxyMediaUrl(url);
+  var localMedia = /^(?:data:|blob:)/i.test(String(url || ''));
+  var target = localMedia ? String(url) : proxyMediaUrl(url);
   try {
     /* 新后端：先 meta 探测存在性（小 JSON，可捕获失败），再让浏览器直接访问
        /download 的 302 直链（响应带 attachment，不依赖 CORS）。
        不再把大文件经 fetch 取进页面，避免 SCF 回传二进制被截断。 */
     const api = window.HM && HM.api;
-    if (api && typeof api.downloadMetaUrl === 'function') {
+    if (!localMedia && api && typeof api.downloadMetaUrl === 'function') {
       const metaRes = await fetch(api.downloadMetaUrl(url, filename), { credentials: 'omit', cache: 'no-store' });
       let meta = null;
       try { meta = await metaRes.json(); } catch (e) {}

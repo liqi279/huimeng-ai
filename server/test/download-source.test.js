@@ -1,0 +1,74 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const { hostnameOf, isTrustedDownloadHost, isConfiguredCosHost, fetchTrustedDownload } = require('../src/download-source');
+
+const req = { headers: { host: 'api.example.test:8787' } };
+
+test('allows COS, CDN, and configured storage hosts', () => {
+  const config = { COS_PUBLIC_BASE: 'https://images.example-cdn.test/assets' };
+  for (const host of [
+    'bucket.cos.ap-guangzhou.myqcloud.com',
+    'cdn.tencentcos.cn',
+    'oss-cn-hangzhou.aliyuncs.com',
+    'img.tuba.ink',
+    'image.pollinations.ai',
+    'api.example.test',
+    'images.example-cdn.test',
+  ]) {
+    assert.equal(isTrustedDownloadHost(host, req, config), true, host);
+  }
+});
+
+test('does not accept lookalike or unconfigured hosts', () => {
+  assert.equal(isTrustedDownloadHost('myqcloud.com.attacker.test', req, {}), false);
+  assert.equal(isTrustedDownloadHost('evil-rayinai.com', req, {}), false);
+  assert.equal(isTrustedDownloadHost('attacker.test', req, {}), false);
+});
+
+test('uses only a URL hostname when reading configured endpoints', () => {
+  assert.equal(hostnameOf('https://cos.example.test:8443/bucket'), 'cos.example.test');
+  assert.equal(hostnameOf('not a URL'), '');
+  assert.equal(isTrustedDownloadHost('cos.example.test', req, {
+    S3_ENDPOINT: 'https://cos.example.test:8443/bucket',
+  }), true);
+});
+
+test('maps only the configured COS bucket endpoint to an object key', () => {
+  const config = { COS_BUCKET: 'huimeng-123', COS_REGION: 'cos.ap-guangzhou' };
+  assert.equal(isConfiguredCosHost('huimeng-123.cos.ap-guangzhou.myqcloud.com', config), true);
+  assert.equal(isConfiguredCosHost('other-bucket.cos.ap-guangzhou.myqcloud.com', config), false);
+  assert.equal(isConfiguredCosHost('huimeng-123.cos.ap-shanghai.myqcloud.com', config), false);
+});
+
+test('checks every download redirect before making the next request', async () => {
+  let calls = 0;
+  await assert.rejects(
+    fetchTrustedDownload('https://images.example-cdn.test/start.png', req, {
+      COS_PUBLIC_BASE: 'https://images.example-cdn.test',
+    }, async () => {
+      calls += 1;
+      return { status: 302, headers: { get: () => 'https://attacker.example/steal' } };
+    }),
+    { status: 400, message: '不允许的下载来源' },
+  );
+  assert.equal(calls, 1, 'untrusted redirect target is never fetched');
+});
+
+test('resolves generated API paths against the backend origin and preserves inline URLs', () => {
+  const source = fs.readFileSync(require.resolve('../../frontend/app.js'), 'utf8');
+  const match = source.match(/function normalizeGeneratedImageUrl\(value\) \{[\s\S]*?\n\}/);
+  assert.ok(match, 'frontend URL normalizer exists');
+  const sandbox = {
+    window: { HM: { api: { mediaUrl: (value) => value[0] === '/' ? 'https://api.example.test' + value : value } } },
+    rayinBase: () => 'https://rayin.example.test/v1',
+  };
+  vm.runInNewContext(match[0] + '\nthis.normalize = normalizeGeneratedImageUrl;', sandbox);
+  assert.equal(sandbox.normalize('/api/uploads/media/result.png'), 'https://api.example.test/api/uploads/media/result.png');
+  assert.equal(sandbox.normalize('data:image/png;base64,Zm9v'), 'data:image/png;base64,Zm9v');
+  assert.equal(sandbox.normalize('blob:https://app.example.test/id'), 'blob:https://app.example.test/id');
+  assert.equal(sandbox.normalize('https://cdn.example.test/result.png'), 'https://cdn.example.test/result.png');
+});
