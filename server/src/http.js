@@ -36,6 +36,12 @@ function normalizeBase(base) {
 
 function apiErrorText(status, text) {
   const raw = typeof text === 'string' ? text : '';
+  /* 反向代理/CDN 的 502/504 常返回整页 HTML，不能把页面源码当错误正文展示。 */
+  if (/<!doctype\s+html|<html(?:\s|>)/i.test(raw)) {
+    if (status === 504) return '上游网关超时（HTTP 504）';
+    if (status === 502) return '上游网关暂时不可用（HTTP 502）';
+    return `上游网页错误（HTTP ${status}）`;
+  }
   let message = '';
   try {
     const parsed = JSON.parse(raw);

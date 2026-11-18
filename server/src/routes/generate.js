@@ -652,7 +652,12 @@ async function generateGptImage({ base, key, model, prompt, size, ref, timing })
     t.bodyMs = r.elapsedMs;
     t.upstreamStatus = r.status;
     if (r.status < 200 || r.status >= 300) {
-      const err = jsonError(r.status, apiErrorText(r.status, r.text), '请检查模型 ID 与账号权限');
+      const hint = r.status === 504
+        ? '上游生成网关等待超时，结果可能尚未返回。请稍后检查上游任务和用量状态，再决定是否重试。'
+        : (r.status >= 500
+          ? '上游图像服务暂时不可用，请稍后重试。'
+          : '请检查模型 ID 与账号权限');
+      const err = jsonError(r.status, apiErrorText(r.status, r.text), hint);
       err.preSend = false;
       err.retryable = false;
       throw err;
