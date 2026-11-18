@@ -64,6 +64,7 @@
     loading: false,
     pdfTocCollapsed: false, /* 目录折叠状态：本次阅读内记住 */
     libDirPage: '',         /* 原画资料当前进入的作品母文件夹（纯展示页面状态） */
+    libSubPage: '',         /* 原画资料母文件夹下的子文件夹（第三层，由 title 后缀派生） */
     storeUsedBytes: null,   /* 全库已用字节数（GET /library/books 的 store.usedBytes） */
     storeLimitLabel: ''     /* 全库上限文案（store.limitLabel，如 "500G"） */
   };
@@ -591,15 +592,31 @@
   /* 原画资料：母文件夹标题用作品全称。优先取条目的 category（若它是「前缀 + 更长全称」），
      否则用下面这张常见缩写映射补全；都没有时才沿用前缀本身。只影响展示，不改书目数据。 */
   var CONCEPT_WORK_NAMES = {
-    '86': '86－不存在的战区－',
+    '86': '86－不存在的战区',
     'eva': '新世纪福音战士',
     'air': 'AIR',
     'clannad': 'CLANNAD',
     '小魔女学园': '小魔女学园',
     '斩服少女': '斩服少女',
     '灵能百分百': '灵能百分百',
-    '紫罗兰永恒花园': '紫罗兰永恒花园'
+    '紫罗兰永恒花园': '紫罗兰永恒花园',
+    '白箱': '白箱'
   };
+
+  /* 母文件夹卡只显示动画名：去掉卷号、区间页码、括号补充、作者后缀与尾部标点。
+     仅用于展示，分组 key 仍用原始前缀，不会把同一作品拆成多个文件夹。 */
+  function conceptDisplayName(name) {
+    var s = String(name || '').trim();
+    var prev;
+    do {
+      prev = s;
+      s = s.replace(/\s*[（(【\[][^（）()【】\[\]]*[）)】\]]\s*$/g, '');
+      s = s.replace(/\s*(第\s*\d+\s*[\/／]?\s*\d*\s*卷|\d+\s*[-–—~至]\s*\d+\s*卷?)\s*$/g, '');
+      s = s.replace(/\s*[\/／]\s*[^\/／]+$/g, '');
+      s = s.replace(/[\s·•・|｜\-—－_]+$/g, '');
+    } while (s && s !== prev);
+    return s || String(name || '').trim();
+  }
 
   function conceptWorkName(prefix, books) {
     var p = String(prefix || '').trim();
@@ -628,7 +645,7 @@
       }
       map[key].books.push(b);
     });
-    order.forEach(function (g) { g.name = conceptWorkName(g.prefix, g.books); });
+    order.forEach(function (g) { g.name = conceptDisplayName(conceptWorkName(g.prefix, g.books)); });
     return order;
   }
 
@@ -739,16 +756,70 @@
     });
   }
 
+  /* 第三层「子文件夹」：由 title 第一个分隔符之后的后缀派生（「阿滋漫画大王 · 人物」→ 人物）。
+     去掉卷号、第N/M卷、上中下卷、页码区间与括号补充；没有后缀时归到「其他」。PSD 区不启用。 */
+  function conceptSubName(b) {
+    var t = String((b && b.title) || '');
+    var cut = t.search(/[·•・|｜]/);
+    var s = cut > 0 ? t.slice(cut + 1) : '';
+    var prev;
+    do {
+      prev = s;
+      s = s.replace(/\s*[（(【\[][^（）()【】\[\]]*[）)】\]]\s*$/g, '');
+      s = s.replace(/\s*(第\s*\d+\s*[\/／]?\s*\d*\s*卷|\d+\s*[-–—~至]\s*\d+\s*卷?)\s*$/g, '');
+      s = s.replace(/\s*[·•・|｜]\s*(上|中|下|[一二三四五六七八九十]+)\s*$/g, '');
+      s = s.replace(/\s*(上|中|下|卷\s*[一二三四五六七八九十]+|[一二三四五六七八九十]+)\s*$/g, '');
+      s = s.replace(/\s*[\/／]\s*[^\/／]+$/g, '');
+      s = s.replace(/[\s·•・|｜\-—－_.]+$/g, '');
+    } while (s && s !== prev);
+    s = String(s || '').trim();
+    return s || '其他';
+  }
+
+  function conceptSubGroups(books) {
+    var map = {}, out = [];
+    books.forEach(function (b) {
+      var name = conceptSubName(b);
+      if (!map[name]) {
+        map[name] = { key: name, name: name, books: [] };
+        out.push(map[name]);
+      }
+      map[name].books.push(b);
+    });
+    out.sort(function (a, b) { return conceptNaturalCompare(a.name, b.name); });
+    return out;
+  }
+
+  function conceptSubCardHtml(sg, mother) {
+    var cover = conceptDirCover(sg.books);
+    var pages = sg.books.reduce(function (n, b) {
+      return n + ((b.pages && b.pages.length) || Number(b.pageCount) || 0);
+    }, 0);
+    return '<button type="button" class="lib-book is-dir" data-libsub="' + esc(sg.name) + '"'
+      + ' title="' + esc(sg.name) + ' · ' + pages + ' 页">'
+      + '<span class="lib-dir-body">'
+      + (cover
+        ? '<img class="lib-dir-cover" src="' + esc(cover) + '" alt="' + esc(sg.name) + '" loading="lazy">'
+        : '<span class="lib-dir-ico">📁</span>')
+      + '<span class="lib-dir-name">' + esc(sg.name) + '</span>'
+      + '<span class="lib-dir-meta">' + esc(mother || '未分类') + ' · ' + pages + ' 页</span>'
+      + '</span></button>';
+  }
+
   function conceptDirCardHtml(g) {
     var cover = conceptDirCover(g.books);
+    /* 原画资料母卡左下角显示内部子文件夹本数；PSD 区维持册数口径 */
+    var isPsd = state.area === 'psd';
+    var subCount = isPsd ? g.books.length : conceptSubGroups(g.books).length;
+    var unit = isPsd ? ' 册' : ' 本';
     return '<button type="button" class="lib-book is-dir" data-libdir="' + esc(g.key) + '"'
-      + ' title="' + esc(g.name) + ' · ' + g.books.length + ' 册">'
+      + ' title="' + esc(g.name) + ' · ' + subCount + unit + '">'
       + '<span class="lib-dir-body">'
       + (cover
         ? '<img class="lib-dir-cover" src="' + esc(cover) + '" alt="' + esc(g.name) + '" loading="lazy">'
         : '<span class="lib-dir-ico">📁</span>')
       + '<span class="lib-dir-name">' + esc(g.name) + '</span>'
-      + '<span class="lib-dir-meta">' + g.books.length + ' 册 · 点击进入</span>'
+      + '<span class="lib-dir-meta">' + subCount + unit + ' · 点击进入</span>'
       + '</span></button>';
   }
 
@@ -759,20 +830,34 @@
     var order = conceptOrderRead();
     var sourceGroups = state.area === 'psd' ? psdDirGroups(state.shelfBooks) : conceptDirGroups(state.shelfBooks);
     var groups = orderConceptGroups(sourceGroups, order);
+    var isPsdArea = state.area === 'psd';
     var page = state.libDirPage || '';
+    var sub = isPsdArea ? '' : (state.libSubPage || '');
     var cur = null;
     groups.forEach(function (g) { if (g.key === page) cur = g; });
     var pageLabel = cur ? cur.name : page;
     var rows = '';
-    if (page) {
-      var books = cur ? orderConceptBooks(cur.books, order.items[page]) : [];
-      rows = books.map(function (b, i) {
+    if (page && sub) {
+      var allBooks = cur ? orderConceptBooks(cur.books, order.items[page]) : [];
+      var subBooks = allBooks.filter(function (b) { return conceptSubName(b) === sub; });
+      pageLabel = (cur ? cur.name : page) + ' / ' + sub;
+      rows = subBooks.map(function (b, i) {
+        return '<div class="lib-drag-item" draggable="true" data-drag-id="' + esc(b.id) + '">'
+          + bookCardHtml(b, i) + '</div>';
+      }).join('');
+    } else if (page && !isPsdArea) {
+      rows = conceptSubGroups(cur ? cur.books : []).map(function (sg) {
+        return '<div class="lib-drag-item">' + conceptSubCardHtml(sg, cur ? cur.name : '') + '</div>';
+      }).join('');
+    } else if (page) {
+      var pbooks = cur ? orderConceptBooks(cur.books, order.items[page]) : [];
+      rows = pbooks.map(function (b, i) {
         return '<div class="lib-drag-item" draggable="true" data-drag-id="' + esc(b.id) + '">'
           + bookCardHtml(b, i) + '</div>';
       }).join('');
     } else {
       groups.forEach(function (g) {
-        var isGroup = !!g.name && (state.area === 'psd' || g.books.length > 1);
+        var isGroup = !!g.name;
         var card = isGroup ? conceptDirCardHtml(g) : bookCardHtml(g.books[0], 0);
         rows += '<div class="lib-drag-item" draggable="true" data-drag-key="' + esc(conceptGroupKey(g)) + '">'
           + card + '</div>';
@@ -2519,18 +2604,35 @@
      保证每个区域按钮上的数字与该区域书架实际册数一致。 */
   function areaCounts() {
     var counts = { all: state.books.length };
+    var conceptDirs = {}, conceptSubs = {};
     for (var i = 0; i < state.books.length; i++) {
       var b = state.books[i];
       if (!b) continue;
       var a = b.area;
       if (a) counts[a] = (counts[a] || 0) + 1;
       if (b.area !== 'psd' && bookInArea(b, 'psd')) counts.psd = (counts.psd || 0) + 1;
+      /* 原画资料按三层结构计数：母文件夹去重 + 子文件夹去重 */
+      if (b.area === 'concept') {
+        var t = String(b.title || '');
+        var cut = t.search(/[·•・|｜]/);
+        var prefix = cut > 0 ? t.slice(0, cut).trim() : '';
+        var dirKey = prefix || ('\u0000' + b.id);
+        conceptDirs[dirKey] = 1;
+        conceptSubs[dirKey + '\u0001' + conceptSubName(b)] = 1;
+      }
+    }
+    if (counts.concept != null) {
+      counts.conceptDirs = Object.keys(conceptDirs).length;
+      counts.conceptSubs = Object.keys(conceptSubs).length;
     }
     return counts;
   }
 
   function areaLabel(area, counts) {
     var n = (counts && counts[area.id] != null) ? counts[area.id] : 0;
+    if (area.id === 'concept') {
+      return area.name + '（' + ((counts && counts.conceptDirs) || 0) + ' 册 · ' + ((counts && counts.conceptSubs) || 0) + ' 本）';
+    }
     return area.name + '（' + n + '本）';
   }
 
@@ -2547,6 +2649,7 @@
     state.area = areaById(id).id;
     state.shelfPage = 1;
     state.libDirPage = '';   /* 换区域时退出母文件夹，回到该区域第一层 */
+    state.libSubPage = '';
     writeJSON(LS.area, state.area);
     if (window.HMSync && window.HMSync.pushLibraryPrefs) {
       clearTimeout(libPrefsPushTimer);
@@ -2562,6 +2665,7 @@
     applyRemotePrefs: function () {
       state.area = areaById(readJSON(LS.area, DEFAULT_AREA)).id;
       state.libDirPage = '';
+      state.libSubPage = '';
       state.pdfZoom = readPdfMode();
       syncAreaBtn();
       updatePdfZoomLabel();
@@ -2763,17 +2867,26 @@
         }, 150);
       });
       els.body.addEventListener('click', function (event) {
-        /* 原画资料：母文件夹 → 子文件夹页面（整块替换），返回按钮回到母文件夹列表 */
+        /* 原画资料三级：母文件夹 → 子文件夹 → PDF 列表；返回逐级退回。PSD 区保持两级 */
+        var subCard = event.target.closest('[data-libsub]');
+        if (subCard && state.area !== 'psd') {
+          state.libSubPage = subCard.getAttribute('data-libsub') || '';
+          state.shelfPage = 1;
+          renderShelf();
+          return;
+        }
         var dirCard = event.target.closest('[data-libdir]');
         if (dirCard) {
           state.libDirPage = dirCard.getAttribute('data-libdir') || '';
+          state.libSubPage = '';
           state.shelfPage = 1;
           renderShelf();
           return;
         }
         var backBtn = event.target.closest('[data-libback]');
         if (backBtn) {
-          state.libDirPage = '';
+          if (state.libSubPage) state.libSubPage = '';
+          else state.libDirPage = '';
           state.shelfPage = 1;
           renderShelf();
           return;
@@ -2802,6 +2915,8 @@
         if (state.area !== 'concept') return;
         var item = event.target.closest && event.target.closest('.lib-drag-item');
         if (!item) return;
+        /* 子文件夹卡不带 drag-id/key，不参与拖动排序 */
+        if (!item.getAttribute('data-drag-id') && !item.getAttribute('data-drag-key')) return;
         conceptDrag = { el: item };
         item.classList.add('is-dragging');
         try {
