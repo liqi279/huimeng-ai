@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const { hostnameOf, isTrustedDownloadHost, isConfiguredCosHost, fetchTrustedDownload } = require('../src/download-source');
+const { imageCandidates } = require('../src/image-url');
 
 const req = { headers: { host: 'api.example.test:8787' } };
 
@@ -44,6 +45,15 @@ test('maps only the configured COS bucket endpoint to an object key', () => {
   assert.equal(isConfiguredCosHost('huimeng-123.cos.ap-shanghai.myqcloud.com', config), false);
 });
 
+test('resolves both root-relative and path-relative upstream image URLs', () => {
+  assert.equal(imageCandidates('/api/uploads/media/result.png', 'https://rayin.example.test/v1')[0],
+    'https://rayin.example.test/api/uploads/media/result.png');
+  assert.equal(imageCandidates('api/uploads/media/result.png', 'https://rayin.example.test/v1')[0],
+    'https://rayin.example.test/v1/api/uploads/media/result.png');
+  assert.deepEqual(imageCandidates('//attacker.example/image.png', 'https://rayin.example.test/v1'), []);
+  assert.deepEqual(imageCandidates('data:image/png;base64,AAAA', 'https://rayin.example.test/v1'), []);
+});
+
 test('checks every download redirect before making the next request', async () => {
   let calls = 0;
   await assert.rejects(
@@ -63,11 +73,12 @@ test('resolves generated API paths against the backend origin and preserves inli
   const match = source.match(/function normalizeGeneratedImageUrl\(value\) \{[\s\S]*?\n\}/);
   assert.ok(match, 'frontend URL normalizer exists');
   const sandbox = {
-    window: { HM: { api: { mediaUrl: (value) => value[0] === '/' ? 'https://api.example.test' + value : value } } },
+    window: { HM: { api: { mediaUrl: (value) => new URL(value, 'https://api.example.test/').href } } },
     rayinBase: () => 'https://rayin.example.test/v1',
   };
   vm.runInNewContext(match[0] + '\nthis.normalize = normalizeGeneratedImageUrl;', sandbox);
   assert.equal(sandbox.normalize('/api/uploads/media/result.png'), 'https://api.example.test/api/uploads/media/result.png');
+  assert.equal(sandbox.normalize('api/uploads/media/result.png'), 'https://api.example.test/api/uploads/media/result.png');
   assert.equal(sandbox.normalize('data:image/png;base64,Zm9v'), 'data:image/png;base64,Zm9v');
   assert.equal(sandbox.normalize('blob:https://app.example.test/id'), 'blob:https://app.example.test/id');
   assert.equal(sandbox.normalize('https://cdn.example.test/result.png'), 'https://cdn.example.test/result.png');

@@ -409,7 +409,9 @@
     var value = String(url || '');
     if (!value) return '';
     if (/^(https?:|data:|blob:)/i.test(value)) return value;
-    if (value.charAt(0) === '/' && origin) return origin + value;
+    if (origin) {
+      try { return new URL(value, origin + '/').href; } catch (e) {}
+    }
     return value;
   };
 

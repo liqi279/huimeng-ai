@@ -6,6 +6,7 @@ const config = require('../config');
 const appConfig = require('../app-config');
 const catalog = require('../catalog');
 const mediaStore = require('../media-store');
+const { imageCandidates } = require('../image-url');
 const userData = require('../user-data');
 const jobs = require('../jobs');
 const { triggerWorker } = require('../scf-invoke');
@@ -409,24 +410,8 @@ async function persistRemoteImage(url, base, key) {
   /* 候选地址：上游给相对路径时，按接入 base / 站点根 / base+路径 三种拼法都试一次。
      实测该上游只回 /api/uploads/media/...（相对），外部一律 404，
      所以这里把所有可能的主机拼法都走一遍，能取到字节就能转存。 */
-  const candidates = [];
-  if (/^https?:\/\//i.test(url)) {
-    candidates.push(url);
-  } else if (url.charAt(0) === '/') {
-    const bases = [base, 'https://www.rayinai.com/v1', 'https://www.rayinai.com'];
-    bases.forEach((b) => {
-      if (!b) return;
-      try {
-        const u = new URL(url, b).href;
-        if (candidates.indexOf(u) < 0) candidates.push(u);
-      } catch (e) {}
-      const joined = String(b).replace(/\/+$/, '') + url;
-      if (candidates.indexOf(joined) < 0) candidates.push(joined);
-    });
-  } else {
-    /* 不是可访问的地址（相对路径补全失败等）：原样透传，让前端/历史记录至少留痕 */
-    return { url, warning: '上游图片地址不可直接访问' };
-  }
+  const candidates = imageCandidates(url, base);
+  if (!candidates.length) return { url, warning: '上游图片地址格式不支持' };
 
   const tryLoad = async (candidate, withAuth) => {
     const headers = Object.assign({ Accept: 'image/*, */*;q=0.8' }, UPSTREAM_BROWSER_HEADERS);
