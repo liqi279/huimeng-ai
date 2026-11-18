@@ -171,9 +171,30 @@ async function platformOpenAIKey() {
   return { key: '', base: '', model: '', at: now };
 }
 
+/* 通用 KV：生图通道熔断状态等运行时开关存在这里，不新增表 */
+async function getKV(key) {
+  const map = await rows();
+  return pick(map, [key]);
+}
+
+async function setKV(key, value) {
+  try {
+    await ensureTable();
+    await userStore.q(
+      'INSERT INTO app_config (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
+      [String(key), String(value)],
+    );
+    cache.at = 0;
+  } catch (err) {
+    console.error('[app-config] 写入失败：' + (err && err.message));
+  }
+}
+
 module.exports = {
   getGemini,
   getOpenAI,
   normalizeBase,
   platformOpenAIKey,
+  getKV,
+  setKV,
 };
