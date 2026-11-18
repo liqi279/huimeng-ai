@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-18T18:20:49.000Z",
+  "generatedAt": "2026-11-18T18:22:26.000Z",
   "source": "huimeng_library.books",
-  "total": 948,
+  "total": 949,
   "areas": {
     "paint": 749,
-    "concept": 175,
+    "concept": 176,
     "ref": 24
   },
   "books": [
@@ -146,6 +146,20 @@
       "pdfKey": "api/library/file/library/books/sakuga-mad-20261119-d-2.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/sakuga-mad-20261119-d-2.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwmg7l4m-0a54fe",
+      "sortNo": 0,
+      "title": "狼的孩子雨和雪 · 线稿设定资料集",
+      "author": "スタジオ地図 / 萌绘图库",
+      "intro": "来源：本机原画资料《《狼的孩子雨和雪》》；原压缩包《[设定集]狼的孩子雨和雪 线稿设定资料集.zip》。第 1-78 页（共 78 页）。",
+      "pageCount": 78,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/wolf-children-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/wolf-children-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
