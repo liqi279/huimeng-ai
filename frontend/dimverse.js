@@ -262,6 +262,14 @@
     if (dimPage) return;
     dimPage = el('div', 'dv-page');
     dimPage.setAttribute('aria-hidden', 'true');
+    /* 关键视觉底层直接由页面节点持有，避免旧缓存样式把整个次元空间渲染成纯黑。 */
+    dimPage.style.backgroundColor = '#070817';
+    dimPage.style.backgroundImage =
+      'radial-gradient(ellipse at 18% 12%, rgba(34,211,238,.13), transparent 54%),' +
+      'radial-gradient(ellipse at 84% 88%, rgba(168,85,247,.16), transparent 58%),' +
+      'repeating-linear-gradient(0deg, rgba(34,211,238,.055) 0 1px, transparent 1px 48px),' +
+      'repeating-linear-gradient(90deg, rgba(34,211,238,.055) 0 1px, transparent 1px 48px),' +
+      'linear-gradient(160deg, #050817 0%, #100a24 52%, #070817 100%)';
 
     /* 顶栏 */
     var topbar = el('div', 'dv-topbar');
@@ -664,13 +672,27 @@
       if (!dimTitleIntroStarted) {
         dimTitleIntroStarted = true;
         var title = dimPage.querySelector('.dv-title');
-        startTitleParticleIntro(dimPage.querySelector('.dv-center'), title, function () {
+        var completed = false;
+        function finishTitleIntro() {
+          if (completed) return;
+          completed = true;
+          if (title) title.classList.remove('dv-title-building');
+          var particleCanvas = dimPage.querySelector('.dv-title-particles');
+          if (particleCanvas) particleCanvas.remove();
           if (dimStartBtn && dimStartBtn.isConnected) {
             dimStartBtn.disabled = false;
             dimStartBtn.classList.remove('is-pending');
             dimStartBtn.classList.add('is-ready');
           }
-        });
+        }
+        /* 无论 Canvas/字体采样/浏览器动画是否异常，都不能让欢迎页永久黑屏。 */
+        try {
+          startTitleParticleIntro(dimPage.querySelector('.dv-center'), title, finishTitleIntro);
+        } catch (introError) {
+          console.error('[Dimverse] title particle intro failed:', introError);
+          finishTitleIntro();
+        }
+        window.setTimeout(finishTitleIntro, 5200);
       }
     });
   }
