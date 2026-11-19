@@ -20062,10 +20062,20 @@ a.lib-btn {
   background-clip: text;
   color: transparent;
   text-shadow: 0 0 40px rgba(168, 85, 247, 0.35);
-  animation: dv-title-entry 1.35s cubic-bezier(0.18, 0.82, 0.22, 1) both,
-             dv-title-glitch 7.4s steps(1, end) 1.35s infinite;
+  animation: dv-title-glitch 7.4s steps(1, end) 3.1s infinite;
   will-change: transform, filter;
 }
+.dv-title-building { opacity: 0 !important; animation: none !important; }
+.dv-title-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.dv-title { z-index: 3; }
 .dv-title::before,
 .dv-title::after {
   content: attr(data-text);
@@ -20109,6 +20119,8 @@ a.lib-btn {
 }
 @media (prefers-reduced-motion: reduce) {
   .dv-title, .dv-title::before, .dv-title::after { animation: none !important; }
+  .dv-title-building { opacity: 1 !important; }
+  .dv-title-particles { display: none !important; }
   .dv-title { opacity: 1; transform: none; filter: none; }
 }
 
