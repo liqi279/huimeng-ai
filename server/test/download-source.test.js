@@ -114,7 +114,6 @@ test('download route uses the shared allowlist and validates every redirect hop'
     assert.ok(code.includes('1000 / 30'), 'background vortex is throttled to reduce continuous CPU usage');
     assert.ok(code.includes('1000 / 45'), 'particle intro rendering is frame-throttled');
     assert.ok(code.includes('translate3d('), 'floating symbols update via compositor transforms');
-    assert.ok(code.includes('1000 / 1000'), 'placeholder');
     assert.ok(code.includes('mctx.measureText(titleText)'), 'particle target points have a font-metrics fallback');
     assert.ok(code.includes('style.fontWeight, style.fontSize, style.fontFamily'), 'canvas text mask uses a valid font shorthand');
     assert.ok(code.includes('prepareTitleCharacters'), 'title characters are prepared for independent glitch timing');
