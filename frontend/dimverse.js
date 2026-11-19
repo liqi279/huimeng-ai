@@ -693,65 +693,62 @@
     ctx.translate(s.x, s.y + Math.sin(now * 0.004) * (s.phase === 'playing' ? 1.5 : 0));
     ctx.rotate(s.tilt);
     ctx.scale(1 + s.squash, 1 - s.squash * 0.7 + breathe);
-    var wobble = Math.sin(now * 0.004 + s.x * 0.012) * (1.2 + speed * 2.4);
+    var wobble = Math.sin(now * 0.004 + s.x * 0.012) * (0.45 + speed * 1.1);
     traceDangoSlime(ctx, wobble);
-    ctx.shadowColor = 'rgba(15,48,70,.2)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 7;
-    var body = ctx.createRadialGradient(-24, -39, 5, 2, -3, 94);
-    body.addColorStop(0, '#effaff'); body.addColorStop(0.42, '#d7edf7');
-    body.addColorStop(0.78, '#bdddeb'); body.addColorStop(1, '#9fbed0');
+    ctx.shadowColor = 'rgba(64,91,110,.2)'; ctx.shadowBlur = 15; ctx.shadowOffsetY = 7;
+    var body = ctx.createRadialGradient(-24, -32, 5, 2, 5, 91);
+    body.addColorStop(0, '#f0f8ff'); body.addColorStop(0.54, '#d8eaf7');
+    body.addColorStop(0.86, '#b8d2e5'); body.addColorStop(1, '#98b7cf');
     ctx.fillStyle = body; ctx.fill();
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
     ctx.save(); traceDangoSlime(ctx, wobble); ctx.clip();
-    var softLight = ctx.createRadialGradient(-31, -39, 1, -22, -26, 61);
-    softLight.addColorStop(0, 'rgba(255,255,255,.44)');
-    softLight.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = softLight; ctx.fillRect(-74, -64, 148, 122);
-    var underside = ctx.createLinearGradient(0, 8, 0, 52);
-    underside.addColorStop(0, 'rgba(88,129,152,0)');
-    underside.addColorStop(1, 'rgba(88,129,152,.18)');
-    ctx.fillStyle = underside; ctx.fillRect(-72, 0, 144, 56);
+    var wash = ctx.createRadialGradient(-25, -27, 2, -17, -22, 58);
+    wash.addColorStop(0, 'rgba(255,255,255,.3)'); wash.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = wash; ctx.fillRect(-74, -59, 148, 118);
+    for (var grain = 0; grain < 46; grain += 1) {
+      var gx = Math.sin((grain + 1) * 127.1) * 68;
+      var gy = Math.sin((grain + 1) * 311.7) * 46;
+      ctx.globalAlpha = 0.035 + (grain % 4) * 0.012;
+      ctx.fillStyle = grain % 3 ? '#f8fcff' : '#7b9cb7';
+      ctx.beginPath(); ctx.ellipse(gx, gy, 0.7 + grain % 3 * 0.25, 0.6 + grain % 2 * 0.3, grain, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
     ctx.restore();
     ctx.save(); traceDangoSlime(ctx, wobble);
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(100,132,151,.72)'; ctx.lineWidth = 4.2; ctx.stroke();
-    ctx.translate(0, -0.7); ctx.strokeStyle = 'rgba(240,250,255,.42)'; ctx.lineWidth = 1.25; ctx.stroke();
+    ctx.strokeStyle = 'rgba(105,135,157,.76)'; ctx.lineWidth = 4.1; ctx.stroke();
+    ctx.translate(-0.7, 0.45); ctx.strokeStyle = 'rgba(179,207,225,.48)'; ctx.lineWidth = 1.35; ctx.stroke();
     ctx.restore();
     var lookX = Math.max(-2, Math.min(2, s.vx / 150));
     var lookY = Math.max(-1.5, Math.min(1.5, s.vy / 240));
     var blinking = now < s.blinkUntil;
-    ctx.strokeStyle = '#24313b'; ctx.fillStyle = '#24313b'; ctx.lineWidth = 3.7; ctx.lineCap = 'round';
-    [-17, 14].forEach(function (eyeX, i) {
+    ctx.strokeStyle = '#283641'; ctx.fillStyle = '#283641'; ctx.lineWidth = 3.1; ctx.lineCap = 'round';
+    [-18, 18].forEach(function (eyeX) {
       if (blinking) {
         ctx.beginPath(); ctx.moveTo(eyeX - 4, -27); ctx.quadraticCurveTo(eyeX, -23, eyeX + 4, -27); ctx.stroke();
       } else {
-        var offset = i ? 2 : -2;
-        ctx.beginPath(); ctx.moveTo(eyeX + lookX, -38 + lookY);
-        ctx.quadraticCurveTo(eyeX + offset + lookX, -32 + lookY, eyeX + 3 + lookX, -25 + lookY); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(eyeX + lookX, -27 + lookY, 3.1, 3.5, 0, 0, Math.PI * 2); ctx.fill();
       }
     });
-    var blush = ctx.createRadialGradient(0, 0, 0, 0, 0, 9);
-    blush.addColorStop(0, 'rgba(244,151,173,.45)'); blush.addColorStop(1, 'rgba(244,151,173,0)');
-    ctx.fillStyle = blush;
-    ctx.beginPath(); ctx.ellipse(-34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.ellipse(34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(70,105,126,.68)'; ctx.lineWidth = 1.7;
-    ctx.beginPath(); ctx.arc(0, -2, 4, 0.2, Math.PI - 0.2); ctx.stroke();
+    ctx.fillStyle = 'rgba(227,119,142,.34)';
+    ctx.beginPath(); ctx.ellipse(-31, -26, 9, 7, -0.12, 0, Math.PI * 2); ctx.ellipse(31, -26, 9, 7, 0.12, 0, Math.PI * 2); ctx.fill();
     if (speed > 0.12) {
-      ctx.strokeStyle = 'rgba(100,132,151,.48)'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(0, 3, 4, 0.15, Math.PI - 0.15); ctx.stroke();
+      ctx.strokeStyle = 'rgba(133,89,103,.8)'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(0, -20, 3, 0.2, Math.PI - 0.2); ctx.stroke();
     }
     ctx.restore();
   }
 
   function traceDangoSlime(ctx, wobble) {
     ctx.beginPath();
-    ctx.moveTo(-62, 39);
-    ctx.bezierCurveTo(-69, 33, -68, 15, -65, -2);
-    ctx.bezierCurveTo(-62, -27, -48, -48, -29, -53 - wobble * 0.35);
-    ctx.bezierCurveTo(-12, -59 - wobble, 11, -59 + wobble * 0.3, 29, -51);
-    ctx.bezierCurveTo(50, -43, 64, -23, 67, -1);
-    ctx.bezierCurveTo(70, 15, 69, 32, 62, 40);
-    ctx.bezierCurveTo(53, 49, 29, 48 + wobble * 0.15, 10, 48);
-    ctx.bezierCurveTo(-14, 50, -48, 50 - wobble * 0.12, -62, 39);
+    ctx.moveTo(-68, 40);
+    ctx.bezierCurveTo(-76, 35, -76, 16, -72, -4);
+    ctx.bezierCurveTo(-68, -29, -50, -47, -29, -51 - wobble * 0.25);
+    ctx.bezierCurveTo(-13, -56 - wobble * 0.18, 8, -56 + wobble * 0.18, 26, -50);
+    ctx.bezierCurveTo(51, -44, 68, -26, 72, -4);
+    ctx.bezierCurveTo(76, 15, 75, 34, 67, 41);
+    ctx.bezierCurveTo(52, 49, 27, 49 + wobble * 0.12, 8, 48);
+    ctx.bezierCurveTo(-18, 52, -51, 51 - wobble * 0.12, -68, 40);
     ctx.closePath();
   }
 
