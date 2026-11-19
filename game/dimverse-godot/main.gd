@@ -111,10 +111,14 @@ func _process(delta: float) -> void:
 
 func _update_particles() -> void:
 	for particle in particles:
+		var target: Vector2 = particle["target"]
+		if state == IntroState.MASCOT_FORM:
+			# 保持已汇聚的团子轮廓，只做轻微能量脉动，不能在阶段切换时退回起点。
+			particle["position"] = target + Vector2(sin(elapsed * 7.0 + target.x * 0.04) * 1.4, cos(elapsed * 5.0 + target.y * 0.03) * 0.8)
+			continue
 		var t := clampf((elapsed - float(particle["delay"])) / 1.25, 0.0, 1.0)
 		var eased := 1.0 - pow(1.0 - t, 3.0)
 		var start: Vector2 = particle["start"]
-		var target: Vector2 = particle["target"]
 		particle["position"] = start.lerp(target, eased)
 
 func _step_mascot(delta: float, allow_input: bool) -> void:
