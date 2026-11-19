@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T12:12:57.000Z",
+  "generatedAt": "2026-11-19T12:18:12.000Z",
   "source": "huimeng_library.books",
-  "total": 976,
+  "total": 977,
   "areas": {
     "paint": 749,
-    "concept": 203,
+    "concept": 204,
     "ref": 24
   },
   "books": [
@@ -538,6 +538,20 @@
       "pdfKey": "api/library/file/library/books/49c76c0d74-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/49c76c0d74-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnijugb-e64931",
+      "sortNo": 0,
+      "title": "悠哉日常大王 · 动画资料设定线稿集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《悠哉日常大王》；原压缩包《[设定集]悠哉日常大王 动画资料设定线稿集【主要是角色、道具、场景的设定资料】.zip》。第 1-90 页（共 90 页）。",
+      "pageCount": 90,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/70f1d9948f-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/70f1d9948f-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
