@@ -142,6 +142,19 @@ test('download route uses the shared allowlist and validates every redirect hop'
 
 
 
+  const godotScript = fs.readFileSync(require.resolve('../../game/dimverse-godot/main.gd'), 'utf8');
+  const godotProject = fs.readFileSync(require.resolve('../../game/dimverse-godot/project.godot'), 'utf8');
+  assert.ok(source.includes("el('button', 'dv-start-btn', '开启')"), 'the opening is user-triggered by the page button');
+  assert.ok(source.includes("new URL('./dimverse/game/index.html'"), 'Godot is embedded as a relative overlay resource');
+  assert.ok(source.includes("event.data === 'hm-godot-ready'"), 'the Godot loader is hidden until the transparent canvas is ready');
+  assert.ok(source.includes("event.data === 'hm-godot-landed'"), 'landing reveals the page-native controls tutorial');
+  assert.ok(sourceStyles.includes('.dv-godot-overlay') && sourceStyles.includes('background: transparent !important'), 'Godot overlay does not paint over the original page');
+  assert.ok(godotProject.includes('viewport/transparent_background=true'), 'Godot viewport is configured with alpha transparency');
+  assert.ok(godotScript.includes('Deliberately no world/background/grid drawing'), 'Godot only draws the mascot/gameplay layer');
+  assert.ok(!godotScript.includes('_draw_cyber_world'), 'Godot does not redraw the webpage background');
+  assert.ok(godotScript.includes('JavaScriptBridge.create_callback(_on_start_from_web)'), 'the page button starts the Godot intro through the browser bridge');
+  assert.ok(godotScript.includes('IntroState.TITLE_PARTICLES') && godotScript.includes('IntroState.MASCOT_FALL'), 'Godot owns the particle-to-mascot intro states');
+
   const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
   original.searchParams.set('view', 'dimverse');
   assert.equal(original.pathname, '/huimeng-ai/');

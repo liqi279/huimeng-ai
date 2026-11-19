@@ -12,6 +12,8 @@ on:
       - ".github/workflows/deploy-pages.yml"
       - "deploy/dimverse/index.html"
       - "frontend/dimverse.js"
+      - "frontend/styles.css"
+      - "game/dimverse-godot/project.godot"
       - "deploy/assets/hm-s29-b9fa10c0.js"
       - "server/test/download-source.test.js"
 
@@ -30,14 +32,14 @@ jobs:
           version: 4.4.1
           use-dotnet: false
           include-templates: true
+      - name: Build Pages source bundle
+        run: npm run build
       - name: Install server dependencies and run regression tests
         run: npm ci --prefix server && npm test --prefix server
       - name: Check Dimverse JavaScript syntax
         run: |
           node --check frontend/dimverse.js
           node --check deploy/assets/hm-s29-b9fa10c0.js
-      - name: Validate Pages source bundle
-        run: npm run build
       - name: Parse project and export Web build
         run: |
           godot --headless --path game/dimverse-godot --editor --quit
