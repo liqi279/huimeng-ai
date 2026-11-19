@@ -5499,6 +5499,15 @@
       <button class="modal-close" id="hmProfileClose" type="button" aria-label="关闭">✕</button>
       <span class="modal-kicker">个人资料</span>
       <h2>编辑个人资料</h2>
+      <div class="hm-profile-avatar-row">
+        <span class="hm-profile-avatar" id="hmProfileAvatar" aria-label="当前头像">我</span>
+        <div class="hm-profile-avatar-actions">
+          <input id="hmProfileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          <button class="hm-pill hm-pill-primary" id="hmProfileAvatarUpload" type="button">更换头像</button>
+          <button class="hm-pill hm-pill-ghost" id="hmProfileAvatarRemove" type="button">恢复默认</button>
+          <small>支持 JPG / PNG / WebP，最大 10MB，自动裁剪为正方形</small>
+        </div>
+      </div>
       <div class="hm-profile-field">
         <label for="hmProfileName">显示名</label>
         <input id="hmProfileName" type="text" maxlength="64" placeholder="例如：小明">
