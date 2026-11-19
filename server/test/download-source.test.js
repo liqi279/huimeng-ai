@@ -90,12 +90,18 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.match(source, /isTrustedDownloadHost\(host, req, config\)/);
   assert.match(source, /fetchTrustedDownload\(target, req, config\)/);
   assert.doesNotMatch(source, /fetch\(target\.toString\(\), \{ redirect: ['"]follow['"] \}\)/);
-});test('次元宇宙专属路由保留 hm_v、其他参数和 hash', () => {
+});test('次元宇宙专属路由保留 hm_v、其他参数和 hash，并进入实际 Pages 产物', () => {
   const source = fs.readFileSync(require.resolve('../../frontend/dimverse.js'), 'utf8');
-  assert.match(source, /searchParams\.set\('view', 'dimverse'\)/);
-  assert.match(source, /searchParams\.delete\('view'\)/);
-  assert.match(source, /addEventListener\('popstate', syncDimverseFromLocation\)/);
-  assert.match(source, /if \(isDimverseRoute\(\)\) syncDimverseFromLocation\(\)/);
+  const deployed = fs.readFileSync(require.resolve('../../deploy/assets/hm-s29-b9fa10c0.js'), 'utf8');
+  const html = fs.readFileSync(require.resolve('../../deploy/index.html'), 'utf8');
+
+  for (const code of [source, deployed]) {
+    assert.match(code, /searchParams\\.set\\('view', 'dimverse'\\)/);
+    assert.match(code, /searchParams\\.delete\\('view'\\)/);
+    assert.match(code, /addEventListener\\('popstate', syncDimverseFromLocation\\)/);
+    assert.match(code, /if \\(isDimverseRoute\\(\\)\\) syncDimverseFromLocation\\(\\)/);
+  }
+  assert.match(html, /\\.\\/assets\\/hm-s29-b9fa10c0\\.js/);
 
   const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
   original.searchParams.set('view', 'dimverse');
@@ -111,4 +117,3 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.equal(original.searchParams.get('lang'), 'zh');
   assert.equal(original.hash, '#top');
 });
-
