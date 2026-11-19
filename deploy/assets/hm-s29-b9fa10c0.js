@@ -413,6 +413,11 @@
   }
 
   function leaveDimverse() {
+    /* 独立 /dimverse/ 入口通过同源 iframe 展示主应用；离开时回到站点根路径。 */
+    if (window.top !== window.self) {
+      window.top.location.href = new URL('../', window.location.href).href;
+      return;
+    }
     if (transitioning) return;
     runVortexTransition(dimVortexBtn, function () {
       updateDimverseRoute(false, false);
