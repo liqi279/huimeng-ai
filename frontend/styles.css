@@ -20764,9 +20764,9 @@ body.dv-open .hm-page {
 .dv-godot-overlay {
   position: absolute;
   z-index: 4;
-  inset: 64px 0 0;
+  inset: 0;
   width: 100%;
-  height: calc(100% - 64px);
+  height: 100%;
   border: 0;
   background: transparent !important;
   opacity: 0;
@@ -20813,5 +20813,5 @@ body.dv-open .hm-page {
 @media (max-width: 640px) {
   .dv-game-tutorial { top: 72px; right: 10px; width: min(270px, calc(100vw - 20px)); }
   .dv-game-score { top: 72px; left: 10px; }
-  .dv-godot-overlay { inset: 56px 0 0; height: calc(100% - 56px); }
+  .dv-godot-overlay { inset: 0; height: 100%; }
 }
