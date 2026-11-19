@@ -20050,8 +20050,9 @@ a.lib-btn {
 .dv-sym {
   position: absolute;
   font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols", sans-serif;
-  will-change: transform, left, top;
+  will-change: transform;
   user-select: none;
+  contain: layout style paint;
 }
 
 .dv-center {
@@ -20097,6 +20098,17 @@ a.lib-btn {
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0.35px rgba(235, 250, 255, 0.38);
+  text-shadow:
+    0 1px 0 #c4b5fd,
+    0 2px 0 #a78bfa,
+    0 3px 0 #7c3aed,
+    0 4px 0 #5b21b6,
+    0 5px 0 #3b0764,
+    0 7px 0 rgba(25, 12, 66, 0.95),
+    0 10px 16px rgba(3, 4, 24, 0.78),
+    0 0 22px rgba(34, 211, 238, 0.28);
+  transform: translateZ(0);
   animation: dv-char-jitter var(--dv-char-duration, 8s) steps(1, end) var(--dv-char-delay, 0s) infinite;
 }
 .dv-title-char::before,
