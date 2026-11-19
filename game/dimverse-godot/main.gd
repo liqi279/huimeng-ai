@@ -62,9 +62,12 @@ func _build_mascot_particles() -> void:
 			if absf(y + 8.0) < 8.0 and (absf(x - 16.0) < 5.0 or absf(x + 16.0) < 5.0):
 				continue
 			var target := Vector2(640.0 + x, 205.0 + y)
-			var angle := rng.randf_range(0.0, TAU)
-			var radius := rng.randf_range(250.0, 720.0)
-			var start := Vector2(640.0 + cos(angle) * radius, 330.0 + sin(angle) * radius * 0.42)
+			# 粒子從原歡迎標題所在的水平字帶散開，再向上匯聚成團子；
+			# 不再從整個畫面四周隨機飛入，避免看起來像另一個獨立遊戲開場。
+			var start := Vector2(
+				rng.randf_range(350.0, 930.0),
+				rng.randf_range(335.0, 405.0)
+			)
 			particles.append({
 				"start": start,
 				"position": start,
