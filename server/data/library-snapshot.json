@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T12:18:12.000Z",
+  "generatedAt": "2026-11-19T12:54:21.000Z",
   "source": "huimeng_library.books",
-  "total": 977,
+  "total": 978,
   "areas": {
     "paint": 749,
-    "concept": 204,
+    "concept": 205,
     "ref": 24
   },
   "books": [
@@ -552,6 +552,20 @@
       "pdfKey": "api/library/file/library/books/70f1d9948f-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/70f1d9948f-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnjvn6d-155e57",
+      "sortNo": 0,
+      "title": "Re-Creators · ReCreators 动画原画设定资料集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《Re-Creators》；原压缩包《[线稿集]ReCreators 动画原画设定资料集【主要是角色的设定稿】.7z》。第 1-59 页（共 59 页）。",
+      "pageCount": 59,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/a98f571436-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/a98f571436-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
