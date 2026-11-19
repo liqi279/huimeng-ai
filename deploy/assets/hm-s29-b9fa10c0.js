@@ -618,7 +618,7 @@
   /* Godot 4 Web 游戏是次元宇宙唯一正式入口；旧查询参数入口自动迁移。 */
   function openGodotDimverse(replace) {
     var target = new URL(window.location.href);
-    target.pathname = target.pathname.replace(/\/?$/, '/') + 'dimverse/';
+    target.pathname = target.pathname.endsWith('/') ? target.pathname + 'dimverse/' : target.pathname + '/dimverse/';
     target.searchParams.delete('view');
     var next = target.pathname + target.search + target.hash;
     var current = window.location.pathname + window.location.search + window.location.hash;
