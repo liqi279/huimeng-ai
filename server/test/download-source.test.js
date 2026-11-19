@@ -90,4 +90,25 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.match(source, /isTrustedDownloadHost\(host, req, config\)/);
   assert.match(source, /fetchTrustedDownload\(target, req, config\)/);
   assert.doesNotMatch(source, /fetch\(target\.toString\(\), \{ redirect: ['"]follow['"] \}\)/);
+});test('次元宇宙专属路由保留 hm_v、其他参数和 hash', () => {
+  const source = fs.readFileSync(require.resolve('../../frontend/dimverse.js'), 'utf8');
+  assert.match(source, /searchParams\.set\('view', 'dimverse'\)/);
+  assert.match(source, /searchParams\.delete\('view'\)/);
+  assert.match(source, /addEventListener\('popstate', syncDimverseFromLocation\)/);
+  assert.match(source, /if \(isDimverseRoute\(\)\) syncDimverseFromLocation\(\)/);
+
+  const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
+  original.searchParams.set('view', 'dimverse');
+  assert.equal(original.pathname, '/huimeng-ai/');
+  assert.equal(original.searchParams.get('view'), 'dimverse');
+  assert.equal(original.searchParams.get('hm_v'), '1795054083561');
+  assert.equal(original.searchParams.get('lang'), 'zh');
+  assert.equal(original.hash, '#top');
+
+  original.searchParams.delete('view');
+  assert.equal(original.searchParams.has('view'), false);
+  assert.equal(original.searchParams.get('hm_v'), '1795054083561');
+  assert.equal(original.searchParams.get('lang'), 'zh');
+  assert.equal(original.hash, '#top');
 });
+
