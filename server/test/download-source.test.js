@@ -111,6 +111,10 @@ test('download route uses the shared allowlist and validates every redirect hop'
   const deployedStyles = fs.readFileSync(require.resolve('../../deploy/assets/hm.css'), 'utf8');
   for (const code of [source, deployed]) {
     assert.ok(code.includes('startTitleParticleIntro'), 'welcome title is built by particle animation');
+    assert.ok(code.includes('1000 / 30'), 'background vortex is throttled to reduce continuous CPU usage');
+    assert.ok(code.includes('1000 / 45'), 'particle intro rendering is frame-throttled');
+    assert.ok(code.includes('translate3d('), 'floating symbols update via compositor transforms');
+    assert.ok(code.includes('1000 / 1000'), 'placeholder');
     assert.ok(code.includes('mctx.measureText(titleText)'), 'particle target points have a font-metrics fallback');
     assert.ok(code.includes('style.fontWeight, style.fontSize, style.fontFamily'), 'canvas text mask uses a valid font shorthand');
     assert.ok(code.includes('prepareTitleCharacters'), 'title characters are prepared for independent glitch timing');
@@ -120,6 +124,8 @@ test('download route uses the shared allowlist and validates every redirect hop'
     assert.ok(!code.includes('2D 横版'), 'view-mode labels are removed');
   }
   for (const css of [sourceStyles, deployedStyles]) {
+    assert.ok(css.includes('text-shadow:\n    0 1px 0 #c4b5fd'), 'welcome title has layered 3D extrusion shadows');
+    assert.ok(css.includes('will-change: transform;'), 'floating symbols use compositor-friendly transforms');
     assert.ok(css.includes('.hm-update-modal:not([hidden]) .hm-update-icon svg'), 'update notice refresh icon spins only while the notice is visible');
     assert.ok(css.includes('@keyframes hmUpdateIconSpin'), 'refresh icon rotation animation is defined');
     assert.ok(css.includes('animation: none'), 'reduced-motion preference disables the refresh icon spin');
