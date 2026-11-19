@@ -101,7 +101,7 @@ test('download route uses the shared allowlist and validates every redirect hop'
     assert.match(code, /addEventListener\\('popstate', syncDimverseFromLocation\\)/);
     assert.match(code, /if \\(isDimverseRoute\\(\\)\\) syncDimverseFromLocation\\(\\)/);
   }
-  assert.match(html, /\\.\\/assets\\/hm-s29-b9fa10c0\\.js/);
+  assert.ok(html.includes('./assets/hm-s29-b9fa10c0.js'), 'Pages HTML loads the patched Dimverse asset');
 
   const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
   original.searchParams.set('view', 'dimverse');
