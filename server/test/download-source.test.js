@@ -83,3 +83,11 @@ test('resolves generated API paths against the backend origin and preserves inli
   assert.equal(sandbox.normalize('blob:https://app.example.test/id'), 'blob:https://app.example.test/id');
   assert.equal(sandbox.normalize('https://cdn.example.test/result.png'), 'https://cdn.example.test/result.png');
 });
+test('download route uses the shared allowlist and validates every redirect hop', () => {
+  const source = fs.readFileSync(require.resolve('../src/index.js'), 'utf8');
+  assert.match(source, /require\(['"]\.\/download-source['"]\)/);
+  assert.match(source, /isConfiguredCosHost\(host, config\)/);
+  assert.match(source, /isTrustedDownloadHost\(host, req, config\)/);
+  assert.match(source, /fetchTrustedDownload\(target, req, config\)/);
+  assert.doesNotMatch(source, /fetch\(target\.toString\(\), \{ redirect: ['"]follow['"] \}\)/);
+});
