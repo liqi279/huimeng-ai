@@ -15,6 +15,8 @@ on:
       - "frontend/styles.css"
       - "game/dimverse-godot/project.godot"
       - "deploy/assets/hm-s29-b9fa10c0.js"
+      - "deploy/assets/hm.css"
+      - "scripts/ensure-deploy.js"
       - "server/test/download-source.test.js"
 
 permissions:

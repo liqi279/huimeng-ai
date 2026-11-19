@@ -145,10 +145,16 @@ test('download route uses the shared allowlist and validates every redirect hop'
   const godotScript = fs.readFileSync(require.resolve('../../game/dimverse-godot/main.gd'), 'utf8');
   const godotProject = fs.readFileSync(require.resolve('../../game/dimverse-godot/project.godot'), 'utf8');
   assert.ok(source.includes("el('button', 'dv-start-btn', '开启')"), 'the opening is user-triggered by the page button');
+  assert.ok(deployed.includes("el('button', 'dv-start-btn', '开启')"), 'the actual Pages script also creates the opening button');
+  assert.equal(deployed, source, 'the production Dimverse bundle must match the canonical controller source');
   assert.ok(source.includes("new URL('./dimverse/game/index.html'"), 'Godot is embedded as a relative overlay resource');
+  assert.ok(deployed.includes("new URL('./dimverse/game/index.html'"), 'the production bundle points to the exported Godot game');
   assert.ok(source.includes("event.data === 'hm-godot-ready'"), 'the Godot loader is hidden until the transparent canvas is ready');
+  assert.ok(deployed.includes("event.data === 'hm-godot-ready'"), 'the production bundle listens for the Godot ready signal');
   assert.ok(source.includes("event.data === 'hm-godot-landed'"), 'landing reveals the page-native controls tutorial');
   assert.ok(sourceStyles.includes('.dv-godot-overlay') && sourceStyles.includes('background: transparent !important'), 'Godot overlay does not paint over the original page');
+  assert.ok(deployedStyles.includes('.dv-start-btn'), 'the deployed stylesheet makes the opening button visible');
+  assert.ok(deployedStyles.includes('.dv-godot-overlay'), 'the deployed stylesheet configures the transparent game overlay');
   assert.ok(godotProject.includes('viewport/transparent_background=true'), 'Godot viewport is configured with alpha transparency');
   assert.ok(godotScript.includes('Deliberately no world/background/grid drawing'), 'Godot only draws the mascot/gameplay layer');
   assert.ok(!godotScript.includes('_draw_cyber_world'), 'Godot does not redraw the webpage background');
