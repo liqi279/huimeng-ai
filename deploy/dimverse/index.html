@@ -7,22 +7,16 @@
   <meta name="description" content="次元宇宙 · 绘梦 AI 创作世界">
   <title>次元宇宙 · 绘梦</title>
   <link rel="icon" href="../favicon.ico">
-  <style>
-    * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #070b18; }
-    .universe { display: block; width: 100%; height: 100%; border: 0; background: #070b18; }
-    .loading { position: fixed; inset: 0; z-index: 2; display: grid; place-items: center; color: #a5b4fc; background: #070b18; font: 14px/1.6 system-ui, sans-serif; pointer-events: none; }
-    .loading[hidden] { display: none; }
-  </style>
-</head>
-<body>
-  <div class="loading" id="loading">正在启动次元宇宙游戏引擎…</div>
-  <iframe class="universe" title="次元宇宙游戏" src="game/index.html" allow="fullscreen; gamepad" allowfullscreen></iframe>
   <script>
-    const frame = document.querySelector('.universe');
-    frame.addEventListener('load', () => {
-      document.getElementById('loading').hidden = true;
-    });
+    (function () {
+      /* 独立路径只是原主站次元宇宙视图的快捷入口，不单独启动 Godot 全屏场景。 */
+      var target = new URL('../', window.location.href);
+      target.search = window.location.search;
+      target.searchParams.set('view', 'dimverse');
+      target.hash = window.location.hash;
+      window.location.replace(target.href);
+    })();
   </script>
-</body>
+</head>
+<body></body>
 </html>
