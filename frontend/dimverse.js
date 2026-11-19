@@ -615,22 +615,13 @@
     }
   }
 
-  /* Godot 4 Web 游戏是次元宇宙唯一正式入口。
-   * 旧 ?view=dimverse 链接自动迁移到独立路径，并保留 hm_v 等缓存参数。 */
-  function openGodotDimverse(replace) {
-    var target = new URL(window.location.href);
-    target.pathname = target.pathname.endsWith('/') ? target.pathname + 'dimverse/' : target.pathname + '/dimverse/';
-    target.searchParams.delete('view');
-    var next = target.pathname + target.search + target.hash;
-    var current = window.location.pathname + window.location.search + window.location.hash;
-    if (next === current) return;
-    if (replace) window.location.replace(next);
-    else window.location.assign(next);
-  }
-
+  /* 次元宇宙沿用绘梦主页面的 DOM 与背景；Godot 只作为透明游戏逻辑层，
+   * 不允许把 Godot 默认启动页或独立场景替换成用户看到的网页背景。 */
   function syncDimverseFromLocation() {
     if (isDimverseRoute()) {
-      openGodotDimverse(true);
+      if (!dimPage) buildDimPage();
+      document.body.classList.add('dv-open');
+      showDimPage();
       return;
     }
     hideDimPage();
@@ -641,7 +632,9 @@
   function enterDimverse() {
     if (transitioning) return;
     runVortexTransition(vortexBtn, function () {
-      openGodotDimverse(false);
+      updateDimverseRoute(true, false);
+      document.body.classList.add('dv-open');
+      showDimPage();
     });
   }
 
