@@ -289,6 +289,7 @@
     /* 中心文案 */
     var center = el('div', 'dv-center');
     center.innerHTML = '<h1 class="dv-title dv-title-building" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
+    prepareTitleCharacters(center.querySelector('.dv-title'));
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
@@ -512,6 +513,27 @@
     }
     raf = requestAnimationFrame(frame);
     return function () { alive = false; cancelAnimationFrame(raf); canvas.remove(); };
+  }
+
+  function prepareTitleCharacters(title) {
+    if (!title || title.dataset.charactersReady === 'true') return;
+    var text = title.textContent || '';
+    title.textContent = '';
+    Array.from(text).forEach(function (character, index) {
+      var span = document.createElement('span');
+      span.className = 'dv-title-char';
+      span.textContent = character;
+      span.setAttribute('data-char', character);
+      span.setAttribute('aria-hidden', 'true');
+      span.style.setProperty('--dv-char-delay', (-rnd(0, 8)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-duration', rnd(5.5, 10.5).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-cyan-delay', (-rnd(0, 10)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-cyan-duration', rnd(4.5, 9).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-pink-delay', (-rnd(0, 12)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-pink-duration', rnd(5, 11).toFixed(2) + 's');
+      title.appendChild(span);
+    });
+    title.dataset.charactersReady = 'true';
   }
 
   function showDimPage() {
