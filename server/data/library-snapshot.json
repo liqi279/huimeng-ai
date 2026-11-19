@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T13:03:23.000Z",
+  "generatedAt": "2026-11-19T13:07:24.000Z",
   "source": "huimeng_library.books",
-  "total": 983,
+  "total": 986,
   "areas": {
     "paint": 749,
-    "concept": 210,
+    "concept": 213,
     "ref": 24
   },
   "books": [
@@ -636,6 +636,48 @@
       "pdfKey": "api/library/file/library/books/cd3c7c45ac-20261119-3-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/cd3c7c45ac-20261119-3-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnkckoh-e5665f",
+      "sortNo": 0,
+      "title": "Kanon · 原画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《Kanon》；原压缩包《[画集]《Kanon Visual memories》【收录了众多杂志曾经刊登过的绝美彩图，动画版人设师池田和美先生德评语和人物的详细介绍，石原立也监督关于各话精彩之处的解说，以及STAFF和CAST阵容的访谈】.zip》。第 1-132 页（共 132 页）。",
+      "pageCount": 132,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/624da2a724-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/624da2a724-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnkcoxt-4d87f1",
+      "sortNo": 0,
+      "title": "Kanon · 2007的日历画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《Kanon》；原压缩包《[画集]动画《kanon(雪之少女)》的2007的日历画集.7z》。第 1-7 页（共 7 页）。",
+      "pageCount": 7,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/624da2a724-20261119-2-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/624da2a724-20261119-2-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnkd3d7-60b9d7",
+      "sortNo": 0,
+      "title": "Kanon · KEY经典GAL改动画kanon(雪之少女)的线稿原画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《Kanon》；原压缩包《[设定集]KEY经典GAL改动画《kanon(雪之少女)》的线稿原画集【角色和场景】.7z》。第 1-66 页（共 66 页）。",
+      "pageCount": 66,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/624da2a724-20261119-3-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/624da2a724-20261119-3-1.jpg",
       "coverBytes": 0
     },
     {
