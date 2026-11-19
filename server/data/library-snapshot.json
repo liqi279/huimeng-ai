@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T13:00:08.000Z",
+  "generatedAt": "2026-11-19T13:03:23.000Z",
   "source": "huimeng_library.books",
-  "total": 980,
+  "total": 983,
   "areas": {
     "paint": 749,
-    "concept": 207,
+    "concept": 210,
     "ref": 24
   },
   "books": [
@@ -594,6 +594,48 @@
       "pdfKey": "api/library/file/library/books/00983f771e-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/00983f771e-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnk69aq-c6a107",
+      "sortNo": 0,
+      "title": "白箱 · Fanbook画集，主要是一些原画图",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《白箱》；原压缩包《[原画集]TV动画《白箱》的Fanbook画集，主要是一些原画图.rar》。第 1-50 页（共 50 页）。",
+      "pageCount": 50,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/cd3c7c45ac-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/cd3c7c45ac-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnk72w4-fed462",
+      "sortNo": 0,
+      "title": "白箱 · 动画线稿原画集，主要是人物的原画线稿",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《白箱》；原压缩包《[原画集]动画《SHIROBAKO(白箱)》的动画线稿原画集，主要是人物的原画线稿.rar》。第 1-142 页（共 142 页）。",
+      "pageCount": 142,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/cd3c7c45ac-20261119-2-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/cd3c7c45ac-20261119-2-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnk80ca-449322",
+      "sortNo": 0,
+      "title": "白箱 · 画集，这个应该是只保留了彩图的版本",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《白箱》；原压缩包《【画集】TV动画《白箱》的画集，这个应该是只保留了彩图的版本.zip》。第 1-31 页（共 31 页）。",
+      "pageCount": 31,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/cd3c7c45ac-20261119-3-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/cd3c7c45ac-20261119-3-1.jpg",
       "coverBytes": 0
     },
     {
