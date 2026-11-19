@@ -20738,9 +20738,19 @@ body.dv-open .hm-page {
 .cmp-file { position: relative; overflow: hidden; }
 .cmp-file span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ============ 次元宇宙 · 原网页背景上的透明 Godot 游戏层 ============ */
+/* ============ 次元宇宙 · 原网页背景上的透明 Canvas 游戏层 ============ */
 .dv-topbar { z-index: 7; }
 .dv-center { z-index: 2; }
+.dv-browser-game {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  touch-action: none;
+}
 .dv-start-btn {
   position: relative;
   z-index: 5;
@@ -20760,18 +20770,20 @@ body.dv-open .hm-page {
   transition: opacity .22s ease, transform .22s ease, filter .22s ease;
 }
 .dv-start-btn:hover { filter: brightness(1.28); transform: translateY(-2px); box-shadow: 0 0 26px rgba(34,211,238,.42), inset 0 0 16px rgba(168,85,247,.22); }
+.dv-start-btn.is-pending { opacity: 0; visibility: hidden; transform: translateY(8px) scale(.96); pointer-events: none; }
+.dv-start-btn.is-ready { opacity: 1; visibility: visible; transform: translateY(0) scale(1); animation: dv-start-appear .42s cubic-bezier(.2,.8,.2,1) both; }
 .dv-start-btn.is-exiting { opacity: 0; transform: translateY(12px) scale(.72); pointer-events: none; }
-.dv-godot-overlay {
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: transparent !important;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .18s ease;
+@keyframes dv-start-appear {
+  from { opacity: 0; transform: translateY(12px) scale(.92); filter: blur(5px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+.dv-title-dissolving .dv-title-char {
+  animation: dv-char-rise-away .62s cubic-bezier(.16,.72,.24,1) var(--dv-rise-delay, 0s) forwards !important;
+}
+@keyframes dv-char-rise-away {
+  0% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
+  18% { opacity: 1; transform: translate3d(0,-5px,0) scale(1.04); filter: brightness(1.8); }
+  100% { opacity: 0; transform: translate3d(var(--dv-rise-x,0px),-125px,0) rotate(var(--dv-rise-rot,0deg)) scale(.12); filter: blur(5px); }
 }
 .dv-game-tutorial {
   position: absolute;
@@ -20813,5 +20825,5 @@ body.dv-open .hm-page {
 @media (max-width: 640px) {
   .dv-game-tutorial { top: 72px; right: 10px; width: min(270px, calc(100vw - 20px)); }
   .dv-game-score { top: 72px; left: 10px; }
-  .dv-godot-overlay { inset: 0; height: 100%; }
+  .dv-browser-game { inset: 0; height: 100%; }
 }

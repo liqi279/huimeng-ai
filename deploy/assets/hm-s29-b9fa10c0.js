@@ -255,11 +255,21 @@
   var dimSymbols = [];
   var dimRaf = 0;
   var lastSymbolFrame = 0;
+  var dimStartBtn = null;
+  var dimTitleIntroStarted = false;
 
   function buildDimPage() {
     if (dimPage) return;
     dimPage = el('div', 'dv-page');
     dimPage.setAttribute('aria-hidden', 'true');
+    /* 关键视觉底层直接由页面节点持有，避免旧缓存样式把整个次元空间渲染成纯黑。 */
+    dimPage.style.backgroundColor = '#070817';
+    dimPage.style.backgroundImage =
+      'radial-gradient(ellipse at 18% 12%, rgba(34,211,238,.13), transparent 54%),' +
+      'radial-gradient(ellipse at 84% 88%, rgba(168,85,247,.16), transparent 58%),' +
+      'repeating-linear-gradient(0deg, rgba(34,211,238,.055) 0 1px, transparent 1px 48px),' +
+      'repeating-linear-gradient(90deg, rgba(34,211,238,.055) 0 1px, transparent 1px 48px),' +
+      'linear-gradient(160deg, #050817 0%, #100a24 52%, #070817 100%)';
 
     /* 顶栏 */
     var topbar = el('div', 'dv-topbar');
@@ -294,18 +304,21 @@
     var center = el('div', 'dv-center');
     center.innerHTML = '<h1 class="dv-title" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
     prepareTitleCharacters(center.querySelector('.dv-title'));
-    var startBtn = el('button', 'dv-start-btn', '开启');
-    startBtn.type = 'button';
-    startBtn.setAttribute('aria-label', '开启次元宇宙序章');
-    startBtn.addEventListener('click', function () {
-      if (startBtn.disabled) return;
-      startBtn.disabled = true;
-      startBtn.classList.add('is-exiting');
-      window.setTimeout(function () { startBtn.remove(); }, 260);
-      startTitleParticleIntro(center, center.querySelector('.dv-title'));
-      ensureGodotOverlay();
+    dimStartBtn = el('button', 'dv-start-btn is-pending', '开启');
+    dimStartBtn.type = 'button';
+    dimStartBtn.disabled = true;
+    dimStartBtn.setAttribute('aria-label', '开启次元宇宙序章');
+    dimStartBtn.addEventListener('click', function () {
+      if (dimStartBtn.disabled || !dimStartBtn.classList.contains('is-ready')) return;
+      dimStartBtn.disabled = true;
+      dimStartBtn.classList.remove('is-ready');
+      dimStartBtn.classList.add('is-exiting');
+      var title = center.querySelector('.dv-title');
+      if (title) title.classList.add('dv-title-dissolving');
+      window.setTimeout(function () { dimStartBtn.remove(); }, 260);
+      startDimverseGame();
     });
-    center.appendChild(startBtn);
+    center.appendChild(dimStartBtn);
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
@@ -359,11 +372,12 @@
   }
 
   /* ---------- 粒子汇聚成字 · 赛博屏障显形 ---------- */
-  function startTitleParticleIntro(center, title) {
+  function startTitleParticleIntro(center, title, onComplete) {
     if (!center || !title) return;
     title.classList.add('dv-title-building');
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       title.classList.remove('dv-title-building');
+      if (onComplete) onComplete();
       return;
     }
     var oldCanvas = center.querySelector('.dv-title-particles');
@@ -374,6 +388,7 @@
     if (!ctx) {
       canvas.remove();
       title.classList.remove('dv-title-building');
+      if (onComplete) onComplete();
       return;
     }
 
@@ -547,7 +562,10 @@
         title.classList.remove('dv-title-building');
         canvas.style.transition = 'opacity .35s ease';
         canvas.style.opacity = '0';
-        window.setTimeout(function () { canvas.remove(); }, 380);
+        window.setTimeout(function () {
+          canvas.remove();
+          if (onComplete) onComplete();
+        }, 380);
       }
     }
     raf = requestAnimationFrame(frame);
@@ -570,71 +588,199 @@
       span.style.setProperty('--dv-char-cyan-duration', rnd(4.5, 9).toFixed(2) + 's');
       span.style.setProperty('--dv-char-pink-delay', (-rnd(0, 12)).toFixed(2) + 's');
       span.style.setProperty('--dv-char-pink-duration', rnd(5, 11).toFixed(2) + 's');
+      span.style.setProperty('--dv-rise-x', rnd(-90, 90).toFixed(0) + 'px');
+      span.style.setProperty('--dv-rise-rot', rnd(-35, 35).toFixed(0) + 'deg');
+      span.style.setProperty('--dv-rise-delay', rnd(0, 0.18).toFixed(2) + 's');
       title.appendChild(span);
     });
     title.dataset.charactersReady = 'true';
   }
 
-  /* ---------- Godot 透明叠加游戏层 ---------- */
-  var godotFrame = null;
-  var godotStarted = false;
+  /* ---------- 本页 Canvas 游戏层：不依赖外部 iframe/WASM 握手 ---------- */
+  var gameCanvas = null;
+  var gameCtx = null;
+  var gameRaf = 0;
+  var gameState = null;
+  var gameKeys = Object.create(null);
   var tutorialPanel = null;
   var scorePanel = null;
 
-  function ensureGodotOverlay() {
-    if (godotFrame) {
-      godotFrame.style.opacity = '1';
-      if (godotStarted && godotFrame.contentWindow && godotFrame.contentWindow.hmGodotStart) {
-        godotFrame.contentWindow.hmGodotStart();
-      }
-      return;
-    }
-    godotFrame = el('iframe', 'dv-godot-overlay');
-    godotFrame.title = '次元宇宙团子游戏层';
-    godotFrame.setAttribute('aria-label', '次元宇宙团子游戏层');
-    godotFrame.setAttribute('allow', 'autoplay; fullscreen');
-    godotFrame.setAttribute('tabindex', '-1');
-    godotFrame.src = new URL('./dimverse/game/index.html', window.location.href).href;
-    dimPage.appendChild(godotFrame);
-    godotFrame.addEventListener('load', function () {
-      try {
-        var doc = godotFrame.contentDocument;
-        if (doc) {
-          doc.documentElement.style.background = 'transparent';
-          doc.body.style.background = 'transparent';
-        }
-      } catch (e) {}
-    });
-  }
-
   function buildTutorialPanel() {
-    if (tutorialPanel) return;
-    tutorialPanel = el('aside', 'dv-game-tutorial');
-    tutorialPanel.innerHTML = '<strong>次元探索指南 <span>/ CONTROLS</span></strong>' +
-      '<p><b>W A S D</b> / 方向键：移动团子</p>' +
-      '<p>靠近发光晶体即可收集</p>' +
-      '<p>探索原有次元空间</p>';
-    dimPage.appendChild(tutorialPanel);
-    requestAnimationFrame(function () { tutorialPanel.classList.add('is-visible'); });
-    scorePanel = el('div', 'dv-game-score', '能量晶体　00 / 04');
-    dimPage.appendChild(scorePanel);
+    if (!tutorialPanel) {
+      tutorialPanel = el('aside', 'dv-game-tutorial');
+      tutorialPanel.innerHTML = '<strong>次元探索指南 <span>/ CONTROLS</span></strong>' +
+        '<p><b>W A S D</b> / 方向键 / 点按：移动团子</p>' +
+        '<p>靠近发光晶体即可收集</p>' +
+        '<p>探索原有次元空间</p>';
+      dimPage.appendChild(tutorialPanel);
+      scorePanel = el('div', 'dv-game-score', '能量晶体　00 / 04');
+      dimPage.appendChild(scorePanel);
+    }
+    requestAnimationFrame(function () { if (tutorialPanel) tutorialPanel.classList.add('is-visible'); });
   }
 
-  function onGodotMessage(event) {
-    if (!godotFrame || event.source !== godotFrame.contentWindow) return;
-    if (event.data === 'hm-godot-ready') {
-      godotStarted = true;
-      godotFrame.style.opacity = '1';
-      try {
-        if (godotFrame.contentWindow.hmGodotStart) godotFrame.contentWindow.hmGodotStart();
-        godotFrame.contentWindow.focus();
-      } catch (e) {}
-    } else if (event.data === 'hm-godot-landed') {
-      buildTutorialPanel();
-    } else if (typeof event.data === 'string' && event.data.indexOf('hm-godot-score-') === 0) {
-      var score = Number(event.data.slice('hm-godot-score-'.length)) || 0;
-      if (scorePanel) scorePanel.textContent = '能量晶体　' + String(score).padStart(2, '0') + ' / 04';
+  function resizeGame() {
+    if (!gameCanvas || !gameCtx) return;
+    var oldW = gameCanvas.clientWidth || window.innerWidth;
+    var oldH = gameCanvas.clientHeight || window.innerHeight;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    gameCanvas.width = Math.max(1, Math.round(oldW * dpr));
+    gameCanvas.height = Math.max(1, Math.round(oldH * dpr));
+    gameCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (gameState) {
+      var sx = oldW / gameState.width, sy = oldH / gameState.height;
+      gameState.x *= sx; gameState.y *= sy; gameState.floorY = oldH * 0.61;
+      gameState.crystals.forEach(function (c) { c.x *= sx; c.y *= sy; });
+      gameState.width = oldW; gameState.height = oldH;
     }
+  }
+
+  function startDimverseGame() {
+    if (gameState) return;
+    gameCanvas = el('canvas', 'dv-browser-game');
+    gameCanvas.setAttribute('aria-label', '使用方向键或 WASD 移动团子并收集能量晶体');
+    dimPage.appendChild(gameCanvas);
+    gameCtx = gameCanvas.getContext('2d');
+    if (!gameCtx) return;
+    gameCanvas.addEventListener('pointerdown', setGamePointerTarget);
+    gameCanvas.addEventListener('pointermove', function (event) {
+      if (event.buttons || event.pointerType === 'touch') setGamePointerTarget(event);
+    });
+    var w = window.innerWidth, h = window.innerHeight;
+    gameState = {
+      width: w, height: h, x: w * 0.5, y: -72, vx: 0, vy: 0,
+      floorY: h * 0.61, phase: 'fall', phaseAt: performance.now(),
+      squash: 0, squashV: 0, tilt: 0, blinkUntil: performance.now() + 500,
+      nextBlink: performance.now() + 2400, score: 0,
+      crystals: [
+        { x: w * 0.22, y: h * 0.57, got: false },
+        { x: w * 0.40, y: h * 0.68, got: false },
+        { x: w * 0.72, y: h * 0.59, got: false },
+        { x: w * 0.86, y: h * 0.40, got: false }
+      ]
+    };
+    resizeGame();
+    if (!gameRaf) gameRaf = requestAnimationFrame(gameFrame);
+  }
+
+  function onGameKeyDown(event) {
+    if (!gameState || gameState.phase !== 'playing' || !dimPage || dimPage.getAttribute('aria-hidden') === 'true') return;
+    var key = event.key.toLowerCase();
+    if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'a', 'd', 'w', 's'].indexOf(key) >= 0) {
+      event.preventDefault(); gameKeys[key] = true;
+    }
+  }
+
+  function onGameKeyUp(event) { delete gameKeys[event.key.toLowerCase()]; }
+
+  function setGamePointerTarget(event) {
+    if (!gameState || gameState.phase !== 'playing' || !gameCanvas) return;
+    var rect = gameCanvas.getBoundingClientRect();
+    gameState.pointerTarget = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  }
+
+  function drawGameDango(ctx, s, now, airHeight) {
+    var shadowScale = Math.max(0.45, 1 - airHeight / Math.max(1, s.height));
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.07, 0.25 - airHeight / s.height * 0.16);
+    ctx.fillStyle = '#020611';
+    ctx.beginPath(); ctx.ellipse(s.x, s.y + 48, 48 * shadowScale, 12 * shadowScale, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    var speed = Math.min(1, Math.hypot(s.vx, s.vy) / 340);
+    var breathe = s.phase === 'playing' ? Math.sin(now * 0.0032) * 0.014 : 0;
+    ctx.save();
+    ctx.translate(s.x, s.y + Math.sin(now * 0.004) * (s.phase === 'playing' ? 1.5 : 0));
+    ctx.rotate(s.tilt);
+    ctx.scale(1 + s.squash, 1 - s.squash * 0.7 + breathe);
+    ctx.shadowColor = 'rgba(0,0,0,.32)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 9;
+    var body = ctx.createRadialGradient(-23, -28, 5, 4, 4, 78);
+    body.addColorStop(0, '#fffef2'); body.addColorStop(0.58, '#f6f2d9');
+    body.addColorStop(0.88, '#e6dfc0'); body.addColorStop(1, '#bdb695');
+    ctx.fillStyle = body; ctx.strokeStyle = 'rgba(105,101,75,.72)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(0, 0, 70, 52, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    ctx.fillStyle = 'rgba(255,255,255,.56)';
+    ctx.beginPath(); ctx.ellipse(-21, -24, 25, 9, -0.24, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.36)';
+    ctx.beginPath(); ctx.ellipse(-40, -10, 7, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+    var lookX = Math.max(-2, Math.min(2, s.vx / 150));
+    var lookY = Math.max(-1.5, Math.min(1.5, s.vy / 240));
+    var blinking = now < s.blinkUntil;
+    ctx.strokeStyle = '#292923'; ctx.fillStyle = '#292923'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+    [-18, 18].forEach(function (eyeX) {
+      if (blinking) {
+        ctx.beginPath(); ctx.moveTo(eyeX - 4, -3); ctx.quadraticCurveTo(eyeX, 1, eyeX + 4, -3); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.ellipse(eyeX + lookX, -5 + lookY, 2.7, 7.2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(eyeX - 0.6 + lookX, -8 + lookY, 1.1, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#292923';
+      }
+    });
+    ctx.fillStyle = 'rgba(239,135,157,.28)';
+    ctx.beginPath(); ctx.ellipse(-31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.ellipse(31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    if (speed > 0.12) {
+      ctx.strokeStyle = 'rgba(133,89,103,.8)'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.arc(0, 7, 4, 0.2, Math.PI - 0.2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawGameCrystal(ctx, crystal, now) {
+    if (crystal.got) return;
+    var pulse = 1 + Math.sin(now * 0.004 + crystal.x) * 0.12;
+    ctx.save(); ctx.translate(crystal.x, crystal.y); ctx.rotate(now * 0.0007);
+    ctx.shadowColor = '#51eaff'; ctx.shadowBlur = 20;
+    ctx.fillStyle = 'rgba(34,211,238,.2)'; ctx.beginPath(); ctx.arc(0, 0, 16 * pulse, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#67eaff'; ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(8, 0); ctx.lineTo(0, 10); ctx.lineTo(-8, 0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function gameFrame(now) {
+    gameRaf = 0;
+    if (!gameCtx || !gameState || !dimPage || dimPage.getAttribute('aria-hidden') === 'true') return;
+    var s = gameState, dt = s.lastTime ? Math.min((now - s.lastTime) / 1000, 0.04) : 1 / 60;
+    s.lastTime = now;
+    if (s.phase === 'fall') {
+      var p = Math.min(1, (now - s.phaseAt) / 1250);
+      var ease = p < 1 ? 1 - Math.pow(1 - p, 3) : 1;
+      s.y = -72 + (s.floorY - 54 + 72) * ease;
+      s.vy = (s.floorY - 54 + 72) * 3 * Math.pow(1 - p, 2) / 1.25;
+      s.squash = Math.max(0, Math.min(0.12, s.vy / 1100 * 0.12));
+      if (p >= 1) {
+        s.phase = 'playing'; s.y = s.floorY - 54; s.vy = 0;
+        s.squash = 0.32; s.squashV = 0; buildTutorialPanel();
+      }
+    } else {
+      var dx = (gameKeys.d || gameKeys.arrowright ? 1 : 0) - (gameKeys.a || gameKeys.arrowleft ? 1 : 0);
+      var dy = (gameKeys.s || gameKeys.arrowdown ? 1 : 0) - (gameKeys.w || gameKeys.arrowup ? 1 : 0);
+      if (!dx && !dy && s.pointerTarget) {
+        dx = s.pointerTarget.x - s.x; dy = s.pointerTarget.y - s.y;
+        if (Math.hypot(dx, dy) < 18) { s.pointerTarget = null; dx = dy = 0; }
+      }
+      var mag = Math.hypot(dx, dy) || 1; dx /= mag; dy /= mag;
+      var targetVx = dx * 285, targetVy = dy * 230, accel = (dx || dy) ? 1500 : 1900;
+      s.vx += Math.max(-accel * dt, Math.min(accel * dt, targetVx - s.vx));
+      s.vy += Math.max(-accel * dt, Math.min(accel * dt, targetVy - s.vy));
+      s.x = Math.max(76, Math.min(s.width - 76, s.x + s.vx * dt));
+      s.y = Math.max(145, Math.min(s.height - 80, s.y + s.vy * dt));
+      var tiltTarget = Math.max(-0.11, Math.min(0.11, s.vx / 285 * 0.11));
+      s.tilt += (tiltTarget - s.tilt) * (1 - Math.exp(-9 * dt));
+      var squashTarget = Math.hypot(s.vx, s.vy) > 20 ? 0.045 : 0;
+      s.squashV += (squashTarget - s.squash) * 68 * dt;
+      s.squashV *= Math.exp(-10.5 * dt); s.squash += s.squashV * dt;
+      if (now > s.nextBlink) { s.blinkUntil = now + 150; s.nextBlink = now + 2200 + Math.random() * 1700; }
+      s.crystals.forEach(function (crystal) {
+        if (!crystal.got && Math.hypot(s.x - crystal.x, s.y - crystal.y) < 70) {
+          crystal.got = true; s.score += 1;
+          if (scorePanel) scorePanel.textContent = '能量晶体　' + String(s.score).padStart(2, '0') + ' / 04';
+        }
+      });
+    }
+    var ctx = gameCtx;
+    ctx.clearRect(0, 0, s.width, s.height);
+    s.crystals.forEach(function (crystal) { drawGameCrystal(ctx, crystal, now); });
+    drawGameDango(ctx, s, now, Math.max(0, s.floorY - 54 - s.y));
+    gameRaf = requestAnimationFrame(gameFrame);
   }
 
   function showDimPage() {
@@ -646,7 +792,33 @@
       dimPage.classList.add('is-visible');
       dimPage.setAttribute('aria-hidden', 'false');
       if (!dimRaf) animateSymbols();
-      /* 序章由用户点击「开启」触发，进入页面不自动播放。 */
+      if (gameState && !gameRaf) gameRaf = requestAnimationFrame(gameFrame);
+      /* 正确顺序：进入页面先由粒子汇聚成标题并形成赛博屏障，完成后才显示「开启」。 */
+      if (!dimTitleIntroStarted) {
+        dimTitleIntroStarted = true;
+        var title = dimPage.querySelector('.dv-title');
+        var completed = false;
+        function finishTitleIntro() {
+          if (completed) return;
+          completed = true;
+          if (title) title.classList.remove('dv-title-building');
+          var particleCanvas = dimPage.querySelector('.dv-title-particles');
+          if (particleCanvas) particleCanvas.remove();
+          if (dimStartBtn && dimStartBtn.isConnected) {
+            dimStartBtn.disabled = false;
+            dimStartBtn.classList.remove('is-pending');
+            dimStartBtn.classList.add('is-ready');
+          }
+        }
+        /* 无论 Canvas/字体采样/浏览器动画是否异常，都不能让欢迎页永久黑屏。 */
+        try {
+          startTitleParticleIntro(dimPage.querySelector('.dv-center'), title, finishTitleIntro);
+        } catch (introError) {
+          console.error('[Dimverse] title particle intro failed:', introError);
+          finishTitleIntro();
+        }
+        window.setTimeout(finishTitleIntro, 5200);
+      }
     });
   }
 
@@ -656,6 +828,7 @@
     if (!vortexAnim && vortexCanvas) vortexAnim = makeVortex(vortexCanvas, 72);
     dimPage.classList.remove('is-visible');
     dimPage.setAttribute('aria-hidden', 'true');
+    gameKeys = Object.create(null);
     setTimeout(function () { if (dimPage) dimPage.style.display = 'none'; }, 350);
   }
 
@@ -688,8 +861,7 @@
     }
   }
 
-  /* 次元宇宙沿用绘梦主页面的 DOM 与背景；Godot 只作为透明游戏逻辑层，
-   * 不允许把 Godot 默认启动页或独立场景替换成用户看到的网页背景。 */
+  /* 次元宇宙沿用绘梦主页面的 DOM 与背景；游戏绘制在同页透明 Canvas 上。 */
   function syncDimverseFromLocation() {
     if (isDimverseRoute()) {
       if (!dimPage) buildDimPage();
@@ -728,7 +900,10 @@
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
-    window.addEventListener('message', onGodotMessage);
+    window.addEventListener('keydown', onGameKeyDown);
+    window.addEventListener('keyup', onGameKeyUp);
+    window.addEventListener('blur', function () { gameKeys = Object.create(null); });
+    window.addEventListener('resize', resizeGame);
     /* 支持直接打开 / 刷新 ?view=dimverse 的专属页面。 */
     if (isDimverseRoute()) syncDimverseFromLocation();
     window.addEventListener('popstate', syncDimverseFromLocation);

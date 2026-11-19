@@ -13,7 +13,8 @@ const dimverseSource = path.join(root, 'frontend', 'dimverse.js');
 const dimverseBundle = path.join(assets, 'hm-s29-b9fa10c0.js');
 const sourceStyles = path.join(root, 'frontend', 'styles.css');
 const deployedStyles = path.join(assets, 'hm.css');
-const styleMarker = '/* ============ 次元宇宙 · 原网页背景上的透明 Godot 游戏层 ============ */';
+const styleMarker = '/* ============ 次元宇宙 · 原网页背景上的透明 Canvas 游戏层 ============ */';
+const legacyStyleMarker = '/* ============ 次元宇宙 · 原网页背景上的透明 Godot 游戏层 ============ */';
 
 if (!fs.existsSync(idx) || !fs.existsSync(assets)) {
   console.error('[publish] 缺少 deploy/index.html 或 deploy/assets');
@@ -33,12 +34,14 @@ fs.copyFileSync(dimverseSource, dimverseBundle);
 const sourceCss = fs.readFileSync(sourceStyles, 'utf8');
 const markerIndex = sourceCss.indexOf(styleMarker);
 if (markerIndex < 0) {
-  console.error('[publish] frontend/styles.css 缺少透明 Godot 游戏层样式标记');
+  console.error('[publish] frontend/styles.css 缺少 Canvas 游戏层样式标记');
   process.exit(1);
 }
 const dimverseCss = sourceCss.slice(markerIndex).trim();
 let css = fs.readFileSync(deployedStyles, 'utf8');
-const existingIndex = css.indexOf(styleMarker);
+const currentIndex = css.indexOf(styleMarker);
+const legacyIndex = css.indexOf(legacyStyleMarker);
+const existingIndex = currentIndex < 0 ? legacyIndex : legacyIndex < 0 ? currentIndex : Math.min(currentIndex, legacyIndex);
 if (existingIndex >= 0) css = css.slice(0, existingIndex).trimEnd();
 css = css.trimEnd() + '\n\n' + dimverseCss + '\n';
 fs.writeFileSync(deployedStyles, css, 'utf8');
@@ -55,10 +58,10 @@ const bundle = fs.readFileSync(dimverseBundle, 'utf8');
 const deployedCss = fs.readFileSync(deployedStyles, 'utf8');
 for (const [ok, message] of [
   [bundle.includes("el('button', 'dv-start-btn is-pending', '开启')"), '生产脚本未包含等待标题入场完成后显示的开启按钮'],
-  [bundle.includes("new URL('./dimverse/game/index.html'"), '生产脚本未包含 Godot iframe 入口'],
-  [bundle.includes("event.data === 'hm-godot-ready'"), '生产脚本未包含 Godot ready 通信'],
+  [bundle.includes('function startDimverseGame()'), '生产脚本未包含本页团子游戏启动逻辑'],
+  [bundle.includes('function drawGameDango(ctx, s, now, airHeight)'), '生产脚本未包含团子绘制与弹性动画'],
   [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
-  [deployedCss.includes('.dv-godot-overlay'), '生产样式未包含透明游戏层样式'],
+  [deployedCss.includes('.dv-browser-game'), '生产样式未包含 Canvas 游戏层样式'],
 ]) {
   if (!ok) {
     console.error('[publish] ' + message);

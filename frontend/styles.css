@@ -20738,9 +20738,19 @@ body.dv-open .hm-page {
 .cmp-file span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 
-/* ============ 次元宇宙 · 原网页背景上的透明 Godot 游戏层 ============ */
+/* ============ 次元宇宙 · 原网页背景上的透明 Canvas 游戏层 ============ */
 .dv-topbar { z-index: 7; }
 .dv-center { z-index: 2; }
+.dv-browser-game {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  touch-action: none;
+}
 .dv-start-btn {
   position: relative;
   z-index: 5;
@@ -20774,18 +20784,6 @@ body.dv-open .hm-page {
   0% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
   18% { opacity: 1; transform: translate3d(0,-5px,0) scale(1.04); filter: brightness(1.8); }
   100% { opacity: 0; transform: translate3d(var(--dv-rise-x,0px),-125px,0) rotate(var(--dv-rise-rot,0deg)) scale(.12); filter: blur(5px); }
-}
-.dv-godot-overlay {
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: transparent !important;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .18s ease;
 }
 .dv-game-tutorial {
   position: absolute;
@@ -20827,5 +20825,5 @@ body.dv-open .hm-page {
 @media (max-width: 640px) {
   .dv-game-tutorial { top: 72px; right: 10px; width: min(270px, calc(100vw - 20px)); }
   .dv-game-score { top: 72px; left: 10px; }
-  .dv-godot-overlay { inset: 0; height: 100%; }
+  .dv-browser-game { inset: 0; height: 100%; }
 }
