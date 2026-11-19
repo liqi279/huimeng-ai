@@ -110,12 +110,14 @@ test('download route uses the shared allowlist and validates every redirect hop'
   const sourceStyles = fs.readFileSync(require.resolve('../../frontend/styles.css'), 'utf8');
   const deployedStyles = fs.readFileSync(require.resolve('../../deploy/assets/hm.css'), 'utf8');
   for (const code of [source, deployed]) {
+    assert.ok(code.includes('startTitleParticleIntro'), 'welcome title is built by particle animation');
+    assert.ok(code.includes('六边形能量屏障'), 'particle reveal transitions into a cyber shield');
     assert.ok(code.includes('data-text="欢迎来到次元宇宙"'), 'welcome title exposes glitch layers');
     assert.ok(!code.includes('页面正开发中'), 'placeholder copy is removed');
     assert.ok(!code.includes('2D 横版'), 'view-mode labels are removed');
   }
   for (const css of [sourceStyles, deployedStyles]) {
-    assert.ok(css.includes('@keyframes dv-title-entry'), 'cyber glitch entrance animation exists');
+    assert.ok(css.includes('.dv-title-particles'), 'particle canvas is layered over the welcome title');
     assert.ok(css.includes('@keyframes dv-title-glitch'), 'subtle recurring glitch animation exists');
     assert.ok(css.includes('prefers-reduced-motion'), 'reduced-motion preference is respected');
     assert.ok(!css.includes('.dv-sub {'), 'placeholder subtitle styles are removed');
