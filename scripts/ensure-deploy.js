@@ -1,8 +1,7 @@
 'use strict';
 
-/* 发布校验占位脚本。
- * GitHub Pages 工作流固定执行 `npm run build`，本脚本只校验 deploy/ 产物完整，
- * 不再从 frontend/ 重新打包，确保发布的就是仓库里的 deploy/ 目录。
+/* GitHub Pages publishes deploy/. Keep the production Dimverse assets synchronized
+ * with their canonical frontend sources before validating the artifact.
  */
 const fs = require('fs');
 const path = require('path');
@@ -10,15 +9,39 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const idx = path.join(root, 'deploy', 'index.html');
 const assets = path.join(root, 'deploy', 'assets');
+const dimverseSource = path.join(root, 'frontend', 'dimverse.js');
+const dimverseBundle = path.join(assets, 'hm-s29-b9fa10c0.js');
+const sourceStyles = path.join(root, 'frontend', 'styles.css');
+const deployedStyles = path.join(assets, 'hm.css');
+const styleMarker = '/* ============ 次元宇宙 · 原网页背景上的透明 Godot 游戏层 ============ */';
 
-if (!fs.existsSync(idx)) {
-  console.error('[publish] 缺少 deploy/index.html');
+if (!fs.existsSync(idx) || !fs.existsSync(assets)) {
+  console.error('[publish] 缺少 deploy/index.html 或 deploy/assets');
   process.exit(1);
 }
-if (!fs.existsSync(assets)) {
-  console.error('[publish] 缺少 deploy/assets');
+if (!fs.existsSync(dimverseSource) || !fs.existsSync(sourceStyles) ||
+    !fs.existsSync(dimverseBundle) || !fs.existsSync(deployedStyles)) {
+  console.error('[publish] 次元宇宙源文件或生产资源缺失');
   process.exit(1);
 }
+
+/* Always publish the exact tested Dimverse controller source. */
+fs.copyFileSync(dimverseSource, dimverseBundle);
+
+/* The production stylesheet contains the shared platform CSS; append the
+ * canonical Dimverse-only overlay rules without replacing unrelated styles. */
+const sourceCss = fs.readFileSync(sourceStyles, 'utf8');
+const markerIndex = sourceCss.indexOf(styleMarker);
+if (markerIndex < 0) {
+  console.error('[publish] frontend/styles.css 缺少透明 Godot 游戏层样式标记');
+  process.exit(1);
+}
+const dimverseCss = sourceCss.slice(markerIndex).trim();
+let css = fs.readFileSync(deployedStyles, 'utf8');
+const existingIndex = css.indexOf(styleMarker);
+if (existingIndex >= 0) css = css.slice(0, existingIndex).trimEnd();
+css = css.trimEnd() + '\n\n' + dimverseCss + '\n';
+fs.writeFileSync(deployedStyles, css, 'utf8');
 
 const html = fs.readFileSync(idx, 'utf8');
 const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
@@ -28,4 +51,19 @@ if (miss.length) {
   process.exit(1);
 }
 
-console.log('[publish] 直接发布 deploy/：index.html ' + fs.statSync(idx).size + ' 字节，资源 ' + refs.length + ' 个齐全');
+const bundle = fs.readFileSync(dimverseBundle, 'utf8');
+const deployedCss = fs.readFileSync(deployedStyles, 'utf8');
+for (const [ok, message] of [
+  [bundle.includes("el('button', 'dv-start-btn', '开启')"), '生产脚本未包含开启按钮'],
+  [bundle.includes("new URL('./dimverse/game/index.html'"), '生产脚本未包含 Godot iframe 入口'],
+  [bundle.includes("event.data === 'hm-godot-ready'"), '生产脚本未包含 Godot ready 通信'],
+  [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
+  [deployedCss.includes('.dv-godot-overlay'), '生产样式未包含透明游戏层样式'],
+]) {
+  if (!ok) {
+    console.error('[publish] ' + message);
+    process.exit(1);
+  }
+}
+
+console.log('[publish] Dimverse production bundle synchronized; deploy/ assets ' + refs.length + ' references verified');
