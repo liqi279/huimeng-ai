@@ -120,6 +120,9 @@ test('download route uses the shared allowlist and validates every redirect hop'
     assert.ok(!code.includes('2D 横版'), 'view-mode labels are removed');
   }
   for (const css of [sourceStyles, deployedStyles]) {
+    assert.ok(css.includes('.hm-update-modal:not([hidden]) .hm-update-icon svg'), 'update notice refresh icon spins only while the notice is visible');
+    assert.ok(css.includes('@keyframes hmUpdateIconSpin'), 'refresh icon rotation animation is defined');
+    assert.ok(css.includes('animation: none'), 'reduced-motion preference disables the refresh icon spin');
     assert.ok(css.includes('.dv-title-particles'), 'particle canvas is layered over the welcome title');
     assert.ok(css.includes('@keyframes dv-char-jitter'), 'each character has an independent glitch animation');
     assert.ok(css.includes('@keyframes dv-char-cyan'), 'each character has independent cyan glitch slices');
