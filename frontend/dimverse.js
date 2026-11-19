@@ -581,6 +581,9 @@
       span.style.setProperty('--dv-char-cyan-duration', rnd(4.5, 9).toFixed(2) + 's');
       span.style.setProperty('--dv-char-pink-delay', (-rnd(0, 12)).toFixed(2) + 's');
       span.style.setProperty('--dv-char-pink-duration', rnd(5, 11).toFixed(2) + 's');
+      span.style.setProperty('--dv-rise-x', rnd(-90, 90).toFixed(0) + 'px');
+      span.style.setProperty('--dv-rise-rot', rnd(-35, 35).toFixed(0) + 'deg');
+      span.style.setProperty('--dv-rise-delay', rnd(0, 0.18).toFixed(2) + 's');
       title.appendChild(span);
     });
     title.dataset.charactersReady = 'true';
