@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T11:55:56.000Z",
+  "generatedAt": "2026-11-19T11:58:12.000Z",
   "source": "huimeng_library.books",
-  "total": 970,
+  "total": 971,
   "areas": {
     "paint": 749,
-    "concept": 197,
+    "concept": 198,
     "ref": 24
   },
   "books": [
@@ -454,6 +454,20 @@
       "pdfKey": "api/library/file/library/books/fa89d49780-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/fa89d49780-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnhw2ov-7b01d1",
+      "sortNo": 0,
+      "title": "幸运星 · 名场面线稿集 三年生",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《幸运星【动画《幸运星》动画线稿原画集】》；原压缩包《[线稿集]幸运星 名场面线稿集 三年生.rar》。第 1-125 页（共 125 页）。",
+      "pageCount": 125,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/36443316bd-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/36443316bd-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
