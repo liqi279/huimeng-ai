@@ -146,7 +146,7 @@ test('download route uses the shared allowlist and validates every redirect hop'
   const godotProject = fs.readFileSync(require.resolve('../../game/dimverse-godot/project.godot'), 'utf8');
   assert.ok(source.includes("el('button', 'dv-start-btn is-pending', '开启')"), 'the opening button starts hidden while the title intro runs');
   assert.ok(deployed.includes("el('button', 'dv-start-btn is-pending', '开启')"), 'the production button starts hidden too');
-  assert.ok(source.includes("startTitleParticleIntro(dimPage.querySelector('.dv-center'), title, function ()"), 'page entry first runs the title particle and cyber shield intro');
+  assert.ok(source.includes("startTitleParticleIntro(dimPage.querySelector('.dv-center'), title, finishTitleIntro)"), 'page entry first runs the title particle and cyber shield intro');
   assert.ok(source.includes("dimStartBtn.classList.add('is-ready')"), 'the start button is revealed only after the title intro callback');
   assert.ok(source.includes("title.classList.add('dv-title-dissolving')"), 'clicking start dissolves the title upward');
   assert.ok(source.includes("ensureGodotOverlay();"), 'the Godot layer is loaded only after the start button is clicked');
