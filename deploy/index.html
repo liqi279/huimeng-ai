@@ -20163,11 +20163,15 @@ a.lib-btn {
 }
 
 body.dv-open .hm-rail,
-body.dv-open .hm-rail-toggle,
 body.dv-open .hm-topbar,
 body.dv-open .shell,
 body.dv-open .hm-page {
   pointer-events: none;
+}
+
+/* Dimverse immersive view: hide the main sidebar handle completely. */
+body.dv-open .hm-rail-toggle {
+  display: none !important;
 }
 
 /* =============================================================

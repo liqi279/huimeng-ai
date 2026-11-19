@@ -20155,11 +20155,15 @@ a.lib-btn {
 }
 
 body.dv-open .hm-rail,
-body.dv-open .hm-rail-toggle,
 body.dv-open .hm-topbar,
 body.dv-open .shell,
 body.dv-open .hm-page {
   pointer-events: none;
+}
+
+/* 次元宇宙为全屏沉浸视图，主站侧栏折叠箭头必须完全隐藏 */
+body.dv-open .hm-rail-toggle {
+  display: none !important;
 }
 
 /* =============================================================
