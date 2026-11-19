@@ -9,7 +9,8 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node src/index.js"
+    "dev": "node src/index.js",
+    "test": "node --test"
   },
   "dependencies": {
     "ali-oss": "^6.23.0",
