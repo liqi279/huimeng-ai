@@ -627,6 +627,7 @@
       godotFrame.style.opacity = '1';
       try {
         if (godotFrame.contentWindow.hmGodotStart) godotFrame.contentWindow.hmGodotStart();
+        godotFrame.contentWindow.focus();
       } catch (e) {}
     } else if (event.data === 'hm-godot-landed') {
       buildTutorialPanel();
