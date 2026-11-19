@@ -1,0 +1,37 @@
+name: Validate Godot Dimverse intro
+
+on:
+  push:
+    branches:
+      - feat/godot-dimverse-intro
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "game/dimverse-godot/**"
+      - ".github/workflows/deploy-pages.yml"
+      - "deploy/dimverse/index.html"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Godot 4
+        uses: chickensoft-games/setup-godot@v1
+        with:
+          version: 4.4.1
+          use-dotnet: false
+          include-templates: true
+      - name: Parse project and export Web build
+        run: |
+          godot --headless --path game/dimverse-godot --editor --quit
+          mkdir -p /tmp/dimverse-web
+          godot --headless --path game/dimverse-godot --export-release "Web" /tmp/dimverse-web/index.html
+          test -s /tmp/dimverse-web/index.html
+          test -s /tmp/dimverse-web/index.wasm
+          test -s /tmp/dimverse-web/index.pck
