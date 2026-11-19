@@ -9372,6 +9372,22 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   height: 20px;
 }
 
+/* 更新提示出现时，仅让原有刷新图标持续旋转；不改变图标外观和卡片布局 */
+.hm-update-modal:not([hidden]) .hm-update-icon svg {
+  transform-origin: 50% 50%;
+  animation: hmUpdateIconSpin 1.35s linear infinite;
+}
+
+@keyframes hmUpdateIconSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-update-modal:not([hidden]) .hm-update-icon svg {
+    animation: none;
+  }
+}
+
 .hm-update-body {
   flex: 1;
   min-width: 0;
