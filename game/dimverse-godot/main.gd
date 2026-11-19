@@ -33,6 +33,10 @@ func _ready() -> void:
 	_register_browser_bridge()
 	set_process(false)
 	queue_redraw()
+	# The game iframe is created only after the user presses “开启”. Start the
+	# intro here as well as exposing the parent callback, so a missed or delayed
+	# postMessage handshake cannot leave the now-visible overlay permanently blank.
+	call_deferred("_on_start_from_web")
 
 func _register_browser_bridge() -> void:
 	if not OS.has_feature("web"):
