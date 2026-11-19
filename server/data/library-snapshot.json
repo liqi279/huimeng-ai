@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T13:35:53.000Z",
+  "generatedAt": "2026-11-19T13:37:22.000Z",
   "source": "huimeng_library.books",
-  "total": 1004,
+  "total": 1001,
   "areas": {
     "paint": 749,
-    "concept": 231,
+    "concept": 228,
     "ref": 24
   },
   "books": [
@@ -837,7 +837,7 @@
     {
       "id": "lib-mwnl3v35-1e690d",
       "sortNo": 0,
-      "title": "因为太怕痛就全点防御力了 · ， 动画设定原画集",
+      "title": "因为太怕痛就全点防御力了 · 动画设定原画集",
       "author": "萌绘图库 / 萌绘图库",
       "intro": "来源：本机原画资料《因为太怕痛就全点防御力了》；原压缩包《[设定集]因为太怕痛就全点防御力了， 动画设定原画集【一些角色、场景的设定图】.zip》。第 1-45 页（共 45 页）。",
       "pageCount": 45,
@@ -846,20 +846,6 @@
       "pdfKey": "api/library/file/library/books/bc190f32a1-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/bc190f32a1-20261119-1-1.jpg",
-      "coverBytes": 0
-    },
-    {
-      "id": "lib-mwnl6aro-f5c192",
-      "sortNo": 0,
-      "title": "终结的炽天使 · 原画集I(1)",
-      "author": "萌绘图库 / 萌绘图库",
-      "intro": "来源：本机原画资料《终结的炽天使》；原压缩包《[线稿集]终结的炽天使 原画集I【动画《终结的炽天使(終わりのセラフ)》的原画集，大量原画线稿】(1).rar》。第 1-225 页（共 225 页）。",
-      "pageCount": 225,
-      "area": "concept",
-      "toc": [],
-      "pdfKey": "api/library/file/library/books/6eb2959cb4-20261119-1-1.pdf",
-      "pdfBytes": 0,
-      "coverKey": "api/library/file/library/covers/6eb2959cb4-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
@@ -874,34 +860,6 @@
       "pdfKey": "api/library/file/library/books/6eb2959cb4-20261119-2-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/6eb2959cb4-20261119-2-1.jpg",
-      "coverBytes": 0
-    },
-    {
-      "id": "lib-mwnl7tsy-6148ae",
-      "sortNo": 0,
-      "title": "终结的炽天使 · (1) · 第1/2卷",
-      "author": "萌绘图库 / 萌绘图库",
-      "intro": "来源：本机原画资料《终结的炽天使》；原压缩包《[设定集]动画《终结的炽天使(終わりのセラフ)》【设定集，大量的设定图及线稿】(1).rar》。第 1-277 页（共 338 页，分 2 卷）。",
-      "pageCount": 277,
-      "area": "concept",
-      "toc": [],
-      "pdfKey": "api/library/file/library/books/6eb2959cb4-20261119-3-1.pdf",
-      "pdfBytes": 0,
-      "coverKey": "api/library/file/library/covers/6eb2959cb4-20261119-3-1.jpg",
-      "coverBytes": 0
-    },
-    {
-      "id": "lib-mwnl81gw-06c3e2",
-      "sortNo": 0,
-      "title": "终结的炽天使 · (1) · 第2/2卷",
-      "author": "萌绘图库 / 萌绘图库",
-      "intro": "来源：本机原画资料《终结的炽天使》；原压缩包《[设定集]动画《终结的炽天使(終わりのセラフ)》【设定集，大量的设定图及线稿】(1).rar》。第 278-338 页（共 338 页，分 2 卷）。",
-      "pageCount": 61,
-      "area": "concept",
-      "toc": [],
-      "pdfKey": "api/library/file/library/books/6eb2959cb4-20261119-3-2.pdf",
-      "pdfBytes": 0,
-      "coverKey": "api/library/file/library/covers/6eb2959cb4-20261119-3-2.jpg",
       "coverBytes": 0
     },
     {
