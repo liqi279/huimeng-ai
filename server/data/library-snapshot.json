@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T11:52:05.000Z",
+  "generatedAt": "2026-11-19T11:54:17.000Z",
   "source": "huimeng_library.books",
-  "total": 969,
+  "total": 970,
   "areas": {
     "paint": 749,
-    "concept": 196,
+    "concept": 197,
     "ref": 24
   },
   "books": [
@@ -431,7 +431,7 @@
     {
       "id": "lib-mwnhm81c-a1b611",
       "sortNo": 0,
-      "title": "虫师 · 日本漫画家漆原友紀(漆原友纪)的蟲師（ ）指南本，主要是一些故事背景人物、虫子的介绍",
+      "title": "虫师 · 画集",
       "author": "萌绘图库 / 萌绘图库",
       "intro": "来源：本机原画资料《虫师》；原压缩包《[画集]日本漫画家漆原友紀(漆原友纪)的《蟲師（虫师）》指南本，主要是一些故事背景人物、虫子的介绍.7z》。第 1-225 页（共 225 页）。",
       "pageCount": 225,
@@ -440,6 +440,20 @@
       "pdfKey": "api/library/file/library/books/2cc5302b89-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/2cc5302b89-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnhqqlz-de5da9",
+      "sortNo": 0,
+      "title": "一拳超人 · 动画资料设定线稿集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《一拳超人》；原压缩包《[线稿集]一拳超人 动画资料设定线稿集【收录了动画的一些设定图片与线稿】.rar》。第 1-49 页（共 49 页）。",
+      "pageCount": 49,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/fa89d49780-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/fa89d49780-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
