@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T12:01:46.000Z",
+  "generatedAt": "2026-11-19T12:05:07.000Z",
   "source": "huimeng_library.books",
-  "total": 972,
+  "total": 973,
   "areas": {
     "paint": 749,
-    "concept": 199,
+    "concept": 200,
     "ref": 24
   },
   "books": [
@@ -482,6 +482,20 @@
       "pdfKey": "api/library/file/library/books/ef77a3deee-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/ef77a3deee-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwni4tum-08d0e1",
+      "sortNo": 0,
+      "title": "斩!赤红之瞳 · 动画资料设定线稿集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《斩!赤红之瞳》；原压缩包《[线稿集]斩!赤红之瞳 动画资料设定线稿集【一些角色的设定稿】.zip》。第 1-48 页（共 48 页）。",
+      "pageCount": 48,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/cd253a7e56-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/cd253a7e56-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
