@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T12:56:29.000Z",
+  "generatedAt": "2026-11-19T13:00:08.000Z",
   "source": "huimeng_library.books",
-  "total": 979,
+  "total": 980,
   "areas": {
     "paint": 749,
-    "concept": 206,
+    "concept": 207,
     "ref": 24
   },
   "books": [
@@ -580,6 +580,20 @@
       "pdfKey": "api/library/file/library/books/811a6a9e0c-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/811a6a9e0c-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnk413k-4e8b55",
+      "sortNo": 0,
+      "title": "超时空辉夜姬 · 指南画集，一些相关的介绍、访谈和设定内容",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《超时空辉夜姬》；原压缩包《[画集]动画《超かぐや姫！（超时空辉夜姬!）》的指南画集，一些相关的介绍、访谈和设定内容.7z》。第 1-84 页（共 84 页）。",
+      "pageCount": 84,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/00983f771e-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/00983f771e-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
