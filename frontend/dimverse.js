@@ -255,6 +255,8 @@
   var dimSymbols = [];
   var dimRaf = 0;
   var lastSymbolFrame = 0;
+  var dimStartBtn = null;
+  var dimTitleIntroStarted = false;
 
   function buildDimPage() {
     if (dimPage) return;
@@ -294,18 +296,22 @@
     var center = el('div', 'dv-center');
     center.innerHTML = '<h1 class="dv-title" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
     prepareTitleCharacters(center.querySelector('.dv-title'));
-    var startBtn = el('button', 'dv-start-btn', '开启');
-    startBtn.type = 'button';
-    startBtn.setAttribute('aria-label', '开启次元宇宙序章');
-    startBtn.addEventListener('click', function () {
-      if (startBtn.disabled) return;
-      startBtn.disabled = true;
-      startBtn.classList.add('is-exiting');
-      window.setTimeout(function () { startBtn.remove(); }, 260);
-      startTitleParticleIntro(center, center.querySelector('.dv-title'));
+    dimStartBtn = el('button', 'dv-start-btn is-pending', '开启');
+    dimStartBtn.type = 'button';
+    dimStartBtn.disabled = true;
+    dimStartBtn.setAttribute('aria-label', '开启次元宇宙序章');
+    dimStartBtn.addEventListener('click', function () {
+      if (dimStartBtn.disabled || !dimStartBtn.classList.contains('is-ready')) return;
+      dimStartBtn.disabled = true;
+      dimStartBtn.classList.remove('is-ready');
+      dimStartBtn.classList.add('is-exiting');
+      var title = center.querySelector('.dv-title');
+      if (title) title.classList.add('dv-title-dissolving');
+      window.setTimeout(function () { dimStartBtn.remove(); }, 260);
+      /* Godot 只在用户点击开启后加载；ready 后由 GDScript 执行团子粒子序章。 */
       ensureGodotOverlay();
     });
-    center.appendChild(startBtn);
+    center.appendChild(dimStartBtn);
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
@@ -359,11 +365,12 @@
   }
 
   /* ---------- 粒子汇聚成字 · 赛博屏障显形 ---------- */
-  function startTitleParticleIntro(center, title) {
+  function startTitleParticleIntro(center, title, onComplete) {
     if (!center || !title) return;
     title.classList.add('dv-title-building');
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       title.classList.remove('dv-title-building');
+      if (onComplete) onComplete();
       return;
     }
     var oldCanvas = center.querySelector('.dv-title-particles');
@@ -374,6 +381,7 @@
     if (!ctx) {
       canvas.remove();
       title.classList.remove('dv-title-building');
+      if (onComplete) onComplete();
       return;
     }
 
@@ -547,7 +555,10 @@
         title.classList.remove('dv-title-building');
         canvas.style.transition = 'opacity .35s ease';
         canvas.style.opacity = '0';
-        window.setTimeout(function () { canvas.remove(); }, 380);
+        window.setTimeout(function () {
+          canvas.remove();
+          if (onComplete) onComplete();
+        }, 380);
       }
     }
     raf = requestAnimationFrame(frame);
@@ -570,6 +581,9 @@
       span.style.setProperty('--dv-char-cyan-duration', rnd(4.5, 9).toFixed(2) + 's');
       span.style.setProperty('--dv-char-pink-delay', (-rnd(0, 12)).toFixed(2) + 's');
       span.style.setProperty('--dv-char-pink-duration', rnd(5, 11).toFixed(2) + 's');
+      span.style.setProperty('--dv-rise-x', rnd(-90, 90).toFixed(0) + 'px');
+      span.style.setProperty('--dv-rise-rot', rnd(-35, 35).toFixed(0) + 'deg');
+      span.style.setProperty('--dv-rise-delay', rnd(0, 0.18).toFixed(2) + 's');
       title.appendChild(span);
     });
     title.dataset.charactersReady = 'true';
@@ -646,7 +660,18 @@
       dimPage.classList.add('is-visible');
       dimPage.setAttribute('aria-hidden', 'false');
       if (!dimRaf) animateSymbols();
-      /* 序章由用户点击「开启」触发，进入页面不自动播放。 */
+      /* 正确顺序：进入页面先由粒子汇聚成标题并形成赛博屏障，完成后才显示「开启」。 */
+      if (!dimTitleIntroStarted) {
+        dimTitleIntroStarted = true;
+        var title = dimPage.querySelector('.dv-title');
+        startTitleParticleIntro(dimPage.querySelector('.dv-center'), title, function () {
+          if (dimStartBtn && dimStartBtn.isConnected) {
+            dimStartBtn.disabled = false;
+            dimStartBtn.classList.remove('is-pending');
+            dimStartBtn.classList.add('is-ready');
+          }
+        });
+      }
     });
   }
 
