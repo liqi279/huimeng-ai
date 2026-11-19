@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T11:48:26.000Z",
+  "generatedAt": "2026-11-19T11:50:31.000Z",
   "source": "huimeng_library.books",
-  "total": 968,
+  "total": 969,
   "areas": {
     "paint": 749,
-    "concept": 195,
+    "concept": 196,
     "ref": 24
   },
   "books": [
@@ -426,6 +426,20 @@
       "pdfKey": "api/library/file/library/books/7ffacf9ad7-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/7ffacf9ad7-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnhm81c-a1b611",
+      "sortNo": 0,
+      "title": "虫师 · 日本漫画家漆原友紀(漆原友纪)的蟲師（ ）指南本，主要是一些故事背景人物、虫子的介绍",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《虫师》；原压缩包《[画集]日本漫画家漆原友紀(漆原友纪)的《蟲師（虫师）》指南本，主要是一些故事背景人物、虫子的介绍.7z》。第 1-225 页（共 225 页）。",
+      "pageCount": 225,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/2cc5302b89-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/2cc5302b89-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
