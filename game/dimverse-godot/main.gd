@@ -11,13 +11,19 @@ const PINK := Color("#e58cff")
 const PURPLE := Color("#a86cff")
 const FLOOR_Y := 620.0
 const MOVE_SPEED := 260.0
+const MOVE_ACCEL := 1900.0
+const MOVE_BRAKE := 2300.0
 const GRAVITY := 1450.0
+const MASCOT_HALF_HEIGHT := 54.0
 
 var state: IntroState = IntroState.WAITING
 var rng := RandomNumberGenerator.new()
 var particles: Array[Dictionary] = []
 var mascot_position := Vector2(640.0, 190.0)
 var mascot_velocity := Vector2.ZERO
+var mascot_squash := 0.0
+var mascot_squash_velocity := 0.0
+var mascot_tilt := 0.0
 var elapsed := 0.0
 var world_time := 0.0
 var blink := false
@@ -105,15 +111,18 @@ func _process(delta: float) -> void:
 				mascot_velocity = Vector2(0.0, 40.0)
 		IntroState.MASCOT_FALL:
 			_step_mascot(delta, false)
-			if mascot_position.y >= FLOOR_Y - 43.0:
-				mascot_position.y = FLOOR_Y - 43.0
+			if mascot_position.y >= FLOOR_Y - MASCOT_HALF_HEIGHT:
+				mascot_position.y = FLOOR_Y - MASCOT_HALF_HEIGHT
 				mascot_velocity = Vector2.ZERO
+				mascot_squash = 0.34
+				mascot_squash_velocity = 0.0
 				state = IntroState.PLAYING
 				_notify_landed()
 		IntroState.PLAYING:
 			_step_mascot(delta, true)
 			_check_crystals()
 			_update_blink(delta)
+	_update_mascot_spring(delta)
 	queue_redraw()
 
 func _update_particles() -> void:
@@ -135,13 +144,26 @@ func _step_mascot(delta: float, allow_input: bool) -> void:
 		if Input.is_key_pressed(KEY_D): direction.x += 1.0
 		if Input.is_key_pressed(KEY_W): direction.y -= 1.0
 		if Input.is_key_pressed(KEY_S): direction.y += 1.0
-		mascot_velocity.x = direction.normalized().x * MOVE_SPEED
-		mascot_velocity.y = direction.normalized().y * MOVE_SPEED
+		direction = direction.normalized()
+		var target_velocity := direction * MOVE_SPEED
+		var acceleration := MOVE_ACCEL if direction.length_squared() > 0.0 else MOVE_BRAKE
+		mascot_velocity = mascot_velocity.move_toward(target_velocity, acceleration * delta)
 	else:
 		mascot_velocity.y += GRAVITY * delta
 	mascot_position += mascot_velocity * delta
 	mascot_position.x = clampf(mascot_position.x, 70.0, VIEW_SIZE.x - 70.0)
-	mascot_position.y = clampf(mascot_position.y, 90.0, FLOOR_Y - 43.0)
+	mascot_position.y = clampf(mascot_position.y, 90.0, FLOOR_Y - MASCOT_HALF_HEIGHT)
+	var lean_target := clampf(mascot_velocity.x / MOVE_SPEED, -1.0, 1.0) * 0.105
+	mascot_tilt = lerp(mascot_tilt, lean_target, 1.0 - exp(-10.0 * delta))
+
+func _update_mascot_spring(delta: float) -> void:
+	if state != IntroState.PLAYING:
+		return
+	# Damped spring: the landing squash rebounds before settling into a soft idle.
+	var target := 0.035 if mascot_velocity.length() > 18.0 else 0.0
+	mascot_squash_velocity += (target - mascot_squash) * 64.0 * delta
+	mascot_squash_velocity *= exp(-10.5 * delta)
+	mascot_squash += mascot_squash_velocity * delta
 
 func _update_blink(delta: float) -> void:
 	if blink:
@@ -191,16 +213,44 @@ func _draw() -> void:
 			]), CYAN)
 
 func _draw_mascot(pos: Vector2) -> void:
-	var points := PackedVector2Array()
-	for i in range(65):
-		var angle := TAU * float(i) / 64.0
-		points.append(pos + Vector2(cos(angle) * 62.0, sin(angle) * 47.0))
-	draw_colored_polygon(points, Color("#f3f2d9"))
-	for i in range(points.size() - 1):
-		draw_line(points[i], points[i + 1], Color("#a9aa91"), 3.0)
+	var height := maxf(0.0, FLOOR_Y - MASCOT_HALF_HEIGHT - pos.y)
+	var shadow_scale := clampf(1.0 - height / 900.0, 0.48, 1.0)
+	var shadow_alpha := clampf(0.27 - height / 1900.0, 0.08, 0.27)
+	draw_set_transform(Vector2(pos.x, FLOOR_Y - 9.0), 0.0, Vector2(shadow_scale, shadow_scale * 0.34))
+	draw_circle(Vector2.ZERO, 48.0, Color(0.0, 0.0, 0.0, shadow_alpha))
+	draw_circle(Vector2(0.0, -2.0), 35.0, Color(0.05, 0.76, 0.96, shadow_alpha * 0.28))
+
+	var speed := clampf(mascot_velocity.length() / MOVE_SPEED, 0.0, 1.0)
+	var breathe := sin(world_time * 3.2) * 0.012
+	var body_scale := Vector2(1.0 + mascot_squash, 1.0 - mascot_squash * 0.72 + breathe)
+	draw_set_transform(pos, mascot_tilt, body_scale)
+	# Layered rim, warm underside and speculars give the blob a soft 2.5D jelly volume.
+	_draw_local_ellipse(Vector2(0.0, 5.0), 72.0, 54.0, Color("#777762"))
+	_draw_local_ellipse(Vector2(0.0, 0.0), 69.0, 51.0, Color("#e8e7ca"))
+	_draw_local_ellipse(Vector2(-2.0, -4.0), 64.0, 46.0, Color("#f7f5df"))
+	_draw_local_ellipse(Vector2(0.0, 22.0), 53.0, 22.0, Color(0.68, 0.58, 0.36, 0.13))
+	_draw_local_ellipse(Vector2(-19.0, -24.0), 27.0, 11.0, Color(1.0, 1.0, 0.94, 0.42))
+	_draw_local_ellipse(Vector2(-34.0, -10.0), 8.0, 4.0, Color(1.0, 1.0, 1.0, 0.5))
+	_draw_local_ellipse(Vector2(-29.0, 7.0), 8.0, 3.2, Color(1.0, 0.58, 0.66, 0.2))
+	_draw_local_ellipse(Vector2(29.0, 7.0), 8.0, 3.2, Color(1.0, 0.58, 0.66, 0.2))
+
+	var look := Vector2(clampf(mascot_velocity.x / MOVE_SPEED, -1.0, 1.0) * 2.2,
+		clampf(mascot_velocity.y / MOVE_SPEED, -1.0, 1.0) * 1.5)
 	if blink:
-		draw_line(pos + Vector2(-18, -5), pos + Vector2(-5, -5), Color("#171717"), 3.0)
-		draw_line(pos + Vector2(5, -5), pos + Vector2(18, -5), Color("#171717"), 3.0)
+		draw_line(Vector2(-22.0, -4.0) + look, Vector2(-13.0, -4.0) + look, Color("#292923"), 2.4, true)
+		draw_line(Vector2(13.0, -4.0) + look, Vector2(22.0, -4.0) + look, Color("#292923"), 2.4, true)
 	else:
-		draw_line(pos + Vector2(-16, -13), pos + Vector2(-16, 1), Color("#171717"), 3.0)
-		draw_line(pos + Vector2(16, -13), pos + Vector2(16, 1), Color("#171717"), 3.0)
+		_draw_local_ellipse(Vector2(-18.0, -5.0) + look, 3.8, 8.5, Color("#262720"))
+		_draw_local_ellipse(Vector2(18.0, -5.0) + look, 3.8, 8.5, Color("#262720"))
+		_draw_local_ellipse(Vector2(-19.0, -8.0) + look, 1.25, 2.0, Color.WHITE)
+		_draw_local_ellipse(Vector2(17.0, -8.0) + look, 1.25, 2.0, Color.WHITE)
+	if speed > 0.15:
+		_draw_local_ellipse(Vector2(0.0, 12.0), 4.0, 2.2, Color("#c78386"))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _draw_local_ellipse(center: Vector2, radius_x: float, radius_y: float, color: Color) -> void:
+	var points := PackedVector2Array()
+	for i in range(33):
+		var angle := TAU * float(i) / 32.0
+		points.append(center + Vector2(cos(angle) * radius_x, sin(angle) * radius_y))
+	draw_colored_polygon(points, color)
