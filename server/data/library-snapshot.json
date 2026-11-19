@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-18T19:25:55.000Z",
+  "generatedAt": "2026-11-19T11:48:26.000Z",
   "source": "huimeng_library.books",
-  "total": 967,
+  "total": 968,
   "areas": {
     "paint": 749,
-    "concept": 194,
+    "concept": 195,
     "ref": 24
   },
   "books": [
@@ -412,6 +412,20 @@
       "pdfKey": "api/library/file/library/books/fate-20261119-i1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/fate-20261119-i1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnhjrk1-a79765",
+      "sortNo": 0,
+      "title": "夏目友人帐 · 动画线稿原画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《夏目友人帐》；原压缩包《[线稿集]夏目友人帐 动画线稿原画集【主要是人物与妖怪的设定线稿】.rar》。第 1-72 页（共 72 页）。",
+      "pageCount": 72,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/7ffacf9ad7-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/7ffacf9ad7-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
