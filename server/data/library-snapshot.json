@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T12:54:21.000Z",
+  "generatedAt": "2026-11-19T12:56:29.000Z",
   "source": "huimeng_library.books",
-  "total": 978,
+  "total": 979,
   "areas": {
     "paint": 749,
-    "concept": 205,
+    "concept": 206,
     "ref": 24
   },
   "books": [
@@ -566,6 +566,20 @@
       "pdfKey": "api/library/file/library/books/a98f571436-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/a98f571436-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnjz9mb-f12806",
+      "sortNo": 0,
+      "title": "干物妹小埋 · 动画原画设定资料集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《干物妹小埋》；原压缩包《[设定集]干物妹小埋 动画原画设定资料集【包含角色、道具、场景等等】.7z》。第 1-124 页（共 124 页）。",
+      "pageCount": 124,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/811a6a9e0c-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/811a6a9e0c-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
