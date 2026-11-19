@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T13:20:02.000Z",
+  "generatedAt": "2026-11-19T13:23:20.000Z",
   "source": "huimeng_library.books",
-  "total": 995,
+  "total": 998,
   "areas": {
     "paint": 749,
-    "concept": 222,
+    "concept": 225,
     "ref": 24
   },
   "books": [
@@ -804,6 +804,48 @@
       "pdfKey": "api/library/file/library/books/bb2fdb0bcc-20261119-5-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/bb2fdb0bcc-20261119-5-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnkwib3-8ad72a",
+      "sortNo": 0,
+      "title": "CLANNAD · KEY经典GAL改动画Clannad的画集，一些设定、插图、剧情介绍等等",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《CLANNAD》；原压缩包《[画集]KEY经典GAL改动画《Clannad》的画集，一些设定、插图、剧情介绍等等.7z》。第 1-144 页（共 144 页）。",
+      "pageCount": 144,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/9be6e06dcd-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/9be6e06dcd-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnkwrp5-394113",
+      "sortNo": 0,
+      "title": "CLANNAD · 2009年和2010两年的日历画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《CLANNAD》；原压缩包《[画集]动画《Clannad》的2009年和2010两年的日历画集.7z》。第 1-14 页（共 14 页）。",
+      "pageCount": 14,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/9be6e06dcd-20261119-2-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/9be6e06dcd-20261119-2-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnkxsg5-4da920",
+      "sortNo": 0,
+      "title": "CLANNAD · 动画资料设定线稿集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《CLANNAD》；原压缩包《[线稿集]CLANNAD 动画资料设定线稿集【动画《CLANNAD》的资料设定集，包含了人物的各种线稿。】.zip》。第 1-35 页（共 35 页）。",
+      "pageCount": 35,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/9be6e06dcd-20261119-3-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/9be6e06dcd-20261119-3-1.jpg",
       "coverBytes": 0
     },
     {
