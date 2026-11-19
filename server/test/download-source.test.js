@@ -144,8 +144,13 @@ test('download route uses the shared allowlist and validates every redirect hop'
 
   const godotScript = fs.readFileSync(require.resolve('../../game/dimverse-godot/main.gd'), 'utf8');
   const godotProject = fs.readFileSync(require.resolve('../../game/dimverse-godot/project.godot'), 'utf8');
-  assert.ok(source.includes("el('button', 'dv-start-btn', '开启')"), 'the opening is user-triggered by the page button');
-  assert.ok(deployed.includes("el('button', 'dv-start-btn', '开启')"), 'the actual Pages script also creates the opening button');
+  assert.ok(source.includes("el('button', 'dv-start-btn is-pending', '开启')"), 'the opening button starts hidden while the title intro runs');
+  assert.ok(deployed.includes("el('button', 'dv-start-btn is-pending', '开启')"), 'the production button starts hidden too');
+  assert.ok(source.includes("startTitleParticleIntro(dimPage.querySelector('.dv-center'), title, function ()"), 'page entry first runs the title particle and cyber shield intro');
+  assert.ok(source.includes("dimStartBtn.classList.add('is-ready')"), 'the start button is revealed only after the title intro callback');
+  assert.ok(source.includes("title.classList.add('dv-title-dissolving')"), 'clicking start dissolves the title upward');
+  assert.ok(source.includes("ensureGodotOverlay();"), 'the Godot layer is loaded only after the start button is clicked');
+  assert.ok(!source.includes("startTitleParticleIntro(center, center.querySelector('.dv-title'))"), 'clicking start does not replay the title-assembly animation');
   assert.equal(deployed, source, 'the production Dimverse bundle must match the canonical controller source');
   assert.ok(source.includes("new URL('./dimverse/game/index.html'"), 'Godot is embedded as a relative overlay resource');
   assert.ok(deployed.includes("new URL('./dimverse/game/index.html'"), 'the production bundle points to the exported Godot game');
@@ -160,6 +165,7 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.ok(!godotScript.includes('_draw_cyber_world'), 'Godot does not redraw the webpage background');
   assert.ok(godotScript.includes('JavaScriptBridge.create_callback(_on_start_from_web)'), 'the page button starts the Godot intro through the browser bridge');
   assert.ok(godotScript.includes('IntroState.TITLE_PARTICLES') && godotScript.includes('IntroState.MASCOT_FALL'), 'Godot owns the particle-to-mascot intro states');
+  assert.ok(godotScript.includes('rng.randf_range(350.0, 930.0)') && godotScript.includes('rng.randf_range(335.0, 405.0)'), 'mascot particles rise from the original welcome-title band');
 
   const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
   original.searchParams.set('view', 'dimverse');
