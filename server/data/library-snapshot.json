@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T12:05:07.000Z",
+  "generatedAt": "2026-11-19T12:08:37.000Z",
   "source": "huimeng_library.books",
-  "total": 973,
+  "total": 975,
   "areas": {
     "paint": 749,
-    "concept": 200,
+    "concept": 202,
     "ref": 24
   },
   "books": [
@@ -496,6 +496,34 @@
       "pdfKey": "api/library/file/library/books/cd253a7e56-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/cd253a7e56-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwni7coq-bb10b4",
+      "sortNo": 0,
+      "title": "AIR · Air 动画线稿原画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《AIR【动画《AIR》的动画线稿原画集，主要角色、道具设定线稿】》；原压缩包《[线稿集]Air 动画线稿原画集.7z》。第 1-72 页（共 72 页）。",
+      "pageCount": 72,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/16b1c49e4e-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/16b1c49e4e-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwni9mq6-c8be09",
+      "sortNo": 0,
+      "title": "AIR · 剧场版 动画资料设定线稿集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《AIR【动画《AIR》的动画线稿原画集，主要角色、道具设定线稿】》；原压缩包《[线稿集]AIR剧场版 动画资料设定线稿集.zip》。第 1-148 页（共 148 页）。",
+      "pageCount": 148,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/16b1c49e4e-20261119-2-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/16b1c49e4e-20261119-2-1.jpg",
       "coverBytes": 0
     },
     {
