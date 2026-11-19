@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T11:58:12.000Z",
+  "generatedAt": "2026-11-19T12:01:46.000Z",
   "source": "huimeng_library.books",
-  "total": 971,
+  "total": 972,
   "areas": {
     "paint": 749,
-    "concept": 198,
+    "concept": 199,
     "ref": 24
   },
   "books": [
@@ -468,6 +468,20 @@
       "pdfKey": "api/library/file/library/books/36443316bd-20261119-1-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/36443316bd-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwni0uww-ec3b3d",
+      "sortNo": 0,
+      "title": "银魂 · 动画资料设定线稿集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《银魂》；原压缩包《[设定集]银魂 动画资料设定线稿集【收录了角色、道具与场景的设定稿】.zip》。第 1-221 页（共 221 页）。",
+      "pageCount": 221,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/ef77a3deee-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/ef77a3deee-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
