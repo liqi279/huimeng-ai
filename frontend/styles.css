@@ -20813,5 +20813,5 @@ body.dv-open .hm-page {
 @media (max-width: 640px) {
   .dv-game-tutorial { top: 72px; right: 10px; width: min(270px, calc(100vw - 20px)); }
   .dv-game-score { top: 72px; left: 10px; }
-  .dv-godot-overlay { inset-top: 56px; height: calc(100% - 56px); }
+  .dv-godot-overlay { inset: 56px 0 0; height: calc(100% - 56px); }
 }
