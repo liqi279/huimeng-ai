@@ -619,7 +619,7 @@
    * 旧 ?view=dimverse 链接自动迁移到独立路径，并保留 hm_v 等缓存参数。 */
   function openGodotDimverse(replace) {
     var target = new URL(window.location.href);
-    target.pathname = target.pathname.replace(/\\/?$/, '/') + 'dimverse/';
+    target.pathname = target.pathname.replace(/\/?$/, '/') + 'dimverse/';
     target.searchParams.delete('view');
     var next = target.pathname + target.search + target.hash;
     var current = window.location.pathname + window.location.search + window.location.hash;
