@@ -329,6 +329,7 @@
   }
 
   function animateSymbols(now) {
+    now = typeof now === 'number' ? now : performance.now();
     if (!dimPage || dimPage.getAttribute('aria-hidden') === 'true') {
       dimRaf = 0;
       return;
