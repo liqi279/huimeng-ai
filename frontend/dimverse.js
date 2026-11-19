@@ -316,8 +316,9 @@
         color: CYBER_COLORS[Math.floor(Math.random() * CYBER_COLORS.length)],
         opacity: rnd(0.12, 0.5)
       };
-      s.style.left = state.x + '%';
-      s.style.top = state.y + '%';
+      s.style.left = '0';
+      s.style.top = '0';
+      s.style.transform = 'translate3d(' + state.x + 'vw, ' + state.y + 'vh, 0) rotate(' + state.rot + 'deg)';
       s.style.fontSize = state.size + 'px';
       s.style.color = state.color;
       s.style.opacity = state.opacity;
@@ -339,9 +340,7 @@
       s.x += s.vx; s.y += s.vy; s.rot += s.vr;
       if (s.x < -5) s.x = 105; if (s.x > 105) s.x = -5;
       if (s.y < -5) s.y = 105; if (s.y > 105) s.y = -5;
-      s.el.style.left = s.x + '%';
-      s.el.style.top = s.y + '%';
-      s.el.style.transform = 'rotate(' + s.rot + 'deg)';
+      s.el.style.transform = 'translate3d(' + s.x + 'vw, ' + s.y + 'vh, 0) rotate(' + s.rot + 'deg)';
     }
     dimRaf = requestAnimationFrame(animateSymbols);
   }
