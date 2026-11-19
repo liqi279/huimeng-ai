@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T12:08:37.000Z",
+  "generatedAt": "2026-11-19T12:12:57.000Z",
   "source": "huimeng_library.books",
-  "total": 975,
+  "total": 976,
   "areas": {
     "paint": 749,
-    "concept": 202,
+    "concept": 203,
     "ref": 24
   },
   "books": [
@@ -524,6 +524,20 @@
       "pdfKey": "api/library/file/library/books/16b1c49e4e-20261119-2-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/16b1c49e4e-20261119-2-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnie8tk-8fb499",
+      "sortNo": 0,
+      "title": "盾之勇者成名录 · 动画资料设定线稿集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《盾之勇者成名录》；原压缩包《[线稿集]盾之勇者成名录 动画资料设定线稿集【一些角色设定原画稿】.zip》。第 1-78 页（共 78 页）。",
+      "pageCount": 78,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/49c76c0d74-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/49c76c0d74-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
