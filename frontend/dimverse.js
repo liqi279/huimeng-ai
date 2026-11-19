@@ -600,15 +600,30 @@
   /* ---------- Godot 透明叠加游戏层 ---------- */
   var godotFrame = null;
   var godotStarted = false;
+  var godotStartAttempts = 0;
   var tutorialPanel = null;
   var scorePanel = null;
+
+  function startGodotWhenReady() {
+    if (!godotFrame || !godotFrame.isConnected) return;
+    try {
+      var gameWindow = godotFrame.contentWindow;
+      if (gameWindow && typeof gameWindow.hmGodotStart === 'function') {
+        godotStarted = true;
+        gameWindow.hmGodotStart();
+        return;
+      }
+    } catch (e) {}
+    if (godotStartAttempts < 80) {
+      godotStartAttempts += 1;
+      window.setTimeout(startGodotWhenReady, 250);
+    }
+  }
 
   function ensureGodotOverlay() {
     if (godotFrame) {
       godotFrame.style.opacity = '1';
-      if (godotStarted && godotFrame.contentWindow && godotFrame.contentWindow.hmGodotStart) {
-        godotFrame.contentWindow.hmGodotStart();
-      }
+      startGodotWhenReady();
       return;
     }
     godotFrame = el('iframe', 'dv-godot-overlay');
@@ -616,9 +631,9 @@
     godotFrame.setAttribute('aria-label', '次元宇宙团子游戏层');
     godotFrame.setAttribute('allow', 'autoplay; fullscreen');
     godotFrame.setAttribute('tabindex', '-1');
-    godotFrame.src = new URL('./dimverse/game/index.html', window.location.href).href;
-    dimPage.appendChild(godotFrame);
     godotFrame.addEventListener('load', function () {
+      /* Do not leave the page looking empty while Godot finishes WASM startup. */
+      godotFrame.style.opacity = '1';
       try {
         var doc = godotFrame.contentDocument;
         if (doc) {
@@ -626,7 +641,11 @@
           doc.body.style.background = 'transparent';
         }
       } catch (e) {}
+      startGodotWhenReady();
+      try { godotFrame.contentWindow.focus(); } catch (e) {}
     });
+    godotFrame.src = new URL('./dimverse/game/index.html', window.location.href).href;
+    dimPage.appendChild(godotFrame);
   }
 
   function buildTutorialPanel() {
@@ -648,7 +667,7 @@
       godotStarted = true;
       godotFrame.style.opacity = '1';
       try {
-        if (godotFrame.contentWindow.hmGodotStart) godotFrame.contentWindow.hmGodotStart();
+        startGodotWhenReady();
         godotFrame.contentWindow.focus();
       } catch (e) {}
     } else if (event.data === 'hm-godot-landed') {
