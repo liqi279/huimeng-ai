@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T13:26:09.000Z",
+  "generatedAt": "2026-11-19T13:28:10.000Z",
   "source": "huimeng_library.books",
-  "total": 997,
+  "total": 998,
   "areas": {
     "paint": 749,
-    "concept": 224,
+    "concept": 225,
     "ref": 24
   },
   "books": [
@@ -832,6 +832,20 @@
       "pdfKey": "api/library/file/library/books/9be6e06dcd-20261119-3-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/9be6e06dcd-20261119-3-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnl3v35-1e690d",
+      "sortNo": 0,
+      "title": "因为太怕痛就全点防御力了 · ， 动画设定原画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《因为太怕痛就全点防御力了》；原压缩包《[设定集]因为太怕痛就全点防御力了， 动画设定原画集【一些角色、场景的设定图】.zip》。第 1-45 页（共 45 页）。",
+      "pageCount": 45,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/bc190f32a1-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/bc190f32a1-20261119-1-1.jpg",
       "coverBytes": 0
     },
     {
