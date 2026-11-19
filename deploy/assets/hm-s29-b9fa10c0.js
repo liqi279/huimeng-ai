@@ -34,6 +34,7 @@
     var t = 0;
     var raf = 0;
     var alive = true;
+    var lastFrame = 0;
 
     var layers = [
       { r: size * 0.42, w: size * 0.05, speed: 0.012, dir: 1, color: CYBER_COLORS[0], segs: 3, gap: 0.9 },
@@ -74,8 +75,10 @@
       ctx.restore();
     }
 
-    function frame() {
+    function frame(now) {
       if (!alive) return;
+      if (now - lastFrame < 1000 / 30) { raf = requestAnimationFrame(frame); return; }
+      lastFrame = now;
       t += 1;
       ctx.clearRect(0, 0, size, size);
 
@@ -251,6 +254,7 @@
   var dimVortexAnim = null;
   var dimSymbols = [];
   var dimRaf = 0;
+  var lastSymbolFrame = 0;
 
   function buildDimPage() {
     if (dimPage) return;
@@ -293,7 +297,6 @@
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
-    dimVortexAnim = makeVortex(dimVortexCanvas, 64);
     spawnSymbols(symLayer);
   }
 
@@ -324,11 +327,13 @@
     }
   }
 
-  function animateSymbols() {
+  function animateSymbols(now) {
     if (!dimPage || dimPage.getAttribute('aria-hidden') === 'true') {
       dimRaf = 0;
       return;
     }
+    if (now - lastSymbolFrame < 1000 / 30) { dimRaf = requestAnimationFrame(animateSymbols); return; }
+    lastSymbolFrame = now;
     for (var i = 0; i < dimSymbols.length; i++) {
       var s = dimSymbols[i];
       s.x += s.vx; s.y += s.vy; s.rot += s.vr;
@@ -362,7 +367,7 @@
 
     var w = Math.max(1, center.clientWidth);
     var h = Math.max(1, center.clientHeight);
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.35);
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     canvas.style.width = w + 'px';
@@ -410,8 +415,8 @@
         }
       }
     }
-    if (points.length > 2600) {
-      var stride = points.length / 2600;
+    if (points.length > 1000) {
+      var stride = points.length / 1000;
       points = points.filter(function (_, i) { return i % stride < 1; });
     }
     var particles = points.map(function (p) {
@@ -434,6 +439,7 @@
     var shieldDuration = 1150;
     var raf = 0;
     var alive = true;
+    var lastFrame = 0;
     function ease(x) { return 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3); }
     function hexPath(x, y, r) {
       ctx.beginPath();
@@ -450,6 +456,8 @@
         canvas.remove();
         return;
       }
+      if (now - lastFrame < 1000 / 45) { raf = requestAnimationFrame(frame); return; }
+      lastFrame = now;
       var elapsed = now - start;
       var p = Math.min(1, elapsed / duration);
       ctx.clearRect(0, 0, w, h);
@@ -464,7 +472,7 @@
         ctx.globalAlpha = alpha;
         ctx.fillStyle = q.color;
         ctx.shadowColor = q.color;
-        ctx.shadowBlur = 5 + local * 9;
+        ctx.shadowBlur = (i % 8 === 0) ? 4 + local * 5 : 0;
         ctx.beginPath();
         ctx.arc(q.x, q.y, q.size * (0.7 + local * 0.5), 0, Math.PI * 2);
         ctx.fill();
@@ -558,6 +566,8 @@
   function showDimPage() {
     if (!dimPage) buildDimPage();
     dimPage.style.display = 'flex';
+    if (vortexAnim) { vortexAnim.stop(); vortexAnim = null; }
+    if (!dimVortexAnim && dimVortexCanvas) dimVortexAnim = makeVortex(dimVortexCanvas, 64);
     requestAnimationFrame(function () {
       dimPage.classList.add('is-visible');
       dimPage.setAttribute('aria-hidden', 'false');
@@ -569,6 +579,8 @@
 
   function hideDimPage() {
     if (!dimPage) return;
+    if (dimVortexAnim) { dimVortexAnim.stop(); dimVortexAnim = null; }
+    if (!vortexAnim && vortexCanvas) vortexAnim = makeVortex(vortexCanvas, 72);
     dimPage.classList.remove('is-visible');
     dimPage.setAttribute('aria-hidden', 'true');
     setTimeout(function () { if (dimPage) dimPage.style.display = 'none'; }, 350);
