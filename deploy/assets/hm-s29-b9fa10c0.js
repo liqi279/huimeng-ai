@@ -615,21 +615,13 @@
     }
   }
 
-  /* Godot 4 Web 游戏是次元宇宙唯一正式入口；旧查询参数入口自动迁移。 */
-  function openGodotDimverse(replace) {
-    var target = new URL(window.location.href);
-    target.pathname = target.pathname.endsWith('/') ? target.pathname + 'dimverse/' : target.pathname + '/dimverse/';
-    target.searchParams.delete('view');
-    var next = target.pathname + target.search + target.hash;
-    var current = window.location.pathname + window.location.search + window.location.hash;
-    if (next === current) return;
-    if (replace) window.location.replace(next);
-    else window.location.assign(next);
-  }
-
+  /* 次元宇宙沿用绘梦主页面的 DOM 与背景；Godot 只作为透明游戏逻辑层，
+   * 不允许把 Godot 默认启动页或独立场景替换成用户看到的网页背景。 */
   function syncDimverseFromLocation() {
     if (isDimverseRoute()) {
-      openGodotDimverse(true);
+      if (!dimPage) buildDimPage();
+      document.body.classList.add('dv-open');
+      showDimPage();
       return;
     }
     hideDimPage();
@@ -640,16 +632,13 @@
   function enterDimverse() {
     if (transitioning) return;
     runVortexTransition(vortexBtn, function () {
-      openGodotDimverse(false);
+      updateDimverseRoute(true, false);
+      document.body.classList.add('dv-open');
+      showDimPage();
     });
   }
 
   function leaveDimverse() {
-    /* 独立 /dimverse/ 入口通过同源 iframe 展示主应用；离开时回到站点根路径。 */
-    if (window.top !== window.self) {
-      window.top.location.href = new URL('../', window.location.href).href;
-      return;
-    }
     if (transitioning) return;
     runVortexTransition(dimVortexBtn, function () {
       updateDimverseRoute(false, false);
