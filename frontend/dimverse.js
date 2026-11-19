@@ -292,8 +292,20 @@
 
     /* 中心文案 */
     var center = el('div', 'dv-center');
-    center.innerHTML = '<h1 class="dv-title dv-title-building" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
+    center.innerHTML = '<h1 class="dv-title" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
     prepareTitleCharacters(center.querySelector('.dv-title'));
+    var startBtn = el('button', 'dv-start-btn', '开启');
+    startBtn.type = 'button';
+    startBtn.setAttribute('aria-label', '开启次元宇宙序章');
+    startBtn.addEventListener('click', function () {
+      if (startBtn.disabled) return;
+      startBtn.disabled = true;
+      startBtn.classList.add('is-exiting');
+      window.setTimeout(function () { startBtn.remove(); }, 260);
+      startTitleParticleIntro(center, center.querySelector('.dv-title'));
+      ensureGodotOverlay();
+    });
+    center.appendChild(startBtn);
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
@@ -563,6 +575,67 @@
     title.dataset.charactersReady = 'true';
   }
 
+  /* ---------- Godot 透明叠加游戏层 ---------- */
+  var godotFrame = null;
+  var godotStarted = false;
+  var tutorialPanel = null;
+  var scorePanel = null;
+
+  function ensureGodotOverlay() {
+    if (godotFrame) {
+      godotFrame.style.opacity = '1';
+      if (godotStarted && godotFrame.contentWindow && godotFrame.contentWindow.hmGodotStart) {
+        godotFrame.contentWindow.hmGodotStart();
+      }
+      return;
+    }
+    godotFrame = el('iframe', 'dv-godot-overlay');
+    godotFrame.title = '次元宇宙团子游戏层';
+    godotFrame.setAttribute('aria-label', '次元宇宙团子游戏层');
+    godotFrame.setAttribute('allow', 'autoplay; fullscreen');
+    godotFrame.setAttribute('tabindex', '-1');
+    godotFrame.src = new URL('./dimverse/game/index.html', window.location.href).href;
+    dimPage.appendChild(godotFrame);
+    godotFrame.addEventListener('load', function () {
+      try {
+        var doc = godotFrame.contentDocument;
+        if (doc) {
+          doc.documentElement.style.background = 'transparent';
+          doc.body.style.background = 'transparent';
+        }
+      } catch (e) {}
+    });
+  }
+
+  function buildTutorialPanel() {
+    if (tutorialPanel) return;
+    tutorialPanel = el('aside', 'dv-game-tutorial');
+    tutorialPanel.innerHTML = '<strong>次元探索指南 <span>/ CONTROLS</span></strong>' +
+      '<p><b>W A S D</b> / 方向键：移动团子</p>' +
+      '<p>靠近发光晶体即可收集</p>' +
+      '<p>探索原有次元空间</p>';
+    dimPage.appendChild(tutorialPanel);
+    requestAnimationFrame(function () { tutorialPanel.classList.add('is-visible'); });
+    scorePanel = el('div', 'dv-game-score', '能量晶体　00 / 04');
+    dimPage.appendChild(scorePanel);
+  }
+
+  function onGodotMessage(event) {
+    if (!godotFrame || event.source !== godotFrame.contentWindow) return;
+    if (event.data === 'hm-godot-ready') {
+      godotStarted = true;
+      godotFrame.style.opacity = '1';
+      try {
+        if (godotFrame.contentWindow.hmGodotStart) godotFrame.contentWindow.hmGodotStart();
+      } catch (e) {}
+    } else if (event.data === 'hm-godot-landed') {
+      buildTutorialPanel();
+    } else if (typeof event.data === 'string' && event.data.indexOf('hm-godot-score-') === 0) {
+      var score = Number(event.data.slice('hm-godot-score-'.length)) || 0;
+      if (scorePanel) scorePanel.textContent = '能量晶体　' + String(score).padStart(2, '0') + ' / 04';
+    }
+  }
+
   function showDimPage() {
     if (!dimPage) buildDimPage();
     dimPage.style.display = 'flex';
@@ -572,8 +645,7 @@
       dimPage.classList.add('is-visible');
       dimPage.setAttribute('aria-hidden', 'false');
       if (!dimRaf) animateSymbols();
-      var title = dimPage.querySelector('.dv-title');
-      if (title) startTitleParticleIntro(dimPage.querySelector('.dv-center'), title);
+      /* 序章由用户点击「开启」触发，进入页面不自动播放。 */
     });
   }
 
@@ -655,6 +727,7 @@
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
+    window.addEventListener('message', onGodotMessage);
     /* 支持直接打开 / 刷新 ?view=dimverse 的专属页面。 */
     if (isDimverseRoute()) syncDimverseFromLocation();
     window.addEventListener('popstate', syncDimverseFromLocation);
