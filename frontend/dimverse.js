@@ -693,36 +693,66 @@
     ctx.translate(s.x, s.y + Math.sin(now * 0.004) * (s.phase === 'playing' ? 1.5 : 0));
     ctx.rotate(s.tilt);
     ctx.scale(1 + s.squash, 1 - s.squash * 0.7 + breathe);
-    ctx.shadowColor = 'rgba(0,0,0,.32)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 9;
-    var body = ctx.createRadialGradient(-23, -28, 5, 4, 4, 78);
-    body.addColorStop(0, '#fffef2'); body.addColorStop(0.58, '#f6f2d9');
-    body.addColorStop(0.88, '#e6dfc0'); body.addColorStop(1, '#bdb695');
-    ctx.fillStyle = body; ctx.strokeStyle = 'rgba(105,101,75,.72)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.ellipse(0, 0, 70, 52, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    var wobble = Math.sin(now * 0.004 + s.x * 0.012) * (1.2 + speed * 2.4);
+    traceDangoSlime(ctx, wobble);
+    ctx.shadowColor = 'rgba(15,48,70,.2)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 7;
+    var body = ctx.createRadialGradient(-24, -39, 5, 2, -3, 94);
+    body.addColorStop(0, '#effaff'); body.addColorStop(0.42, '#d7edf7');
+    body.addColorStop(0.78, '#bdddeb'); body.addColorStop(1, '#9fbed0');
+    ctx.fillStyle = body; ctx.fill();
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-    ctx.fillStyle = 'rgba(255,255,255,.56)';
-    ctx.beginPath(); ctx.ellipse(-21, -24, 25, 9, -0.24, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.36)';
-    ctx.beginPath(); ctx.ellipse(-40, -10, 7, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); traceDangoSlime(ctx, wobble); ctx.clip();
+    var softLight = ctx.createRadialGradient(-31, -39, 1, -22, -26, 61);
+    softLight.addColorStop(0, 'rgba(255,255,255,.44)');
+    softLight.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = softLight; ctx.fillRect(-74, -64, 148, 122);
+    var underside = ctx.createLinearGradient(0, 8, 0, 52);
+    underside.addColorStop(0, 'rgba(88,129,152,0)');
+    underside.addColorStop(1, 'rgba(88,129,152,.18)');
+    ctx.fillStyle = underside; ctx.fillRect(-72, 0, 144, 56);
+    ctx.restore();
+    ctx.save(); traceDangoSlime(ctx, wobble);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(100,132,151,.72)'; ctx.lineWidth = 4.2; ctx.stroke();
+    ctx.translate(0, -0.7); ctx.strokeStyle = 'rgba(240,250,255,.42)'; ctx.lineWidth = 1.25; ctx.stroke();
+    ctx.restore();
     var lookX = Math.max(-2, Math.min(2, s.vx / 150));
     var lookY = Math.max(-1.5, Math.min(1.5, s.vy / 240));
     var blinking = now < s.blinkUntil;
-    ctx.strokeStyle = '#292923'; ctx.fillStyle = '#292923'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
-    [-18, 18].forEach(function (eyeX) {
+    ctx.strokeStyle = '#24313b'; ctx.fillStyle = '#24313b'; ctx.lineWidth = 3.7; ctx.lineCap = 'round';
+    [-17, 14].forEach(function (eyeX, i) {
       if (blinking) {
-        ctx.beginPath(); ctx.moveTo(eyeX - 4, -3); ctx.quadraticCurveTo(eyeX, 1, eyeX + 4, -3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(eyeX - 4, -27); ctx.quadraticCurveTo(eyeX, -23, eyeX + 4, -27); ctx.stroke();
       } else {
-        ctx.beginPath(); ctx.ellipse(eyeX + lookX, -5 + lookY, 2.7, 7.2, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(eyeX - 0.6 + lookX, -8 + lookY, 1.1, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#292923';
+        var offset = i ? 2 : -2;
+        ctx.beginPath(); ctx.moveTo(eyeX + lookX, -38 + lookY);
+        ctx.quadraticCurveTo(eyeX + offset + lookX, -32 + lookY, eyeX + 3 + lookX, -25 + lookY); ctx.stroke();
       }
     });
-    ctx.fillStyle = 'rgba(239,135,157,.28)';
-    ctx.beginPath(); ctx.ellipse(-31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.ellipse(31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    var blush = ctx.createRadialGradient(0, 0, 0, 0, 0, 9);
+    blush.addColorStop(0, 'rgba(244,151,173,.45)'); blush.addColorStop(1, 'rgba(244,151,173,0)');
+    ctx.fillStyle = blush;
+    ctx.beginPath(); ctx.ellipse(-34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.ellipse(34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(70,105,126,.68)'; ctx.lineWidth = 1.7;
+    ctx.beginPath(); ctx.arc(0, -2, 4, 0.2, Math.PI - 0.2); ctx.stroke();
     if (speed > 0.12) {
-      ctx.strokeStyle = 'rgba(133,89,103,.8)'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(0, 7, 4, 0.2, Math.PI - 0.2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(100,132,151,.48)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, 3, 4, 0.15, Math.PI - 0.15); ctx.stroke();
     }
     ctx.restore();
+  }
+
+  function traceDangoSlime(ctx, wobble) {
+    ctx.beginPath();
+    ctx.moveTo(-62, 39);
+    ctx.bezierCurveTo(-69, 33, -68, 15, -65, -2);
+    ctx.bezierCurveTo(-62, -27, -48, -48, -29, -53 - wobble * 0.35);
+    ctx.bezierCurveTo(-12, -59 - wobble, 11, -59 + wobble * 0.3, 29, -51);
+    ctx.bezierCurveTo(50, -43, 64, -23, 67, -1);
+    ctx.bezierCurveTo(70, 15, 69, 32, 62, 40);
+    ctx.bezierCurveTo(53, 49, 29, 48 + wobble * 0.15, 10, 48);
+    ctx.bezierCurveTo(-14, 50, -48, 50 - wobble * 0.12, -62, 39);
+    ctx.closePath();
   }
 
   function drawGameCrystal(ctx, crystal, now) {
@@ -917,3 +947,4 @@
 
   window.HMDimverse = { enter: enterDimverse, leave: leaveDimverse };
 })();
+
