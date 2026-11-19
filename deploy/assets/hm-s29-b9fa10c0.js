@@ -288,7 +288,7 @@
 
     /* 中心文案 */
     var center = el('div', 'dv-center');
-    center.innerHTML = '<h1 class="dv-title" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
+    center.innerHTML = '<h1 class="dv-title dv-title-building" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
@@ -340,6 +340,180 @@
     dimRaf = requestAnimationFrame(animateSymbols);
   }
 
+  /* ---------- 粒子汇聚成字 · 赛博屏障显形 ---------- */
+  function startTitleParticleIntro(center, title) {
+    if (!center || !title) return;
+    title.classList.add('dv-title-building');
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      title.classList.remove('dv-title-building');
+      return;
+    }
+    var oldCanvas = center.querySelector('.dv-title-particles');
+    if (oldCanvas) oldCanvas.remove();
+    var canvas = el('canvas', 'dv-title-particles');
+    center.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+    if (!ctx) {
+      canvas.remove();
+      title.classList.remove('dv-title-building');
+      return;
+    }
+
+    var w = Math.max(1, center.clientWidth);
+    var h = Math.max(1, center.clientHeight);
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.scale(dpr, dpr);
+
+    var rect = title.getBoundingClientRect();
+    var base = center.getBoundingClientRect();
+    var left = rect.left - base.left;
+    var top = rect.top - base.top;
+    var mask = document.createElement('canvas');
+    mask.width = Math.ceil(w);
+    mask.height = Math.ceil(h);
+    var mctx = mask.getContext('2d');
+    var style = window.getComputedStyle(title);
+    mctx.font = style.font;
+    mctx.textAlign = 'center';
+    mctx.textBaseline = 'middle';
+    mctx.fillStyle = '#fff';
+    mctx.fillText(title.textContent, left + rect.width / 2, top + rect.height / 2, rect.width + 8);
+    var pixels = mctx.getImageData(0, 0, mask.width, mask.height).data;
+    var points = [];
+    var step = 3;
+    for (var y = Math.max(0, Math.floor(top)); y < Math.min(mask.height, top + rect.height); y += step) {
+      for (var x = Math.max(0, Math.floor(left)); x < Math.min(mask.width, left + rect.width); x += step) {
+        if (pixels[(y * mask.width + x) * 4 + 3] > 100 && Math.random() > 0.13) points.push({ x: x, y: y });
+      }
+    }
+    if (points.length > 1900) {
+      var stride = points.length / 1900;
+      points = points.filter(function (_, i) { return i % stride < 1; });
+    }
+    var particles = points.map(function (p) {
+      var angle = rnd(0, Math.PI * 2);
+      var radius = rnd(Math.max(w, h) * 0.28, Math.max(w, h) * 0.85);
+      return {
+        x: w / 2 + Math.cos(angle) * radius,
+        y: h / 2 + Math.sin(angle) * radius,
+        sx: w / 2 + Math.cos(angle) * radius,
+        sy: h / 2 + Math.sin(angle) * radius,
+        tx: p.x, ty: p.y,
+        size: rnd(0.65, 1.65),
+        color: CYBER_COLORS[Math.floor(Math.random() * CYBER_COLORS.length)],
+        delay: rnd(0, 0.28)
+      };
+    });
+
+    var start = performance.now();
+    var duration = 2050;
+    var shieldDuration = 1050;
+    var raf = 0;
+    var alive = true;
+    function ease(x) { return 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3); }
+    function hexPath(x, y, r) {
+      ctx.beginPath();
+      for (var k = 0; k < 6; k++) {
+        var a = Math.PI / 3 * k - Math.PI / 6;
+        var px = x + Math.cos(a) * r;
+        var py = y + Math.sin(a) * r;
+        if (!k) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    }
+    function frame(now) {
+      if (!alive || !dimPage || dimPage.getAttribute('aria-hidden') === 'true') {
+        canvas.remove();
+        return;
+      }
+      var elapsed = now - start;
+      var p = Math.min(1, elapsed / duration);
+      ctx.clearRect(0, 0, w, h);
+
+      /* 第一阶段：四面八方的能量粒子向文字轮廓汇聚 */
+      for (var i = 0; i < particles.length; i++) {
+        var q = particles[i];
+        var local = ease((p - q.delay) / (1 - q.delay));
+        q.x = q.sx + (q.tx - q.sx) * local;
+        q.y = q.sy + (q.ty - q.sy) * local;
+        var alpha = 0.25 + local * 0.75;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = q.color;
+        ctx.shadowColor = q.color;
+        ctx.shadowBlur = 5 + local * 9;
+        ctx.beginPath();
+        ctx.arc(q.x, q.y, q.size * (0.7 + local * 0.5), 0, Math.PI * 2);
+        ctx.fill();
+        if (local < 0.82) {
+          ctx.globalAlpha = alpha * 0.22;
+          ctx.strokeStyle = q.color;
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(q.x, q.y);
+          ctx.lineTo(q.x + (q.tx - q.sx) * 0.025, q.y + (q.ty - q.sy) * 0.025);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+
+      /* 第二阶段：文字成形后，六边形能量屏障由内向外闭合 */
+      var shield = Math.max(0, Math.min(1, (elapsed - duration) / shieldDuration));
+      if (shield > 0) {
+        var sx = left - 26, sy = top - 22;
+        var sw = rect.width + 52, sh = rect.height + 44;
+        var radius = 13;
+        var cols = Math.ceil(sw / (radius * 1.5)) + 2;
+        var rows = Math.ceil(sh / (radius * 1.72)) + 2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(sx - 8, sy - 8, sw + 16, sh + 16);
+        ctx.clip();
+        for (var row = -1; row < rows; row++) {
+          for (var col = -1; col < cols; col++) {
+            var hx = sx + col * radius * 1.5 + (row % 2) * radius * 0.75;
+            var hy = sy + row * radius * 1.72;
+            var dist = Math.hypot(hx - (left + rect.width / 2), hy - (top + rect.height / 2));
+            var reveal = shield * Math.max(sw, sh) * 0.78;
+            if (dist > reveal) continue;
+            var fade = Math.max(0.08, 1 - Math.max(0, dist - reveal + 40) / 70);
+            hexPath(hx, hy, radius * 0.52);
+            ctx.strokeStyle = row % 2 ? 'rgba(34,211,238,' + (0.12 * fade) + ')' : 'rgba(192,132,252,' + (0.16 * fade) + ')';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+
+        var pulse = 0.5 + Math.sin(elapsed * 0.018) * 0.5;
+        ctx.strokeStyle = 'rgba(34,211,238,' + (0.35 * (1 - shield * 0.45)) + ')';
+        ctx.lineWidth = 1.4;
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = 16;
+        ctx.strokeRect(sx, sy, sw, sh);
+        ctx.shadowBlur = 0;
+        var scanY = sy + ((elapsed - duration) % 420) / 420 * sh;
+        ctx.fillStyle = 'rgba(103,232,249,' + (0.16 + pulse * 0.12) + ')';
+        ctx.fillRect(sx, scanY, sw, 1.5);
+      }
+
+      if (elapsed < duration + shieldDuration) {
+        raf = requestAnimationFrame(frame);
+      } else {
+        title.classList.remove('dv-title-building');
+        canvas.style.transition = 'opacity .35s ease';
+        canvas.style.opacity = '0';
+        window.setTimeout(function () { canvas.remove(); }, 380);
+      }
+    }
+    raf = requestAnimationFrame(frame);
+    return function () { alive = false; cancelAnimationFrame(raf); canvas.remove(); };
+  }
+
   function showDimPage() {
     if (!dimPage) buildDimPage();
     dimPage.style.display = 'flex';
@@ -347,6 +521,8 @@
       dimPage.classList.add('is-visible');
       dimPage.setAttribute('aria-hidden', 'false');
       if (!dimRaf) animateSymbols();
+      var title = dimPage.querySelector('.dv-title');
+      if (title) startTitleParticleIntro(dimPage.querySelector('.dv-center'), title);
     });
   }
 
