@@ -288,11 +288,7 @@
 
     /* 中心文案 */
     var center = el('div', 'dv-center');
-    center.innerHTML = '<h1 class="dv-title">欢迎来到次元宇宙</h1>'
-      + '<p class="dv-sub">页面正开发中<span class="dv-dots">......</span>敬请期待</p>'
-      + '<div class="dv-meta">'
-      + '<span>2D 横版</span><i></i><span>2.5D</span><i></i><span>3D · 多元视角</span>'
-      + '</div>';
+    center.innerHTML = '<h1 class="dv-title" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
