@@ -105,10 +105,10 @@ test('download route uses the shared allowlist and validates every redirect hop'
   }
   assert.ok(html.includes('./assets/hm-s29-b9fa10c0.js'), 'Pages HTML loads the patched Dimverse asset');
   const standalone = fs.readFileSync(require.resolve('../../deploy/dimverse/index.html'), 'utf8');
-  assert.match(standalone, /<title>次元宇宙 · 绘梦<\\/title>/);
+  assert.ok(standalone.includes('<title>次元宇宙 · 绘梦</title>'));
   assert.ok(standalone.includes("searchParams.set('view', 'dimverse')"), 'standalone route returns to the original page with the Dimverse view');
   assert.ok(!standalone.includes('game/index.html'), 'standalone route does not launch the Godot splash screen');
-  assert.match(source, /function enterDimverse\\(\\)[\\s\\S]*?showDimPage\\(\\)/);
+  assert.ok(source.includes('function enterDimverse()') && source.includes('showDimPage()'));
 
   const sourceStyles = fs.readFileSync(require.resolve('../../frontend/styles.css'), 'utf8');
   const deployedStyles = fs.readFileSync(require.resolve('../../deploy/assets/hm.css'), 'utf8');
