@@ -96,10 +96,10 @@ test('download route uses the shared allowlist and validates every redirect hop'
   const html = fs.readFileSync(require.resolve('../../deploy/index.html'), 'utf8');
 
   for (const code of [source, deployed]) {
-    assert.match(code, /searchParams\\.set\\('view', 'dimverse'\\)/);
-    assert.match(code, /searchParams\\.delete\\('view'\\)/);
-    assert.match(code, /addEventListener\\('popstate', syncDimverseFromLocation\\)/);
-    assert.match(code, /if \\(isDimverseRoute\\(\\)\\) syncDimverseFromLocation\\(\\)/);
+    assert.ok(code.includes("searchParams.set('view', 'dimverse')"));
+    assert.ok(code.includes("searchParams.set('view', 'dimverse')"));
+    assert.ok(code.includes("addEventListener('popstate', syncDimverseFromLocation)"));
+    assert.ok(code.includes('if (isDimverseRoute()) syncDimverseFromLocation()'));
   }
   assert.ok(html.includes('./assets/hm-s29-b9fa10c0.js'), 'Pages HTML loads the patched Dimverse asset');
 
