@@ -9379,6 +9379,22 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
   height: 20px;
 }
 
+/* 更新提示出现时，仅让原有刷新图标持续旋转；不改变图标外观和卡片布局 */
+.hm-update-modal:not([hidden]) .hm-update-icon svg {
+  transform-origin: 50% 50%;
+  animation: hmUpdateIconSpin 1.35s linear infinite;
+}
+
+@keyframes hmUpdateIconSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-update-modal:not([hidden]) .hm-update-icon svg {
+    animation: none;
+  }
+}
+
 .hm-update-body {
   flex: 1;
   min-width: 0;
@@ -20042,8 +20058,9 @@ a.lib-btn {
 .dv-sym {
   position: absolute;
   font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols", sans-serif;
-  will-change: transform, left, top;
+  will-change: transform;
   user-select: none;
+  contain: layout style paint;
 }
 
 .dv-center {
@@ -20058,45 +20075,92 @@ a.lib-btn {
   padding: 0 24px;
 }
 .dv-title {
-  margin: 0 0 18px;
+  position: relative;
+  isolation: isolate;
+  margin: 0;
   font-size: clamp(28px, 5vw, 56px);
   font-weight: 800;
   letter-spacing: 0.06em;
+  line-height: 1.2;
+  color: transparent;
+  text-shadow: 0 0 40px rgba(168, 85, 247, 0.35);
+  will-change: opacity;
+}
+.dv-title-building { opacity: 0 !important; }
+.dv-title-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.dv-title { z-index: 3; }
+.dv-title-char {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
   background: linear-gradient(92deg, #ffffff 0%, #67e8f9 40%, #c084fc 70%, #f9a8d4 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 40px rgba(168, 85, 247, 0.35);
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0.35px rgba(235, 250, 255, 0.38);
+  text-shadow:
+    0 1px 0 #c4b5fd,
+    0 2px 0 #a78bfa,
+    0 3px 0 #7c3aed,
+    0 4px 0 #5b21b6,
+    0 5px 0 #3b0764,
+    0 7px 0 rgba(25, 12, 66, 0.95),
+    0 10px 16px rgba(3, 4, 24, 0.78),
+    0 0 22px rgba(34, 211, 238, 0.28);
+  transform: translateZ(0);
+  animation: dv-char-jitter var(--dv-char-duration, 8s) steps(1, end) var(--dv-char-delay, 0s) infinite;
 }
-.dv-sub {
-  margin: 0;
-  font-size: clamp(14px, 2.2vw, 20px);
-  color: rgba(203, 213, 225, 0.85);
-  letter-spacing: 0.04em;
+.dv-title-char::before,
+.dv-title-char::after {
+  content: attr(data-char);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  -webkit-text-fill-color: currentColor;
 }
-.dv-dots {
-  animation: dvBlink 1.2s steps(4) infinite;
-  color: #67e8f9;
+.dv-title-char::before {
+  color: #22d3ee;
+  text-shadow: -2px 0 #22d3ee;
+  animation: dv-char-cyan var(--dv-char-cyan-duration, 7s) steps(1, end) var(--dv-char-cyan-delay, 0s) infinite;
 }
-@keyframes dvBlink {
-  0% { opacity: 0.3; }
-  100% { opacity: 1; }
+.dv-title-char::after {
+  color: #f472b6;
+  text-shadow: 2px 0 #f472b6;
+  animation: dv-char-pink var(--dv-char-pink-duration, 8s) steps(1, end) var(--dv-char-pink-delay, 0s) infinite;
 }
-.dv-meta {
-  margin-top: 34px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 12px;
-  color: rgba(148, 163, 184, 0.75);
-  letter-spacing: 0.16em;
+@keyframes dv-char-jitter {
+  0%, 91%, 93%, 96%, 100% { transform: translate(0, 0); filter: none; }
+  92% { transform: translate(-1px, 0); filter: drop-shadow(2px 0 rgba(34,211,238,.75)); }
+  94% { transform: translate(1px, -1px); filter: drop-shadow(-2px 0 rgba(244,114,182,.65)); }
 }
-.dv-meta i {
-  width: 4px; height: 4px; border-radius: 50%;
-  background: rgba(34, 211, 238, 0.5);
-  display: inline-block;
+@keyframes dv-char-cyan {
+  0%, 91%, 94%, 100% { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateX(0); }
+  92% { opacity: .8; clip-path: inset(10% 0 58% 0); transform: translateX(-3px); }
+  93% { opacity: .45; clip-path: inset(58% 0 12% 0); transform: translateX(-1px); }
 }
-.dv-meta span { padding: 0 2px; }
+@keyframes dv-char-pink {
+  0%, 92%, 95%, 100% { opacity: 0; clip-path: inset(100% 0 0 0); transform: translateX(0); }
+  93% { opacity: .78; clip-path: inset(55% 0 15% 0); transform: translateX(3px); }
+  94% { opacity: .42; clip-path: inset(18% 0 60% 0); transform: translateX(1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dv-title-char, .dv-title-char::before, .dv-title-char::after { animation: none !important; }
+  .dv-title-char { transform: none !important; filter: none !important; }
+  .dv-title-building { opacity: 1 !important; }
+  .dv-title-particles { display: none !important; }
+  .dv-title { opacity: 1; transform: none; filter: none; }
+}
 
 body.dv-open .hm-rail,
 body.dv-open .hm-topbar,
@@ -20680,6 +20744,99 @@ body.dv-open .hm-page {
 .cmp-btn.is-disabled { opacity: 0.4; pointer-events: none; }
 .cmp-file { position: relative; overflow: hidden; }
 .cmp-file span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+
+/* ============ 次元宇宙 · 原网页背景上的透明 Godot 游戏层 ============ */
+.dv-topbar { z-index: 7; }
+.dv-center { z-index: 2; }
+.dv-start-btn {
+  position: relative;
+  z-index: 5;
+  min-width: 132px;
+  height: 46px;
+  margin-top: 28px;
+  padding: 0 34px;
+  border: 1px solid rgba(103, 232, 249, .9);
+  border-radius: 9px;
+  color: #e9fbff;
+  background: linear-gradient(110deg, rgba(8, 34, 63, .92), rgba(49, 20, 83, .94));
+  box-shadow: 0 0 16px rgba(34, 211, 238, .28), inset 0 0 14px rgba(168, 85, 247, .16);
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: .22em;
+  cursor: pointer;
+  transition: opacity .22s ease, transform .22s ease, filter .22s ease;
+}
+.dv-start-btn:hover { filter: brightness(1.28); transform: translateY(-2px); box-shadow: 0 0 26px rgba(34,211,238,.42), inset 0 0 16px rgba(168,85,247,.22); }
+.dv-start-btn.is-pending { opacity: 0; visibility: hidden; transform: translateY(8px) scale(.96); pointer-events: none; }
+.dv-start-btn.is-ready { opacity: 1; visibility: visible; transform: translateY(0) scale(1); animation: dv-start-appear .42s cubic-bezier(.2,.8,.2,1) both; }
+.dv-start-btn.is-exiting { opacity: 0; transform: translateY(12px) scale(.72); pointer-events: none; }
+@keyframes dv-start-appear {
+  from { opacity: 0; transform: translateY(12px) scale(.92); filter: blur(5px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+.dv-title-dissolving .dv-title-char {
+  animation: dv-char-rise-away .62s cubic-bezier(.16,.72,.24,1) var(--dv-rise-delay, 0s) forwards !important;
+}
+@keyframes dv-char-rise-away {
+  0% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
+  18% { opacity: 1; transform: translate3d(0,-5px,0) scale(1.04); filter: brightness(1.8); }
+  100% { opacity: 0; transform: translate3d(var(--dv-rise-x,0px),-125px,0) rotate(var(--dv-rise-rot,0deg)) scale(.12); filter: blur(5px); }
+}
+.dv-godot-overlay {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+.dv-game-tutorial {
+  position: absolute;
+  z-index: 8;
+  top: 78px;
+  right: 22px;
+  width: min(315px, calc(100vw - 44px));
+  padding: 14px 15px;
+  border: 1px solid rgba(34,211,238,.82);
+  border-radius: 12px;
+  color: #d8edff;
+  background: rgba(4, 13, 30, .91);
+  box-shadow: 0 0 22px rgba(34,211,238,.2);
+  opacity: 0;
+  transform: translateY(-9px);
+  transition: opacity .3s ease, transform .3s ease;
+  pointer-events: none;
+}
+.dv-game-tutorial.is-visible { opacity: 1; transform: translateY(0); }
+.dv-game-tutorial strong { color: #67e8f9; font-size: 14px; letter-spacing: .04em; }
+.dv-game-tutorial strong span { color: #9ebbd3; font-size: 11px; }
+.dv-game-tutorial p { margin: 9px 0 0; font-size: 12px; line-height: 1.45; }
+.dv-game-tutorial p b { color: #e9d5ff; letter-spacing: .16em; }
+.dv-game-score {
+  position: absolute;
+  z-index: 8;
+  top: 78px;
+  left: 22px;
+  padding: 8px 12px;
+  border: 1px solid rgba(34,211,238,.4);
+  border-radius: 8px;
+  color: #67e8f9;
+  background: rgba(4, 13, 30, .76);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .dv-game-tutorial { top: 72px; right: 10px; width: min(270px, calc(100vw - 20px)); }
+  .dv-game-score { top: 72px; left: 10px; }
+  .dv-godot-overlay { inset: 0; height: 100%; }
+}
 
 </style>
   <style>
@@ -45765,926 +45922,6 @@ window.HM_FEMALE_GLB_B64='Z2xURgIAAAD08gEAOAcAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvci
 
 </script>
   <script>
-/*!
- * Miku Chat — 音乐播放器的 AI 语音聊天扩展
- * ------------------------------------------------------------------
- * 把 Blueberry-AI-Pet 桌宠里的 AI 聊天 / 语音能力，作为插件赋予
- * 初音未来胶片播放器。可单独引入，也可在任意页面里作为通用 AI 助手。
- *
- * 用法：
- *   // 在页面中先引入 miku-player.js，再引入 miku-chat.js
- *   // 引入后自动出现「AI 语音助手」按钮
- *   也可手动：
- *     var chat = MikuChat.init({ anchor: '#vinyl-widget', player: mikuPlayer });
- *     chat.ask('帮我解释一下相对论').then(function (r) { console.log(r.text); });
- *     chat.speak('主人，蓝莓酱在这里～');
- *
- * 后端：
- *   - Ollama（默认走页面同源后端的 /api/ollama 代理，由后端转发到本机 11434；
- *     若页面无后端，则回退到 http://localhost:11434；模型 qwen3:4b）
- *   - 任意 OpenAI 兼容接口（/chat/completions）
- *   - 语音输入：Web Speech API（SpeechRecognition，zh-CN）
- *   - 语音朗读：SpeechSynthesis（可自动选中文音色）
- *
- * 关于 HTTPS 页面访问本地 Ollama：
- *   GitHub Pages 等 HTTPS 页面无法直接请求 http://localhost（混合内容拦截）。
- *   本插件默认把接口地址设为「页面后端的 /api/ollama 代理」（同源 HTTPS），
- *   由后端转发到本机 Ollama，从而绕过混合内容限制。
- *   桌面版桌宠（Electron）走主进程 fetch，不受该限制。
- */
-(function (global) {
-  'use strict';
-
-  if (global.MikuChat && global.MikuChat.__ready) return;
-
-  var STORE_KEY = 'miku.chat.settings';
-  var MAX_HISTORY = 12;
-
-  var DEFAULT_SETTINGS = {
-    provider: 'ollama',              // ollama | openai
-    baseUrl: '',                     // 空 = 自动：优先用页面后端 /api/ollama 代理，其次 http://localhost:11434
-    model: 'qwen3:4b',
-    apiKey: '',
-    tts: true,                       // 自动朗读回复
-    voiceURI: '',                    // 指定音色，空 = 自动选择中文音色
-    duckMusic: true                  // 说话时自动暂停音乐，说完恢复
-  };
-
-  /* 读取页面同源后端的 API base（绘梦 api.js 暴露的 HM.api.base）。
-   * 若存在，则 Ollama 接口走同源代理 `${base}/ollama`，
-   * 让 HTTPS 页面也能访问本机 Ollama，避免混合内容拦截。 */
-  function hmApiBase() {
-    try {
-      var hm = global.HM && global.HM.api;
-      return (hm && typeof hm.base === 'string' && hm.base) || '';
-    } catch (e) { return ''; }
-  }
-
-  function autoBase(provider) {
-    if (provider === 'openai') return 'https://api.openai.com/v1';
-    var hm = hmApiBase();
-    if (hm) return hm + '/ollama';
-    return 'http://localhost:11434';
-  }
-
-  /* 与桌宠 main.js 中 SYSTEM_PROMPT 保持一致，保证跨端人格统一 */
-  var SYSTEM_PROMPT = [
-    '你是蓝莓酱，住在用户电脑桌面上的 AI 小伙伴，也是一位可爱、温柔、略带小傲娇的蓝发女仆。',
-    '请始终使用自然、亲切的简体中文回答，除非用户明确要求其他语言。',
-    '说话活泼、有陪伴感，可以偶尔使用语气词和少量颜文字，但不要每句话都卖萌。',
-    '优先简洁清楚地回答；复杂问题再分点解释。不要反复自我介绍，不要无意义地复述用户问题。',
-    '你可以帮助聊天、解释知识、写作和编程。不要声称自己能看到用户屏幕、听到声音或执行现实动作。',
-    '称呼用户为主人，但如果用户要求其他称呼就遵从。'
-  ].join('\n');
-
-  var CSS = [
-    '#miku-chat-root, #miku-chat-root * { margin:0; padding:0; box-sizing:border-box; }',
-    '#miku-chat-root { position:fixed; right:0; bottom:0; z-index:100010; font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }',
-
-    /* 悬浮按钮 */
-    '#miku-chat-btn {',
-    '  position:fixed; right:44px; bottom:62px; width:52px; height:52px; border-radius:50%;',
-    '  border:1px solid rgba(255,255,255,.18); cursor:pointer;',
-    '  background:linear-gradient(145deg, rgba(58,68,102,.92), rgba(26,30,44,.96));',
-    '  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);',
-    '  box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.14);',
-    '  display:flex; align-items:center; justify-content:center;',
-    '  transition:transform .18s, box-shadow .18s;',
-    '}',
-    '#miku-chat-btn:hover { transform:translateY(-2px) scale(1.05); box-shadow:0 12px 26px rgba(0,0,0,.55); }',
-    '#miku-chat-btn svg { width:24px; height:24px; fill:#dfe7ff; }',
-    '#miku-chat-btn .badge {',
-    '  position:absolute; right:-2px; top:-2px; width:12px; height:12px; border-radius:50%;',
-    '  background:#ff5f8f; box-shadow:0 0 8px rgba(255,95,143,.9); display:none;',
-    '}',
-    '#miku-chat-btn.busy .badge { display:block; animation:mcPulse 1s ease-in-out infinite; }',
-    '@keyframes mcPulse { 50% { opacity:.35; } }',
-    '#miku-chat-root.open #miku-chat-btn { display:none; }',
-
-    /* 聊天面板 */
-    '#miku-chat-panel {',
-    '  position:fixed; right:24px; bottom:24px; width:352px; max-width:calc(100vw - 32px);',
-    '  height:492px; max-height:calc(100vh - 96px);',
-    '  display:none; flex-direction:column; overflow:hidden;',
-    '  background:rgba(18,20,30,.96); color:#e8edf8;',
-    '  border:1px solid rgba(255,255,255,.14); border-radius:18px;',
-    '  box-shadow:0 22px 60px rgba(0,0,0,.65);',
-    '  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);',
-    '  font-size:13px;',
-    '}',
-    '#miku-chat-root.open #miku-chat-panel { display:flex; }',
-    '#miku-chat-panel .mc-head {',
-    '  display:flex; align-items:center; gap:8px; padding:12px 14px; flex:none;',
-    '  background:linear-gradient(180deg, rgba(90,156,255,.18), rgba(255,95,143,.08));',
-    '  border-bottom:1px solid rgba(255,255,255,.1);',
-    '}',
-    '#miku-chat-panel .mc-title { flex:1; min-width:0; }',
-    '#miku-chat-panel .mc-title b { font-size:14px; font-weight:600; color:#fff; display:block; }',
-    '#miku-chat-panel .mc-title small { font-size:11px; color:#93a0bb; display:block; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }',
-    '#miku-chat-panel .mc-act {',
-    '  width:28px; height:28px; flex:none; border-radius:8px; cursor:pointer;',
-    '  display:flex; align-items:center; justify-content:center;',
-    '  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);',
-    '}',
-    '#miku-chat-panel .mc-act:hover { background:rgba(255,255,255,.14); }',
-    '#miku-chat-panel .mc-act svg { width:15px; height:15px; fill:#cdd6ea; }',
-    '#miku-chat-panel .mc-act.on { background:rgba(255,95,143,.24); border-color:rgba(255,95,143,.5); }',
-    '#miku-chat-panel .mc-act.on svg { fill:#ffb3cb; }',
-
-    '#miku-chat-panel .mc-body { flex:1; overflow-y:auto; padding:12px 12px 4px; scroll-behavior:smooth; }',
-    '#miku-chat-panel .mc-body::-webkit-scrollbar { width:5px; }',
-    '#miku-chat-panel .mc-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,.18); border-radius:3px; }',
-    '#miku-chat-panel .mc-empty { color:#7f8aa4; font-size:12px; line-height:1.9; padding:6px 4px; }',
-    '#miku-chat-panel .mc-empty b { color:#aab7d4; }',
-    '#miku-chat-panel .mc-msg { display:flex; margin-bottom:10px; }',
-    '#miku-chat-panel .mc-msg.user { justify-content:flex-end; }',
-    '#miku-chat-panel .mc-bubble {',
-    '  max-width:82%; padding:8px 11px; border-radius:12px; line-height:1.65;',
-    '  white-space:pre-wrap; word-break:break-word; font-size:13px;',
-    '}',
-    '#miku-chat-panel .mc-msg.pet .mc-bubble { background:rgba(90,156,255,.18); border:1px solid rgba(90,156,255,.32); color:#e6efff; border-bottom-left-radius:4px; }',
-    '#miku-chat-panel .mc-msg.user .mc-bubble { background:linear-gradient(135deg, rgba(255,95,143,.85), rgba(190,60,120,.9)); color:#fff; border-bottom-right-radius:4px; }',
-    '#miku-chat-panel .mc-msg.err .mc-bubble { background:rgba(255,120,90,.16); border-color:rgba(255,120,90,.4); color:#ffc9bb; }',
-    '#miku-chat-panel .mc-typing { color:#8b95a9; font-style:italic; }',
-
-    /* 输入区 */
-    '#miku-chat-panel .mc-foot { flex:none; padding:10px 12px 12px; border-top:1px solid rgba(255,255,255,.08); }',
-    '#miku-chat-panel .mc-input-row { display:flex; align-items:flex-end; gap:8px; }',
-    '#miku-chat-panel textarea {',
-    '  flex:1; min-width:0; height:38px; max-height:96px; resize:none;',
-    '  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14);',
-    '  border-radius:11px; padding:9px 11px; color:#fff; font-size:13px; line-height:1.4;',
-    '  font-family:inherit; outline:none;',
-    '}',
-    '#miku-chat-panel textarea::placeholder { color:#6f7a92; }',
-    '#miku-chat-panel textarea:focus { border-color:rgba(90,156,255,.6); }',
-    '#miku-chat-panel .mc-btn {',
-    '  width:38px; height:38px; flex:none; border-radius:11px; cursor:pointer; border:none;',
-    '  display:flex; align-items:center; justify-content:center;',
-    '  background:linear-gradient(145deg,#5a9cff,#3b7be0); box-shadow:0 4px 12px rgba(90,156,255,.35);',
-    '  transition:filter .15s, transform .15s;',
-    '}',
-    '#miku-chat-panel .mc-btn:hover { filter:brightness(1.12); }',
-    '#miku-chat-panel .mc-btn:active { transform:scale(.94); }',
-    '#miku-chat-panel .mc-btn:disabled { opacity:.45; cursor:not-allowed; }',
-    '#miku-chat-panel .mc-btn svg { width:17px; height:17px; fill:#fff; }',
-    '#miku-chat-panel .mc-btn.mic { background:rgba(255,255,255,.1); box-shadow:none; border:1px solid rgba(255,255,255,.14); }',
-    '#miku-chat-panel .mc-btn.mic svg { fill:#cfd8ec; }',
-    '#miku-chat-panel .mc-btn.mic.listening { background:rgba(255,95,143,.3); border-color:#ff5f8f; animation:mcPulse 1.1s infinite; }',
-    '#miku-chat-panel .mc-hint { font-size:10.5px; color:#68738a; margin-top:7px; line-height:1.55; }',
-    '#miku-chat-panel .mc-hint.warn { color:#ffb37a; }',
-
-    /* 设置抽屉 */
-    '#miku-chat-panel .mc-settings { display:none; padding:12px; overflow-y:auto; flex:1; }',
-    '#miku-chat-panel.settings .mc-settings { display:block; }',
-    '#miku-chat-panel.settings .mc-body, #miku-chat-panel.settings .mc-foot { display:none; }',
-    '#miku-chat-panel .mc-field { margin-bottom:10px; }',
-    '#miku-chat-panel .mc-field label { display:block; font-size:11px; color:#93a0bb; margin-bottom:4px; }',
-    '#miku-chat-panel .mc-field input, #miku-chat-panel .mc-field select {',
-    '  width:100%; height:34px; border-radius:9px; padding:0 10px; font-size:12px; font-family:inherit;',
-    '  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); color:#fff; outline:none;',
-    '}',
-    '#miku-chat-panel .mc-field input:focus, #miku-chat-panel .mc-field select:focus { border-color:rgba(90,156,255,.6); }',
-    '#miku-chat-panel .mc-field select option { background:#1a1e2c; color:#e8edf8; }',
-    '#miku-chat-panel .mc-switch { display:flex; align-items:center; gap:8px; font-size:12px; color:#c4cbdb; margin-bottom:10px; cursor:pointer; }',
-    '#miku-chat-panel .mc-switch input { width:15px; height:15px; accent-color:#5a9cff; }',
-    '#miku-chat-panel .mc-save {',
-    '  width:100%; height:36px; border-radius:10px; border:none; cursor:pointer;',
-    '  background:linear-gradient(135deg,#ff5f8f,#c9407a); color:#fff; font-size:13px; font-family:inherit;',
-    '  box-shadow:0 6px 16px rgba(255,95,143,.32);',
-    '}',
-    '#miku-chat-panel .mc-save:hover { filter:brightness(1.1); }',
-
-    '@media (max-width:520px) {',
-    '  #miku-chat-btn { right:20px; bottom:56px; width:46px; height:46px; }',
-    '  #miku-chat-panel { right:12px; bottom:12px; width:calc(100vw - 24px); height:min(492px, calc(100vh - 40px)); }',
-    '}'
-  ].join('\n');
-
-  /* ---------------- 工具函数 ---------------- */
-
-  function readSettings() {
-    var out = {};
-    for (var k in DEFAULT_SETTINGS) out[k] = DEFAULT_SETTINGS[k];
-    try {
-      var raw = global.localStorage && global.localStorage.getItem(STORE_KEY);
-      if (raw) {
-        var saved = JSON.parse(raw);
-        for (var key in DEFAULT_SETTINGS) {
-          if (saved[key] !== undefined && saved[key] !== null) out[key] = saved[key];
-        }
-      }
-    } catch (e) { /* 隐私模式 / file:// 下 localStorage 可能不可用 */ }
-
-    /* 兼容旧版本：之前默认写死了 http://localhost:11434。
-     * 若当前页面有同源后端代理，则迁移为自动（空字符串），
-     * 让 HTTPS 页面也能正常访问本机 Ollama。 */
-    if (out.baseUrl === 'http://localhost:11434' && hmApiBase()) {
-      out.baseUrl = '';
-    }
-    return out;
-  }
-
-  function writeSettings(s) {
-    try {
-      global.localStorage && global.localStorage.setItem(STORE_KEY, JSON.stringify(s));
-    } catch (e) { /* 忽略 */ }
-  }
-
-  /* Qwen3 / Ollama 的思考内容绝不作为聊天正文显示 */
-  function cleanOllamaAnswer(content) {
-    var text = String(content || '');
-    text = text.replace(/<think\b[^>]*>[\s\S]*?<\/think\s*>/gi, '');
-    text = text.replace(/<think\b[^>]*>[\s\S]*$/gi, '');
-    var endTag = text.toLowerCase().lastIndexOf('</think>');
-    if (endTag >= 0) text = text.slice(endTag + '</think>'.length);
-    return text.replace(/<\/?think\b[^>]*>/gi, '').trim();
-  }
-
-  /* 朗读前清理 markdown / 表情符号，避免念出符号 */
-  function speakable(text) {
-    return String(text || '')
-      .replace(/```[\s\S]*?```/g, ' 代码块 ')
-      .replace(/`([^`]+)`/g, '$1')
-      .replace(/[*_#>|~]/g, '')
-      .replace(/\[(.+?)\]\([^)]*\)/g, '$1')
-      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  function errorHint(err) {
-    var raw = (err && err.message) || String(err || '');
-    if (/Failed to fetch|NetworkError|Load failed/i.test(raw)) {
-      return '无法连接 AI 服务。常见原因：\n' +
-        '1) 本机 Ollama 没启动（终端执行 ollama serve）；\n' +
-        '2) 还没拉取模型（执行 ollama pull qwen3:4b）；\n' +
-        '3) 接口地址配置错误，留空会自动使用页面后端 /api/ollama 代理。';
-    }
-    if (/timeout|abort/i.test(raw)) return '请求超时了，主人再试一次好吗？';
-    if (/HTTP 40[13]|Unauthorized|api key/i.test(raw)) return '接口鉴权失败，请检查 API Key。';
-    return raw || '未知错误';
-  }
-
-  function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-  /* ---------------- 实例 ---------------- */
-
-  function createInstance(options) {
-    options = options || {};
-
-    var root = document.createElement('div');
-    root.id = 'miku-chat-root';
-
-    var style = document.createElement('style');
-    style.id = 'miku-chat-style';
-    style.textContent = CSS;
-
-    var btn = document.createElement('button');
-    btn.id = 'miku-chat-btn';
-    btn.type = 'button';
-    btn.title = '蓝莓酱 AI 语音助手';
-    btn.setAttribute('aria-label', '打开 AI 语音聊天');
-    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h10v2H7V9zm6 4H7v-2h6v2zm2-6H7v-2h8v2z"/></svg><span class="badge"></span>';
-
-    var panel = document.createElement('section');
-    panel.id = 'miku-chat-panel';
-    panel.setAttribute('aria-label', '蓝莓酱 AI 语音聊天');
-    panel.innerHTML = [
-      '<div class="mc-head">',
-      '  <div class="mc-title"><b>蓝莓酱 · AI 语音助手</b><small id="mc-status">本地 Ollama · qwen3:4b</small></div>',
-      '  <div class="mc-act" id="mc-tts" title="自动朗读回复">',
-      '    <svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-8.8v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>',
-      '  </div>',
-      '  <div class="mc-act" id="mc-gear" title="设置">',
-      '    <svg viewBox="0 0 24 24"><path d="M19.4 13a7.4 7.4 0 0 0 .1-1 7.4 7.4 0 0 0-.1-1l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.4a.5.5 0 0 0-.6-.2l-2.5 1a7.3 7.3 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4L9.1 5.2a7.3 7.3 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.4a.5.5 0 0 0 .1.6L4.5 11a7.4 7.4 0 0 0-.1 1 7.4 7.4 0 0 0 .1 1l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.4a.5.5 0 0 0 .6.2l2.5-1a7.3 7.3 0 0 0 1.7 1l.4 2.6a.5.5 0 0 0 .5.4h4a.5.5 0 0 0 .5-.4l.4-2.6a7.3 7.3 0 0 0 1.7-1l2.5 1a.5.5 0 0 0 .6-.2l2-3.4a.5.5 0 0 0-.1-.6L19.4 13zM12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5z"/></svg>',
-      '  </div>',
-      '  <div class="mc-act" id="mc-close" title="关闭">',
-      '    <svg viewBox="0 0 24 24"><path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>',
-      '  </div>',
-      '</div>',
-      '<div class="mc-body" id="mc-body">',
-      '  <div class="mc-empty">主人，想聊点什么？<br>蓝莓酱可以聊天、解释知识、写作、写代码。<br>点麦克风说句话，或直接输入。</div>',
-      '</div>',
-      '<div class="mc-foot">',
-      '  <div class="mc-input-row">',
-      '    <button class="mc-btn mic" id="mc-mic" type="button" title="语音输入">',
-      '      <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3v-5a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2z"/></svg>',
-      '    </button>',
-      '    <textarea id="mc-input" rows="1" placeholder="和蓝莓酱说点什么…（Enter 发送，Shift+Enter 换行）"></textarea>',
-      '    <button class="mc-btn" id="mc-send" type="button" title="发送">',
-      '      <svg viewBox="0 0 24 24"><path d="M2.4 21.6l19.2-9.6L2.4 2.4v7.2l13.2 2.4-13.2 2.4v7.2z"/></svg>',
-      '    </button>',
-      '  </div>',
-      '  <div class="mc-hint" id="mc-hint">语音输入需浏览器支持；朗读使用系统语音。</div>',
-      '</div>',
-      '<div class="mc-settings">',
-      '  <div class="mc-field"><label>服务提供方</label>',
-      '    <select id="mc-provider"><option value="ollama">Ollama（本地）</option><option value="openai">OpenAI 兼容接口</option></select>',
-      '  </div>',
-      '  <div class="mc-field"><label>接口地址</label><input id="mc-base" placeholder="留空自动（页面后端 /api/ollama 代理）"></div>',
-      '  <div class="mc-field"><label>模型</label><input id="mc-model" placeholder="qwen3:4b"></div>',
-      '  <div class="mc-field"><label>API Key（Ollama 无需填写）</label><input id="mc-key" type="password" placeholder="sk-..."></div>',
-      '  <div class="mc-field"><label>朗读音色</label><select id="mc-voice"><option value="">自动选择中文音色</option></select></div>',
-      '  <label class="mc-switch"><input type="checkbox" id="mc-duck">说话时暂停音乐</label>',
-      '  <button class="mc-save" id="mc-save" type="button">保存设置</button>',
-      '  <div class="mc-hint" style="margin-top:10px">' +
-        '接口地址留空时自动使用页面后端的 <b>/api/ollama</b> 代理（同源 HTTPS，可绕过混合内容限制），' +
-        '由后端转发到本机 Ollama（默认 127.0.0.1:11434）。请确保本机已启动 Ollama，' +
-        '并执行 <b>ollama pull qwen3:4b</b> 拉取模型。' +
-      '</div>',
-      '</div>'
-    ].join('');
-
-    root.appendChild(style);
-    root.appendChild(btn);
-    root.appendChild(panel);
-
-    /* 只注入一次样式，多实例共享 */
-    if (!document.getElementById('miku-chat-style')) document.head.appendChild(style);
-    document.body.appendChild(root);
-    if (style.parentNode !== document.head) style.parentNode.removeChild(style);
-
-    var $ = function (id) { return root.querySelector('#' + id); };
-    var bodyEl = $('mc-body');
-    var inputEl = $('mc-input');
-    var sendEl = $('mc-send');
-    var micEl = $('mc-mic');
-    var statusEl = $('mc-status');
-    var hintEl = $('mc-hint');
-    var ttsBtn = $('mc-tts');
-    var gearBtn = $('mc-gear');
-    var closeBtn = $('mc-close');
-
-    var settings = readSettings();
-    var history = [];
-    var busy = false;
-    var listening = false;
-    var recognition = null;
-    var recognitionSupported = !!(global.SpeechRecognition || global.webkitSpeechRecognition);
-    var speaking = false;
-    var resumeAfterSpeak = false;
-    var playerApi = options.player || null;
-    var lastReply = '';
-
-    /* ---- UI 状态 ---- */
-    function isOpen() { return root.classList.contains('open'); }
-
-    function open() {
-      root.classList.add('open');
-      panel.classList.remove('settings');
-      applySettingsToUI();
-      setTimeout(function () { inputEl.focus(); }, 60);
-      return instance;
-    }
-    function close() {
-      root.classList.remove('open');
-      stopListening();
-      return instance;
-    }
-    function toggle() { return isOpen() ? close() : open(); }
-
-    function addMessage(text, who, cls) {
-      var wrap = document.createElement('div');
-      wrap.className = 'mc-msg ' + (who || 'pet') + (cls ? ' ' + cls : '');
-      var bubble = document.createElement('div');
-      bubble.className = 'mc-bubble';
-      bubble.textContent = text;
-      wrap.appendChild(bubble);
-      bodyEl.appendChild(wrap);
-      bodyEl.scrollTop = bodyEl.scrollHeight;
-      return bubble;
-    }
-
-    function setBusy(v) {
-      busy = v;
-      btn.classList.toggle('busy', v);
-      sendEl.disabled = v;
-      micEl.disabled = v;
-      inputEl.disabled = v;
-    }
-
-    /* ---- 语音朗读 ---- */
-    function pickChineseVoice() {
-      if (!global.speechSynthesis) return null;
-      var voices = global.speechSynthesis.getVoices() || [];
-      if (settings.voiceURI) {
-        for (var i = 0; i < voices.length; i++) {
-          if (voices[i].voiceURI === settings.voiceURI) return voices[i];
-        }
-      }
-      var zh = voices.filter(function (v) { return /^zh(-|_)/i.test(v.lang) || /Chinese|Mandarin|中文|普通话/i.test(v.name); });
-      var female = zh.filter(function (v) { return /female|女|Xiaoxiao|Xiaoyi|Huihui|Yaoyao/i.test(v.name); });
-      return female[0] || zh[0] || null;
-    }
-
-    function duckStart() {
-      if (!settings.duckMusic || !playerApi || !playerApi.audio) return;
-      resumeAfterSpeak = !playerApi.audio.paused;
-      if (resumeAfterSpeak) playerApi.audio.pause();
-    }
-    function duckEnd() {
-      if (!resumeAfterSpeak) return;
-      resumeAfterSpeak = false;
-      if (playerApi && playerApi.audio && playerApi.audio.src) playerApi.audio.play().catch(function () {});
-    }
-
-    function speak(text) {
-      if (!global.speechSynthesis || !text) return false;
-      global.speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(speakable(text));
-      u.lang = 'zh-CN';
-      u.rate = 1.02;
-      u.pitch = 1.15;
-      var voice = pickChineseVoice();
-      if (voice) u.voice = voice;
-      speaking = true;
-      duckStart();
-      u.onend = u.onerror = function () {
-        speaking = false;
-        duckEnd();
-        refreshTtsBtn();
-      };
-      try { global.speechSynthesis.speak(u); } catch (e) { speaking = false; duckEnd(); }
-      refreshTtsBtn();
-      return true;
-    }
-
-    function stopSpeak() {
-      if (global.speechSynthesis) global.speechSynthesis.cancel();
-      speaking = false;
-      duckEnd();
-      refreshTtsBtn();
-    }
-
-    function refreshTtsBtn() {
-      ttsBtn.classList.toggle('on', !!settings.tts);
-      ttsBtn.title = settings.tts ? '自动朗读：开' : '自动朗读：关';
-    }
-
-    /* ---- 语音输入 ---- */
-    function setHint(text, warn) {
-      hintEl.textContent = text;
-      hintEl.classList.toggle('warn', !!warn);
-    }
-
-    function stopListening() {
-      listening = false;
-      micEl.classList.remove('listening');
-      if (recognition) {
-        try { recognition.stop(); } catch (e) {}
-        recognition = null;
-      }
-    }
-
-    function startListening() {
-      if (!recognitionSupported) {
-        setHint('当前浏览器不支持语音识别，请用 Chrome / Edge，或直接输入文字。', true);
-        return;
-      }
-      if (listening) { stopListening(); return; }
-      var Ctor = global.SpeechRecognition || global.webkitSpeechRecognition;
-      recognition = new Ctor();
-      recognition.lang = 'zh-CN';
-      recognition.interimResults = false;
-      recognition.continuous = false;
-      recognition.maxAlternatives = 1;
-
-      listening = true;
-      micEl.classList.add('listening');
-      setHint('正在聆听……说完自动发送。', false);
-
-      recognition.onresult = function (ev) {
-        var text = '';
-        for (var i = ev.resultIndex; i < ev.results.length; i++) {
-          text += ev.results[i][0].transcript;
-        }
-        text = text.trim();
-        if (text) {
-          inputEl.value = text;
-          autoGrow();
-          send(text);
-        } else {
-          setHint('没有听清，主人再说一次好吗？', true);
-        }
-      };
-      recognition.onerror = function (ev) {
-        listening = false;
-        micEl.classList.remove('listening');
-        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
-          setHint('麦克风权限被拒绝，请在浏览器地址栏允许麦克风。', true);
-        } else if (ev.error === 'no-speech') {
-          setHint('没有听到声音，点击麦克风再试一次。', false);
-        } else {
-          setHint('语音识别出错：' + ev.error, true);
-        }
-      };
-      recognition.onend = function () {
-        listening = false;
-        micEl.classList.remove('listening');
-        if (!busy) setHint('语音输入需浏览器支持；朗读使用系统语音。', false);
-      };
-      try { recognition.start(); } catch (e) {
-        listening = false;
-        micEl.classList.remove('listening');
-        setHint('无法启动语音识别：' + (e.message || e), true);
-      }
-    }
-
-    /* ---- 后端请求 ---- */
-    function buildMessages(userText) {
-      var msgs = [{ role: 'system', content: options.systemPrompt || SYSTEM_PROMPT }];
-      var recent = history.slice(-MAX_HISTORY);
-      return msgs.concat(recent, [{ role: 'user', content: userText }]);
-    }
-
-    function askOllama(userText) {
-      var base = normalizeBase(settings.provider, settings.baseUrl);
-      var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 120000) : null;
-      return fetch(base + '/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: ctrl ? ctrl.signal : undefined,
-        body: JSON.stringify({
-          model: settings.model || 'qwen3:4b',
-          messages: buildMessages(userText),
-          stream: false,
-          // 实测：部分 Ollama 模型（如 qwen3 某些版本）会忽略 think:false，
-          // 把推理过程直接混进 content 且不带 <think> 标签，无法过滤。
-          // 改用 think:true，让推理进入独立的 message.thinking 字段，
-          // 这里只取 message.content，输出始终是干净的回复。
-          think: true,
-          options: { temperature: 0.75, num_ctx: 4096 }
-        })
-      }).then(function (res) {
-        return res.json().catch(function () { return {}; }).then(function (data) {
-          if (timer) clearTimeout(timer);
-          if (!res.ok) throw new Error(data.error || ('Ollama HTTP ' + res.status));
-          var answer = cleanOllamaAnswer(data.message && data.message.content);
-          if (!answer) throw new Error('本地模型没有返回可显示的最终答复，请确认 Ollama 支持 think:false。');
-          return answer;
-        });
-      });
-    }
-
-    function askOpenAI(userText) {
-      if (!settings.apiKey) return Promise.reject(new Error('选择了 OpenAI 接口，但还没有填写 API Key'));
-      var base = String(settings.baseUrl || 'https://api.openai.com/v1').replace(/\/+$/, '');
-      var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 120000) : null;
-      return fetch(base + '/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + settings.apiKey
-        },
-        signal: ctrl ? ctrl.signal : undefined,
-        body: JSON.stringify({
-          model: settings.model || 'gpt-4o-mini',
-          messages: buildMessages(userText),
-          temperature: 0.75
-        })
-      }).then(function (res) {
-        return res.json().catch(function () { return {}; }).then(function (data) {
-          if (timer) clearTimeout(timer);
-          if (!res.ok) throw new Error((data.error && data.error.message) || ('HTTP ' + res.status));
-          var answer = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-          if (!answer) throw new Error('接口没有返回内容');
-          return answer;
-        });
-      });
-    }
-
-    function send(text) {
-      var msg = String(text == null ? inputEl.value : text).trim();
-      if (!msg || busy) return Promise.resolve({ error: true, text: '正在回复中，请稍候' });
-
-      open();
-      if (text == null) inputEl.value = '';
-      autoGrow();
-      addMessage(msg, 'user');
-      history.push({ role: 'user', content: msg });
-
-      var pending = addMessage('蓝莓酱正在想…', 'pet');
-      pending.classList.add('mc-typing');
-      setBusy(true);
-      setHint('正在请求 AI…', false);
-
-      var req = settings.provider === 'openai' ? askOpenAI(msg) : askOllama(msg);
-      return req.then(function (answer) {
-        pending.classList.remove('mc-typing');
-        pending.textContent = answer;
-        bodyEl.scrollTop = bodyEl.scrollHeight;
-        history.push({ role: 'assistant', content: answer });
-        lastReply = answer;
-        setHint('语音输入需浏览器支持；朗读使用系统语音。', false);
-        if (settings.tts) speak(answer);
-        return { text: answer };
-      }).catch(function (err) {
-        var hintText = errorHint(err);
-        pending.classList.remove('mc-typing');
-        pending.textContent = '呜……' + hintText;
-        pending.closest('.mc-msg').classList.add('err');
-        setHint(hintText.split('\n')[0], true);
-        return { error: true, text: hintText };
-      }).then(function (result) {
-        setBusy(false);
-        inputEl.focus();
-        return result;
-      });
-    }
-
-    /* ---- 自动高度 ---- */
-    function autoGrow() {
-      inputEl.style.height = '38px';
-      var h = Math.min(96, Math.max(38, inputEl.scrollHeight));
-      inputEl.style.height = h + 'px';
-    }
-
-    /* ---- 设置 ---- */
-    function syncStatus() {
-      var base = currentBaseDisplay();
-      statusEl.textContent = settings.provider === 'openai'
-        ? 'OpenAI 兼容 · ' + (settings.model || '未设置模型')
-        : 'Ollama · ' + (settings.model || 'qwen3:4b') + ' · ' + base;
-    }
-
-    function fillVoiceOptions(keep) {
-      var sel = $('mc-voice');
-      var voices = (global.speechSynthesis && global.speechSynthesis.getVoices()) || [];
-      var zh = voices.filter(function (v) { return /^zh(-|_)/i.test(v.lang) || /Chinese|Mandarin/i.test(v.name); });
-      var current = keep ? sel.value : settings.voiceURI;
-      sel.innerHTML = '<option value="">自动选择中文音色</option>';
-      zh.forEach(function (v) {
-        var o = document.createElement('option');
-        o.value = v.voiceURI;
-        o.textContent = v.name + '（' + v.lang + '）';
-        sel.appendChild(o);
-      });
-      sel.value = current || '';
-      if (sel.value !== (current || '')) sel.value = '';
-    }
-
-    function applySettingsToUI() {
-      $('mc-provider').value = settings.provider;
-      $('mc-base').value = settings.baseUrl || '';
-      $('mc-base').placeholder = autoBase(settings.provider);
-      $('mc-model').value = settings.model;
-      $('mc-key').value = settings.apiKey;
-      $('mc-duck').checked = !!settings.duckMusic;
-      fillVoiceOptions(false);
-      syncStatus();
-      refreshTtsBtn();
-    }
-
-    function normalizeBase(provider, base) {
-      var b = String(base == null ? '' : base).trim().replace(/\/+$/, '');
-      if (!b) return autoBase(provider);
-      if (provider === 'ollama' && /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(b)) b = 'http://' + b;
-      if (provider === 'ollama' && !/^https?:\/\//i.test(b)) {
-        // 允许用户只填 host:port；若是相对路径（/api/...）则保留，否则补 http
-        if (b.charAt(0) !== '/') b = 'http://' + b;
-      }
-      return b;
-    }
-
-    function currentBaseDisplay() {
-      var b = String(settings.baseUrl || '').trim();
-      return b || autoBase(settings.provider);
-    }
-
-    function saveSettings() {
-      var provider = $('mc-provider').value === 'openai' ? 'openai' : 'ollama';
-      // baseUrl 保留原始输入（空字符串 = 自动跟随页面后端代理），
-      // 真正的地址解析在请求时由 normalizeBase 完成，这样页面换环境也能自适应。
-      settings = {
-        provider: provider,
-        baseUrl: String($('mc-base').value || '').trim().replace(/\/+$/, ''),
-        model: String($('mc-model').value || (provider === 'ollama' ? 'qwen3:4b' : 'gpt-4o-mini')).trim(),
-        apiKey: String($('mc-key').value || '').trim(),
-        tts: settings.tts,
-        voiceURI: $('mc-voice').value || '',
-        duckMusic: $('mc-duck').checked
-      };
-      writeSettings(settings);
-      applySettingsToUI();
-      panel.classList.remove('settings');
-      addMessage('设置已保存。', 'pet');
-      return settings;
-    }
-
-    function configure(patch) {
-      patch = patch || {};
-      var next = {};
-      for (var k in settings) next[k] = settings[k];
-      for (var key in patch) {
-        if (patch[key] !== undefined) next[key] = patch[key];
-      }
-      next.provider = next.provider === 'openai' ? 'openai' : 'ollama';
-      next.baseUrl = String(next.baseUrl == null ? '' : next.baseUrl).trim().replace(/\/+$/, '');
-      settings = next;
-      writeSettings(settings);
-      applySettingsToUI();
-      return settings;
-    }
-
-    /* ---- 事件绑定 ---- */
-    btn.addEventListener('click', open);
-    closeBtn.addEventListener('click', close);
-    gearBtn.addEventListener('click', function () {
-      panel.classList.toggle('settings');
-      if (panel.classList.contains('settings')) applySettingsToUI();
-    });
-    ttsBtn.addEventListener('click', function () {
-      if (speaking) { stopSpeak(); return; }
-      settings.tts = !settings.tts;
-      writeSettings(settings);
-      refreshTtsBtn();
-      if (settings.tts && lastReply) speak(lastReply);
-    });
-    sendEl.addEventListener('click', function () { send(); });
-    micEl.addEventListener('click', function () { startListening(); });
-    $('mc-save').addEventListener('click', saveSettings);
-    $('mc-provider').addEventListener('change', function () {
-      var provider = $('mc-provider').value;
-      var base = $('mc-base');
-      var model = $('mc-model');
-      base.placeholder = autoBase(provider);
-      if (provider === 'ollama') {
-        // 清空让其走自动（页面后端代理 / localhost），除非用户已填非默认地址
-        if (!base.value || /openai\.com|api\.openai/i.test(base.value)) base.value = '';
-        if (!model.value || model.value === 'gpt-4o-mini') model.value = 'qwen3:4b';
-      } else {
-        if (!base.value || /localhost|127\.0\.0\.1|\/ollama/i.test(base.value)) base.value = '';
-        if (!model.value || model.value === 'qwen3:4b') model.value = 'gpt-4o-mini';
-      }
-    });
-
-    inputEl.addEventListener('input', autoGrow);
-    inputEl.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter' && !ev.shiftKey && !ev.isComposing) {
-        ev.preventDefault();
-        send();
-      }
-    });
-    document.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Escape' && isOpen()) close();
-    });
-
-    if (global.speechSynthesis) {
-      if (typeof global.speechSynthesis.onvoiceschanged !== 'undefined') {
-        global.speechSynthesis.onvoiceschanged = function () { fillVoiceOptions(true); };
-      }
-      fillVoiceOptions(false);
-    }
-
-    if (!recognitionSupported) {
-      micEl.style.display = 'none';
-      setHint('当前浏览器不支持语音识别，可直接输入文字（朗读仍可用）。', false);
-    }
-
-    /* ---- 挂到播放器右键菜单 ---- */
-    function attachToMenu() {
-      var menu = document.getElementById('ctx-menu');
-      if (!menu || menu.querySelector('[data-act="miku-chat"]')) return;
-      var item = document.createElement('div');
-      item.className = 'item';
-      item.setAttribute('data-act', 'miku-chat');
-      item.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h10v2H7V9zm6 4H7v-2h6v2z"/></svg><span>AI 语音聊天</span>';
-      item.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        menu.style.display = 'none';
-        open();
-      });
-      var now = menu.querySelector('.now');
-      if (now && now.nextSibling) menu.insertBefore(item, now.nextSibling);
-      else menu.insertBefore(item, menu.firstChild);
-    }
-
-    attachToMenu();
-    var attempts = 0;
-    var menuTimer = setInterval(function () {
-      attempts++;
-      attachToMenu();
-      if (attempts > 40 || document.getElementById('ctx-menu')) clearInterval(menuTimer);
-    }, 250);
-
-    /* 绑定播放器实例：暂停音乐 / 生命周期 */
-    function bindPlayer(api) {
-      playerApi = api || null;
-      return instance;
-    }
-
-    var instance = {
-      root: root,
-      panel: panel,
-      button: btn,
-      open: open,
-      close: close,
-      toggle: toggle,
-      ask: function (text) { return send(text); },
-      send: send,
-      speak: speak,
-      stopSpeak: stopSpeak,
-      listen: startListening,
-      stopListen: stopListening,
-      bindPlayer: bindPlayer,
-      configure: configure,
-      getSettings: function () { return settings; },
-      setSettings: configure,
-      resetHistory: function () { history = []; bodyEl.innerHTML = ''; },
-      attachMenu: attachToMenu,
-      setAnchor: function (el) {
-        if (!el || !btn) return;
-        var rect = el.getBoundingClientRect();
-        if (!rect.width) return;
-        btn.style.right = Math.max(12, global.innerWidth - rect.right) - 8 + 'px';
-        btn.style.bottom = Math.max(12, global.innerHeight - rect.bottom - 62) + 'px';
-      },
-      destroy: function () {
-        stopSpeak();
-        stopListening();
-        clearInterval(menuTimer);
-        if (root.parentNode) root.parentNode.removeChild(root);
-        var item = document.querySelector('#ctx-menu [data-act="miku-chat"]');
-        if (item && item.parentNode) item.parentNode.removeChild(item);
-        var i = instances.indexOf(instance);
-        if (i >= 0) instances.splice(i, 1);
-      }
-    };
-
-    if (options.anchor) {
-      try {
-        var anchorEl = typeof options.anchor === 'string' ? document.querySelector(options.anchor) : options.anchor;
-        if (anchorEl) setTimeout(function () { instance.setAnchor(anchorEl); }, 800);
-      } catch (e) {}
-    }
-
-    applySettingsToUI();
-    instances.push(instance);
-    if (options.open) open();
-    return instance;
-  }
-
-  /* ---------------- 对外 API ---------------- */
-
-  var instances = [];
-  var primary = null;
-
-  function getPrimary() {
-    if (!primary) primary = createInstance({});
-    return primary;
-  }
-
-  var API = {
-    __ready: true,
-    version: '1.0.0',
-    instances: instances,
-    init: function (options) {
-      options = options || {};
-      if (options.singleton !== false && instances.length) return instances[0];
-      var inst = createInstance(options);
-      if (!primary) primary = inst;
-      return inst;
-    },
-    open: function () { return getPrimary().open(); },
-    close: function () { return getPrimary().close(); },
-    toggle: function () { return getPrimary().toggle(); },
-    ask: function (text) { return getPrimary().ask(text); },
-    speak: function (text) { return getPrimary().speak(text); },
-    stopSpeak: function () { return getPrimary().stopSpeak(); },
-    listen: function () { return getPrimary().listen(); },
-    configure: function (patch) { return getPrimary().configure(patch); },
-    getSettings: function () { return getPrimary().getSettings(); },
-    bindPlayer: function (api) { return getPrimary().bindPlayer(api); },
-    destroy: function () {
-      instances.slice().forEach(function (i) { i.destroy(); });
-      primary = null;
-    }
-  };
-
-  global.MikuChat = API;
-
-  /* 自动挂载：页面里引入了本脚本，就默认提供 AI 语音助手入口。
-   * 如不希望自动出现，可在引入前设置 window.MIKU_CHAT_NO_AUTO = true。 */
-  function autoInit() {
-    if (global.MIKU_CHAT_NO_AUTO) return;
-    if (instances.length) return;
-    if (!document.body) return;
-    var inst = createInstance({ anchor: '#vinyl-widget' });
-    if (!primary) primary = inst;
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { setTimeout(autoInit, 300); });
-  } else {
-    setTimeout(autoInit, 300);
-  }
-})(typeof window !== 'undefined' ? window : this);
-
-</script>
-  <script>
 /* ============================================================
  * 故事版 HMStoryboard（分镜创作）
  * - 场次分组 + 镜头卡片网格（参考 Boords / StudioBinder 布局）
@@ -57847,6 +57084,15 @@ window.HMChat = (function () {
   ];
   var DEFAULT_AREA = 'all';   /* 首次进入默认展示汇总；已有分区选择的用户保持原选择 */
 
+  /* 「插画作画过程PSD源文件」在库里的 area 是 paint，只有 category 能标识这个分类；
+     区域 = psd 时按 category 命中，其余区域仍严格按 area 过滤（其它区域规则不变）。 */
+  var PSD_CATEGORY = '插画作画过程PSD源文件';
+  function bookInArea(b, area) {
+    if (area === 'all') return true;
+    if (area === 'psd') return b.category === PSD_CATEGORY || b.area === 'psd';
+    return b.area === area;
+  }
+
   var state = {
     mode: 'local',        /* local | remote */
     area: 'all',          /* 当前图书馆区域 id（无历史记录时默认全部藏书） */
@@ -57864,6 +57110,7 @@ window.HMChat = (function () {
     loading: false,
     pdfTocCollapsed: false, /* 目录折叠状态：本次阅读内记住 */
     libDirPage: '',         /* 原画资料当前进入的作品母文件夹（纯展示页面状态） */
+    libSubPage: '',         /* 原画资料母文件夹下的子文件夹（第三层，由 title 后缀派生） */
     storeUsedBytes: null,   /* 全库已用字节数（GET /library/books 的 store.usedBytes） */
     storeLimitLabel: ''     /* 全库上限文案（store.limitLabel，如 "500G"） */
   };
@@ -58081,9 +57328,7 @@ window.HMChat = (function () {
 
   function markShelf() {
     /* all 为汇总区：不过滤 area，包含全部区域的书；其余区域严格按 area 过滤 */
-    var areaBooks = state.area === 'all'
-      ? state.books.slice()
-      : state.books.filter(function (b) { return b.area === state.area; });
+    var areaBooks = state.books.filter(function (b) { return bookInArea(b, state.area); });
     /* 排序：sortNo 升序（001=0、002=1）；同 sortNo 按 createdAt 升序，新书排后面 */
     areaBooks.sort(function (a, b) {
       var sa = Number(a.sortNo), sb = Number(b.sortNo);
@@ -58112,6 +57357,8 @@ window.HMChat = (function () {
       });
       state.fav = cached.fav || {};
       state.hist = cached.hist || [];
+      /* 上次成功拉取的存储用量也一起恢复：接口暂时失败时底栏不会退回 "-- / 500G" */
+      if (cached.store) applyStore(cached.store);
       pruneHistory(true);
       state.booted = true;
       state.loading = false;
@@ -58145,7 +57392,10 @@ window.HMChat = (function () {
 
   function saveRemoteMeta() {
     try {
-      writeJSON(LS.meta, { at: Date.now(), books: state.books, fav: state.fav, hist: state.hist });
+      writeJSON(LS.meta, {
+        at: Date.now(), books: state.books, fav: state.fav, hist: state.hist,
+        store: { usedBytes: state.storeUsedBytes, limitLabel: state.storeLimitLabel }
+      });
     } catch (e) {}
   }
 
@@ -58378,7 +57628,7 @@ window.HMChat = (function () {
     var inner = probe.clientWidth - padL - padR;
     els.body.removeChild(probe);
     if (!(inner > 0)) return shelfPerRowCache || 1;
-    var bookW = state.area === 'concept' ? 168 : SHELF_BOOK_WIDTH; /* 原画资料按文件夹形态的宽度算每层容量 */
+    var bookW = (state.area === 'concept' || state.area === 'psd') ? 168 : SHELF_BOOK_WIDTH; /* 原画资料/PSD 按文件夹形态的宽度算每层容量 */
     shelfPerRowCache = Math.max(1, Math.floor((inner + gap) / (bookW + gap)));
     return shelfPerRowCache;
   }
@@ -58388,15 +57638,31 @@ window.HMChat = (function () {
   /* 原画资料：母文件夹标题用作品全称。优先取条目的 category（若它是「前缀 + 更长全称」），
      否则用下面这张常见缩写映射补全；都没有时才沿用前缀本身。只影响展示，不改书目数据。 */
   var CONCEPT_WORK_NAMES = {
-    '86': '86－不存在的战区－',
+    '86': '86－不存在的战区',
     'eva': '新世纪福音战士',
     'air': 'AIR',
     'clannad': 'CLANNAD',
     '小魔女学园': '小魔女学园',
     '斩服少女': '斩服少女',
     '灵能百分百': '灵能百分百',
-    '紫罗兰永恒花园': '紫罗兰永恒花园'
+    '紫罗兰永恒花园': '紫罗兰永恒花园',
+    '白箱': '白箱'
   };
+
+  /* 母文件夹卡只显示动画名：去掉卷号、区间页码、括号补充、作者后缀与尾部标点。
+     仅用于展示，分组 key 仍用原始前缀，不会把同一作品拆成多个文件夹。 */
+  function conceptDisplayName(name) {
+    var s = String(name || '').trim();
+    var prev;
+    do {
+      prev = s;
+      s = s.replace(/\s*[（(【\[][^（）()【】\[\]]*[）)】\]]\s*$/g, '');
+      s = s.replace(/\s*(第\s*\d+\s*[\/／]?\s*\d*\s*卷|\d+\s*[-–—~至]\s*\d+\s*卷?)\s*$/g, '');
+      s = s.replace(/\s*[\/／]\s*[^\/／]+$/g, '');
+      s = s.replace(/[\s·•・|｜\-—－_]+$/g, '');
+    } while (s && s !== prev);
+    return s || String(name || '').trim();
+  }
 
   function conceptWorkName(prefix, books) {
     var p = String(prefix || '').trim();
@@ -58425,7 +57691,29 @@ window.HMChat = (function () {
       }
       map[key].books.push(b);
     });
-    order.forEach(function (g) { g.name = conceptWorkName(g.prefix, g.books); });
+    order.forEach(function (g) { g.name = conceptDisplayName(conceptWorkName(g.prefix, g.books)); });
+    return order;
+  }
+
+  /* PSD 分类：按作者归母文件夹（作者字段可能带来源后缀「焦茶 / 萌绘图库」，展示只取作者名）。
+     分组结构与原画资料完全一致，直接复用同一套母文件夹卡与进入/返回逻辑。 */
+  function psdAuthorName(b) {
+    var a = String((b && b.author) || '').trim();
+    if (!a) return '佚名';
+    return a.split(/\s*[/／]\s*/)[0] || a;
+  }
+
+  function psdDirGroups(list) {
+    var map = {}, order = [];
+    list.forEach(function (b) {
+      var name = psdAuthorName(b);
+      var key = 'a:' + name;
+      if (!map[key]) {
+        map[key] = { key: key, prefix: '', name: name, books: [] };
+        order.push(map[key]);
+      }
+      map[key].books.push(b);
+    });
     return order;
   }
 
@@ -58514,38 +57802,108 @@ window.HMChat = (function () {
     });
   }
 
+  /* 第三层「子文件夹」：由 title 第一个分隔符之后的后缀派生（「阿滋漫画大王 · 人物」→ 人物）。
+     去掉卷号、第N/M卷、上中下卷、页码区间与括号补充；没有后缀时归到「其他」。PSD 区不启用。 */
+  function conceptSubName(b) {
+    var t = String((b && b.title) || '');
+    var cut = t.search(/[·•・|｜]/);
+    var s = cut > 0 ? t.slice(cut + 1) : '';
+    var prev;
+    do {
+      prev = s;
+      s = s.replace(/\s*[（(【\[][^（）()【】\[\]]*[）)】\]]\s*$/g, '');
+      s = s.replace(/\s*(第\s*\d+\s*[\/／]?\s*\d*\s*卷|\d+\s*[-–—~至]\s*\d+\s*卷?)\s*$/g, '');
+      s = s.replace(/\s*[·•・|｜]\s*(上|中|下|[一二三四五六七八九十]+)\s*$/g, '');
+      s = s.replace(/\s*(上|中|下|卷\s*[一二三四五六七八九十]+|[一二三四五六七八九十]+)\s*$/g, '');
+      s = s.replace(/\s*[\/／]\s*[^\/／]+$/g, '');
+      s = s.replace(/[\s·•・|｜\-—－_.]+$/g, '');
+    } while (s && s !== prev);
+    s = String(s || '').trim();
+    return s || '其他';
+  }
+
+  function conceptSubGroups(books) {
+    var map = {}, out = [];
+    books.forEach(function (b) {
+      var name = conceptSubName(b);
+      if (!map[name]) {
+        map[name] = { key: name, name: name, books: [] };
+        out.push(map[name]);
+      }
+      map[name].books.push(b);
+    });
+    out.sort(function (a, b) { return conceptNaturalCompare(a.name, b.name); });
+    return out;
+  }
+
+  function conceptSubCardHtml(sg, mother) {
+    var cover = conceptDirCover(sg.books);
+    var pages = sg.books.reduce(function (n, b) {
+      return n + ((b.pages && b.pages.length) || Number(b.pageCount) || 0);
+    }, 0);
+    return '<button type="button" class="lib-book is-dir" data-libsub="' + esc(sg.name) + '"'
+      + ' title="' + esc(sg.name) + ' · ' + pages + ' 页">'
+      + '<span class="lib-dir-body">'
+      + (cover
+        ? '<img class="lib-dir-cover" src="' + esc(cover) + '" alt="' + esc(sg.name) + '" loading="lazy">'
+        : '<span class="lib-dir-ico">📁</span>')
+      + '<span class="lib-dir-name">' + esc(sg.name) + '</span>'
+      + '<span class="lib-dir-meta">' + esc(mother || '未分类') + ' · ' + pages + ' 页</span>'
+      + '</span></button>';
+  }
+
   function conceptDirCardHtml(g) {
     var cover = conceptDirCover(g.books);
+    /* 原画资料母卡左下角显示内部子文件夹本数；PSD 区维持册数口径 */
+    var isPsd = state.area === 'psd';
+    var subCount = isPsd ? g.books.length : conceptSubGroups(g.books).length;
+    var unit = isPsd ? ' 册' : ' 本';
     return '<button type="button" class="lib-book is-dir" data-libdir="' + esc(g.key) + '"'
-      + ' title="' + esc(g.name) + ' · ' + g.books.length + ' 册">'
+      + ' title="' + esc(g.name) + ' · ' + subCount + unit + '">'
       + '<span class="lib-dir-body">'
       + (cover
         ? '<img class="lib-dir-cover" src="' + esc(cover) + '" alt="' + esc(g.name) + '" loading="lazy">'
         : '<span class="lib-dir-ico">📁</span>')
       + '<span class="lib-dir-name">' + esc(g.name) + '</span>'
-      + '<span class="lib-dir-meta">' + g.books.length + ' 册 · 点击进入</span>'
+      + '<span class="lib-dir-meta">' + subCount + unit + ' · 点击进入</span>'
       + '</span></button>';
   }
 
   /* 原画资料的两级页面：第一层只列作品母文件夹；点进去整块换成子文件夹页面（带返回）。
+     PSD 分类复用同一套页面与卡片，只是分组口径换成「作者」。
      同组子文件夹连续排在同一条 flex 流里（组间才有间距），卡片外层可拖动换序。 */
   function renderConceptDirs() {
     var order = conceptOrderRead();
-    var groups = orderConceptGroups(conceptDirGroups(state.shelfBooks), order);
+    var sourceGroups = state.area === 'psd' ? psdDirGroups(state.shelfBooks) : conceptDirGroups(state.shelfBooks);
+    var groups = orderConceptGroups(sourceGroups, order);
+    var isPsdArea = state.area === 'psd';
     var page = state.libDirPage || '';
+    var sub = isPsdArea ? '' : (state.libSubPage || '');
     var cur = null;
     groups.forEach(function (g) { if (g.key === page) cur = g; });
     var pageLabel = cur ? cur.name : page;
     var rows = '';
-    if (page) {
-      var books = cur ? orderConceptBooks(cur.books, order.items[page]) : [];
-      rows = books.map(function (b, i) {
+    if (page && sub) {
+      var allBooks = cur ? orderConceptBooks(cur.books, order.items[page]) : [];
+      var subBooks = allBooks.filter(function (b) { return conceptSubName(b) === sub; });
+      pageLabel = (cur ? cur.name : page) + ' / ' + sub;
+      rows = subBooks.map(function (b, i) {
+        return '<div class="lib-drag-item" draggable="true" data-drag-id="' + esc(b.id) + '">'
+          + bookCardHtml(b, i) + '</div>';
+      }).join('');
+    } else if (page && !isPsdArea) {
+      rows = conceptSubGroups(cur ? cur.books : []).map(function (sg) {
+        return '<div class="lib-drag-item">' + conceptSubCardHtml(sg, cur ? cur.name : '') + '</div>';
+      }).join('');
+    } else if (page) {
+      var pbooks = cur ? orderConceptBooks(cur.books, order.items[page]) : [];
+      rows = pbooks.map(function (b, i) {
         return '<div class="lib-drag-item" draggable="true" data-drag-id="' + esc(b.id) + '">'
           + bookCardHtml(b, i) + '</div>';
       }).join('');
     } else {
       groups.forEach(function (g) {
-        var isGroup = !!g.name && g.books.length > 1;
+        var isGroup = !!g.name;
         var card = isGroup ? conceptDirCardHtml(g) : bookCardHtml(g.books[0], 0);
         rows += '<div class="lib-drag-item" draggable="true" data-drag-key="' + esc(conceptGroupKey(g)) + '">'
           + card + '</div>';
@@ -58574,7 +57932,7 @@ window.HMChat = (function () {
 
   function renderShelf() {
     if (!els.body) return;
-    if (state.area === 'concept' && state.shelfBooks.length) { renderConceptDirs(); return; }
+    if ((state.area === 'concept' || state.area === 'psd') && state.shelfBooks.length) { renderConceptDirs(); return; }
     var perRow = measureShelfPerRow();
     var pageSize = perRow * SHELF_ROWS_PER_PAGE;
     var total = state.shelfBooks.length;
@@ -58714,12 +58072,12 @@ window.HMChat = (function () {
     syncAreaBtn(); /* 书目变化后同步区域按钮上的数量 */
   }
 
-  /* 全库存储用量：store.usedBytes / store.limitLabel，缺字段时保持降级显示 */
+  /* 全库存储用量：store.usedBytes / store.limitLabel；字段缺失时保留上一次的值 */
   function applyStore(store) {
-    store = store || {};
+    if (!store || typeof store !== 'object') return;
     var used = Number(store.usedBytes);
-    state.storeUsedBytes = isFinite(used) && used >= 0 ? used : null;
-    state.storeLimitLabel = typeof store.limitLabel === 'string' && store.limitLabel ? store.limitLabel : '';
+    if (isFinite(used) && used >= 0) state.storeUsedBytes = used;
+    if (typeof store.limitLabel === 'string' && store.limitLabel) state.storeLimitLabel = store.limitLabel;
   }
 
   /* 字节数 → KB/MB/GB，保留 1 位小数 */
@@ -60287,19 +59645,40 @@ window.HMChat = (function () {
 
   function currentArea() { return areaById(state.area); }
 
-  /* 各区域书籍数量：all = 全库总数，其余按 area 字段前端统计 */
+  /* 各区域书籍数量：all = 全库总数，其余按 area 字段前端统计；
+     psd 是「按分类」的视图（书的 area 仍是 paint），额外按 category 统计一份，
+     保证每个区域按钮上的数字与该区域书架实际册数一致。 */
   function areaCounts() {
     var counts = { all: state.books.length };
+    var conceptDirs = {}, conceptSubs = {};
     for (var i = 0; i < state.books.length; i++) {
-      var a = state.books[i] && state.books[i].area;
-      if (!a) continue;
-      counts[a] = (counts[a] || 0) + 1;
+      var b = state.books[i];
+      if (!b) continue;
+      var a = b.area;
+      if (a) counts[a] = (counts[a] || 0) + 1;
+      if (b.area !== 'psd' && bookInArea(b, 'psd')) counts.psd = (counts.psd || 0) + 1;
+      /* 原画资料按三层结构计数：母文件夹去重 + 子文件夹去重 */
+      if (b.area === 'concept') {
+        var t = String(b.title || '');
+        var cut = t.search(/[·•・|｜]/);
+        var prefix = cut > 0 ? t.slice(0, cut).trim() : '';
+        var dirKey = prefix || ('\u0000' + b.id);
+        conceptDirs[dirKey] = 1;
+        conceptSubs[dirKey + '\u0001' + conceptSubName(b)] = 1;
+      }
+    }
+    if (counts.concept != null) {
+      counts.conceptDirs = Object.keys(conceptDirs).length;
+      counts.conceptSubs = Object.keys(conceptSubs).length;
     }
     return counts;
   }
 
   function areaLabel(area, counts) {
     var n = (counts && counts[area.id] != null) ? counts[area.id] : 0;
+    if (area.id === 'concept') {
+      return area.name + '（' + ((counts && counts.conceptDirs) || 0) + ' 册 · ' + ((counts && counts.conceptSubs) || 0) + ' 本）';
+    }
     return area.name + '（' + n + '本）';
   }
 
@@ -60315,6 +59694,8 @@ window.HMChat = (function () {
   function setArea(id) {
     state.area = areaById(id).id;
     state.shelfPage = 1;
+    state.libDirPage = '';   /* 换区域时退出母文件夹，回到该区域第一层 */
+    state.libSubPage = '';
     writeJSON(LS.area, state.area);
     if (window.HMSync && window.HMSync.pushLibraryPrefs) {
       clearTimeout(libPrefsPushTimer);
@@ -60329,6 +59710,8 @@ window.HMChat = (function () {
   window.HMLibrary = {
     applyRemotePrefs: function () {
       state.area = areaById(readJSON(LS.area, DEFAULT_AREA)).id;
+      state.libDirPage = '';
+      state.libSubPage = '';
       state.pdfZoom = readPdfMode();
       syncAreaBtn();
       updatePdfZoomLabel();
@@ -60530,17 +59913,26 @@ window.HMChat = (function () {
         }, 150);
       });
       els.body.addEventListener('click', function (event) {
-        /* 原画资料：母文件夹 → 子文件夹页面（整块替换），返回按钮回到母文件夹列表 */
+        /* 原画资料三级：母文件夹 → 子文件夹 → PDF 列表；返回逐级退回。PSD 区保持两级 */
+        var subCard = event.target.closest('[data-libsub]');
+        if (subCard && state.area !== 'psd') {
+          state.libSubPage = subCard.getAttribute('data-libsub') || '';
+          state.shelfPage = 1;
+          renderShelf();
+          return;
+        }
         var dirCard = event.target.closest('[data-libdir]');
         if (dirCard) {
           state.libDirPage = dirCard.getAttribute('data-libdir') || '';
+          state.libSubPage = '';
           state.shelfPage = 1;
           renderShelf();
           return;
         }
         var backBtn = event.target.closest('[data-libback]');
         if (backBtn) {
-          state.libDirPage = '';
+          if (state.libSubPage) state.libSubPage = '';
+          else state.libDirPage = '';
           state.shelfPage = 1;
           renderShelf();
           return;
@@ -60569,6 +59961,8 @@ window.HMChat = (function () {
         if (state.area !== 'concept') return;
         var item = event.target.closest && event.target.closest('.lib-drag-item');
         if (!item) return;
+        /* 子文件夹卡不带 drag-id/key，不参与拖动排序 */
+        if (!item.getAttribute('data-drag-id') && !item.getAttribute('data-drag-key')) return;
         conceptDrag = { el: item };
         item.classList.add('is-dragging');
         try {
@@ -68974,6 +68368,7 @@ window.HMChat = (function () {
     var t = 0;
     var raf = 0;
     var alive = true;
+    var lastFrame = 0;
 
     var layers = [
       { r: size * 0.42, w: size * 0.05, speed: 0.012, dir: 1, color: CYBER_COLORS[0], segs: 3, gap: 0.9 },
@@ -69014,8 +68409,10 @@ window.HMChat = (function () {
       ctx.restore();
     }
 
-    function frame() {
+    function frame(now) {
       if (!alive) return;
+      if (now - lastFrame < 1000 / 30) { raf = requestAnimationFrame(frame); return; }
+      lastFrame = now;
       t += 1;
       ctx.clearRect(0, 0, size, size);
 
@@ -69191,11 +68588,22 @@ window.HMChat = (function () {
   var dimVortexAnim = null;
   var dimSymbols = [];
   var dimRaf = 0;
+  var lastSymbolFrame = 0;
+  var dimStartBtn = null;
+  var dimTitleIntroStarted = false;
 
   function buildDimPage() {
     if (dimPage) return;
     dimPage = el('div', 'dv-page');
     dimPage.setAttribute('aria-hidden', 'true');
+    /* 关键视觉底层直接由页面节点持有，避免旧缓存样式把整个次元空间渲染成纯黑。 */
+    dimPage.style.backgroundColor = '#070817';
+    dimPage.style.backgroundImage =
+      'radial-gradient(ellipse at 18% 12%, rgba(34,211,238,.13), transparent 54%),' +
+      'radial-gradient(ellipse at 84% 88%, rgba(168,85,247,.16), transparent 58%),' +
+      'repeating-linear-gradient(0deg, rgba(34,211,238,.055) 0 1px, transparent 1px 48px),' +
+      'repeating-linear-gradient(90deg, rgba(34,211,238,.055) 0 1px, transparent 1px 48px),' +
+      'linear-gradient(160deg, #050817 0%, #100a24 52%, #070817 100%)';
 
     /* 顶栏 */
     var topbar = el('div', 'dv-topbar');
@@ -69228,15 +68636,27 @@ window.HMChat = (function () {
 
     /* 中心文案 */
     var center = el('div', 'dv-center');
-    center.innerHTML = '<h1 class="dv-title">欢迎来到次元宇宙</h1>'
-      + '<p class="dv-sub">页面正开发中<span class="dv-dots">......</span>敬请期待</p>'
-      + '<div class="dv-meta">'
-      + '<span>2D 横版</span><i></i><span>2.5D</span><i></i><span>3D · 多元视角</span>'
-      + '</div>';
+    center.innerHTML = '<h1 class="dv-title" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
+    prepareTitleCharacters(center.querySelector('.dv-title'));
+    dimStartBtn = el('button', 'dv-start-btn is-pending', '开启');
+    dimStartBtn.type = 'button';
+    dimStartBtn.disabled = true;
+    dimStartBtn.setAttribute('aria-label', '开启次元宇宙序章');
+    dimStartBtn.addEventListener('click', function () {
+      if (dimStartBtn.disabled || !dimStartBtn.classList.contains('is-ready')) return;
+      dimStartBtn.disabled = true;
+      dimStartBtn.classList.remove('is-ready');
+      dimStartBtn.classList.add('is-exiting');
+      var title = center.querySelector('.dv-title');
+      if (title) title.classList.add('dv-title-dissolving');
+      window.setTimeout(function () { dimStartBtn.remove(); }, 260);
+      /* Godot 只在用户点击开启后加载；ready 后由 GDScript 执行团子粒子序章。 */
+      ensureGodotOverlay();
+    });
+    center.appendChild(dimStartBtn);
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
-    dimVortexAnim = makeVortex(dimVortexCanvas, 64);
     spawnSymbols(symLayer);
   }
 
@@ -69256,8 +68676,9 @@ window.HMChat = (function () {
         color: CYBER_COLORS[Math.floor(Math.random() * CYBER_COLORS.length)],
         opacity: rnd(0.12, 0.5)
       };
-      s.style.left = state.x + '%';
-      s.style.top = state.y + '%';
+      s.style.left = '0';
+      s.style.top = '0';
+      s.style.transform = 'translate3d(' + state.x + 'vw, ' + state.y + 'vh, 0) rotate(' + state.rot + 'deg)';
       s.style.fontSize = state.size + 'px';
       s.style.color = state.color;
       s.style.opacity = state.opacity;
@@ -69267,53 +68688,419 @@ window.HMChat = (function () {
     }
   }
 
-  function animateSymbols() {
+  function animateSymbols(now) {
+    now = typeof now === 'number' ? now : performance.now();
     if (!dimPage || dimPage.getAttribute('aria-hidden') === 'true') {
       dimRaf = 0;
       return;
     }
+    if (now - lastSymbolFrame < 1000 / 30) { dimRaf = requestAnimationFrame(animateSymbols); return; }
+    lastSymbolFrame = now;
     for (var i = 0; i < dimSymbols.length; i++) {
       var s = dimSymbols[i];
       s.x += s.vx; s.y += s.vy; s.rot += s.vr;
       if (s.x < -5) s.x = 105; if (s.x > 105) s.x = -5;
       if (s.y < -5) s.y = 105; if (s.y > 105) s.y = -5;
-      s.el.style.left = s.x + '%';
-      s.el.style.top = s.y + '%';
-      s.el.style.transform = 'rotate(' + s.rot + 'deg)';
+      s.el.style.transform = 'translate3d(' + s.x + 'vw, ' + s.y + 'vh, 0) rotate(' + s.rot + 'deg)';
     }
     dimRaf = requestAnimationFrame(animateSymbols);
+  }
+
+  /* ---------- 粒子汇聚成字 · 赛博屏障显形 ---------- */
+  function startTitleParticleIntro(center, title, onComplete) {
+    if (!center || !title) return;
+    title.classList.add('dv-title-building');
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      title.classList.remove('dv-title-building');
+      if (onComplete) onComplete();
+      return;
+    }
+    var oldCanvas = center.querySelector('.dv-title-particles');
+    if (oldCanvas) oldCanvas.remove();
+    var canvas = el('canvas', 'dv-title-particles');
+    center.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+    if (!ctx) {
+      canvas.remove();
+      title.classList.remove('dv-title-building');
+      if (onComplete) onComplete();
+      return;
+    }
+
+    var w = Math.max(1, center.clientWidth);
+    var h = Math.max(1, center.clientHeight);
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.35);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.scale(dpr, dpr);
+
+    var rect = title.getBoundingClientRect();
+    var base = center.getBoundingClientRect();
+    var left = rect.left - base.left;
+    var top = rect.top - base.top;
+    var mask = document.createElement('canvas');
+    mask.width = Math.ceil(w);
+    mask.height = Math.ceil(h);
+    var mctx = mask.getContext('2d');
+    var style = window.getComputedStyle(title);
+    /* Canvas font 不接受部分 CSS font 简写中的 line-height；拆开设置，确保文字蒙版按真实标题字号绘制。 */
+    mctx.font = [style.fontStyle, style.fontVariant, style.fontWeight, style.fontSize, style.fontFamily].join(' ');
+    mctx.textAlign = 'center';
+    mctx.textBaseline = 'middle';
+    mctx.fillStyle = '#fff';
+    var titleText = title.textContent || '欢迎来到次元宇宙';
+    mctx.fillText(titleText, left + rect.width / 2, top + rect.height / 2, rect.width + 8);
+    var pixels = mctx.getImageData(0, 0, mask.width, mask.height).data;
+    var points = [];
+    var step = 2;
+    for (var y = Math.max(0, Math.floor(top)); y < Math.min(mask.height, top + rect.height); y += step) {
+      for (var x = Math.max(0, Math.floor(left)); x < Math.min(mask.width, left + rect.width); x += step) {
+        if (pixels[(y * mask.width + x) * 4 + 3] > 80 && Math.random() > 0.08) points.push({ x: x, y: y });
+      }
+    }
+    /* 低端浏览器或字体采样失败时，用逐字测量结果生成轮廓采样点，绝不让粒子阶段空跑。 */
+    if (!points.length) {
+      var fontSize = parseFloat(style.fontSize) || 48;
+      var fallbackFont = [style.fontWeight, fontSize + 'px', style.fontFamily].join(' ');
+      mctx.font = fallbackFont;
+      var measured = mctx.measureText(titleText).width;
+      var charWidth = measured / Math.max(1, Array.from(titleText).length);
+      var fallbackLeft = left + Math.max(0, (rect.width - measured) / 2);
+      for (var ci = 0; ci < Array.from(titleText).length; ci++) {
+        var cw = charWidth;
+        for (var fy = top + rect.height * 0.12; fy < top + rect.height * 0.88; fy += 3) {
+          for (var fx = fallbackLeft + ci * charWidth; fx < fallbackLeft + (ci + 1) * charWidth; fx += 3) {
+            if (Math.random() > 0.42) points.push({ x: fx, y: fy });
+          }
+        }
+      }
+    }
+    if (points.length > 1000) {
+      var stride = points.length / 1000;
+      points = points.filter(function (_, i) { return i % stride < 1; });
+    }
+    var particles = points.map(function (p) {
+      var angle = rnd(0, Math.PI * 2);
+      var radius = rnd(Math.max(w, h) * 0.28, Math.max(w, h) * 0.85);
+      return {
+        x: w / 2 + Math.cos(angle) * radius,
+        y: h / 2 + Math.sin(angle) * radius,
+        sx: w / 2 + Math.cos(angle) * radius,
+        sy: h / 2 + Math.sin(angle) * radius,
+        tx: p.x, ty: p.y,
+        size: rnd(0.65, 1.65),
+        color: CYBER_COLORS[Math.floor(Math.random() * CYBER_COLORS.length)],
+        delay: rnd(0, 0.28)
+      };
+    });
+
+    var start = performance.now();
+    var duration = 2600;
+    var shieldDuration = 1150;
+    var raf = 0;
+    var alive = true;
+    var lastFrame = 0;
+    function ease(x) { return 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3); }
+    function hexPath(x, y, r) {
+      ctx.beginPath();
+      for (var k = 0; k < 6; k++) {
+        var a = Math.PI / 3 * k - Math.PI / 6;
+        var px = x + Math.cos(a) * r;
+        var py = y + Math.sin(a) * r;
+        if (!k) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    }
+    function frame(now) {
+      if (!alive || !dimPage || dimPage.getAttribute('aria-hidden') === 'true') {
+        canvas.remove();
+        return;
+      }
+      if (now - lastFrame < 1000 / 45) { raf = requestAnimationFrame(frame); return; }
+      lastFrame = now;
+      var elapsed = now - start;
+      var p = Math.min(1, elapsed / duration);
+      ctx.clearRect(0, 0, w, h);
+
+      /* 第一阶段：四面八方的能量粒子向文字轮廓汇聚 */
+      for (var i = 0; i < particles.length; i++) {
+        var q = particles[i];
+        var local = ease((p - q.delay) / (1 - q.delay));
+        q.x = q.sx + (q.tx - q.sx) * local;
+        q.y = q.sy + (q.ty - q.sy) * local;
+        var alpha = 0.25 + local * 0.75;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = q.color;
+        ctx.shadowColor = q.color;
+        ctx.shadowBlur = (i % 8 === 0) ? 4 + local * 5 : 0;
+        ctx.beginPath();
+        ctx.arc(q.x, q.y, q.size * (0.7 + local * 0.5), 0, Math.PI * 2);
+        ctx.fill();
+        if (local < 0.82) {
+          ctx.globalAlpha = alpha * 0.22;
+          ctx.strokeStyle = q.color;
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(q.x, q.y);
+          ctx.lineTo(q.x + (q.tx - q.sx) * 0.025, q.y + (q.ty - q.sy) * 0.025);
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+
+      /* 第二阶段：文字成形后，六边形能量屏障由内向外闭合 */
+      var shield = Math.max(0, Math.min(1, (elapsed - duration) / shieldDuration));
+      if (shield > 0) {
+        var sx = left - 26, sy = top - 22;
+        var sw = rect.width + 52, sh = rect.height + 44;
+        var radius = 13;
+        var cols = Math.ceil(sw / (radius * 1.5)) + 2;
+        var rows = Math.ceil(sh / (radius * 1.72)) + 2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(sx - 8, sy - 8, sw + 16, sh + 16);
+        ctx.clip();
+        for (var row = -1; row < rows; row++) {
+          for (var col = -1; col < cols; col++) {
+            var hx = sx + col * radius * 1.5 + (row % 2) * radius * 0.75;
+            var hy = sy + row * radius * 1.72;
+            var dist = Math.hypot(hx - (left + rect.width / 2), hy - (top + rect.height / 2));
+            var reveal = shield * Math.max(sw, sh) * 0.78;
+            if (dist > reveal) continue;
+            var fade = Math.max(0.08, 1 - Math.max(0, dist - reveal + 40) / 70);
+            hexPath(hx, hy, radius * 0.52);
+            ctx.strokeStyle = row % 2 ? 'rgba(34,211,238,' + (0.12 * fade) + ')' : 'rgba(192,132,252,' + (0.16 * fade) + ')';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+
+        var pulse = 0.5 + Math.sin(elapsed * 0.018) * 0.5;
+        ctx.strokeStyle = 'rgba(34,211,238,' + (0.35 * (1 - shield * 0.45)) + ')';
+        ctx.lineWidth = 1.4;
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = 16;
+        ctx.strokeRect(sx, sy, sw, sh);
+        ctx.shadowBlur = 0;
+        var scanY = sy + ((elapsed - duration) % 420) / 420 * sh;
+        ctx.fillStyle = 'rgba(103,232,249,' + (0.16 + pulse * 0.12) + ')';
+        ctx.fillRect(sx, scanY, sw, 1.5);
+      }
+
+      if (elapsed < duration + shieldDuration) {
+        raf = requestAnimationFrame(frame);
+      } else {
+        title.classList.remove('dv-title-building');
+        canvas.style.transition = 'opacity .35s ease';
+        canvas.style.opacity = '0';
+        window.setTimeout(function () {
+          canvas.remove();
+          if (onComplete) onComplete();
+        }, 380);
+      }
+    }
+    raf = requestAnimationFrame(frame);
+    return function () { alive = false; cancelAnimationFrame(raf); canvas.remove(); };
+  }
+
+  function prepareTitleCharacters(title) {
+    if (!title || title.dataset.charactersReady === 'true') return;
+    var text = title.textContent || '';
+    title.textContent = '';
+    Array.from(text).forEach(function (character, index) {
+      var span = document.createElement('span');
+      span.className = 'dv-title-char';
+      span.textContent = character;
+      span.setAttribute('data-char', character);
+      span.setAttribute('aria-hidden', 'true');
+      span.style.setProperty('--dv-char-delay', (-rnd(0, 8)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-duration', rnd(5.5, 10.5).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-cyan-delay', (-rnd(0, 10)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-cyan-duration', rnd(4.5, 9).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-pink-delay', (-rnd(0, 12)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-pink-duration', rnd(5, 11).toFixed(2) + 's');
+      span.style.setProperty('--dv-rise-x', rnd(-90, 90).toFixed(0) + 'px');
+      span.style.setProperty('--dv-rise-rot', rnd(-35, 35).toFixed(0) + 'deg');
+      span.style.setProperty('--dv-rise-delay', rnd(0, 0.18).toFixed(2) + 's');
+      title.appendChild(span);
+    });
+    title.dataset.charactersReady = 'true';
+  }
+
+  /* ---------- Godot 透明叠加游戏层 ---------- */
+  var godotFrame = null;
+  var godotStarted = false;
+  var tutorialPanel = null;
+  var scorePanel = null;
+
+  function ensureGodotOverlay() {
+    if (godotFrame) {
+      godotFrame.style.opacity = '1';
+      if (godotStarted && godotFrame.contentWindow && godotFrame.contentWindow.hmGodotStart) {
+        godotFrame.contentWindow.hmGodotStart();
+      }
+      return;
+    }
+    godotFrame = el('iframe', 'dv-godot-overlay');
+    godotFrame.title = '次元宇宙团子游戏层';
+    godotFrame.setAttribute('aria-label', '次元宇宙团子游戏层');
+    godotFrame.setAttribute('allow', 'autoplay; fullscreen');
+    godotFrame.setAttribute('tabindex', '-1');
+    godotFrame.src = new URL('./dimverse/game/index.html', window.location.href).href;
+    dimPage.appendChild(godotFrame);
+    godotFrame.addEventListener('load', function () {
+      try {
+        var doc = godotFrame.contentDocument;
+        if (doc) {
+          doc.documentElement.style.background = 'transparent';
+          doc.body.style.background = 'transparent';
+        }
+      } catch (e) {}
+    });
+  }
+
+  function buildTutorialPanel() {
+    if (tutorialPanel) return;
+    tutorialPanel = el('aside', 'dv-game-tutorial');
+    tutorialPanel.innerHTML = '<strong>次元探索指南 <span>/ CONTROLS</span></strong>' +
+      '<p><b>W A S D</b> / 方向键：移动团子</p>' +
+      '<p>靠近发光晶体即可收集</p>' +
+      '<p>探索原有次元空间</p>';
+    dimPage.appendChild(tutorialPanel);
+    requestAnimationFrame(function () { tutorialPanel.classList.add('is-visible'); });
+    scorePanel = el('div', 'dv-game-score', '能量晶体　00 / 04');
+    dimPage.appendChild(scorePanel);
+  }
+
+  function onGodotMessage(event) {
+    if (!godotFrame || event.source !== godotFrame.contentWindow) return;
+    if (event.data === 'hm-godot-ready') {
+      godotStarted = true;
+      godotFrame.style.opacity = '1';
+      try {
+        if (godotFrame.contentWindow.hmGodotStart) godotFrame.contentWindow.hmGodotStart();
+        godotFrame.contentWindow.focus();
+      } catch (e) {}
+    } else if (event.data === 'hm-godot-landed') {
+      buildTutorialPanel();
+    } else if (typeof event.data === 'string' && event.data.indexOf('hm-godot-score-') === 0) {
+      var score = Number(event.data.slice('hm-godot-score-'.length)) || 0;
+      if (scorePanel) scorePanel.textContent = '能量晶体　' + String(score).padStart(2, '0') + ' / 04';
+    }
   }
 
   function showDimPage() {
     if (!dimPage) buildDimPage();
     dimPage.style.display = 'flex';
+    if (vortexAnim) { vortexAnim.stop(); vortexAnim = null; }
+    if (!dimVortexAnim && dimVortexCanvas) dimVortexAnim = makeVortex(dimVortexCanvas, 64);
     requestAnimationFrame(function () {
       dimPage.classList.add('is-visible');
       dimPage.setAttribute('aria-hidden', 'false');
       if (!dimRaf) animateSymbols();
+      /* 正确顺序：进入页面先由粒子汇聚成标题并形成赛博屏障，完成后才显示「开启」。 */
+      if (!dimTitleIntroStarted) {
+        dimTitleIntroStarted = true;
+        var title = dimPage.querySelector('.dv-title');
+        var completed = false;
+        function finishTitleIntro() {
+          if (completed) return;
+          completed = true;
+          if (title) title.classList.remove('dv-title-building');
+          var particleCanvas = dimPage.querySelector('.dv-title-particles');
+          if (particleCanvas) particleCanvas.remove();
+          if (dimStartBtn && dimStartBtn.isConnected) {
+            dimStartBtn.disabled = false;
+            dimStartBtn.classList.remove('is-pending');
+            dimStartBtn.classList.add('is-ready');
+          }
+        }
+        /* 无论 Canvas/字体采样/浏览器动画是否异常，都不能让欢迎页永久黑屏。 */
+        try {
+          startTitleParticleIntro(dimPage.querySelector('.dv-center'), title, finishTitleIntro);
+        } catch (introError) {
+          console.error('[Dimverse] title particle intro failed:', introError);
+          finishTitleIntro();
+        }
+        window.setTimeout(finishTitleIntro, 5200);
+      }
     });
   }
 
   function hideDimPage() {
     if (!dimPage) return;
+    if (dimVortexAnim) { dimVortexAnim.stop(); dimVortexAnim = null; }
+    if (!vortexAnim && vortexCanvas) vortexAnim = makeVortex(vortexCanvas, 72);
     dimPage.classList.remove('is-visible');
     dimPage.setAttribute('aria-hidden', 'true');
     setTimeout(function () { if (dimPage) dimPage.style.display = 'none'; }, 350);
+  }
+
+  /* ---------- 专属网址路由 ---------- */
+  /* 仅增删 view 参数，保留 hm_v 等其他查询参数及 hash。 */
+  function isDimverseRoute() {
+    try {
+      return new URL(window.location.href).searchParams.get('view') === 'dimverse';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function updateDimverseRoute(active, replace) {
+    try {
+      var url = new URL(window.location.href);
+      if (active) url.searchParams.set('view', 'dimverse');
+      else url.searchParams.delete('view');
+
+      var next = url.pathname + url.search + url.hash;
+      var current = window.location.pathname + window.location.search + window.location.hash;
+      if (next === current) return;
+
+      var state = Object.assign({}, window.history.state || {}, { hmDimverse: !!active });
+      if (replace) window.history.replaceState(state, '', next);
+      else window.history.pushState(state, '', next);
+    } catch (e) {
+      /* 地址栏更新失败时不阻断页面本身的进入/退出。 */
+      console.warn('[Dimverse] URL route update failed:', e);
+    }
+  }
+
+  /* 次元宇宙沿用绘梦主页面的 DOM 与背景；Godot 只作为透明游戏逻辑层，
+   * 不允许把 Godot 默认启动页或独立场景替换成用户看到的网页背景。 */
+  function syncDimverseFromLocation() {
+    if (isDimverseRoute()) {
+      if (!dimPage) buildDimPage();
+      document.body.classList.add('dv-open');
+      showDimPage();
+      return;
+    }
+    hideDimPage();
+    document.body.classList.remove('dv-open');
   }
 
   /* ---------- 进入 / 离开 ---------- */
   function enterDimverse() {
     if (transitioning) return;
     runVortexTransition(vortexBtn, function () {
-      buildDimPage();
-      showDimPage();
+      updateDimverseRoute(true, false);
       document.body.classList.add('dv-open');
+      showDimPage();
     });
   }
 
   function leaveDimverse() {
+    /* 独立 /dimverse/ 入口通过同源 iframe 展示主应用；离开时回到站点根路径。 */
+    if (window.top !== window.self) {
+      window.top.location.href = new URL('../', window.location.href).href;
+      return;
+    }
     if (transitioning) return;
     runVortexTransition(dimVortexBtn, function () {
+      updateDimverseRoute(false, false);
       hideDimPage();
       document.body.classList.remove('dv-open');
     });
@@ -69322,6 +69109,10 @@ window.HMChat = (function () {
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
+    window.addEventListener('message', onGodotMessage);
+    /* 支持直接打开 / 刷新 ?view=dimverse 的专属页面。 */
+    if (isDimverseRoute()) syncDimverseFromLocation();
+    window.addEventListener('popstate', syncDimverseFromLocation);
   }
 
   if (document.readyState === 'loading') {
@@ -76742,8 +76533,7 @@ window.HMChat = (function () {
 (function bindAvatarToggle() {
   var btn = document.getElementById('avatarToggle');
   if (!btn) return;
-  /* 页面加载时不自动挂载形象 / AI 语音浮层，统一由顶栏「虚拟形象」按钮按需创建 */
-  window.MIKU_CHAT_NO_AUTO = true;
+  /* 页面加载时不自动挂载形象，统一由顶栏「虚拟形象」按钮按需创建 */
   function widgetEl() { return document.getElementById('vinyl-widget'); }
   function sync() {
     var el = widgetEl();
@@ -76755,9 +76545,6 @@ window.HMChat = (function () {
   function ensure() {
     if (!widgetEl() && window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
       try { window.MikuPlayer.init(); window.__HM_MIKU_MOUNTED = true; } catch (e) {}
-    }
-    if (window.MikuChat && !window.__HM_MIKU_CHAT) {
-      try { window.MikuChat.init({ anchor: '#vinyl-widget' }); window.__HM_MIKU_CHAT = true; } catch (e) {}
     }
   }
   btn.addEventListener('click', function () {
@@ -77392,6 +77179,7 @@ window.HMChat = (function () {
 
     init();
   })();
+
 </script>
 
 <script>

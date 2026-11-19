@@ -2643,8 +2643,7 @@
 (function bindAvatarToggle() {
   var btn = document.getElementById('avatarToggle');
   if (!btn) return;
-  /* 页面加载时不自动挂载形象 / AI 语音浮层，统一由顶栏「虚拟形象」按钮按需创建 */
-  window.MIKU_CHAT_NO_AUTO = true;
+  /* 页面加载时不自动挂载形象，统一由顶栏「虚拟形象」按钮按需创建 */
   function widgetEl() { return document.getElementById('vinyl-widget'); }
   function sync() {
     var el = widgetEl();
@@ -2656,9 +2655,6 @@
   function ensure() {
     if (!widgetEl() && window.MikuPlayer && !window.__HM_MIKU_MOUNTED) {
       try { window.MikuPlayer.init(); window.__HM_MIKU_MOUNTED = true; } catch (e) {}
-    }
-    if (window.MikuChat && !window.__HM_MIKU_CHAT) {
-      try { window.MikuChat.init({ anchor: '#vinyl-widget' }); window.__HM_MIKU_CHAT = true; } catch (e) {}
     }
   }
   btn.addEventListener('click', function () {
