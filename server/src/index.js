@@ -178,7 +178,7 @@ async function resolveDownloadSource(src, req) {
   }
   const host = target.hostname.toLowerCase();
   if (isConfiguredCosHost(host, config)) {
-    const key = decodeURIComponent(target.pathname.replace(/^\\/+/, ''));
+    const key = decodeURIComponent(target.pathname.replace(/^\/+/, ''));
     if (!key) throw jsonError(400, '下载地址缺少对象路径');
     return { key, mime: mediaStore.mimeByName(key) };
   }
