@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-19T13:07:24.000Z",
+  "generatedAt": "2026-11-19T13:10:17.000Z",
   "source": "huimeng_library.books",
-  "total": 986,
+  "total": 988,
   "areas": {
     "paint": 749,
-    "concept": 213,
+    "concept": 215,
     "ref": 24
   },
   "books": [
@@ -678,6 +678,34 @@
       "pdfKey": "api/library/file/library/books/624da2a724-20261119-3-1.pdf",
       "pdfBytes": 0,
       "coverKey": "api/library/file/library/covers/624da2a724-20261119-3-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnkfirf-4eb0b5",
+      "sortNo": 0,
+      "title": "灵能百分百 · 原画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《灵能百分百》；原压缩包《[线稿集]灵能百分百 原画集.rar》。第 1-103 页（共 103 页）。",
+      "pageCount": 103,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/0a7f6c750f-20261119-1-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/0a7f6c750f-20261119-1-1.jpg",
+      "coverBytes": 0
+    },
+    {
+      "id": "lib-mwnkfx88-debced",
+      "sortNo": 0,
+      "title": "灵能百分百 · 第二季 动画线稿原画集",
+      "author": "萌绘图库 / 萌绘图库",
+      "intro": "来源：本机原画资料《灵能百分百》；原压缩包《[线稿集]灵能百分百 第二季 动画线稿原画集.rar》。第 1-63 页（共 63 页）。",
+      "pageCount": 63,
+      "area": "concept",
+      "toc": [],
+      "pdfKey": "api/library/file/library/books/0a7f6c750f-20261119-2-1.pdf",
+      "pdfBytes": 0,
+      "coverKey": "api/library/file/library/covers/0a7f6c750f-20261119-2-1.jpg",
       "coverBytes": 0
     },
     {
