@@ -97,6 +97,9 @@ test('download route uses the shared allowlist and validates every redirect hop'
 
   for (const code of [source, deployed]) {
     assert.ok(code.includes("searchParams.set('view', 'dimverse')"));
+    assert.ok(code.includes("target.pathname.endsWith('/') ? target.pathname + 'dimverse/' : target.pathname + '/dimverse/'"), 'legacy query route resolves to the standalone Godot path');
+    assert.ok(code.includes("window.location.replace(next)"), 'direct legacy URLs are redirected without adding history entries');
+    assert.ok(code.includes("openGodotDimverse(false)"), 'vortex entry opens the Godot game instead of the legacy DOM scene');
     assert.ok(code.includes("searchParams.set('view', 'dimverse')"));
     assert.ok(code.includes("addEventListener('popstate', syncDimverseFromLocation)"));
     assert.ok(code.includes('if (isDimverseRoute()) syncDimverseFromLocation()'));
@@ -104,7 +107,7 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.ok(html.includes('./assets/hm-s29-b9fa10c0.js'), 'Pages HTML loads the patched Dimverse asset');
   const standalone = fs.readFileSync(require.resolve('../../deploy/dimverse/index.html'), 'utf8');
   assert.match(standalone, /<title>次元宇宙 · 绘梦<\/title>/);
-  assert.ok(standalone.includes('src="../?view=dimverse"'));
+  assert.ok(standalone.includes('src="game/index.html"'), 'standalone route loads the Godot Web export');
   assert.match(source, /window\.top !== window\.self/);
 
   const sourceStyles = fs.readFileSync(require.resolve('../../frontend/styles.css'), 'utf8');
