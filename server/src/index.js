@@ -37,6 +37,7 @@ const libraryRoutes = require('./routes/library');
 const imageProxyRoutes = require('./routes/image-proxy');
 const objectStore = require('./object-store');
 const storage = require('./storage');
+const { isTrustedDownloadHost, isConfiguredCosHost, fetchTrustedDownload } = require('./download-source');
 const { wrap, jsonError } = require('./http');
 
 const app = express();
@@ -176,18 +177,16 @@ async function resolveDownloadSource(src, req) {
     throw jsonError(400, '不支持的下载协议');
   }
   const host = target.hostname.toLowerCase();
-  const ownHost = String(req.headers.host || '').split(':')[0].toLowerCase();
-  if (/\.myqcloud\.com$/.test(host)) {
+  if (isConfiguredCosHost(host, config)) {
     const key = decodeURIComponent(target.pathname.replace(/^\/+/, ''));
     if (!key) throw jsonError(400, '下载地址缺少对象路径');
     return { key, mime: mediaStore.mimeByName(key) };
   }
-  const allowed = host === ownHost
-    || /\.aliyuncs\.com$/.test(host)
-    || host === 'localhost'
-    || /^127\./.test(host);
-  if (!allowed) throw jsonError(400, '不允许的下载来源');
-  const upstream = await fetch(target.toString(), { redirect: 'follow' });
+  if (!isTrustedDownloadHost(host, req, config)) {
+    throw jsonError(400, '不允许的下载来源');
+  }
+  /* 手动逐跳跟随重定向，并在每一跳重新校验主机；不能让可信 CDN 把代理带到任意外站。 */
+  const upstream = await fetchTrustedDownload(target, req, config);
   if (!upstream.ok) {
     throw jsonError(upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502,
       '原文件读取失败', 'HTTP ' + upstream.status);

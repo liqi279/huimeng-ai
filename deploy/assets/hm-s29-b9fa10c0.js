@@ -1,4 +1,3 @@
-
 'use strict';
 
 /* =============================================================
@@ -362,10 +361,51 @@
     setTimeout(function () { if (dimPage) dimPage.style.display = 'none'; }, 350);
   }
 
+  /* ---------- 专属网址路由 ---------- */
+  /* 仅增删 view 参数，保留 hm_v 等其他查询参数及 hash。 */
+  function isDimverseRoute() {
+    try {
+      return new URL(window.location.href).searchParams.get('view') === 'dimverse';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function updateDimverseRoute(active, replace) {
+    try {
+      var url = new URL(window.location.href);
+      if (active) url.searchParams.set('view', 'dimverse');
+      else url.searchParams.delete('view');
+
+      var next = url.pathname + url.search + url.hash;
+      var current = window.location.pathname + window.location.search + window.location.hash;
+      if (next === current) return;
+
+      var state = Object.assign({}, window.history.state || {}, { hmDimverse: !!active });
+      if (replace) window.history.replaceState(state, '', next);
+      else window.history.pushState(state, '', next);
+    } catch (e) {
+      /* 地址栏更新失败时不阻断页面本身的进入/退出。 */
+      console.warn('[Dimverse] URL route update failed:', e);
+    }
+  }
+
+  function syncDimverseFromLocation() {
+    if (isDimverseRoute()) {
+      buildDimPage();
+      showDimPage();
+      document.body.classList.add('dv-open');
+    } else {
+      hideDimPage();
+      document.body.classList.remove('dv-open');
+    }
+  }
+
   /* ---------- 进入 / 离开 ---------- */
   function enterDimverse() {
     if (transitioning) return;
     runVortexTransition(vortexBtn, function () {
+      updateDimverseRoute(true, false);
       buildDimPage();
       showDimPage();
       document.body.classList.add('dv-open');
@@ -375,6 +415,7 @@
   function leaveDimverse() {
     if (transitioning) return;
     runVortexTransition(dimVortexBtn, function () {
+      updateDimverseRoute(false, false);
       hideDimPage();
       document.body.classList.remove('dv-open');
     });
@@ -383,6 +424,9 @@
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
+    /* 支持直接打开 / 刷新 ?view=dimverse 的专属页面。 */
+    if (isDimverseRoute()) syncDimverseFromLocation();
+    window.addEventListener('popstate', syncDimverseFromLocation);
   }
 
   if (document.readyState === 'loading') {
@@ -393,4 +437,3 @@
 
   window.HMDimverse = { enter: enterDimverse, leave: leaveDimverse };
 })();
-

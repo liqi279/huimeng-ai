@@ -83,3 +83,37 @@ test('resolves generated API paths against the backend origin and preserves inli
   assert.equal(sandbox.normalize('blob:https://app.example.test/id'), 'blob:https://app.example.test/id');
   assert.equal(sandbox.normalize('https://cdn.example.test/result.png'), 'https://cdn.example.test/result.png');
 });
+test('download route uses the shared allowlist and validates every redirect hop', () => {
+  const source = fs.readFileSync(require.resolve('../src/index.js'), 'utf8');
+  assert.match(source, /require\(['"]\.\/download-source['"]\)/);
+  assert.match(source, /isConfiguredCosHost\(host, config\)/);
+  assert.match(source, /isTrustedDownloadHost\(host, req, config\)/);
+  assert.match(source, /fetchTrustedDownload\(target, req, config\)/);
+  assert.doesNotMatch(source, /fetch\(target\.toString\(\), \{ redirect: ['"]follow['"] \}\)/);
+});test('次元宇宙专属路由保留 hm_v、其他参数和 hash，并进入实际 Pages 产物', () => {
+  const source = fs.readFileSync(require.resolve('../../frontend/dimverse.js'), 'utf8');
+  const deployed = fs.readFileSync(require.resolve('../../deploy/assets/hm-s29-b9fa10c0.js'), 'utf8');
+  const html = fs.readFileSync(require.resolve('../../deploy/index.html'), 'utf8');
+
+  for (const code of [source, deployed]) {
+    assert.ok(code.includes("searchParams.set('view', 'dimverse')"));
+    assert.ok(code.includes("searchParams.set('view', 'dimverse')"));
+    assert.ok(code.includes("addEventListener('popstate', syncDimverseFromLocation)"));
+    assert.ok(code.includes('if (isDimverseRoute()) syncDimverseFromLocation()'));
+  }
+  assert.ok(html.includes('./assets/hm-s29-b9fa10c0.js'), 'Pages HTML loads the patched Dimverse asset');
+
+  const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
+  original.searchParams.set('view', 'dimverse');
+  assert.equal(original.pathname, '/huimeng-ai/');
+  assert.equal(original.searchParams.get('view'), 'dimverse');
+  assert.equal(original.searchParams.get('hm_v'), '1795054083561');
+  assert.equal(original.searchParams.get('lang'), 'zh');
+  assert.equal(original.hash, '#top');
+
+  original.searchParams.delete('view');
+  assert.equal(original.searchParams.has('view'), false);
+  assert.equal(original.searchParams.get('hm_v'), '1795054083561');
+  assert.equal(original.searchParams.get('lang'), 'zh');
+  assert.equal(original.hash, '#top');
+});
