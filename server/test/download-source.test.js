@@ -111,6 +111,9 @@ test('download route uses the shared allowlist and validates every redirect hop'
   const deployedStyles = fs.readFileSync(require.resolve('../../deploy/assets/hm.css'), 'utf8');
   for (const code of [source, deployed]) {
     assert.ok(code.includes('startTitleParticleIntro'), 'welcome title is built by particle animation');
+    assert.ok(code.includes('mctx.measureText(titleText)'), 'particle target points have a font-metrics fallback');
+    assert.ok(code.includes('style.fontWeight, style.fontSize, style.fontFamily'), 'canvas text mask uses a valid font shorthand');
+    assert.ok(code.includes('prepareTitleCharacters'), 'title characters are prepared for independent glitch timing');
     assert.ok(code.includes('六边形能量屏障'), 'particle reveal transitions into a cyber shield');
     assert.ok(code.includes('data-text="欢迎来到次元宇宙"'), 'welcome title exposes glitch layers');
     assert.ok(!code.includes('页面正开发中'), 'placeholder copy is removed');
@@ -118,7 +121,9 @@ test('download route uses the shared allowlist and validates every redirect hop'
   }
   for (const css of [sourceStyles, deployedStyles]) {
     assert.ok(css.includes('.dv-title-particles'), 'particle canvas is layered over the welcome title');
-    assert.ok(css.includes('@keyframes dv-title-glitch'), 'subtle recurring glitch animation exists');
+    assert.ok(css.includes('@keyframes dv-char-jitter'), 'each character has an independent glitch animation');
+    assert.ok(css.includes('@keyframes dv-char-cyan'), 'each character has independent cyan glitch slices');
+    assert.ok(css.includes('@keyframes dv-char-pink'), 'each character has independent magenta glitch slices');
     assert.ok(css.includes('prefers-reduced-motion'), 'reduced-motion preference is respected');
     assert.ok(!css.includes('.dv-sub {'), 'placeholder subtitle styles are removed');
     assert.ok(!css.includes('.dv-meta {'), 'view-mode label styles are removed');

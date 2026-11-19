@@ -289,6 +289,7 @@
     /* 中心文案 */
     var center = el('div', 'dv-center');
     center.innerHTML = '<h1 class="dv-title dv-title-building" data-text="欢迎来到次元宇宙" aria-label="欢迎来到次元宇宙">欢迎来到次元宇宙</h1>';
+    prepareTitleCharacters(center.querySelector('.dv-title'));
     dimPage.appendChild(center);
 
     document.body.appendChild(dimPage);
@@ -377,21 +378,40 @@
     mask.height = Math.ceil(h);
     var mctx = mask.getContext('2d');
     var style = window.getComputedStyle(title);
-    mctx.font = style.font;
+    /* Canvas font 不接受部分 CSS font 简写中的 line-height；拆开设置，确保文字蒙版按真实标题字号绘制。 */
+    mctx.font = [style.fontStyle, style.fontVariant, style.fontWeight, style.fontSize, style.fontFamily].join(' ');
     mctx.textAlign = 'center';
     mctx.textBaseline = 'middle';
     mctx.fillStyle = '#fff';
-    mctx.fillText(title.textContent, left + rect.width / 2, top + rect.height / 2, rect.width + 8);
+    var titleText = title.textContent || '欢迎来到次元宇宙';
+    mctx.fillText(titleText, left + rect.width / 2, top + rect.height / 2, rect.width + 8);
     var pixels = mctx.getImageData(0, 0, mask.width, mask.height).data;
     var points = [];
-    var step = 3;
+    var step = 2;
     for (var y = Math.max(0, Math.floor(top)); y < Math.min(mask.height, top + rect.height); y += step) {
       for (var x = Math.max(0, Math.floor(left)); x < Math.min(mask.width, left + rect.width); x += step) {
-        if (pixels[(y * mask.width + x) * 4 + 3] > 100 && Math.random() > 0.13) points.push({ x: x, y: y });
+        if (pixels[(y * mask.width + x) * 4 + 3] > 80 && Math.random() > 0.08) points.push({ x: x, y: y });
       }
     }
-    if (points.length > 1900) {
-      var stride = points.length / 1900;
+    /* 低端浏览器或字体采样失败时，用逐字测量结果生成轮廓采样点，绝不让粒子阶段空跑。 */
+    if (!points.length) {
+      var fontSize = parseFloat(style.fontSize) || 48;
+      var fallbackFont = [style.fontWeight, fontSize + 'px', style.fontFamily].join(' ');
+      mctx.font = fallbackFont;
+      var measured = mctx.measureText(titleText).width;
+      var charWidth = measured / Math.max(1, Array.from(titleText).length);
+      var fallbackLeft = left + Math.max(0, (rect.width - measured) / 2);
+      for (var ci = 0; ci < Array.from(titleText).length; ci++) {
+        var cw = charWidth;
+        for (var fy = top + rect.height * 0.12; fy < top + rect.height * 0.88; fy += 3) {
+          for (var fx = fallbackLeft + ci * charWidth; fx < fallbackLeft + (ci + 1) * charWidth; fx += 3) {
+            if (Math.random() > 0.42) points.push({ x: fx, y: fy });
+          }
+        }
+      }
+    }
+    if (points.length > 2600) {
+      var stride = points.length / 2600;
       points = points.filter(function (_, i) { return i % stride < 1; });
     }
     var particles = points.map(function (p) {
@@ -410,8 +430,8 @@
     });
 
     var start = performance.now();
-    var duration = 2050;
-    var shieldDuration = 1050;
+    var duration = 2600;
+    var shieldDuration = 1150;
     var raf = 0;
     var alive = true;
     function ease(x) { return 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3); }
@@ -512,6 +532,27 @@
     }
     raf = requestAnimationFrame(frame);
     return function () { alive = false; cancelAnimationFrame(raf); canvas.remove(); };
+  }
+
+  function prepareTitleCharacters(title) {
+    if (!title || title.dataset.charactersReady === 'true') return;
+    var text = title.textContent || '';
+    title.textContent = '';
+    Array.from(text).forEach(function (character, index) {
+      var span = document.createElement('span');
+      span.className = 'dv-title-char';
+      span.textContent = character;
+      span.setAttribute('data-char', character);
+      span.setAttribute('aria-hidden', 'true');
+      span.style.setProperty('--dv-char-delay', (-rnd(0, 8)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-duration', rnd(5.5, 10.5).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-cyan-delay', (-rnd(0, 10)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-cyan-duration', rnd(4.5, 9).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-pink-delay', (-rnd(0, 12)).toFixed(2) + 's');
+      span.style.setProperty('--dv-char-pink-duration', rnd(5, 11).toFixed(2) + 's');
+      title.appendChild(span);
+    });
+    title.dataset.charactersReady = 'true';
   }
 
   function showDimPage() {
