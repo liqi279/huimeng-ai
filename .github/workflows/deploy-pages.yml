@@ -43,7 +43,7 @@ jobs:
         run: |
           godot --headless --path game/dimverse-godot --editor --quit
           mkdir -p deploy/dimverse/game
-          godot --headless --path game/dimverse-godot --export-release "Web" deploy/dimverse/game/index.html
+          godot --headless --path game/dimverse-godot --export-release "Web" "$GITHUB_WORKSPACE/deploy/dimverse/game/index.html"
           test -s deploy/dimverse/game/index.html
           test -s deploy/dimverse/game/index.wasm
           test -s deploy/dimverse/game/index.pck
