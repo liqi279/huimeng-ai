@@ -104,7 +104,7 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.ok(html.includes('./assets/hm-s29-b9fa10c0.js'), 'Pages HTML loads the patched Dimverse asset');
   const standalone = fs.readFileSync(require.resolve('../../deploy/dimverse/index.html'), 'utf8');
   assert.match(standalone, /<title>次元宇宙 · 绘梦<\/title>/);
-  assert.match(standalone, /src="\.\.\/?view=dimverse"/);
+  assert.ok(standalone.includes('src="../?view=dimverse"'));
   assert.match(source, /window\.top !== window\.self/);
 
 
