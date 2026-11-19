@@ -507,6 +507,9 @@
   api.updateProfile = function (patch) {
     return request('/auth/profile', { method: 'PATCH', body: patch || {} }, 15000);
   };
+  api.uploadAvatar = function (dataUrl) {
+    return request('/auth/avatar/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000);
+  };
   api.getPreferences = function () {
     return request('/auth/preferences', {}, 15000);
   };

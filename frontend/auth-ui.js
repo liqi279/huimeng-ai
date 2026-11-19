@@ -9,6 +9,8 @@
   var api = (window.HM && window.HM.api) ? window.HM.api : null;
 
   var submitting = false;
+  var profileLoadedUserId = '';
+  var currentAvatarUrl = '';
   /* 首次打开登录框时清空一次，避免浏览器密码管理器把「接口地址 + API Key」填进来 */
   var loginFieldsCleared = false;
 
@@ -98,13 +100,17 @@
     if (nameEl) nameEl.value = u.displayName || u.username || '';
     if (emailEl) emailEl.value = u.email || '';
     if (bioEl) bioEl.value = '';
+    setProfileAvatarPreview(currentAvatarUrl);
     openModal('hmProfileModal');
     try {
       var res = await api.getProfile();
       var p = (res && res.profile) || {};
+      currentAvatarUrl = p.avatarUrl || '';
       if (nameEl) nameEl.value = p.displayName || u.username || '';
       if (emailEl) emailEl.value = p.email || '';
       if (bioEl) bioEl.value = p.bio || '';
+      setProfileAvatarPreview(currentAvatarUrl);
+      applyUserAvatar(currentAvatarUrl, u);
     } catch (e) {}
   }
 
@@ -124,8 +130,11 @@
       window.HMApp = window.HMApp || {};
       window.HMApp.user = Object.assign({}, window.HMApp.user || {}, {
         displayName: p.displayName || '',
-        email: p.email || ''
+        email: p.email || '',
+        avatarUrl: p.avatarUrl || currentAvatarUrl || ''
       });
+      currentAvatarUrl = p.avatarUrl || currentAvatarUrl || '';
+      applyUserAvatar(currentAvatarUrl, window.HMApp.user);
       try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
       closeModal('hmProfileModal');
       if (window.HMApp.toast) window.HMApp.toast('资料已保存到服务器', 'success');
@@ -313,11 +322,135 @@
       return;
     }
     els.userWrap.hidden = false;
+    if (profileLoadedUserId !== user.id) currentAvatarUrl = user.avatarUrl || '';
     els.userAvatar.textContent = String(user.username || '?').charAt(0).toUpperCase();
+    els.userAvatar.style.backgroundImage = '';
+    applyUserAvatar(user.avatarUrl || currentAvatarUrl, user);
     els.userName.textContent = user.username || '用户';
     var isAdmin = user.role === 'admin';
     els.userRole.hidden = !isAdmin;
     els.adminBtn.hidden = !isAdmin;
+    if (api && user.id && profileLoadedUserId !== user.id) {
+      profileLoadedUserId = user.id;
+      api.getProfile().then(function (res) {
+        var p = (res && res.profile) || {};
+        if (!window.HMApp || !window.HMApp.user || window.HMApp.user.id !== user.id) return;
+        currentAvatarUrl = p.avatarUrl || '';
+        window.HMApp.user.avatarUrl = currentAvatarUrl;
+        applyUserAvatar(currentAvatarUrl, window.HMApp.user);
+        try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
+      }).catch(function () { profileLoadedUserId = ''; });
+    }
+  }
+
+  function applyUserAvatar(url, user) {
+    if (!els.userAvatar) return;
+    var initial = String((user && user.username) || '?').charAt(0).toUpperCase();
+    els.userAvatar.textContent = initial;
+    els.userAvatar.style.backgroundImage = '';
+    if (!url) return;
+    var img = document.createElement('img');
+    img.alt = '';
+    img.loading = 'lazy';
+    img.src = api && api.mediaUrl ? api.mediaUrl(url) : url;
+    img.onerror = function () {
+      if (img.parentNode === els.userAvatar) els.userAvatar.removeChild(img);
+      els.userAvatar.textContent = initial;
+      els.userAvatar.style.backgroundImage = '';
+    };
+    els.userAvatar.textContent = '';
+    els.userAvatar.appendChild(img);
+  }
+
+  function setProfileAvatarPreview(url) {
+    var preview = document.getElementById('hmProfileAvatar');
+    var fallback = String((((window.HMApp || {}).user || {}).username) || '?').charAt(0).toUpperCase();
+    if (!preview) return;
+    preview.textContent = fallback;
+    preview.style.backgroundImage = '';
+    preview.innerHTML = '';
+    if (!url) { preview.textContent = fallback; return; }
+    var img = document.createElement('img');
+    img.alt = '当前头像';
+    img.src = api && api.mediaUrl ? api.mediaUrl(url) : url;
+    img.onerror = function () { if (img.parentNode === preview) preview.removeChild(img); preview.textContent = fallback; };
+    preview.appendChild(img);
+  }
+
+  function readAvatarAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var image = new Image();
+        image.onload = function () {
+          var size = 512;
+          var canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          var ctx = canvas.getContext('2d');
+          var side = Math.min(image.naturalWidth, image.naturalHeight);
+          var sx = Math.round((image.naturalWidth - side) / 2);
+          var sy = Math.round((image.naturalHeight - side) / 2);
+          ctx.drawImage(image, sx, sy, side, side, 0, 0, size, size);
+          var dataUrl = canvas.toDataURL('image/webp', 0.86);
+          if (!/^data:image\/webp;base64,/.test(dataUrl)) dataUrl = canvas.toDataURL('image/jpeg', 0.86);
+          resolve(dataUrl);
+        };
+        image.onerror = function () { reject(new Error('无法读取图片，请换一张图片')); };
+        image.src = reader.result;
+      };
+      reader.onerror = function () { reject(new Error('读取图片失败')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleAvatarUpload(file) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/i.test(file.type || '')) {
+      toast('仅支持 JPG、PNG、WebP 图片', 'error');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast('原始图片不能超过 10MB', 'error');
+      return;
+    }
+    var input = document.getElementById('hmProfileAvatarFile');
+    var uploadBtn = document.getElementById('hmProfileAvatarUpload');
+    if (uploadBtn) { uploadBtn.disabled = true; uploadBtn.textContent = '上传中…'; }
+    try {
+      var dataUrl = await readAvatarAsDataUrl(file);
+      var res = await api.uploadAvatar(dataUrl);
+      var p = (res && res.profile) || {};
+      currentAvatarUrl = p.avatarUrl || (res && res.url) || '';
+      window.HMApp = window.HMApp || {};
+      window.HMApp.user = Object.assign({}, window.HMApp.user || {}, { avatarUrl: currentAvatarUrl });
+      applyUserAvatar(currentAvatarUrl, window.HMApp.user);
+      setProfileAvatarPreview(currentAvatarUrl);
+      try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
+      toast('头像已上传并保存', 'success');
+    } catch (err) {
+      toast((err && err.message) || '头像上传失败', 'error');
+    } finally {
+      if (uploadBtn) { uploadBtn.disabled = false; uploadBtn.textContent = '更换头像'; }
+      if (input) input.value = '';
+    }
+  }
+
+  async function removeAvatar() {
+    var btn = document.getElementById('hmProfileAvatarRemove');
+    if (btn) btn.disabled = true;
+    try {
+      var res = await api.updateProfile({ avatarUrl: '' });
+      var p = (res && res.profile) || {};
+      currentAvatarUrl = p.avatarUrl || '';
+      window.HMApp = window.HMApp || {};
+      window.HMApp.user = Object.assign({}, window.HMApp.user || {}, { avatarUrl: '' });
+      applyUserAvatar('', window.HMApp.user);
+      setProfileAvatarPreview('');
+      try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
+      toast('已恢复默认头像', 'success');
+    } catch (err) {
+      toast((err && err.message) || '恢复失败', 'error');
+    } finally { if (btn) btn.disabled = false; }
   }
 
   function toggleUserMenu(force) {
@@ -347,6 +480,8 @@
       try { window.HMDesk.resetForLogout(); } catch (e) {}
     }
     window.HMApp.user = null;
+    profileLoadedUserId = '';
+    currentAvatarUrl = '';
     toggleUserMenu(false);
     updateUserUI();
     resetSearchBox();
@@ -500,6 +635,16 @@
     /* 新申请提醒 / 个人资料 弹窗 */
     var profileSaveBtn = document.getElementById('hmProfileSave');
     if (profileSaveBtn) profileSaveBtn.addEventListener('click', saveProfile);
+    var avatarInput = document.getElementById('hmProfileAvatarFile');
+    if (avatarInput) avatarInput.addEventListener('change', function () {
+      if (avatarInput.files && avatarInput.files[0]) handleAvatarUpload(avatarInput.files[0]);
+    });
+    var avatarUploadBtn = document.getElementById('hmProfileAvatarUpload');
+    if (avatarUploadBtn) avatarUploadBtn.addEventListener('click', function () {
+      if (avatarInput) avatarInput.click();
+    });
+    var avatarRemoveBtn = document.getElementById('hmProfileAvatarRemove');
+    if (avatarRemoveBtn) avatarRemoveBtn.addEventListener('click', removeAvatar);
     ['hmProfileClose', 'hmProfileCancel'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.addEventListener('click', function () { closeModal('hmProfileModal'); });

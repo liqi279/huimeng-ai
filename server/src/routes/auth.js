@@ -1,9 +1,18 @@
 'use strict';
 
 const express = require('express');
-const { wrap, assert } = require('../http');
+const crypto = require('crypto');
+const { wrap, assert, dataUrlToBuffer } = require('../http');
 const store = require('../store');
+const mediaStore = require('../media-store');
 const { authRequired, authOptional, adminOnly, invalidateUserCache } = require('../auth');
+
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const AVATAR_TYPES = {
+  'image/jpeg': { ext: 'jpg', valid: (b) => b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  'image/png': { ext: 'png', valid: (b) => b.length >= 8 && b.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) },
+  'image/webp': { ext: 'webp', valid: (b) => b.length >= 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP' },
+};
 
 const router = express.Router();
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; /* 30 天 */
@@ -261,6 +270,28 @@ router.delete('/auth/users/:id', authRequired, adminOnly, wrap(async (req, res) 
 }));
 
 /* ============ 当前用户资料 / 偏好（只能操作自己） ============ */
+router.post('/auth/avatar/upload', authRequired, wrap(async (req, res) => {
+  const body = req.body || {};
+  assert(typeof body.dataUrl === 'string' && body.dataUrl.startsWith('data:'), 400, '缺少头像图片', '请重新选择图片');
+  const decoded = dataUrlToBuffer(body.dataUrl);
+  const mime = String(decoded.mime || '').toLowerCase();
+  const spec = AVATAR_TYPES[mime];
+  assert(spec, 400, '头像格式不支持', '仅支持 JPG、PNG、WebP');
+  assert(decoded.base64 && decoded.buffer.length > 0, 400, '头像数据无效', '请重新选择图片');
+  assert(decoded.buffer.length <= MAX_AVATAR_BYTES, 413, '头像文件过大', '压缩后的头像不能超过 2MB');
+  assert(spec.valid(decoded.buffer), 400, '图片内容与格式不匹配', '请使用有效的 JPG、PNG 或 WebP 图片');
+
+  const fileName = 'avatar-' + crypto.randomUUID() + '.' + spec.ext;
+  const saved = await mediaStore.put('assets', fileName, decoded.buffer, mime);
+  try {
+    const profile = await store.updateProfile(req.user.id, { avatarUrl: saved.url });
+    res.json({ profile, url: saved.url, size: decoded.buffer.length, mime });
+  } catch (err) {
+    await mediaStore.remove('assets', fileName).catch(() => {});
+    throw err;
+  }
+}));
+
 router.get('/auth/profile', authRequired, wrap(async (req, res) => {
   res.json({ profile: await store.getProfile(req.user.id) });
 }));
