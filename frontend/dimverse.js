@@ -343,6 +343,7 @@
   /* ---------- 粒子汇聚成字 · 赛博屏障显形 ---------- */
   function startTitleParticleIntro(center, title) {
     if (!center || !title) return;
+    title.classList.add('dv-title-building');
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       title.classList.remove('dv-title-building');
       return;
@@ -498,7 +499,6 @@
         var scanY = sy + ((elapsed - duration) % 420) / 420 * sh;
         ctx.fillStyle = 'rgba(103,232,249,' + (0.16 + pulse * 0.12) + ')';
         ctx.fillRect(sx, scanY, sw, 1.5);
-        ctx.restore();
       }
 
       if (elapsed < duration + shieldDuration) {
