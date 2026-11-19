@@ -169,6 +169,7 @@ func _process(delta: float) -> void:
 		IntroState.MASCOT_FORM:
 			_update_title_particles()
 			if elapsed > 0.82:
+				particles.clear()
 				state = IntroState.MASCOT_FALL
 				elapsed = 0.0
 				mascot_position = Vector2(640, 150)
@@ -269,8 +270,8 @@ func _draw_mascot(pos: Vector2) -> void:
 	for i in range(points.size() - 1):
 		draw_line(points[i], points[i + 1], Color(0.72, 0.75, 0.64, 0.9), 3.0)
 	if blinking:
-		draw_line(Vector2(-15, -7), Vector2(-15, 4), Color(0.12, 0.13, 0.12), 3.0)
-		draw_line(Vector2(15, -7), Vector2(15, 4), Color(0.12, 0.13, 0.12), 3.0)
+		draw_line(Vector2(-22, 0), Vector2(-8, 0), Color(0.12, 0.13, 0.12), 3.0)
+		draw_line(Vector2(8, 0), Vector2(22, 0), Color(0.12, 0.13, 0.12), 3.0)
 	else:
 		draw_line(Vector2(-15, -8), Vector2(-15, 7), Color(0.12, 0.13, 0.12), 3.0)
 		draw_line(Vector2(15, -8), Vector2(15, 7), Color(0.12, 0.13, 0.12), 3.0)
