@@ -29,8 +29,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Build frontend bundle
-        run: npm run build
+      - name: Build frontend bundle from canonical sources
+        run: |
+          node scripts/build-deploy.js
+          npm run build
 
       - name: Setup Godot 4
         uses: chickensoft-games/setup-godot@v1

@@ -457,7 +457,8 @@ const state = {
   lora: typeof storedPrefs.lora === 'string' ? storedPrefs.lora : '',   // 动漫 LoRA 风格包 ID
   videoModel: typeof storedPrefs.videoModel === 'string' && storedPrefs.videoModel
     ? storedPrefs.videoModel
-    : 'sora-2',
+    : 'minimax_h3-768p',
+  videoResolution: typeof storedPrefs.videoResolution === 'string' ? storedPrefs.videoResolution : '480p',
   audioModel: typeof storedPrefs.audioModel === 'string' && storedPrefs.audioModel
     ? storedPrefs.audioModel
     : 'tts-1',
@@ -583,6 +584,18 @@ if (Array.isArray(state.refImages) && state.refImages.length > 0 &&
 function currentRefs() {
   ensureTabSlots();
   return state.tabRefs[state.activePrompt] || [];
+}
+function currentRefMaxCount() {
+  if (state.mode === 'video' && window.HMUI && typeof window.HMUI.getVideoImageLimit === 'function') {
+    return Number(window.HMUI.getVideoImageLimit()) || 0;
+  }
+  return REF_MAX_COUNT;
+}
+function currentRefMaxBytes() {
+  if (state.mode === 'video' && window.HMUI && typeof window.HMUI.getVideoImageMaxBytes === 'function') {
+    return Number(window.HMUI.getVideoImageMaxBytes()) || REF_MAX_BYTES;
+  }
+  return REF_MAX_BYTES;
 }
 function setCurrentRefs(arr) {
   ensureTabSlots();
@@ -1786,7 +1799,7 @@ function currentModelLabel() {
 
 /* 视频 / 音频可选模型 */
 const MEDIA_MODELS = {
-  video: [['sora-2', 'Sora 2'], ['sora-2-pro', 'Sora 2 Pro'], ['veo-3', 'Veo 3']],
+  video: [['minimax_h3-768p', 'MiniMax H3'], ['vidu-q4-nopeak', 'Vidu Q4 NoPeak'], ['sd-2.5-flash', 'Seedance 2.5 Flash'], ['mh-seedance-2.0-mini', 'Seedance 2.0 Mini'], ['mh-seedance-2.0-fast', 'Seedance 2.0 Fast']],
   audio: [['tts-1', 'TTS-1'], ['tts-1-hd', 'TTS-1 HD'], ['gpt-4o-mini-tts', 'GPT-4o mini TTS']]
 };
 
@@ -1926,6 +1939,8 @@ function syncEngineUI() {
 const REF_MAX_BYTES = 10 * 1024 * 1024;
 const REF_MAX_SIDE = 1280;
 const REF_MAX_COUNT = 10;
+const VIDEO_REF_TOTAL_MAX_BYTES = 12 * 1024 * 1024;
+var _videoMediaRefs = { videos: [], audios: [] };
 
 function syncRefNote() {
   if (!els.refNote) return;
@@ -2155,12 +2170,12 @@ function renderRef() {
     });
 
     /* "+" 槽位 */
-    if (list.length < REF_MAX_COUNT && !_refSelectMode) {
+    if (list.length < currentRefMaxCount() && !_refSelectMode) {
       var addCell = document.createElement('div');
       addCell.className = 'hm-ref-cell hm-ref-add';
       addCell.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>' +
-        '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
+        '<span>' + list.length + '/' + currentRefMaxCount() + '</span>';
       addCell.addEventListener('click', function (ev) {
         ev.stopPropagation();
         openRefPicker();
@@ -2591,6 +2606,8 @@ function removeRefAt(idx) {
 
 function clearRefImages() {
   setCurrentRefs([]);
+  _videoMediaRefs = { videos: [], audios: [] };
+  renderVideoMediaRefs();
   els.refInput.value = '';
   _refSelectedSet = {};
   hideRefHover();
@@ -2899,18 +2916,110 @@ function loadImageFile(file) {
   });
 }
 
+function getVideoMediaLimit(kind) {
+  var all = window.HMUI && typeof window.HMUI.getVideoRefLimits === 'function' ? window.HMUI.getVideoRefLimits() : {};
+  var item = all && all[kind];
+  return item && typeof item === 'object' ? item : { count: 0, maxBytes: 0 };
+}
+function readRefFileDataUrl(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result || '')); };
+    reader.onerror = function () { reject(new Error('文件读取失败')); };
+    reader.readAsDataURL(file);
+  });
+}
+function currentVideoRefPayloadChars() {
+  var chars = currentRefs().reduce(function (sum, r) { return sum + String(r && r.dataUrl || '').length; }, 0);
+  ['videos', 'audios'].forEach(function (kind) {
+    _videoMediaRefs[kind].forEach(function (r) { chars += String(r.dataUrl || '').length; });
+  });
+  return chars;
+}
+function renderVideoMediaRefs() {
+  var list = document.getElementById('refMediaList');
+  if (!list) return;
+  list.innerHTML = '';
+  var entries = [];
+  _videoMediaRefs.videos.forEach(function (r, i) { entries.push({ kind: 'videos', index: i, label: '视频 · ' + r.name }); });
+  _videoMediaRefs.audios.forEach(function (r, i) { entries.push({ kind: 'audios', index: i, label: '音频 · ' + r.name }); });
+  list.hidden = entries.length === 0;
+  entries.forEach(function (entry) {
+    var chip = document.createElement('span');
+    chip.className = 'hm-ref-media-chip';
+    var label = document.createElement('span');
+    label.textContent = entry.label;
+    var remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.setAttribute('aria-label', '移除' + entry.label);
+    remove.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      _videoMediaRefs[entry.kind].splice(entry.index, 1);
+      renderVideoMediaRefs();
+    });
+    chip.appendChild(label);
+    chip.appendChild(remove);
+    list.appendChild(chip);
+  });
+}
+async function pickVideoMediaFile(file, kind) {
+  var bucket = kind === 'videos' ? 'videos' : 'audios';
+  var mime = String(file.type || '').toLowerCase();
+  var allowed = kind === 'videos'
+    ? /^video\/(mp4|webm|quicktime)$/.test(mime)
+    : /^audio\/(mpeg|mp3|wav|x-wav|ogg|mp4|m4a)$/.test(mime);
+  if (!allowed) { toast(kind === 'videos' ? '参考视频仅支持 MP4 / WebM / MOV' : '参考音频仅支持 MP3 / WAV / OGG / M4A', 'error'); return; }
+  var limit = getVideoMediaLimit(bucket);
+  if (Number(limit.count || 0) <= _videoMediaRefs[bucket].length) {
+    toast('当前模型参考' + (kind === 'videos' ? '视频' : '音频') + '最多 ' + Number(limit.count || 0) + ' 个', 'error');
+    return;
+  }
+  var hardMax = kind === 'videos' ? 7 * 1024 * 1024 : 3 * 1024 * 1024;
+  var maxBytes = Math.min(Number(limit.maxBytes || hardMax), hardMax);
+  if (file.size > maxBytes) {
+    toast('该参考文件超过前端安全上传上限 ' + Math.round(maxBytes / 1024 / 1024) + 'MB', 'error');
+    return;
+  }
+  var dataUrl = await readRefFileDataUrl(file);
+  var existingChars = currentVideoRefPayloadChars();
+  if (existingChars + dataUrl.length > VIDEO_REF_TOTAL_MAX_BYTES * 4 / 3) {
+    toast('参考素材总量过大，请减少素材或压缩文件后再上传', 'error');
+    return;
+  }
+  _videoMediaRefs[bucket].push({
+    dataUrl: dataUrl,
+    name: String(file.name || (kind === 'videos' ? 'reference.mp4' : 'reference.mp3')).slice(0, 120),
+    size: file.size,
+    mime: mime
+  });
+  renderVideoMediaRefs();
+  toast('已添加' + (kind === 'videos' ? '参考视频' : '参考音频') + '：' + (file.name || '文件'), 'success');
+}
+async function handleReferenceFiles(files) {
+  var list = Array.from(files || []);
+  for (var i = 0; i < list.length; i++) {
+    var file = list[i];
+    var type = String(file.type || '').toLowerCase();
+    if (/^image\/(png|jpe?g|webp)$/.test(type)) await pickRefFile(file);
+    else if (state.mode === 'video' && /^video\//.test(type)) await pickVideoMediaFile(file, 'videos');
+    else if (state.mode === 'video' && /^audio\//.test(type)) await pickVideoMediaFile(file, 'audios');
+    else toast('当前模式不支持该参考文件类型', 'error');
+  }
+}
+
 async function pickRefFile(file) {
   if (!file) return;
-  if (currentRefs().length >= REF_MAX_COUNT) {
-    toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+  if (currentRefs().length >= currentRefMaxCount()) {
+    toast('当前模型参考图片最多 ' + currentRefMaxCount() + ' 张', 'error');
     return;
   }
   if (!/^image\/(png|jpe?g|webp)$/i.test(file.type || '')) {
     toast('参考图仅支持 PNG / JPG / WebP 格式', 'error');
     return;
   }
-  if (file.size > REF_MAX_BYTES) {
-    toast('参考图不能超过 10MB', 'error');
+  if (file.size > currentRefMaxBytes()) {
+    toast('参考图超过当前模型单文件大小限制', 'error');
     return;
   }
 
@@ -2961,7 +3070,7 @@ async function pickRefFile(file) {
     els.refInput.value = '';
     renderRef();
     const n = arr.length;
-    toast('已添加到当前描述（' + n + '/' + REF_MAX_COUNT + '）· 点击 @' + n + ' 可插入提示词', 'success');
+    toast('已添加到当前描述（' + n + '/' + currentRefMaxCount() + '）· 点击 @' + n + ' 可插入提示词', 'success');
   } catch (err) {
     toast('参考图读取失败，请换一张图片', 'error');
   }
@@ -3068,6 +3177,13 @@ window.HMRefDrop = {
     }
   }
 };
+window.HMRefDrop.getMediaRefs = function () {
+  return {
+    videos: _videoMediaRefs.videos.map(function (r) { return r.dataUrl; }),
+    audios: _videoMediaRefs.audios.map(function (r) { return r.dataUrl; })
+  };
+};
+window.HMRefDrop.renderMediaRefs = renderVideoMediaRefs;
 
 /* 作品卡（我的作品）作为原生拖拽源：拖拽标识只放作品 id */
 document.addEventListener('dragstart', function (ev) {
@@ -3121,6 +3237,7 @@ function persistPrefs() {
     channelModel: state.channelModel,
     lora: state.lora,
     videoModel: state.videoModel,
+    videoResolution: state.videoResolution,
     audioModel: state.audioModel,
     providerId: state.providerId,
     toonApi: state.toonApi,
@@ -6846,15 +6963,7 @@ function bindEvents() {
   els.refInput.addEventListener('change', async function (event) {
     var files = Array.from(event.target.files || []);
     if (!files.length) return;
-    var remaining = REF_MAX_COUNT - currentRefs().length;
-    if (remaining <= 0) {
-      toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
-      els.refInput.value = '';
-      return;
-    }
-    for (var i = 0; i < Math.min(files.length, remaining); i++) {
-      await pickRefFile(files[i]);
-    }
+    await handleReferenceFiles(files);
     els.refInput.value = '';
   });
 
@@ -6941,21 +7050,7 @@ function bindEvents() {
       }
       return;
     }
-    /* 只保留图片 */
-    var imgs = files.filter(function (f) {
-      return /^image\/(png|jpe?g|webp)$/i.test(f.type || '');
-    });
-    if (!imgs.length) {
-      toast('拖入的文件不是图片，请拖 PNG / JPG / WebP', 'error');
-      return;
-    }
-    var remaining = REF_MAX_COUNT - currentRefs().length;
-    for (var i = 0; i < Math.min(imgs.length, remaining); i++) {
-      await pickRefFile(imgs[i]);
-    }
-    if (imgs.length > remaining) {
-      toast('仅添加了前 ' + remaining + ' 张（已达上限 ' + REF_MAX_COUNT + '）', 'info');
-    }
+    await handleReferenceFiles(files);
   });
 
   /* === 右侧工具条 === */
@@ -8028,6 +8123,8 @@ window.HMApp = {
   hydrateWorks: hydrateWorks,
   worksLsKey: worksLsKey,
   renderRef: renderRef,
+  currentRefs: currentRefs,
+  renderRatios: renderRatios,
   translatePrompt: translatePrompt,
   syncSettingsUI: syncSettingsUI,
   persistPrefs: persistPrefs,

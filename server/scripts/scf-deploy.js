@@ -315,6 +315,42 @@ async function ensureFunctionCredentials(current) {
   log('scf', '凭据指纹 ID=' + fp(wantId) + ' KEY=' + fp(wantKey));
 }
 
+const ZELING_MODEL_KEY_NAMES = [
+  'ZELING_KEY_MINIMAX_H3_768P',
+  'ZELING_KEY_VIDU_Q4_NOPEAK',
+  'ZELING_KEY_SD_2_5_FLASH',
+  'ZELING_KEY_MH_SEEDANCE_2_0_MINI',
+  'ZELING_KEY_MH_SEEDANCE_2_0_FAST',
+];
+
+/* 只把非空 GitHub Actions Secrets 同步进 SCF；未提供的 Key 保留 SCF 现值。
+   日志仅记录变量名与数量，绝不输出密钥内容。 */
+async function ensureZelingModelKeys(current) {
+  const provided = {};
+  for (const name of ZELING_MODEL_KEY_NAMES) {
+    const value = String(process.env[name] || '').trim();
+    if (value) provided[name] = value;
+  }
+  const names = Object.keys(provided);
+  if (!names.length) {
+    log('zeling', '未从 GitHub Secrets 提供模型 Key；保留 SCF 当前环境变量');
+    return;
+  }
+  const env = Object.assign({}, (current && current.env) || {});
+  const changed = names.filter((name) => String(env[name] || '') !== provided[name]);
+  if (!changed.length) {
+    log('zeling', '5 个模型 Key 的已提供项与 SCF 一致，无需调整');
+    return;
+  }
+  const merged = Object.assign({}, env, provided);
+  await tc3Request('UpdateFunctionConfiguration', {
+    FunctionName: CFG.functionName,
+    Namespace: CFG.namespace,
+    Environment: { Variables: Object.keys(merged).map((k) => ({ Key: k, Value: String(merged[k]) })) },
+  });
+  log('zeling', '已安全同步模型 Key 环境变量：' + changed.join(', ') + '（值不打印）');
+}
+
 async function updateCode(objectKey) {
   const t0 = Date.now();
   log('scf', 'UpdateFunctionCode → ' + CFG.bucket + '/' + objectKey);
@@ -593,6 +629,7 @@ async function doDeploy() {
   try {
     await ensureRuntimeLimits(before);
     await ensureFunctionCredentials(before);
+    await ensureZelingModelKeys(await getFunction());
     await waitActive(120000);
     await updateCodeWithRetry(CFG.objectKey);
     await waitUpdated(before ? before.modTime : '', 120000);
