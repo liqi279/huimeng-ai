@@ -962,7 +962,8 @@
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
-    window.addEventListener('message', onGodotMessage);\n    window.addEventListener('keydown', onGameKeyDown);
+    window.addEventListener('message', onGodotMessage);
+    window.addEventListener('keydown', onGameKeyDown);
     window.addEventListener('keyup', onGameKeyUp);
     window.addEventListener('blur', function () { gameKeys = Object.create(null); });
     window.addEventListener('resize', resizeGame);
