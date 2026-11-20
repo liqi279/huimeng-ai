@@ -249,17 +249,18 @@ func _next_path_cell(start: Vector2i, goal: Vector2i) -> Vector2i:
     var found := false
     var cursor := 0
     while cursor < queue.size():
-        var current := queue[cursor]
+        var current: Vector2i = queue[cursor]
         cursor += 1
         if current == goal:
             found = true
             break
-        for d in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
-            var n := current + d
-            if n.x < 0 or n.y < 0 or n.x >= maze_w or n.y >= maze_h: continue
-            if maze[n.y][n.x] != 0 or came_from.has(n): continue
-            came_from[n] = current
-            queue.append(n)
+        var directions: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
+        for direction: Vector2i in directions:
+            var neighbor: Vector2i = current + direction
+            if neighbor.x < 0 or neighbor.y < 0 or neighbor.x >= maze_w or neighbor.y >= maze_h: continue
+            if maze[neighbor.y][neighbor.x] != 0 or came_from.has(neighbor): continue
+            came_from[neighbor] = current
+            queue.append(neighbor)
     if not found: return start
     var step := goal
     while came_from.get(step, start) != start and step != start:
