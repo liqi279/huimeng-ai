@@ -1394,7 +1394,9 @@
         enterReader(state.current, Number(btn.getAttribute('data-page')));
       });
     });
-    /* 详情页就预取签名直链：点「继续阅读」时无需再等一次后端握手 */
+    /* 用户浏览详情时就预热 PDF.js 与 Worker，并预取签名直链；
+       点「开始阅读」时不再等待 GitHub Pages 下载大体积 Worker。 */
+    if (book.pdfUrl) warmPdfReader();
     prefetchPdfSignedUrl(book);
   }
 
@@ -1630,8 +1632,10 @@
     idle(function () {
       loadPdfJs().then(function () {
         try {
-          /* 只为进 HTTP 缓存；失败无副作用 */
-          fetch(PDFJS_BASE + 'pdf.worker.min.js', { cache: 'force-cache' }).catch(function () {});
+          /* 预热实际配置的 Worker 地址（优先腾讯云 COS），不要再从 GitHub Pages 拉取 1MB Worker。 */
+          var workerUrl = window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions
+            && window.pdfjsLib.GlobalWorkerOptions.workerSrc;
+          if (workerUrl) fetch(workerUrl, { cache: 'force-cache', mode: 'cors' }).catch(function () {});
         } catch (e) {}
       }).catch(function () {});
     }, { timeout: 3000 });
