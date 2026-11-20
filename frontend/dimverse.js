@@ -639,6 +639,8 @@
 
   function restoreDimverseWelcome() {
     if (gameFrame) { gameFrame.remove(); gameFrame = null; }
+    if (tutorialPanel) { tutorialPanel.remove(); tutorialPanel = null; }
+    if (scorePanel) { scorePanel.remove(); scorePanel = null; }
     gameCanvas = null; gameCtx = null; gameState = null; gameRaf = 0;
     if (!dimPage) return;
     var center = dimPage.querySelector('.dv-center');
