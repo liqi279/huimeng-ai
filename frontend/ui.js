@@ -1340,13 +1340,19 @@
       var images = videoRefCount(meta, 'images');
       var videos = videoRefCount(meta, 'videos');
       var audios = videoRefCount(meta, 'audios');
-      if (emptyText) emptyText.textContent = '拖入或上传参考图片（当前界面支持图片参考）';
+      if (emptyText) emptyText.textContent = '拖入或上传参考主体（图片 / 视频 / 音频）';
       if (hintText) hintText.textContent = '时长 ' + min + '-' + max + ' 秒 · 比例 ' + ratios + ' · 清晰度 ' + resolutions;
-      if (input) input.setAttribute('accept', 'image/png,image/jpeg,image/webp');
+      if (input) {
+        var accepted = ['image/png', 'image/jpeg', 'image/webp'];
+        if (videos > 0) accepted.push('video/mp4', 'video/webm', 'video/quicktime');
+        if (audios > 0) accepted.push('audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4');
+        input.setAttribute('accept', accepted.join(','));
+      }
       if (limits && limitsText) {
         limits.hidden = false;
-        limitsText.textContent = '模型参考上限：图片 ' + images + ' 张 · 视频 ' + videos + ' 个 · 音频 ' + audios +
-          ' 个；当前页面上传通道仅开放图片参考。' + (meta && meta.configured === false ? ' 此模型 API Key 尚未配置，暂不能生成。' : '');
+        limitsText.textContent = '参考上限：图片 ' + images + ' 张 · 视频 ' + videos + ' 个 · 音频 ' + audios +
+          ' 个（单文件前端限制：视频 7MB / 音频 3MB；参考素材总量不超过 12MB）' +
+          (meta && meta.configured === false ? ' · 此模型 API Key 尚未配置，暂不能生成。' : '');
       }
       renderVideoEstimate();
     } else if (mode === 'audio') {
@@ -1733,9 +1739,23 @@
         return;
       }
       var imageLimit = videoRefCount(modelMeta, 'images');
+      var videoLimit = videoRefCount(modelMeta, 'videos');
+      var audioLimit = videoRefCount(modelMeta, 'audios');
       var selectedImages = typeof A.currentRefs === 'function' ? A.currentRefs().length : 0;
+      var mediaRefs = window.HMRefDrop && typeof window.HMRefDrop.getMediaRefs === 'function'
+        ? window.HMRefDrop.getMediaRefs() : { videos: [], audios: [] };
       if (selectedImages > imageLimit) {
         A.toast('参考图片数量超过当前模型上限：最多 ' + imageLimit + ' 张', 'error');
+        return;
+      }
+      if (mediaRefs.videos.length > videoLimit || mediaRefs.audios.length > audioLimit) {
+        A.toast('参考视频或音频数量超过当前模型上限，请移除超出数量的素材', 'error');
+        return;
+      }
+      var refPayloadChars = videoImageRefs.reduce(function (sum, item) { return sum + String(item || '').length; }, 0);
+      refPayloadChars += mediaRefs.videos.concat(mediaRefs.audios).reduce(function (sum, item) { return sum + String(item || '').length; }, 0);
+      if (refPayloadChars > 22 * 1024 * 1024) {
+        A.toast('参考素材总量超过安全上传上限，请压缩或减少素材', 'error');
         return;
       }
     }
@@ -1798,6 +1818,8 @@
           resolution: state.videoResolution || (modelMeta && modelMeta.resolutions && modelMeta.resolutions[0]) || '720p',
           duration: state.duration,
           refImages: videoImageRefs,
+          refVideos: mediaRefs.videos,
+          refAudios: mediaRefs.audios,
           seed: state.seed
         }, 200000);
       } else {
@@ -2925,7 +2947,11 @@
     },
     importAssets: function (files) { return handleFiles(files); },
     getVideoImageLimit: getVideoImageLimit,
-    getVideoImageMaxBytes: getVideoImageMaxBytes
+    getVideoImageMaxBytes: getVideoImageMaxBytes,
+    getVideoRefLimits: function () {
+      var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+      return meta && meta.refLimits ? meta.refLimits : {};
+    }
   };
 
   init();
