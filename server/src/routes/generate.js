@@ -1205,6 +1205,9 @@ async function effectiveVideoModelMeta(modelId) {
   if (remote.price_type === 'per_call') merged.billingType = 'perTask';
   const prices = remote.resolution_prices || remote.video_resolution_prices;
   if (prices && typeof prices === 'object') merged.resolutionPrices = Object.assign({}, prices);
+  if (remote.max_reference_images != null) merged.refLimits.images = Number(remote.max_reference_images);
+  if (remote.max_reference_videos != null) merged.refLimits.videos = Number(remote.max_reference_videos);
+  if (remote.max_reference_audios != null) merged.refLimits.audios = Number(remote.max_reference_audios);
   return merged;
 }
 
@@ -1541,6 +1544,8 @@ router.get('/media-models', wrap(async (req, res) => {
       maxDuration: m.maxDuration,
       durations: m.durations || [],
       resolutions: m.resolutions,
+      resolutionPrices: m.resolutionPrices || {},
+      aspectRatios: m.aspectRatios || [],
       fps: m.fps || 24,
       billingType: m.billingType || 'perTask',
       credits: m.credits,
@@ -1550,11 +1555,10 @@ router.get('/media-models', wrap(async (req, res) => {
       desc: m.desc || '',
       refHint: m.refHint || '',
       free: m.free,
-      /* 参考主体限制 */
       refLimits: {
-        images: { count: 10, maxBytes: 10 * 1024 * 1024, mime: ['image/jpeg', 'image/png', 'image/webp'] },
-        videos: { count: 3, maxBytes: 50 * 1024 * 1024, mime: ['video/mp4', 'video/webm', 'video/quicktime'] },
-        audios: { count: 3, maxBytes: 10 * 1024 * 1024, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4'] },
+        images: { count: m.refLimits.images, maxBytes: m.refLimits.imageMaxBytes, mime: ['image/jpeg', 'image/png', 'image/webp'] },
+        videos: { count: m.refLimits.videos, maxBytes: m.refLimits.videoMaxBytes, mime: ['video/mp4', 'video/webm', 'video/quicktime'] },
+        audios: { count: m.refLimits.audios, maxBytes: m.refLimits.audioMaxBytes, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4'] },
       },
     };
   }));
