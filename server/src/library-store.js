@@ -424,9 +424,6 @@ async function mysqlList(q, category, opts) {
   const [rows] = await pool.query(sql, params);
   const ids = rows.map((r) => r.id);
   let pages = [];
-  /* 列表默认只返回书目元数据：1001 本的正文一次性取出要 30 秒以上，
-     响应体也过大，前端 30 秒超时后只能退回本地缓存/种子库（看起来像「少了书」）。
-     正文由阅读器打开单本时经 /library/books/:id 拉取。 */
   if (ids.length && !(opts && opts.lite)) {
     const [pr] = await pool.query(
       'SELECT book_id, page_no, title, content FROM book_pages WHERE book_id IN (?) ORDER BY page_no ASC',
@@ -820,7 +817,8 @@ const store = {
       retryCount: info.retryCount,
       storageLimit: info.storageLimit,
       books: books.length,
-      pages: books.reduce((n, b) => n + b.pages.length, 0),
+      /* 轻量列表不含各页正文，页数用书目自带的 pageCount 汇总 */
+      pages: books.reduce((n, b) => n + (Number(b.pageCount) || 0), 0),
       categories: Array.from(new Set(books.map((b) => b.category))).length,
     };
   },

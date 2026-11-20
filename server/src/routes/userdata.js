@@ -22,6 +22,7 @@ const { Readable } = require('stream');
 const { wrap, assert, jsonError, extFromMime } = require('../http');
 const { authRequired } = require('../auth');
 const userData = require('../user-data');
+const objectStore = require('../object-store');
 const { mergeAndSave } = require('../desk-merge');
 
 const router = express.Router();
@@ -47,13 +48,20 @@ function trimInlineMedia(out) {
   return out;
 }
 
-async function wrapWork(row, req) {
+/* assetMap 由调用方按页批量预取（getAssets）：逐件查资产会退化成 N+1，
+   1001 件作品就是 1001 条 SQL，实测能把 bootstrap 拖到 30 秒以上，
+   前端 30 秒超时就报「云端拉取失败」。 */
+async function wrapWork(row, req, assetMap) {
   var out = Object.assign({}, row.data || {}, {
     id: row.id,
     _rev: row.rev,
     _updatedAt: row.updatedAt,
   });
-  if (out._assetId) out.url = await userData.assetPublicUrl(out._assetId);
+  if (out._assetId) {
+    const asset = assetMap && assetMap[out._assetId];
+    const direct = asset && asset.objectKey ? objectStore.presignGet(asset.objectKey, 3600) : '';
+    out.url = direct || await userData.assetPublicUrl(out._assetId);
+  }
   return trimInlineMedia(out);
 }
 
@@ -93,7 +101,12 @@ router.get('/user-data/bootstrap', authRequired, wrap(async (req, res) => {
   let hasMore = true;
   while (hasMore && guard < 30) {
     const page = await userData.listChanges(userId, { since: cursor, limit: 200 });
-    works.push(...await Promise.all(page.items.map(function (row) { return wrapWork(row, req); })));
+    /* 本页资产的 objectKey 一次批量取回，wrapWork 不再逐件查库 */
+    const assetIds = page.items
+      .map(function (row) { return row.data && row.data._assetId; })
+      .filter(Boolean);
+    const assetMap = assetIds.length ? await userData.getAssets(assetIds) : {};
+    works.push(...await Promise.all(page.items.map(function (row) { return wrapWork(row, req, assetMap); })));
     deleted.push(...page.deleted);
     cursor = page.cursor;
     hasMore = page.hasMore;
