@@ -599,6 +599,11 @@
   /* ---------- 本页 Canvas 游戏层：不依赖外部 iframe/WASM 握手 ---------- */
   var gameFrame = null;
   var tutorialPanel = null;
+  var challengeSignboard = null;
+  var timerPanel = null;
+  var scorePanel = null;
+  var celebrationToast = null;
+  var mazeHint = null;
 
   function buildTutorialPanel(stage) {
     if (!tutorialPanel) {
@@ -610,12 +615,86 @@
       dimPage.appendChild(tutorialPanel);
       requestAnimationFrame(function () { if (tutorialPanel) tutorialPanel.classList.add('is-visible'); });
     }
-    if (stage === 'maze') {
-      var paragraphs = tutorialPanel.querySelectorAll('p');
+    var paragraphs = tutorialPanel.querySelectorAll('p');
+    if (stage === 'block') {
+      if (paragraphs[1]) paragraphs[1].textContent = '挑战完成！从问号方块的正下方靠近';
+      if (paragraphs[2]) paragraphs[2].textContent = '向上移动团子，撞击方块开启第二关';
+    } else if (stage === 'maze') {
       if (paragraphs[1]) paragraphs[1].textContent = '第二关：穿过随机生成的迷宫';
       if (paragraphs[2]) paragraphs[2].textContent = '躲避两名幽灵守卫，抵达漩涡出口';
     }
   }
+
+  function buildChallengeSignboard() {
+    if (challengeSignboard) challengeSignboard.remove();
+    challengeSignboard = el('div', 'dv-challenge-signboard');
+    challengeSignboard.innerHTML = '<span class="dv-signboard-kicker">DIMENSIONAL TRIAL · 01</span>' +
+      '<strong>能量晶体收集挑战</strong>' +
+      '<span class="dv-signboard-sub">在 60 秒内吞食 21 枚晶体，开启下一道次元门</span>' +
+      '<b class="dv-signboard-clock">01:00</b>';
+    dimPage.appendChild(challengeSignboard);
+
+    if (!timerPanel) {
+      timerPanel = el('div', 'dv-game-timer');
+      timerPanel.innerHTML = '<span class="dv-hud-label">剩余时间</span><strong class="dv-timer-value">01:00</strong>';
+      dimPage.appendChild(timerPanel);
+    }
+    if (!scorePanel) {
+      scorePanel = el('div', 'dv-game-score');
+      scorePanel.innerHTML = '<span class="dv-hud-label">吞食晶体</span><strong class="dv-score-value">00 / 21</strong>';
+      dimPage.appendChild(scorePanel);
+    }
+    requestAnimationFrame(function () {
+      if (challengeSignboard) challengeSignboard.classList.add('is-dropped');
+      if (timerPanel) timerPanel.classList.add('is-visible');
+      if (scorePanel) scorePanel.classList.add('is-visible');
+    });
+    window.setTimeout(function () {
+      if (challengeSignboard) challengeSignboard.classList.add('is-compact');
+    }, 2450);
+    window.setTimeout(function () {
+      if (challengeSignboard) { challengeSignboard.remove(); challengeSignboard = null; }
+    }, 4400);
+  }
+
+  function updateGodotHud(data) {
+    var parts = data.split(':');
+    if (parts.length < 3) return;
+    var seconds = Math.max(0, parseInt(parts[1], 10) || 0);
+    var count = Math.max(0, parseInt(parts[2], 10) || 0);
+    var timeText = '00:' + String(seconds).padStart(2, '0');
+    if (timerPanel) {
+      var timerValue = timerPanel.querySelector('.dv-timer-value');
+      if (timerValue) timerValue.textContent = timeText;
+    }
+    if (challengeSignboard) {
+      var signClock = challengeSignboard.querySelector('.dv-signboard-clock');
+      if (signClock) signClock.textContent = timeText;
+    }
+    if (scorePanel) {
+      var scoreValue = scorePanel.querySelector('.dv-score-value');
+      if (scoreValue) scoreValue.textContent = String(count).padStart(2, '0') + ' / 21';
+    }
+  }
+
+  function showCelebrationToast() {
+    if (celebrationToast) celebrationToast.remove();
+    celebrationToast = el('div', 'dv-celebration-toast');
+    celebrationToast.innerHTML = '<span>✦ 能量突破 ✦</span><strong>21 枚晶体收集完成！</strong><small>太棒啦！次元门已解锁</small>';
+    dimPage.appendChild(celebrationToast);
+    requestAnimationFrame(function () { if (celebrationToast) celebrationToast.classList.add('is-visible'); });
+    window.setTimeout(function () {
+      if (celebrationToast) { celebrationToast.remove(); celebrationToast = null; }
+    }, 3000);
+  }
+
+  function showMazeHint() {
+    if (mazeHint) mazeHint.remove();
+    mazeHint = el('div', 'dv-maze-hint', '第二关 · 找到漩涡出口，避开两名幽灵守卫');
+    dimPage.appendChild(mazeHint);
+    requestAnimationFrame(function () { if (mazeHint) mazeHint.classList.add('is-visible'); });
+  }
+
 
   function ensureGodotOverlay() {
     if (gameFrame && gameFrame.isConnected) return;
@@ -641,7 +720,10 @@
       gameFrame.remove();
       gameFrame = null;
     }
-    if (tutorialPanel) { tutorialPanel.remove(); tutorialPanel = null; }
+    [tutorialPanel, challengeSignboard, timerPanel, scorePanel, celebrationToast, mazeHint].forEach(function (node) {
+      if (node) node.remove();
+    });
+    tutorialPanel = challengeSignboard = timerPanel = scorePanel = celebrationToast = mazeHint = null;
     var center = dimPage && dimPage.querySelector('.dv-center');
     var title = center && center.querySelector('.dv-title');
     if (title) title.classList.remove('dv-title-dissolving', 'dv-title-building');
@@ -661,10 +743,27 @@
     }
     if (event.data === 'hm-godot-landed') {
       buildTutorialPanel('crystals');
+      buildChallengeSignboard();
+      return;
+    }
+    if (typeof event.data === 'string' && event.data.indexOf('hm-godot-hud:') === 0) {
+      updateGodotHud(event.data.slice('hm-godot-hud:'.length));
+      return;
+    }
+    if (event.data === 'hm-godot-celebrate') {
+      showCelebrationToast();
+      return;
+    }
+    if (event.data === 'hm-godot-stage-block') {
+      buildTutorialPanel('block');
       return;
     }
     if (event.data === 'hm-godot-stage-maze') {
       buildTutorialPanel('maze');
+      if (challengeSignboard) { challengeSignboard.remove(); challengeSignboard = null; }
+      if (timerPanel) { timerPanel.remove(); timerPanel = null; }
+      if (scorePanel) { scorePanel.remove(); scorePanel = null; }
+      showMazeHint();
       return;
     }
     if (event.data === 'hm-godot-gameover') {
