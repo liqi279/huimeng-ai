@@ -97,26 +97,25 @@ router.get('/user-data/bootstrap', authRequired, wrap(async (req, res) => {
   const works = [];
   const deleted = [];
   let cursor = since;
-  let guard = 0;
-  let hasMore = true;
-  while (hasMore && guard < 30) {
-    const page = await userData.listChanges(userId, { since: cursor, limit: 200 });
-    /* 本页资产的 objectKey 一次批量取回，wrapWork 不再逐件查库 */
-    const assetIds = page.items
-      .map(function (row) { return row.data && row.data._assetId; })
-      .filter(Boolean);
-    const assetMap = assetIds.length ? await userData.getAssets(assetIds) : {};
-    works.push(...await Promise.all(page.items.map(function (row) { return wrapWork(row, req, assetMap); })));
-    deleted.push(...page.deleted);
-    cursor = page.cursor;
-    hasMore = page.hasMore;
-    guard += 1;
-    if (!page.items.length && !page.deleted.length) break;
-  }
+  let hasMore = false;
+  /* 每次只返回一页，避免大账号的全量同步占住单个云函数请求。
+     前端先展示这一页，再用 cursor 在后台继续拉取。 */
+  const page = await userData.listChanges(userId, { since, limit: 200 });
+  const assetIds = page.items
+    .map(function (row) { return row.data && row.data._assetId; })
+    .filter(Boolean);
+  const assetMap = assetIds.length ? await userData.getAssets(assetIds) : {};
+  works.push(...await Promise.all(page.items.map(function (row) { return wrapWork(row, req, assetMap); })));
+  deleted.push(...page.deleted);
+  cursor = page.cursor;
+  hasMore = page.hasMore;
 
+  /* 文档只在首屏请求中读取，后续作品分页不重复查询文档。 */
   const docs = {};
-  for (const kind of userData.DOC_KINDS) {
-    docs[kind] = await userData.getDoc(userId, kind);
+  if (!since) {
+    for (const kind of userData.DOC_KINDS) {
+      docs[kind] = await userData.getDoc(userId, kind);
+    }
   }
 
   const payload = {
