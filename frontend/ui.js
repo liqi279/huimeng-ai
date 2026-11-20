@@ -1407,7 +1407,12 @@
     try {
       var data = await api.mediaModels();
       if (!data) return;
-      if (data.video) mediaCatalog.video = data.video;
+      if (Array.isArray(data.video)) {
+        /* 前端目录只允许展示已确认接入的五个则灵模型，忽略后端历史遗留模型 */
+        var allowedVideoIds = ['minimax_h3-768p', 'vidu-q4-nopeak', 'sd-2.5-flash', 'mh-seedance-2.0-mini', 'mh-seedance-2.0-fast'];
+        var serverVideo = data.video.filter(function (m) { return m && allowedVideoIds.indexOf(m.id) >= 0; });
+        if (serverVideo.length) mediaCatalog.video = serverVideo;
+      }
       if (data.audio) mediaCatalog.audio = Object.assign({}, mediaCatalog.audio, data.audio);
       if (!mediaCatalog.video.some(function (m) { return m.id === state.videoModel; })) {
         state.videoModel = mediaCatalog.video.some(function (m) { return m.id === 'minimax_h3-768p'; })
@@ -1449,7 +1454,7 @@
             : '<small class="hm-pay-badge">按次</small>';
           var keyBadge = m.configured === false ? '<small class="hm-pay-badge hm-key-pending">待配置Key</small>' : '';
           var tip = m.refHint ? ' ' + m.refHint : '';
-          return '<button data-vmodel="' + m.id + '" title="' + creditsText + tip + '">' +
+          return '<button type="button" data-vmodel="' + m.id + '" title="' + creditsText + tip + '">' +
             m.name + badge + keyBadge +
             '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + '</span>' +
           '</button>';
@@ -1465,8 +1470,11 @@
       btn.classList.toggle('is-active', btn.getAttribute('data-vmodel') === state.videoModel);
       btn.addEventListener('click', function (event) {
         /* 模型选择只由按钮自身处理，阻止外层 modelMenu 再次处理同一点击 */
+        if (event && event.preventDefault) event.preventDefault();
         if (event && event.stopPropagation) event.stopPropagation();
-        state.videoModel = btn.getAttribute('data-vmodel');
+        var selectedId = btn.getAttribute('data-vmodel');
+        if (!mediaCatalog.video.some(function (m) { return m.id === selectedId; })) return;
+        state.videoModel = selectedId;
         var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; });
         var resolutions = meta && Array.isArray(meta.resolutions) ? meta.resolutions : [];
         if (resolutions.indexOf(state.videoResolution) < 0) {
