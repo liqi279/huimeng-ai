@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:41:34+0800",
+  "generatedAt": "2026-11-20T22:45:14+0800",
   "source": "scf-library",
-  "total": 1024,
+  "total": 1028,
   "areas": {
     "paint": 749,
-    "concept": 251,
+    "concept": 255,
     "ref": 24
   },
   "books": [
@@ -1898,6 +1898,94 @@
       "sortNo": 0,
       "createdAt": 1795185287454,
       "updatedAt": 1795185287454,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp39kcw-326c99",
+      "title": "Free · 动画《Free!》的公式画集",
+      "author": "萌绘图库",
+      "category": "Free",
+      "tags": [
+        "Free",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《Free》；原包《动画《Free!》的公式画集》。第 1-134 页（共 134 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/free-00c63af9ac2e-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/free-00c63af9ac2e-20261120-01.pdf",
+      "pageCount": 134,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185784401,
+      "updatedAt": 1795185784401,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3aws4-5fcfd3",
+      "title": "Free · 动画《Free!》第二季的公式画集",
+      "author": "萌绘图库",
+      "category": "Free",
+      "tags": [
+        "Free",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《Free》；原包《动画《Free!》第二季的公式画集》。第 1-131 页（共 131 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/free-bf755fef37ee-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/free-bf755fef37ee-20261120-01.pdf",
+      "pageCount": 131,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185847156,
+      "updatedAt": 1795185847156,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3c214-30d84c",
+      "title": "Free · 《Free! 》的动画线稿设定集",
+      "author": "萌绘图库",
+      "category": "Free",
+      "tags": [
+        "Free",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《Free》；原包《《Free! 》的动画线稿设定集》。第 1-151 页（共 151 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/free-f9a103f993dd-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/free-f9a103f993dd-20261120-01.pdf",
+      "pageCount": 151,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185900616,
+      "updatedAt": 1795185900616,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3c6wp-7d5c1f",
+      "title": "Free · 动画《Free!》的小册子",
+      "author": "萌绘图库",
+      "category": "Free",
+      "tags": [
+        "Free",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《Free》；原包《动画《Free!》的小册子》。第 1-18 页（共 18 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/free-b15cdf8eee45-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/free-b15cdf8eee45-20261120-01.pdf",
+      "pageCount": 18,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185906937,
+      "updatedAt": 1795185906937,
       "pages": []
     },
     {
