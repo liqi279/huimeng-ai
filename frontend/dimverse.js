@@ -717,7 +717,7 @@
     if (!vortexAnim && vortexCanvas) vortexAnim = makeVortex(vortexCanvas, 72);
     dimPage.classList.remove('is-visible');
     dimPage.setAttribute('aria-hidden', 'true');
-    gameKeys = Object.create(null);
+    if (gameFrame) resetDimverseToWelcome();
     setTimeout(function () { if (dimPage) dimPage.style.display = 'none'; }, 350);
   }
 
@@ -789,10 +789,7 @@
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
-    window.addEventListener('keydown', onGameKeyDown);
-    window.addEventListener('keyup', onGameKeyUp);
-    window.addEventListener('blur', function () { gameKeys = Object.create(null); });
-    window.addEventListener('resize', resizeGame);
+    window.addEventListener('message', onGodotMessage);
     /* 支持直接打开 / 刷新 ?view=dimverse 的专属页面。 */
     if (isDimverseRoute()) syncDimverseFromLocation();
     window.addEventListener('popstate', syncDimverseFromLocation);
