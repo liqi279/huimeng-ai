@@ -152,14 +152,15 @@ func _process(delta: float) -> void:
                 mascot_scale = 0.43
         Phase.MAZE:
             _update_maze_player(dt)
-            _update_ghosts(dt)
-            for ghost in ghost_positions:
-                if player.distance_to(ghost) < cell_size * 0.9:
-                    phase = Phase.GAME_OVER
-                    phase_t = 0.0
-                    maze_escaped = false
-                    game_over_sent = false
-                    break
+            if phase == Phase.MAZE:
+                _update_ghosts(dt)
+                for ghost in ghost_positions:
+                    if player.distance_to(ghost) < cell_size * 0.9:
+                        phase = Phase.GAME_OVER
+                        phase_t = 0.0
+                        maze_escaped = false
+                        game_over_sent = false
+                        break
         Phase.GAME_OVER:
             if phase_t >= 2.7 and not game_over_sent:
                 game_over_sent = true
@@ -376,7 +377,6 @@ func _draw_stage_one() -> void:
         if phase == Phase.SIGNBOARD:
             var intro_sign_y := lerpf(-105.0, 72.0, minf(1.0, phase_t / 0.85))
             _draw_sign(intro_sign_y)
-        _draw_player()
         return
     # Slim center signboard descends, then the 60-second clock begins.
     if phase == Phase.PLAYING:
@@ -394,7 +394,6 @@ func _draw_stage_one() -> void:
     elif phase == Phase.BLOCK:
         _draw_hud()
         _draw_center_text("向上撞击能量方块", "站到方块正下方，按 W / ↑ 跳起")
-    _draw_player()
 
 func _draw_sign(y: float) -> void:
     var rect := Rect2(W * 0.5 - 180.0, y, 360.0, 64.0)
