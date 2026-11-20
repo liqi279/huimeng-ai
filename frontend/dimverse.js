@@ -605,16 +605,22 @@
   var tutorialPanel = null;
   var scorePanel = null;
 
-  function buildTutorialPanel() {
+  function buildTutorialPanel(stage) {
     if (!tutorialPanel) {
       tutorialPanel = el('aside', 'dv-game-tutorial');
       tutorialPanel.innerHTML = '<strong>次元探索指南 <span>/ CONTROLS</span></strong>' +
-        '<p><b>W A S D</b> / 方向键 / 点按：移动团子</p>' +
-        '<p>靠近发光晶体即可收集</p>' +
-        '<p>探索原有次元空间</p>';
+        '<p><b>W A S D</b> / 方向键：移动团子</p>' +
+        '<p>第一关：60 秒内吞食超过 20 枚随机能量晶体</p>' +
+        '<p>收集完成后，从问号方块下方向上撞击</p>';
       dimPage.appendChild(tutorialPanel);
-      scorePanel = el('div', 'dv-game-score', '双阶段挑战　/　60 SEC');
-      dimPage.appendChild(scorePanel);
+    }
+    var paragraphs = tutorialPanel.querySelectorAll('p');
+    if (stage === 'block') {
+      if (paragraphs[1]) paragraphs[1].textContent = '挑战完成！站到问号方块的正下方';
+      if (paragraphs[2]) paragraphs[2].textContent = '按 W / ↑ 向上跳起，撞击方块开启第二关';
+    } else if (stage === 'maze') {
+      if (paragraphs[1]) paragraphs[1].textContent = '第二关：穿过随机生成的迷宫';
+      if (paragraphs[2]) paragraphs[2].textContent = '躲避两名幽灵守卫，抵达漩涡出口';
     }
     requestAnimationFrame(function () { if (tutorialPanel) tutorialPanel.classList.add('is-visible'); });
   }
@@ -672,7 +678,15 @@
       return;
     }
     if (event.data === 'hm-godot-landed') {
-      buildTutorialPanel();
+      buildTutorialPanel('crystals');
+      return;
+    }
+    if (event.data === 'hm-godot-block') {
+      buildTutorialPanel('block');
+      return;
+    }
+    if (event.data === 'hm-godot-maze') {
+      buildTutorialPanel('maze');
       return;
     }
     if (event.data === 'hm-godot-welcome') restoreDimverseWelcome();

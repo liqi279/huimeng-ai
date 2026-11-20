@@ -1,6 +1,6 @@
 extends Node2D
 ## Two-stage Dimverse mini game. Transparent Godot Web overlay; website owns the backdrop.
-enum Phase { WAITING, INTRO, MASCOT_FALL, SIGNBOARD, PLAYING, CELEBRATE, BLOCK, MAZE, GAME_OVER }
+enum Phase { WAITING, INTRO, MASCOT_FALL, SIGNBOARD, PLAYING, CELEBRATE, BLOCK, MAZE_TRANSITION, MAZE, GAME_OVER }
 enum IntroState { WAITING, TITLE_PARTICLES, MASCOT_FORM, MASCOT_BLINK, MASCOT_FALL, PLAYING }
 const W := 1280.0
 const H := 720.0
@@ -19,7 +19,9 @@ var velocity := Vector2.ZERO
 var score := 0
 var remaining := 60.0
 var crystals: Array[Vector2] = []
+var crystal_spawn_clock := 0.0
 var confetti: Array[Dictionary] = []
+var block_particles: Array[Dictionary] = []
 var block_pos := Vector2(640, 275)
 var block_hit := false
 var maze: Array = []
@@ -121,41 +123,49 @@ func _process(delta: float) -> void:
                 phase = Phase.PLAYING
                 phase_t = 0.0
                 player = Vector2(W * 0.5, H * 0.68)
-                _spawn_crystal()
-                _spawn_crystal()
-                _spawn_crystal()
-                _spawn_crystal()
+                crystal_spawn_clock = 0.0
+                for i in range(8): _spawn_crystal()
         Phase.PLAYING:
             _update_player(dt, false)
             remaining = maxf(0.0, remaining - dt)
             _update_crystals(dt)
-            if remaining <= 0.0:
-                phase = Phase.CELEBRATE
+            if phase == Phase.PLAYING and remaining <= 0.0:
+                phase = Phase.GAME_OVER
                 phase_t = 0.0
-                if score > 20:
-                    _make_confetti()
+                maze_escaped = false
+                game_over_sent = false
         Phase.CELEBRATE:
             _update_confetti(dt)
             if phase_t >= 2.6:
+                confetti.clear()
                 phase = Phase.BLOCK
                 phase_t = 0.0
                 block_hit = false
                 player = Vector2(block_pos.x, H - 90.0)
                 velocity = Vector2.ZERO
+                if OS.has_feature("web"):
+                    JavaScriptBridge.eval("window.parent.postMessage('hm-godot-block','*');")
         Phase.BLOCK:
             _update_block_player(dt)
             if block_hit:
                 _build_maze()
-                phase = Phase.MAZE
+                phase = Phase.MAZE_TRANSITION
                 phase_t = 0.0
                 player = _cell_center(Vector2i(1, 1))
-                mascot_scale = 0.43
+                mascot_scale = 0.22
+                if OS.has_feature("web"):
+                    JavaScriptBridge.eval("window.parent.postMessage('hm-godot-maze','*');")
+        Phase.MAZE_TRANSITION:
+            _update_block_particles(dt)
+            if phase_t >= 0.9:
+                phase = Phase.MAZE
+                phase_t = 0.0
         Phase.MAZE:
             _update_maze_player(dt)
             if phase == Phase.MAZE:
                 _update_ghosts(dt)
                 for ghost in ghost_positions:
-                    if player.distance_to(ghost) < cell_size * 0.9:
+                    if player.distance_to(ghost) < cell_size * 0.62:
                         phase = Phase.GAME_OVER
                         phase_t = 0.0
                         maze_escaped = false
@@ -193,8 +203,8 @@ func _update_player(dt: float, maze_mode: bool) -> void:
     player.y = clampf(player.y, 130.0, H - 70.0)
 
 func _spawn_crystal() -> void:
-    for attempt in range(50):
-        var p := Vector2(rng.randf_range(95.0, W - 95.0), rng.randf_range(150.0, H - 90.0))
+    for attempt in range(60):
+        var p := Vector2(rng.randf_range(42.0, W - 42.0), rng.randf_range(86.0, H - 40.0))
         var clear := true
         for other in crystals:
             if p.distance_to(other) < 100.0: clear = false
@@ -203,13 +213,47 @@ func _spawn_crystal() -> void:
             return
 
 func _update_crystals(dt: float) -> void:
-    if crystals.size() < 7 and rng.randf() < dt * 1.05:
+    crystal_spawn_clock += dt
+    if crystals.size() < 15 and crystal_spawn_clock >= 0.42:
+        crystal_spawn_clock = 0.0
         _spawn_crystal()
     for i in range(crystals.size() - 1, -1, -1):
         if player.distance_to(crystals[i]) < 58.0:
             crystals.remove_at(i)
             score += 1
-            if score > 20 and score % 4 == 1: _make_confetti_burst(player)
+            if score > 20:
+                phase = Phase.CELEBRATE
+                phase_t = 0.0
+                _make_confetti()
+                return
+
+
+func _make_block_burst() -> void:
+    block_particles.clear()
+    for i in range(180):
+        var angle := rng.randf_range(0.0, TAU)
+        var speed := rng.randf_range(100.0, 560.0)
+        block_particles.append({
+            "p": block_pos + Vector2(rng.randf_range(-36.0, 36.0), rng.randf_range(-36.0, 36.0)),
+            "v": Vector2(cos(angle), sin(angle)) * speed,
+            "age": 0.0, "life": rng.randf_range(0.55, 1.2),
+            "size": rng.randf_range(2.0, 6.0),
+            "c": [Color("#fff0a6"), Color("#ffc34e"), CYAN, PURPLE][i % 4]
+        })
+
+func _update_block_particles(dt: float) -> void:
+    for item in block_particles:
+        item.p += item.v * dt
+        item.v.y += 280.0 * dt
+        item.age += dt
+
+func _draw_block_particles() -> void:
+    for item in block_particles:
+        var alpha := 1.0 - float(item.age) / float(item.life)
+        if alpha <= 0.0: continue
+        var tint: Color = item.c
+        tint.a = alpha
+        draw_rect(Rect2(item.p, Vector2.ONE * float(item.size)), tint, true)
 
 func _make_confetti() -> void:
     for i in range(150):
@@ -232,13 +276,13 @@ func _update_block_player(dt: float) -> void:
     velocity.x = move_toward(velocity.x, direction.x * 280.0, 1500.0 * dt)
     if Input.is_action_just_pressed("ui_up") or Input.is_key_pressed(KEY_W):
         if player.y > block_pos.y + 58.0 and absf(player.x - block_pos.x) < 92.0 and velocity.y >= -10.0:
-            velocity.y = -650.0
+            velocity.y = -1050.0
     velocity.y += 1550.0 * dt
     player += velocity * dt
     player.x = clampf(player.x, 70.0, W - 70.0)
     if player.y < block_pos.y + 58.0 and player.y > block_pos.y - 8.0 and absf(player.x - block_pos.x) < 72.0 and velocity.y < 0.0:
         block_hit = true
-        _make_confetti_burst(block_pos)
+        _make_block_burst()
     if player.y > H - 78.0:
         player.y = H - 78.0
         velocity.y = 0.0
@@ -275,7 +319,7 @@ func _build_maze() -> void:
     maze[maze_h - 2][maze_w - 3] = 0
     ghost_positions = [_cell_center(Vector2i(maze_w - 2, 1)), _cell_center(Vector2i(1, maze_h - 2))]
     ghost_paths = [Vector2.ZERO, Vector2.ZERO]
-    mascot_scale = 0.43
+    mascot_scale = 0.22
 
 func _cell_center(c: Vector2i) -> Vector2:
     var ox := (W - maze_w * cell_size) * 0.5
@@ -285,8 +329,12 @@ func _cell_center(c: Vector2i) -> Vector2:
 func _is_open(p: Vector2) -> bool:
     var ox := (W - maze_w * cell_size) * 0.5
     var oy := (H - maze_h * cell_size) * 0.5
-    var c := Vector2i(floori((p.x - ox) / cell_size), floori((p.y - oy) / cell_size))
-    return c.x >= 0 and c.y >= 0 and c.x < maze_w and c.y < maze_h and maze[c.y][c.x] == 0
+    var radius := cell_size * 0.34
+    for offset in [Vector2(-radius, -radius), Vector2(radius, -radius), Vector2(-radius, radius), Vector2(radius, radius)]:
+        var c := Vector2i(floori((p.x + offset.x - ox) / cell_size), floori((p.y + offset.y - oy) / cell_size))
+        if c.x < 0 or c.y < 0 or c.x >= maze_w or c.y >= maze_h or maze[c.y][c.x] != 0:
+            return false
+    return true
 
 func _update_maze_player(dt: float) -> void:
     var direction := _move_input()
@@ -354,8 +402,9 @@ func _draw() -> void:
         return
     if phase in [Phase.MASCOT_FALL, Phase.SIGNBOARD, Phase.PLAYING, Phase.CELEBRATE, Phase.BLOCK]:
         _draw_stage_one()
-    elif phase == Phase.MAZE:
+    elif phase in [Phase.MAZE_TRANSITION, Phase.MAZE]:
         _draw_maze()
+        if phase == Phase.MAZE_TRANSITION: _draw_block_particles()
     elif phase == Phase.GAME_OVER:
         _draw_game_over()
     if phase == Phase.CELEBRATE:
@@ -375,12 +424,15 @@ func _draw_intro_particles() -> void:
 func _draw_stage_one() -> void:
     if phase in [Phase.MASCOT_FALL, Phase.SIGNBOARD]:
         if phase == Phase.SIGNBOARD:
-            var intro_sign_y := lerpf(-105.0, 72.0, minf(1.0, phase_t / 0.85))
+            var drop := minf(1.0, phase_t / 0.8)
+            var eased := 1.0 - pow(1.0 - drop, 3.0)
+            var intro_sign_y := lerpf(-105.0, H * 0.47 - 32.0, eased)
             _draw_sign(intro_sign_y)
         return
     # Slim center signboard descends, then the 60-second clock begins.
     if phase == Phase.PLAYING:
-        var sign_y := lerpf(-105.0, 72.0, minf(1.0, phase_t / 0.85))
+        var compact := minf(1.0, phase_t / 0.7)
+        var sign_y := lerpf(H * 0.47 - 32.0, 72.0, 1.0 - pow(1.0 - compact, 3.0))
         _draw_sign(sign_y)
         _draw_hud()
         for c in crystals: _draw_crystal(c)
