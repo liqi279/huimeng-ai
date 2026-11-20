@@ -662,7 +662,7 @@
     if (parts.length < 2) return;
     var seconds = Math.max(0, parseInt(parts[0], 10) || 0);
     var count = Math.max(0, parseInt(parts[1], 10) || 0);
-    var timeText = '00:' + String(seconds).padStart(2, '0');
+    var timeText = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
     if (timerPanel) {
       var timerValue = timerPanel.querySelector('.dv-timer-value');
       if (timerValue) timerValue.textContent = timeText;
