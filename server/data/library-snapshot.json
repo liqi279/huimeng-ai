@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:26:33+0800",
+  "generatedAt": "2026-11-20T22:30:47+0800",
   "source": "scf-library",
-  "total": 1015,
+  "total": 1019,
   "areas": {
     "paint": 749,
-    "concept": 242,
+    "concept": 246,
     "ref": 24
   },
   "books": [
@@ -1700,6 +1700,94 @@
       "sortNo": 0,
       "createdAt": 1795184787813,
       "updatedAt": 1795184787813,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2qo9q-020fcf",
+      "title": "轮回的拉格朗日 · 色见本 · 上",
+      "author": "萌绘图库",
+      "category": "轮回的拉格朗日",
+      "tags": [
+        "轮回的拉格朗日",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《轮回的拉格朗日》；原包《色见本》。第 1-236 页（共 343 页，分 2 卷）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-6a56843c31-f7c6603512a3-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-6a56843c31-f7c6603512a3-20261120-01.pdf",
+      "pageCount": 236,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795184903007,
+      "updatedAt": 1795184903007,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2qygq-77186f",
+      "title": "轮回的拉格朗日 · 色见本 · 中",
+      "author": "萌绘图库",
+      "category": "轮回的拉格朗日",
+      "tags": [
+        "轮回的拉格朗日",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《轮回的拉格朗日》；原包《色见本》。第 237-343 页（共 343 页，分 2 卷）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-6a56843c31-f7c6603512a3-20261120-02.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-6a56843c31-f7c6603512a3-20261120-02.pdf",
+      "pageCount": 107,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795184916218,
+      "updatedAt": 1795184916218,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2s8rl-cf2935",
+      "title": "轮回的拉格朗日 · 动画《輪廻のラグランジェ(轮回的拉格朗日)》的设定集",
+      "author": "萌绘图库",
+      "category": "轮回的拉格朗日",
+      "tags": [
+        "轮回的拉格朗日",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《轮回的拉格朗日》；原包《动画《輪廻のラグランジェ(轮回的拉格朗日)》的设定集》。第 1-153 页（共 153 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-c17801675e-4bc373314090-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-c17801675e-4bc373314090-20261120-01.pdf",
+      "pageCount": 153,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795184976225,
+      "updatedAt": 1795184976225,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2tmx2-25dc66",
+      "title": "轮回的拉格朗日 · 轮回的拉格朗日 动画资料设定线稿集",
+      "author": "萌绘图库",
+      "category": "轮回的拉格朗日",
+      "tags": [
+        "轮回的拉格朗日",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《轮回的拉格朗日》；原包《轮回的拉格朗日 动画资料设定线稿集》。第 1-203 页（共 203 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-db4faba1be-31cbbdad179c-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-db4faba1be-31cbbdad179c-20261120-01.pdf",
+      "pageCount": 203,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185041222,
+      "updatedAt": 1795185041222,
       "pages": []
     },
     {
