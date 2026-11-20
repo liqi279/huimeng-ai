@@ -1,18 +1,18 @@
 'use strict';
 
-/* GitHub Pages publishes deploy/. Keep the production Dimverse assets synchronized
- * with their canonical frontend sources before validating the artifact.
- */
+/* GitHub Pages 发布校验：多文件静态前端 + Dimverse 生产脚本。 */
 const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const idx = path.join(root, 'deploy', 'index.html');
-const assets = path.join(root, 'deploy', 'assets');
+const deploy = path.join(root, 'deploy');
+const idx = path.join(deploy, 'index.html');
+const assets = path.join(deploy, 'assets');
 const dimverseSource = path.join(root, 'frontend', 'dimverse.js');
 const dimverseBundle = path.join(assets, 'hm-s29-b9fa10c0.js');
 const sourceStyles = path.join(root, 'frontend', 'styles.css');
 const deployedStyles = path.join(assets, 'hm.css');
+const pageStyles = path.join(deploy, 'styles.css');
 const styleMarker = '/* ============ 次元宇宙 · 原网页背景上的透明 Canvas 游戏层 ============ */';
 const legacyStyleMarker = '/* ============ 次元宇宙 · 原网页背景上的透明 Godot 游戏层 ============ */';
 
@@ -21,16 +21,40 @@ if (!fs.existsSync(idx) || !fs.existsSync(assets)) {
   process.exit(1);
 }
 if (!fs.existsSync(dimverseSource) || !fs.existsSync(sourceStyles) ||
-    !fs.existsSync(dimverseBundle) || !fs.existsSync(deployedStyles)) {
-  console.error('[publish] 次元宇宙源文件或生产资源缺失');
+    !fs.existsSync(dimverseBundle) || !fs.existsSync(deployedStyles) ||
+    !fs.existsSync(pageStyles)) {
+  console.error('[publish] 前端入口、样式或次元宇宙生产资源缺失');
   process.exit(1);
 }
 
-/* Always publish the exact tested Dimverse controller source. */
+/* Pages 主入口必须保持轻量，并通过独立文件加载样式和脚本。 */
+let html = fs.readFileSync(idx, 'utf8');
+if (Buffer.byteLength(html, 'utf8') > 800000 ||
+    !/href=["']styles\.css\?v=/.test(html) ||
+    !/href=["']styles-admin\.css\?v=/.test(html) ||
+    !/<script[^>]*\bsrc=["']api\.js\?v=/.test(html) ||
+    !/<script[^>]*\bdefer\b/.test(html)) {
+  console.error('[publish] Pages 入口仍是大型内嵌包，或缺少独立资源/延迟加载配置');
+  process.exit(1);
+}
+
+/* 始终发布当前已验证的 Dimverse 控制器。 */
 fs.copyFileSync(dimverseSource, dimverseBundle);
 
-/* The production stylesheet contains the shared platform CSS; append the
- * canonical Dimverse-only overlay rules without replacing unrelated styles. */
+/* 兼容并替换独立的 dimverse.js 引用，保留 defer 执行时序。 */
+const dimverseTag = /<script\b([^>]*\bsrc=["'](?:\.\/)?dimverse\.js(?:\?[^"']*)?["'][^>]*)><\/script>/i;
+const dimverseMatch = html.match(dimverseTag);
+if (dimverseMatch) {
+  let attrs = dimverseMatch[1].replace(/\bsrc=(["'])([^"']+)\1/i,
+    'src="./assets/hm-s29-b9fa10c0.js"');
+  if (!/\bdefer\b/i.test(attrs)) attrs += ' defer';
+  html = html.replace(dimverseTag, '<script' + attrs + '></script>');
+} else if (!html.includes('./assets/hm-s29-b9fa10c0.js')) {
+  console.error('[publish] Pages 入口缺少可替换的 Dimverse 脚本引用');
+  process.exit(1);
+}
+
+/* 同步旧版共享样式资产，避免其他入口引用时出现版本漂移。 */
 const sourceCss = fs.readFileSync(sourceStyles, 'utf8');
 const markerIndex = sourceCss.indexOf(styleMarker);
 if (markerIndex < 0) {
@@ -41,34 +65,13 @@ const dimverseCss = sourceCss.slice(markerIndex).trim();
 let css = fs.readFileSync(deployedStyles, 'utf8');
 const currentIndex = css.indexOf(styleMarker);
 const legacyIndex = css.indexOf(legacyStyleMarker);
-const existingIndex = currentIndex < 0 ? legacyIndex : legacyIndex < 0 ? currentIndex : Math.min(currentIndex, legacyIndex);
+const existingIndex = currentIndex < 0 ? legacyIndex :
+  legacyIndex < 0 ? currentIndex : Math.min(currentIndex, legacyIndex);
 if (existingIndex >= 0) css = css.slice(0, existingIndex).trimEnd();
 css = css.trimEnd() + '\n\n' + dimverseCss + '\n';
 fs.writeFileSync(deployedStyles, css, 'utf8');
 
-/* The Pages HTML is a legacy self-contained bundle. Replace its embedded
- * stale Dimverse controller with the canonical, independently tested asset.
- * This keeps the deployed entry point in sync with frontend/dimverse.js.
- */
-let html = fs.readFileSync(idx, 'utf8');
-const dimverseMarker = '次元宇宙（Dimensional Universe）';
-const dimverseStart = html.indexOf(dimverseMarker);
-if (dimverseStart >= 0 && !html.includes('./assets/hm-s29-b9fa10c0.js')) {
-  const scriptStart = html.lastIndexOf('<script', dimverseStart);
-  const scriptEnd = html.indexOf('</script>', dimverseStart);
-  if (scriptStart < 0 || scriptEnd < 0) {
-    console.error('[publish] 无法定位 deploy/index.html 中的旧次元宇宙脚本');
-    process.exit(1);
-  }
-  html = html.slice(0, scriptStart) +
-    '<script src="./assets/hm-s29-b9fa10c0.js"></script>' +
-    html.slice(scriptEnd + '</script>'.length);
-  fs.writeFileSync(idx, html, 'utf8');
-}
-/* The deployed HTML has its platform CSS inlined and does not load hm.css.
- * Add only the new transparent Godot iframe rule to avoid duplicating the
- * entire platform stylesheet.
- */
+/* 主页面使用独立 styles.css；只在 HTML 内补充极小的透明游戏层规则。 */
 if (!html.includes('.dv-godot-overlay')) {
   const headEnd = html.indexOf('</head>');
   if (headEnd < 0) {
@@ -77,8 +80,9 @@ if (!html.includes('.dv-godot-overlay')) {
   }
   const godotStyle = '<style>.dv-godot-overlay{position:absolute;z-index:4;inset:0;display:block;width:100%;height:100%;border:0;background:transparent!important;pointer-events:auto;touch-action:none;transition:opacity .35s ease}</style>';
   html = html.slice(0, headEnd) + godotStyle + html.slice(headEnd);
-  fs.writeFileSync(idx, html, 'utf8');
 }
+fs.writeFileSync(idx, html, 'utf8');
+
 const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
 const miss = refs.filter((f) => !fs.existsSync(path.join(assets, f)));
 if (miss.length) {
@@ -87,7 +91,7 @@ if (miss.length) {
 }
 
 const bundle = fs.readFileSync(dimverseBundle, 'utf8');
-const deployedCss = fs.readFileSync(deployedStyles, 'utf8');
+const deployedCss = fs.readFileSync(pageStyles, 'utf8');
 for (const [ok, message] of [
   [bundle.includes("el('button', 'dv-start-btn is-pending', '开启')"), '生产脚本未包含等待标题入场完成后显示的开启按钮'],
   [bundle.includes('function startDimverseGame()') && bundle.includes("new URL('./dimverse/game/index.html'") && bundle.includes('function ensureGodotOverlay()'), '生产脚本未接入 Godot 双阶段游戏导出'],
@@ -102,4 +106,19 @@ for (const [ok, message] of [
   }
 }
 
-console.log('[publish] Dimverse production bundle synchronized; deploy/ assets ' + refs.length + ' references verified');
+const criticalFiles = [
+  'styles.css', 'styles-admin.css', 'jszip.min.js', 'chart.umd.min.js',
+  'api.js', 'auth-ui.js', 'app.js', 'three.min.js', 'ui.js',
+  'desk.js', 'admin.js', 'vendor/oua-canvas.js'
+];
+const missingFiles = criticalFiles.filter((file) =>
+  !fs.existsSync(path.join(deploy, file))
+);
+if (missingFiles.length) {
+  console.error('[publish] Pages 静态资源缺失：' + missingFiles.join(', '));
+  process.exit(1);
+}
+
+console.log('[publish] 多文件 Pages 入口已验证：HTML ' +
+  (Buffer.byteLength(html, 'utf8') / 1024).toFixed(1) +
+  ' KB；独立 CSS/JS 资源、defer 加载与 Dimverse/Godot 资源均通过检查');
