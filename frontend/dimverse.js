@@ -659,9 +659,9 @@
 
   function updateGodotHud(data) {
     var parts = data.split(':');
-    if (parts.length < 3) return;
-    var seconds = Math.max(0, parseInt(parts[1], 10) || 0);
-    var count = Math.max(0, parseInt(parts[2], 10) || 0);
+    if (parts.length < 2) return;
+    var seconds = Math.max(0, parseInt(parts[0], 10) || 0);
+    var count = Math.max(0, parseInt(parts[1], 10) || 0);
     var timeText = '00:' + String(seconds).padStart(2, '0');
     if (timerPanel) {
       var timerValue = timerPanel.querySelector('.dv-timer-value');
