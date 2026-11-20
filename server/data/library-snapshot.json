@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:23:39+0800",
+  "generatedAt": "2026-11-20T22:26:33+0800",
   "source": "scf-library",
-  "total": 1011,
+  "total": 1015,
   "areas": {
     "paint": 749,
-    "concept": 238,
+    "concept": 242,
     "ref": 24
   },
   "books": [
@@ -1612,6 +1612,94 @@
       "sortNo": 0,
       "createdAt": 1795184611641,
       "updatedAt": 1795184611641,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2llbj-77e67f",
+      "title": "约会大作战 · 色见本",
+      "author": "萌绘图库",
+      "category": "约会大作战",
+      "tags": [
+        "约会大作战",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《约会大作战》；原包《色见本》。第 1-58 页（共 58 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-6a56843c31-10624195cc18-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-6a56843c31-10624195cc18-20261120-01.pdf",
+      "pageCount": 58,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795184665903,
+      "updatedAt": 1795184665903,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2nhx8-67bbb3",
+      "title": "约会大作战 · 约会大作战 万由里裁决 动画线稿原画集 · 上",
+      "author": "萌绘图库",
+      "category": "约会大作战",
+      "tags": [
+        "约会大作战",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《约会大作战》；原包《约会大作战 万由里裁决 动画线稿原画集》。第 1-263 页（共 289 页，分 2 卷）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-1729fcf1cf-be9868af6172-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-1729fcf1cf-be9868af6172-20261120-01.pdf",
+      "pageCount": 263,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795184754813,
+      "updatedAt": 1795184754813,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2nkwb-cac4c8",
+      "title": "约会大作战 · 约会大作战 万由里裁决 动画线稿原画集 · 中",
+      "author": "萌绘图库",
+      "category": "约会大作战",
+      "tags": [
+        "约会大作战",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《约会大作战》；原包《约会大作战 万由里裁决 动画线稿原画集》。第 264-289 页（共 289 页，分 2 卷）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-1729fcf1cf-be9868af6172-20261120-02.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-1729fcf1cf-be9868af6172-20261120-02.pdf",
+      "pageCount": 26,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795184758667,
+      "updatedAt": 1795184758667,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2o7dw-c56d3d",
+      "title": "约会大作战 · 约会大作战 动画资料设定线稿集",
+      "author": "萌绘图库",
+      "category": "约会大作战",
+      "tags": [
+        "约会大作战",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《约会大作战》；原包《约会大作战 动画资料设定线稿集》。第 1-100 页（共 100 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-5f5f011bd0-bd58df101951-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-5f5f011bd0-bd58df101951-20261120-01.pdf",
+      "pageCount": 100,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795184787813,
+      "updatedAt": 1795184787813,
       "pages": []
     },
     {
