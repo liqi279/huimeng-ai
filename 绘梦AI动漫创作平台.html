@@ -9142,10 +9142,17 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-user-pill:hover { border-color: var(--line-strong); background: var(--surface-2); }
 .hm-user-avatar {
   width: 28px; height: 28px; border-radius: 50%;
-  display: grid; place-items: center;
+  display: grid; place-items: center; overflow: hidden;
   background: linear-gradient(135deg, var(--violet), var(--pink));
   color: #fff; font-size: 12px; font-weight: 700; flex-shrink: 0;
 }
+.hm-user-avatar img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+.hm-profile-avatar-row { display:flex; align-items:center; gap:16px; margin:14px 0 18px; }
+.hm-profile-avatar { width:76px; height:76px; flex:0 0 76px; display:grid; place-items:center; overflow:hidden; border-radius:50%; background:linear-gradient(135deg,var(--violet),var(--pink)); color:#fff; font-size:24px; font-weight:700; }
+.hm-profile-avatar img { width:100%; height:100%; object-fit:cover; }
+.hm-profile-avatar-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.hm-profile-avatar-actions small { flex-basis:100%; color:var(--muted); font-size:11px; line-height:1.5; }
+
 .hm-user-name { font-size: 13px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hm-user-role {
   font-size: 10px; padding: 1px 7px; border-radius: 999px;
@@ -20169,6 +20176,11 @@ body.dv-open .hm-page {
   pointer-events: none;
 }
 
+/* 次元宇宙为全屏沉浸视图，主站侧栏折叠箭头必须完全隐藏 */
+body.dv-open .hm-rail-toggle {
+  display: none !important;
+}
+
 /* =============================================================
  * 作画模块 · 视图底色（原画 / 动画 / 背景 / Layout / 着色）
  * ============================================================= */
@@ -26852,6 +26864,15 @@ body.hm-light .hm-hk-key { background: #f8fafc; color: #0369a1; border-color: rg
       <button class="modal-close" id="hmProfileClose" type="button" aria-label="关闭">✕</button>
       <span class="modal-kicker">个人资料</span>
       <h2>编辑个人资料</h2>
+      <div class="hm-profile-avatar-row">
+        <span class="hm-profile-avatar" id="hmProfileAvatar" aria-label="当前头像">我</span>
+        <div class="hm-profile-avatar-actions">
+          <input id="hmProfileAvatarFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          <button class="hm-pill hm-pill-primary" id="hmProfileAvatarUpload" type="button">更换头像</button>
+          <button class="hm-pill hm-pill-ghost" id="hmProfileAvatarRemove" type="button">恢复默认</button>
+          <small>支持 JPG / PNG / WebP，最大 10MB，自动裁剪为正方形</small>
+        </div>
+      </div>
       <div class="hm-profile-field">
         <label for="hmProfileName">显示名</label>
         <input id="hmProfileName" type="text" maxlength="64" placeholder="例如：小明">
@@ -27508,6 +27529,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   api.updateProfile = function (patch) {
     return request('/auth/profile', { method: 'PATCH', body: patch || {} }, 15000);
   };
+  api.uploadAvatar = function (dataUrl) {
+    return request('/auth/avatar/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000);
+  };
   api.getPreferences = function () {
     return request('/auth/preferences', {}, 15000);
   };
@@ -27531,6 +27555,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   var api = (window.HM && window.HM.api) ? window.HM.api : null;
 
   var submitting = false;
+  var profileLoadedUserId = '';
+  var currentAvatarUrl = '';
   /* 首次打开登录框时清空一次，避免浏览器密码管理器把「接口地址 + API Key」填进来 */
   var loginFieldsCleared = false;
 
@@ -27620,13 +27646,17 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     if (nameEl) nameEl.value = u.displayName || u.username || '';
     if (emailEl) emailEl.value = u.email || '';
     if (bioEl) bioEl.value = '';
+    setProfileAvatarPreview(currentAvatarUrl);
     openModal('hmProfileModal');
     try {
       var res = await api.getProfile();
       var p = (res && res.profile) || {};
+      currentAvatarUrl = p.avatarUrl || '';
       if (nameEl) nameEl.value = p.displayName || u.username || '';
       if (emailEl) emailEl.value = p.email || '';
       if (bioEl) bioEl.value = p.bio || '';
+      setProfileAvatarPreview(currentAvatarUrl);
+      applyUserAvatar(currentAvatarUrl, u);
     } catch (e) {}
   }
 
@@ -27646,8 +27676,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       window.HMApp = window.HMApp || {};
       window.HMApp.user = Object.assign({}, window.HMApp.user || {}, {
         displayName: p.displayName || '',
-        email: p.email || ''
+        email: p.email || '',
+        avatarUrl: p.avatarUrl || currentAvatarUrl || ''
       });
+      currentAvatarUrl = p.avatarUrl || currentAvatarUrl || '';
+      applyUserAvatar(currentAvatarUrl, window.HMApp.user);
       try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
       closeModal('hmProfileModal');
       if (window.HMApp.toast) window.HMApp.toast('资料已保存到服务器', 'success');
@@ -27835,11 +27868,135 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       return;
     }
     els.userWrap.hidden = false;
+    if (profileLoadedUserId !== user.id) currentAvatarUrl = user.avatarUrl || '';
     els.userAvatar.textContent = String(user.username || '?').charAt(0).toUpperCase();
+    els.userAvatar.style.backgroundImage = '';
+    applyUserAvatar(user.avatarUrl || currentAvatarUrl, user);
     els.userName.textContent = user.username || '用户';
     var isAdmin = user.role === 'admin';
     els.userRole.hidden = !isAdmin;
     els.adminBtn.hidden = !isAdmin;
+    if (api && user.id && profileLoadedUserId !== user.id) {
+      profileLoadedUserId = user.id;
+      api.getProfile().then(function (res) {
+        var p = (res && res.profile) || {};
+        if (!window.HMApp || !window.HMApp.user || window.HMApp.user.id !== user.id) return;
+        currentAvatarUrl = p.avatarUrl || '';
+        window.HMApp.user.avatarUrl = currentAvatarUrl;
+        applyUserAvatar(currentAvatarUrl, window.HMApp.user);
+        try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
+      }).catch(function () { profileLoadedUserId = ''; });
+    }
+  }
+
+  function applyUserAvatar(url, user) {
+    if (!els.userAvatar) return;
+    var initial = String((user && user.username) || '?').charAt(0).toUpperCase();
+    els.userAvatar.textContent = initial;
+    els.userAvatar.style.backgroundImage = '';
+    if (!url) return;
+    var img = document.createElement('img');
+    img.alt = '';
+    img.loading = 'lazy';
+    img.src = api && api.mediaUrl ? api.mediaUrl(url) : url;
+    img.onerror = function () {
+      if (img.parentNode === els.userAvatar) els.userAvatar.removeChild(img);
+      els.userAvatar.textContent = initial;
+      els.userAvatar.style.backgroundImage = '';
+    };
+    els.userAvatar.textContent = '';
+    els.userAvatar.appendChild(img);
+  }
+
+  function setProfileAvatarPreview(url) {
+    var preview = document.getElementById('hmProfileAvatar');
+    var fallback = String((((window.HMApp || {}).user || {}).username) || '?').charAt(0).toUpperCase();
+    if (!preview) return;
+    preview.textContent = fallback;
+    preview.style.backgroundImage = '';
+    preview.innerHTML = '';
+    if (!url) { preview.textContent = fallback; return; }
+    var img = document.createElement('img');
+    img.alt = '当前头像';
+    img.src = api && api.mediaUrl ? api.mediaUrl(url) : url;
+    img.onerror = function () { if (img.parentNode === preview) preview.removeChild(img); preview.textContent = fallback; };
+    preview.appendChild(img);
+  }
+
+  function readAvatarAsDataUrl(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var image = new Image();
+        image.onload = function () {
+          var size = 512;
+          var canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          var ctx = canvas.getContext('2d');
+          var side = Math.min(image.naturalWidth, image.naturalHeight);
+          var sx = Math.round((image.naturalWidth - side) / 2);
+          var sy = Math.round((image.naturalHeight - side) / 2);
+          ctx.drawImage(image, sx, sy, side, side, 0, 0, size, size);
+          var dataUrl = canvas.toDataURL('image/webp', 0.86);
+          if (!/^data:image\/webp;base64,/.test(dataUrl)) dataUrl = canvas.toDataURL('image/jpeg', 0.86);
+          resolve(dataUrl);
+        };
+        image.onerror = function () { reject(new Error('无法读取图片，请换一张图片')); };
+        image.src = reader.result;
+      };
+      reader.onerror = function () { reject(new Error('读取图片失败')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleAvatarUpload(file) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/i.test(file.type || '')) {
+      toast('仅支持 JPG、PNG、WebP 图片', 'error');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast('原始图片不能超过 10MB', 'error');
+      return;
+    }
+    var input = document.getElementById('hmProfileAvatarFile');
+    var uploadBtn = document.getElementById('hmProfileAvatarUpload');
+    if (uploadBtn) { uploadBtn.disabled = true; uploadBtn.textContent = '上传中…'; }
+    try {
+      var dataUrl = await readAvatarAsDataUrl(file);
+      var res = await api.uploadAvatar(dataUrl);
+      var p = (res && res.profile) || {};
+      currentAvatarUrl = p.avatarUrl || (res && res.url) || '';
+      window.HMApp = window.HMApp || {};
+      window.HMApp.user = Object.assign({}, window.HMApp.user || {}, { avatarUrl: currentAvatarUrl });
+      applyUserAvatar(currentAvatarUrl, window.HMApp.user);
+      setProfileAvatarPreview(currentAvatarUrl);
+      try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
+      toast('头像已上传并保存', 'success');
+    } catch (err) {
+      toast((err && err.message) || '头像上传失败', 'error');
+    } finally {
+      if (uploadBtn) { uploadBtn.disabled = false; uploadBtn.textContent = '更换头像'; }
+      if (input) input.value = '';
+    }
+  }
+
+  async function removeAvatar() {
+    var btn = document.getElementById('hmProfileAvatarRemove');
+    if (btn) btn.disabled = true;
+    try {
+      var res = await api.updateProfile({ avatarUrl: '' });
+      var p = (res && res.profile) || {};
+      currentAvatarUrl = p.avatarUrl || '';
+      window.HMApp = window.HMApp || {};
+      window.HMApp.user = Object.assign({}, window.HMApp.user || {}, { avatarUrl: '' });
+      applyUserAvatar('', window.HMApp.user);
+      setProfileAvatarPreview('');
+      try { localStorage.setItem('hm.user', JSON.stringify(window.HMApp.user)); } catch (e) {}
+      toast('已恢复默认头像', 'success');
+    } catch (err) {
+      toast((err && err.message) || '恢复失败', 'error');
+    } finally { if (btn) btn.disabled = false; }
   }
 
   function toggleUserMenu(force) {
@@ -27869,6 +28026,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       try { window.HMDesk.resetForLogout(); } catch (e) {}
     }
     window.HMApp.user = null;
+    profileLoadedUserId = '';
+    currentAvatarUrl = '';
     toggleUserMenu(false);
     updateUserUI();
     resetSearchBox();
@@ -28022,6 +28181,16 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     /* 新申请提醒 / 个人资料 弹窗 */
     var profileSaveBtn = document.getElementById('hmProfileSave');
     if (profileSaveBtn) profileSaveBtn.addEventListener('click', saveProfile);
+    var avatarInput = document.getElementById('hmProfileAvatarFile');
+    if (avatarInput) avatarInput.addEventListener('change', function () {
+      if (avatarInput.files && avatarInput.files[0]) handleAvatarUpload(avatarInput.files[0]);
+    });
+    var avatarUploadBtn = document.getElementById('hmProfileAvatarUpload');
+    if (avatarUploadBtn) avatarUploadBtn.addEventListener('click', function () {
+      if (avatarInput) avatarInput.click();
+    });
+    var avatarRemoveBtn = document.getElementById('hmProfileAvatarRemove');
+    if (avatarRemoveBtn) avatarRemoveBtn.addEventListener('click', removeAvatar);
     ['hmProfileClose', 'hmProfileCancel'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.addEventListener('click', function () { closeModal('hmProfileModal'); });
@@ -57364,7 +57533,7 @@ window.HMChat = (function () {
       renderShelf();
       renderStatus();
     }
-    return request('/library/books', {}, 30000).then(function (data) {
+    return request('/library/books', {}, 60000).then(function (data) {
       state.mode = 'remote';
       applyStore(data.store); /* 全库用量随书目一起刷新 */
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
@@ -57417,7 +57586,7 @@ window.HMChat = (function () {
       renderStatus();
       return Promise.resolve();
     }
-    return request('/library/books', {}, 30000).then(function (data) {
+    return request('/library/books', {}, 60000).then(function (data) {
       applyStore(data.store); /* 全库用量随书目一起刷新 */
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
@@ -59463,7 +59632,18 @@ window.HMChat = (function () {
   }
 
   /* ---------------- 新增 / 编辑 ---------------- */
-  function openBookForm(book) {
+  function openBookForm(book, noFetch) {
+    /* 列表接口是轻量数据（不含各页正文）：编辑前先取回完整内容，
+       否则保存时会把正文覆盖成空。取不到就取消编辑，绝不拿空正文回写。 */
+    if (book && book.id && !noFetch && (!book.pages || !book.pages.length)) {
+      request('/library/books/' + encodeURIComponent(book.id), {}, 20000)
+        .then(function (full) {
+          if (!full || !full.pages) { toast('读取书籍正文失败，已取消编辑', 'error'); return; }
+          openBookForm(Object.assign({}, book, { pages: full.pages }), true);
+        })
+        .catch(function () { toast('读取书籍正文失败，已取消编辑', 'error'); });
+      return;
+    }
     state.editing = book || null;
     if (!els.modal) return;
     var b = book || { title: '', author: '', category: '', tags: [], intro: '', accent: '#8a6a4f', pages: [] };
@@ -69025,36 +69205,66 @@ window.HMChat = (function () {
     ctx.translate(s.x, s.y + Math.sin(now * 0.004) * (s.phase === 'playing' ? 1.5 : 0));
     ctx.rotate(s.tilt);
     ctx.scale(1 + s.squash, 1 - s.squash * 0.7 + breathe);
-    ctx.shadowColor = 'rgba(0,0,0,.32)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 9;
-    var body = ctx.createRadialGradient(-23, -28, 5, 4, 4, 78);
-    body.addColorStop(0, '#fffef2'); body.addColorStop(0.58, '#f6f2d9');
-    body.addColorStop(0.88, '#e6dfc0'); body.addColorStop(1, '#bdb695');
-    ctx.fillStyle = body; ctx.strokeStyle = 'rgba(105,101,75,.72)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.ellipse(0, 0, 70, 52, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    var wobble = Math.sin(now * 0.004 + s.x * 0.012) * (1.2 + speed * 2.4);
+    traceDangoSlime(ctx, wobble);
+    ctx.shadowColor = 'rgba(15,48,70,.2)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 7;
+    var body = ctx.createRadialGradient(-24, -39, 5, 2, -3, 94);
+    body.addColorStop(0, '#effaff'); body.addColorStop(0.42, '#d7edf7');
+    body.addColorStop(0.78, '#bdddeb'); body.addColorStop(1, '#9fbed0');
+    ctx.fillStyle = body; ctx.fill();
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-    ctx.fillStyle = 'rgba(255,255,255,.56)';
-    ctx.beginPath(); ctx.ellipse(-21, -24, 25, 9, -0.24, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.36)';
-    ctx.beginPath(); ctx.ellipse(-40, -10, 7, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); traceDangoSlime(ctx, wobble); ctx.clip();
+    var softLight = ctx.createRadialGradient(-31, -39, 1, -22, -26, 61);
+    softLight.addColorStop(0, 'rgba(255,255,255,.44)');
+    softLight.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = softLight; ctx.fillRect(-74, -64, 148, 122);
+    var underside = ctx.createLinearGradient(0, 8, 0, 52);
+    underside.addColorStop(0, 'rgba(88,129,152,0)');
+    underside.addColorStop(1, 'rgba(88,129,152,.18)');
+    ctx.fillStyle = underside; ctx.fillRect(-72, 0, 144, 56);
+    ctx.restore();
+    ctx.save(); traceDangoSlime(ctx, wobble);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(100,132,151,.72)'; ctx.lineWidth = 4.2; ctx.stroke();
+    ctx.translate(0, -0.7); ctx.strokeStyle = 'rgba(240,250,255,.42)'; ctx.lineWidth = 1.25; ctx.stroke();
+    ctx.restore();
     var lookX = Math.max(-2, Math.min(2, s.vx / 150));
     var lookY = Math.max(-1.5, Math.min(1.5, s.vy / 240));
     var blinking = now < s.blinkUntil;
-    ctx.strokeStyle = '#292923'; ctx.fillStyle = '#292923'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
-    [-18, 18].forEach(function (eyeX) {
+    ctx.strokeStyle = '#24313b'; ctx.fillStyle = '#24313b'; ctx.lineWidth = 3.7; ctx.lineCap = 'round';
+    [-17, 14].forEach(function (eyeX, i) {
       if (blinking) {
-        ctx.beginPath(); ctx.moveTo(eyeX - 4, -3); ctx.quadraticCurveTo(eyeX, 1, eyeX + 4, -3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(eyeX - 4, -27); ctx.quadraticCurveTo(eyeX, -23, eyeX + 4, -27); ctx.stroke();
       } else {
-        ctx.beginPath(); ctx.ellipse(eyeX + lookX, -5 + lookY, 2.7, 7.2, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(eyeX - 0.6 + lookX, -8 + lookY, 1.1, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#292923';
+        var offset = i ? 2 : -2;
+        ctx.beginPath(); ctx.moveTo(eyeX + lookX, -38 + lookY);
+        ctx.quadraticCurveTo(eyeX + offset + lookX, -32 + lookY, eyeX + 3 + lookX, -25 + lookY); ctx.stroke();
       }
     });
-    ctx.fillStyle = 'rgba(239,135,157,.28)';
-    ctx.beginPath(); ctx.ellipse(-31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.ellipse(31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    var blush = ctx.createRadialGradient(0, 0, 0, 0, 0, 9);
+    blush.addColorStop(0, 'rgba(244,151,173,.45)'); blush.addColorStop(1, 'rgba(244,151,173,0)');
+    ctx.fillStyle = blush;
+    ctx.beginPath(); ctx.ellipse(-34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.ellipse(34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(70,105,126,.68)'; ctx.lineWidth = 1.7;
+    ctx.beginPath(); ctx.arc(0, -2, 4, 0.2, Math.PI - 0.2); ctx.stroke();
     if (speed > 0.12) {
-      ctx.strokeStyle = 'rgba(133,89,103,.8)'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(0, 7, 4, 0.2, Math.PI - 0.2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(100,132,151,.48)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, 3, 4, 0.15, Math.PI - 0.15); ctx.stroke();
     }
     ctx.restore();
+  }
+
+  function traceDangoSlime(ctx, wobble) {
+    ctx.beginPath();
+    ctx.moveTo(-62, 39);
+    ctx.bezierCurveTo(-69, 33, -68, 15, -65, -2);
+    ctx.bezierCurveTo(-62, -27, -48, -48, -29, -53 - wobble * 0.35);
+    ctx.bezierCurveTo(-12, -59 - wobble, 11, -59 + wobble * 0.3, 29, -51);
+    ctx.bezierCurveTo(50, -43, 64, -23, 67, -1);
+    ctx.bezierCurveTo(70, 15, 69, 32, 62, 40);
+    ctx.bezierCurveTo(53, 49, 29, 48 + wobble * 0.15, 10, 48);
+    ctx.bezierCurveTo(-14, 50, -48, 50 - wobble * 0.12, -62, 39);
+    ctx.closePath();
   }
 
   function drawGameCrystal(ctx, crystal, now) {
@@ -69249,6 +69459,7 @@ window.HMChat = (function () {
 
   window.HMDimverse = { enter: enterDimverse, leave: leaveDimverse };
 })();
+
 
 </script>
   <script>

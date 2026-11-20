@@ -320,7 +320,7 @@
       renderShelf();
       renderStatus();
     }
-    return request('/library/books', {}, 30000).then(function (data) {
+    return request('/library/books', {}, 60000).then(function (data) {
       state.mode = 'remote';
       applyStore(data.store); /* 全库用量随书目一起刷新 */
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
@@ -373,7 +373,7 @@
       renderStatus();
       return Promise.resolve();
     }
-    return request('/library/books', {}, 30000).then(function (data) {
+    return request('/library/books', {}, 60000).then(function (data) {
       applyStore(data.store); /* 全库用量随书目一起刷新 */
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
@@ -2419,7 +2419,18 @@
   }
 
   /* ---------------- 新增 / 编辑 ---------------- */
-  function openBookForm(book) {
+  function openBookForm(book, noFetch) {
+    /* 列表接口是轻量数据（不含各页正文）：编辑前先取回完整内容，
+       否则保存时会把正文覆盖成空。取不到就取消编辑，绝不拿空正文回写。 */
+    if (book && book.id && !noFetch && (!book.pages || !book.pages.length)) {
+      request('/library/books/' + encodeURIComponent(book.id), {}, 20000)
+        .then(function (full) {
+          if (!full || !full.pages) { toast('读取书籍正文失败，已取消编辑', 'error'); return; }
+          openBookForm(Object.assign({}, book, { pages: full.pages }), true);
+        })
+        .catch(function () { toast('读取书籍正文失败，已取消编辑', 'error'); });
+      return;
+    }
     state.editing = book || null;
     if (!els.modal) return;
     var b = book || { title: '', author: '', category: '', tags: [], intro: '', accent: '#8a6a4f', pages: [] };

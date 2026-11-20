@@ -9142,10 +9142,17 @@ body.hm-light .desk-hint { border-color: rgba(15, 23, 42, 0.1); background: rgba
 .hm-user-pill:hover { border-color: var(--line-strong); background: var(--surface-2); }
 .hm-user-avatar {
   width: 28px; height: 28px; border-radius: 50%;
-  display: grid; place-items: center;
+  display: grid; place-items: center; overflow: hidden;
   background: linear-gradient(135deg, var(--violet), var(--pink));
   color: #fff; font-size: 12px; font-weight: 700; flex-shrink: 0;
 }
+.hm-user-avatar img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+.hm-profile-avatar-row { display:flex; align-items:center; gap:16px; margin:14px 0 18px; }
+.hm-profile-avatar { width:76px; height:76px; flex:0 0 76px; display:grid; place-items:center; overflow:hidden; border-radius:50%; background:linear-gradient(135deg,var(--violet),var(--pink)); color:#fff; font-size:24px; font-weight:700; }
+.hm-profile-avatar img { width:100%; height:100%; object-fit:cover; }
+.hm-profile-avatar-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.hm-profile-avatar-actions small { flex-basis:100%; color:var(--muted); font-size:11px; line-height:1.5; }
+
 .hm-user-name { font-size: 13px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hm-user-role {
   font-size: 10px; padding: 1px 7px; border-radius: 999px;
@@ -20169,7 +20176,7 @@ body.dv-open .hm-page {
   pointer-events: none;
 }
 
-/* Dimverse immersive view: hide the main sidebar handle completely. */
+/* 次元宇宙为全屏沉浸视图，主站侧栏折叠箭头必须完全隐藏 */
 body.dv-open .hm-rail-toggle {
   display: none !important;
 }
@@ -21376,9 +21383,6 @@ body.hm-light .hm-hk-key { background: #f8fafc; color: #0369a1; border-color: rg
     return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
   } catch (e) { return ''; }
 })();</script>
-<style>
-.hm-user-avatar{overflow:hidden}.hm-user-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}.hm-profile-avatar-row{display:flex;align-items:center;gap:16px;margin:14px 0 18px}.hm-profile-avatar{width:76px;height:76px;flex:0 0 76px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;font-size:24px;font-weight:700}.hm-profile-avatar img{width:100%;height:100%;object-fit:cover}.hm-profile-avatar-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.hm-profile-avatar-actions small{flex-basis:100%;color:#8b94a6;font-size:11px;line-height:1.5}
-</style>
 </head>
 <body data-view="create">
 <script>
@@ -26859,7 +26863,7 @@ body.hm-light .hm-hk-key { background: #f8fafc; color: #0369a1; border-color: rg
     <div class="modal-card">
       <button class="modal-close" id="hmProfileClose" type="button" aria-label="关闭">✕</button>
       <span class="modal-kicker">个人资料</span>
-            <h2>编辑个人资料</h2>
+      <h2>编辑个人资料</h2>
       <div class="hm-profile-avatar-row">
         <span class="hm-profile-avatar" id="hmProfileAvatar" aria-label="当前头像">我</span>
         <div class="hm-profile-avatar-actions">
@@ -27015,7 +27019,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 //# sourceMappingURL=chart.umd.js.map
 
 </script>
-  <script>'use strict';
+  <script>
+'use strict';
 
 /* =============================================================
  * 绘梦 · 后端 API 客户端（前后端分离）
@@ -27536,8 +27541,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
   HM.api = api;
 })();
+
 </script>
-  <script>'use strict';
+  <script>
+'use strict';
 
 /* =============================================================
  * 绘梦 · 登录 / 用户管理 UI
@@ -28221,6 +28228,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     bind();
   }
 })();
+
 </script>
   <script>
 'use strict';
@@ -46799,10 +46807,7 @@ window.HMStoryboard = (function () {
       '.desc{padding:8px;font-size:12px;line-height:1.5;margin:0}.dia{padding:0 8px 6px;font-size:12px;color:#1a4b8c;margin:0}' +
       '.note{padding:0 8px 8px;font-size:11px;color:#777;margin:0}' +
       '@media print{body{margin:12mm}}' +
-      '</style><style>
-.hm-user-avatar{overflow:hidden}.hm-user-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}.hm-profile-avatar-row{display:flex;align-items:center;gap:16px;margin:14px 0 18px}.hm-profile-avatar{width:76px;height:76px;flex:0 0 76px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;font-size:24px;font-weight:700}.hm-profile-avatar img{width:100%;height:100%;object-fit:cover}.hm-profile-avatar-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.hm-profile-avatar-actions small{flex-basis:100%;color:#8b94a6;font-size:11px;line-height:1.5}
-</style>
-</head><body>';
+      '</style></head><body>';
     html += '<h1>' + esc(project.name) + '</h1>';
     var total = project.panels.reduce(function (a, p) { return a + (Number(p.duration) || 0); }, 0);
     html += '<div class="meta">' + project.scenes.length + ' 个场次 · ' + project.panels.length + ' 个镜头 · 总时长 ' + total.toFixed(1) + 's</div>';
@@ -57528,7 +57533,7 @@ window.HMChat = (function () {
       renderShelf();
       renderStatus();
     }
-    return request('/library/books', {}, 30000).then(function (data) {
+    return request('/library/books', {}, 60000).then(function (data) {
       state.mode = 'remote';
       applyStore(data.store); /* 全库用量随书目一起刷新 */
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
@@ -57581,7 +57586,7 @@ window.HMChat = (function () {
       renderStatus();
       return Promise.resolve();
     }
-    return request('/library/books', {}, 30000).then(function (data) {
+    return request('/library/books', {}, 60000).then(function (data) {
       applyStore(data.store); /* 全库用量随书目一起刷新 */
       state.books = (data.items || []).map(function (b, i) { return normalize(b, i); });
       return loadRemoteAux();
@@ -59627,7 +59632,18 @@ window.HMChat = (function () {
   }
 
   /* ---------------- 新增 / 编辑 ---------------- */
-  function openBookForm(book) {
+  function openBookForm(book, noFetch) {
+    /* 列表接口是轻量数据（不含各页正文）：编辑前先取回完整内容，
+       否则保存时会把正文覆盖成空。取不到就取消编辑，绝不拿空正文回写。 */
+    if (book && book.id && !noFetch && (!book.pages || !book.pages.length)) {
+      request('/library/books/' + encodeURIComponent(book.id), {}, 20000)
+        .then(function (full) {
+          if (!full || !full.pages) { toast('读取书籍正文失败，已取消编辑', 'error'); return; }
+          openBookForm(Object.assign({}, book, { pages: full.pages }), true);
+        })
+        .catch(function () { toast('读取书籍正文失败，已取消编辑', 'error'); });
+      return;
+    }
     state.editing = book || null;
     if (!els.modal) return;
     var b = book || { title: '', author: '', category: '', tags: [], intro: '', accent: '#8a6a4f', pages: [] };
@@ -69189,36 +69205,66 @@ window.HMChat = (function () {
     ctx.translate(s.x, s.y + Math.sin(now * 0.004) * (s.phase === 'playing' ? 1.5 : 0));
     ctx.rotate(s.tilt);
     ctx.scale(1 + s.squash, 1 - s.squash * 0.7 + breathe);
-    ctx.shadowColor = 'rgba(0,0,0,.32)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 9;
-    var body = ctx.createRadialGradient(-23, -28, 5, 4, 4, 78);
-    body.addColorStop(0, '#fffef2'); body.addColorStop(0.58, '#f6f2d9');
-    body.addColorStop(0.88, '#e6dfc0'); body.addColorStop(1, '#bdb695');
-    ctx.fillStyle = body; ctx.strokeStyle = 'rgba(105,101,75,.72)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.ellipse(0, 0, 70, 52, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    var wobble = Math.sin(now * 0.004 + s.x * 0.012) * (1.2 + speed * 2.4);
+    traceDangoSlime(ctx, wobble);
+    ctx.shadowColor = 'rgba(15,48,70,.2)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 7;
+    var body = ctx.createRadialGradient(-24, -39, 5, 2, -3, 94);
+    body.addColorStop(0, '#effaff'); body.addColorStop(0.42, '#d7edf7');
+    body.addColorStop(0.78, '#bdddeb'); body.addColorStop(1, '#9fbed0');
+    ctx.fillStyle = body; ctx.fill();
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-    ctx.fillStyle = 'rgba(255,255,255,.56)';
-    ctx.beginPath(); ctx.ellipse(-21, -24, 25, 9, -0.24, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.36)';
-    ctx.beginPath(); ctx.ellipse(-40, -10, 7, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); traceDangoSlime(ctx, wobble); ctx.clip();
+    var softLight = ctx.createRadialGradient(-31, -39, 1, -22, -26, 61);
+    softLight.addColorStop(0, 'rgba(255,255,255,.44)');
+    softLight.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = softLight; ctx.fillRect(-74, -64, 148, 122);
+    var underside = ctx.createLinearGradient(0, 8, 0, 52);
+    underside.addColorStop(0, 'rgba(88,129,152,0)');
+    underside.addColorStop(1, 'rgba(88,129,152,.18)');
+    ctx.fillStyle = underside; ctx.fillRect(-72, 0, 144, 56);
+    ctx.restore();
+    ctx.save(); traceDangoSlime(ctx, wobble);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(100,132,151,.72)'; ctx.lineWidth = 4.2; ctx.stroke();
+    ctx.translate(0, -0.7); ctx.strokeStyle = 'rgba(240,250,255,.42)'; ctx.lineWidth = 1.25; ctx.stroke();
+    ctx.restore();
     var lookX = Math.max(-2, Math.min(2, s.vx / 150));
     var lookY = Math.max(-1.5, Math.min(1.5, s.vy / 240));
     var blinking = now < s.blinkUntil;
-    ctx.strokeStyle = '#292923'; ctx.fillStyle = '#292923'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
-    [-18, 18].forEach(function (eyeX) {
+    ctx.strokeStyle = '#24313b'; ctx.fillStyle = '#24313b'; ctx.lineWidth = 3.7; ctx.lineCap = 'round';
+    [-17, 14].forEach(function (eyeX, i) {
       if (blinking) {
-        ctx.beginPath(); ctx.moveTo(eyeX - 4, -3); ctx.quadraticCurveTo(eyeX, 1, eyeX + 4, -3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(eyeX - 4, -27); ctx.quadraticCurveTo(eyeX, -23, eyeX + 4, -27); ctx.stroke();
       } else {
-        ctx.beginPath(); ctx.ellipse(eyeX + lookX, -5 + lookY, 2.7, 7.2, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(eyeX - 0.6 + lookX, -8 + lookY, 1.1, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#292923';
+        var offset = i ? 2 : -2;
+        ctx.beginPath(); ctx.moveTo(eyeX + lookX, -38 + lookY);
+        ctx.quadraticCurveTo(eyeX + offset + lookX, -32 + lookY, eyeX + 3 + lookX, -25 + lookY); ctx.stroke();
       }
     });
-    ctx.fillStyle = 'rgba(239,135,157,.28)';
-    ctx.beginPath(); ctx.ellipse(-31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.ellipse(31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    var blush = ctx.createRadialGradient(0, 0, 0, 0, 0, 9);
+    blush.addColorStop(0, 'rgba(244,151,173,.45)'); blush.addColorStop(1, 'rgba(244,151,173,0)');
+    ctx.fillStyle = blush;
+    ctx.beginPath(); ctx.ellipse(-34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.ellipse(34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(70,105,126,.68)'; ctx.lineWidth = 1.7;
+    ctx.beginPath(); ctx.arc(0, -2, 4, 0.2, Math.PI - 0.2); ctx.stroke();
     if (speed > 0.12) {
-      ctx.strokeStyle = 'rgba(133,89,103,.8)'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(0, 7, 4, 0.2, Math.PI - 0.2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(100,132,151,.48)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, 3, 4, 0.15, Math.PI - 0.15); ctx.stroke();
     }
     ctx.restore();
+  }
+
+  function traceDangoSlime(ctx, wobble) {
+    ctx.beginPath();
+    ctx.moveTo(-62, 39);
+    ctx.bezierCurveTo(-69, 33, -68, 15, -65, -2);
+    ctx.bezierCurveTo(-62, -27, -48, -48, -29, -53 - wobble * 0.35);
+    ctx.bezierCurveTo(-12, -59 - wobble, 11, -59 + wobble * 0.3, 29, -51);
+    ctx.bezierCurveTo(50, -43, 64, -23, 67, -1);
+    ctx.bezierCurveTo(70, 15, 69, 32, 62, 40);
+    ctx.bezierCurveTo(53, 49, 29, 48 + wobble * 0.15, 10, 48);
+    ctx.bezierCurveTo(-14, 50, -48, 50 - wobble * 0.12, -62, 39);
+    ctx.closePath();
   }
 
   function drawGameCrystal(ctx, crystal, now) {
@@ -69413,6 +69459,7 @@ window.HMChat = (function () {
 
   window.HMDimverse = { enter: enterDimverse, leave: leaveDimverse };
 })();
+
 
 </script>
   <script>

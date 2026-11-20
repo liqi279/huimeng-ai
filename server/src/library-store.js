@@ -406,7 +406,7 @@ function normalizeSeed(b, i) {
 }
 
 /* ---------- MySQL 查询 ---------- */
-async function mysqlList(q, category) {
+async function mysqlList(q, category, opts) {
   const params = [];
   let sql = 'SELECT * FROM books';
   const where = [];
@@ -424,7 +424,10 @@ async function mysqlList(q, category) {
   const [rows] = await pool.query(sql, params);
   const ids = rows.map((r) => r.id);
   let pages = [];
-  if (ids.length) {
+  /* 列表默认只返回书目元数据：1001 本的正文一次性取出要 30 秒以上，
+     响应体也过大，前端 30 秒超时后只能退回本地缓存/种子库（看起来像「少了书」）。
+     正文由阅读器打开单本时经 /library/books/:id 拉取。 */
+  if (ids.length && !(opts && opts.lite)) {
     const [pr] = await pool.query(
       'SELECT book_id, page_no, title, content FROM book_pages WHERE book_id IN (?) ORDER BY page_no ASC',
       [ids]
@@ -614,9 +617,9 @@ const store = {
   init,
   userKey,
 
-  async list(q, category) {
+  async list(q, category, opts) {
     await init();
-    return info.mode === 'mysql' ? mysqlList(q, category) : fileList(q, category);
+    return info.mode === 'mysql' ? mysqlList(q, category, opts) : fileList(q, category);
   },
 
   async get(id) {
@@ -665,7 +668,7 @@ const store = {
   async suggest(q) {
     await init();
     const needle = String(q || '').trim();
-    const books = await store.list('', '全部');
+    const books = await store.list('', '全部', { lite: true });
     if (!needle) {
       return { books: books.slice(0, 6).map(lite), terms: [] };
     }
@@ -695,7 +698,7 @@ const store = {
       const favs = readJSON(FAV_FILE, {});
       ids = Object.keys(favs[u] || {}).sort((a, b) => favs[u][b] - favs[u][a]);
     }
-    const books = (await store.list('', '全部')).filter((b) => ids.includes(b.id));
+    const books = (await store.list('', '全部', { lite: true })).filter((b) => ids.includes(b.id));
     return books;
   },
 
@@ -758,7 +761,7 @@ const store = {
         openedAt: Number(hist[u][id].openedAt || 0),
       })).sort((a, b) => b.openedAt - a.openedAt).slice(0, 40);
     }
-    const books = await store.list('', '全部');
+    const books = await store.list('', '全部', { lite: true });
     const byId = {};
     books.forEach((b) => { byId[b.id] = b; });
     return rows.filter((r) => byId[r.bookId]).map((r) => ({
@@ -809,7 +812,7 @@ const store = {
 
   async stats() {
     await init();
-    const books = await store.list('', '全部');
+    const books = await store.list('', '全部', { lite: true });
     return {
       mode: info.mode,
       mysqlError: info.mysqlError,

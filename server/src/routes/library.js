@@ -67,7 +67,9 @@ function retargetBook(item, origin) {
 router.get('/library/books', authOptional, wrap(async (req, res) => {
   const q = String(req.query.q || '');
   const category = String(req.query.category || '');
-  const items = await library.list(q, category);
+  /* 默认轻量：只返回书目元数据（不含各页正文）。需要正文时传 ?full=1。 */
+  const lite = String(req.query.full || '') !== '1';
+  const items = await library.list(q, category, { lite });
   const origin = requestOrigin(req);
   const mapped = items.map((item) => retargetBook(item, origin));
   /* store 里追加真实占用：COS library/ 下对象 Content-Length 之和（90s 缓存，
