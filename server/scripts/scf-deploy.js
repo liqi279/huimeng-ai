@@ -1,0 +1,705 @@
+#!/usr/bin/env node
+'use strict';
+
+/* =============================================================
+ * 一键发布 / 回滚（含发布前快照）
+ * -------------------------------------------------------------
+ * 正常发布（快照 → 打包 → 上传 → 更新函数 → 自检）：
+ *   node server/scripts/scf-deploy.js
+ *   node server/scripts/scf-deploy.js --skip-pack     # 复用 dist 里已有 zip
+ *   node server/scripts/scf-deploy.js --check-only    # 只跑五步自检
+ *   node server/scripts/scf-deploy.js --prune-only     # 只演练快照清理（只打印不删）
+ *   node server/scripts/scf-deploy.js --prune-dry-run  # 正常发布，但清理只打印不删
+ *
+ * 回滚（默认最近一次快照；也可指定 key 或文件名）：
+ *   node server/scripts/scf-deploy.js --rollback
+ *   node server/scripts/scf-deploy.js --rollback scf/releases/20261111-011500.zip
+ *
+ * 快照位置：
+ *   代码包  COS  scf/releases/<yyyyMMdd-HHmmss>.zip
+ *   数据库  本机 <workspace>/backup/<yyyyMMdd>/db/<库名>.sql
+ *
+ * 密钥只从环境变量读，不打印、不落盘：
+ *   COS_SECRET_ID/COS_SECRET_KEY（或 S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY）
+ * 数据库连接串从函数环境变量 MYSQL_URL 读取（内存中使用，不输出）。
+ * ============================================================= */
+
+const fs = require('fs');
+const path = require('path');
+const https = require('https');
+const crypto = require('crypto');
+const { spawnSync } = require('child_process');
+
+const SERVER_ROOT = path.resolve(__dirname, '..');
+const DIST = path.join(SERVER_ROOT, 'dist');
+const ZIP = path.join(DIST, 'huimeng-scf.zip');
+const WORKSPACE = path.resolve(SERVER_ROOT, '..', '..');
+const BACKUP_ROOT = process.env.BACKUP_ROOT || path.join(WORKSPACE, 'backup');
+
+const CFG = {
+  bucket: process.env.COS_BUCKET || 'huimeng-1527498271',
+  region: process.env.COS_REGION || 'ap-guangzhou',
+  objectKey: process.env.SCF_CODE_KEY || 'scf/huimeng-scf.zip',
+  releasePrefix: 'scf/releases/',
+  keepReleases: (function () {
+    const n = Number(process.env.SCF_KEEP_RELEASES || 3);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 3;
+  })(),
+  secretId: process.env.COS_SECRET_ID || process.env.S3_ACCESS_KEY_ID || '',
+  secretKey: process.env.COS_SECRET_KEY || process.env.S3_SECRET_ACCESS_KEY || '',
+  namespace: process.env.SCF_NAMESPACE || 'default',
+  functionName: process.env.SCF_FUNCTION || 'huimeng-api',
+  apiBase: process.env.API_BASE || 'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com',
+  frontendBase: process.env.FRONTEND_BASE || 'https://liqi279.github.io',
+};
+
+const args = process.argv.slice(2);
+const skipPack = args.includes('--skip-pack');
+const checkOnly = args.includes('--check-only');
+const pruneDry = args.includes('--prune-dry-run');
+const pruneOnly = args.includes('--prune-only');
+const rollbackIdx = args.indexOf('--rollback');
+const isRollback = rollbackIdx >= 0;
+const rollbackTarget = isRollback ? (args[rollbackIdx + 1] && !args[rollbackIdx + 1].startsWith('-') ? args[rollbackIdx + 1] : '') : '';
+
+function log(tag, msg) { console.log('[' + tag + '] ' + msg); }
+function bytes(n) { return Number(n).toLocaleString('en-US') + ' B'; }
+function md5(buf) { return crypto.createHash('md5').update(buf).digest('hex'); }
+function sha256hex(buf) { return crypto.createHash('sha256').update(buf).digest('hex'); }
+function hmac(key, data) { return crypto.createHmac('sha256', key).update(data).digest(); }
+function stamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+}
+function day() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
+}
+
+function cosClient() {
+  const COS = require('cos-nodejs-sdk-v5');
+  return new COS({ SecretId: CFG.secretId, SecretKey: CFG.secretKey });
+}
+
+/* ---------- 1. 打包 ---------- */
+function pack() {
+  if (skipPack && fs.existsSync(ZIP)) {
+    log('pack', '跳过打包，复用 ' + ZIP);
+    return;
+  }
+  const script = path.join(__dirname, 'package-scf.ps1');
+  log('pack', '执行 ' + path.basename(script));
+  const env = Object.assign({}, process.env, { PATH: path.dirname(process.execPath) + ';' + (process.env.PATH || '') });
+  const r = spawnSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script], {
+    cwd: SERVER_ROOT, encoding: 'utf8', timeout: 10 * 60 * 1000, env,
+  });
+  if (r.stdout) process.stdout.write(r.stdout);
+  if (r.status !== 0) throw new Error('打包失败 exit=' + r.status + ' ' + (r.stderr || '').slice(0, 400));
+  if (!fs.existsSync(ZIP)) throw new Error('打包后未找到 ' + ZIP);
+}
+
+/* ---------- 2. 上传新包 ---------- */
+async function uploadCode() {
+  const cos = cosClient();
+  const size = fs.statSync(ZIP).size;
+  const t0 = Date.now();
+  await new Promise((resolve, reject) => {
+    cos.putObject({
+      Bucket: CFG.bucket, Region: CFG.region, Key: CFG.objectKey,
+      Body: fs.createReadStream(ZIP), ContentLength: size, ContentType: 'application/zip',
+    }, (err, data) => (err ? reject(err) : resolve(data)));
+  });
+  const ms = Date.now() - t0;
+  const head = await new Promise((resolve, reject) => {
+    cos.headObject({ Bucket: CFG.bucket, Region: CFG.region, Key: CFG.objectKey }, (err, data) => {
+      if (err) return reject(err);
+      const h = data.headers || data;
+      resolve({ size: Number(h['content-length']), etag: String(h.etag || h.ETag || '').replace(/"/g, '') });
+    });
+  });
+  const local = fs.readFileSync(ZIP);
+  const ok = head.size === local.length && head.etag === md5(local);
+  log('cos', '上传 ' + CFG.objectKey + ' ' + bytes(head.size) + ' etag=' + head.etag + ' ms=' + ms + ' 校验=' + (ok ? 'OK' : 'FAIL'));
+  if (!ok) throw new Error('COS 回读校验失败');
+  return { ms, size: head.size, etag: head.etag };
+}
+
+/* ---------- 3. 发布前快照：代码包 ---------- */
+async function snapshotCode() {
+  const cos = cosClient();
+  const key = CFG.releasePrefix + stamp() + '.zip';
+  const t0 = Date.now();
+  await new Promise((resolve, reject) => {
+    cos.putObjectCopy({
+      Bucket: CFG.bucket, Region: CFG.region, Key: key,
+      CopySource: CFG.bucket + '.cos.' + CFG.region + '.myqcloud.com/' + CFG.objectKey,
+    }, (err, data) => (err ? reject(err) : resolve(data)));
+  });
+  const head = await new Promise((resolve, reject) => {
+    cos.headObject({ Bucket: CFG.bucket, Region: CFG.region, Key: key }, (err, data) => {
+      if (err) return reject(err);
+      const h = data.headers || data;
+      resolve({ size: Number(h['content-length']), etag: String(h.etag || h.ETag || '').replace(/"/g, '') });
+    });
+  });
+  log('snapshot', '代码包 → ' + key + ' ' + bytes(head.size) + ' etag=' + head.etag + ' ms=' + (Date.now() - t0));
+  return { key, size: head.size, etag: head.etag };
+}
+
+async function listReleases() {
+  const cos = cosClient();
+  const data = await new Promise((resolve, reject) => {
+    cos.getBucket({ Bucket: CFG.bucket, Region: CFG.region, Prefix: CFG.releasePrefix, MaxKeys: 1000 }, (err, d) => (err ? reject(err) : resolve(d)));
+  });
+  return (data.Contents || [])
+    .filter((o) => /\.zip$/i.test(o.Key))
+    .map((o) => ({ key: o.Key, size: Number(o.Size), mtime: o.LastModified, etag: String(o.ETag || '').replace(/"/g, '') }))
+    .sort((a, b) => String(b.key).localeCompare(String(a.key)));
+}
+
+/* ---------- 3.5 清理历史快照：只保留最近 3 个（按文件名时间戳） ----------
+   规则：本次刚生成的快照 + 时间戳最新的其余包，凑够 keepCount；
+        时间戳解析失败的一律排到末尾，绝不会因为解析异常被当成“最新”而误删当前包。
+        删除失败只告警，不中断部署。 */
+function tsOf(key) {
+  const m = /(\d{8}-\d{6})\.zip$/i.exec(String(key));
+  return m ? m[1] : '';
+}
+
+async function pruneReleases(keepKey, keepCount, dryRun) {
+  let list;
+  try {
+    list = await listReleases();
+  } catch (err) {
+    log('prune', '列出快照失败，跳过清理（不影响部署）：' + err.message);
+    return;
+  }
+  const sorted = list.slice().sort((a, b) => {
+    const ta = tsOf(a.key);
+    const tb = tsOf(b.key);
+    if (ta && tb) return tb.localeCompare(ta);
+    if (ta) return -1;
+    if (tb) return 1;
+    return String(b.key).localeCompare(String(a.key));
+  });
+  const keep = [];
+  if (keepKey) keep.push(keepKey);
+  for (const o of sorted) {
+    if (keep.length >= keepCount) break;
+    if (keep.indexOf(o.key) >= 0) continue;
+    keep.push(o.key);
+  }
+  const drop = sorted.filter((o) => keep.indexOf(o.key) < 0);
+  log('prune', '保留 ' + keep.length + ' 个：' + (keep.length ? keep.join(', ') : '(无)'));
+  log('prune', (dryRun ? '待删除 ' : '删除 ') + drop.length + ' 个：' +
+    (drop.length ? drop.map((o) => o.key + '(' + bytes(o.size) + ')').join(', ') : '(无)'));
+  if (dryRun || !drop.length) return;
+  const cos = cosClient();
+  let failed = 0;
+  for (const o of drop) {
+    try {
+      await new Promise((resolve, reject) => {
+        cos.deleteObject({ Bucket: CFG.bucket, Region: CFG.region, Key: o.key }, (err) => (err ? reject(err) : resolve()));
+      });
+    } catch (err) {
+      failed += 1;
+      log('prune', '删除失败（忽略，不中断部署）' + o.key + '：' + err.message);
+    }
+  }
+  log('prune', '清理完成 删除=' + (drop.length - failed) + ' 失败=' + failed);
+}
+
+/* ---------- 4. TC3 调 SCF ---------- */
+function tc3Request(action, bodyObj) {
+  const payload = JSON.stringify(bodyObj);
+  const host = 'scf.tencentcloudapi.com';
+  const timestamp = Math.floor(Date.now() / 1000);
+  const date = new Date(timestamp * 1000).toISOString().slice(0, 10);
+  const contentType = 'application/json; charset=utf-8';
+  const signedHeaders = 'content-type;host;x-tc-action';
+  const canonicalHeaders = 'content-type:' + contentType + '\nhost:' + host + '\nx-tc-action:' + action.toLowerCase() + '\n';
+  const canonicalRequest = ['POST', '/', '', canonicalHeaders, signedHeaders, sha256hex(Buffer.from(payload))].join('\n');
+  const scope = date + '/scf/tc3_request';
+  const stringToSign = ['TC3-HMAC-SHA256', String(timestamp), scope, sha256hex(Buffer.from(canonicalRequest))].join('\n');
+  const kSigning = hmac(hmac(hmac('TC3' + CFG.secretKey, date), 'scf'), 'tc3_request');
+  const signature = crypto.createHmac('sha256', kSigning).update(stringToSign).digest('hex');
+  const headers = {
+    Authorization: 'TC3-HMAC-SHA256 Credential=' + CFG.secretId + '/' + scope +
+      ', SignedHeaders=' + signedHeaders + ', Signature=' + signature,
+    'Content-Type': contentType, Host: host, 'X-TC-Action': action,
+    'X-TC-Timestamp': String(timestamp), 'X-TC-Version': '2018-04-16', 'X-TC-Region': CFG.region,
+  };
+  return new Promise((resolve, reject) => {
+    const req = https.request({ method: 'POST', hostname: host, path: '/', headers, timeout: 60000 }, (res) => {
+      let text = '';
+      res.on('data', (d) => { text += d; });
+      res.on('end', () => {
+        let json = null;
+        try { json = JSON.parse(text); } catch (e) { /* ignore */ }
+        const resp = (json && json.Response) || {};
+        if (resp.Error) return reject(Object.assign(new Error(resp.Error.Code + ': ' + resp.Error.Message), { code: resp.Error.Code }));
+        resolve(resp);
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('scf api timeout')));
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function getFunction() {
+  const r = await tc3Request('GetFunction', { FunctionName: CFG.functionName, Namespace: CFG.namespace });
+  const env = {};
+  for (const v of (r.Environment && r.Environment.Variables) || []) env[v.Key] = v.Value;
+  return {
+    modTime: r.ModTime || '',
+    status: r.Status || '',
+    env,
+    timeout: Number(r.Timeout || 0),
+    memory: Number(r.MemorySize || 0),
+  };
+}
+
+/* 生图是同步长任务：函数超时必须显著大于上游 120s 超时 + 一次重试，
+   否则请求会在函数层被提前掐断（线上 28~31s 的「上游网络请求失败」就是这个）。
+   发布时统一抬到 300s，避免只在控制台手改、下次发布又被覆盖。 */
+async function ensureRuntimeLimits(current) {
+  const want = Number(process.env.SCF_TIMEOUT || 300);
+  const now = current && current.timeout ? current.timeout : 0;
+  if (now >= want) {
+    log('scf', '函数超时已是 ' + now + 's（≥' + want + 's），无需调整');
+    return;
+  }
+  log('scf', 'UpdateFunctionConfiguration Timeout ' + (now || '未知') + 's → ' + want + 's');
+  await tc3Request('UpdateFunctionConfiguration', {
+    FunctionName: CFG.functionName,
+    Namespace: CFG.namespace,
+    Timeout: want,
+  });
+  log('scf', '函数超时已更新为 ' + want + 's');
+}
+
+/* 函数的腾讯云凭据必须与发布方一致。
+   线上事故：函数环境里的 COS_SECRET_ID 是已经轮换掉的旧值，表现是
+   AuthFailure.SecretIdNotFound —— 于是「异步触发自己」每次都失败（退化成
+   同步跑 30~60s 的长请求），图片回写 COS 也会失败。发布时顺手对齐，
+   避免只在控制台手改、下次又漂移。只写不读，日志不打印任何密钥。 */
+async function ensureFunctionCredentials(current) {
+  const wantId = process.env.COS_SECRET_ID || process.env.S3_ACCESS_KEY_ID || '';
+  const wantKey = process.env.COS_SECRET_KEY || process.env.S3_SECRET_ACCESS_KEY || '';
+  if (!wantId || !wantKey) {
+    log('scf', '发布方未提供 COS 密钥，跳过函数凭据同步');
+    return;
+  }
+  const env = (current && current.env) || {};
+  const idOk = String(env.COS_SECRET_ID || '') === wantId;
+  const keyOk = String(env.COS_SECRET_KEY || '') === wantKey;
+  if (idOk && keyOk) {
+    log('scf', '函数凭据与发布密钥一致，无需调整');
+    return;
+  }
+  log('scf', '函数凭据已过期/不一致（SecretId ' + (idOk ? '一致' : '不一致') + '，SecretKey ' + (keyOk ? '一致' : '不一致') + '）→ 同步');
+  const merged = Object.assign({}, env, { COS_SECRET_ID: wantId, COS_SECRET_KEY: wantKey });
+  await tc3Request('UpdateFunctionConfiguration', {
+    FunctionName: CFG.functionName,
+    Namespace: CFG.namespace,
+    Environment: { Variables: Object.keys(merged).map((k) => ({ Key: k, Value: String(merged[k]) })) },
+  });
+  log('scf', '函数凭据已同步（共 ' + Object.keys(merged).length + ' 个环境变量，值不打印）');
+  /* 只打指纹：和线上 /api/diag/scf 的 credFingerprint 对齐即可确认是否真的写进去了 */
+  const crypto = require('crypto');
+  const fp = (v) => crypto.createHash('sha256').update(String(v || ''), 'utf8').digest('hex').slice(0, 8) + '/len' + String(v || '').length;
+  log('scf', '凭据指纹 ID=' + fp(wantId) + ' KEY=' + fp(wantKey));
+}
+
+const ZELING_MODEL_KEY_NAMES = [
+  'ZELING_KEY_MINIMAX_H3_768P',
+  'ZELING_KEY_VIDU_Q4_NOPEAK',
+  'ZELING_KEY_SD_2_5_FLASH',
+  'ZELING_KEY_MH_SEEDANCE_2_0_MINI',
+  'ZELING_KEY_MH_SEEDANCE_2_0_FAST',
+];
+
+/* 只把非空 GitHub Actions Secrets 同步进 SCF；未提供的 Key 保留 SCF 现值。
+   日志仅记录变量名与数量，绝不输出密钥内容。 */
+async function ensureZelingModelKeys(current) {
+  const provided = {};
+  for (const name of ZELING_MODEL_KEY_NAMES) {
+    const value = String(process.env[name] || '').trim();
+    if (value) provided[name] = value;
+  }
+  const names = Object.keys(provided);
+  if (!names.length) {
+    log('zeling', '未从 GitHub Secrets 提供模型 Key；保留 SCF 当前环境变量');
+    return;
+  }
+  const env = Object.assign({}, (current && current.env) || {});
+  const changed = names.filter((name) => String(env[name] || '') !== provided[name]);
+  if (!changed.length) {
+    log('zeling', '5 个模型 Key 的已提供项与 SCF 一致，无需调整');
+    return;
+  }
+  const merged = Object.assign({}, env, provided);
+  await tc3Request('UpdateFunctionConfiguration', {
+    FunctionName: CFG.functionName,
+    Namespace: CFG.namespace,
+    Environment: { Variables: Object.keys(merged).map((k) => ({ Key: k, Value: String(merged[k]) })) },
+  });
+  log('zeling', '已安全同步模型 Key 环境变量：' + changed.join(', ') + '（值不打印）');
+}
+
+async function updateCode(objectKey) {
+  const t0 = Date.now();
+  log('scf', 'UpdateFunctionCode → ' + CFG.bucket + '/' + objectKey);
+  const resp = await tc3Request('UpdateFunctionCode', {
+    FunctionName: CFG.functionName,
+    Namespace: CFG.namespace,
+    CosBucketName: CFG.bucket,
+    CosObjectName: '/' + objectKey.replace(/^\/+/, ''),
+    CosBucketRegion: CFG.region,
+  });
+  log('scf', 'UpdateFunctionCode OK ms=' + (Date.now() - t0) + ' RequestId=' + (resp.RequestId || ''));
+  return resp;
+}
+
+/* 改完配置后函数会进入 Updating，此时 UpdateFunctionCode 会被拒，
+   必须等回到 Active 再切代码；仍被拒则退避重试。 */
+async function waitActive(maxMs) {
+  const deadline = Date.now() + (maxMs || 120000);
+  while (Date.now() < deadline) {
+    try {
+      const g = await getFunction();
+      if (String(g.status).toLowerCase() !== 'updating') return g;
+      log('scf', '函数 Updating，等待中…');
+    } catch (err) {
+      log('scf', 'GetFunction 失败：' + err.message);
+    }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  return null;
+}
+
+async function updateCodeWithRetry(objectKey) {
+  for (let i = 0; i < 6; i += 1) {
+    try {
+      return await updateCode(objectKey);
+    } catch (err) {
+      const msg = String((err && err.message) || '');
+      if (!/Updating/i.test(msg) || i === 5) throw err;
+      log('scf', '函数仍在 Updating，' + (i + 1) + '/5 次等待后重试');
+      await waitActive(120000);
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+  throw new Error('updateCode 重试耗尽');
+}
+
+async function waitUpdated(beforeModTime, maxMs) {
+  const deadline = Date.now() + (maxMs || 90000);
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 3000));
+    try {
+      const g = await getFunction();
+      log('scf', 'poll ModTime=' + g.modTime + ' status=' + g.status);
+      if (g.modTime && g.modTime !== beforeModTime) return g;
+    } catch (err) {
+      log('scf', 'poll 失败 ' + err.message);
+    }
+  }
+  log('scf', '轮询超时');
+  return null;
+}
+
+/* ---------- 5. 数据库快照 ---------- */
+async function snapshotDb(env) {
+  const url = String(env.MYSQL_URL || '');
+  if (!url) {
+    log('db', '函数环境变量里没有 MYSQL_URL，跳过数据库快照');
+    return null;
+  }
+  let mysql;
+  try {
+    mysql = require('mysql2/promise');
+  } catch (e) {
+    log('db', '本地找不到 mysql2，跳过数据库快照');
+    return null;
+  }
+  const u = new URL(url);
+  const baseDb = decodeURIComponent(u.pathname.replace(/^\//, '')) || 'huimeng_users';
+  const dbs = Array.from(new Set([baseDb, 'huimeng_users', 'huimeng_library']));
+  const dir = path.join(BACKUP_ROOT, day(), 'db');
+  fs.mkdirSync(dir, { recursive: true });
+
+  const conn = await mysql.createConnection({
+    host: u.hostname,
+    port: Number(u.port || 3306),
+    user: decodeURIComponent(u.username),
+    password: decodeURIComponent(u.password),
+    multipleStatements: false,
+    ssl: /127\.0\.0\.1|localhost/.test(u.hostname) ? undefined : { rejectUnauthorized: false },
+  });
+
+  const out = [];
+  let tables = 0;
+  let rows = 0;
+  for (const db of dbs) {
+    let list = [];
+    try {
+      const [r] = await conn.query('SHOW TABLES FROM `' + db + '`');
+      list = r.map((x) => Object.values(x)[0]);
+    } catch (e) {
+      continue;
+    }
+    if (!list.length) continue;
+    out.push('-- database: ' + db + '  tables: ' + list.length);
+    out.push('CREATE DATABASE IF NOT EXISTS `' + db + '` DEFAULT CHARACTER SET utf8mb4;');
+    out.push('USE `' + db + '`;');
+    for (const t of list) {
+      const [cr] = await conn.query('SHOW CREATE TABLE `' + db + '`.`' + t + '`');
+      out.push('\n-- table: ' + t);
+      out.push(cr[0]['Create Table'] + ';');
+      const [rowsArr] = await conn.query('SELECT * FROM `' + db + '`.`' + t + '`');
+      for (const row of rowsArr) {
+        const cols = Object.keys(row).map((c) => '`' + c + '`').join(', ');
+        const vals = Object.values(row).map((v) => (v === null ? 'NULL' : conn.escape(v))).join(', ');
+        out.push('INSERT INTO `' + t + '` (' + cols + ') VALUES (' + vals + ');');
+      }
+      tables += 1;
+      rows += rowsArr.length;
+    }
+  }
+  await conn.end();
+  const file = path.join(dir, 'snapshot-' + stamp() + '.sql');
+  fs.writeFileSync(file, out.join('\n') + '\n', 'utf8');
+  log('db', '数据库快照 → ' + file + '（' + tables + ' 表 / ' + rows + ' 行 / ' + bytes(fs.statSync(file).size) + '）');
+  return { file, tables, rows };
+}
+
+/* ---------- 6. HTTP 自检 ---------- */
+function httpGet(url, headers) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const req = https.request({ method: 'GET', hostname: u.hostname, path: u.pathname + u.search, headers: headers || {}, timeout: 60000 }, (res) => {
+      let text = '';
+      res.on('data', (d) => { if (text.length < 2000000) text += d.toString('utf8'); });
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, text }));
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+async function selfCheck() {
+  const results = [];
+  const h = await httpGet(CFG.apiBase + '/api/health');
+  let hj = {};
+  try { hj = JSON.parse(h.text); } catch (e) { /* ignore */ }
+  const ud = hj.userData || {};
+  results.push(['health', h.status, 'objectLabel=' + ud.objectLabel + ' endpoint=' + ud.endpoint + ' storage=' + hj.storage + ' persistent=' + hj.persistent,
+    h.status === 200 && ud.objectLabel === '腾讯云 COS' && /cos\.ap-/.test(String(ud.endpoint)) && hj.storage === 'mysql']);
+
+  const b = await httpGet(CFG.apiBase + '/api/library/books', { Origin: 'https://liqi279.github.io' });
+  let bj = {};
+  try { bj = JSON.parse(b.text); } catch (e) { /* ignore */ }
+  const items = bj.items || [];
+  /* 书目总数随内容增长：默认只要求非空；需要严格卡数量时传 EXPECT_BOOKS */
+  const expectBooks = Number(process.env.EXPECT_BOOKS || 0);
+  const countOk = expectBooks > 0 ? items.length === expectBooks : items.length > 0;
+  results.push(['books', b.status, 'items=' + items.length + (expectBooks ? '/expect=' + expectBooks : '') + ' mode=' + (bj.store && bj.store.mode) + ' mysqlError=' + (bj.store && bj.store.mysqlError),
+    b.status === 200 && countOk && bj.store && bj.store.mode === 'mysql']);
+
+  if (items.length) {
+    const book = items[0];
+    const host = new URL(book.pdfUrl).hostname;
+    results.push(['pdfUrl host', 200, host, host.indexOf('onrender.com') < 0]);
+
+    const p = await httpGet(CFG.apiBase + '/api/library/books/' + encodeURIComponent(book.id) + '/pdf-url');
+    let pj = {};
+    try { pj = JSON.parse(p.text); } catch (e) { /* ignore */ }
+    const signed = pj.url || pj.pdfUrl || '';
+    if (signed) {
+      const g = await httpGet(signed, { Range: 'bytes=0-1023' });
+      results.push(['pdf Range', g.status, 'type=' + g.headers['content-type'] + ' range=' + g.headers['content-range'],
+        g.status === 206 && /application\/pdf/.test(String(g.headers['content-type']))]);
+    }
+    /* 封面现在直接是对象存储签名直链：原样请求即可（带 Origin 验证 CORS）。
+       只有历史数据里仍是 /api/library/file/... 相对地址时才改写到当前后端。 */
+    const rawCover = String(book.coverUrl || '');
+    const coverUrl = /^https?:\/\//i.test(rawCover)
+      ? rawCover
+      : CFG.apiBase + rawCover;
+    if (coverUrl) {
+      const c = await httpGet(coverUrl, { Origin: 'https://liqi279.github.io' });
+      const ct = String(c.headers['content-type'] || '');
+      results.push(['cover', c.status, 'type=' + ct + ' acao=' + String(c.headers['access-control-allow-origin'] || '(none)'),
+        (c.status === 200 || c.status === 206) && /image\//.test(ct)]);
+    }
+  }
+
+  console.log('\n=== 五步自检 ===');
+  let allOk = true;
+  for (const [name, status, detail, ok] of results) {
+    if (!ok) allOk = false;
+    console.log('  ' + (ok ? 'PASS' : 'FAIL') + '  ' + name + '  status=' + status + '  ' + detail);
+  }
+  return allOk;
+}
+
+/* ---------- 则灵模型密钥状态探测（只输出配置状态，不读取/打印密钥） ---------- */
+async function zelingModelProbe() {
+  try {
+    const r = await httpGet(CFG.apiBase + '/api/media-models');
+    if (r.status !== 200) {
+      log('zeling', '模型目录探测 HTTP ' + r.status + '（不影响部署自检）');
+      return;
+    }
+    const payload = JSON.parse(r.text || '{}');
+    const models = Array.isArray(payload.video) ? payload.video : [];
+    if (!models.length) {
+      log('zeling', '模型目录接口可达，但没有返回视频模型列表');
+      return;
+    }
+    log('zeling', '视频模型 Key 状态：' + models.map((m) => String(m.id) + '=' + (m.configured ? 'configured' : 'missing')).join(', '));
+  } catch (err) {
+    log('zeling', '模型 Key 状态探测失败：' + err.message + '（不影响部署）');
+  }
+}
+
+/* ---------- 7. 附加：前端线上指纹（只记录，无本地基线时不做“是否一致”判断） ---------- */
+async function frontendProbe() {
+  try {
+    const r = await httpGet(CFG.frontendBase + '/');
+    const sha = sha256hex(Buffer.from(r.text, 'utf8'));
+    log('frontend', CFG.frontendBase + ' status=' + r.status + ' sha256=' + sha + ' bytes=' + Buffer.byteLength(r.text));
+    log('frontend', '仅记录线上指纹：本工作区没有 frontend/ 源码快照，无法与本地构建比对，因此不作“一致/不一致”判断');
+  } catch (err) {
+    log('frontend', '探测失败（不影响发布）：' + err.message);
+  }
+}
+
+/* ---------- 主流程 ---------- */
+async function doRollback() {
+  const t0 = Date.now();
+  let key = rollbackTarget;
+  if (!key) {
+    const list = await listReleases();
+    if (!list.length) throw new Error('没有可用快照（' + CFG.releasePrefix + ' 下无 .zip）');
+    key = list[0].key;
+    log('rollback', '未指定 key，使用最近快照 ' + key + ' ' + bytes(list[0].size) + ' mtime=' + list[0].mtime);
+  }
+  if (!/^scf\/releases\//.test(key)) key = key.replace(/^\/+/, '');
+  const before = await getFunction();
+  log('rollback', '当前 ModTime=' + before.modTime);
+  await ensureRuntimeLimits(before);
+  await ensureFunctionCredentials(before);
+  await waitActive(120000);
+  await updateCodeWithRetry(key);
+  const after = await waitUpdated(before.modTime, 120000);
+  const ok = await selfCheck();
+  console.log('\n[rollback] 目标快照=' + key + ' 耗时=' + Math.round((Date.now() - t0) / 1000) + 's 结果=' + (ok ? 'SUCCESS' : 'SELF-CHECK FAILED'));
+  if (!ok) console.log('[rollback] 如自检未过，可继续退更早快照：node server/scripts/scf-deploy.js --rollback <key>');
+  process.exit(ok ? 0 : 2);
+}
+
+/* 任何一步都不允许无限期挂着：TiDB 抖一下就会让整条发布流水线卡死
+   （实测卡满 10 分钟被迫手动取消）。超时按「该步失败」处理，不影响后续发布。 */
+function withTimeout(promise, timeoutMs, label) {
+  let timer = null;
+  const guard = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(label + ' 超过 ' + Math.round(timeoutMs / 1000) + 's 未完成')), timeoutMs);
+  });
+  return Promise.race([promise, guard]).finally(() => clearTimeout(timer));
+}
+
+async function doDeploy() {
+  const t0 = Date.now();
+  log('start', '发布开始（快照 → 打包 → 上传 → 更新函数 → 自检）');
+
+  /* 1) 快照：先拿函数状态（含 MYSQL_URL），再备份代码包与数据库 */
+  let before = null;
+  try {
+    before = await getFunction();
+  } catch (err) {
+    log('scf', 'GetFunction 失败：' + err.message);
+  }
+  const snap = await snapshotCode();
+  try {
+    await withTimeout(snapshotDb((before && before.env) || {}), 120000, '数据库快照');
+  } catch (err) {
+    log('db', '数据库快照失败：' + err.message + '（继续发布，但本次无 DB 备份）');
+  }
+
+  const list = await listReleases();
+  log('snapshot', '当前快照 ' + list.length + ' 份，保留策略 ' + CFG.keepReleases + ' 份（上传成功后自动清理）');
+
+  /* 2) 打包 + 上传 */
+  pack();
+  const local = fs.readFileSync(ZIP);
+  log('pack', bytes(local.length) + ' md5=' + md5(local));
+  await uploadCode();
+
+  /* 3) 上传成功后清理历史快照（只保留最近 3 个，保护本次快照） */
+  await pruneReleases(snap.key, CFG.keepReleases, pruneDry);
+
+  /* 3) 更新函数 + 轮询 */
+  try {
+    await ensureRuntimeLimits(before);
+    await ensureFunctionCredentials(before);
+    await ensureZelingModelKeys(await getFunction());
+    await waitActive(120000);
+    await updateCodeWithRetry(CFG.objectKey);
+    await waitUpdated(before ? before.modTime : '', 120000);
+  } catch (err) {
+    console.error('\n[FAIL] 更新函数失败：' + (err.code ? err.code + ' ' : '') + err.message);
+    console.error('[线上状态] 代码包已上传到 COS，但函数未切换，线上仍是旧版。');
+    console.error('[回滚] node server/scripts/scf-deploy.js --rollback ' + snap.key);
+    throw err;
+  }
+
+  /* 4) 自检 */
+  const ok = await selfCheck();
+  if (!ok) {
+    console.error('\n[线上状态] 新包已生效，但五步自检未全绿。');
+    console.error('[回滚] node server/scripts/scf-deploy.js --rollback ' + snap.key);
+  }
+  await zelingModelProbe();
+  await frontendProbe();
+  const secs = Math.round((Date.now() - t0) / 1000);
+  console.log('\n[summary] 快照=' + snap.key + ' 新包=' + CFG.objectKey + ' 耗时=' + secs + 's 结果=' + (ok ? 'SUCCESS' : 'SELF-CHECK FAILED'));
+  process.exit(ok ? 0 : 2);
+}
+
+(async () => {
+  /* 密钥只从环境变量读：缺失时明确报错退出，绝不回落到任何内置值 */
+  const missingEnv = [];
+  if (!String(CFG.secretId || '').trim()) missingEnv.push('COS_SECRET_ID（或 S3_ACCESS_KEY_ID）');
+  if (!String(CFG.secretKey || '').trim()) missingEnv.push('COS_SECRET_KEY（或 S3_SECRET_ACCESS_KEY）');
+  if (missingEnv.length) {
+    throw new Error('缺少环境变量：' + missingEnv.join('、') + '。请先在终端注入后再运行（脚本不读取任何硬编码密钥）。');
+  }
+  fs.mkdirSync(BACKUP_ROOT, { recursive: true });
+
+  if (pruneOnly) {
+    await pruneReleases('', CFG.keepReleases, true);
+    return;
+  }
+  if (checkOnly) {
+    const ok = await selfCheck();
+    log('done', '仅自检，结果=' + (ok ? 'SUCCESS' : 'FAILED'));
+    process.exit(ok ? 0 : 2);
+  }
+  if (isRollback) return doRollback();
+  return doDeploy();
+})().catch((err) => {
+  const code = err && err.code;
+  console.error('\n[FAIL] ' + (code ? code + ' ' : '') + (err && err.message));
+  if (code === 'AuthFailure.UnauthorizedOperation' || code === 'UnauthorizedOperation' || code === 'AuthFailure') {
+    console.error('→ CAM 权限不足：最小策略 scf:UpdateFunctionCode + scf:GetFunction，或授予 QcloudSCFFullAccess。');
+  }
+  console.error('[回滚提示] node server/scripts/scf-deploy.js --rollback');
+  process.exit(1);
+});

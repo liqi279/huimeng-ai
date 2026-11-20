@@ -1,0 +1,39 @@
+# 绘梦 AI · Cloudflare Workers 后端
+# 部署前请先执行：wrangler login（或设置 CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID）
+#
+# 1) 创建 D1：  wrangler d1 create huimeng-ai
+#    把命令输出的 database_id 填到下方 [[d1_databases]] 的 database_id（替换 PLACEHOLDER）
+# 2) 初始化表：  wrangler d1 execute DB --remote --file=schema.sql
+# 3) 部署：      wrangler deploy
+# 4) 密钥：      wrangler secret put TOKEN_SECRET
+#
+# R2（可选）：如果创建了 R2 存储桶，去掉下面 [[r2_buckets]] 的注释并填写真实 bucket_name
+#           未绑定 R2 时，图片/音频会自动存到 D1 的 blobs 表（base64），并通过 /api/blob/:key 访问。
+
+name = "huimeng-ai-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "huimeng-ai"
+database_id = "PLACEHOLDER"
+
+# ---- R2（可选，未创建 R2 时保持注释状态）----
+# [[r2_buckets]]
+# binding = "ASSETS"
+# bucket_name = "huimeng-ai-assets"
+
+[vars]
+CORS_ORIGIN = "*"
+RAYIN_BASE = "https://www.rayinai.com/v1"
+GPT_MODEL = "gpt-image-2"
+BANANA_MODEL = "nano-banana"
+VIDEO_MODEL = "sora-2"
+AUDIO_MODEL = "tts-1"
+RAYIN_VIDEO_PATH = "/videos/generations"
+RAYIN_VIDEO_STATUS_PATH = "/videos/generations"
+
+# 敏感变量不要写在这里，用 wrangler secret put 设置：
+#   TOKEN_SECRET   token 签名密钥（建议自定义长随机串）
+#   RAYIN_KEY      服务端 RayinAPI Key（可选，前端也可自带）

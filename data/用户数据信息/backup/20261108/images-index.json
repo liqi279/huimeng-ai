@@ -1,0 +1,16 @@
+[
+    {
+        "workId":  "8obgybrdw19j",
+        "kind":  "inline-thumb",
+        "path":  "images\\8obgybrdw19j_thumb.jpg",
+        "bytes":  13487,
+        "sha256":  "5E0F235DBEF4FDD770F3C4F99088D8D321F462B944C44ECF86FF4BA4A8B6CB80",
+        "http":  0
+    },
+    {
+        "workId":  "8obgybrdw19j",
+        "kind":  "external-link",
+        "url":  "https://huimeng-ai-backend-wel5.onrender.com/uploads/media/1793214976347-dfca4d6b.jpg",
+        "http":  503
+    }
+]

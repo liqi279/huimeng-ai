@@ -1,0 +1,1 @@
+将获得许可的 Cubism Core、PixiJS 和 pixi-live2d-display 运行库放在此目录。

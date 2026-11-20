@@ -1,0 +1,37 @@
+蓝莓酱 Blueberry AI Pet｜完整项目源码与素材包
+
+【目录】
+- 项目根目录：Electron 桌宠完整源代码（main/preload/renderer、聊天页面与样式、设置与 Ollama 接入）
+- pet-live2d.*：Live2D 透明桌宠窗口和模型加载入口
+- vendor/live2d/：运行库放置说明（未附 Cubism Core / Web SDK）
+- live2d/model/：模型文件放置说明（尚无正式 Cubism 模型）
+- 素材与角色原图/：原始角色图、透明底稿、局部放大参考
+- Live2D美术工程/：不同阶段的拆件 ORA、图层 PNG、参数规划、补画参考和原始阶段 ZIP 备份
+
+【Windows 启动】
+1. 安装 Node.js（建议 LTS 版本）。
+2. 在本文件所在项目根目录打开 CMD。
+3. 执行：npm install
+4. 执行：npm start
+也可以尝试双击 START-PET.bat。
+
+【本包已包含】
+- Electron 主进程、preload、安全 IPC、渲染页面和聊天 UI 源码
+- Ollama / Qwen3 本地模型通信代码和思考标签过滤
+- 透明桌宠窗口、拖动、双击进入聊天、隐藏/退出交互入口
+- package.json 与 package-lock.json
+- 原始角色素材、透明抠图底稿、眼部/脸部放大参考
+- Live2D 美术拆件阶段文件、ORA 工程、参数清单和补画辅助图
+
+【未包含 / 当前尚未完成】
+- node_modules：依赖可用 npm install 按 package-lock.json 安装
+- Ollama 模型权重（需本机自行安装并拉取 qwen3:4b）
+- Live2D Cubism Core / Cubism SDK for Web：需要从官方渠道取得并遵守许可后放入 vendor/live2d/
+- 蓝莓酱最终 Cubism 模型：当前没有 .moc3、model3.json 完整模型资源、ArtMesh/Deformer 绑定、Physics 或 Motion
+- GitHub 远程推送不包含在此压缩包交付中
+
+【美术素材真实性说明】
+最初的角色图是合并立绘，不是真正分层 PSD。当前 ORA/PNG 拆件是从合并图提取的近似遮罩与工作底稿；遮挡区域补画包括算法辅助稿，并非无损恢复的隐藏像素，也不应当作最终人工精修。4 倍放大底稿只用于检查和继续编辑，不代表源图获得了新的真实细节。各阶段 ZIP 备份保留了此前交付内容。
+
+【版本说明】
+当前代码以 Live2D 透明窗口接入增强版为基底，并合并 v1.0.0 源码包中的项目文档与许可文件。运行前请检查本机环境和 Ollama 服务状态。

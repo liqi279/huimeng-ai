@@ -1,0 +1,1 @@
+{"ok":true,"storage":{"dataStore":"mysql","dataLabel":"MySQL","database":"huimeng_users","objectStore":"local","objectLabel":"服务器本地盘","bucket":null,"endpoint":null,"warnings":["作品图片当前存放在服务器本地盘，Render 重启会丢失；请配置 S3/R2/MinIO。"]},"usage":{"works":0,"assets":0,"bytes":0,"workCap":500,"assetMaxBytes":10485760,"storageMaxBytes":2147483648},"serverTime":1794319893632}

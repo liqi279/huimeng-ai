@@ -1,0 +1,542 @@
+'use strict';
+
+/**
+ * 美术设定设计 路由
+ *
+ * 参考日本动画现场标准：
+ *   二、美术监督（美術監督）负责的 8 项交付清单
+ *   三、并行独立大设定板块（角色/生物/道具/机甲/特效/服装/纹章/LOGO/宣传）
+ *   四、配套协同资料（色彩设计 / 设定会审检查表）
+ *
+ * 分类常量：
+ *   CATEGORIES = {
+ *     sekai:    '世界观氛围资料',     // イメージボード + 世界観美術テキスト
+ *     bg:       '背景设定',           // 平面图 / 立面图 / 透视基准线稿 / 场景版本区分
+ *     prop:     '道具设定',           // プロップ設定 + 固定设施 + 载具 + 自然物 + 材质光照
+ *     effect:   '作画特效设定',       // 角色招式特效（与环境特效区分）
+ *     visual:   '宣传视觉设定',       // 主视觉 / PV 关键图 / 宣发立绘
+ *     logo:     '文字标识设定',       // 标题 LOGO / 纹章 / 组织标识 / 色彩管理
+ *   }
+ *
+ * 条目模型 ArtBoard：
+ *   {
+ *     id, projectId, category,        // 归属
+ *     title, subtitle,                 // 主标题 + 日文原名（可选）
+ *     section,                         // 属于哪个交付子节（如"环境器物平面图形"）
+ *     tags: string[],                  // 标签：朝/昼/夕/夜/雨/霧/雪 等
+ *     status: 'draft' | 'wip' | 'review' | 'final',
+ *     version: 'Ver1.0',
+ *     spec: {                          // 技术规格
+ *       type: 'lineart' | 'painting' | 'model' | 'color' | 'layout' | 'doc',
+ *       format: 'psd' | 'ai' | 'png' | 'pdf',
+ *       resolution: '1920x1080',
+ *       layers: [],
+ *     },
+ *     media: {                         // 关联媒体（URL / uploadId）
+ *       thumb: '',
+ *       sources: [],                  // 多版本（初稿/改修/定稿）
+ *     },
+ *     content: string,                 // 文字说明 / 规格书文本
+ *     notes: string,                   // 审图备注 / 变更记录
+ *     colorSpec: {                     // 色卡（可选）
+ *       palette: [{ name, hex, role }],
+ *       shadows: [{ name, hex }],
+ *       highlights: [{ name, hex }],
+ *     },
+ *     createdAt, updatedAt,
+ *   }
+ *
+ * 路由：
+ *   GET    /art                                    → 条目列表（可按 category 过滤）
+ *   POST   /art                                    → 新建条目
+ *   GET    /art/:id                                → 读取完整条目
+ *   PATCH  /art/:id                                → 更新
+ *   DELETE /art/:id                                → 删除
+ *   POST   /art/:id/upload                         → 上传关联媒体（multipart 或 dataUrl）
+ *   GET    /art/categories                         → 分类字典（给前端下拉用）
+ *   GET    /art/checklist                          → 设定会审检查表（SOP 模板）
+ *   POST   /art/checklist                          → 保存会审检查表状态
+ */
+
+const path = require('path');
+const crypto = require('crypto');
+const express = require('express');
+const { wrap, assert, dataUrlToBuffer, extFromMime, randomToken } = require('../http');
+const store = require('../store');
+const mediaStore = require('../media-store');
+
+const MAX_ART_MEDIA_BYTES = 50 * 1024 * 1024; // 50MB
+
+// 使用 store 的原子写入 + 串行队列，保证并发安全和数据不损坏
+const writeJson = store.writeJson;
+const readJson = store.readJson;
+const enqueue = store.enqueue;
+
+const router = express.Router();
+
+const ARTS_CAP = 1000;
+
+const CATEGORIES = [
+  { key: 'sekai',  name: '世界观氛围资料',     icon: '🌍', sections: [
+    '氛围概念稿',
+    '世界观美术规范书',
+    '参考拼贴板（光影参考 / 色调 mood board）',
+  ]},
+  { key: 'bg',     name: '背景设定',           icon: '🏞️', sections: [
+    '平面配置图',
+    '立面图 / 剖视图',
+    '透视基准线稿',
+    '场景版本区分（朝 / 昼 / 夕 / 夜 / 雨 / 雾 / 雪）',
+    '背景样板彩稿',
+  ]},
+  { key: 'prop',   name: '道具 / 器物设定',    icon: '🎒', sections: [
+    '环境小物设定（固定陈设三视图）',
+    '平面图形 / 屏幕图形设定（屏幕 UI / 架空文字 / 路牌）',
+    '大型设施 · 装置设定（工厂设备 / 闸门 / 管线）',
+    '常驻载具设定（停泊船只 / 静置飞行器）',
+    '自然物设定（树种 / 花草 / 岩石 / 云 / 浪花）',
+    '材质设定（木材 / 石材 / 金属 / 玻璃 反光规则）',
+    '光环境设定（全域光源色温 / 阴影衰减）',
+  ]},
+  { key: 'character', name: '角色设定',           icon: '🧑', sections: [
+    'Model Sheet 标准人设表（正 / 侧 / 背 三视图）',
+    '身高对比图（全员）',
+    '表情集（喜 / 怒 / 哀 / 惧 / 吃惊 / 冷漠）',
+    '口型集（A / I / U / E / O 基础口型）',
+    '基础姿势集（站姿 / 行走 / 待机 Pose）',
+    '服装分解图 · 配饰拆分图',
+    '角色色指定（基础色 / 阴影色 / 高光色卡）',
+    '特殊变体（破损服装 / 老化 / Q 版 / 变身前 · 后）',
+  ]},
+  { key: 'effect', name: '作画特效设定',       icon: '✨', sections: [
+    '特效关键帧序列稿（起形→扩散→消散）',
+    '色阶渐变规范',
+    '轨迹 · 残像规则',
+    '大中小倍率版本规范（近景特写 / 远景广角）',
+  ]},
+  { key: 'visual', name: '宣传视觉设定',       icon: '🎨', sections: [
+    '主视觉海报',
+    'PV 关键图',
+    '宣发用角色立绘',
+    '世界观概念主视觉',
+  ]},
+  { key: 'logo',   name: '文字标识设定',       icon: '🔤', sections: [
+    '标题 LOGO（作品 Logo / OP·ED 标题字）',
+    '纹章 · 组织标识（家族纹章 / 徽章）',
+    '章节标题字体',
+    '色彩设计（全片色彩偏移规则表）',
+    '设定会审检查表',
+  ]},
+];
+
+const STATUS_OPTIONS = [
+  { value: 'draft',  label: '草稿' },
+  { value: 'wip',    label: '制作中' },
+  { value: 'review', label: '审图中' },
+  { value: 'final',  label: '定稿' },
+];
+
+const ART_TYPES = [
+  { value: 'lineart', label: '线稿' },
+  { value: 'painting', label: '彩稿' },
+  { value: 'model', label: '设定三视图' },
+  { value: 'color', label: '色卡' },
+  { value: 'layout', label: 'Layout' },
+  { value: 'doc', label: '文档' },
+];
+
+/* ============ 持久化 ============ */
+const artsFile = path.join(store.dirs.root, 'artboards.json');
+const checklistFile = path.join(store.dirs.root, 'art-checklist.json');
+
+async function loadArts() {
+  return readJson(artsFile, []);
+}
+function saveArts(list) {
+  // 使用 store 的原子写入（先写 .tmp 再 rename）+ 串行队列（避免并发覆盖）
+  return enqueue(() => writeJson(artsFile, list));
+}
+async function loadChecklist() {
+  const raw = await readJson(checklistFile, null);
+  if (!raw) return Object.assign({}, DEFAULT_CHECKLIST, { items: {} });
+  // 合并默认字段，防止老数据缺字段
+  return Object.assign({}, DEFAULT_CHECKLIST, raw, {
+    items: raw.items || {},
+  });
+}
+function saveChecklist(data) {
+  data.updatedAt = new Date().toISOString();
+  return enqueue(() => writeJson(checklistFile, data));
+}
+
+function uid() { return crypto.randomUUID(); }
+
+function emptyBoard() {
+  return {
+    title: '', subtitle: '',
+    category: 'bg', section: '',
+    tags: [],
+    status: 'draft', version: 'Ver1.0',
+    spec: { type: 'painting', format: 'psd', resolution: '', layers: [] },
+    media: { thumb: '', sources: [] },
+    content: '', notes: '',
+    colorSpec: { palette: [], shadows: [], highlights: [] },
+    // 角色设定专有（category === 'character' 时使用）
+    characterSpec: {
+      // 基础信息
+      role: '',             // 角色定位
+      gender: '',
+      age: '',
+      height: '',
+      weight: '',
+      voiceActor: '',       // 声优 / 配音
+      signature: '',        // 口头禅
+      // 角色色（头发/瞳孔/皮肤/服装主色）
+      hairColor: '',
+      eyeColor: '',
+      skinColor: '',
+      outfitMainColor: '',
+      // Model Sheet 三视图
+      modelSheet: {
+        front: '',   // 正面
+        side: '',    // 侧面
+        back: '',    // 背面
+      },
+      // 表情集（6+ 标准表情）
+      expressions: [
+        { key: 'happy',   label: '😊 喜',   url: '' },
+        { key: 'angry',   label: '😠 怒',   url: '' },
+        { key: 'sad',     label: '😢 哀',   url: '' },
+        { key: 'fear',    label: '😨 惧',   url: '' },
+        { key: 'surprise',label: '😮 吃惊', url: '' },
+        { key: 'cold',    label: '😐 冷漠', url: '' },
+      ],
+      // 口型集（A/I/U/E/O）
+      mouthShapes: [
+        { key: 'A', label: 'A', url: '' },
+        { key: 'I', label: 'I', url: '' },
+        { key: 'U', label: 'U', url: '' },
+        { key: 'E', label: 'E', url: '' },
+        { key: 'O', label: 'O', url: '' },
+      ],
+      // 基础姿势集
+      poses: [
+        { key: 'stand', label: '站姿', url: '' },
+        { key: 'walk',  label: '行走', url: '' },
+        { key: 'idle',  label: '待机', url: '' },
+      ],
+      // 特殊变体
+      variants: [
+        { label: '变身前', url: '' },
+        { label: '变身后', url: '' },
+      ],
+    },
+  };
+}
+
+/** 深合并 characterSpec —— 防止 PATCH 部分字段更新时数组被整个替换丢 */
+function deepMergeCharacterSpec(base, patch) {
+  base = base || {};
+  patch = patch || {};
+  const merged = Object.assign({}, base, patch);
+  // modelSheet 要保持 3 个槽（front/side/back），至少含默认空值
+  merged.modelSheet = Object.assign({ front: '', side: '', back: '' }, base.modelSheet || {}, patch.modelSheet || {});
+  // 数组：patch 有就用 patch（客户端传全量），没有就保留 base
+  const ARRAY_FIELDS = ['expressions', 'mouthShapes', 'poses', 'variants'];
+  ARRAY_FIELDS.forEach(function (k) {
+    if (patch[k] !== undefined) {
+      merged[k] = Array.isArray(patch[k]) ? patch[k] : [];
+    } else {
+      merged[k] = Array.isArray(base[k]) ? base[k] : [];
+    }
+  });
+  return merged;
+}
+
+/* ============ 图片上传 ============ */
+router.post('/art/upload', wrap(async (req, res) => {
+  const body = req.body || {};
+  assert(
+    typeof body.dataUrl === 'string' && body.dataUrl.startsWith('data:'),
+    400, '缺少文件数据', 'dataUrl 需为 data:<mime>;base64,... 形式',
+  );
+  const decoded = dataUrlToBuffer(body.dataUrl);
+  assert(decoded.buffer.length > 0, 400, '文件内容为空', '请重新选择文件');
+  assert(decoded.buffer.length <= MAX_ART_MEDIA_BYTES, 413, '文件过大',
+    `单个文件不能超过 ${Math.round(MAX_ART_MEDIA_BYTES / 1024 / 1024)}MB`);
+  const mime = decoded.mime || 'image/png';
+  assert(mime.startsWith('image/'), 400, '仅支持图片', `收到 MIME: ${mime}`);
+  const ext = extFromMime(mime) || 'png';
+  const fileName = `art-${Date.now()}-${randomToken()}.${ext}`;
+  /* 统一写对象存储（未配置时由 objectStore 回落本地盘），
+     URL 仍是 /uploads/assets/<name>，历史与前端均不受影响 */
+  const saved = await mediaStore.put('assets', fileName, decoded.buffer, mime);
+  res.json({
+    url: saved.url,
+    mime,
+    size: decoded.buffer.length,
+    ext,
+  });
+}));
+
+/* ============ 批量导入（JSON 数组） ============ */
+router.post('/art/bulk', wrap(async (req, res) => {
+  const body = req.body || {};
+  assert(Array.isArray(body.items) && body.items.length > 0, 400, 'items 数组为空', '请传入 { items: [...] }');
+  assert(body.items.length <= 500, 400, '单次最多 500 条', '当前: ' + body.items.length);
+
+  const list = await loadArts();
+  const now = new Date().toISOString();
+  const eb = emptyBoard();
+  const results = [];
+  let skipped = 0;
+
+  for (const raw of body.items) {
+    if (!raw || typeof raw !== 'object') { skipped++; continue; }
+    const eb2 = emptyBoard();
+    const entry = Object.assign({}, eb2, raw, {
+      id: uid(),
+      category: raw.category || 'character',
+      section: raw.section || '',
+      status: raw.status || 'draft',
+      version: raw.version || 'Ver1.0',
+      tags: Array.isArray(raw.tags) ? raw.tags : [],
+      spec: Object.assign({}, eb2.spec, raw.spec || {}),
+      media: Object.assign({}, eb2.media, raw.media || {}),
+      colorSpec: Object.assign({}, eb2.colorSpec, raw.colorSpec || {}),
+      characterSpec: deepMergeCharacterSpec(eb2.characterSpec, raw.characterSpec),
+      createdAt: now, updatedAt: now,
+    });
+    list.unshift(entry);
+    results.push({
+      id: entry.id,
+      title: entry.title,
+      category: entry.category,
+      section: entry.section,
+    });
+  }
+
+  // 保持 ARTS_CAP 上限
+  if (list.length > ARTS_CAP) {
+    list.splice(ARTS_CAP);
+    skipped += (list.length - ARTS_CAP);
+  }
+
+  await saveArts(list);
+  res.json({ inserted: results.length, skipped, items: results });
+}));
+
+/* ============ 分类字典 ============ */
+router.get('/art/categories', wrap(async (req, res) => {
+  res.json({ categories: CATEGORIES, statusOptions: STATUS_OPTIONS, artTypes: ART_TYPES });
+}));
+
+/* ============ 会审检查表（SOP 模板） ============ */
+const DEFAULT_CHECKLIST = {
+  version: 'Ver1.0', updatedAt: null,
+  // 美术监督
+  sekai_board: [
+    '氛围概念稿情绪彩稿（3–8 张）',
+    '世界观美术规范书（时代/地域/气候/建筑规则/禁忌元素）',
+    '昼夜变化规则文档',
+  ],
+  bg_board: [
+    '场景平面图',
+    '立面图 / 剖视图',
+    '透视基准线稿',
+    '同场景多空间分区标注',
+    '场景版本区分表（朝/昼/夕/夜/雨/雾/雪）',
+    '常用场景各光照版本背景样板彩稿',
+    '标注主光源方向 / 阴影软硬 / 空气透视',
+  ],
+  prop_board: [
+    '环境小物固定陈设三视图',
+    '平面图形 / 屏幕图形设定（路牌/架空文字/屏幕 UI）',
+    '大型设施 / 装置剖视图',
+    '常驻载具设定',
+    '自然物规范稿（树种/花草/岩石/云/浪花）',
+    '材质设定（木材/石材/金属/玻璃 反光规则）',
+    '光环境设定（色温/阴影衰减/反光反弹）',
+  ],
+  // 并行板块
+  character_board: [
+    '人设三视图（正面/侧面/背面）',
+    '身高对比图',
+    '表情集（喜/怒/哀/惧/吃惊/冷漠）',
+    '口型集（A/I/U/E/O）',
+    '基础姿势集',
+    '服装分解图 / 配饰拆分图',
+    '角色色指定（基础色/阴影色/高光色卡）',
+  ],
+  creature_board: [
+    '生物三视图 / 骨骼参考',
+    '体表纹理 / 斑纹 / 角质细节',
+    '变形阶段稿',
+    '关节活动范围标注',
+    '生物色指定',
+  ],
+  mecha_board: [
+    '外装三视图',
+    '内部剖视图',
+    '关节可动范围',
+    '武装挂载 / 变形机构示意图',
+    '装甲磨损 / 战损版本',
+    '机设色指定',
+  ],
+  effect_board: [
+    '特效关键帧序列稿（起形→扩散→消散）',
+    '色阶渐变规范',
+    '轨迹 / 残像规则',
+    '大中小倍率版本规范',
+  ],
+  visual_board: [
+    '主视觉海报',
+    'PV 关键图',
+    '宣发用角色立绘',
+  ],
+  logo_board: [
+    '作品 Logo',
+    'OP/ED 标题字',
+    '章节标题字体',
+    '纹章 / 组织标识（矢量，多种尺寸适配）',
+  ],
+  coordination: [
+    '色彩设计：全片色彩偏移规则表（黄昏/夜景/水下/阴影）',
+    '背景原图基准规范书（Layout 对接背景画师规范）',
+    '实地采风资料（采风照片 / 建筑测绘）',
+  ],
+};
+
+/* 注意：loadChecklist / saveChecklist 已移至上方「持久化」模块，
+ * 使用 store.writeJson 原子写入 + enqueue 串行化，保证并发安全 */
+
+router.get('/art/checklist', wrap(async (req, res) => {
+  const data = await loadChecklist();
+  res.json({ checklist: data });
+}));
+
+router.post('/art/checklist', wrap(async (req, res) => {
+  const body = req.body || {};
+  const cur = await loadChecklist();
+  if (body.items) cur.items = Object.assign({}, cur.items, body.items);
+  if (body.notes !== undefined) cur.notes = String(body.notes);
+  await saveChecklist(cur);
+  res.json({ checklist: cur });
+}));
+
+/* ============ ArtBoard CRUD ============ */
+
+function mask(art) {
+  return Object.assign({}, art);
+}
+
+router.get('/art', wrap(async (req, res) => {
+  const list = await loadArts();
+  const category = req.query.category;
+  let items = list;
+  if (category && category !== 'all') items = items.filter((a) => a.category === category);
+  // 精简返回（不传超大媒体字段）
+  const compact = items.map((a) => ({
+    id: a.id, title: a.title, subtitle: a.subtitle,
+    category: a.category, section: a.section, tags: a.tags,
+    status: a.status, version: a.version,
+    media: { thumb: a.media ? a.media.thumb : '', sourceCount: a.media ? (a.media.sources || []).length : 0 },
+    spec: a.spec ? { type: a.spec.type, format: a.spec.format } : {},
+    contentLen: (a.content || '').length,
+    colorCount: (a.colorSpec && a.colorSpec.palette ? a.colorSpec.palette.length : 0),
+    updatedAt: a.updatedAt, createdAt: a.createdAt,
+  }));
+  compact.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  res.json({ items: compact, total: compact.length });
+}));
+
+router.post('/art', wrap(async (req, res) => {
+  const body = req.body || {};
+  const list = await loadArts();
+  const now = new Date().toISOString();
+  const eb = emptyBoard();
+  const item = Object.assign({}, eb, body, {
+    id: uid(),
+    tags: Array.isArray(body.tags) ? body.tags : [],
+    spec: Object.assign({}, eb.spec, body.spec || {}),
+    media: Object.assign({}, eb.media, body.media || {}),
+    colorSpec: Object.assign({}, eb.colorSpec, body.colorSpec || {}),
+    characterSpec: deepMergeCharacterSpec(eb.characterSpec, body.characterSpec),
+    createdAt: now, updatedAt: now,
+  });
+  list.unshift(item);
+  if (list.length > ARTS_CAP) list.length = ARTS_CAP;
+  await saveArts(list);
+  res.json({ art: mask(item) });
+}));
+
+router.get('/art/:id', wrap(async (req, res) => {
+  const list = await loadArts();
+  const found = list.find((a) => a.id === req.params.id);
+  assert(found, 404, '美术条目不存在');
+  res.json({ art: found });
+}));
+
+router.patch('/art/:id', wrap(async (req, res) => {
+  const list = await loadArts();
+  const idx = list.findIndex((a) => a.id === req.params.id);
+  assert(idx >= 0, 404, '美术条目不存在');
+  const body = req.body || {};
+  const prev = list[idx];
+  list[idx] = Object.assign({}, prev, body, {
+    id: prev.id, createdAt: prev.createdAt,
+    updatedAt: new Date().toISOString(),
+    tags: Array.isArray(body.tags) ? body.tags : prev.tags,
+    spec: body.spec ? Object.assign({}, prev.spec, body.spec) : prev.spec,
+    media: body.media ? Object.assign({}, prev.media, body.media) : prev.media,
+    colorSpec: body.colorSpec ? Object.assign({}, prev.colorSpec, body.colorSpec) : prev.colorSpec,
+    characterSpec: deepMergeCharacterSpec(prev.characterSpec, body.characterSpec),
+  });
+  await saveArts(list);
+  res.json({ art: mask(list[idx]) });
+}));
+
+router.delete('/art/:id', wrap(async (req, res) => {
+  const list = await loadArts();
+  const idx = list.findIndex((a) => a.id === req.params.id);
+  assert(idx >= 0, 404, '美术条目不存在');
+  list.splice(idx, 1);
+  await saveArts(list);
+  res.json({ ok: true });
+}));
+
+/* ============ 复制 ============ */
+router.post('/art/:id/duplicate', wrap(async (req, res) => {
+  const list = await loadArts();
+  const src = list.find((a) => a.id === req.params.id);
+  assert(src, 404, '美术条目不存在');
+  const now = new Date().toISOString();
+  const copy = Object.assign({}, src, {
+    id: uid(),
+    title: (src.title || '') + ' (副本)',
+    createdAt: now, updatedAt: now,
+    media: Object.assign({}, src.media, { sources: [] }), // 媒体不复制，避免重复存储
+  });
+  list.unshift(copy);
+  await saveArts(list);
+  res.json({ art: mask(copy) });
+}));
+
+/* ============ 批量状态更新 ============ */
+router.post('/art/bulk-status', wrap(async (req, res) => {
+  const body = req.body || {};
+  const ids = Array.isArray(body.ids) ? body.ids : [];
+  const status = String(body.status || 'review');
+  if (!ids.length) return res.json({ ok: true, count: 0 });
+  const list = await loadArts();
+  const now = new Date().toISOString();
+  let count = 0;
+  ids.forEach((id) => {
+    const a = list.find((x) => x.id === id);
+    if (a) { a.status = status; a.updatedAt = now; count++; }
+  });
+  await saveArts(list);
+  res.json({ ok: true, count });
+}));
+
+module.exports = router;

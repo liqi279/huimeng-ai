@@ -1,0 +1,1 @@
+将 Cubism 导出的蓝莓酱模型文件放在此目录，入口文件名需为 blueberry.model3.json。

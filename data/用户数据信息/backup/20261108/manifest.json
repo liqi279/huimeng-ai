@@ -1,0 +1,114 @@
+{
+    "createdAt":  "2026-11-08T19:32:57",
+    "backend":  "https://huimeng-ai-backend.onrender.com/api",
+    "account":  {
+                    "id":  "u_init_admin0001",
+                    "username":  "admin",
+                    "email":  null,
+                    "role":  "admin",
+                    "status":  "approved",
+                    "note":  "初始化超管",
+                    "createdAt":  1794090627923,
+                    "approvedAt":  null
+                },
+    "worksCount":  1,
+    "imagesCount":  1,
+    "externalLinks":  1,
+    "fileCount":  9,
+    "totalBytes":  76968,
+    "fetchResults":  [
+                         {
+                             "name":  "accounts.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  431
+                         },
+                         {
+                             "name":  "export.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  20553
+                         },
+                         {
+                             "name":  "bootstrap.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  20053
+                         },
+                         {
+                             "name":  "desk.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  303
+                         },
+                         {
+                             "name":  "user-data-status.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  369
+                         }
+                     ],
+    "assets":  [
+                   {
+                       "workId":  "8obgybrdw19j",
+                       "kind":  "inline-thumb",
+                       "path":  "images\\8obgybrdw19j_thumb.jpg",
+                       "bytes":  13487,
+                       "sha256":  "5E0F235DBEF4FDD770F3C4F99088D8D321F462B944C44ECF86FF4BA4A8B6CB80",
+                       "http":  0
+                   },
+                   {
+                       "workId":  "8obgybrdw19j",
+                       "kind":  "external-link",
+                       "url":  "https://huimeng-ai-backend-wel5.onrender.com/uploads/media/1793214976347-dfca4d6b.jpg",
+                       "http":  503
+                   }
+               ],
+    "files":  [
+                  {
+                      "relativePath":  "accounts.json",
+                      "bytes":  431,
+                      "sha256":  "60455DE9194F83747B830EC47511758FCFE9892946A75115F3468B5D743A3DFA"
+                  },
+                  {
+                      "relativePath":  "bootstrap.json",
+                      "bytes":  20053,
+                      "sha256":  "CD590D24A82F579754EC6FD6717E2D039662728FAFD47952C578A505FD81434A"
+                  },
+                  {
+                      "relativePath":  "desk.json",
+                      "bytes":  303,
+                      "sha256":  "CA67D57DA70F589C147C1F98DD92AC22932D09783155DBAC00829116FB4D138D"
+                  },
+                  {
+                      "relativePath":  "export.json",
+                      "bytes":  20553,
+                      "sha256":  "17EC5169985FB8D970168DCF4EE7E907E2CCA8756A56F9D8D8C6D462FC3F53DB"
+                  },
+                  {
+                      "relativePath":  "images-index.json",
+                      "bytes":  488,
+                      "sha256":  "EFDD8B5FCA3CE76BFC210D9757F74C2E04450FDA06258FE37B523826E82AFA6A"
+                  },
+                  {
+                      "relativePath":  "README_恢复说明.md",
+                      "bytes":  2028,
+                      "sha256":  "DE4E54900A79241C39E3C1E57F512F103BCABD3F3ACE76D491CB20D8185BACE4"
+                  },
+                  {
+                      "relativePath":  "user-data-status.json",
+                      "bytes":  369,
+                      "sha256":  "36E4D85126551E6009DC24B2AA4532EBAB7258585CC867BAA7024A6D6D6E656F"
+                  },
+                  {
+                      "relativePath":  "works.json",
+                      "bytes":  19256,
+                      "sha256":  "2929971515E3A281E5EA38E05E4E8EEA08705AA52519BAA4C3A6296583ED3822"
+                  },
+                  {
+                      "relativePath":  "images/8obgybrdw19j_thumb.jpg",
+                      "bytes":  13487,
+                      "sha256":  "5E0F235DBEF4FDD770F3C4F99088D8D321F462B944C44ECF86FF4BA4A8B6CB80"
+                  }
+              ]
+}

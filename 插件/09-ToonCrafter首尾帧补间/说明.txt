@@ -1,0 +1,4 @@
+﻿名称：09_ToonCrafter首尾帧补间
+仓库：https://github.com/ToonCrafter/ToonCrafter
+用途：首尾关键帧插值成中间动画，赛璐璐线稿友好，漫剧补帧核心工具。
+说明：本文件夹内 .zip 为该仓库的源码压缩包，解压后按仓库 README 安装。

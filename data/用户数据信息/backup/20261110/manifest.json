@@ -1,0 +1,96 @@
+{
+    "createdAt":  "2026-11-10T22:11:33",
+    "backend":  "http://127.0.0.1:8787/api",
+    "account":  {
+                    "id":  "u_init_admin0001",
+                    "username":  "admin",
+                    "email":  null,
+                    "role":  "admin",
+                    "status":  "approved",
+                    "note":  "",
+                    "createdAt":  1794087487905,
+                    "approvedAt":  null
+                },
+    "worksCount":  0,
+    "imagesCount":  0,
+    "externalLinks":  0,
+    "fileCount":  8,
+    "totalBytes":  4944,
+    "fetchResults":  [
+                         {
+                             "name":  "accounts.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  1026
+                         },
+                         {
+                             "name":  "export.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  457
+                         },
+                         {
+                             "name":  "bootstrap.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  805
+                         },
+                         {
+                             "name":  "desk.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  98
+                         },
+                         {
+                             "name":  "user-data-status.json",
+                             "http":  200,
+                             "ok":  true,
+                             "bytes":  426
+                         }
+                     ],
+    "assets":  [
+
+               ],
+    "files":  [
+                  {
+                      "relativePath":  "accounts.json",
+                      "bytes":  1026,
+                      "sha256":  "34B26F2C1788F9771A074EBFF307AE34CF1930A8CF3636DA1152083DDBC82A91"
+                  },
+                  {
+                      "relativePath":  "bootstrap.json",
+                      "bytes":  805,
+                      "sha256":  "343FB956E6F4BF9DD1D639012B79FD1AC7BAD11CC17196EC8B1694EABCAF6C6D"
+                  },
+                  {
+                      "relativePath":  "desk.json",
+                      "bytes":  98,
+                      "sha256":  "EC0721281192C19D0245D232F985B0CB07F97528DE14F6BC3D1161A8AFCBEE6C"
+                  },
+                  {
+                      "relativePath":  "export.json",
+                      "bytes":  457,
+                      "sha256":  "FCC164F4124147BB4F6A9258476DE795A47B2F78E6F150701E4811A94D1291D2"
+                  },
+                  {
+                      "relativePath":  "images-index.json",
+                      "bytes":  0,
+                      "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+                  },
+                  {
+                      "relativePath":  "README_恢复说明.md",
+                      "bytes":  2028,
+                      "sha256":  "DE4E54900A79241C39E3C1E57F512F103BCABD3F3ACE76D491CB20D8185BACE4"
+                  },
+                  {
+                      "relativePath":  "user-data-status.json",
+                      "bytes":  426,
+                      "sha256":  "CC5F2EEF3F24A5B1D38F73D6DCD6E94EF3A6A2782C55027FF0778D43DC308CCE"
+                  },
+                  {
+                      "relativePath":  "works.json",
+                      "bytes":  104,
+                      "sha256":  "4F4B61FCC186D4AA38CEDF4F4B0D366D3E3330CBE36D18801A77B1FAE02E5FE6"
+                  }
+              ]
+}

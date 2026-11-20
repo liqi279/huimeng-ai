@@ -1,0 +1,55 @@
+name: Validate Godot Dimverse intro
+
+on:
+  push:
+    branches:
+      - feat/godot-dimverse-intro
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "game/dimverse-godot/**"
+      - ".github/workflows/deploy-pages.yml"
+      - "deploy/dimverse/index.html"
+      - "frontend/dimverse.js"
+      - "frontend/styles.css"
+      - "game/dimverse-godot/project.godot"
+      - "deploy/assets/hm-s29-b9fa10c0.js"
+      - "deploy/assets/hm.css"
+      - "scripts/ensure-deploy.js"
+      - "server/test/download-source.test.js"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Godot 4
+        uses: chickensoft-games/setup-godot@v1
+        with:
+          version: 4.4.1
+          use-dotnet: false
+          include-templates: true
+      - name: Build Pages source bundle
+        run: npm run build
+
+      - name: Check Dimverse JavaScript syntax
+        run: |
+          node --check frontend/dimverse.js
+          node --check deploy/assets/hm-s29-b9fa10c0.js
+
+      - name: Parse project and export Web build
+        run: |
+          godot --headless --path game/dimverse-godot --editor --quit
+          mkdir -p deploy/dimverse/game
+          godot --headless --path game/dimverse-godot --export-release "Web" "$GITHUB_WORKSPACE/deploy/dimverse/game/index.html"
+          test -s deploy/dimverse/game/index.html
+          test -s deploy/dimverse/game/index.wasm
+          test -s deploy/dimverse/game/index.pck
+
+      - name: Install server dependencies and run regression tests
+        run: npm ci --prefix server && npm test --prefix server

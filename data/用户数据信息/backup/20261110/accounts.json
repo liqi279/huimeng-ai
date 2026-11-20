@@ -1,0 +1,59 @@
+{
+    "users":  [
+                  {
+                      "id":  "u_init_admin0001",
+                      "username":  "admin",
+                      "email":  null,
+                      "role":  "admin",
+                      "status":  "approved",
+                      "note":  "",
+                      "createdAt":  1794087487905,
+                      "approvedAt":  null
+                  },
+                  {
+                      "id":  "u_a89d853ccb2a9ff0",
+                      "username":  "e2e_1794087782",
+                      "email":  "e2e_1794087782@example.com",
+                      "role":  "user",
+                      "status":  "approved",
+                      "note":  "e2e",
+                      "createdAt":  1794087782493,
+                      "approvedAt":  1794087782636
+                  },
+                  {
+                      "id":  "u_25aa477153ffba0f",
+                      "username":  "e2e_1794087810",
+                      "email":  "e2e_1794087810@example.com",
+                      "role":  "user",
+                      "status":  "approved",
+                      "note":  "e2e",
+                      "createdAt":  1794087810179,
+                      "approvedAt":  1794087810311
+                  },
+                  {
+                      "id":  "u_a20089c768691b24",
+                      "username":  "staff_1794088320",
+                      "email":  null,
+                      "role":  "user",
+                      "status":  "approved",
+                      "note":  "由超管 admin 创建",
+                      "createdAt":  1794088320221,
+                      "approvedAt":  1794088320221
+                  },
+                  {
+                      "id":  "u_5344202615f3bb79",
+                      "username":  "staff2_1794088320",
+                      "email":  null,
+                      "role":  "admin",
+                      "status":  "approved",
+                      "note":  "新增人员测试",
+                      "createdAt":  1794088320317,
+                      "approvedAt":  1794088320317
+                  }
+              ],
+    "pendingCount":  0,
+    "storageScope":  "accounts",
+    "storage":  "mysql",
+    "storageLabel":  "MySQL",
+    "storageWarning":  ""
+}

@@ -1,0 +1,573 @@
+
+'use strict';
+
+/* =============================================================
+ * 绘梦 · 后端 API 客户端（前后端分离）
+ * 默认使用同源 /api；也可用 ?api= 指定后端地址，例如：
+ *   GitHub Pages 默认指向腾讯云 SCF 后端：
+ *     https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api
+ *   本地开发可覆盖为本地后端：
+ *     ?api=https://localhost:8443/api   （首次需访问 https://localhost:8443 信任自签证书）
+ *     ?api=http://localhost:8787/api    （Chrome 允许 localhost 混合内容，其他浏览器可能拦截）
+ * 或 <meta name="hm-api-base" content="..."> 指定后端地址。
+ * ============================================================= */
+(function () {
+  var HM = window.HM = window.HM || {};
+
+  var META = document.querySelector('meta[name="hm-api-base"]');
+  var override = '';
+  try {
+    override = new URLSearchParams(location.search).get('api') || '';
+  } catch (err) { override = ''; }
+
+  /* 自动检测：在静态托管（如 GitHub Pages）上默认指向腾讯云 SCF 后端，
+   * 本地运行时仍走同源 /api。可用 ?api= 覆盖。 */
+  var isLocalHost = /^(localhost|127\.0\.0\.1)$/i.test(location.hostname);
+  var autoBase = isLocalHost ? '/api' : 'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api';
+
+  var base = String(override || (META && META.content) || autoBase).replace(/\/+$/, '');
+  var origin = '';
+  if (/^https?:/i.test(base)) {
+    try { origin = new URL(base).origin; } catch (err) { origin = ''; }
+  }
+
+  function apiUrl(path) {
+    return base + (path.charAt(0) === '/' ? path : '/' + path);
+  }
+
+  /* 提前与后端建立连接，省掉首次请求的 DNS/TLS 握手时间（跨地域约 0.5~1s） */
+  if (origin) {
+    try {
+      var pre = document.createElement('link');
+      pre.rel = 'preconnect';
+      pre.href = origin;
+      pre.crossOrigin = 'anonymous';
+      document.head.appendChild(pre);
+      var dns = document.createElement('link');
+      dns.rel = 'dns-prefetch';
+      dns.href = origin;
+      document.head.appendChild(dns);
+    } catch (e) {}
+  }
+
+  function normalizeError(data, status) {
+    var message = '';
+    var hint = '';
+    if (data && typeof data === 'object') {
+      if (data.error && typeof data.error === 'object') {
+        message = String(data.error.message || '');
+        hint = String(data.error.hint || '');
+      } else if (typeof data.error === 'string') {
+        message = data.error;
+      } else if (data.message) {
+        message = String(data.message);
+      }
+    } else if (typeof data === 'string') {
+      message = data.slice(0, 180);
+    }
+    var error = new Error(message || ('后端请求失败（HTTP ' + status + '）'));
+    if (hint) error.hint = hint;
+    error.status = status;
+    /* 保留后端错误码：前端要区分 TOKEN_INVALID / ACCOUNT_PENDING / ACCOUNT_UNDEFINED，
+       不能只靠中文文案猜。 */
+    if (data && typeof data === 'object' && data.error && typeof data.error === 'object' && data.error.code) {
+      error.code = String(data.error.code);
+    }
+    return error;
+  }
+
+  function authToken() {
+    /* 读取顺序 hm.token → sessionStorage → hm.token.bak（读到即回填主键）。
+       配额满导致主键没写进去时，刷新后仍能拿到 token，不会弹登录。 */
+    if (window.HMAuth && window.HMAuth.getToken) return window.HMAuth.getToken();
+    try { return localStorage.getItem('hm.token') || ''; } catch (e) { return ''; }
+  }
+  function setAuthToken(token) {
+    /* 写入失败不再静默：先回收可重建缓存重试，再降级 sessionStorage，并回读校验。 */
+    if (window.HMAuth && window.HMAuth.setToken) { window.HMAuth.setToken(token); return; }
+    try {
+      if (token) localStorage.setItem('hm.token', token);
+      else localStorage.removeItem('hm.token');
+    } catch (e) {}
+  }
+
+  async function request(path, options, timeoutMs) {
+    var opts = options || {};
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, timeoutMs || 30000);
+
+    try {
+      var token = authToken();
+      var init = {
+        method: opts.method || 'GET',
+        headers: Object.assign({ Accept: 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}, opts.headers || {}),
+        signal: controller.signal
+      };
+      if (opts.body !== undefined) {
+        init.headers['Content-Type'] = 'application/json';
+        init.body = JSON.stringify(opts.body);
+      }
+
+      var res;
+      try {
+        res = await fetch(apiUrl(path), init);
+      } catch (err) {
+        var netError = new Error(err && err.name === 'AbortError'
+          ? '后端请求超时，请稍后重试'
+          : '无法连接后端服务。请确认：\n1. 已拉取最新代码（git pull）\n2. 后端服务正常运行\n3. 本地开发请访问 https://localhost:8443 信任自签证书');
+        netError.offline = true;
+        throw netError;
+      }
+
+      var raw = await res.text();
+      var data = null;
+      if (raw) {
+        try { data = JSON.parse(raw); } catch (err) { data = raw; }
+      }
+      if (!res.ok) throw normalizeError(data, res.status);
+      return data;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  var api = {
+    base: base,
+    online: false,
+    checked: false,
+    config: null,
+    modes: [],
+    engines: []
+  };
+
+  /* 探测后端；返回是否可用 */
+  api.ping = async function () {
+    if (typeof location !== 'undefined' && location.protocol === 'file:') {
+      api.checked = true;
+      api.online = false;
+      return false;
+    }
+    try {
+      var health = await request('/health', {}, 6000);
+      api.online = !!(health && health.ok);
+      api.modes = (health && health.modes) || [];
+      api.engines = (health && health.engines) || [];
+    } catch (err) {
+      api.online = false;
+    }
+    api.checked = true;
+
+    if (api.online) {
+      try {
+        api.config = await request('/config', {}, 6000);
+      } catch (err) { api.config = null; }
+    }
+    return api.online;
+  };
+
+  api.hasServerKey = function () {
+    return !!(api.config && api.config.rayin && api.config.rayin.hasKey);
+  };
+
+  /* 生图改走异步任务（提交 → 轮询）：单次 HTTP 长连接不会再被 SCF 的 300 秒上限掐断。
+     旧后端没有 /generate/jobs 时自动退回同步调用，功能不消失。
+     提交响应丢失时按幂等键找回任务，不重新提交（避免同一张图被上游扣两次费）。 */
+  async function jobByRequestId(requestId, headers) {
+    try {
+      var res = await fetch(apiUrl('/generate/jobs/by-key/' + encodeURIComponent(requestId)), { headers: headers });
+      if (res.status === 404) return null;
+      if (!res.ok) return undefined;
+      var text = await res.text();
+      try { return JSON.parse(text); } catch (e) { return undefined; }
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  function jobFailure(job) {
+    var err = new Error((job.error && job.error.message) || '生成失败');
+    err.hint = (job.error && job.error.hint) || '';
+    err.category = (job.error && job.error.category) || '';
+    err.status = (job.error && job.error.status) || 502;
+    return err;
+  }
+
+  async function requestGenerateJob(payload, timeoutMs, onProgress) {
+    var budget = timeoutMs || 360000;
+    var requestId = 'rq-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    var token = authToken();
+    var headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    var startedAt = Date.now();
+    function notify(status) {
+      if (typeof onProgress !== 'function') return;
+      try { onProgress({ status: status || 'pending', elapsedMs: Date.now() - startedAt }); } catch (e) {}
+    }
+
+    var data = null;
+    var submit = null;
+    try {
+      submit = await fetch(apiUrl('/generate/jobs'), {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(Object.assign({}, payload, { requestId: requestId }))
+      });
+    } catch (err) {
+      /* 提交可能已到后端、只是响应没回来：先按幂等键找回，绝不重新提交 */
+      var found = null;
+      for (var i = 0; i < 3 && found === null; i++) {
+        await new Promise(function (r) { setTimeout(r, 1200); });
+        found = await jobByRequestId(requestId, headers);
+      }
+      if (found === null) return request('/generate', { method: 'POST', body: payload }, budget);
+      if (found === undefined) {
+        var unknown = new Error('网络中断，无法确认任务是否已提交；任务可能仍在后台运行，请稍后到历史记录查看，避免重复提交');
+        unknown.timeout = true;
+        throw unknown;
+      }
+      data = found;
+    }
+
+    if (submit) {
+      if (submit.status === 404 || submit.status === 405 || submit.status === 501) {
+        /* 旧后端没有异步任务接口：退回同步调用 */
+        return request('/generate', { method: 'POST', body: payload }, budget);
+      }
+      var raw = await submit.text();
+      if (raw) { try { data = JSON.parse(raw); } catch (err) { data = null; } }
+      if (!submit.ok && submit.status !== 202) throw normalizeError(data, submit.status);
+    }
+
+    if (data && data.status === 'done' && data.result) return data.result;
+    if (data && data.error) throw jobFailure(data);
+
+    var id = data && data.id;
+    if (!id) throw new Error('任务创建失败：后端未返回任务 ID');
+    notify(data.status || 'pending');
+
+    while (Date.now() - startedAt < budget) {
+      await new Promise(function (r) { setTimeout(r, 2000); });
+      var poll, body;
+      try {
+        poll = await fetch(apiUrl('/generate/jobs/' + encodeURIComponent(id)), { headers: headers });
+        body = await poll.text();
+      } catch (err) {
+        continue; /* 单次轮询抖动不判失败，继续等到预算耗尽 */
+      }
+      var job = null;
+      if (body) { try { job = JSON.parse(body); } catch (err) { job = null; } }
+      if (!poll.ok) throw normalizeError(job, poll.status);
+      if (!job) continue;
+      if (job.status === 'done') return job.result;
+      if (job.status === 'failed' || job.status === 'error') throw jobFailure(job);
+      /* 只透传后端的真实任务状态，不做假进度 */
+      notify(job.status || 'running');
+    }
+    var timeoutError = new Error('请求已等待 ' + Math.round(budget / 1000) + ' 秒仍未完成，任务可能仍在后台运行，请稍后到历史记录查看');
+    timeoutError.timeout = true;
+    throw timeoutError;
+  }
+
+  api.generate = function (payload, timeoutMs, onProgress) {
+    /* 只把生图切到异步任务；视频/音频仍走原来的同步链路，链路不动 */
+    if (payload && payload.mode === 'image') {
+      return requestGenerateJob(payload, timeoutMs || 360000, onProgress);
+    }
+    return request('/generate', { method: 'POST', body: payload }, timeoutMs || 180000);
+  };
+
+  /* 工作流 TTS：声音设计（Edge-TTS 免费） */
+  api.ttsDesign = function (payload, timeoutMs) {
+    return request('/tts/design', { method: 'POST', body: payload }, timeoutMs || 60000);
+  };
+  /* 工作流 TTS：语音克隆（Fish Audio，需 API Key） */
+  api.ttsClone = function (payload, timeoutMs) {
+    return request('/tts/clone', { method: 'POST', body: payload }, timeoutMs || 120000);
+  };
+  api.ttsVoices = function () {
+    return request('/tts/voices', {}, 15000);
+  };
+
+  api.translate = async function (text) {
+    var data = await request('/translate', { method: 'POST', body: { text: text } }, 30000);
+    return (data && data.text) || '';
+  };
+
+  /* 通用 GET —— 管理台（admin.js）等模块依赖此方法读取 /admin/* 接口 */
+  api.get = function (path, timeoutMs) {
+    return request(path, {}, timeoutMs || 20000);
+  };
+
+  api.listWorks = function () { return request('/works', {}, 20000); };
+  api.saveWork = function (work) { return request('/works', { method: 'POST', body: { work: work } }, 15000); };
+  api.deleteWork = function (id) { return request('/works/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+  api.clearWorks = function () { return request('/works', { method: 'DELETE' }, 15000); };
+
+  api.getDesk = function () { return request('/desk', {}, 20000); };
+  api.saveDesk = function (desk) { return request('/desk', { method: 'PUT', body: { desk: desk } }, 30000); };
+
+  api.listAssets = function (filter) {
+    var qs = [];
+    if (filter && filter.type) qs.push('type=' + encodeURIComponent(filter.type));
+    if (filter && filter.projectId) qs.push('projectId=' + encodeURIComponent(filter.projectId));
+    if (filter && filter.folder) qs.push('folder=' + encodeURIComponent(filter.folder));
+    var url = '/assets' + (qs.length ? '?' + qs.join('&') : '');
+    return request(url, {}, 15000);
+  };
+  api.addAsset = function (asset) { return request('/assets', { method: 'POST', body: asset }, 60000); };
+  api.deleteAsset = function (id) { return request('/assets/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
+  api.listProjects = function () { return request('/projects', {}, 15000); };
+  api.createProject = function (project) { return request('/projects', { method: 'POST', body: project }, 15000); };
+  api.updateProject = function (id, patch) { return request('/projects/' + encodeURIComponent(id), { method: 'PATCH', body: patch }, 15000); };
+  api.deleteProject = function (id) { return request('/projects/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+  api.addProjectFolder = function (id, name) { return request('/projects/' + encodeURIComponent(id) + '/folders', { method: 'POST', body: { name: name } }, 15000); };
+
+  /* -------------- 企划模块 -------------- */
+  api.planTrending = function (platform) {
+    return request('/plan/trending?platform=' + encodeURIComponent(platform || 'zhihu'), {}, 15000);
+  };
+  api.planTrendingAll = function () {
+    return request('/plan/trending/all', {}, 20000);
+  };
+  api.planRanking = function (category, refresh) {
+    var qs = 'category=' + encodeURIComponent(category || 'anime');
+    if (refresh) qs += '&refresh=1';
+    return request('/plan/ranking?' + qs, {}, 30000);
+  };
+  api.planRankingCategories = function () {
+    return request('/plan/ranking/categories', {}, 10000);
+  };
+  api.planSearch = function (q, category, platform) {
+    var qs = 'q=' + encodeURIComponent(q || '');
+    if (category) qs += '&category=' + encodeURIComponent(category);
+    if (platform) qs += '&platform=' + encodeURIComponent(platform);
+    return request('/plan/search?' + qs, {}, 20000);
+  };
+  api.listProposals = function () { return request('/plan/proposal', {}, 15000); };
+  api.getProposal = function (id) { return request('/plan/proposal/' + encodeURIComponent(id), {}, 15000); };
+  api.createProposal = function (payload) { return request('/plan/proposal', { method: 'POST', body: payload }, 20000); };
+  api.updateProposal = function (id, payload) { return request('/plan/proposal/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteProposal = function (id) { return request('/plan/proposal/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
+  /* -------------- 剧本模块 -------------- */
+  api.listScripts = function () { return request('/script', {}, 15000); };
+  api.createScript = function (payload) { return request('/script', { method: 'POST', body: payload }, 20000); };
+  api.getScript = function (id) { return request('/script/' + encodeURIComponent(id), {}, 15000); };
+  api.updateScript = function (id, payload) { return request('/script/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteScript = function (id) { return request('/script/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+
+  // 角色
+  api.addCharacter = function (scriptId, char) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters', { method: 'POST', body: char }, 15000);
+  };
+  api.updateCharacter = function (scriptId, cid, char) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters/' + encodeURIComponent(cid), { method: 'PATCH', body: char }, 15000);
+  };
+  api.deleteCharacter = function (scriptId, cid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/characters/' + encodeURIComponent(cid), { method: 'DELETE' }, 15000);
+  };
+  // 场次
+  api.addScene = function (scriptId, scene) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes', { method: 'POST', body: scene }, 15000);
+  };
+  api.updateScene = function (scriptId, sid, scene) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid), { method: 'PATCH', body: scene }, 15000);
+  };
+  api.deleteScene = function (scriptId, sid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid), { method: 'DELETE' }, 15000);
+  };
+  // 镜头
+  api.addShot = function (scriptId, sid, shot) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots', { method: 'POST', body: shot }, 15000);
+  };
+  api.updateShot = function (scriptId, sid, shotId, shot) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId), { method: 'PATCH', body: shot }, 15000);
+  };
+  api.deleteShot = function (scriptId, sid, shotId) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId), { method: 'DELETE' }, 15000);
+  };
+  // 对白
+  api.addDialogue = function (scriptId, sid, shotId, d) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues', { method: 'POST', body: d }, 15000);
+  };
+  api.updateDialogue = function (scriptId, sid, shotId, did, d) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues/' + encodeURIComponent(did), { method: 'PATCH', body: d }, 15000);
+  };
+  api.deleteDialogue = function (scriptId, sid, shotId, did) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/scenes/' + encodeURIComponent(sid) + '/shots/' + encodeURIComponent(shotId) + '/dialogues/' + encodeURIComponent(did), { method: 'DELETE' }, 15000);
+  };
+  // 版本
+  api.snapshotScript = function (scriptId, label) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions', { method: 'POST', body: { label: label || '' } }, 20000);
+  };
+  api.listVersions = function (scriptId) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions', {}, 15000);
+  };
+  api.restoreVersion = function (scriptId, vid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions/' + encodeURIComponent(vid) + '/restore', { method: 'POST' }, 20000);
+  };
+  api.deleteVersion = function (scriptId, vid) {
+    return request('/script/' + encodeURIComponent(scriptId) + '/versions/' + encodeURIComponent(vid), { method: 'DELETE' }, 15000);
+  };
+  // 导出
+  api.exportScript = function (scriptId, format) {
+    return '/script/' + encodeURIComponent(scriptId) + '/export?format=' + encodeURIComponent(format || 'fountain');
+  };
+
+  /* -------------- 美术设定设计 -------------- */
+  api.artCategories = function () { return request('/art/categories', {}, 10000); };
+  api.listArts = function (category) {
+    var q = category && category !== 'all' ? '?category=' + encodeURIComponent(category) : '';
+    return request('/art' + q, {}, 15000);
+  };
+  api.createArt = function (payload) { return request('/art', { method: 'POST', body: payload }, 20000); };
+  api.getArt = function (id) { return request('/art/' + encodeURIComponent(id), {}, 15000); };
+  api.updateArt = function (id, payload) { return request('/art/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.uploadArtMedia = function (dataUrl) { return request('/art/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000); };
+  api.bulkImportArts = function (items) { return request('/art/bulk', { method: 'POST', body: { items: items } }, 30000); };
+  api.exportArtBoard = function (id, format) { return request('/art/' + encodeURIComponent(id) + '/export?format=' + encodeURIComponent(format), null, 15000); };
+
+
+  /* ===== 动画（Animation / Tweening）===== */
+  api.listAnimation = function (q) { return request('/animation' + (q || ''), null, 20000); };
+  api.getAnimation = function (id) { return request('/animation/' + encodeURIComponent(id), null, 20000); };
+  api.createAnimation = function (payload) { return request('/animation', { method: 'POST', body: payload }, 20000); };
+  api.updateAnimation = function (id, payload) { return request('/animation/' + encodeURIComponent(id), { method: 'PATCH', body: payload }, 20000); };
+  api.deleteAnimation = function (id) { return request('/animation/' + encodeURIComponent(id), { method: 'DELETE', body: null }, 15000); };
+  api.duplicateAnimation = function (id) { return request('/animation/' + encodeURIComponent(id) + '/duplicate', { method: 'POST', body: null }, 20000); };
+  api.bulkAnimation = function (items) { return request('/animation/bulk', { method: 'POST', body: { items: items } }, 30000); };
+  api.uploadAnimMedia = function (dataUrl) { return request('/animation/upload', { method: 'POST', body: { dataUrl: dataUrl } }, 60000); };
+  api.animAddKf = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/kf', { method: 'POST', body: payload }, 15000); };
+  api.animAddTween = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/tween', { method: 'POST', body: payload }, 15000); };
+  api.animGenerate = function (id, payload) { return request('/animation/' + encodeURIComponent(id) + '/generate', { method: 'POST', body: payload }, 15000); };
+  api.animDeleteTween = function (id, tweenId) { return request('/animation/' + encodeURIComponent(id) + '/tween/' + encodeURIComponent(tweenId), { method: 'DELETE', body: null }, 15000); };
+  api.animBulkTweenStatus = function (id, ids, status) { return request('/animation/' + encodeURIComponent(id) + '/tween-bulk-status', { method: 'POST', body: { ids: ids, status: status } }, 15000); };
+  api.exportAnimation = function (id, format) { return '/api/animation/export/' + encodeURIComponent(id) + '?format=' + (format || 'csv'); };
+  api.dictAnimation = function () { return request('/animation/dict', null, 10000); };
+  api.deleteArt = function (id) { return request('/art/' + encodeURIComponent(id), { method: 'DELETE' }, 15000); };
+  api.duplicateArt = function (id) { return request('/art/' + encodeURIComponent(id) + '/duplicate', { method: 'POST' }, 15000); };
+  api.bulkArtStatus = function (ids, status) {
+    return request('/art/bulk-status', { method: 'POST', body: { ids: ids, status: status } }, 20000);
+  };
+  api.getChecklist = function () { return request('/art/checklist', {}, 15000); };
+  api.saveChecklist = function (payload) { return request('/art/checklist', { method: 'POST', body: payload }, 15000); };
+
+  api.presets = function () { return request('/presets', {}, 15000); };
+  api.catalog = function () { return request('/catalog', {}, 15000); };
+  api.mediaModels = function () { return request('/media-models', {}, 15000); };
+  api.models = function (cfg) {
+    return request('/rayin/models', { method: 'POST', body: cfg || {} }, 45000);
+  };
+
+  /* 后端返回的 /uploads/... 相对地址在跨域时需要补全 origin */
+  api.mediaUrl = function (url) {
+    var value = String(url || '');
+    if (!value) return '';
+    if (/^(https?:|data:|blob:)/i.test(value)) return value;
+    if (value.charAt(0) === '/' && origin) return origin + value;
+    return value;
+  };
+
+  /* 跨域图片代理：上游图没有 CORS 头时，由后端代取字节（服务端不受浏览器跨域限制） */
+  api.origin = origin || '';
+  api.base = base;
+  api.imageProxyUrl = function (url) {
+    var raw = String(url || '');
+    if (!raw) return '';
+    var target = /^https?:\/\//i.test(raw) ? raw : api.mediaUrl(raw);
+    /* SCF 函数 URL 不透传二进制响应体（200 空 body），走 JSON 通道拿 dataUrl */
+    var path = '/api/image-proxy?url=' + encodeURIComponent(target) + '&format=json';
+    return origin ? origin + path : path;
+  };
+
+  /* 历史数据里保存的旧域名绝对地址（后端已迁移）统一改写到当前 API origin。
+     - 仅改写已知旧域名前缀，新域名/第三方地址原样返回
+     - 相对地址先按 mediaUrl 补全；file:// 下没有同源 origin，则保持原值交给浏览器 */
+  var LEGACY_ORIGINS = ['https://huimeng-ai-backend.onrender.com'];
+  api.fileUrl = function (url) {
+    var value = api.mediaUrl(url);
+    if (!value || !origin) return value;
+    for (var i = 0; i < LEGACY_ORIGINS.length; i++) {
+      if (value.indexOf(LEGACY_ORIGINS[i]) === 0) {
+        return origin + value.slice(LEGACY_ORIGINS[i].length);
+      }
+    }
+    return value;
+  };
+  /* 是否是迁移前旧域名的历史地址（可用来判断缓存是否过期） */
+  api.isLegacyFileUrl = function (url) {
+    var value = String(url || '');
+    for (var i = 0; i < LEGACY_ORIGINS.length; i++) {
+      if (value.indexOf(LEGACY_ORIGINS[i]) === 0) return true;
+    }
+    return false;
+  };
+
+  /* -------------- 用户认证 -------------- */
+  api.setToken = setAuthToken;
+  api.getToken = authToken;
+
+  api.login = function (username, password) {
+    return request('/auth/login', { method: 'POST', body: { username: username, password: password } }, 60000);
+  };
+  api.me = function () {
+    return request('/auth/me', {}, 30000);
+  };
+  /* 预热后端：Render 免费层休眠后首个请求需 20~60s 唤醒，
+     在打开登录框时先打一枪，用户输入账号密码期间服务器即可醒来 */
+  api.warmup = function () {
+    return request('/health', {}, 60000).catch(function () {});
+  };
+  api.logout = function () {
+    setAuthToken('');
+    try { localStorage.removeItem('hm.user'); } catch (e) {}
+  };
+
+  /* 管理员：用户管理 */
+  api.listUsers = function () { return request('/auth/users', {}, 15000); };
+  api.createUser = function (username, password, role, note) {
+    return request('/auth/users', { method: 'POST', body: { username: username, password: password, role: role, note: note || '' } }, 20000);
+  };
+  api.setUserRole = function (id, role) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/role', { method: 'PATCH', body: { role: role } }, 15000);
+  };
+  api.resetUserPassword = function (id, password) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/password', { method: 'PATCH', body: { password: password } }, 15000);
+  };
+  api.deleteUser = function (id) {
+    return request('/auth/users/' + encodeURIComponent(id), { method: 'DELETE' }, 15000);
+  };
+  /* 审批流 */
+  api.setUserStatus = function (id, status, note) {
+    return request('/auth/users/' + encodeURIComponent(id) + '/status', { method: 'PATCH', body: { status: status, note: note || '' } }, 15000);
+  };
+  api.pendingCount = function () {
+    return request('/auth/users/pending-count', {}, 12000);
+  };
+  api.storeStatus = function () {
+    return request('/auth/store-status', {}, 12000);
+  };
+  api.migrateFileUsers = function () {
+    return request('/auth/users/migrate-file', { method: 'POST', body: {} }, 60000);
+  };
+  api.exportUsers = function () {
+    return request('/auth/users/export', {}, 20000);
+  };
+  /* 个人资料 / 偏好：全部走后端，localStorage 只做短期缓存 */
+  api.getProfile = function () {
+    return request('/auth/profile', {}, 15000);
+  };
+  api.updateProfile = function (patch) {
+    return request('/auth/profile', { method: 'PATCH', body: patch || {} }, 15000);
+  };
+  api.getPreferences = function () {
+    return request('/auth/preferences', {}, 15000);
+  };
+  api.updatePreferences = function (patch) {
+    return request('/auth/preferences', { method: 'PATCH', body: patch || {} }, 15000);
+  };
+
+  HM.api = api;
+})();
+

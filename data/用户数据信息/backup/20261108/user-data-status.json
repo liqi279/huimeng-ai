@@ -1,0 +1,1 @@
+{"ok":true,"storage":{"dataStore":"mysql","dataLabel":"MySQL","database":"huimeng_users","objectStore":"s3","objectLabel":"对象存储(S3)","bucket":"huimeng2-assets","endpoint":"https://oss-cn-hangzhou.aliyuncs.com","warnings":[]},"usage":{"works":1,"assets":0,"bytes":0,"workCap":500,"assetMaxBytes":10485760,"storageMaxBytes":2147483648},"serverTime":1794137573117}

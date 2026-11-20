@@ -1,0 +1,18 @@
+蓝莓酱桌宠 - 原项目修复版
+
+安装方法：
+1. 完全退出正在运行的蓝莓酱桌宠。
+2. 先备份原文件夹（建议复制一份 E:\Blueberry-AI-Pet）。
+3. 将本压缩包内 Blueberry-AI-Pet 文件夹中的全部文件解压覆盖到原项目 E:\Blueberry-AI-Pet。
+   注意：本包不含 node_modules，不要删除你原来已经安装好的 node_modules。
+4. 在 E:\Blueberry-AI-Pet 地址栏输入 cmd，回车。
+5. 执行 npm start。
+
+本次修复：
+- 桌宠按钮先绑定再检测 IPC，避免通信检查阻塞交互初始化。
+- IPC 操作统一使用 invoke/handle 并返回执行结果。
+- 修复 Electron 新版 console-message 诊断监听方式，增加 preload、加载失败和渲染进程退出日志。
+- 聊天窗口和聊天页面增加错误处理。
+- 保留原角色图片、界面样式、项目配置及启动脚本。
+
+说明：AI 在线回复仍需填写有效的 API Key、Base URL 和该 API 服务实际支持的模型 ID。未配置时使用本地演示回复。

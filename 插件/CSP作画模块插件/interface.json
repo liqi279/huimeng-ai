@@ -1,0 +1,21 @@
+{
+  "name": "CSP作画模块插件",
+  "id": "huimeng-csp-bridge",
+  "version": "1.0.0",
+  "platform": "huimeng-ai",
+  "entry": "huimeng-csp-bridge.js",
+  "global": "HMCSPBridge",
+  "description": "绘梦平台 ↔ 本地正版 CLIP STUDIO PAINT 联动：协议唤起、状态探测、完成稿回导资产库。不包含任何破解或激活绕过内容。",
+  "api": [
+    { "method": "launch()", "returns": "void", "desc": "通过 clipstudio:// 协议唤起本机 CSP；1800ms 内窗口失焦视为成功，否则进入 notfound 并应展示正版安装引导" },
+    { "method": "status()", "returns": "'unknown'|'launching'|'launched'|'notfound'", "desc": "查询当前联动状态" },
+    { "method": "onStatusChange(fn)", "returns": "unsubscribe: Function", "desc": "订阅状态变化" },
+    { "method": "importFiles(files)", "returns": "Promise<void>", "desc": "把 FileList 中的 PNG/JPG/WebP 导入平台资产库（依赖 HMUI.importAssets）" },
+    { "method": "openAssets()", "returns": "void", "desc": "跳转到平台「资产」模块" }
+  ],
+  "workflow": [
+    "平台「原画 / 着色」导出 PNG 底稿",
+    "launch() 唤起本地 CSP 并打开底稿作画",
+    "CSP 导出完成稿 → importFiles() 回导平台资产库"
+  ]
+}

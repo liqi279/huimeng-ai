@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>蓝莓酱 · Live2D</title>
+  <link rel="stylesheet" href="pet-live2d.css">
+</head>
+<body>
+  <main id="petRoot" aria-label="蓝莓酱桌面宠物">
+    <div id="modelStage">
+      <canvas id="live2dCanvas"></canvas>
+      <div id="modelFallback" role="status">
+        <div class="fallback-orb">♡</div>
+        <strong>蓝莓酱正在等待模型</strong>
+        <span>把 Cubism 模型放入 live2d/model/ 文件夹</span>
+        <small id="runtimeStatus">正在检查 Live2D 运行环境…</small>
+      </div>
+    </div>
+    <div id="speech" class="speech" hidden>主人！蓝莓酱在这里哦～</div>
+    <nav class="petTools" aria-label="桌宠操作">
+      <button id="chatBtn" title="打开聊天">聊</button>
+      <button id="speechBtn" title="打招呼">♡</button>
+      <button id="hideBtn" title="隐藏桌宠">－</button>
+      <button id="quitBtn" title="退出">×</button>
+    </nav>
+    <div id="modelHint">双击角色打开聊天 · 拖动角色移动</div>
+  </main>
+  <!-- Place licensed Cubism Core and the matching Cubism Web Framework in vendor/live2d/. -->
+  <script src="vendor/live2d/live2dcubismcore.min.js"></script>
+  <script src="vendor/live2d/pixi.min.js"></script>
+  <script src="vendor/live2d/pixi-live2d-display.min.js"></script>
+  <script src="pet-live2d.js"></script>
+</body>
+</html>
