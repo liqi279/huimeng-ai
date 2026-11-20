@@ -1443,20 +1443,17 @@
     if (!menu) return;
     function renderGroup(title, models, perSecond) {
       if (!models.length) return '';
-      return '<span class="hm-menu-label hm-video-group-label">' + title + '</span>' +
+      return '<span class="hm-menu-label hm-video-group-label ' + (perSecond ? 'hm-video-group-per-second' : 'hm-video-group-per-task') + '">' + title + '</span>' +
         '<div class="hm-chip-grid">' + models.map(function (m) {
           var unit = perSecond ? '积分/秒' : '积分/次';
           var priceMap = m.resolutionPrices || {};
           var priceParts = Object.keys(priceMap).map(function (res) { return res + ' ' + priceMap[res] + ' ' + unit; });
           var creditsText = priceParts.length ? priceParts.join(' · ') : (m.desc || unit);
-          var badge = perSecond
-            ? '<small class="hm-pay-badge hm-pay-persec">按秒</small>'
-            : '<small class="hm-pay-badge">按次</small>';
-          var keyBadge = m.configured === false ? '<small class="hm-pay-badge hm-key-pending">待配置Key</small>' : '';
+          var keyBadge = m.configured === false ? ' · 待配置Key' : '';
           var tip = m.refHint ? ' ' + m.refHint : '';
-          return '<button type="button" data-vmodel="' + m.id + '" title="' + creditsText + tip + '">' +
-            m.name + badge + keyBadge +
-            '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + '</span>' +
+          return '<button type="button" data-vmodel="' + m.id + '" title="' + creditsText + keyBadge + tip + '">' +
+            m.name +
+            '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + keyBadge + '</span>' +
           '</button>';
         }).join('') + '</div>';
     }
@@ -1486,7 +1483,7 @@
       renderVideoRatioPicker();
       updateRefDropForMode('video');
       renderVideoEstimate();
-      renderVideoModels();
+      /* syncEngineUI 已同步选中态；避免重新生成整个菜单造成点击后卡顿 */
       A.closeAllMenus();
       return true;
     };
@@ -2922,8 +2919,8 @@
     bindDurationSlider();
 
     await detectBackend();
-    await loadAssets();
-    await loadMediaCatalog();
+    /* 素材库与模型目录互不依赖，并行加载，避免模型列表等待素材请求完成 */
+    await Promise.all([loadAssets(), loadMediaCatalog()]);
 
     /* 导演台初始化 */
     if (window.HMDirector) {
