@@ -1261,6 +1261,8 @@ async function generateVideo(body) {
   const refImages = readRefImages(body.refImages);
   const refVideos = Array.isArray(body.refVideos) ? body.refVideos : [];
   const refAudios = Array.isArray(body.refAudios) ? body.refAudios : [];
+  const refPayloadChars = refImages.concat(refVideos, refAudios).reduce((sum, item) => sum + String(item || '').length, 0);
+  assert(refPayloadChars <= 5.5 * 1024 * 1024, 413, '参考素材总量超过云函数请求限制', '请将图片、视频、音频参考素材总量控制在约 4MB 以内');
   const refLimits = modelMeta.refLimits || { images: 10, videos: 3, audios: 3 };
   assert(refImages.length <= refLimits.images, 400, '参考图片数量超过模型上限', '当前模型最多支持 ' + refLimits.images + ' 张图片');
   assert(refVideos.length <= refLimits.videos, 400, '参考视频数量超过模型上限', '当前模型最多支持 ' + refLimits.videos + ' 个视频');
