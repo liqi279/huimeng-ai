@@ -1266,6 +1266,12 @@
     /* refDrop 在所有模式下都显示（上传参考主体），但内容/accept 动态变化 */
     if (A.els.refDrop) A.els.refDrop.hidden = false;
     updateRefDropForMode(mode);
+    if (mode === 'video') renderDurationControls();
+    else if (A.els.scalePicker && defaultScalePickerHtml != null &&
+        !A.els.scalePicker.querySelector('[data-scale]')) {
+      A.els.scalePicker.innerHTML = defaultScalePickerHtml;
+      syncScaleLabels();
+    }
 
     var hint = document.getElementById('genHint');
     if (hint && !state.generating) {
@@ -1325,12 +1331,22 @@
     if (mode === 'video') {
       var videoMeta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
       var refHint = videoMeta && videoMeta.refHint ? videoMeta.refHint : '支持图片/视频/音频参考';
+      var ratioHint = videoMeta && videoMeta.aspectRatios ? videoMeta.aspectRatios.join(' / ') : '';
+      var resolutionHint = videoMeta && videoMeta.resolutions ? videoMeta.resolutions.join(' / ') : '';
       if (emptyText) emptyText.textContent = '拖入或上传参考主体（图片/视频/音频）';
-      if (hintText) hintText.textContent = refHint;
+      if (hintText) hintText.textContent = '时长 ' + videoMeta.minDuration + '–' + videoMeta.maxDuration + ' 秒 · 清晰度 ' + resolutionHint + ' · 比例 ' + ratioHint + ' · ' + refHint;
       if (input) input.setAttribute('accept', 'image/*,video/*,audio/*');
       if (limits && limitsText) {
         limits.hidden = false;
-        limitsText.textContent = '视频参考主体 · 图片 ≤10MB 最多10张 · 视频 ≤50MB 最多3个 · 音频 ≤10MB 最多3个';
+        var rl = videoMeta && videoMeta.refLimits ? videoMeta.refLimits : {};
+        var fmtLimit = function (item, fallback) {
+          if (!item) return fallback;
+          var mb = item.maxBytes ? Math.round(item.maxBytes / 1024 / 1024) : 0;
+          return item.count + ' 个 · 单个 ≤' + mb + 'MB';
+        };
+        limitsText.textContent = '素材限制：图片 ' + fmtLimit(rl.images, '最多10张') +
+          '；视频 ' + fmtLimit(rl.videos, '最多3个') +
+          '；音频 ' + fmtLimit(rl.audios, '最多3个');
       }
     } else if (mode === 'audio') {
       if (emptyText) emptyText.textContent = '拖入或上传参考音频（可选）';
@@ -1527,8 +1543,8 @@
     /* slider：全局固定范围 1-30 / step=1，当前值夹紧到模型合法范围 */
     var slider = document.getElementById('durationSlider');
     if (slider) {
-      slider.min = 1;
-      slider.max = 30;
+      slider.min = min;
+      slider.max = max;
       slider.step = 1;
       slider.value = state.duration;
       var label = document.getElementById('durationSliderLabel');
