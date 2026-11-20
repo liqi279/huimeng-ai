@@ -1939,7 +1939,7 @@ function syncEngineUI() {
 const REF_MAX_BYTES = 10 * 1024 * 1024;
 const REF_MAX_SIDE = 1280;
 const REF_MAX_COUNT = 10;
-const VIDEO_REF_TOTAL_MAX_BYTES = 12 * 1024 * 1024;
+const VIDEO_REF_TOTAL_MAX_BYTES = 4 * 1024 * 1024;
 var _videoMediaRefs = { videos: [], audios: [] };
 
 function syncRefNote() {
@@ -2975,7 +2975,7 @@ async function pickVideoMediaFile(file, kind) {
     toast('当前模型参考' + (kind === 'videos' ? '视频' : '音频') + '最多 ' + Number(limit.count || 0) + ' 个', 'error');
     return;
   }
-  var hardMax = kind === 'videos' ? 7 * 1024 * 1024 : 3 * 1024 * 1024;
+  var hardMax = kind === 'videos' ? 3 * 1024 * 1024 : 1536 * 1024;
   var maxBytes = Math.min(Number(limit.maxBytes || hardMax), hardMax);
   if (file.size > maxBytes) {
     toast('该参考文件超过前端安全上传上限 ' + Math.round(maxBytes / 1024 / 1024) + 'MB', 'error');
