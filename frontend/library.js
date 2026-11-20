@@ -1625,20 +1625,31 @@
 
   /* 阅读器预热：空闲时把 pdf.js 主脚本与 worker 拉进浏览器缓存，点击时不再付这一笔 */
   var pdfWarmStarted = false;
+  var pdfWarmPromise = null;
   function warmPdfReader() {
-    if (pdfWarmStarted) return;
+    if (pdfWarmPromise) return pdfWarmPromise;
     pdfWarmStarted = true;
-    var idle = window.requestIdleCallback || function (fn) { return setTimeout(fn, 1200); };
-    idle(function () {
-      loadPdfJs().then(function () {
-        try {
-          /* 预热实际配置的 Worker 地址（优先腾讯云 COS），不要再从 GitHub Pages 拉取 1MB Worker。 */
-          var workerUrl = window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions
-            && window.pdfjsLib.GlobalWorkerOptions.workerSrc;
-          if (workerUrl) fetch(workerUrl, { cache: 'force-cache', mode: 'cors' }).catch(function () {});
-        } catch (e) {}
-      }).catch(function () {});
-    }, { timeout: 3000 });
+    /* 详情页显示时立即并行预热 PDF.js 与 Worker，不再等待 requestIdleCallback；
+       大陆网络下 Worker 约 1MB，延迟到点击阅读才下载会明显拖慢首屏。 */
+    pdfWarmPromise = loadPdfJs().then(function (pdfjs) {
+      var workerUrl = pdfjs && pdfjs.GlobalWorkerOptions && pdfjs.GlobalWorkerOptions.workerSrc;
+      if (!workerUrl) return pdfjs;
+      return fetch(workerUrl, { cache: 'force-cache', mode: 'cors' })
+        .then(function (response) {
+          if (!response || !response.ok) throw new Error('PDF Worker 预热失败');
+          return pdfjs;
+        })
+        .catch(function (err) {
+          /* 预热失败不阻断阅读，pdf.js 仍可自行加载 Worker。 */
+          console.warn('[library] PDF Worker 预热失败：', err && err.message);
+          return pdfjs;
+        });
+    }).catch(function (err) {
+      pdfWarmPromise = null;
+      pdfWarmStarted = false;
+      throw err;
+    });
+    return pdfWarmPromise;
   }
 
   function fetchPdfSignedUrl(book, force) {
@@ -1850,7 +1861,8 @@
     /* SCF 不支持该路由的 Readable 流式回传；兜底必须使用标准文件路由，
        由它 302 到 COS，浏览器直接按 Range 读取，不能追加 stream=1。 */
 
-    state.pdfDocPromise = loadPdfJs()
+    state.pdfDocPromise = warmPdfReader()
+      .then(function () { return loadPdfJs(); })
       .then(function (pdfjs) {
         pdfPerf.js = performance.now();
         /* 分段读取：只取当前页需要的字节；带真实进度回调
