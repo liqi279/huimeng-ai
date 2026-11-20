@@ -1341,6 +1341,7 @@
         var rl = videoMeta && videoMeta.refLimits ? videoMeta.refLimits : {};
         var fmtLimit = function (item, fallback) {
           if (!item) return fallback;
+          if (!item.count) return '不支持';
           var mb = item.maxBytes ? Math.round(item.maxBytes / 1024 / 1024) : 0;
           return item.count + ' 个 · 单个 ≤' + mb + 'MB';
         };
@@ -1428,6 +1429,7 @@
       var badge = m.billingType === 'perSecond'
         ? '<small class="hm-pay-badge hm-pay-persec">按秒</small>'
         : '<small class="hm-pay-badge">按次</small>';
+      if (m.configured === false) badge += '<small class="hm-pay-badge">待配置</small>';
       return '<button data-vmodel="' + m.id + '" title="' + creditsText + '">' +
         m.name + badge +
         '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + '</span>' +
@@ -1641,6 +1643,10 @@
       ? (mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0])
       : null;
     if (mode === 'video' && videoMetaForValidation) {
+      if (videoMetaForValidation.configured === false) {
+        A.toast('该模型的则灵 API Key 尚未配置，请先完成服务器密钥配置', 'error');
+        return;
+      }
       var refsForValidation = A.getCurrentRefs ? A.getCurrentRefs() : [];
       var maxImages = videoMetaForValidation.refLimits && videoMetaForValidation.refLimits.images
         ? videoMetaForValidation.refLimits.images.count : 10;
@@ -1673,7 +1679,7 @@
       modelMeta = mediaCatalog.audio.models.find(function (m) { return m.id === modelId; });
     }
     var isFree = mode === 'audio' && modelMeta && modelMeta.free;
-    if (!isFree && !modeFreeFor(mode)) {
+    if (mode !== 'video' && !isFree && !modeFreeFor(mode)) {
       var hasUserKey = !!String((state.api && state.api.key) || '').trim();
       var hasServerKey = api.hasServerKey();
       if (!hasUserKey && !hasServerKey) {
