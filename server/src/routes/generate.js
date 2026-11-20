@@ -1162,6 +1162,51 @@ function videoModel(v) {
 function videoModelMeta(v) {
   return VIDEO_MODELS.find((m) => m.id === v) || VIDEO_MODELS[0];
 }
+ 
+/* 则灵公开模型清单是时长/比例/清晰度能力的权威来源；短缓存避免每次生成重复请求。 */
+let zelingModelDirectoryCache = null;
+let zelingModelDirectoryExpires = 0;
+async function getZelingModelDirectory() {
+  if (zelingModelDirectoryCache && Date.now() < zelingModelDirectoryExpires) return zelingModelDirectoryCache;
+  try {
+    const data = await fetchJson(`${ZELING_BASE}/models`, { headers: { Accept: 'application/json' } }, 12000, '则灵模型清单获取失败');
+    if (data && typeof data === 'object') {
+      zelingModelDirectoryCache = data;
+      zelingModelDirectoryExpires = Date.now() + 60 * 1000;
+      return data;
+    }
+  } catch (err) {
+    /* 上游模型目录短暂不可用时使用已配置的本地能力兜底。 */
+  }
+  return zelingModelDirectoryCache || {};
+}
+function findZelingModel(directory, modelId) {
+  const groups = [directory && directory.video, directory && directory.videoStable];
+  for (const group of groups) {
+    if (!Array.isArray(group)) continue;
+    const found = group.find((item) => item && (item.id === modelId || item.model === modelId));
+    if (found) return found;
+  }
+  return null;
+}
+async function effectiveVideoModelMeta(modelId) {
+  const base = videoModelMeta(modelId);
+  const remote = findZelingModel(await getZelingModelDirectory(), base.model || base.id);
+  if (!remote) return base;
+  const merged = Object.assign({}, base);
+  if (Array.isArray(remote.durations) && remote.durations.length) {
+    merged.durations = remote.durations.map(Number).filter(Number.isFinite);
+    merged.minDuration = Math.min(...merged.durations);
+    merged.maxDuration = Math.max(...merged.durations);
+  }
+  if (Array.isArray(remote.resolutions) && remote.resolutions.length) merged.resolutions = remote.resolutions.slice();
+  if (Array.isArray(remote.aspect_ratios) && remote.aspect_ratios.length) merged.aspectRatios = remote.aspect_ratios.slice();
+  if (remote.price_type === 'per_second') merged.billingType = 'perSecond';
+  if (remote.price_type === 'per_call') merged.billingType = 'perTask';
+  const prices = remote.resolution_prices || remote.video_resolution_prices;
+  if (prices && typeof prices === 'object') merged.resolutionPrices = Object.assign({}, prices);
+  return merged;
+}
 
 function audioModel(v) {
   const found = AUDIO_MODELS.find((m) => m.id === v);
@@ -1202,30 +1247,42 @@ function zelingMediaUrl(task) {
 async function generateVideo(body) {
   const prompt = readPrompt(body.prompt, '提示词');
   const modelId = videoModel(body.model);
-  const modelMeta = videoModelMeta(modelId);
+  const modelMeta = await effectiveVideoModelMeta(modelId);
 
   /* aspect_ratio：zeling 原生字段，值为 "16:9"/"9:16"/"1:1"/"4:3"/"21:9" 等 */
-  const ratio = modelMeta.aspectRatios && modelMeta.aspectRatios.includes(body.ratio)
-    ? body.ratio
-    : (modelMeta.aspectRatios && modelMeta.aspectRatios[0]) || '16:9';
+  const ratio = body.ratio || modelMeta.aspectRatios[0];
+  assert(modelMeta.aspectRatios.includes(ratio), 400, '画面比例不受支持', '模型 ' + modelMeta.name + ' 支持：' + modelMeta.aspectRatios.join(' / '));
 
-  const resolution = modelMeta.resolutions.includes(body.resolution) ? body.resolution : modelMeta.resolutions[0];
+  const resolution = body.resolution || modelMeta.resolutions[0];
+  assert(modelMeta.resolutions.includes(resolution), 400, '清晰度不受支持', '模型 ' + modelMeta.name + ' 支持：' + modelMeta.resolutions.join(' / '));
 
   /* 时长校验（zeling 有固定档位，前端做 5 的倍数已经够了，这里边界检查即可） */
   let duration = body.duration != null && body.duration !== '' ? Number(body.duration) : modelMeta.minDuration;
-  if (!Number.isFinite(duration) || duration < modelMeta.minDuration || duration > modelMeta.maxDuration) {
-    throw jsonError(400, `视频时长 ${duration} 秒超出范围`, `模型 ${modelMeta.name} 支持 ${modelMeta.minDuration}-${modelMeta.maxDuration} 秒`);
+  if (!Number.isFinite(duration) || duration < modelMeta.minDuration || duration > modelMeta.maxDuration ||
+      (Array.isArray(modelMeta.durations) && modelMeta.durations.length && !modelMeta.durations.includes(duration))) {
+    const allowed = Array.isArray(modelMeta.durations) && modelMeta.durations.length
+      ? modelMeta.durations.join(' / ') : modelMeta.minDuration + '-' + modelMeta.maxDuration;
+    throw jsonError(400, `视频时长 ${duration} 秒不受支持`, `模型 ${modelMeta.name} 支持：${allowed} 秒`);
   }
 
   /* 参考主体校验 + 解析 */
   const refImages = readRefImages(body.refImages);
   const refVideos = Array.isArray(body.refVideos) ? body.refVideos : [];
   const refAudios = Array.isArray(body.refAudios) ? body.refAudios : [];
+  const refLimits = modelMeta.refLimits || { images: 10, videos: 3, audios: 3, imageMaxBytes: 9 * 1024 * 1024, videoMaxBytes: 30 * 1024 * 1024, audioMaxBytes: 9 * 1024 * 1024 };
+  assert(refImages.length <= refLimits.images, 400, '参考图片数量超限', modelMeta.name + ' 最多支持 ' + refLimits.images + ' 张图片');
+  assert(refVideos.length <= refLimits.videos, 400, '参考视频数量超限', modelMeta.name + ' 最多支持 ' + refLimits.videos + ' 个视频');
+  assert(refAudios.length <= refLimits.audios, 400, '参考音频数量超限', modelMeta.name + ' 最多支持 ' + refLimits.audios + ' 个音频');
+  refImages.forEach((item, index) => assert(item.buffer.length <= refLimits.imageMaxBytes, 413, '参考图片过大', '单张图片不能超过 9MB'));
   for (let i = 0; i < refVideos.length; i += 1) {
     assert(typeof refVideos[i] === 'string' && refVideos[i].startsWith('data:'), 400, `参考视频 ${i + 1} 格式不正确`);
+    const decoded = dataUrlToBuffer(refVideos[i]);
+    assert(decoded.buffer.length <= refLimits.videoMaxBytes, 413, `参考视频 ${i + 1} 过大`, '单个视频不能超过 30MB');
   }
   for (let i = 0; i < refAudios.length; i += 1) {
     assert(typeof refAudios[i] === 'string' && refAudios[i].startsWith('data:'), 400, `参考音频 ${i + 1} 格式不正确`);
+    const decoded = dataUrlToBuffer(refAudios[i]);
+    assert(decoded.buffer.length <= refLimits.audioMaxBytes, 413, `参考音频 ${i + 1} 过大`, '单个音频不能超过 9MB');
   }
 
   const key = modelMeta.apiKey;
@@ -1475,12 +1532,14 @@ async function generateAudioViaRayin({ text, model, voice, format, rayin, sample
 
 /* 视频 / 音频模型目录接口 —— 前端用来动态渲染时长滑块和参考主体限制 */
 router.get('/media-models', wrap(async (req, res) => {
-  res.json({
-    video: VIDEO_MODELS.map((m) => ({
+  const video = await Promise.all(VIDEO_MODELS.map(async (base) => {
+    const m = await effectiveVideoModelMeta(base.id);
+    return {
       id: m.id,
       name: m.name,
       minDuration: m.minDuration,
       maxDuration: m.maxDuration,
+      durations: m.durations || [],
       resolutions: m.resolutions,
       fps: m.fps || 24,
       billingType: m.billingType || 'perTask',
@@ -1497,7 +1556,10 @@ router.get('/media-models', wrap(async (req, res) => {
         videos: { count: 3, maxBytes: 50 * 1024 * 1024, mime: ['video/mp4', 'video/webm', 'video/quicktime'] },
         audios: { count: 3, maxBytes: 10 * 1024 * 1024, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4'] },
       },
-    })),
+    };
+  }));
+  res.json({
+    video,
     audio: {
       models: AUDIO_MODELS.map((m) => ({
         id: m.id,
