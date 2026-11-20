@@ -1476,21 +1476,42 @@
   function loadPdfJs() {
     if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
     if (pdfJsPromise) return pdfJsPromise;
-    pdfJsPromise = new Promise(function (resolve, reject) {
-      var s = document.createElement('script');
-      s.src = PDFJS_BASE + 'pdf.min.js';
-      s.onload = function () {
-        try {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js';
-        } catch (e) {}
-        resolve(window.pdfjsLib);
-      };
-      s.onerror = function () {
+
+    /* 优先从腾讯云 COS 直连加载 PDF.js；大陆网络下避免 GitHub Pages 大文件下载瓶颈。
+       API 只返回短期签名地址，PDF.js 与 Worker 字节均不经过后端中转。 */
+    function loadFrom(urls) {
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = urls.pdfJsUrl;
+        s.crossOrigin = 'anonymous';
+        s.onload = function () {
+          try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = urls.workerUrl; } catch (e) {}
+          resolve(window.pdfjsLib);
+        };
+        s.onerror = function () {
+          reject(new Error('pdfjs-load-failed：' + s.src));
+        };
+        document.head.appendChild(s);
+      });
+    }
+
+    pdfJsPromise = request('/library/pdfjs-assets', {}, 15000)
+      .then(function (assets) {
+        if (!assets || !assets.pdfJsUrl || !assets.workerUrl) throw new Error('pdfjs-assets-invalid');
+        return loadFrom(assets);
+      })
+      .catch(function (remoteErr) {
+        /* COS 地址暂不可用时保留原静态资源回退，确保离线演示与旧部署兼容。 */
+        console.warn('[library] COS PDF.js 资源不可用，回退静态资源：', remoteErr && remoteErr.message);
+        return loadFrom({
+          pdfJsUrl: PDFJS_BASE + 'pdf.min.js',
+          workerUrl: PDFJS_BASE + 'pdf.worker.min.js'
+        });
+      })
+      .catch(function (err) {
         pdfJsPromise = null;
-        reject(new Error('pdfjs-load-failed：' + s.src));
-      };
-      document.head.appendChild(s);
-    });
+        throw err;
+      });
     return pdfJsPromise;
   }
 

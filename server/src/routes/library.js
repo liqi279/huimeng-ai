@@ -143,6 +143,17 @@ async function probeObject(url, ext) {
    大 PDF（200MB+）走这条，避免每段都经 Render 中转。
    前端示例：fetch('/api/library/books/<id>/pdf-url').then(r=>r.json()).then(d=>pdfjsLib.getDocument({
      url: d.url, httpHeaders: {}, withCredentials: false })) */
+/* PDF.js 主脚本与 Worker 放在腾讯云 COS，避免中国大陆网络从 GitHub Pages 下载大文件缓慢。
+   两个 URL 使用短期签名；字节由浏览器直连 COS，不经 SCF 中转。 */
+router.get('/library/pdfjs-assets', authOptional, wrap(async (req, res) => {
+  const prefix = 'library/vendor/pdfjs/';
+  const pdfJsUrl = objectStore.presignGet(prefix + 'pdf.min.js', config.ASSET_URL_TTL);
+  const workerUrl = objectStore.presignGet(prefix + 'pdf.worker.min.js', config.ASSET_URL_TTL);
+  assert(pdfJsUrl && workerUrl, 503, 'PDF 阅读组件暂不可用', '腾讯云对象存储未能签发 PDF.js 资源地址');
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.json({ pdfJsUrl, workerUrl });
+}));
+
 router.get('/library/books/:id/pdf-url', authOptional, wrap(async (req, res) => {
   const book = await library.get(req.params.id);
   assert(book, 404, '书籍不存在', '请检查书籍 ID');
