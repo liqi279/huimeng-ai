@@ -60,6 +60,7 @@ var return_success := false
 var return_notified := false
 
 func _ready() -> void:
+	floor_y = _viewport_size().y * 0.86
 	rng.randomize()
 	_register_browser_bridge()
 	set_process(false)
@@ -754,7 +755,8 @@ func _draw_mascot(position: Vector2, scale: float) -> void:
 	var air_height := maxf(0.0, floor_y - DANGO_HALF_HEIGHT - position.y)
 	var shadow_scale := clampf(1.0 - air_height / maxf(1.0, size.y), 0.45, 1.0)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	draw_circle(Vector2(position.x, floor_y - 8.0), 42.0 * shadow_scale * scale, Color(0.0, 0.0, 0.0, 0.12))
+	var shadow_y := position.y + 18.0 if state in [GameState.MAZE, GameState.MAZE_TRANSITION] else floor_y - 8.0
+	draw_circle(Vector2(position.x, shadow_y), 42.0 * shadow_scale * scale, Color(0.0, 0.0, 0.0, 0.12))
 	var speed := clampf(mascot_velocity.length() / MOVE_SPEED, 0.0, 1.0)
 	var wobble := sin(world_time * 4.0 + position.x * 0.012) * (1.2 + speed * 2.4)
 	var body_scale := Vector2(scale * (1.0 + mascot_squash), scale * (1.0 - mascot_squash * 0.7 + sin(world_time * 3.2) * 0.012))
@@ -774,15 +776,13 @@ func _draw_mascot(position: Vector2, scale: float) -> void:
 		draw_line(Vector2(-22.0, -4.0) + look, Vector2(-13.0, -4.0) + look, Color("#292923"), 2.4, true)
 		draw_line(Vector2(13.0, -4.0) + look, Vector2(22.0, -4.0) + look, Color("#292923"), 2.4, true)
 	else:
-		draw_ellipse_eye(Vector2(-18.0, -5.0) + look)
-		draw_ellipse_eye(Vector2(18.0, -5.0) + look)
+		_draw_ellipse_eye(Vector2(-18.0, -5.0) + look)
+		_draw_ellipse_eye(Vector2(18.0, -5.0) + look)
 	draw_circle(Vector2(-34.0, 7.0), 5.5, Color(1.0, 0.58, 0.66, 0.22))
 	draw_circle(Vector2(34.0, 7.0), 5.5, Color(1.0, 0.58, 0.66, 0.22))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-func draw_ellipse_eye(position: Vector2) -> void:
+func _draw_ellipse_eye(position: Vector2) -> void:
 	draw_circle(position, 4.0, Color("#262720"))
 	draw_circle(position + Vector2(-1.0, -2.0), 1.2, Color.WHITE)
 
-func _update_maze_player(delta: float) -> void:
-	pass
