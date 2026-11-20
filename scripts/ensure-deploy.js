@@ -46,7 +46,26 @@ if (existingIndex >= 0) css = css.slice(0, existingIndex).trimEnd();
 css = css.trimEnd() + '\n\n' + dimverseCss + '\n';
 fs.writeFileSync(deployedStyles, css, 'utf8');
 
-const html = fs.readFileSync(idx, 'utf8');
+/* The Pages HTML is a legacy self-contained bundle. Replace its embedded
+ * stale Dimverse controller with the canonical, independently tested asset.
+ * This keeps the deployed entry point in sync with frontend/dimverse.js.
+ */
+let html = fs.readFileSync(idx, 'utf8');
+const dimverseMarker = '次元宇宙（Dimensional Universe）';
+const dimverseStart = html.indexOf(dimverseMarker);
+if (dimverseStart >= 0 && !html.includes('./assets/hm-s29-b9fa10c0.js')) {
+  const scriptStart = html.lastIndexOf('<script', dimverseStart);
+  const scriptEnd = html.indexOf('</script>', dimverseStart);
+  if (scriptStart < 0 || scriptEnd < 0) {
+    console.error('[publish] 无法定位 deploy/index.html 中的旧次元宇宙脚本');
+    process.exit(1);
+  }
+  html = html.slice(0, scriptStart) +
+    '<script src="./assets/hm-s29-b9fa10c0.js"></script>' +
+    html.slice(scriptEnd + '</script>'.length);
+  fs.writeFileSync(idx, html, 'utf8');
+}
+const refs = [...html.matchAll(/(?:src|href)="\\.\\/assets\\/([^"?]+)/g)].map((m) => m[1]);
 const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
 const miss = refs.filter((f) => !fs.existsSync(path.join(assets, f)));
 if (miss.length) {
