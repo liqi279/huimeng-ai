@@ -6872,11 +6872,12 @@
 
   /* bootstrap 单次请求内部再重试 2 次（间隔 1.2s / 3s）；
      401/403 是登录态问题，重试无意义，直接抛给上层。 */
-  function pullBootstrap() {
+  function pullBootstrap(since) {
     var delays = [0, 1200, 3000];
     var attempt = 0;
+    var path = '/user-data/bootstrap' + (Number(since) > 0 ? '?since=' + encodeURIComponent(Number(since)) : '');
     function next() {
-      return request('GET', '/user-data/bootstrap', null, 60000).catch(function (err) {
+      return request('GET', path, null, 30000).catch(function (err) {
         if (err && (err.status === 401 || err.status === 403)) throw err;
         attempt += 1;
         if (attempt >= delays.length) throw err;
@@ -6918,10 +6919,21 @@
         scheduleRetry();
         return;
       }
-      /* 拉取成功：先清掉历史遗留的失败提示，再落地数据（applyBootstrap 自己的告警不受影响） */
+      /* 首屏先落地 200 条，让用户尽快看到作品；其余分页随后逐页补齐。 */
       sync.lastError = '';
       clearRetry();
-      applyBootstrap(boot);
+      var seenCloudIds = Object.create(null);
+      var pageCount = 0;
+      while (boot && typeof boot === 'object') {
+        if (!Array.isArray(boot.works)) throw new Error('云端返回结构异常（works 不是数组）');
+        boot.works.forEach(function (w) { if (w && w.id) seenCloudIds[String(w.id)] = true; });
+        var finalPage = !boot.hasMore;
+        applyBootstrap(boot, seenCloudIds, finalPage);
+        pageCount += 1;
+        if (finalPage) break;
+        if (pageCount >= 30) throw new Error('云端作品超过单次同步上限，已保留已加载作品；稍后继续同步');
+        boot = await pullBootstrap(Number(boot.cursor) || 0);
+      }
       await migrateLocal();
       await flushQueue();
       sync.lastSync = Date.now();
@@ -6941,7 +6953,7 @@
     return !!(w && typeof w === 'object' && (w.id || w.url || w.thumb || w.failed || w.ok === false));
   }
 
-  function applyBootstrap(boot) {
+  function applyBootstrap(boot, seenCloudIds, finalPage) {
     if (!boot || typeof boot !== 'object') return;
     storage = boot.storage || storage;
     usage = boot.usage || usage;
@@ -7015,6 +7027,10 @@
     });
     Object.keys(localMap).forEach(function (id) {
       var lw = localMap[id];
+      /* 分页过程中保留已在前页确认过的云端作品，不能误标成待上传 */
+      if (seenCloudIds && seenCloudIds[id]) { merged.push(lw); return; }
+      /* 非末页暂不判定本地独有作品，避免把尚未拉到的云端作品误判为本地新增 */
+      if (finalPage === false) { merged.push(lw); return; }
       var tomb = deletedMap[id];
       if (tomb && workTime(lw) <= tomb) return; /* 其它设备已删除且本地没有更新 */
       merged.push(Object.assign({}, lw, { _pendingUpload: true }));
