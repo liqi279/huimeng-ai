@@ -143,6 +143,8 @@ func _process(delta: float) -> void:
                 block_hit = false
                 player = Vector2(block_pos.x, H - 90.0)
                 velocity = Vector2.ZERO
+                if OS.has_feature("web"):
+                    JavaScriptBridge.eval("window.parent.postMessage('hm-godot-block','*');")
         Phase.BLOCK:
             _update_block_player(dt)
             if block_hit:
@@ -151,6 +153,8 @@ func _process(delta: float) -> void:
                 phase_t = 0.0
                 player = _cell_center(Vector2i(1, 1))
                 mascot_scale = 0.22
+                if OS.has_feature("web"):
+                    JavaScriptBridge.eval("window.parent.postMessage('hm-godot-maze','*');")
         Phase.MAZE_TRANSITION:
             _update_block_particles(dt)
             if phase_t >= 0.9:
