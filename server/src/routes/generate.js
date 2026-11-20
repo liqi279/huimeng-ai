@@ -1195,7 +1195,7 @@ async function getZelingModelKey(meta) {
 
 function videoModel(v) {
   const found = VIDEO_MODELS.find((m) => m.id === v);
-  return found ? found.id : VIDEO_MODELS[0].id;
+  return found ? found.id : ((VIDEO_MODELS.find((m) => m.id === 'minimax_h3-768p') || VIDEO_MODELS[0]).id);
 }
 
 function videoModelMeta(v) {
@@ -1244,11 +1244,12 @@ async function generateVideo(body) {
   const modelMeta = videoModelMeta(modelId);
 
   /* aspect_ratio：zeling 原生字段，值为 "16:9"/"9:16"/"1:1"/"4:3"/"21:9" 等 */
-  const ratio = modelMeta.aspectRatios && modelMeta.aspectRatios.includes(body.ratio)
-    ? body.ratio
-    : (modelMeta.aspectRatios && modelMeta.aspectRatios[0]) || '16:9';
+  const allowedRatios = modelMeta.aspectRatios || ['16:9', '9:16', '1:1'];
+  const ratio = body.ratio == null || body.ratio === '' ? allowedRatios[0] : String(body.ratio);
+  assert(allowedRatios.includes(ratio), 400, '该模型不支持所选画面比例', '支持比例：' + allowedRatios.join(' / '));
 
-  const resolution = modelMeta.resolutions.includes(body.resolution) ? body.resolution : modelMeta.resolutions[0];
+  const resolution = body.resolution == null || body.resolution === '' ? modelMeta.resolutions[0] : String(body.resolution);
+  assert(modelMeta.resolutions.includes(resolution), 400, '该模型不支持所选清晰度', '支持清晰度：' + modelMeta.resolutions.join(' / '));
 
   /* 时长校验（zeling 有固定档位，前端做 5 的倍数已经够了，这里边界检查即可） */
   let duration = body.duration != null && body.duration !== '' ? Number(body.duration) : modelMeta.minDuration;
