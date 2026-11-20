@@ -901,6 +901,8 @@
 
   function hideDimPage() {
     if (!dimPage) return;
+    /* Stop the embedded WebAssembly game when leaving this route. */
+    if (gameFrame) restoreDimverseWelcome();
     if (dimVortexAnim) { dimVortexAnim.stop(); dimVortexAnim = null; }
     if (!vortexAnim && vortexCanvas) vortexAnim = makeVortex(vortexCanvas, 72);
     dimPage.classList.remove('is-visible');
