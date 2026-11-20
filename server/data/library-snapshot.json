@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:32:25+0800",
+  "generatedAt": "2026-11-20T22:41:34+0800",
   "source": "scf-library",
-  "total": 1021,
+  "total": 1024,
   "areas": {
     "paint": 749,
-    "concept": 248,
+    "concept": 251,
     "ref": 24
   },
   "books": [
@@ -1832,6 +1832,72 @@
       "sortNo": 0,
       "createdAt": 1795185139694,
       "updatedAt": 1795185139694,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2xmwy-391670",
+      "title": "黑执事 · 原画集",
+      "author": "萌绘图库",
+      "category": "黑执事",
+      "tags": [
+        "黑执事",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《黑执事》；原包《原画集》。第 1-171 页（共 171 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-23f15cd848-b4fbc9919510-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-23f15cd848-b4fbc9919510-20261120-01.pdf",
+      "pageCount": 171,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185227842,
+      "updatedAt": 1795185227842,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2xw8x-66802f",
+      "title": "黑执事 · 画集",
+      "author": "萌绘图库",
+      "category": "黑执事",
+      "tags": [
+        "黑执事",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《黑执事》；原包《画集》。第 1-66 页（共 66 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-34468a602e-ab197c970804-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-34468a602e-ab197c970804-20261120-01.pdf",
+      "pageCount": 66,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185239937,
+      "updatedAt": 1795185239937,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2ywwu-f819b7",
+      "title": "黑执事 · 设定集",
+      "author": "萌绘图库",
+      "category": "黑执事",
+      "tags": [
+        "黑执事",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《黑执事》；原包《设定集》。第 1-167 页（共 167 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-9353077007-9e2ac58690e0-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-9353077007-9e2ac58690e0-20261120-01.pdf",
+      "pageCount": 167,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185287454,
+      "updatedAt": 1795185287454,
       "pages": []
     },
     {
