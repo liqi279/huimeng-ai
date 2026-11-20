@@ -1263,13 +1263,24 @@
     closeDetail(true);
     toast('正在打开《' + book.title + '》', 'info');
 
+    /* 书架条目已含标题/封面/分类/页数，先用它把详情画出来（点击即出），
+       详情接口返回后只在确有新字段时再静默补一次，避免开书空等 300ms~1.2s。 */
+    state.current = book;
+    renderDetail(book);
+    var opening = animateOpen(card, book);
+
     fetchBook(id).then(function (full) {
-      if (!full) { toast('书籍加载失败', 'error'); return; }
+      if (!full || full === book) return;
+      var changed = (full.pages || []).length !== (book.pages || []).length
+        || (full.toc || []).length !== (book.toc || []).length
+        || full.pdfUrl !== book.pdfUrl
+        || full.coverUrl !== book.coverUrl
+        || full.pageCount !== book.pageCount;
+      if (!changed) return;
       state.current = full;
-      return animateOpen(card, full);
-    }).then(function () {
-      if (!state.current) return;
-      renderDetail(state.current);
+      return opening.then(function () {
+        if (state.current === full) renderDetail(full);
+      });
     }).catch(function (err) {
       toast('打开失败：' + (err && err.message ? err.message : err), 'error');
     });
