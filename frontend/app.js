@@ -457,7 +457,8 @@ const state = {
   lora: typeof storedPrefs.lora === 'string' ? storedPrefs.lora : '',   // 动漫 LoRA 风格包 ID
   videoModel: typeof storedPrefs.videoModel === 'string' && storedPrefs.videoModel
     ? storedPrefs.videoModel
-    : 'sora-2',
+    : 'minimax_h3-768p',
+  videoResolution: typeof storedPrefs.videoResolution === 'string' ? storedPrefs.videoResolution : '480p',
   audioModel: typeof storedPrefs.audioModel === 'string' && storedPrefs.audioModel
     ? storedPrefs.audioModel
     : 'tts-1',
@@ -3121,6 +3122,7 @@ function persistPrefs() {
     channelModel: state.channelModel,
     lora: state.lora,
     videoModel: state.videoModel,
+    videoResolution: state.videoResolution,
     audioModel: state.audioModel,
     providerId: state.providerId,
     toonApi: state.toonApi,
@@ -7165,6 +7167,18 @@ function bindEvents() {
   });
 
   els.scalePicker.addEventListener('click', function (event) {
+    const videoBtn = event.target.closest('[data-vresolution]');
+    if (videoBtn && state.mode === 'video') {
+      state.videoResolution = videoBtn.dataset.vresolution;
+      els.scalePicker.querySelectorAll('[data-vresolution]').forEach(function (el) {
+        el.classList.toggle('is-active', el.dataset.vresolution === state.videoResolution);
+      });
+      var chip = document.getElementById('scaleChipText');
+      if (chip) chip.textContent = state.videoResolution;
+      persistPrefs();
+      closeAllMenus();
+      return;
+    }
     const btn = event.target.closest('[data-scale]');
     if (!btn) return;
     if (btn.dataset.scale === 'custom') {
@@ -8036,6 +8050,7 @@ window.HMApp = {
   modeModelLabel: modeModelLabel,
   currentModelLabel: currentModelLabel,
   getModel: getModel,
+  getCurrentRefs: function () { return currentRefs().slice(); },
   reuseJob: reuseJob,
   retryWork: retryWork,
   hasRayinKey: hasRayinKey,
