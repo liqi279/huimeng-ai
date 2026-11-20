@@ -73,7 +73,7 @@ if (!standalone.includes(adminStyleTag.slice(0, 40))) {
 }
 for (const file of scripts) {
   const escaped = file.replace(/\./g, '\\.');
-  const re = new RegExp('<script[^>]*src=["\\']' + escaped + '["\\'][^>]*><\\/script>', 'i');
+  const re = new RegExp("<script[^>]*src=[\"']" + escaped + "[\"'][^>]*></script>", "i");
   if (!re.test(standalone)) throw new Error('未找到脚本标签：' + file);
   standalone = standalone.replace(re, () => '<script>\n' + inlineScript(read(file)) + '\n</script>');
 }
