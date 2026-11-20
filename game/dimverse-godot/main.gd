@@ -1,256 +1,389 @@
 extends Node2D
-## Godot 4 transparent gameplay overlay.
-## The original website owns the background, title, navigation and tutorial DOM.
-## This scene only renders the mascot, intro particles and gameplay entities.
-
-enum IntroState { WAITING, TITLE_PARTICLES, MASCOT_FORM, MASCOT_BLINK, MASCOT_FALL, PLAYING }
-
-const VIEW_SIZE := Vector2(1280.0, 720.0)
+## Two-stage Dimverse mini game. Transparent Godot Web overlay; website owns the backdrop.
+enum Phase { WAITING, INTRO, PLAYING, CELEBRATE, BLOCK, MAZE, GAME_OVER }
+const W := 1280.0
+const H := 720.0
 const CYAN := Color("#67eaff")
-const PINK := Color("#e58cff")
-const PURPLE := Color("#a86cff")
-const FLOOR_Y := 620.0
-const MOVE_SPEED := 260.0
-const MOVE_ACCEL := 1900.0
-const MOVE_BRAKE := 2300.0
-const GRAVITY := 1450.0
-const MASCOT_HALF_HEIGHT := 54.0
-
-var state: IntroState = IntroState.WAITING
+const PINK := Color("#f18bce")
+const PURPLE := Color("#a78bfa")
+const CELL := 36.0
+var phase: Phase = Phase.WAITING
 var rng := RandomNumberGenerator.new()
-var particles: Array[Dictionary] = []
-var mascot_position := Vector2(640.0, 190.0)
-var mascot_velocity := Vector2.ZERO
-var mascot_squash := 0.0
-var mascot_squash_velocity := 0.0
-var mascot_tilt := 0.0
-var elapsed := 0.0
-var world_time := 0.0
-var blink := false
-var blink_clock := 0.0
-var blink_next := 2.0
-var landed_notified := false
-var crystals: Array[Vector2] = [Vector2(300, 530), Vector2(520, 455), Vector2(900, 500), Vector2(1080, 390)]
+var t := 0.0
+var phase_t := 0.0
+var player := Vector2(640, 500)
+var velocity := Vector2.ZERO
 var score := 0
-var drag_camera := false
+var remaining := 60.0
+var crystals: Array[Vector2] = []
+var confetti: Array[Dictionary] = []
+var block_pos := Vector2(640, 275)
+var block_hit := false
+var maze: Array = []
+var maze_w := 25
+var maze_h := 15
+var cell_size := 36.0
+var ghost_positions: Array[Vector2] = []
+var ghost_paths: Array[Vector2] = []
+var game_over_sent := false
+var last_size := Vector2(1280, 720)
+var mascot_scale := 1.0
+var blink_until := 0.0
+var next_blink := 2.5
 
 func _ready() -> void:
-	rng.randomize()
-	_register_browser_bridge()
-	set_process(false)
-	queue_redraw()
-	# The game iframe is created only after the user presses “开启”. Start the
-	# intro here as well as exposing the parent callback, so a missed or delayed
-	# postMessage handshake cannot leave the now-visible overlay permanently blank.
-	call_deferred("_on_start_from_web")
+    rng.randomize()
+    _register_bridge()
+    set_process(false)
+    queue_redraw()
+    call_deferred("_start")
 
-func _register_browser_bridge() -> void:
-	if not OS.has_feature("web"):
-		return
-	var browser_window = JavaScriptBridge.get_interface("window")
-	if browser_window:
-		browser_window.set("hmGodotStart", JavaScriptBridge.create_callback(_on_start_from_web))
-	JavaScriptBridge.eval("window.parent.postMessage('hm-godot-ready', '*');")
+func _register_bridge() -> void:
+    if OS.has_feature("web"):
+        JavaScriptBridge.eval("window.parent.postMessage('hm-godot-ready','*');")
 
-func _on_start_from_web(_args = []) -> void:
-	if state != IntroState.WAITING:
-		return
-	state = IntroState.TITLE_PARTICLES
-	elapsed = 0.0
-	landed_notified = false
-	_build_mascot_particles()
-	set_process(true)
-
-func _build_mascot_particles() -> void:
-	particles.clear()
-	# Dense oval silhouette sampled as a soft body; the eyes remain empty.
-	for y in range(-43, 44, 4):
-		for x in range(-58, 59, 4):
-			var normalized := (float(x * x) / (58.0 * 58.0)) + (float(y * y) / (43.0 * 43.0))
-			if normalized > 1.0 or rng.randf() > 0.78:
-				continue
-			if absf(y + 8.0) < 8.0 and (absf(x - 16.0) < 5.0 or absf(x + 16.0) < 5.0):
-				continue
-			var target := Vector2(640.0 + x, 205.0 + y)
-			# 粒子從原歡迎標題所在的水平字帶散開，再向上匯聚成團子；
-			# 不再從整個畫面四周隨機飛入，避免看起來像另一個獨立遊戲開場。
-			var start := Vector2(
-				rng.randf_range(350.0, 930.0),
-				rng.randf_range(335.0, 405.0)
-			)
-			particles.append({
-				"start": start,
-				"position": start,
-				"target": target,
-				"delay": rng.randf_range(0.0, 0.55),
-				"size": rng.randf_range(1.0, 2.8),
-				"color": CYAN.lerp(PINK, rng.randf())
-			})
+func _start() -> void:
+    if phase != Phase.WAITING: return
+    phase = Phase.INTRO
+    phase_t = 0.0
+    set_process(true)
 
 func _process(delta: float) -> void:
-	world_time += delta
-	elapsed += delta
-	match state:
-		IntroState.TITLE_PARTICLES:
-			_update_particles()
-			if elapsed >= 2.0:
-				state = IntroState.MASCOT_FORM
-				elapsed = 0.0
-		IntroState.MASCOT_FORM:
-			_update_particles()
-			if elapsed >= 0.8:
-				state = IntroState.MASCOT_BLINK
-				elapsed = 0.0
-				mascot_position = Vector2(640.0, 205.0)
-				blink = true
-		IntroState.MASCOT_BLINK:
-			if elapsed >= 0.22:
-				blink = false
-				state = IntroState.MASCOT_FALL
-				elapsed = 0.0
-				mascot_velocity = Vector2(0.0, 40.0)
-		IntroState.MASCOT_FALL:
-			_step_mascot(delta, false)
-			if mascot_position.y >= FLOOR_Y - MASCOT_HALF_HEIGHT:
-				mascot_position.y = FLOOR_Y - MASCOT_HALF_HEIGHT
-				mascot_velocity = Vector2.ZERO
-				mascot_squash = 0.34
-				mascot_squash_velocity = 0.0
-				state = IntroState.PLAYING
-				_notify_landed()
-		IntroState.PLAYING:
-			_step_mascot(delta, true)
-			_check_crystals()
-			_update_blink(delta)
-	_update_mascot_spring(delta)
-	queue_redraw()
+    var dt := minf(delta, 0.04)
+    t += dt
+    phase_t += dt
+    match phase:
+        Phase.INTRO:
+            if phase_t >= 1.25:
+                phase = Phase.PLAYING
+                phase_t = 0.0
+                player = Vector2(W * 0.5, H * 0.68)
+                _spawn_crystal()
+                _spawn_crystal()
+                _spawn_crystal()
+                _spawn_crystal()
+        Phase.PLAYING:
+            _update_player(dt, false)
+            remaining = maxf(0.0, remaining - dt)
+            _update_crystals(dt)
+            if remaining <= 0.0:
+                phase = Phase.CELEBRATE
+                phase_t = 0.0
+                _make_confetti()
+        Phase.CELEBRATE:
+            _update_confetti(dt)
+            if phase_t >= 2.6:
+                phase = Phase.BLOCK
+                phase_t = 0.0
+                block_hit = false
+                player = Vector2(block_pos.x, H - 90.0)
+                velocity = Vector2.ZERO
+        Phase.BLOCK:
+            _update_block_player(dt)
+            if block_hit:
+                _build_maze()
+                phase = Phase.MAZE
+                phase_t = 0.0
+                player = _cell_center(Vector2i(1, 1))
+                mascot_scale = 0.43
+        Phase.MAZE:
+            _update_maze_player(dt)
+            _update_ghosts(dt)
+            for ghost in ghost_positions:
+                if player.distance_to(ghost) < cell_size * 0.48:
+                    phase = Phase.GAME_OVER
+                    phase_t = 0.0
+                    game_over_sent = false
+                    break
+        Phase.GAME_OVER:
+            if phase_t >= 2.7 and not game_over_sent:
+                game_over_sent = true
+                if OS.has_feature("web"):
+                    JavaScriptBridge.eval("window.parent.postMessage('hm-godot-welcome','*');")
+                set_process(false)
+    _update_blink(dt)
+    queue_redraw()
 
-func _update_particles() -> void:
-	for particle in particles:
-		var target: Vector2 = particle["target"]
-		if state == IntroState.MASCOT_FORM:
-			# 保持已汇聚的团子轮廓，只做轻微能量脉动，不能在阶段切换时退回起点。
-			particle["position"] = target + Vector2(sin(elapsed * 7.0 + target.x * 0.04) * 1.4, cos(elapsed * 5.0 + target.y * 0.03) * 0.8)
-			continue
-		var t := clampf((elapsed - float(particle["delay"])) / 1.25, 0.0, 1.0)
-		var eased := 1.0 - pow(1.0 - t, 3.0)
-		var start: Vector2 = particle["start"]
-		particle["position"] = start.lerp(target, eased)
+func _update_blink(dt: float) -> void:
+    if t >= next_blink:
+        blink_until = t + 0.14
+        next_blink = t + rng.randf_range(2.0, 4.0)
 
-func _step_mascot(delta: float, allow_input: bool) -> void:
-	if allow_input:
-		var direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-		if Input.is_key_pressed(KEY_A): direction.x -= 1.0
-		if Input.is_key_pressed(KEY_D): direction.x += 1.0
-		if Input.is_key_pressed(KEY_W): direction.y -= 1.0
-		if Input.is_key_pressed(KEY_S): direction.y += 1.0
-		direction = direction.normalized()
-		var target_velocity := direction * MOVE_SPEED
-		var acceleration := MOVE_ACCEL if direction.length_squared() > 0.0 else MOVE_BRAKE
-		mascot_velocity = mascot_velocity.move_toward(target_velocity, acceleration * delta)
-	else:
-		mascot_velocity.y += GRAVITY * delta
-	mascot_position += mascot_velocity * delta
-	mascot_position.x = clampf(mascot_position.x, 70.0, VIEW_SIZE.x - 70.0)
-	mascot_position.y = clampf(mascot_position.y, 90.0, FLOOR_Y - MASCOT_HALF_HEIGHT)
-	var lean_target := clampf(mascot_velocity.x / MOVE_SPEED, -1.0, 1.0) * 0.105
-	mascot_tilt = lerp(mascot_tilt, lean_target, 1.0 - exp(-10.0 * delta))
+func _move_input() -> Vector2:
+    var x := Input.get_axis("ui_left", "ui_right")
+    var y := Input.get_axis("ui_up", "ui_down")
+    if Input.is_key_pressed(KEY_A): x -= 1.0
+    if Input.is_key_pressed(KEY_D): x += 1.0
+    if Input.is_key_pressed(KEY_W): y -= 1.0
+    if Input.is_key_pressed(KEY_S): y += 1.0
+    return Vector2(x, y).normalized()
 
-func _update_mascot_spring(delta: float) -> void:
-	if state != IntroState.PLAYING:
-		return
-	# Damped spring: the landing squash rebounds before settling into a soft idle.
-	var target := 0.035 if mascot_velocity.length() > 18.0 else 0.0
-	mascot_squash_velocity += (target - mascot_squash) * 64.0 * delta
-	mascot_squash_velocity *= exp(-10.5 * delta)
-	mascot_squash += mascot_squash_velocity * delta
+func _update_player(dt: float, maze_mode: bool) -> void:
+    var direction := _move_input()
+    var target := direction * (190.0 if maze_mode else 330.0)
+    velocity = velocity.move_toward(target, (1150.0 if direction.length_squared() > 0.0 else 1500.0) * dt)
+    player += velocity * dt
+    player.x = clampf(player.x, 72.0, W - 72.0)
+    player.y = clampf(player.y, 130.0, H - 70.0)
 
-func _update_blink(delta: float) -> void:
-	if blink:
-		blink_clock -= delta
-		if blink_clock <= 0.0:
-			blink = false
-			blink_next = rng.randf_range(2.0, 4.2)
-	else:
-		blink_next -= delta
-		if blink_next <= 0.0:
-			blink = true
-			blink_clock = 0.16
+func _spawn_crystal() -> void:
+    for attempt in range(50):
+        var p := Vector2(rng.randf_range(95.0, W - 95.0), rng.randf_range(150.0, H - 90.0))
+        var clear := true
+        for other in crystals:
+            if p.distance_to(other) < 100.0: clear = false
+        if clear:
+            crystals.append(p)
+            return
 
-func _check_crystals() -> void:
-	for i in range(crystals.size() - 1, -1, -1):
-		if mascot_position.distance_to(crystals[i]) < 68.0:
-			crystals.remove_at(i)
-			score += 1
-			if OS.has_feature("web"):
-				JavaScriptBridge.eval("window.parent.postMessage('hm-godot-score-" + str(score) + "', '*');")
+func _update_crystals(dt: float) -> void:
+    if crystals.size() < 7 and rng.randf() < dt * 1.05:
+        _spawn_crystal()
+    for i in range(crystals.size() - 1, -1, -1):
+        if player.distance_to(crystals[i]) < 58.0:
+            crystals.remove_at(i)
+            score += 1
+            if score > 20 and score % 4 == 1: _make_confetti_burst(player)
 
-func _notify_landed() -> void:
-	if landed_notified:
-		return
-	landed_notified = true
-	if OS.has_feature("web"):
-		JavaScriptBridge.eval("window.parent.postMessage('hm-godot-landed', '*');")
+func _make_confetti() -> void:
+    for i in range(150):
+        confetti.append({"p": Vector2(rng.randf_range(0, W), rng.randf_range(-H, 0)), "v": Vector2(rng.randf_range(-90, 90), rng.randf_range(120, 390)), "r": rng.randf_range(2, 5), "c": [CYAN, PINK, PURPLE, Color("#f8d477")][rng.randi_range(0, 3)]})
+
+func _make_confetti_burst(at: Vector2) -> void:
+    for i in range(18):
+        var a := rng.randf_range(0.0, TAU)
+        confetti.append({"p": at, "v": Vector2(cos(a), sin(a)) * rng.randf_range(90, 260), "r": rng.randf_range(2, 4), "c": [CYAN, PINK, PURPLE, Color.WHITE][rng.randi_range(0, 3)]})
+
+func _update_confetti(dt: float) -> void:
+    for item in confetti:
+        item.p += item.v * dt
+        item.v.y += 180.0 * dt
+    for i in range(confetti.size() - 1, -1, -1):
+        if confetti[i].p.y > H + 30: confetti.remove_at(i)
+
+func _update_block_player(dt: float) -> void:
+    var direction := _move_input()
+    velocity.x = move_toward(velocity.x, direction.x * 280.0, 1500.0 * dt)
+    if Input.is_action_just_pressed("ui_up") or Input.is_key_pressed(KEY_W):
+        if player.y > block_pos.y + 58.0 and absf(player.x - block_pos.x) < 92.0 and velocity.y >= -10.0:
+            velocity.y = -650.0
+    velocity.y += 1550.0 * dt
+    player += velocity * dt
+    player.x = clampf(player.x, 70.0, W - 70.0)
+    if player.y < block_pos.y + 58.0 and player.y > block_pos.y - 8.0 and absf(player.x - block_pos.x) < 72.0 and velocity.y < 0.0:
+        block_hit = true
+        _make_confetti_burst(block_pos)
+    if player.y > H - 78.0:
+        player.y = H - 78.0
+        velocity.y = 0.0
+
+func _build_maze() -> void:
+    maze_w = clampi(int(W / CELL), 21, 31)
+    maze_h = clampi(int(H / CELL), 13, 19)
+    if maze_w % 2 == 0: maze_w -= 1
+    if maze_h % 2 == 0: maze_h -= 1
+    cell_size = minf(W / maze_w, H / maze_h)
+    maze.clear()
+    for y in range(maze_h):
+        var row: Array[int] = []
+        for x in range(maze_w): row.append(1)
+        maze.append(row)
+    var stack: Array[Vector2i] = [Vector2i(1, 1)]
+    maze[1][1] = 0
+    while not stack.is_empty():
+        var current: Vector2i = stack.back()
+        var choices: Array[Vector2i] = []
+        for d in [Vector2i(0, -2), Vector2i(2, 0), Vector2i(0, 2), Vector2i(-2, 0)]:
+            var n: Vector2i = current + d
+            if n.x > 0 and n.y > 0 and n.x < maze_w - 1 and n.y < maze_h - 1 and maze[n.y][n.x] == 1:
+                choices.append(n)
+        if choices.is_empty():
+            stack.pop_back()
+        else:
+            var next: Vector2i = choices[rng.randi_range(0, choices.size() - 1)]
+            maze[(current.y + next.y) / 2][(current.x + next.x) / 2] = 0
+            maze[next.y][next.x] = 0
+            stack.append(next)
+    maze[maze_h - 2][maze_w - 2] = 0
+    # Ensure a readable exit corridor.
+    maze[maze_h - 2][maze_w - 3] = 0
+    ghost_positions = [_cell_center(Vector2i(maze_w - 2, 1)), _cell_center(Vector2i(1, maze_h - 2))]
+    ghost_paths = [Vector2.ZERO, Vector2.ZERO]
+    mascot_scale = 0.43
+
+func _cell_center(c: Vector2i) -> Vector2:
+    var ox := (W - maze_w * cell_size) * 0.5
+    var oy := (H - maze_h * cell_size) * 0.5
+    return Vector2(ox + (c.x + 0.5) * cell_size, oy + (c.y + 0.5) * cell_size)
+
+func _is_open(p: Vector2) -> bool:
+    var ox := (W - maze_w * cell_size) * 0.5
+    var oy := (H - maze_h * cell_size) * 0.5
+    var c := Vector2i(floori((p.x - ox) / cell_size), floori((p.y - oy) / cell_size))
+    return c.x >= 0 and c.y >= 0 and c.x < maze_w and c.y < maze_h and maze[c.y][c.x] == 0
+
+func _update_maze_player(dt: float) -> void:
+    var direction := _move_input()
+    var target := direction * 175.0
+    velocity = velocity.move_toward(target, 1100.0 * dt)
+    var next_x := Vector2(player.x + velocity.x * dt, player.y)
+    var next_y := Vector2(player.x, player.y + velocity.y * dt)
+    if _is_open(next_x): player.x = next_x.x
+    else: velocity.x = 0.0
+    if _is_open(next_y): player.y = next_y.y
+    else: velocity.y = 0.0
+    if player.distance_to(_cell_center(Vector2i(maze_w - 2, maze_h - 2))) < cell_size * 0.5:
+        phase = Phase.GAME_OVER
+        phase_t = 0.0
+        game_over_sent = false
+
+func _update_ghosts(dt: float) -> void:
+    for i in range(ghost_positions.size()):
+        var g: Vector2 = ghost_positions[i]
+        var dir := (player - g).normalized()
+        var speed := 78.0 + float(i) * 12.0
+        var candidate := g + dir * speed * dt
+        if _is_open(candidate):
+            ghost_positions[i] = candidate
+        else:
+            # Wall-aware pursuit: probe the four adjacent corridor directions.
+            var best := g
+            var best_dist := g.distance_to(player)
+            for d in [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]:
+                var probe := g + d * speed * dt
+                if _is_open(probe) and probe.distance_to(player) < best_dist:
+                    best = probe
+                    best_dist = probe.distance_to(player)
+            ghost_positions[i] = best
 
 func _draw() -> void:
-	# Deliberately no world/background/grid drawing: the original webpage remains visible.
-	if state in [IntroState.TITLE_PARTICLES, IntroState.MASCOT_FORM]:
-		for particle in particles:
-			var pos: Vector2 = particle["position"]
-			var color: Color = particle["color"]
-			var size := float(particle["size"])
-			draw_circle(pos, size * 3.2, Color(color.r, color.g, color.b, 0.16))
-			draw_circle(pos, size, color)
-	if state in [IntroState.MASCOT_BLINK, IntroState.MASCOT_FALL, IntroState.PLAYING]:
-		_draw_mascot(mascot_position)
-	if state == IntroState.PLAYING:
-		for crystal in crystals:
-			var pulse := 1.0 + 0.16 * sin(world_time * 3.0 + crystal.x)
-			draw_circle(crystal, 13.0 * pulse, Color(0.1, 0.85, 1.0, 0.14))
-			draw_colored_polygon(PackedVector2Array([
-				crystal + Vector2(0, -9), crystal + Vector2(8, 0),
-				crystal + Vector2(0, 9), crystal + Vector2(-8, 0)
-			]), CYAN)
+    if phase == Phase.WAITING: return
+    if phase in [Phase.INTRO, Phase.PLAYING, Phase.CELEBRATE, Phase.BLOCK]:
+        _draw_stage_one()
+    elif phase == Phase.MAZE:
+        _draw_maze()
+    elif phase == Phase.GAME_OVER:
+        _draw_game_over()
+    if phase == Phase.CELEBRATE:
+        _draw_confetti()
+    if phase == Phase.BLOCK:
+        _draw_block()
+    _draw_player()
 
-func _draw_mascot(pos: Vector2) -> void:
-	var height := maxf(0.0, FLOOR_Y - MASCOT_HALF_HEIGHT - pos.y)
-	var shadow_scale := clampf(1.0 - height / 900.0, 0.48, 1.0)
-	var shadow_alpha := clampf(0.27 - height / 1900.0, 0.08, 0.27)
-	draw_set_transform(Vector2(pos.x, FLOOR_Y - 9.0), 0.0, Vector2(shadow_scale, shadow_scale * 0.34))
-	draw_circle(Vector2.ZERO, 48.0, Color(0.0, 0.0, 0.0, shadow_alpha))
-	draw_circle(Vector2(0.0, -2.0), 35.0, Color(0.05, 0.76, 0.96, shadow_alpha * 0.28))
+func _draw_stage_one() -> void:
+    if phase == Phase.INTRO:
+        _draw_player()
+        return
+    # Slim center signboard descends, then the 60-second clock begins.
+    if phase == Phase.PLAYING:
+        var sign_y := lerpf(-105.0, 72.0, minf(1.0, phase_t / 0.85))
+        _draw_sign(sign_y)
+        _draw_hud()
+        for c in crystals: _draw_crystal(c)
+    elif phase == Phase.CELEBRATE:
+        _draw_sign(72.0)
+        _draw_hud()
+        _draw_center_text("超能量收集！", "CRYSTAL FEVER  ·  %02d 枚" % score)
+    elif phase == Phase.BLOCK:
+        _draw_hud()
+        _draw_center_text("向上撞击能量方块", "站到方块正下方，按 W / ↑ 跳起")
+    _draw_player()
 
-	var speed := clampf(mascot_velocity.length() / MOVE_SPEED, 0.0, 1.0)
-	var breathe := sin(world_time * 3.2) * 0.012
-	var body_scale := Vector2(1.0 + mascot_squash, 1.0 - mascot_squash * 0.72 + breathe)
-	draw_set_transform(pos, mascot_tilt, body_scale)
-	# Layered rim, warm underside and speculars give the blob a soft 2.5D jelly volume.
-	_draw_local_ellipse(Vector2(0.0, 5.0), 72.0, 54.0, Color("#777762"))
-	_draw_local_ellipse(Vector2(0.0, 0.0), 69.0, 51.0, Color("#e8e7ca"))
-	_draw_local_ellipse(Vector2(-2.0, -4.0), 64.0, 46.0, Color("#f7f5df"))
-	_draw_local_ellipse(Vector2(0.0, 22.0), 53.0, 22.0, Color(0.68, 0.58, 0.36, 0.13))
-	_draw_local_ellipse(Vector2(-19.0, -24.0), 27.0, 11.0, Color(1.0, 1.0, 0.94, 0.42))
-	_draw_local_ellipse(Vector2(-34.0, -10.0), 8.0, 4.0, Color(1.0, 1.0, 1.0, 0.5))
-	_draw_local_ellipse(Vector2(-29.0, 7.0), 8.0, 3.2, Color(1.0, 0.58, 0.66, 0.2))
-	_draw_local_ellipse(Vector2(29.0, 7.0), 8.0, 3.2, Color(1.0, 0.58, 0.66, 0.2))
+func _draw_sign(y: float) -> void:
+    var rect := Rect2(W * 0.5 - 180.0, y, 360.0, 64.0)
+    draw_rect(rect.grow(7), Color(0.0, 0.0, 0.0, 0.18), true)
+    draw_rect(rect, Color("#0a1730"), true)
+    draw_rect(rect, CYAN, false, 1.5)
+    draw_string(ThemeDB.fallback_font, Vector2(rect.position.x + 24, y + 26), "DIMENSIONAL CHALLENGE", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#9ab8d2"))
+    draw_string(ThemeDB.fallback_font, Vector2(rect.position.x + 24, y + 49), "晶体吞食挑战  /  60 SEC", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#eafaff"))
 
-	var look := Vector2(clampf(mascot_velocity.x / MOVE_SPEED, -1.0, 1.0) * 2.2,
-		clampf(mascot_velocity.y / MOVE_SPEED, -1.0, 1.0) * 1.5)
-	if blink:
-		draw_line(Vector2(-22.0, -4.0) + look, Vector2(-13.0, -4.0) + look, Color("#292923"), 2.4, true)
-		draw_line(Vector2(13.0, -4.0) + look, Vector2(22.0, -4.0) + look, Color("#292923"), 2.4, true)
-	else:
-		_draw_local_ellipse(Vector2(-18.0, -5.0) + look, 3.8, 8.5, Color("#262720"))
-		_draw_local_ellipse(Vector2(18.0, -5.0) + look, 3.8, 8.5, Color("#262720"))
-		_draw_local_ellipse(Vector2(-19.0, -8.0) + look, 1.25, 2.0, Color.WHITE)
-		_draw_local_ellipse(Vector2(17.0, -8.0) + look, 1.25, 2.0, Color.WHITE)
-	if speed > 0.15:
-		_draw_local_ellipse(Vector2(0.0, 12.0), 4.0, 2.2, Color("#c78386"))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+func _draw_hud() -> void:
+    var panel := Rect2(24, 78, 220, 70)
+    draw_rect(panel, Color(0.015, 0.035, 0.09, 0.78), true)
+    draw_rect(panel, Color(0.2, 0.82, 0.98, 0.48), false, 1.0)
+    draw_string(ThemeDB.fallback_font, Vector2(42, 104), "CRYSTALS  /  吞食数量", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#9cb8d1"))
+    draw_string(ThemeDB.fallback_font, Vector2(42, 134), "%02d" % score, HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color("#7cecff"))
+    var seconds := ceili(remaining)
+    draw_string(ThemeDB.fallback_font, Vector2(W - 170, 112), "%02d:%02d" % [seconds / 60, seconds % 60], HORIZONTAL_ALIGNMENT_LEFT, -1, 31, Color("#f1e9ff"))
 
-func _draw_local_ellipse(center: Vector2, radius_x: float, radius_y: float, color: Color) -> void:
-	var points := PackedVector2Array()
-	for i in range(33):
-		var angle := TAU * float(i) / 32.0
-		points.append(center + Vector2(cos(angle) * radius_x, sin(angle) * radius_y))
-	draw_colored_polygon(points, color)
+func _draw_crystal(p: Vector2) -> void:
+    var pulse := 1.0 + 0.15 * sin(t * 4.0 + p.x)
+    draw_circle(p, 22.0 * pulse, Color(0.1, 0.85, 1.0, 0.12))
+    var poly := PackedVector2Array([p + Vector2(0, -13), p + Vector2(11, 0), p + Vector2(0, 13), p + Vector2(-11, 0)])
+    draw_colored_polygon(poly, CYAN)
+    draw_polyline(PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]]), Color.WHITE, 1.0, true)
+
+func _draw_block() -> void:
+    var r := Rect2(block_pos - Vector2(42, 42), Vector2(84, 84))
+    draw_rect(r.grow(12), Color(1.0, 0.72, 0.18, 0.1), true)
+    draw_rect(r, Color("#f6b83f"), true)
+    draw_rect(r, Color("#fff0a6"), false, 4.0)
+    draw_rect(r.grow(-10), Color("#d77a23"), false, 2.0)
+    draw_string(ThemeDB.fallback_font, block_pos + Vector2(-12, 12), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 48, Color("#fff8db"))
+
+func _draw_maze() -> void:
+    var ox := (W - maze_w * cell_size) * 0.5
+    var oy := (H - maze_h * cell_size) * 0.5
+    draw_rect(Rect2(0, 0, W, H), Color(0.015, 0.02, 0.07, 0.96), true)
+    for y in range(maze_h):
+        for x in range(maze_w):
+            var r := Rect2(ox + x * cell_size, oy + y * cell_size, cell_size, cell_size)
+            if maze[y][x] == 1:
+                draw_rect(r, Color("#182343"), true)
+                draw_rect(r, Color(0.18, 0.72, 0.95, 0.24), false, 1.0)
+            else:
+                draw_rect(r, Color("#091127"), true)
+    var exit := _cell_center(Vector2i(maze_w - 2, maze_h - 2))
+    draw_circle(exit, cell_size * 0.8, Color(0.56, 0.25, 1.0, 0.12))
+    for k in range(3):
+        draw_arc(exit, cell_size * (0.25 + k * 0.19), t * 1.2 + k, TAU + t * 1.2 + k, 64, PURPLE, 2.0, true)
+    draw_string(ThemeDB.fallback_font, Vector2(24, 44), "MAZE SECTOR  /  找到漩涡出口", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#d9d5ff"))
+    for g in ghost_positions: _draw_ghost(g)
+
+func _draw_ghost(p: Vector2) -> void:
+    var bob := sin(t * 5.0 + p.x) * 2.5
+    draw_circle(p, cell_size * 0.48, Color(0.95, 0.38, 0.62, 0.12))
+    var body := Rect2(p + Vector2(-10, -7 + bob), Vector2(20, 19))
+    draw_rect(body, Color("#f18bce"), true)
+    draw_circle(p + Vector2(0, -7 + bob), 10, Color("#f18bce"))
+    draw_circle(p + Vector2(-3, -8 + bob), 2, Color("#27213d"))
+    draw_circle(p + Vector2(4, -8 + bob), 2, Color("#27213d"))
+    draw_colored_polygon(PackedVector2Array([p + Vector2(-10, 11 + bob), p + Vector2(-5, 7 + bob), p + Vector2(0, 11 + bob), p + Vector2(5, 7 + bob), p + Vector2(10, 11 + bob)]), Color("#f18bce"))
+
+func _draw_game_over() -> void:
+    draw_rect(Rect2(0, 0, W, H), Color(0.015, 0.01, 0.06, 0.94), true)
+    var center := Vector2(W * 0.5, H * 0.5)
+    var radius := lerpf(20.0, 900.0, minf(1.0, phase_t / 2.4))
+    for i in range(5):
+        draw_arc(center, radius * (0.42 + i * 0.14), t * 1.7 + i, TAU + t * 1.7 + i, 96, [CYAN, PURPLE, PINK][i % 3], 7.0 - i * 0.7, true)
+    draw_string(ThemeDB.fallback_font, center + Vector2(-115, 8), "DIMENSION LOST", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color.WHITE)
+
+func _draw_center_text(title: String, subtitle: String) -> void:
+    draw_string(ThemeDB.fallback_font, Vector2(0, H * 0.43), title, HORIZONTAL_ALIGNMENT_CENTER, W, 30, Color("#f1eaff"))
+    draw_string(ThemeDB.fallback_font, Vector2(0, H * 0.43 + 34), subtitle, HORIZONTAL_ALIGNMENT_CENTER, W, 14, Color("#a8d7ed"))
+
+func _draw_confetti() -> void:
+    for item in confetti:
+        draw_rect(Rect2(item.p, Vector2(item.r, item.r * 1.8)), item.c, true)
+
+func _draw_player() -> void:
+    if phase == Phase.GAME_OVER: return
+    var scale_factor := mascot_scale
+    var speed := clampf(velocity.length() / 330.0, 0.0, 1.0)
+    var wobble := sin(t * 4.0 + player.x * 0.01) * (1.2 + speed * 2.0)
+    var body := PackedVector2Array([
+        Vector2(-62, 39), Vector2(-68, 20), Vector2(-65, -3), Vector2(-54, -31),
+        Vector2(-30, -51 - wobble * 0.3), Vector2(-8, -57 - wobble), Vector2(18, -54 + wobble * 0.2),
+        Vector2(43, -43), Vector2(63, -18), Vector2(68, 7), Vector2(64, 34),
+        Vector2(45, 47), Vector2(12, 49), Vector2(-25, 49), Vector2(-53, 46)
+    ])
+    var transformed := PackedVector2Array()
+    for p in body: transformed.append(player + p * scale_factor)
+    draw_colored_polygon(transformed, Color("#dcebf0"))
+    draw_polyline(transformed + PackedVector2Array([transformed[0]]), Color("#8299a8"), 3.0 * scale_factor, true)
+    draw_circle(player + Vector2(-18, -26) * scale_factor, 3.2 * scale_factor, Color("#29333d"))
+    draw_circle(player + Vector2(16, -26) * scale_factor, 3.2 * scale_factor, Color("#29333d"))
+    draw_circle(player + Vector2(-19, -28) * scale_factor, 1.0 * scale_factor, Color.WHITE)
+    draw_circle(player + Vector2(15, -28) * scale_factor, 1.0 * scale_factor, Color.WHITE)
+    draw_circle(player + Vector2(-35, -8) * scale_factor, 5.0 * scale_factor, Color(1.0, 0.55, 0.65, 0.28))
+    draw_circle(player + Vector2(35, -8) * scale_factor, 5.0 * scale_factor, Color(1.0, 0.55, 0.65, 0.28))
