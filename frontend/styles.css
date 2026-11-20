@@ -20873,3 +20873,188 @@ body.dv-open .hm-rail-toggle {
 @media (prefers-reduced-motion: reduce) {
   .dv-godot-overlay { transition-duration: .01ms !important; }
 }
+
+
+/* ============ 次元空间 · Godot 关卡 HUD 与挑战招牌 ============ */
+.dv-topbar { z-index: 7; }
+.dv-center { z-index: 2; }
+.dv-godot-overlay {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  opacity: 0;
+  background: transparent !important;
+  pointer-events: auto;
+  transition: opacity .28s ease;
+}
+.dv-godot-overlay.is-loaded,
+.dv-godot-overlay.is-ready { opacity: 1; }
+.dv-game-timer,
+.dv-game-score {
+  position: absolute;
+  z-index: 9;
+  top: 78px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 14px;
+  border: 1px solid rgba(103, 232, 249, .38);
+  border-radius: 13px;
+  color: #effaff;
+  background: linear-gradient(135deg, rgba(5, 18, 42, .91), rgba(24, 13, 50, .88));
+  box-shadow: 0 9px 28px rgba(0, 0, 0, .25), inset 0 0 18px rgba(103, 232, 249, .06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity .32s ease, transform .32s ease;
+  pointer-events: none;
+}
+.dv-game-timer { left: 22px; }
+.dv-game-score { left: 188px; border-color: rgba(216, 180, 254, .42); }
+.dv-game-timer.is-visible,
+.dv-game-score.is-visible { opacity: 1; transform: translateY(0); }
+.dv-hud-label { color: rgba(193, 221, 245, .8); font-size: 11px; letter-spacing: .08em; white-space: nowrap; }
+.dv-timer-value {
+  min-width: 60px;
+  color: #a5f3fc;
+  font: 850 21px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .04em;
+  text-shadow: 0 0 14px rgba(34, 211, 238, .62);
+  font-variant-numeric: tabular-nums;
+}
+.dv-score-value {
+  color: #f0abfc;
+  font: 850 21px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  text-shadow: 0 0 14px rgba(232, 121, 249, .5);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dv-challenge-signboard {
+  position: absolute;
+  z-index: 10;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(440px, calc(100vw - 36px));
+  padding: 22px 28px 20px;
+  border: 1px solid rgba(103, 232, 249, .82);
+  border-radius: 17px;
+  color: #effbff;
+  background: linear-gradient(135deg, rgba(7, 23, 48, .97), rgba(32, 15, 63, .96));
+  box-shadow: 0 0 0 5px rgba(103, 232, 249, .07), 0 18px 70px rgba(0, 0, 0, .5), 0 0 38px rgba(34, 211, 238, .3), inset 0 0 24px rgba(168, 85, 247, .14);
+  opacity: 0;
+  transform: translate(-50%, -50%) translateY(-110vh) rotateX(22deg);
+  transform-origin: top center;
+  transition: top .7s cubic-bezier(.18,.82,.24,1), transform .72s cubic-bezier(.18,.82,.24,1), opacity .35s ease, padding .45s ease, width .45s ease, gap .3s ease;
+  pointer-events: none;
+}
+.dv-challenge-signboard::before,
+.dv-challenge-signboard::after {
+  content: "";
+  position: absolute;
+  top: -18px;
+  width: 2px;
+  height: 19px;
+  background: linear-gradient(#f0abfc, #67e8f9);
+  box-shadow: 0 0 12px rgba(103, 232, 249, .8);
+}
+.dv-challenge-signboard::before { left: 24%; }
+.dv-challenge-signboard::after { right: 24%; }
+.dv-challenge-signboard.is-dropped { opacity: 1; transform: translate(-50%, -50%) translateY(0) rotateX(0); }
+.dv-signboard-kicker { color: #67e8f9; font-size: 10px; font-weight: 800; letter-spacing: .24em; }
+.dv-challenge-signboard > strong { font-size: clamp(19px, 3vw, 25px); font-weight: 850; letter-spacing: .08em; text-shadow: 0 0 18px rgba(103, 232, 249, .3); }
+.dv-signboard-sub { color: rgba(211, 229, 255, .8); font-size: 12px; text-align: center; }
+.dv-signboard-clock {
+  margin-top: 4px;
+  color: #fff;
+  font: 900 38px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .1em;
+  text-shadow: 0 0 10px #67e8f9, 0 0 28px rgba(34, 211, 238, .7);
+  font-variant-numeric: tabular-nums;
+}
+.dv-challenge-signboard.is-compact {
+  top: 72px;
+  width: min(250px, calc(100vw - 32px));
+  gap: 2px;
+  padding: 8px 15px;
+  border-radius: 12px;
+  transform: translate(-50%, 0) scale(.92);
+}
+.dv-challenge-signboard.is-compact .dv-signboard-kicker,
+.dv-challenge-signboard.is-compact .dv-signboard-sub { display: none; }
+.dv-challenge-signboard.is-compact > strong { font-size: 11px; letter-spacing: .14em; }
+.dv-challenge-signboard.is-compact .dv-signboard-clock { margin-top: 1px; font-size: 24px; }
+.dv-challenge-signboard.is-compact::before,
+.dv-challenge-signboard.is-compact::after { height: 8px; top: -8px; }
+.dv-celebration-toast {
+  position: absolute;
+  z-index: 11;
+  top: 36%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-width: min(350px, calc(100vw - 36px));
+  padding: 18px 26px;
+  border: 1px solid rgba(245, 208, 106, .8);
+  border-radius: 16px;
+  color: #fff7d7;
+  background: linear-gradient(130deg, rgba(42, 25, 64, .92), rgba(10, 26, 52, .94));
+  box-shadow: 0 0 36px rgba(245, 208, 106, .2), 0 14px 48px rgba(0,0,0,.35);
+  opacity: 0;
+  transform: translate(-50%, 16px) scale(.94);
+  transition: opacity .3s ease, transform .35s cubic-bezier(.2,.8,.2,1);
+  pointer-events: none;
+}
+.dv-celebration-toast.is-visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.dv-celebration-toast span { color: #ffe58a; font-size: 10px; font-weight: 800; letter-spacing: .25em; }
+.dv-celebration-toast strong { font-size: 21px; font-weight: 850; text-shadow: 0 0 16px rgba(255, 229, 138, .35); }
+.dv-celebration-toast small { color: #cdefff; font-size: 12px; }
+.dv-maze-hint {
+  position: absolute;
+  z-index: 9;
+  top: 78px;
+  left: 50%;
+  padding: 9px 18px;
+  border: 1px solid rgba(167, 139, 250, .45);
+  border-radius: 99px;
+  color: #e9ddff;
+  background: rgba(15, 10, 39, .84);
+  box-shadow: 0 0 22px rgba(168, 139, 250, .18);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  opacity: 0;
+  transform: translate(-50%, -8px);
+  transition: opacity .3s ease, transform .3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.dv-maze-hint.is-visible { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 640px) {
+  .dv-game-timer { top: 72px; left: 10px; gap: 6px; padding: 7px 9px; }
+  .dv-game-score { top: 72px; left: 144px; gap: 6px; padding: 7px 9px; }
+  .dv-hud-label { font-size: 9px; }
+  .dv-timer-value, .dv-score-value { font-size: 18px; }
+  .dv-challenge-signboard { padding: 18px 15px; }
+  .dv-challenge-signboard.is-compact { top: 126px; width: min(190px, calc(100vw - 32px)); padding: 7px 9px; }
+  .dv-challenge-signboard.is-compact > strong { font-size: 10px; }
+  .dv-challenge-signboard.is-compact .dv-signboard-clock { font-size: 20px; }
+  .dv-game-tutorial { top: 178px; right: 10px; width: min(245px, calc(100vw - 20px)); padding: 10px 12px; }
+  .dv-game-tutorial p { margin-top: 6px; font-size: 10px; }
+  .dv-maze-hint { top: 72px; max-width: calc(100vw - 20px); font-size: 10px; }
+  .dv-celebration-toast strong { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dv-godot-overlay, .dv-challenge-signboard, .dv-celebration-toast, .dv-maze-hint { transition-duration: .01ms !important; }
+}
