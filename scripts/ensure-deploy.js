@@ -1,7 +1,7 @@
 'use strict';
 
-/* GitHub Pages publishes deploy/. Keep the production Dimverse assets synchronized
- * with their canonical frontend sources before validating the artifact.
+/* Keep both the Pages single-file HTML and its auxiliary Dimverse assets
+ * synchronized with the canonical frontend sources before publishing.
  */
 const fs = require('fs');
 const path = require('path');
@@ -26,12 +26,11 @@ if (!fs.existsSync(dimverseSource) || !fs.existsSync(sourceStyles) ||
   process.exit(1);
 }
 
-/* Always publish the exact tested Dimverse controller source. */
-fs.copyFileSync(dimverseSource, dimverseBundle);
-
-/* The production stylesheet contains the shared platform CSS; append the
- * canonical Dimverse-only overlay rules without replacing unrelated styles. */
+const sourceJs = fs.readFileSync(dimverseSource, 'utf8');
 const sourceCss = fs.readFileSync(sourceStyles, 'utf8');
+
+/* Keep the standalone JS/CSS assets synchronized for tooling and fallback use. */
+fs.copyFileSync(dimverseSource, dimverseBundle);
 const markerIndex = sourceCss.indexOf(styleMarker);
 if (markerIndex < 0) {
   console.error('[publish] frontend/styles.css 缺少 Canvas 游戏层样式标记');
@@ -48,9 +47,8 @@ fs.writeFileSync(deployedStyles, css, 'utf8');
 
 let html = fs.readFileSync(idx, 'utf8');
 
-/* Pages serves deploy/index.html itself (a single-file HTML build). Keep its
- * inlined Dimverse controller and stylesheet synchronized with canonical
- * frontend sources; syncing only deploy/assets would leave the live page stale.
+/* Pages serves deploy/index.html as a single-file app. Update the exact inline
+ * style and script blocks; copying deploy/assets alone does not change the page.
  */
 const inlineStyleAt = html.indexOf(styleMarker);
 const inlineStyleOpen = inlineStyleAt >= 0 ? html.lastIndexOf('<style', inlineStyleAt) : -1;
@@ -60,9 +58,9 @@ if (inlineStyleOpen < 0 || inlineStyleOpenEnd <= 0 || inlineStyleClose < 0) {
   console.error('[publish] deploy/index.html 缺少次元空间样式内联区');
   process.exit(1);
 }
-html = html.slice(0, inlineStyleOpenEnd) + sourceCss + '\\n' + html.slice(inlineStyleClose);
+html = html.slice(0, inlineStyleOpenEnd) + sourceCss + '\n' + html.slice(inlineStyleClose);
 
-const inlineScriptMarker = '/* =============================================================\\n * 次元宇宙（Dimensional Universe）';
+const inlineScriptMarker = ' * 次元宇宙（Dimensional Universe）';
 const inlineScriptAt = html.indexOf(inlineScriptMarker);
 const inlineScriptOpen = inlineScriptAt >= 0 ? html.lastIndexOf('<script', inlineScriptAt) : -1;
 const inlineScriptOpenEnd = inlineScriptOpen >= 0 ? html.indexOf('>', inlineScriptOpen) + 1 : -1;
@@ -71,11 +69,11 @@ if (inlineScriptOpen < 0 || inlineScriptOpenEnd <= 0 || inlineScriptClose < 0) {
   console.error('[publish] deploy/index.html 缺少次元空间控制器内联区');
   process.exit(1);
 }
-const inlineDimverse = fs.readFileSync(dimverseSource, 'utf8').replace(/<\\/script/gi, '<\\\\/script');
-html = html.slice(0, inlineScriptOpenEnd) + inlineDimverse + '\\n' + html.slice(inlineScriptClose);
+const inlineDimverse = sourceJs.replace(/<\/script/gi, '<\\/script');
+html = html.slice(0, inlineScriptOpenEnd) + inlineDimverse + '\n' + html.slice(inlineScriptClose);
 fs.writeFileSync(idx, html, 'utf8');
 
-const refs = [...html.matchAll(/(?:src|href)="\\.\\/assets\\/([^"?]+)/g)].map((m) => m[1]);
+const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
 const miss = refs.filter((f) => !fs.existsSync(path.join(assets, f)));
 if (miss.length) {
   console.error('[publish] deploy/assets 缺失：' + miss.join(', '));
@@ -106,4 +104,4 @@ for (const [ok, message] of [
   }
 }
 
-console.log('[publish] Dimverse production bundle synchronized; deploy/ assets ' + refs.length + ' references verified');
+console.log('[publish] Dimverse inline HTML, JS bundle, and CSS synchronized; deploy/ assets ' + refs.length + ' references verified');
