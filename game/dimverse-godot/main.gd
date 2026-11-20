@@ -169,6 +169,7 @@ func _process(delta: float) -> void:
 			_update_confetti(delta)
 			elapsed += delta
 			if elapsed >= 3.1:
+				confetti.clear()
 				state = GameState.BLOCK
 				elapsed = 0.0
 				question_block = Vector2(size.x * 0.5, maxf(190.0, size.y * 0.39))
