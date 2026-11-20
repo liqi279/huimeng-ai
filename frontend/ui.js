@@ -1463,18 +1463,26 @@
       '<p class="hm-menu-note">悬停查看单价；按秒模型的预计积分会随清晰度和时长更新</p>';
     menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-vmodel') === state.videoModel);
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', function (event) {
+        /* 模型选择只由按钮自身处理，阻止外层 modelMenu 再次处理同一点击 */
+        if (event && event.stopPropagation) event.stopPropagation();
         state.videoModel = btn.getAttribute('data-vmodel');
         var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; });
-        if (meta && (!meta.resolutions || meta.resolutions.indexOf(state.videoResolution) < 0)) {
-          state.videoResolution = meta.resolutions[0];
+        var resolutions = meta && Array.isArray(meta.resolutions) ? meta.resolutions : [];
+        if (resolutions.indexOf(state.videoResolution) < 0) {
+          state.videoResolution = resolutions[0] || '';
         }
-        if (meta && meta.aspectRatios && meta.aspectRatios.indexOf(state.ratio) < 0) state.ratio = meta.aspectRatios[0];
+        if (meta && meta.aspectRatios && meta.aspectRatios.indexOf(state.ratio) < 0) {
+          state.ratio = meta.aspectRatios[0];
+        }
         A.persistPrefs();
         A.syncEngineUI();
+        /* 按新模型重绘：清晰度、比例、时长、参考限制和积分预估必须同步 */
         renderDurationControls();
+        renderVideoResolutionControl();
         renderVideoRatioPicker();
-        updateRefDropForMode(state.mode);
+        updateRefDropForMode('video');
+        renderVideoEstimate();
         renderVideoModels();
       });
     });
