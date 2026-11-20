@@ -662,6 +662,10 @@
       var timerValue = timerPanel.querySelector('.dv-timer-value');
       if (timerValue) timerValue.textContent = formatGameTime(gameState.timeLeft);
     }
+    if (challengeSignboard) {
+      var signClock = challengeSignboard.querySelector('.dv-signboard-clock');
+      if (signClock) signClock.textContent = formatGameTime(gameState.timeLeft);
+    }
   }
 
   function formatGameTime(seconds) {
@@ -851,7 +855,7 @@
       var p = tutorialPanel.querySelector('p:last-child');
       if (p) p.innerHTML = '太棒了！从问号方块的正下方，向上移动撞击它';
     }
-    s.block = { x: s.width * 0.5, y: Math.max(190, s.height * 0.39), size: 76, hit: false, pulse: 0 };
+    s.block = null;
   }
 
   function drawCelebration(ctx, s, now) {
@@ -1239,7 +1243,11 @@
       }
     } else if (s.phase === 'celebrating') {
       s.confetti.forEach(function (p) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 260 * dt; p.rot += p.vr * dt; });
-      if (now >= s.celebrationUntil) s.phase = 'block';
+      if (now >= s.celebrationUntil) {
+        s.confetti = [];
+        s.phase = 'block';
+        s.block = { x: s.width * 0.5, y: Math.max(190, s.height * 0.39), size: 76, hit: false, pulse: 0 };
+      }
     } else if (s.phase === 'block') {
       var previousY = updateFreeMovement(s, dt, 300, now);
       if (s.block && !s.block.hit) {
