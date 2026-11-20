@@ -1468,33 +1468,28 @@
       '<p class="hm-menu-note">悬停查看单价；按秒模型的预计积分会随清晰度和时长更新</p>';
     menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-vmodel') === state.videoModel);
-      btn.addEventListener('click', function (event) {
-        /* 模型选择只由按钮自身处理，阻止外层 modelMenu 再次处理同一点击 */
-        if (event && event.preventDefault) event.preventDefault();
-        if (event && event.stopPropagation) event.stopPropagation();
-        var selectedId = btn.getAttribute('data-vmodel');
-        if (!mediaCatalog.video.some(function (m) { return m.id === selectedId; })) return;
-        state.videoModel = selectedId;
-        var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; });
-        var resolutions = meta && Array.isArray(meta.resolutions) ? meta.resolutions : [];
-        if (resolutions.indexOf(state.videoResolution) < 0) {
-          state.videoResolution = resolutions[0] || '';
-        }
-        if (meta && meta.aspectRatios && meta.aspectRatios.indexOf(state.ratio) < 0) {
-          state.ratio = meta.aspectRatios[0];
-        }
-        A.persistPrefs();
-        A.syncEngineUI();
-        /* 按新模型重绘：清晰度、比例、时长、参考限制和积分预估必须同步 */
-        renderDurationControls();
-        renderVideoResolutionControl();
-        renderVideoRatioPicker();
-        updateRefDropForMode('video');
-        renderVideoEstimate();
-        renderVideoModels();
-        A.closeAllMenus();
-      });
+      btn.type = 'button';
     });
+    /* 由 app.js 的 modelMenu 单一委托入口调用，避免按钮与父级重复处理点击 */
+    window.HMVideoModels = window.HMVideoModels || {};
+    window.HMVideoModels.select = function (selectedId) {
+      if (!mediaCatalog.video.some(function (m) { return m.id === selectedId; })) return false;
+      state.videoModel = selectedId;
+      var meta = mediaCatalog.video.find(function (m) { return m.id === selectedId; });
+      var resolutions = meta && Array.isArray(meta.resolutions) ? meta.resolutions : [];
+      if (resolutions.indexOf(state.videoResolution) < 0) state.videoResolution = resolutions[0] || '';
+      if (meta && meta.aspectRatios && meta.aspectRatios.indexOf(state.ratio) < 0) state.ratio = meta.aspectRatios[0];
+      A.persistPrefs();
+      A.syncEngineUI();
+      renderDurationControls();
+      renderVideoResolutionControl();
+      renderVideoRatioPicker();
+      updateRefDropForMode('video');
+      renderVideoEstimate();
+      renderVideoModels();
+      A.closeAllMenus();
+      return true;
+    };
   }
 
   function renderAudioModels() {
