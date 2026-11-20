@@ -5019,7 +5019,7 @@
             <div class="hm-menu hm-menu-up hm-ratio-menu" id="ratioPicker" aria-hidden="true"></div>
           </div>
 
-          <div class="hm-menu-wrap hm-av-only">
+          <div class="hm-menu-wrap hm-av-only hm-image-scale-only">
             <button class="hm-chip" id="scaleBtn" aria-haspopup="true" aria-expanded="false">
               <span class="hm-chip-ic" id="scaleChipIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>
               <span id="scaleChipText">1K</span>
@@ -5036,6 +5036,14 @@
               </div>
               <div class="hm-scale-size" id="scaleSizeText">1024×1024</div>
             </div>
+          </div>
+
+          <div class="hm-menu-wrap hm-video-only" hidden>
+            <button class="hm-chip" id="videoResolutionBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="videoResolutionLabel">480p</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-scale-menu" id="videoResolutionPicker" aria-hidden="true"></div>
           </div>
 
           <div class="hm-menu-wrap hm-video-only" hidden>
