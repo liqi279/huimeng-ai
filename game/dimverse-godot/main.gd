@@ -73,13 +73,14 @@ func _build_mascot_particles() -> void:
 
 func _update_intro_particles() -> void:
     for particle in particles:
-        var target: Vector2 = particle.target
+        var target: Vector2 = particle["target"]
         if intro_state == IntroState.MASCOT_FORM:
-            particle.position = target + Vector2(sin(phase_t * 7.0 + target.x * 0.04) * 1.2, cos(phase_t * 5.0 + target.y * 0.03) * 0.8)
+            particle["position"] = target + Vector2(sin(phase_t * 7.0 + target.x * 0.04) * 1.2, cos(phase_t * 5.0 + target.y * 0.03) * 0.8)
         else:
-            var progress := clampf((phase_t - float(particle.delay)) / 1.2, 0.0, 1.0)
+            var progress := clampf((phase_t - float(particle["delay"])) / 1.2, 0.0, 1.0)
             var eased := 1.0 - pow(1.0 - progress, 3.0)
-            particle.position = (particle.start as Vector2).lerp(target, eased)
+            var start: Vector2 = particle["start"]
+            particle["position"] = start.lerp(target, eased)
 
 func _notify_landed() -> void:
     if OS.has_feature("web"):
@@ -343,6 +344,7 @@ func _update_ghosts(dt: float) -> void:
         ghost_positions[i] = g.move_toward(waypoint, speed * dt)
 
 func _draw() -> void:
+    # Deliberately no world/background/grid drawing: the original webpage remains the visual world.
     if phase == Phase.WAITING: return
     if phase == Phase.INTRO:
         _draw_intro_particles()
@@ -363,9 +365,9 @@ func _draw() -> void:
 
 func _draw_intro_particles() -> void:
     for particle in particles:
-        var pos: Vector2 = particle.position
-        var color: Color = particle.color
-        var size := float(particle.size)
+        var pos: Vector2 = particle["position"]
+        var color: Color = particle["color"]
+        var size := float(particle["size"])
         draw_circle(pos, size * 3.2, Color(color.r, color.g, color.b, 0.16))
         draw_circle(pos, size, color)
 
