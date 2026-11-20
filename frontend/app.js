@@ -2983,7 +2983,7 @@ async function pickVideoMediaFile(file, kind) {
   }
   var dataUrl = await readRefFileDataUrl(file);
   var existingChars = currentVideoRefPayloadChars();
-  if (existingChars + dataUrl.length > 22 * 1024 * 1024) {
+  if (existingChars + dataUrl.length > VIDEO_REF_TOTAL_MAX_BYTES * 4 / 3) {
     toast('参考素材总量过大，请减少素材或压缩文件后再上传', 'error');
     return;
   }
