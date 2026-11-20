@@ -1847,13 +1847,8 @@
     if (state.pdfDoc) return Promise.resolve(state.pdfDoc);
     if (state.pdfDocPromise) return state.pdfDocPromise;
 
-    function streamUrl(url) {
-      var s = String(url || '');
-      var hashAt = s.indexOf('#');
-      var hash = hashAt >= 0 ? s.slice(hashAt) : '';
-      var base = hashAt >= 0 ? s.slice(0, hashAt) : s;
-      return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'stream=1' + hash;
-    }
+    /* SCF 不支持该路由的 Readable 流式回传；兜底必须使用标准文件路由，
+       由它 302 到 COS，浏览器直接按 Range 读取，不能追加 stream=1。 */
 
     state.pdfDocPromise = loadPdfJs()
       .then(function (pdfjs) {
@@ -1916,11 +1911,11 @@
         }).catch(function (err) {
           attempts.push('签名直链（' + (err && err.name) + ' / ' + (err && err.message) + '）');
           console.warn('[library] 签名直链失败，改用 stream=1：', err && err.name, err && err.message);
-          var streamed = streamUrl(mediaFile(book.pdfUrl));
-          pdfLoadingText('正在加载 PDF …');
+          var fallbackUrl = mediaFile(book.pdfUrl);
+          pdfLoadingText('正在通过对象存储读取 PDF …');
           kickPdfSlowTimer();
-          return open(streamed).catch(function (err2) {
-            attempts.push('流式 ' + streamed + '（' + (err2 && err2.name) + ' / ' + (err2 && err2.message) + '）');
+          return open(fallbackUrl).catch(function (err2) {
+            attempts.push('对象存储重定向 ' + fallbackUrl + '（' + (err2 && err2.name) + ' / ' + (err2 && err2.message) + '）');
             var e = new Error('已尝试：' + attempts.join('；'));
             e.name = (err2 && err2.name) || (err && err.name) || 'Error';
             throw e;
