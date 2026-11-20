@@ -1351,7 +1351,7 @@
       if (limits && limitsText) {
         limits.hidden = false;
         limitsText.textContent = '参考上限：图片 ' + images + ' 张 · 视频 ' + videos + ' 个 · 音频 ' + audios +
-          ' 个（单文件前端限制：视频 7MB / 音频 3MB；参考素材总量不超过 12MB）' +
+          ' 个（单文件前端限制：视频 3MB / 音频 1.5MB；参考素材总量不超过 4MB（SCF 请求体限制））' +
           (meta && meta.configured === false ? ' · 此模型 API Key 尚未配置，暂不能生成。' : '');
       }
       renderVideoEstimate();
@@ -1754,7 +1754,7 @@
       }
       var refPayloadChars = videoImageRefs.reduce(function (sum, item) { return sum + String(item || '').length; }, 0);
       refPayloadChars += mediaRefs.videos.concat(mediaRefs.audios).reduce(function (sum, item) { return sum + String(item || '').length; }, 0);
-      if (refPayloadChars > 16 * 1024 * 1024) {
+      if (refPayloadChars > (4 * 1024 * 1024 * 4 / 3)) {
         A.toast('参考素材总量超过安全上传上限，请压缩或减少素材', 'error');
         return;
       }
