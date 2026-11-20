@@ -1331,21 +1331,24 @@
     var input = document.getElementById('refInput');
     var limits = document.getElementById('refLimits');
     var limitsText = document.getElementById('refLimitsText');
-
     if (mode === 'video') {
-      var videoMeta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
-      var refHint = videoMeta && videoMeta.refHint ? videoMeta.refHint : '支持图片/视频/音频参考';
-      if (emptyText) emptyText.textContent = '拖入或上传参考主体（图片/视频/音频）';
-      if (hintText) hintText.textContent = refHint;
-      if (input) input.setAttribute('accept', 'image/*,video/*,audio/*');
+      var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+      var ratios = (meta && meta.aspectRatios || []).join(' / ') || '未提供';
+      var resolutions = (meta && meta.resolutions || []).join(' / ') || '未提供';
+      var min = meta && meta.minDuration != null ? meta.minDuration : '?';
+      var max = meta && meta.maxDuration != null ? meta.maxDuration : '?';
+      var images = videoRefCount(meta, 'images');
+      var videos = videoRefCount(meta, 'videos');
+      var audios = videoRefCount(meta, 'audios');
+      if (emptyText) emptyText.textContent = '拖入或上传参考图片（当前界面支持图片参考）';
+      if (hintText) hintText.textContent = '时长 ' + min + '-' + max + ' 秒 · 比例 ' + ratios + ' · 清晰度 ' + resolutions;
+      if (input) input.setAttribute('accept', 'image/png,image/jpeg,image/webp');
       if (limits && limitsText) {
-        var refs = videoMeta && videoMeta.refLimits ? videoMeta.refLimits : {};
-        var imageCount = refs.images && refs.images.count != null ? refs.images.count : 10;
-        var videoCount = refs.videos && refs.videos.count != null ? refs.videos.count : 3;
-        var audioCount = refs.audios && refs.audios.count != null ? refs.audios.count : 3;
         limits.hidden = false;
-        limitsText.textContent = '当前模型参考上限：图片 ' + imageCount + ' 张（≤9MB） · 视频 ' + videoCount + ' 个（≤30MB） · 音频 ' + audioCount + ' 个（≤9MB）';
+        limitsText.textContent = '模型参考上限：图片 ' + images + ' 张 · 视频 ' + videos + ' 个 · 音频 ' + audios +
+          ' 个；当前页面上传通道仅开放图片参考。' + (meta && meta.configured === false ? ' 此模型 API Key 尚未配置，暂不能生成。' : '');
       }
+      renderVideoEstimate();
     } else if (mode === 'audio') {
       if (emptyText) emptyText.textContent = '拖入或上传参考音频（可选）';
       if (hintText) hintText.textContent = '音频参考 ≤10MB · 最多 3 个';
@@ -1418,29 +1421,40 @@
     } catch (err) { /* 保持内置兜底 */ }
   }
 
+  function videoRefCount(meta, key) {
+    var value = meta && meta.refLimits ? meta.refLimits[key] : null;
+    if (value && typeof value === 'object') value = value.count;
+    return value == null ? 0 : Math.max(0, Number(value) || 0);
+  }
+
   function renderVideoModels() {
     var menu = document.querySelector('#modelMenu [data-mode-panel="video"]');
     if (!menu) return;
+    function renderGroup(title, models, perSecond) {
+      if (!models.length) return '';
+      return '<span class="hm-menu-label hm-video-group-label">' + title + '</span>' +
+        '<div class="hm-chip-grid">' + models.map(function (m) {
+          var unit = perSecond ? '积分/秒' : '积分/次';
+          var priceMap = m.resolutionPrices || {};
+          var priceParts = Object.keys(priceMap).map(function (res) { return res + ' ' + priceMap[res] + ' ' + unit; });
+          var creditsText = priceParts.length ? priceParts.join(' · ') : (m.desc || unit);
+          var badge = perSecond
+            ? '<small class="hm-pay-badge hm-pay-persec">按秒</small>'
+            : '<small class="hm-pay-badge">按次</small>';
+          var keyBadge = m.configured === false ? '<small class="hm-pay-badge hm-key-pending">待配置Key</small>' : '';
+          var tip = m.refHint ? ' ' + m.refHint : '';
+          return '<button data-vmodel="' + m.id + '" title="' + creditsText + tip + '">' +
+            m.name + badge + keyBadge +
+            '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + '</span>' +
+          '</button>';
+        }).join('') + '</div>';
+    }
+    var perTask = mediaCatalog.video.filter(function (m) { return m.billingType !== 'perSecond'; });
+    var perSecond = mediaCatalog.video.filter(function (m) { return m.billingType === 'perSecond'; });
     menu.innerHTML = '<span class="hm-menu-label">则灵 AI 视频模型</span>' +
-      '<div class="hm-chip-grid">' +
-      mediaCatalog.video.map(function (m) {
-        var unit = m.billingType === 'perSecond' ? '积分/秒' : '积分/次';
-        var priceMap = m.resolutionPrices || {};
-        var priceParts = Object.keys(priceMap).map(function (res) { return res + ' ' + priceMap[res] + ' ' + unit; });
-        var creditsText = priceParts.length ? priceParts.join(' · ') : (m.desc || unit);
-        var badge = m.billingType === 'perSecond'
-          ? '<small class="hm-pay-badge hm-pay-persec">按秒</small>'
-          : '<small class="hm-pay-badge">按次</small>';
-        var keyBadge = m.configured === false ? '<small class="hm-pay-badge">待配置Key</small>' : '';
-        var tip = m.refHint ? ' ' + m.refHint : '';
-        return '<button data-vmodel="' + m.id + '" title="' + creditsText + tip + '">' +
-          m.name + badge + keyBadge +
-          '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + '</span>' +
-        '</button>';
-      }).join('') +
-      '</div>' +
-      '<p class="hm-menu-note">模型价格按分辨率显示 · 按秒模型按所选分辨率单价 × 时长计费</p>';
-
+      renderGroup('按次计费', perTask, false) +
+      renderGroup('按秒计费', perSecond, true) +
+      '<p class="hm-menu-note">悬停查看单价；按秒模型的预计积分会随清晰度和时长更新</p>';
     menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-vmodel') === state.videoModel);
       btn.addEventListener('click', function () {
@@ -1519,6 +1533,7 @@
         ' title="' + res + suffix + '">' + res + suffix + '</button>';
     }).join('');
     if (label) label.textContent = state.videoResolution || '清晰度';
+    renderVideoEstimate();
     picker.querySelectorAll('[data-video-resolution]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         state.videoResolution = btn.getAttribute('data-video-resolution');
@@ -1527,6 +1542,24 @@
         A.closeAllMenus();
       });
     });
+  }
+
+  function renderVideoEstimate() {
+    var el = document.getElementById('videoCreditEstimate');
+    if (!el) return;
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    if (!meta) { el.textContent = ''; return; }
+    var rate = meta.resolutionPrices && meta.resolutionPrices[state.videoResolution];
+    if (rate == null) {
+      el.textContent = '预计积分：价格信息暂不可用';
+      return;
+    }
+    if (meta.billingType === 'perSecond') {
+      var total = Number(rate) * Number(state.duration || meta.minDuration || 1);
+      el.textContent = '预计积分：' + (Math.round(total * 100) / 100) + ' 积分（' + rate + ' × ' + state.duration + ' 秒）';
+    } else {
+      el.textContent = '预计积分：' + rate + ' 积分/次（固定单次计费）';
+    }
   }
 
   /* 根据当前模型夹紧 duration 到合法范围 */
@@ -1551,6 +1584,7 @@
       state.duration = val;
       slider.value = val; /* 把滑块位置也拉回合法值 */
       if (label) label.textContent = val + '秒';
+      renderVideoEstimate();
       syncChoiceLabels();
     };
 
@@ -1675,9 +1709,35 @@
 
     /* 免费 Edge-TTS 通道不需要 RayinAPI key，付费通道才要 */
     var modelId = mode === 'video' ? state.videoModel : state.audioModel;
-    var modelMeta = null;
-    if (mode === 'audio') {
-      modelMeta = mediaCatalog.audio.models.find(function (m) { return m.id === modelId; });
+    var modelMeta = mode === 'video'
+      ? mediaCatalog.video.find(function (m) { return m.id === modelId; })
+      : mediaCatalog.audio.models.find(function (m) { return m.id === modelId; });
+    if (mode === 'video') {
+      if (!modelMeta) { A.toast('未找到所选视频模型，请刷新模型列表', 'error'); return; }
+      if (modelMeta.configured === false) {
+        A.toast('该模型的则灵 API Key 尚未配置，请先完成服务器密钥配置', 'error');
+        return;
+      }
+      var minDuration = Number(modelMeta.minDuration || 1);
+      var maxDuration = Number(modelMeta.maxDuration || 30);
+      if (!Number.isFinite(Number(state.duration)) || Number(state.duration) < minDuration || Number(state.duration) > maxDuration) {
+        A.toast('视频时长不符合模型要求：' + minDuration + '-' + maxDuration + ' 秒', 'error');
+        return;
+      }
+      if (!(modelMeta.aspectRatios || []).includes(state.ratio)) {
+        A.toast('当前模型不支持 ' + state.ratio + ' 比例，请重新选择', 'error');
+        return;
+      }
+      if (!(modelMeta.resolutions || []).includes(state.videoResolution)) {
+        A.toast('当前模型不支持所选清晰度，请重新选择', 'error');
+        return;
+      }
+      var imageLimit = videoRefCount(modelMeta, 'images');
+      var selectedImages = typeof A.currentRefs === 'function' ? A.currentRefs().length : 0;
+      if (selectedImages > imageLimit) {
+        A.toast('参考图片数量超过当前模型上限：最多 ' + imageLimit + ' 张', 'error');
+        return;
+      }
     }
     var isFree = mode === 'audio' && modelMeta && modelMeta.free;
     var videoImageRefs = mode === 'video' && typeof A.currentRefs === 'function'
