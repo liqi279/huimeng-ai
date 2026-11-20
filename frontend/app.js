@@ -1616,15 +1616,18 @@ const SCALE_ICONS = {
 
 function syncScaleChip() {
   if (els.scaleChipText) {
-    els.scaleChipText.textContent = state.scale === 'custom' ? '自定义' : String(state.scale).toUpperCase();
+    els.scaleChipText.textContent = state.mode === 'video'
+      ? (state.videoResolution || '720p')
+      : (state.scale === 'custom' ? '自定义' : String(state.scale).toUpperCase());
   }
   const icon = document.getElementById('scaleChipIcon');
-  if (icon) icon.innerHTML = state.scale === 'custom' ? SCALE_ICONS.tune : state.scale === '4k' ? SCALE_ICONS.slab : SCALE_ICONS.bars;
+  if (icon) icon.innerHTML = state.mode !== 'video' && state.scale === 'custom'
+    ? SCALE_ICONS.tune : state.mode !== 'video' && state.scale === '4k' ? SCALE_ICONS.slab : SCALE_ICONS.bars;
 }
 
 function toggleCustomRow() {
   const row = document.getElementById('scaleCustomRow');
-  if (row) row.hidden = state.scale !== 'custom';
+  if (row) row.hidden = state.mode === 'video' || state.scale !== 'custom';
 }
 
 function syncSettingsUI() {
