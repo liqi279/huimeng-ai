@@ -1,6 +1,7 @@
 extends Node2D
 ## Two-stage Dimverse mini game. Transparent Godot Web overlay; website owns the backdrop.
-enum Phase { WAITING, INTRO, PLAYING, CELEBRATE, BLOCK, MAZE, GAME_OVER }
+enum Phase { WAITING, INTRO, MASCOT_FALL, SIGNBOARD, PLAYING, CELEBRATE, BLOCK, MAZE, GAME_OVER }
+enum IntroState { WAITING, TITLE_PARTICLES, MASCOT_FORM, MASCOT_BLINK, MASCOT_FALL, PLAYING }
 const W := 1280.0
 const H := 720.0
 const CYAN := Color("#67eaff")
@@ -8,6 +9,8 @@ const PINK := Color("#f18bce")
 const PURPLE := Color("#a78bfa")
 const CELL := 36.0
 var phase: Phase = Phase.WAITING
+var intro_state: IntroState = IntroState.WAITING
+var particles: Array[Dictionary] = []
 var rng := RandomNumberGenerator.new()
 var t := 0.0
 var phase_t := 0.0
@@ -40,14 +43,47 @@ func _ready() -> void:
     call_deferred("_start")
 
 func _register_bridge() -> void:
-    if OS.has_feature("web"):
-        JavaScriptBridge.eval("window.parent.postMessage('hm-godot-ready','*');")
+    if not OS.has_feature("web"): return
+    var browser_window = JavaScriptBridge.get_interface("window")
+    if browser_window:
+        browser_window.set("hmGodotStart", JavaScriptBridge.create_callback(_on_start_from_web))
+    JavaScriptBridge.eval("window.parent.postMessage('hm-godot-ready','*');")
+
+func _on_start_from_web(_args = []) -> void:
+    _start()
 
 func _start() -> void:
     if phase != Phase.WAITING: return
     phase = Phase.INTRO
+    intro_state = IntroState.TITLE_PARTICLES
     phase_t = 0.0
+    _build_mascot_particles()
     set_process(true)
+
+func _build_mascot_particles() -> void:
+    particles.clear()
+    for y in range(-43, 44, 4):
+        for x in range(-62, 63, 4):
+            var shape := (float(x * x) / (62.0 * 62.0)) + (float(y * y) / (43.0 * 43.0))
+            if shape > 1.0 or rng.randf() > 0.78: continue
+            if absf(y + 8.0) < 8.0 and (absf(x - 16.0) < 5.0 or absf(x + 16.0) < 5.0): continue
+            var target := Vector2(640.0 + x, 205.0 + y)
+            var start := Vector2(rng.randf_range(350.0, 930.0), rng.randf_range(335.0, 405.0))
+            particles.append({"start": start, "position": start, "target": target, "delay": rng.randf_range(0.0, 0.55), "size": rng.randf_range(1.0, 2.8), "color": CYAN.lerp(PINK, rng.randf())})
+
+func _update_intro_particles() -> void:
+    for particle in particles:
+        var target: Vector2 = particle.target
+        if intro_state == IntroState.MASCOT_FORM:
+            particle.position = target + Vector2(sin(phase_t * 7.0 + target.x * 0.04) * 1.2, cos(phase_t * 5.0 + target.y * 0.03) * 0.8)
+        else:
+            var progress := clampf((phase_t - float(particle.delay)) / 1.2, 0.0, 1.0)
+            var eased := 1.0 - pow(1.0 - progress, 3.0)
+            particle.position = (particle.start as Vector2).lerp(target, eased)
+
+func _notify_landed() -> void:
+    if OS.has_feature("web"):
+        JavaScriptBridge.eval("window.parent.postMessage('hm-godot-landed','*');")
 
 func _process(delta: float) -> void:
     var dt := minf(delta, 0.04)
@@ -55,6 +91,31 @@ func _process(delta: float) -> void:
     phase_t += dt
     match phase:
         Phase.INTRO:
+            _update_intro_particles()
+            if intro_state == IntroState.TITLE_PARTICLES and phase_t >= 1.8:
+                intro_state = IntroState.MASCOT_FORM
+                phase_t = 0.0
+            elif intro_state == IntroState.MASCOT_FORM and phase_t >= 0.7:
+                intro_state = IntroState.MASCOT_BLINK
+                phase_t = 0.0
+                player = Vector2(640.0, 205.0)
+            elif intro_state == IntroState.MASCOT_BLINK and phase_t >= 0.2:
+                intro_state = IntroState.MASCOT_FALL
+                phase = Phase.MASCOT_FALL
+                phase_t = 0.0
+                player = Vector2(640.0, -75.0)
+                velocity = Vector2(0.0, 80.0)
+        Phase.MASCOT_FALL:
+            velocity.y += 1450.0 * dt
+            player += velocity * dt
+            if player.y >= H * 0.68:
+                player.y = H * 0.68
+                velocity = Vector2.ZERO
+                phase = Phase.SIGNBOARD
+                phase_t = 0.0
+                intro_state = IntroState.PLAYING
+                _notify_landed()
+        Phase.SIGNBOARD:
             if phase_t >= 1.25:
                 phase = Phase.PLAYING
                 phase_t = 0.0
@@ -283,7 +344,12 @@ func _update_ghosts(dt: float) -> void:
 
 func _draw() -> void:
     if phase == Phase.WAITING: return
-    if phase in [Phase.INTRO, Phase.PLAYING, Phase.CELEBRATE, Phase.BLOCK]:
+    if phase == Phase.INTRO:
+        _draw_intro_particles()
+        if intro_state in [IntroState.MASCOT_BLINK, IntroState.MASCOT_FALL]:
+            _draw_player()
+        return
+    if phase in [Phase.MASCOT_FALL, Phase.SIGNBOARD, Phase.PLAYING, Phase.CELEBRATE, Phase.BLOCK]:
         _draw_stage_one()
     elif phase == Phase.MAZE:
         _draw_maze()
@@ -295,10 +361,19 @@ func _draw() -> void:
         _draw_block()
     _draw_player()
 
+func _draw_intro_particles() -> void:
+    for particle in particles:
+        var pos: Vector2 = particle.position
+        var color: Color = particle.color
+        var size := float(particle.size)
+        draw_circle(pos, size * 3.2, Color(color.r, color.g, color.b, 0.16))
+        draw_circle(pos, size, color)
+
 func _draw_stage_one() -> void:
-    if phase == Phase.INTRO:
-        var intro_sign_y := lerpf(-105.0, 72.0, minf(1.0, phase_t / 0.85))
-        _draw_sign(intro_sign_y)
+    if phase in [Phase.MASCOT_FALL, Phase.SIGNBOARD]:
+        if phase == Phase.SIGNBOARD:
+            var intro_sign_y := lerpf(-105.0, 72.0, minf(1.0, phase_t / 0.85))
+            _draw_sign(intro_sign_y)
         _draw_player()
         return
     # Slim center signboard descends, then the 60-second clock begins.
