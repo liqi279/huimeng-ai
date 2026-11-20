@@ -49,4 +49,9 @@ jobs:
           SCF_NAMESPACE: ${{ vars.SCF_NAMESPACE }}
           API_BASE: ${{ vars.API_BASE }}
           EXPECT_BOOKS: ${{ vars.EXPECT_BOOKS }}
+          ZELING_VIDEO_KEY_MINIMAX_H3: ${{ secrets.ZELING_VIDEO_KEY_MINIMAX_H3 }}
+          ZELING_VIDEO_KEY_VIDU_Q4_NOPEAK: ${{ secrets.ZELING_VIDEO_KEY_VIDU_Q4_NOPEAK }}
+          ZELING_VIDEO_KEY_SD_25_FLASH: ${{ secrets.ZELING_VIDEO_KEY_SD_25_FLASH }}
+          ZELING_VIDEO_KEY_SEEDANCE_MINI: ${{ secrets.ZELING_VIDEO_KEY_SEEDANCE_MINI }}
+          ZELING_VIDEO_KEY_SEEDANCE_FAST: ${{ secrets.ZELING_VIDEO_KEY_SEEDANCE_FAST }}
         run: node scripts/scf-deploy.js

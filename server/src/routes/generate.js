@@ -353,17 +353,17 @@ function gptSize(ratio) {
 }
 
 function videoSize(ratio, resolution) {
-  const longSide = resolution === '2k' ? 2048 : resolution === '1080p' ? 1920 : 1280;
+  const shortSide = ({ '480p': 480, '720p': 720, '768p': 768, '1080p': 1080, '2k': 1440 })[resolution] || 720;
   const base = RATIO_SIZE[ratio] || RATIO_SIZE['16:9'];
   const aspect = base[0] / base[1];
   let width;
   let height;
   if (aspect >= 1) {
-    width = longSide;
-    height = Math.round(longSide / aspect);
+    height = shortSide;
+    width = Math.round(shortSide * aspect);
   } else {
-    height = longSide;
-    width = Math.round(longSide * aspect);
+    width = shortSide;
+    height = Math.round(shortSide / aspect);
   }
   width = Math.max(256, Math.round(width / 8) * 8);
   height = Math.max(256, Math.round(height / 8) * 8);
@@ -1063,72 +1063,75 @@ const ZELING_BASE = 'https://www.zeling.online/api/hz';
 const ZELING_UPLOAD_BASE = 'https://www.zeling.online';
 
 const VIDEO_MODELS = [
-  /* ==== 账号一 3045324659@qq.com · 按次生成 ==== */
-  {
-    id: 'vidu-q4',
-    name: 'Vidu Q4',
-    model: 'vidu-q4',
-    minDuration: 4, maxDuration: 16,
-    resolutions: ['720p', '1080p'],
-    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '21:9'],
-    fps: 24,
-    billingType: 'perTask', creditsMin: 19, credits: 31,
-    refHint: '图15 / 视0 / 音3 多参考，支持首尾帧；1080p 更贵',
-    desc: '按次生成 · 19-31 积分/次',
-    apiKey: 'zk-83e955434c5079dfc4f6f054d472f5b0',
-  },
   {
     id: 'minimax_h3-768p',
     name: 'MiniMax H3',
     model: 'minimax_h3-768p',
     minDuration: 5, maxDuration: 15,
-    resolutions: ['768p', '480p'],
+    resolutions: ['480p', '768p'],
+    resolutionPrices: { '480p': 15, '768p': 17 },
     aspectRatios: ['16:9', '9:16', '1:1'],
-    fps: 24,
-    billingType: 'perTask', creditsMin: 13, credits: 15,
-    refHint: '图9 / 视0 / 音3 全参模式；原生分辨率 768p',
-    desc: '按次生成 · 13-15 积分/次',
-    apiKey: 'zk-276f49cf4a4f2543790da21098cec361',
+    billingType: 'perTask',
+    refLimits: { images: 9, videos: 0, audios: 3, imageMaxBytes: 9 * 1024 * 1024, videoMaxBytes: 0, audioMaxBytes: 9 * 1024 * 1024 },
+    refHint: '参考上限：图片 9 张 · 视频不支持 · 音频 3 个',
+    desc: '按次计费 · 480p 15 积分/次 · 768p 17 积分/次',
+    apiKey: config.ZELING_VIDEO_KEY_MINIMAX_H3,
   },
   {
-    id: 'sd-2-720p',
-    name: 'Seedance 2 · 9图3音3视',
-    model: 'sd-2-720p',
+    id: 'vidu-q4-nopeak',
+    name: 'Vidu Q4 Nopeak',
+    model: 'vidu-q4-nopeak',
+    minDuration: 4, maxDuration: 16,
+    resolutions: ['720p', '1080p'],
+    resolutionPrices: { '720p': 16, '1080p': 16 },
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4'],
+    billingType: 'perTask',
+    refLimits: { images: 10, videos: 0, audios: 3, imageMaxBytes: 9 * 1024 * 1024, videoMaxBytes: 0, audioMaxBytes: 9 * 1024 * 1024 },
+    refHint: '参考上限：图片 10 张 · 视频不支持 · 音频 3 个',
+    desc: '按次计费 · 16 积分/次',
+    apiKey: config.ZELING_VIDEO_KEY_VIDU_Q4_NOPEAK,
+  },
+  {
+    id: 'sd-2.5-flash',
+    name: 'SD 2.5 Flash',
+    model: 'sd-2.5-flash',
+    minDuration: 4, maxDuration: 30,
+    resolutions: ['480p', '768p'],
+    resolutionPrices: { '480p': 1.9, '768p': 2.2 },
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'],
+    billingType: 'perSecond',
+    refLimits: { images: 10, videos: 5, audios: 5, imageMaxBytes: 9 * 1024 * 1024, videoMaxBytes: 30 * 1024 * 1024, audioMaxBytes: 9 * 1024 * 1024 },
+    refHint: '参考上限：图片 10 张 · 视频 5 个 · 音频 5 个',
+    desc: '按秒计费 · 480p 1.9 积分/秒 · 768p 2.2 积分/秒',
+    apiKey: config.ZELING_VIDEO_KEY_SD_25_FLASH,
+  },
+  {
+    id: 'mh-seedance-2.0-mini',
+    name: 'Seedance 2.0 Mini',
+    model: 'mh-seedance-2.0-mini',
     minDuration: 5, maxDuration: 15,
-    resolutions: ['720p'],
-    aspectRatios: ['16:9', '9:16', '1:1', '4:3'],
-    fps: 24,
-    billingType: 'perTask', credits: 35,
-    refHint: '9图+3音+3视 多模态参考，动作/风格/角色一致性强',
-    desc: '按次生成 · 35 积分/次',
-    apiKey: 'zk-a779d45bbdfd5a363064e305a8f9c2be',
+    resolutions: ['480p', '720p'],
+    resolutionPrices: { '480p': 1.1, '720p': 1.4 },
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4'],
+    billingType: 'perSecond',
+    refLimits: { images: 9, videos: 3, audios: 3, imageMaxBytes: 9 * 1024 * 1024, videoMaxBytes: 30 * 1024 * 1024, audioMaxBytes: 9 * 1024 * 1024 },
+    refHint: '参考上限：图片 9 张 · 视频 3 个 · 音频 3 个',
+    desc: '按秒计费 · 480p 1.1 积分/秒 · 720p 1.4 积分/秒',
+    apiKey: config.ZELING_VIDEO_KEY_SEEDANCE_MINI,
   },
   {
-    id: 'seedance-2.0-903',
-    name: 'Seedance 2.0 满血',
-    model: 'seedance-2.0-903',
+    id: 'mh-seedance-2.0-fast',
+    name: 'Seedance 2.0 Fast',
+    model: 'mh-seedance-2.0-fast',
     minDuration: 5, maxDuration: 15,
-    resolutions: ['720p'],
-    aspectRatios: ['16:9', '9:16', '1:1', '4:3'],
-    fps: 24,
-    billingType: 'perTask', credits: 34,
-    refHint: '9图+0视+3音，风格迁移 / 角色一致性',
-    desc: '按次生成 · 34 积分/次',
-    apiKey: 'zk-ad8b695045b525614d7735185255600d',
-  },
-  /* ==== 账号二 18005676519@qq.com · 混合 ==== */
-  {
-    id: 'sd2.5-sss',
-    name: 'Seedance 2.5 SSS',
-    model: 'sd2.5-sss',
-    minDuration: 5, maxDuration: 30,
-    resolutions: ['720p'],
-    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '21:9'],
-    fps: 24,
-    billingType: 'perTask', credits: 70,
-    refHint: '图30 / 视10 / 音10 极多参考，Seedance 2.5 SSS 模式',
-    desc: '按次生成 · 70 积分/次',
-    apiKey: 'zk-adda48ef81efe9b95571906b17dad841',
+    resolutions: ['480p', '720p'],
+    resolutionPrices: { '480p': 1.4, '720p': 1.7 },
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4'],
+    billingType: 'perSecond',
+    refLimits: { images: 9, videos: 3, audios: 3, imageMaxBytes: 9 * 1024 * 1024, videoMaxBytes: 30 * 1024 * 1024, audioMaxBytes: 9 * 1024 * 1024 },
+    refHint: '参考上限：图片 9 张 · 视频 3 个 · 音频 3 个',
+    desc: '按秒计费 · 480p 1.4 积分/秒 · 720p 1.7 积分/秒',
+    apiKey: config.ZELING_VIDEO_KEY_SEEDANCE_FAST,
   },
 ];
 
@@ -1158,6 +1161,60 @@ function videoModel(v) {
 
 function videoModelMeta(v) {
   return VIDEO_MODELS.find((m) => m.id === v) || VIDEO_MODELS[0];
+}
+
+/* 则灵公开模型清单提供精确时长档位、比例、清晰度与实时价格。 */
+let zelingModelDirectoryCache = null;
+let zelingModelDirectoryExpires = 0;
+let zelingModelDirectoryPromise = null;
+async function getZelingModelDirectory() {
+  if (zelingModelDirectoryCache && Date.now() < zelingModelDirectoryExpires) return zelingModelDirectoryCache;
+  if (zelingModelDirectoryPromise) return zelingModelDirectoryPromise;
+  zelingModelDirectoryPromise = (async () => {
+    try {
+      const data = await fetchJson(`${ZELING_BASE}/models`, { headers: { Accept: 'application/json' } }, 5000, '则灵模型清单获取失败');
+      if (data && typeof data === 'object') {
+        zelingModelDirectoryCache = data;
+        zelingModelDirectoryExpires = Date.now() + 60 * 1000;
+      }
+    } catch (err) {
+      /* 上游目录不可用时使用静态能力兜底。 */
+    } finally {
+      zelingModelDirectoryPromise = null;
+    }
+    return zelingModelDirectoryCache || {};
+  })();
+  return zelingModelDirectoryPromise;
+}
+function findZelingModel(directory, modelId) {
+  const groups = [directory && directory.video, directory && directory.videoStable];
+  for (const group of groups) {
+    if (!Array.isArray(group)) continue;
+    const found = group.find((item) => item && (item.id === modelId || item.model === modelId));
+    if (found) return found;
+  }
+  return null;
+}
+async function effectiveVideoModelMeta(modelId) {
+  const base = videoModelMeta(modelId);
+  const remote = findZelingModel(await getZelingModelDirectory(), base.model || base.id);
+  if (!remote) return base;
+  const merged = Object.assign({}, base);
+  if (Array.isArray(remote.durations) && remote.durations.length) {
+    merged.durations = remote.durations.map(Number).filter(Number.isFinite);
+    merged.minDuration = Math.min(...merged.durations);
+    merged.maxDuration = Math.max(...merged.durations);
+  }
+  if (Array.isArray(remote.resolutions) && remote.resolutions.length) merged.resolutions = remote.resolutions.slice();
+  if (Array.isArray(remote.aspect_ratios) && remote.aspect_ratios.length) merged.aspectRatios = remote.aspect_ratios.slice();
+  if (remote.price_type === 'per_second') merged.billingType = 'perSecond';
+  if (remote.price_type === 'per_call') merged.billingType = 'perTask';
+  const prices = remote.resolution_prices || remote.video_resolution_prices;
+  if (prices && typeof prices === 'object') merged.resolutionPrices = Object.assign({}, prices);
+  if (remote.max_reference_images != null) merged.refLimits.images = Number(remote.max_reference_images);
+  if (remote.max_reference_videos != null) merged.refLimits.videos = Number(remote.max_reference_videos);
+  if (remote.max_reference_audios != null) merged.refLimits.audios = Number(remote.max_reference_audios);
+  return merged;
 }
 
 function audioModel(v) {
@@ -1199,30 +1256,42 @@ function zelingMediaUrl(task) {
 async function generateVideo(body) {
   const prompt = readPrompt(body.prompt, '提示词');
   const modelId = videoModel(body.model);
-  const modelMeta = videoModelMeta(modelId);
+  const modelMeta = await effectiveVideoModelMeta(modelId);
 
   /* aspect_ratio：zeling 原生字段，值为 "16:9"/"9:16"/"1:1"/"4:3"/"21:9" 等 */
-  const ratio = modelMeta.aspectRatios && modelMeta.aspectRatios.includes(body.ratio)
-    ? body.ratio
-    : (modelMeta.aspectRatios && modelMeta.aspectRatios[0]) || '16:9';
+  const ratio = body.ratio || modelMeta.aspectRatios[0];
+  assert(modelMeta.aspectRatios.includes(ratio), 400, '画面比例不受支持', '模型 ' + modelMeta.name + ' 支持：' + modelMeta.aspectRatios.join(' / '));
 
-  const resolution = modelMeta.resolutions.includes(body.resolution) ? body.resolution : modelMeta.resolutions[0];
+  const resolution = body.resolution || modelMeta.resolutions[0];
+  assert(modelMeta.resolutions.includes(resolution), 400, '清晰度不受支持', '模型 ' + modelMeta.name + ' 支持：' + modelMeta.resolutions.join(' / '));
 
   /* 时长校验（zeling 有固定档位，前端做 5 的倍数已经够了，这里边界检查即可） */
   let duration = body.duration != null && body.duration !== '' ? Number(body.duration) : modelMeta.minDuration;
-  if (!Number.isFinite(duration) || duration < modelMeta.minDuration || duration > modelMeta.maxDuration) {
-    throw jsonError(400, `视频时长 ${duration} 秒超出范围`, `模型 ${modelMeta.name} 支持 ${modelMeta.minDuration}-${modelMeta.maxDuration} 秒`);
+  if (!Number.isFinite(duration) || duration < modelMeta.minDuration || duration > modelMeta.maxDuration ||
+      (Array.isArray(modelMeta.durations) && modelMeta.durations.length && !modelMeta.durations.includes(duration))) {
+    const allowed = Array.isArray(modelMeta.durations) && modelMeta.durations.length
+      ? modelMeta.durations.join(' / ') : modelMeta.minDuration + '-' + modelMeta.maxDuration;
+    throw jsonError(400, `视频时长 ${duration} 秒不受支持`, `模型 ${modelMeta.name} 支持：${allowed} 秒`);
   }
 
   /* 参考主体校验 + 解析 */
   const refImages = readRefImages(body.refImages);
   const refVideos = Array.isArray(body.refVideos) ? body.refVideos : [];
   const refAudios = Array.isArray(body.refAudios) ? body.refAudios : [];
+  const refLimits = modelMeta.refLimits || { images: 10, videos: 3, audios: 3, imageMaxBytes: 9 * 1024 * 1024, videoMaxBytes: 30 * 1024 * 1024, audioMaxBytes: 9 * 1024 * 1024 };
+  assert(refImages.length <= refLimits.images, 400, '参考图片数量超限', modelMeta.name + ' 最多支持 ' + refLimits.images + ' 张图片');
+  assert(refVideos.length <= refLimits.videos, 400, '参考视频数量超限', modelMeta.name + ' 最多支持 ' + refLimits.videos + ' 个视频');
+  assert(refAudios.length <= refLimits.audios, 400, '参考音频数量超限', modelMeta.name + ' 最多支持 ' + refLimits.audios + ' 个音频');
+  refImages.forEach((item) => assert(item.buffer.length <= refLimits.imageMaxBytes, 413, '参考图片过大', '单张图片不能超过 9MB'));
   for (let i = 0; i < refVideos.length; i += 1) {
     assert(typeof refVideos[i] === 'string' && refVideos[i].startsWith('data:'), 400, `参考视频 ${i + 1} 格式不正确`);
+    const decoded = dataUrlToBuffer(refVideos[i]);
+    assert(decoded.buffer.length <= refLimits.videoMaxBytes, 413, `参考视频 ${i + 1} 过大`, '单个视频不能超过 30MB');
   }
   for (let i = 0; i < refAudios.length; i += 1) {
     assert(typeof refAudios[i] === 'string' && refAudios[i].startsWith('data:'), 400, `参考音频 ${i + 1} 格式不正确`);
+    const decoded = dataUrlToBuffer(refAudios[i]);
+    assert(decoded.buffer.length <= refLimits.audioMaxBytes, 413, `参考音频 ${i + 1} 过大`, '单个音频不能超过 9MB');
   }
 
   const key = modelMeta.apiKey;
@@ -1472,29 +1541,32 @@ async function generateAudioViaRayin({ text, model, voice, format, rayin, sample
 
 /* 视频 / 音频模型目录接口 —— 前端用来动态渲染时长滑块和参考主体限制 */
 router.get('/media-models', wrap(async (req, res) => {
-  res.json({
-    video: VIDEO_MODELS.map((m) => ({
+  const video = await Promise.all(VIDEO_MODELS.map(async (base) => {
+    const m = await effectiveVideoModelMeta(base.id);
+    return {
       id: m.id,
       name: m.name,
       minDuration: m.minDuration,
       maxDuration: m.maxDuration,
+      durations: m.durations || [],
       resolutions: m.resolutions,
+      resolutionPrices: m.resolutionPrices || {},
+      aspectRatios: m.aspectRatios || [],
       fps: m.fps || 24,
       billingType: m.billingType || 'perTask',
-      credits: m.credits,
-      creditsMin: m.creditsMin,
-      creditsPerSec: m.creditsPerSec,
-      creditsPerSecMin: m.creditsPerSecMin,
       desc: m.desc || '',
-      refHint: m.refHint || '',
-      free: m.free,
-      /* 参考主体限制 */
+      refHint: '参考上限：图片 ' + m.refLimits.images + ' 张 · 视频 ' +
+        (m.refLimits.videos ? m.refLimits.videos + ' 个' : '不支持') + ' · 音频 ' + m.refLimits.audios + ' 个',
+      configured: Boolean(m.apiKey),
       refLimits: {
-        images: { count: 10, maxBytes: 10 * 1024 * 1024, mime: ['image/jpeg', 'image/png', 'image/webp'] },
-        videos: { count: 3, maxBytes: 50 * 1024 * 1024, mime: ['video/mp4', 'video/webm', 'video/quicktime'] },
-        audios: { count: 3, maxBytes: 10 * 1024 * 1024, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4'] },
+        images: { count: m.refLimits.images, maxBytes: m.refLimits.imageMaxBytes, mime: ['image/jpeg', 'image/png', 'image/webp'] },
+        videos: { count: m.refLimits.videos, maxBytes: m.refLimits.videoMaxBytes, mime: ['video/mp4', 'video/webm', 'video/quicktime'] },
+        audios: { count: m.refLimits.audios, maxBytes: m.refLimits.audioMaxBytes, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4'] },
       },
-    })),
+    };
+  }));
+  res.json({
+    video,
     audio: {
       models: AUDIO_MODELS.map((m) => ({
         id: m.id,
@@ -1505,7 +1577,6 @@ router.get('/media-models', wrap(async (req, res) => {
       refLimits: {
         audios: { count: 3, maxBytes: 10 * 1024 * 1024, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'] },
       },
-      /* Edge-TTS 声音列表（免费引擎才用到） */
       edgeVoices: edgetts.listVoices(),
     },
   });

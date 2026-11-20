@@ -288,31 +288,40 @@ async function ensureRuntimeLimits(current) {
    同步跑 30~60s 的长请求），图片回写 COS 也会失败。发布时顺手对齐，
    避免只在控制台手改、下次又漂移。只写不读，日志不打印任何密钥。 */
 async function ensureFunctionCredentials(current) {
+  const env = (current && current.env) || {};
+  const desired = {};
   const wantId = process.env.COS_SECRET_ID || process.env.S3_ACCESS_KEY_ID || '';
   const wantKey = process.env.COS_SECRET_KEY || process.env.S3_SECRET_ACCESS_KEY || '';
-  if (!wantId || !wantKey) {
-    log('scf', '发布方未提供 COS 密钥，跳过函数凭据同步');
+  if (wantId && wantKey) {
+    desired.COS_SECRET_ID = wantId;
+    desired.COS_SECRET_KEY = wantKey;
+  }
+  [
+    'ZELING_VIDEO_KEY_MINIMAX_H3',
+    'ZELING_VIDEO_KEY_VIDU_Q4_NOPEAK',
+    'ZELING_VIDEO_KEY_SD_25_FLASH',
+    'ZELING_VIDEO_KEY_SEEDANCE_MINI',
+    'ZELING_VIDEO_KEY_SEEDANCE_FAST',
+  ].forEach((name) => {
+    if (process.env[name]) desired[name] = process.env[name];
+  });
+  const keys = Object.keys(desired);
+  if (!keys.length) {
+    log('scf', '未提供新的 COS / 则灵密钥，跳过函数凭据同步');
     return;
   }
-  const env = (current && current.env) || {};
-  const idOk = String(env.COS_SECRET_ID || '') === wantId;
-  const keyOk = String(env.COS_SECRET_KEY || '') === wantKey;
-  if (idOk && keyOk) {
-    log('scf', '函数凭据与发布密钥一致，无需调整');
+  const changed = keys.filter((name) => String(env[name] || '') !== String(desired[name]));
+  if (!changed.length) {
+    log('scf', '函数 COS / 则灵密钥均与发布配置一致，无需调整');
     return;
   }
-  log('scf', '函数凭据已过期/不一致（SecretId ' + (idOk ? '一致' : '不一致') + '，SecretKey ' + (keyOk ? '一致' : '不一致') + '）→ 同步');
-  const merged = Object.assign({}, env, { COS_SECRET_ID: wantId, COS_SECRET_KEY: wantKey });
+  const merged = Object.assign({}, env, desired);
   await tc3Request('UpdateFunctionConfiguration', {
     FunctionName: CFG.functionName,
     Namespace: CFG.namespace,
     Environment: { Variables: Object.keys(merged).map((k) => ({ Key: k, Value: String(merged[k]) })) },
   });
-  log('scf', '函数凭据已同步（共 ' + Object.keys(merged).length + ' 个环境变量，值不打印）');
-  /* 只打指纹：和线上 /api/diag/scf 的 credFingerprint 对齐即可确认是否真的写进去了 */
-  const crypto = require('crypto');
-  const fp = (v) => crypto.createHash('sha256').update(String(v || ''), 'utf8').digest('hex').slice(0, 8) + '/len' + String(v || '').length;
-  log('scf', '凭据指纹 ID=' + fp(wantId) + ' KEY=' + fp(wantKey));
+  log('scf', '函数环境密钥已同步（更新 ' + changed.length + ' 项；值不打印）');
 }
 
 async function updateCode(objectKey) {

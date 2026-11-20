@@ -457,7 +457,8 @@ const state = {
   lora: typeof storedPrefs.lora === 'string' ? storedPrefs.lora : '',   // 动漫 LoRA 风格包 ID
   videoModel: typeof storedPrefs.videoModel === 'string' && storedPrefs.videoModel
     ? storedPrefs.videoModel
-    : 'sora-2',
+    : 'minimax_h3-768p',
+  videoResolution: typeof storedPrefs.videoResolution === 'string' ? storedPrefs.videoResolution : '480p',
   audioModel: typeof storedPrefs.audioModel === 'string' && storedPrefs.audioModel
     ? storedPrefs.audioModel
     : 'tts-1',
@@ -1615,15 +1616,18 @@ const SCALE_ICONS = {
 
 function syncScaleChip() {
   if (els.scaleChipText) {
-    els.scaleChipText.textContent = state.scale === 'custom' ? '自定义' : String(state.scale).toUpperCase();
+    els.scaleChipText.textContent = state.mode === 'video'
+      ? (state.videoResolution || '720p')
+      : (state.scale === 'custom' ? '自定义' : String(state.scale).toUpperCase());
   }
   const icon = document.getElementById('scaleChipIcon');
-  if (icon) icon.innerHTML = state.scale === 'custom' ? SCALE_ICONS.tune : state.scale === '4k' ? SCALE_ICONS.slab : SCALE_ICONS.bars;
+  if (icon) icon.innerHTML = state.mode !== 'video' && state.scale === 'custom'
+    ? SCALE_ICONS.tune : state.mode !== 'video' && state.scale === '4k' ? SCALE_ICONS.slab : SCALE_ICONS.bars;
 }
 
 function toggleCustomRow() {
   const row = document.getElementById('scaleCustomRow');
-  if (row) row.hidden = state.scale !== 'custom';
+  if (row) row.hidden = state.mode === 'video' || state.scale !== 'custom';
 }
 
 function syncSettingsUI() {
@@ -3121,6 +3125,7 @@ function persistPrefs() {
     channelModel: state.channelModel,
     lora: state.lora,
     videoModel: state.videoModel,
+    videoResolution: state.videoResolution,
     audioModel: state.audioModel,
     providerId: state.providerId,
     toonApi: state.toonApi,
@@ -7165,6 +7170,18 @@ function bindEvents() {
   });
 
   els.scalePicker.addEventListener('click', function (event) {
+    const videoBtn = event.target.closest('[data-vresolution]');
+    if (videoBtn && state.mode === 'video') {
+      state.videoResolution = videoBtn.dataset.vresolution;
+      els.scalePicker.querySelectorAll('[data-vresolution]').forEach(function (el) {
+        el.classList.toggle('is-active', el.dataset.vresolution === state.videoResolution);
+      });
+      var chip = document.getElementById('scaleChipText');
+      if (chip) chip.textContent = state.videoResolution;
+      persistPrefs();
+      closeAllMenus();
+      return;
+    }
     const btn = event.target.closest('[data-scale]');
     if (!btn) return;
     if (btn.dataset.scale === 'custom') {
@@ -8036,6 +8053,7 @@ window.HMApp = {
   modeModelLabel: modeModelLabel,
   currentModelLabel: currentModelLabel,
   getModel: getModel,
+  getCurrentRefs: function () { return currentRefs().slice(); },
   reuseJob: reuseJob,
   retryWork: retryWork,
   hasRayinKey: hasRayinKey,
