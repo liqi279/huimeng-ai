@@ -457,7 +457,8 @@ const state = {
   lora: typeof storedPrefs.lora === 'string' ? storedPrefs.lora : '',   // 动漫 LoRA 风格包 ID
   videoModel: typeof storedPrefs.videoModel === 'string' && storedPrefs.videoModel
     ? storedPrefs.videoModel
-    : 'sora-2',
+    : 'minimax_h3-768p',
+  videoResolution: typeof storedPrefs.videoResolution === 'string' ? storedPrefs.videoResolution : '480p',
   audioModel: typeof storedPrefs.audioModel === 'string' && storedPrefs.audioModel
     ? storedPrefs.audioModel
     : 'tts-1',
@@ -1786,7 +1787,7 @@ function currentModelLabel() {
 
 /* 视频 / 音频可选模型 */
 const MEDIA_MODELS = {
-  video: [['sora-2', 'Sora 2'], ['sora-2-pro', 'Sora 2 Pro'], ['veo-3', 'Veo 3']],
+  video: [['minimax_h3-768p', 'MiniMax H3'], ['vidu-q4-nopeak', 'Vidu Q4 NoPeak'], ['sd-2.5-flash', 'Seedance 2.5 Flash'], ['mh-seedance-2.0-mini', 'Seedance 2.0 Mini'], ['mh-seedance-2.0-fast', 'Seedance 2.0 Fast']],
   audio: [['tts-1', 'TTS-1'], ['tts-1-hd', 'TTS-1 HD'], ['gpt-4o-mini-tts', 'GPT-4o mini TTS']]
 };
 
@@ -3121,6 +3122,7 @@ function persistPrefs() {
     channelModel: state.channelModel,
     lora: state.lora,
     videoModel: state.videoModel,
+    videoResolution: state.videoResolution,
     audioModel: state.audioModel,
     providerId: state.providerId,
     toonApi: state.toonApi,
@@ -8028,6 +8030,7 @@ window.HMApp = {
   hydrateWorks: hydrateWorks,
   worksLsKey: worksLsKey,
   renderRef: renderRef,
+  renderRatios: renderRatios,
   translatePrompt: translatePrompt,
   syncSettingsUI: syncSettingsUI,
   persistPrefs: persistPrefs,
