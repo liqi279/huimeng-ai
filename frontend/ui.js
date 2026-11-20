@@ -1754,7 +1754,7 @@
       }
       var refPayloadChars = videoImageRefs.reduce(function (sum, item) { return sum + String(item || '').length; }, 0);
       refPayloadChars += mediaRefs.videos.concat(mediaRefs.audios).reduce(function (sum, item) { return sum + String(item || '').length; }, 0);
-      if (refPayloadChars > 22 * 1024 * 1024) {
+      if (refPayloadChars > 16 * 1024 * 1024) {
         A.toast('参考素材总量超过安全上传上限，请压缩或减少素材', 'error');
         return;
       }
