@@ -46,8 +46,36 @@ if (existingIndex >= 0) css = css.slice(0, existingIndex).trimEnd();
 css = css.trimEnd() + '\n\n' + dimverseCss + '\n';
 fs.writeFileSync(deployedStyles, css, 'utf8');
 
-const html = fs.readFileSync(idx, 'utf8');
-const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
+let html = fs.readFileSync(idx, 'utf8');
+
+/* Pages serves deploy/index.html itself (a single-file HTML build). Keep its
+ * inlined Dimverse controller and stylesheet synchronized with canonical
+ * frontend sources; syncing only deploy/assets would leave the live page stale.
+ */
+const inlineStyleAt = html.indexOf(styleMarker);
+const inlineStyleOpen = inlineStyleAt >= 0 ? html.lastIndexOf('<style', inlineStyleAt) : -1;
+const inlineStyleOpenEnd = inlineStyleOpen >= 0 ? html.indexOf('>', inlineStyleOpen) + 1 : -1;
+const inlineStyleClose = inlineStyleAt >= 0 ? html.indexOf('</style>', inlineStyleAt) : -1;
+if (inlineStyleOpen < 0 || inlineStyleOpenEnd <= 0 || inlineStyleClose < 0) {
+  console.error('[publish] deploy/index.html 缺少次元空间样式内联区');
+  process.exit(1);
+}
+html = html.slice(0, inlineStyleOpenEnd) + sourceCss + '\\n' + html.slice(inlineStyleClose);
+
+const inlineScriptMarker = '/* =============================================================\\n * 次元宇宙（Dimensional Universe）';
+const inlineScriptAt = html.indexOf(inlineScriptMarker);
+const inlineScriptOpen = inlineScriptAt >= 0 ? html.lastIndexOf('<script', inlineScriptAt) : -1;
+const inlineScriptOpenEnd = inlineScriptOpen >= 0 ? html.indexOf('>', inlineScriptOpen) + 1 : -1;
+const inlineScriptClose = inlineScriptAt >= 0 ? html.indexOf('</script>', inlineScriptAt) : -1;
+if (inlineScriptOpen < 0 || inlineScriptOpenEnd <= 0 || inlineScriptClose < 0) {
+  console.error('[publish] deploy/index.html 缺少次元空间控制器内联区');
+  process.exit(1);
+}
+const inlineDimverse = fs.readFileSync(dimverseSource, 'utf8').replace(/<\\/script/gi, '<\\\\/script');
+html = html.slice(0, inlineScriptOpenEnd) + inlineDimverse + '\\n' + html.slice(inlineScriptClose);
+fs.writeFileSync(idx, html, 'utf8');
+
+const refs = [...html.matchAll(/(?:src|href)="\\.\\/assets\\/([^"?]+)/g)].map((m) => m[1]);
 const miss = refs.filter((f) => !fs.existsSync(path.join(assets, f)));
 if (miss.length) {
   console.error('[publish] deploy/assets 缺失：' + miss.join(', '));
@@ -67,6 +95,10 @@ for (const [ok, message] of [
   [deployedCss.includes('.dv-game-return-vortex'), '生产样式未包含漩涡返回过渡样式'],
   [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
   [deployedCss.includes('.dv-browser-game'), '生产样式未包含 Canvas 游戏层样式'],
+  [html.includes('function spawnRandomCrystal(s)'), 'Pages HTML 未内联最新随机晶体逻辑'],
+  [html.includes('function generateMaze(s)'), 'Pages HTML 未内联最新随机迷宫逻辑'],
+  [html.includes('function updateMazeGhosts(s, dt, now)'), 'Pages HTML 未内联双幽灵追击逻辑'],
+  [html.includes('.dv-challenge-signboard'), 'Pages HTML 未内联挑战招牌样式'],
 ]) {
   if (!ok) {
     console.error('[publish] ' + message);
