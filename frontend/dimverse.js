@@ -956,7 +956,7 @@
     var cell = Math.min((s.width - 34) / cols, (s.height - 142) / rows);
     var boardW = cell * cols, boardH = cell * rows;
     var board = { x: (s.width - boardW) / 2, y: Math.max(78, (s.height - boardH) / 2 + 32), cell: cell, width: boardW, height: boardH };
-    s.maze = grid; s.mazeBoard = board;
+    s.maze = grid; s.mazeBoard = board; s.pointerTarget = null;
     s.mazePlayer = { x: board.x + cell * 1.5, y: board.y + cell * 1.5 };
     s.x = s.mazePlayer.x; s.y = s.mazePlayer.y; s.vx = 0; s.vy = 0;
     s.mazeExit = { x: cols - 2, y: rows - 2 };
@@ -1263,7 +1263,7 @@
     } else if (s.phase === 'maze') {
       updateMazePlayer(s, dt);
       updateMazeGhosts(s, dt, now);
-      var radius = s.mazeBoard.cell * 0.28;
+      var radius = s.mazeBoard.cell * 0.36;
       for (var gi = 0; gi < s.ghosts.length; gi++) {
         if (Math.hypot(s.mazePlayer.x - s.ghosts[gi].x, s.mazePlayer.y - s.ghosts[gi].y) < radius * 1.7) {
           triggerGameReturn(s, false); break;
