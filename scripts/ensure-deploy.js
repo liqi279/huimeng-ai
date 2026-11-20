@@ -65,7 +65,6 @@ if (dimverseStart >= 0 && !html.includes('./assets/hm-s29-b9fa10c0.js')) {
     html.slice(scriptEnd + '</script>'.length);
   fs.writeFileSync(idx, html, 'utf8');
 }
-const refs = [...html.matchAll(/(?:src|href)="\\.\\/assets\\/([^"?]+)/g)].map((m) => m[1]);
 const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
 const miss = refs.filter((f) => !fs.existsSync(path.join(assets, f)));
 if (miss.length) {
