@@ -1,5 +1,6 @@
 extends Node2D
 ## Transparent Godot 4 game layer for the original Dimverse page.
+## Deliberately no world/background/grid drawing: the original webpage remains visible.
 ## The website keeps its own background and welcome UI; this scene owns all gameplay.
 
 enum GameState {
@@ -158,6 +159,8 @@ func _process(delta: float) -> void:
 				crystal_spawn_clock = 0.5
 		GameState.PLAYING:
 			signboard_elapsed += delta
+			_step_mascot(delta, true)
+			_update_mascot_spring(delta)
 			_update_crystal_challenge(delta)
 		GameState.CELEBRATING:
 			signboard_elapsed += delta
