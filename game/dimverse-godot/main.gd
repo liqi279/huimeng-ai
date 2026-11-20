@@ -404,13 +404,18 @@ func _draw_sign(y: float) -> void:
     draw_string(ThemeDB.fallback_font, Vector2(rect.position.x + 24, y + 49), "晶体吞食挑战  /  60 SEC", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#eafaff"))
 
 func _draw_hud() -> void:
+    # Collection counter and countdown sit together as one compact HUD group.
     var panel := Rect2(24, 78, 220, 70)
     draw_rect(panel, Color(0.015, 0.035, 0.09, 0.78), true)
     draw_rect(panel, Color(0.2, 0.82, 0.98, 0.48), false, 1.0)
     draw_string(ThemeDB.fallback_font, Vector2(42, 104), "CRYSTALS  /  吞食数量", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#9cb8d1"))
     draw_string(ThemeDB.fallback_font, Vector2(42, 134), "%02d" % score, HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color("#7cecff"))
+    var timer_panel := Rect2(258, 78, 156, 70)
+    draw_rect(timer_panel, Color(0.035, 0.02, 0.09, 0.78), true)
+    draw_rect(timer_panel, Color(0.68, 0.48, 0.98, 0.48), false, 1.0)
+    draw_string(ThemeDB.fallback_font, Vector2(274, 104), "TIME LEFT", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#b9a7df"))
     var seconds := ceili(remaining)
-    draw_string(ThemeDB.fallback_font, Vector2(W - 170, 112), "%02d:%02d" % [seconds / 60, seconds % 60], HORIZONTAL_ALIGNMENT_LEFT, -1, 31, Color("#f1e9ff"))
+    draw_string(ThemeDB.fallback_font, Vector2(274, 134), "%02d:%02d" % [seconds / 60, seconds % 60], HORIZONTAL_ALIGNMENT_LEFT, -1, 27, Color("#f1e9ff"))
 
 func _draw_crystal(p: Vector2) -> void:
     var pulse := 1.0 + 0.15 * sin(t * 4.0 + p.x)
