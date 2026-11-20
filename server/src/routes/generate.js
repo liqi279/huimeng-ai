@@ -1265,13 +1265,22 @@ async function generateVideo(body) {
   assert(refImages.length <= refLimits.images, 400, '参考图片数量超过模型上限', '当前模型最多支持 ' + refLimits.images + ' 张图片');
   assert(refVideos.length <= refLimits.videos, 400, '参考视频数量超过模型上限', '当前模型最多支持 ' + refLimits.videos + ' 个视频');
   assert(refAudios.length <= refLimits.audios, 400, '参考音频数量超过模型上限', '当前模型最多支持 ' + refLimits.audios + ' 个音频');
-  for (let i = 0; i < refVideos.length; i += 1) {
-    assert(typeof refVideos[i] === 'string' && refVideos[i].startsWith('data:'), 400, `参考视频 ${i + 1} 格式不正确`);
-  }
-  for (let i = 0; i < refAudios.length; i += 1) {
-    assert(typeof refAudios[i] === 'string' && refAudios[i].startsWith('data:'), 400, `参考音频 ${i + 1} 格式不正确`);
-  }
-
+  const decodedVideoRefs = refVideos.map((item, index) => {
+    assert(typeof item === 'string' && item.startsWith('data:'), 400, `参考视频 ${index + 1} 格式不正确`);
+    const decoded = dataUrlToBuffer(item);
+    assert(['video/mp4', 'video/webm', 'video/quicktime'].includes(String(decoded.mime || '').toLowerCase()),
+      400, `参考视频 ${index + 1} 格式不支持`, '仅支持 MP4 / WebM / MOV');
+    assert(decoded.buffer.length <= 30 * 1024 * 1024, 413, `参考视频 ${index + 1} 过大`, '单个参考视频不能超过 30MB');
+    return decoded;
+  });
+  const decodedAudioRefs = refAudios.map((item, index) => {
+    assert(typeof item === 'string' && item.startsWith('data:'), 400, `参考音频 ${index + 1} 格式不正确`);
+    const decoded = dataUrlToBuffer(item);
+    assert(['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/mp4', 'audio/m4a'].includes(String(decoded.mime || '').toLowerCase()),
+      400, `参考音频 ${index + 1} 格式不支持`, '仅支持 MP3 / WAV / OGG / M4A');
+    assert(decoded.buffer.length <= 9 * 1024 * 1024, 413, `参考音频 ${index + 1} 过大`, '单个参考音频不能超过 9MB');
+    return decoded;
+  });
   const key = await getZelingModelKey(modelMeta);
   assert(key, 503, '该视频模型尚未配置则灵 API Key', '请在腾讯云 SCF 环境变量中配置 ' + (modelMeta.apiKeyEnv || '对应模型密钥'));
 
@@ -1293,18 +1302,16 @@ async function generateVideo(body) {
     const url = await zelingUpload(r.buffer, 'image', `ref-${randomToken(4)}.${r.ext}`);
     imageRefUrls.push(url);
   }
-  for (const item of refVideos) {
-    const dec = dataUrlToBuffer(item);
+  for (const dec of decodedVideoRefs) {
     const url = await zelingUpload(dec.buffer, 'video', `ref-${randomToken(4)}.${extFromMime(dec.mime) || 'mp4'}`);
     videoRefUrls.push(url);
   }
-  for (const item of refAudios) {
-    const dec = dataUrlToBuffer(item);
+  for (const dec of decodedAudioRefs) {
     const url = await zelingUpload(dec.buffer, 'audio', `ref-${randomToken(4)}.${extFromMime(dec.mime) || 'mp3'}`);
     audioRefUrls.push(url);
   }
 
-  /* ==== 第二步：创建异步视频任务 ==== */
+    /* ==== 第二步：创建异步视频任务 ==== */
   const payload = {
     type: 'video',
     model: modelMeta.model || modelId,
