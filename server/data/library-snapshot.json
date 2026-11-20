@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:20:50+0800",
+  "generatedAt": "2026-11-20T22:23:39+0800",
   "source": "scf-library",
-  "total": 1010,
+  "total": 1011,
   "areas": {
     "paint": 749,
-    "concept": 237,
+    "concept": 238,
     "ref": 24
   },
   "books": [
@@ -1590,6 +1590,28 @@
       "sortNo": 0,
       "createdAt": 1795184444514,
       "updatedAt": 1795184444514,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2kfg9-4d8810",
+      "title": "黑色五叶草 · 设定集",
+      "author": "萌绘图库",
+      "category": "黑色五叶草",
+      "tags": [
+        "黑色五叶草",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《黑色五叶草》；原包《设定集》。第 1-285 页（共 285 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-9353077007-748dfe667ffe-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-9353077007-748dfe667ffe-20261120-01.pdf",
+      "pageCount": 285,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795184611641,
+      "updatedAt": 1795184611641,
       "pages": []
     },
     {
