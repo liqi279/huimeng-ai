@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:47:14+0800",
+  "generatedAt": "2026-11-20T22:49:09+0800",
   "source": "scf-library",
-  "total": 1029,
+  "total": 1033,
   "areas": {
     "paint": 749,
-    "concept": 256,
+    "concept": 260,
     "ref": 24
   },
   "books": [
@@ -2008,6 +2008,94 @@
       "sortNo": 0,
       "createdAt": 1795186028649,
       "updatedAt": 1795186028649,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3fjox-c808c1",
+      "title": "黑岩射手 · 动画《黑岩射手》的特典画集",
+      "author": "萌绘图库",
+      "category": "黑岩射手",
+      "tags": [
+        "黑岩射手",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《黑岩射手》；原包《动画《黑岩射手》的特典画集》。第 1-36 页（共 36 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-18f09f7e4f-1eae3999388f-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-18f09f7e4f-1eae3999388f-20261120-01.pdf",
+      "pageCount": 36,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795186063473,
+      "updatedAt": 1795186063473,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3gmka-0903ca",
+      "title": "黑岩射手 · 黑岩射手 原画集",
+      "author": "萌绘图库",
+      "category": "黑岩射手",
+      "tags": [
+        "黑岩射手",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《黑岩射手》；原包《黑岩射手 原画集》。第 1-192 页（共 192 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-a5da56b4b8-4445d279b63b-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-a5da56b4b8-4445d279b63b-20261120-01.pdf",
+      "pageCount": 192,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795186113850,
+      "updatedAt": 1795186113850,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3gxi7-fe0a24",
+      "title": "黑岩射手 · 动画《黑岩射手（Black Rock Shooter、ブラック★ロックシューター）》OVA版本的设定图集",
+      "author": "萌绘图库",
+      "category": "黑岩射手",
+      "tags": [
+        "黑岩射手",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《黑岩射手》；原包《动画《黑岩射手（Black Rock Shooter、ブラック★ロックシューター）》OVA版本的设定图集》。第 1-30 页（共 30 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/black-rock-shooter-ova-ca4642cf5f30-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/black-rock-shooter-ova-ca4642cf5f30-20261120-01.pdf",
+      "pageCount": 30,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795186128031,
+      "updatedAt": 1795186128031,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3h9dl-56dd9b",
+      "title": "黑岩射手 · 黑岩射手 动画线稿设定集",
+      "author": "萌绘图库",
+      "category": "黑岩射手",
+      "tags": [
+        "黑岩射手",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《黑岩射手》；原包《黑岩射手 动画线稿设定集》。第 1-49 页（共 49 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-0358a1d318-ce9491ff06b0-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-0358a1d318-ce9491ff06b0-20261120-01.pdf",
+      "pageCount": 49,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795186143417,
+      "updatedAt": 1795186143417,
       "pages": []
     },
     {
