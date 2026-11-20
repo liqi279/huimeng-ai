@@ -674,6 +674,23 @@
     gameFrame.title = '次元空间双阶段挑战';
     gameFrame.setAttribute('allow', 'autoplay; fullscreen; gamepad');
     gameFrame.setAttribute('loading', 'eager');
+    gameFrame.addEventListener('load', function () {
+      try {
+        var doc = gameFrame.contentDocument;
+        if (doc) {
+          doc.documentElement.style.background = 'transparent';
+          doc.documentElement.style.backgroundColor = 'transparent';
+          if (doc.body) {
+            doc.body.style.background = 'transparent';
+            doc.body.style.backgroundColor = 'transparent';
+            doc.body.style.margin = '0';
+            doc.body.style.overflow = 'hidden';
+          }
+          var canvas = doc.querySelector('canvas');
+          if (canvas) { canvas.style.background = 'transparent'; canvas.style.backgroundColor = 'transparent'; }
+        }
+      } catch (e) { console.warn('[Dimverse] transparent Godot shell setup skipped:', e); }
+    });
     gameFrame.src = new URL('dimverse/game/index.html?embed=1', document.baseURI).href;
     dimPage.appendChild(gameFrame);
   }
