@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:30:47+0800",
+  "generatedAt": "2026-11-20T22:32:25+0800",
   "source": "scf-library",
-  "total": 1019,
+  "total": 1021,
   "areas": {
     "paint": 749,
-    "concept": 246,
+    "concept": 248,
     "ref": 24
   },
   "books": [
@@ -1788,6 +1788,50 @@
       "sortNo": 0,
       "createdAt": 1795185041222,
       "updatedAt": 1795185041222,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2vpch-6f467d",
+      "title": "境界触发者 · 设定集 · 上",
+      "author": "萌绘图库",
+      "category": "境界触发者",
+      "tags": [
+        "境界触发者",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《境界触发者》；原包《设定集》。第 1-670 页（共 686 页，分 2 卷）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-9353077007-1ab16f0bb03e-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-9353077007-1ab16f0bb03e-20261120-01.pdf",
+      "pageCount": 670,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185137681,
+      "updatedAt": 1795185137681,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp2vqwe-80752e",
+      "title": "境界触发者 · 设定集 · 中",
+      "author": "萌绘图库",
+      "category": "境界触发者",
+      "tags": [
+        "境界触发者",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《境界触发者》；原包《设定集》。第 671-686 页（共 686 页，分 2 卷）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-9353077007-1ab16f0bb03e-20261120-02.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-9353077007-1ab16f0bb03e-20261120-02.pdf",
+      "pageCount": 16,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795185139694,
+      "updatedAt": 1795185139694,
       "pages": []
     },
     {
