@@ -1169,7 +1169,7 @@ let zelingModelDirectoryExpires = 0;
 async function getZelingModelDirectory() {
   if (zelingModelDirectoryCache && Date.now() < zelingModelDirectoryExpires) return zelingModelDirectoryCache;
   try {
-    const data = await fetchJson(`${ZELING_BASE}/models`, { headers: { Accept: 'application/json' } }, 12000, '则灵模型清单获取失败');
+    const data = await fetchJson(`${ZELING_BASE}/models`, { headers: { Accept: 'application/json' } }, 5000, '则灵模型清单获取失败');
     if (data && typeof data === 'object') {
       zelingModelDirectoryCache = data;
       zelingModelDirectoryExpires = Date.now() + 60 * 1000;
@@ -1553,7 +1553,8 @@ router.get('/media-models', wrap(async (req, res) => {
       creditsPerSec: m.creditsPerSec,
       creditsPerSecMin: m.creditsPerSecMin,
       desc: m.desc || '',
-      refHint: m.refHint || '',
+      refHint: '参考上限：图片 ' + m.refLimits.images + ' 张 · 视频 ' +
+        (m.refLimits.videos ? m.refLimits.videos + ' 个' : '不支持') + ' · 音频 ' + m.refLimits.audios + ' 个',
       free: m.free,
       refLimits: {
         images: { count: m.refLimits.images, maxBytes: m.refLimits.imageMaxBytes, mime: ['image/jpeg', 'image/png', 'image/webp'] },
