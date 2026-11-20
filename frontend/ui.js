@@ -1293,6 +1293,13 @@
       }
     }
 
+    if (mode === 'video') {
+      renderDurationControls();
+      renderVideoResolutionControl();
+      renderVideoRatioPicker();
+    } else if (mode === 'image' && typeof A.renderRatios === 'function') {
+      A.renderRatios();
+    }
     syncScaleLabels();
   }
 
@@ -1405,7 +1412,7 @@
       renderVideoModels();
       renderAudioModels();
       renderDurationControls();
-      renderVideoRatioPicker();
+      if (state.mode === 'video') renderVideoRatioPicker();
       updateRefDropForMode(state.mode);
       renderVoiceMenu();
     } catch (err) { /* 保持内置兜底 */ }
