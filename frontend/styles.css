@@ -20892,3 +20892,36 @@ body.dv-open .hm-rail-toggle {
   line-height: 1.5;
   white-space: normal;
 }
+
+
+/* 则灵参考视频/音频素材标签 */
+.hm-ref-media-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 5px 0 2px;
+}
+.hm-ref-media-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 3px 7px 3px 9px;
+  border: 1px solid rgba(94, 196, 238, .2);
+  border-radius: 6px;
+  color: #a9c7d8;
+  background: rgba(56, 189, 248, .06);
+  font-size: 10px;
+}
+.hm-ref-media-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-ref-media-chip button {
+  padding: 0 2px;
+  color: #b7cbd8;
+  font-size: 15px;
+  line-height: 1;
+}
+.hm-ref-media-chip button:hover { color: #ff9b9b; }
