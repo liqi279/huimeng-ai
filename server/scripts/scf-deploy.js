@@ -549,6 +549,26 @@ async function selfCheck() {
   return allOk;
 }
 
+/* ---------- 则灵模型密钥状态探测（只输出配置状态，不读取/打印密钥） ---------- */
+async function zelingModelProbe() {
+  try {
+    const r = await httpGet(CFG.apiBase + '/media-models');
+    if (r.status !== 200) {
+      log('zeling', '模型目录探测 HTTP ' + r.status + '（不影响部署自检）');
+      return;
+    }
+    const payload = JSON.parse(r.text || '{}');
+    const models = Array.isArray(payload.video) ? payload.video : [];
+    if (!models.length) {
+      log('zeling', '模型目录接口可达，但没有返回视频模型列表');
+      return;
+    }
+    log('zeling', '视频模型 Key 状态：' + models.map((m) => String(m.id) + '=' + (m.configured ? 'configured' : 'missing')).join(', '));
+  } catch (err) {
+    log('zeling', '模型 Key 状态探测失败：' + err.message + '（不影响部署）');
+  }
+}
+
 /* ---------- 7. 附加：前端线上指纹（只记录，无本地基线时不做“是否一致”判断） ---------- */
 async function frontendProbe() {
   try {
@@ -646,6 +666,7 @@ async function doDeploy() {
     console.error('\n[线上状态] 新包已生效，但五步自检未全绿。');
     console.error('[回滚] node server/scripts/scf-deploy.js --rollback ' + snap.key);
   }
+  await zelingModelProbe();
   await frontendProbe();
   const secs = Math.round((Date.now() - t0) / 1000);
   console.log('\n[summary] 快照=' + snap.key + ' 新包=' + CFG.objectKey + ' 耗时=' + secs + 's 结果=' + (ok ? 'SUCCESS' : 'SELF-CHECK FAILED'));
