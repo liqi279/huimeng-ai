@@ -26,6 +26,7 @@ var cell_size := 36.0
 var ghost_positions: Array[Vector2] = []
 var ghost_paths: Array[Vector2] = []
 var game_over_sent := false
+var maze_escaped := false
 var last_size := Vector2(1280, 720)
 var mascot_scale := 1.0
 var blink_until := 0.0
@@ -91,9 +92,10 @@ func _process(delta: float) -> void:
             _update_maze_player(dt)
             _update_ghosts(dt)
             for ghost in ghost_positions:
-                if player.distance_to(ghost) < cell_size * 0.48:
+                if player.distance_to(ghost) < cell_size * 0.9:
                     phase = Phase.GAME_OVER
                     phase_t = 0.0
+                    maze_escaped = false
                     game_over_sent = false
                     break
         Phase.GAME_OVER:
@@ -236,6 +238,7 @@ func _update_maze_player(dt: float) -> void:
     if player.distance_to(_cell_center(Vector2i(maze_w - 2, maze_h - 2))) < cell_size * 0.5:
         phase = Phase.GAME_OVER
         phase_t = 0.0
+        maze_escaped = true
         game_over_sent = false
 
 func _cell_at(p: Vector2) -> Vector2i:
@@ -383,7 +386,8 @@ func _draw_game_over() -> void:
     var radius := lerpf(20.0, 900.0, minf(1.0, phase_t / 2.4))
     for i in range(5):
         draw_arc(center, radius * (0.42 + i * 0.14), t * 1.7 + i, TAU + t * 1.7 + i, 96, [CYAN, PURPLE, PINK][i % 3], 7.0 - i * 0.7, true)
-    draw_string(ThemeDB.fallback_font, center + Vector2(-115, 8), "DIMENSION LOST", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color.WHITE)
+    var result_text := "MAZE CLEARED" if maze_escaped else "DIMENSION LOST"
+    draw_string(ThemeDB.fallback_font, center + Vector2(-115, 8), result_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color.WHITE)
 
 func _draw_center_text(title: String, subtitle: String) -> void:
     draw_string(ThemeDB.fallback_font, Vector2(0, H * 0.43), title, HORIZONTAL_ALIGNMENT_CENTER, W, 30, Color("#f1eaff"))
