@@ -40,6 +40,7 @@ var signboard_elapsed := 0.0
 var timer_elapsed := 0.0
 var timer_remaining := 60.0
 var crystal_spawn_clock := 0.0
+var hud_send_clock := 0.0
 var score := 0
 var blink := false
 var blink_clock := 0.0
@@ -171,6 +172,7 @@ func _process(delta: float) -> void:
 				state = GameState.BLOCK
 				elapsed = 0.0
 				question_block = Vector2(size.x * 0.5, maxf(190.0, size.y * 0.39))
+				_send_parent("hm-godot-stage-block")
 		GameState.BLOCK:
 			signboard_elapsed += delta
 			var previous_y := _step_mascot(delta, true)
@@ -289,6 +291,10 @@ func _notify_landed() -> void:
 func _update_crystal_challenge(delta: float) -> void:
 	timer_elapsed += delta
 	timer_remaining = maxf(0.0, 60.0 - timer_elapsed)
+	hud_send_clock += delta
+	if hud_send_clock >= 0.15:
+		hud_send_clock = 0.0
+		_send_hud_update()
 	crystal_spawn_clock += delta
 	if crystal_spawn_clock >= 0.47 and crystals.size() < 15:
 		crystal_spawn_clock = 0.0
@@ -303,6 +309,7 @@ func _update_crystal_challenge(delta: float) -> void:
 		if mascot_position.distance_to(position) < 70.0:
 			crystals.remove_at(i)
 			score += 1
+			_send_hud_update()
 			if score > 20:
 				_begin_celebration()
 				return
@@ -328,6 +335,7 @@ func _spawn_random_crystal() -> void:
 	})
 
 func _begin_celebration() -> void:
+	_send_parent("hm-godot-celebrate")
 	state = GameState.CELEBRATING
 	elapsed = 0.0
 	confetti.clear()
@@ -339,6 +347,9 @@ func _begin_celebration() -> void:
 			"size": rng.randf_range(3.0, 8.0),
 			"color": [CYAN, PINK, Color("#ffe58a"), Color("#8cffc1"), Color.WHITE][i % 5]
 		})
+
+func _send_hud_update() -> void:
+	_send_parent("hm-godot-hud:" + str(ceili(timer_remaining)) + ":" + str(score))
 
 func _update_confetti(delta: float) -> void:
 	for item in confetti:
@@ -564,16 +575,11 @@ func _draw() -> void:
 		GameState.PLAYING, GameState.CELEBRATING, GameState.BLOCK
 	]:
 		_draw_mascot(mascot_position, 1.0)
-	if state in [GameState.SIGNBOARD, GameState.PLAYING, GameState.CELEBRATING, GameState.BLOCK]:
-		if signboard_elapsed < 4.2:
-			_draw_signboard(size)
 	if state in [GameState.PLAYING, GameState.CELEBRATING, GameState.BLOCK]:
 		for crystal in crystals:
 			_draw_crystal(crystal)
-		_draw_hud()
 	if state == GameState.CELEBRATING or state == GameState.BLOCK:
 		_draw_confetti()
-		_draw_celebration_text(size)
 	if state == GameState.BLOCK:
 		_draw_question_block()
 	if state == GameState.MAZE_TRANSITION:
@@ -587,8 +593,6 @@ func _draw() -> void:
 			_draw_ghost(ghost)
 		var mini_scale := minf(0.31, maze_cell_size * 0.74 / 134.0)
 		_draw_mascot(mascot_position, mini_scale)
-		draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.5 - 170.0, 75.0),
-			"找到漩涡出口 · 避开两名幽灵守卫", HORIZONTAL_ALIGNMENT_CENTER, 340.0, 14, Color("#d7edff"))
 	if state == GameState.RETURNING:
 		_draw_return_vortex(size)
 
@@ -663,8 +667,6 @@ func _draw_question_block() -> void:
 	draw_rect(rect, Color("#fff0a3"), false, 3.0)
 	draw_rect(rect.grow(-7.0), Color("#d8791f"), false, 2.0)
 	draw_string(ThemeDB.fallback_font, question_block + Vector2(-15.0, 17.0), "?", HORIZONTAL_ALIGNMENT_CENTER, 30.0, 48, Color("#fff3b0"))
-	draw_string(ThemeDB.fallback_font, question_block + Vector2(-130.0, question_block_size * 0.9),
-		"从下方撞击方块", HORIZONTAL_ALIGNMENT_CENTER, 260.0, 13, Color("#fff0bd"))
 
 func _draw_block_particles() -> void:
 	for item in block_particles:
@@ -738,10 +740,6 @@ func _draw_return_vortex(size: Vector2) -> void:
 		var rotation := world_time * (1.4 if i % 2 == 0 else -1.2) + float(i) * 0.62
 		draw_arc(center, maxf(2.0, radius), rotation, rotation + 5.35, 72, tint, 3.0 + float(i) * 0.45, true)
 	draw_circle(center, 8.0 + progress * 20.0, Color(0.9, 0.98, 1.0, progress))
-	if return_elapsed > 0.2:
-		var caption := "次元探索完成" if return_success else "次元空间 · 再会"
-		draw_string(ThemeDB.fallback_font, Vector2(0.0, size.y * 0.82), caption,
-			HORIZONTAL_ALIGNMENT_CENTER, size.x, 18, Color(0.9, 0.98, 1.0, progress))
 
 func _dango_outline(wobble: float) -> PackedVector2Array:
 	var points := PackedVector2Array()
