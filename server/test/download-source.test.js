@@ -103,7 +103,10 @@ test('download route uses the shared allowlist and validates every redirect hop'
     assert.ok(code.includes("showDimPage()"), 'Dimverse content is rendered inside the original page');
     assert.ok(!code.includes('openGodotDimverse'), 'the route does not replace the original page with a Godot full-screen shell');
   }
-  assert.ok(html.includes('./assets/hm-s29-b9fa10c0.js'), 'Pages HTML loads the patched Dimverse asset');
+  assert.ok(html.includes('function startDimverseGame()'), 'Pages HTML embeds the Dimverse controller');
+  assert.ok(html.includes('function spawnRandomCrystal(s)'), 'Pages HTML embeds the random crystal challenge');
+  assert.ok(html.includes('function generateMaze(s)'), 'Pages HTML embeds the generated maze');
+  assert.ok(html.includes('function updateMazeGhosts(s, dt, now)'), 'Pages HTML embeds both pursuing ghosts');
   const standalone = fs.readFileSync(require.resolve('../../deploy/dimverse/index.html'), 'utf8');
   assert.ok(standalone.includes('<title>次元宇宙 · 绘梦</title>'));
   assert.ok(standalone.includes("searchParams.set('view', 'dimverse')"), 'standalone route returns to the original page with the Dimverse view');
