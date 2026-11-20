@@ -353,17 +353,17 @@ function gptSize(ratio) {
 }
 
 function videoSize(ratio, resolution) {
-  const longSide = resolution === '2k' ? 2048 : resolution === '1080p' ? 1920 : 1280;
+  const shortSide = ({ '480p': 480, '720p': 720, '768p': 768, '1080p': 1080, '2k': 1440 })[resolution] || 720;
   const base = RATIO_SIZE[ratio] || RATIO_SIZE['16:9'];
   const aspect = base[0] / base[1];
   let width;
   let height;
   if (aspect >= 1) {
-    width = longSide;
-    height = Math.round(longSide / aspect);
+    height = shortSide;
+    width = Math.round(shortSide * aspect);
   } else {
-    height = longSide;
-    width = Math.round(longSide * aspect);
+    width = shortSide;
+    height = Math.round(shortSide / aspect);
   }
   width = Math.max(256, Math.round(width / 8) * 8);
   height = Math.max(256, Math.round(height / 8) * 8);
@@ -1162,23 +1162,29 @@ function videoModel(v) {
 function videoModelMeta(v) {
   return VIDEO_MODELS.find((m) => m.id === v) || VIDEO_MODELS[0];
 }
- 
-/* 则灵公开模型清单是时长/比例/清晰度能力的权威来源；短缓存避免每次生成重复请求。 */
+
+/* 则灵公开模型清单提供精确时长档位、比例、清晰度与实时价格。 */
 let zelingModelDirectoryCache = null;
 let zelingModelDirectoryExpires = 0;
+let zelingModelDirectoryPromise = null;
 async function getZelingModelDirectory() {
   if (zelingModelDirectoryCache && Date.now() < zelingModelDirectoryExpires) return zelingModelDirectoryCache;
-  try {
-    const data = await fetchJson(`${ZELING_BASE}/models`, { headers: { Accept: 'application/json' } }, 5000, '则灵模型清单获取失败');
-    if (data && typeof data === 'object') {
-      zelingModelDirectoryCache = data;
-      zelingModelDirectoryExpires = Date.now() + 60 * 1000;
-      return data;
+  if (zelingModelDirectoryPromise) return zelingModelDirectoryPromise;
+  zelingModelDirectoryPromise = (async () => {
+    try {
+      const data = await fetchJson(`${ZELING_BASE}/models`, { headers: { Accept: 'application/json' } }, 5000, '则灵模型清单获取失败');
+      if (data && typeof data === 'object') {
+        zelingModelDirectoryCache = data;
+        zelingModelDirectoryExpires = Date.now() + 60 * 1000;
+      }
+    } catch (err) {
+      /* 上游目录不可用时使用静态能力兜底。 */
+    } finally {
+      zelingModelDirectoryPromise = null;
     }
-  } catch (err) {
-    /* 上游模型目录短暂不可用时使用已配置的本地能力兜底。 */
-  }
-  return zelingModelDirectoryCache || {};
+    return zelingModelDirectoryCache || {};
+  })();
+  return zelingModelDirectoryPromise;
 }
 function findZelingModel(directory, modelId) {
   const groups = [directory && directory.video, directory && directory.videoStable];
@@ -1276,7 +1282,7 @@ async function generateVideo(body) {
   assert(refImages.length <= refLimits.images, 400, '参考图片数量超限', modelMeta.name + ' 最多支持 ' + refLimits.images + ' 张图片');
   assert(refVideos.length <= refLimits.videos, 400, '参考视频数量超限', modelMeta.name + ' 最多支持 ' + refLimits.videos + ' 个视频');
   assert(refAudios.length <= refLimits.audios, 400, '参考音频数量超限', modelMeta.name + ' 最多支持 ' + refLimits.audios + ' 个音频');
-  refImages.forEach((item, index) => assert(item.buffer.length <= refLimits.imageMaxBytes, 413, '参考图片过大', '单张图片不能超过 9MB'));
+  refImages.forEach((item) => assert(item.buffer.length <= refLimits.imageMaxBytes, 413, '参考图片过大', '单张图片不能超过 9MB'));
   for (let i = 0; i < refVideos.length; i += 1) {
     assert(typeof refVideos[i] === 'string' && refVideos[i].startsWith('data:'), 400, `参考视频 ${i + 1} 格式不正确`);
     const decoded = dataUrlToBuffer(refVideos[i]);
@@ -1548,15 +1554,10 @@ router.get('/media-models', wrap(async (req, res) => {
       aspectRatios: m.aspectRatios || [],
       fps: m.fps || 24,
       billingType: m.billingType || 'perTask',
-      credits: m.credits,
-      creditsMin: m.creditsMin,
-      creditsPerSec: m.creditsPerSec,
-      creditsPerSecMin: m.creditsPerSecMin,
       desc: m.desc || '',
       refHint: '参考上限：图片 ' + m.refLimits.images + ' 张 · 视频 ' +
         (m.refLimits.videos ? m.refLimits.videos + ' 个' : '不支持') + ' · 音频 ' + m.refLimits.audios + ' 个',
       configured: Boolean(m.apiKey),
-      free: m.free,
       refLimits: {
         images: { count: m.refLimits.images, maxBytes: m.refLimits.imageMaxBytes, mime: ['image/jpeg', 'image/png', 'image/webp'] },
         videos: { count: m.refLimits.videos, maxBytes: m.refLimits.videoMaxBytes, mime: ['video/mp4', 'video/webm', 'video/quicktime'] },
@@ -1576,7 +1577,6 @@ router.get('/media-models', wrap(async (req, res) => {
       refLimits: {
         audios: { count: 3, maxBytes: 10 * 1024 * 1024, mime: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg'] },
       },
-      /* Edge-TTS 声音列表（免费引擎才用到） */
       edgeVoices: edgetts.listVoices(),
     },
   });
