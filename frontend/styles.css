@@ -20872,10 +20872,16 @@ body.dv-open .hm-rail-toggle {
 /* 则灵视频模型分组与费用估算 */
 .hm-video-group-label {
   display: block;
-  margin: 5px 8px 2px;
-  color: #8ea8bb;
+  margin: 7px 8px 3px;
   font-size: 10px;
-  letter-spacing: .04em;
+  font-weight: 750;
+  letter-spacing: .05em;
+}
+.hm-video-group-per-task {
+  color: #f6bd65;
+}
+.hm-video-group-per-second {
+  color: #67c8ff;
 }
 .hm-chip-grid button .hm-key-pending {
   background: #7c4a2b;
