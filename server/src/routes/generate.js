@@ -1528,7 +1528,15 @@ async function generateAudioViaRayin({ text, model, voice, format, rayin, sample
 
 /* 视频 / 音频模型目录接口 —— 前端用来动态渲染时长滑块和参考主体限制 */
 router.get('/media-models', wrap(async (req, res) => {
-  const video = await Promise.all(VIDEO_MODELS.map(async (m) => ({
+  /* 对外仅发布当前正式开放的五个则灵视频模型；历史兼容模型不进入前端目录 */
+  const PUBLIC_VIDEO_MODEL_IDS = new Set([
+    'minimax_h3-768p',
+    'vidu-q4-nopeak',
+    'sd-2.5-flash',
+    'mh-seedance-2.0-mini',
+    'mh-seedance-2.0-fast',
+  ]);
+  const video = await Promise.all(VIDEO_MODELS.filter((m) => PUBLIC_VIDEO_MODEL_IDS.has(m.id)).map(async (m) => ({
     id: m.id,
     name: m.name,
     minDuration: m.minDuration,
