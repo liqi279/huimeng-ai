@@ -552,7 +552,7 @@ async function selfCheck() {
 /* ---------- 则灵模型密钥状态探测（只输出配置状态，不读取/打印密钥） ---------- */
 async function zelingModelProbe() {
   try {
-    const r = await httpGet(CFG.apiBase + '/media-models');
+    const r = await httpGet(CFG.apiBase + '/api/media-models');
     if (r.status !== 200) {
       log('zeling', '模型目录探测 HTTP ' + r.status + '（不影响部署自检）');
       return;
