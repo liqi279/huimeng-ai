@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:45:14+0800",
+  "generatedAt": "2026-11-20T22:47:14+0800",
   "source": "scf-library",
-  "total": 1028,
+  "total": 1029,
   "areas": {
     "paint": 749,
-    "concept": 255,
+    "concept": 256,
     "ref": 24
   },
   "books": [
@@ -1986,6 +1986,28 @@
       "sortNo": 0,
       "createdAt": 1795185906937,
       "updatedAt": 1795185906937,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3estl-ae3094",
+      "title": "金牌得主 · 画集",
+      "author": "萌绘图库",
+      "category": "金牌得主",
+      "tags": [
+        "金牌得主",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《金牌得主》；原包《画集》。第 1-104 页（共 104 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-34468a602e-d5c263a41964-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-34468a602e-d5c263a41964-20261120-01.pdf",
+      "pageCount": 104,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795186028649,
+      "updatedAt": 1795186028649,
       "pages": []
     },
     {
