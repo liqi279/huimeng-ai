@@ -59,7 +59,12 @@ const deployedCss = fs.readFileSync(deployedStyles, 'utf8');
 for (const [ok, message] of [
   [bundle.includes("el('button', 'dv-start-btn is-pending', '开启')"), '生产脚本未包含等待标题入场完成后显示的开启按钮'],
   [bundle.includes('function startDimverseGame()'), '生产脚本未包含本页团子游戏启动逻辑'],
-  [bundle.includes('function drawGameDango(ctx, s, now, airHeight)'), '生产脚本未包含团子绘制与弹性动画'],
+  [bundle.includes('function drawGameDango(ctx, s, now, airHeight, scale)'), '生产脚本未包含团子绘制与弹性动画'],
+  [bundle.includes('function spawnRandomCrystal(s)'), '生产脚本未包含随机能量晶体生成'],
+  [bundle.includes('function generateMaze(s)'), '生产脚本未包含第二关随机迷宫生成'],
+  [bundle.includes('function updateMazeGhosts(s, dt, now)'), '生产脚本未包含双幽灵追击逻辑'],
+  [deployedCss.includes('.dv-challenge-signboard'), '生产样式未包含一分钟挑战招牌样式'],
+  [deployedCss.includes('.dv-game-return-vortex'), '生产样式未包含漩涡返回过渡样式'],
   [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
   [deployedCss.includes('.dv-browser-game'), '生产样式未包含 Canvas 游戏层样式'],
 ]) {
