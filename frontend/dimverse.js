@@ -976,7 +976,7 @@
   }
 
   function mazeCanOccupy(s, x, y) {
-    var b = s.mazeBoard, r = b.cell * 0.22;
+    var b = s.mazeBoard, r = b.cell * 0.34;
     var tests = [[-r, -r], [r, -r], [-r, r], [r, r]];
     for (var i = 0; i < tests.length; i++) {
       var cell = mazeCellAt(s, x + tests[i][0], y + tests[i][1]);
@@ -1290,11 +1290,11 @@
         ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 12;
         ctx.fillRect(p.x, p.y, p.size, p.size); ctx.restore();
       });
-      drawGameDango(ctx, s, now, 0, 0.3 + reveal * 0.08);
+      drawGameDango(ctx, s, now, 0, Math.min(0.31, s.mazeBoard.cell * 0.74 / 134));
     } else if (s.phase === 'maze') {
       drawMaze(ctx, s, now, 1);
       s.ghosts.forEach(function (ghost) { drawMazeGhost(ctx, ghost, now, s.mazeBoard.cell); });
-      drawGameDango(ctx, s, now, 0, 0.31);
+      drawGameDango(ctx, s, now, 0, Math.min(0.31, s.mazeBoard.cell * 0.74 / 134));
       ctx.save(); ctx.textAlign = 'center'; ctx.font = '600 12px system-ui,sans-serif';
       ctx.fillStyle = 'rgba(190,226,255,.85)'; ctx.fillText('找到漩涡出口 · 避开两名幽灵守卫', s.width * 0.5, 78); ctx.restore();
     }
