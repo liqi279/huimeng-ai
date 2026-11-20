@@ -91,11 +91,18 @@ for (const [ok, message] of [
   [bundle.includes("event.data === 'hm-godot-landed'"), '生产脚本未监听团子落地消息'],
   [deployedCss.includes('.dv-godot-overlay'), '生产样式未包含透明 Godot 游戏层'],
   [deployedCss.includes('background: transparent !important'), '生产样式未保持 Godot 游戏层透明'],
+  [deployedCss.includes('.dv-game-timer') && deployedCss.includes('.dv-game-score'), '生产样式未包含倒计时和吞食计数 HUD'],
+  [deployedCss.includes('.dv-challenge-signboard'), '生产样式未包含下拉挑战招牌'],
+  [deployedCss.includes('.dv-celebration-toast'), '生产样式未包含收集成功喝彩 UI'],
+  [deployedCss.includes('.dv-maze-hint'), '生产样式未包含迷宫关卡提示'],
   [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
   [deployedCss.includes('.dv-browser-game'), '生产样式未包含 Canvas 游戏层样式'],
   [html.includes('function ensureGodotOverlay()'), 'Pages HTML 未内联 Godot Web 游戏启动逻辑'],
   [html.includes("new URL('./dimverse/game/index.html'"), 'Pages HTML 未内联 Godot Web 导出入口'],
   [html.includes("event.data === 'hm-godot-gameover'"), 'Pages HTML 未内联游戏结束回到欢迎页逻辑'],
+  [html.includes('function updateGodotHud(data)'), 'Pages HTML 未内联实时倒计时和吞食计数'],
+  [html.includes('function showCelebrationToast()'), 'Pages HTML 未内联成功喝彩 UI'],
+  [html.includes('function showMazeHint()'), 'Pages HTML 未内联迷宫关卡提示'],
   [html.includes('.dv-godot-overlay'), 'Pages HTML 未内联透明 Godot 游戏层样式'],
 ]) {
   if (!ok) {
