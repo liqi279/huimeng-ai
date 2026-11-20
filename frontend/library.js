@@ -1495,26 +1495,29 @@
   }
 
   function resolvePdfOutline(doc, outline) {
-    var out = [];
+    /* 目录节点互不依赖：并行解析目标页，保持原有目录顺序，避免长目录逐项等待 */
     function walk(items, depth) {
-      return items.reduce(function (p, it) {
-        return p.then(function () {
-          var destPromise = it.dest
-            ? doc.getDestination(it.dest).catch(function () { return null; })
-            : Promise.resolve(null);
-          return destPromise.then(function (dest) {
-            var pagePromise = (dest && dest[0])
-              ? doc.getPageIndex(dest[0]).then(function (idx) { return idx + 1; }).catch(function () { return 0; })
-              : Promise.resolve(0);
-            return pagePromise.then(function (page) {
-              out.push({ title: it.title || '未命名', page: page, depth: depth });
-              return (it.items && it.items.length) ? walk(it.items, depth + 1) : null;
-            });
-          });
-        }, function () { return null; });
-      }, Promise.resolve());
+      return Promise.all((items || []).map(function (it) {
+        var destPromise = it.dest
+          ? doc.getDestination(it.dest).catch(function () { return null; })
+          : Promise.resolve(null);
+        return destPromise.then(function (dest) {
+          return (dest && dest[0])
+            ? doc.getPageIndex(dest[0]).then(function (idx) { return idx + 1; }).catch(function () { return 0; })
+            : 0;
+        }).then(function (page) {
+          var current = { title: it.title || '未命名', page: page, depth: depth };
+          return (it.items && it.items.length)
+            ? walk(it.items, depth + 1).then(function (children) { return [current].concat(children); })
+            : [current];
+        }).catch(function () {
+          return [{ title: it.title || '未命名', page: 0, depth: depth }];
+        });
+      })).then(function (groups) {
+        return Array.prototype.concat.apply([], groups);
+      });
     }
-    return walk(outline, 0).then(function () { return out; });
+    return walk(outline, 0);
   }
 
   /* -------- PDF 阅读：pdf.js canvas 自绘；任何失败都只在站内提示，绝不导航直链 -------- */
@@ -1840,9 +1843,11 @@
             var task = pdfjs.getDocument({
               url: url,
               disableRange: false,
-              disableStream: false,
-              /* 不后台整卷预取：大 PDF 在慢网下会把带宽抢光，先保证首屏 */
+              /* 对象存储支持 Range：关闭整卷流式下载，只按当前页请求分段 */
+              disableStream: true,
               disableAutoFetch: true,
+              /* 64KB 默认块在高延迟网络下请求次数偏多，增至 512KB 减少往返 */
+              rangeChunkSize: 512 * 1024,
               withCredentials: false
             });
             var settled = false;
