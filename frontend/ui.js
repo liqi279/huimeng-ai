@@ -1648,6 +1648,18 @@
     syncChoiceLabels();
   }
 
+  function getVideoImageLimit() {
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    var refs = meta && meta.refLimits && meta.refLimits.images;
+    return refs && refs.count != null ? Number(refs.count) : 10;
+  }
+
+  function getVideoImageMaxBytes() {
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    var refs = meta && meta.refLimits && meta.refLimits.images;
+    return refs && refs.maxBytes ? Number(refs.maxBytes) : 9 * 1024 * 1024;
+  }
+
   /* ---------------- 多模态生成（后端） ---------------- */
   async function runMedia(mode) {
     var text = A.els.promptInput.value.trim();
@@ -1668,6 +1680,9 @@
       modelMeta = mediaCatalog.audio.models.find(function (m) { return m.id === modelId; });
     }
     var isFree = mode === 'audio' && modelMeta && modelMeta.free;
+    var videoImageRefs = mode === 'video' && typeof A.currentRefs === 'function'
+      ? A.currentRefs().map(function (r) { return r && r.dataUrl; }).filter(Boolean)
+      : [];
     if (mode === 'audio' && !isFree && !modeFreeFor(mode)) {
       var hasUserKey = !!String((state.api && state.api.key) || '').trim();
       var hasServerKey = api.hasServerKey();
@@ -1722,6 +1737,7 @@
           ratio: state.ratio,
           resolution: state.videoResolution || (modelMeta && modelMeta.resolutions && modelMeta.resolutions[0]) || '720p',
           duration: state.duration,
+          refImages: videoImageRefs,
           seed: state.seed
         }, 200000);
       } else {
@@ -2847,7 +2863,9 @@
       var expand = document.getElementById('expandPrompt');
       if (expand) expand.click();
     },
-    importAssets: function (files) { return handleFiles(files); }
+    importAssets: function (files) { return handleFiles(files); },
+    getVideoImageLimit: getVideoImageLimit,
+    getVideoImageMaxBytes: getVideoImageMaxBytes
   };
 
   init();
