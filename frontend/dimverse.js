@@ -635,32 +635,47 @@
     }
   }
 
-  function startDimverseGame() {
-    if (gameState) return;
-    gameCanvas = el('canvas', 'dv-browser-game');
-    gameCanvas.setAttribute('aria-label', '使用方向键或 WASD 移动团子并收集能量晶体');
-    dimPage.appendChild(gameCanvas);
-    gameCtx = gameCanvas.getContext('2d');
-    if (!gameCtx) return;
-    gameCanvas.addEventListener('pointerdown', setGamePointerTarget);
-    gameCanvas.addEventListener('pointermove', function (event) {
-      if (event.buttons || event.pointerType === 'touch') setGamePointerTarget(event);
+  var gameFrame = null;
+
+  function restoreDimverseWelcome() {
+    if (gameFrame) { gameFrame.remove(); gameFrame = null; }
+    gameCanvas = null; gameCtx = null; gameState = null; gameRaf = 0;
+    if (!dimPage) return;
+    var center = dimPage.querySelector('.dv-center');
+    if (!center) return;
+    center.innerHTML = '';
+    var title = el('h1', 'dv-title', '欢迎来到次元宇宙');
+    title.setAttribute('data-text', '欢迎来到次元宇宙');
+    title.setAttribute('aria-label', '欢迎来到次元宇宙');
+    prepareTitleCharacters(title);
+    center.appendChild(title);
+    dimStartBtn = el('button', 'dv-start-btn is-ready', '再次开启');
+    dimStartBtn.type = 'button';
+    dimStartBtn.addEventListener('click', function () {
+      if (dimStartBtn.disabled) return;
+      dimStartBtn.disabled = true;
+      dimStartBtn.classList.remove('is-ready');
+      dimStartBtn.classList.add('is-exiting');
+      title.classList.add('dv-title-dissolving');
+      window.setTimeout(function () { if (dimStartBtn && dimStartBtn.isConnected) dimStartBtn.remove(); }, 260);
+      startDimverseGame();
     });
-    var w = window.innerWidth, h = window.innerHeight;
-    gameState = {
-      width: w, height: h, x: w * 0.5, y: -72, vx: 0, vy: 0,
-      floorY: h * 0.61, phase: 'fall', phaseAt: performance.now(),
-      squash: 0, squashV: 0, tilt: 0, blinkUntil: performance.now() + 500,
-      nextBlink: performance.now() + 2400, score: 0,
-      crystals: [
-        { x: w * 0.22, y: h * 0.57, got: false },
-        { x: w * 0.40, y: h * 0.68, got: false },
-        { x: w * 0.72, y: h * 0.59, got: false },
-        { x: w * 0.86, y: h * 0.40, got: false }
-      ]
-    };
-    resizeGame();
-    if (!gameRaf) gameRaf = requestAnimationFrame(gameFrame);
+    center.appendChild(dimStartBtn);
+  }
+
+  function onGodotMessage(event) {
+    if (!gameFrame || event.source !== gameFrame.contentWindow) return;
+    if (event.data === 'hm-godot-welcome') restoreDimverseWelcome();
+  }
+
+  function startDimverseGame() {
+    if (gameFrame) return;
+    gameFrame = el('iframe', 'dv-godot-game');
+    gameFrame.title = '次元空间双阶段挑战';
+    gameFrame.setAttribute('allow', 'autoplay; fullscreen; gamepad');
+    gameFrame.setAttribute('loading', 'eager');
+    gameFrame.src = new URL('dimverse/game/index.html?embed=1', document.baseURI).href;
+    dimPage.appendChild(gameFrame);
   }
 
   function onGameKeyDown(event) {
@@ -930,7 +945,7 @@
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
-    window.addEventListener('keydown', onGameKeyDown);
+    window.addEventListener('message', onGodotMessage);\n    window.addEventListener('keydown', onGameKeyDown);
     window.addEventListener('keyup', onGameKeyUp);
     window.addEventListener('blur', function () { gameKeys = Object.create(null); });
     window.addEventListener('resize', resizeGame);
