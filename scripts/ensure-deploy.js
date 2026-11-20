@@ -92,6 +92,7 @@ for (const [ok, message] of [
   [bundle.includes("el('button', 'dv-start-btn is-pending', '开启')"), '生产脚本未包含等待标题入场完成后显示的开启按钮'],
   [bundle.includes('function startDimverseGame()') && bundle.includes("new URL('./dimverse/game/index.html'") && bundle.includes('function ensureGodotOverlay()'), '生产脚本未接入 Godot 双阶段游戏导出'],
   [bundle.includes("event.data === 'hm-godot-ready'") && bundle.includes("event.data === 'hm-godot-landed'"), '生产脚本未接入 Godot 生命周期桥接'],
+  [bundle.includes("event.data === 'hm-godot-block'") && bundle.includes("event.data === 'hm-godot-maze'"), '生产脚本未接入问号方块和迷宫阶段提示'],
   [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
   [deployedCss.includes('.dv-godot-overlay') && html.includes('.dv-godot-overlay'), '生产 HTML/CSS 未包含透明 Godot 游戏层样式'],
 ]) {
