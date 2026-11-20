@@ -18,6 +18,11 @@
 | `COS_REGION` | 使用对象存储时必填 | 对象存储地域。 |
 | `COS_SECRET_ID` | 使用对象存储时必填 | 腾讯云 API SecretId；只从环境变量注入。 |
 | `COS_SECRET_KEY` | 使用对象存储时必填 | 腾讯云 API SecretKey；只从环境变量注入，不打印、不写文件。 |
+| `ZELING_KEY_MINIMAX_H3_768P` | 新增视频模型必填 | MiniMax H3（minimax_h3-768p）的则灵独立 API Key。 |
+| `ZELING_KEY_VIDU_Q4_NOPEAK` | 新增视频模型必填 | Vidu Q4 NoPeak（vidu-q4-nopeak）的则灵独立 API Key。 |
+| `ZELING_KEY_SD_2_5_FLASH` | 新增视频模型必填 | Seedance 2.5 Flash（sd-2.5-flash）的则灵独立 API Key。 |
+| `ZELING_KEY_MH_SEEDANCE_2_0_MINI` | 新增视频模型必填 | Seedance 2.0 Mini（mh-seedance-2.0-mini）的则灵独立 API Key。 |
+| `ZELING_KEY_MH_SEEDANCE_2_0_FAST` | 新增视频模型必填 | Seedance 2.0 Fast（mh-seedance-2.0-fast）的则灵独立 API Key。 |
 | `MYSQL_CONNECT_TIMEOUT_MS` | 可选 | MySQL 连接超时（毫秒），默认 5000。 |
 | `LIBRARY_USAGE_TTL_MS` | 可选 | `usedBytes` 用量缓存 TTL（毫秒），默认 90000。 |
 | `DATA_DIR` | 本地/自托管可选 | 运行数据目录（file 模式落盘位置）。 |
