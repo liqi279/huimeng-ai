@@ -266,14 +266,14 @@ function repairPdfMissingObjectHeaders(input) {
   const data = Buffer.isBuffer(input) ? input : Buffer.from(input || []);
   const sx = data.lastIndexOf(Buffer.from('startxref'));
   assert(sx >= 0, 422, 'PDF 结构不支持自动修复', '缺少 startxref');
-  const xrefOffset = Number(data.subarray(sx + 9).toString('ascii').trim().split(/\\s+/)[0]);
+  const xrefOffset = Number(data.subarray(sx + 9).toString('ascii').trim().split(/\s+/)[0]);
   assert(Number.isInteger(xrefOffset) && xrefOffset > 0 &&
     data.toString('ascii', xrefOffset, xrefOffset + 4) === 'xref',
     422, 'PDF 结构不支持自动修复', '未找到经典 xref 表');
   const trailerAt = data.indexOf(Buffer.from('trailer'), xrefOffset);
   assert(trailerAt > xrefOffset && trailerAt < sx, 422, 'PDF 结构不支持自动修复', '缺少 trailer');
-  const rows = data.subarray(xrefOffset, trailerAt).toString('ascii').split(/\\r?\\n/);
-  const first = (rows[1] || '').trim().split(/\\s+/).map(Number);
+  const rows = data.subarray(xrefOffset, trailerAt).toString('ascii').split(/\r?\n/);
+  const first = (rows[1] || '').trim().split(/\s+/).map(Number);
   const start = first[0], count = first[1];
   assert(start === 0 && Number.isInteger(count) && count > 1 && rows.length >= count + 2,
     422, 'PDF 结构不支持自动修复', 'xref 表格式异常');
@@ -281,7 +281,7 @@ function repairPdfMissingObjectHeaders(input) {
   const objects = [];
   entries.forEach((row, i) => {
     const line = row.trim();
-    if (/\\sn$/.test(line)) {
+    if (/\sn$/.test(line)) {
       const offset = Number(line.slice(0, 10));
       const generation = Number(line.slice(11, 16));
       assert(Number.isInteger(offset) && offset > 0 && generation === 0,
@@ -301,25 +301,25 @@ function repairPdfMissingObjectHeaders(input) {
     const end = i + 1 < objects.length ? objects[i + 1].offset : xrefOffset;
     const body = data.subarray(o.offset, end);
     newOffsets.set(o.id, length);
-    const prefix = Buffer.from(o.id + ' ' + o.generation + ' obj\\n');
-    const suffix = Buffer.from((body.length && body[body.length - 1] === 10 ? '' : '\\n') + 'endobj\\n');
+    const prefix = Buffer.from(o.id + ' ' + o.generation + ' obj\n');
+    const suffix = Buffer.from((body.length && body[body.length - 1] === 10 ? '' : '\n') + 'endobj\n');
     chunks.push(prefix, body, suffix);
     length += prefix.length + body.length + suffix.length;
   });
   const newXref = length;
-  chunks.push(Buffer.from('xref\\n0 ' + count + '\\n'));
-  length += Buffer.byteLength('xref\\n0 ' + count + '\\n');
+  chunks.push(Buffer.from('xref\n0 ' + count + '\n'));
+  length += Buffer.byteLength('xref\n0 ' + count + '\n');
   entries.forEach((entry, i) => {
     const id = start + i;
     const row = newOffsets.has(id)
-      ? String(newOffsets.get(id)).padStart(10, '0') + ' 00000 n \\n'
-      : entry.trimEnd() + '\\n';
+      ? String(newOffsets.get(id)).padStart(10, '0') + ' 00000 n \n'
+      : entry.trimEnd() + '\n';
     const chunk = Buffer.from(row);
     chunks.push(chunk);
     length += chunk.length;
   });
   const trailer = data.subarray(trailerAt, sx);
-  chunks.push(trailer, Buffer.from('startxref\\n' + newXref + '\\n%%EOF\\n'));
+  chunks.push(trailer, Buffer.from('startxref\n' + newXref + '\n%%EOF\n'));
   const repaired = Buffer.concat(chunks);
   return { buffer: repaired, objectCount: objects.length };
 }
