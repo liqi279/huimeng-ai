@@ -161,7 +161,13 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.ok(deployed.includes("event.data === 'hm-godot-ready'"), 'the production bundle listens for the Godot ready signal');
   assert.ok(source.includes("event.data === 'hm-godot-landed'"), 'landing reveals the page-native controls tutorial');
   assert.ok(source.includes("event.data === 'hm-godot-gameover'"), 'game over restores the original welcome screen');
+  assert.ok(source.includes('function buildChallengeSignboard()'), 'the one-minute signboard is rendered with page-native UI');
+  assert.ok(source.includes('function updateGodotHud(data)'), 'the page receives live timer and collection count updates');
+  assert.ok(source.includes('function showCelebrationToast()'), 'collecting 21 crystals triggers the celebration UI');
+  assert.ok(source.includes('function showMazeHint()'), 'the maze stage displays its own instruction hint');
   assert.ok(sourceStyles.includes('.dv-godot-overlay') && sourceStyles.includes('background: transparent !important'), 'Godot overlay does not paint over the original page');
+  assert.ok(sourceStyles.includes('.dv-game-timer') && sourceStyles.includes('.dv-game-score'), 'the timer and crystal count are shown side by side');
+  assert.ok(sourceStyles.includes('.dv-challenge-signboard') && sourceStyles.includes('.dv-celebration-toast'), 'the signboard and celebration use polished UI styles');
   assert.ok(deployedStyles.includes('.dv-start-btn'), 'the deployed stylesheet makes the opening button visible');
   assert.ok(deployedStyles.includes('.dv-godot-overlay'), 'the deployed stylesheet configures the transparent game overlay');
   assert.ok(godotProject.includes('viewport/transparent_background=true'), 'Godot viewport is configured with alpha transparency');
@@ -175,6 +181,9 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.ok(godotScript.includes('func _generate_maze()'), 'the second level generates a random maze');
   assert.ok(godotScript.includes('func _update_ghosts(delta: float)'), 'two ghosts continuously pathfind toward the dango');
   assert.ok(godotScript.includes('func _begin_return(success: bool)'), 'ghost collision triggers the vortex return flow');
+  assert.ok(godotScript.includes('func _send_hud_update()'), 'Godot sends the live countdown and score to the web HUD');
+  assert.ok(godotScript.includes('hm-godot-celebrate') && godotScript.includes('hm-godot-stage-block'), 'Godot signals the celebration and question-block stage');
+  assert.ok(godotScript.includes('hm-godot-stage-maze'), 'Godot signals the maze transition');
 
   const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
   original.searchParams.set('view', 'dimverse');
