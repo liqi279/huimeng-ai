@@ -46,7 +46,39 @@ if (existingIndex >= 0) css = css.slice(0, existingIndex).trimEnd();
 css = css.trimEnd() + '\n\n' + dimverseCss + '\n';
 fs.writeFileSync(deployedStyles, css, 'utf8');
 
-const html = fs.readFileSync(idx, 'utf8');
+/* The Pages HTML is a legacy self-contained bundle. Replace its embedded
+ * stale Dimverse controller with the canonical, independently tested asset.
+ * This keeps the deployed entry point in sync with frontend/dimverse.js.
+ */
+let html = fs.readFileSync(idx, 'utf8');
+const dimverseMarker = '次元宇宙（Dimensional Universe）';
+const dimverseStart = html.indexOf(dimverseMarker);
+if (dimverseStart >= 0 && !html.includes('./assets/hm-s29-b9fa10c0.js')) {
+  const scriptStart = html.lastIndexOf('<script', dimverseStart);
+  const scriptEnd = html.indexOf('</script>', dimverseStart);
+  if (scriptStart < 0 || scriptEnd < 0) {
+    console.error('[publish] 无法定位 deploy/index.html 中的旧次元宇宙脚本');
+    process.exit(1);
+  }
+  html = html.slice(0, scriptStart) +
+    '<script src="./assets/hm-s29-b9fa10c0.js"></script>' +
+    html.slice(scriptEnd + '</script>'.length);
+  fs.writeFileSync(idx, html, 'utf8');
+}
+/* The deployed HTML has its platform CSS inlined and does not load hm.css.
+ * Add only the new transparent Godot iframe rule to avoid duplicating the
+ * entire platform stylesheet.
+ */
+if (!html.includes('.dv-godot-overlay')) {
+  const headEnd = html.indexOf('</head>');
+  if (headEnd < 0) {
+    console.error('[publish] deploy/index.html 缺少 head 结束标签');
+    process.exit(1);
+  }
+  const godotStyle = '<style>.dv-godot-overlay{position:absolute;z-index:4;inset:0;display:block;width:100%;height:100%;border:0;background:transparent!important;pointer-events:auto;touch-action:none;transition:opacity .35s ease}</style>';
+  html = html.slice(0, headEnd) + godotStyle + html.slice(headEnd);
+  fs.writeFileSync(idx, html, 'utf8');
+}
 const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
 const miss = refs.filter((f) => !fs.existsSync(path.join(assets, f)));
 if (miss.length) {
@@ -58,10 +90,10 @@ const bundle = fs.readFileSync(dimverseBundle, 'utf8');
 const deployedCss = fs.readFileSync(deployedStyles, 'utf8');
 for (const [ok, message] of [
   [bundle.includes("el('button', 'dv-start-btn is-pending', '开启')"), '生产脚本未包含等待标题入场完成后显示的开启按钮'],
-  [bundle.includes('function startDimverseGame()'), '生产脚本未包含本页团子游戏启动逻辑'],
-  [bundle.includes('function drawGameDango(ctx, s, now, airHeight)'), '生产脚本未包含团子绘制与弹性动画'],
+  [bundle.includes('function startDimverseGame()') && bundle.includes("new URL('./dimverse/game/index.html'") && bundle.includes('function ensureGodotOverlay()'), '生产脚本未接入 Godot 双阶段游戏导出'],
+  [bundle.includes("event.data === 'hm-godot-ready'") && bundle.includes("event.data === 'hm-godot-landed'"), '生产脚本未接入 Godot 生命周期桥接'],
   [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
-  [deployedCss.includes('.dv-browser-game'), '生产样式未包含 Canvas 游戏层样式'],
+  [deployedCss.includes('.dv-godot-overlay') && html.includes('.dv-godot-overlay'), '生产 HTML/CSS 未包含透明 Godot 游戏层样式'],
 ]) {
   if (!ok) {
     console.error('[publish] ' + message);
