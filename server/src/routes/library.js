@@ -158,7 +158,7 @@ router.post('/library/admin/repair-pdf/:id', authRequired, adminOnly, wrap(async
   const book = await library.get(req.params.id);
   assert(book, 404, '书籍不存在', '请检查书籍 ID');
   const key = keyFromUrl(book.pdfUrl);
-  assert(key && /^library\\/books\\/[A-Za-z0-9._/-]+$/.test(key), 400, '不是有效的图书 PDF 对象');
+  assert(key && /^library\/books\/[A-Za-z0-9._/-]+$/.test(key), 400, '不是有效的图书 PDF 对象');
   const original = await objectStore.readObject(key);
   assert(Buffer.isBuffer(original) && original.length > 0, 502, '读取 PDF 失败', '对象存储未返回 PDF 字节');
   const fixed = repairPdfMissingObjectHeaders(original);
