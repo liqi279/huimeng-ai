@@ -1119,7 +1119,7 @@ const VIDEO_MODELS = [
 
   /* ==== 则灵新增模型：密钥只从 SCF 环境变量 / app_config 读取 ==== */
   {
-    id: 'vidu-q4-nopeak', name: 'Vidu Q4 NoPeak', model: 'vidu-q4-nopeak',
+    id: 'vidu-q4-nopeak', name: 'Vidu Q4', model: 'vidu-q4-nopeak',
     minDuration: 4, maxDuration: 16, resolutions: ['720p', '1080p'],
     resolutionPrices: { '720p': 16, '1080p': 16 },
     aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4'],
