@@ -6997,7 +6997,7 @@
     local.forEach(function (w) { localMap[itemId(w)] = w; });
 
     /* 云端为空：保留本地全部作品并标记待上传，绝不写空 */
-    if (!serverWorks.length) {
+    if (!serverWorks.length && !(seenCloudIds && Object.keys(seenCloudIds).length) && finalPage !== false) {
       if (!local.length) return;
       local.forEach(function (w) { w._pendingUpload = true; });
       runSyncWrite(function () {
