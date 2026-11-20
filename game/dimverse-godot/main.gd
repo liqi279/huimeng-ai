@@ -152,6 +152,7 @@ func _process(delta: float) -> void:
 				_notify_landed()
 		GameState.SIGNBOARD:
 			signboard_elapsed += delta
+			_update_mascot_spring(delta)
 			if signboard_elapsed >= 1.05:
 				state = GameState.PLAYING
 				timer_elapsed = 0.0
@@ -175,9 +176,13 @@ func _process(delta: float) -> void:
 			var previous_y := _step_mascot(delta, true)
 			_update_mascot_spring(delta)
 			var underside := question_block.y + question_block_size * 0.5 + 40.0
-			if previous_y > underside and mascot_position.y <= underside and mascot_velocity.y < 0.0 \
-				and mascot_position.x > question_block.x - question_block_size * 0.9 \
-				and mascot_position.x < question_block.x + question_block_size * 0.9:
+			if (
+				previous_y > underside
+				and mascot_position.y <= underside
+				and mascot_velocity.y < 0.0
+				and mascot_position.x > question_block.x - question_block_size * 0.9
+				and mascot_position.x < question_block.x + question_block_size * 0.9
+			):
 				_burst_question_block()
 		GameState.MAZE_TRANSITION:
 			maze_transition_elapsed += delta
@@ -398,8 +403,11 @@ func _generate_maze() -> void:
 		var next_cell := Vector2i(-1, -1)
 		for direction in directions:
 			var candidate := current + direction
-			if candidate.x > 0 and candidate.y > 0 and candidate.x < maze_cols - 1 \
-				and candidate.y < maze_rows - 1 and maze_grid[candidate.y][candidate.x] == 1:
+			if (
+				candidate.x > 0 and candidate.y > 0
+				and candidate.x < maze_cols - 1 and candidate.y < maze_rows - 1
+				and maze_grid[candidate.y][candidate.x] == 1
+			):
 				next_cell = candidate
 				break
 		if next_cell.x >= 0:
