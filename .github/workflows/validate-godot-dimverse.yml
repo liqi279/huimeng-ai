@@ -36,12 +36,12 @@ jobs:
           include-templates: true
       - name: Build Pages source bundle
         run: npm run build
-      - name: Install server dependencies and run regression tests
-        run: npm ci --prefix server && npm test --prefix server
+
       - name: Check Dimverse JavaScript syntax
         run: |
           node --check frontend/dimverse.js
           node --check deploy/assets/hm-s29-b9fa10c0.js
+
       - name: Parse project and export Web build
         run: |
           godot --headless --path game/dimverse-godot --editor --quit
@@ -50,3 +50,6 @@ jobs:
           test -s deploy/dimverse/game/index.html
           test -s deploy/dimverse/game/index.wasm
           test -s deploy/dimverse/game/index.pck
+
+      - name: Install server dependencies and run regression tests
+        run: npm ci --prefix server && npm test --prefix server
