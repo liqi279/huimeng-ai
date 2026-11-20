@@ -1485,7 +1485,12 @@
     var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
     var min = meta.minDuration || 5;
     var max = meta.maxDuration || 30;
-    return Math.max(min, Math.min(max, val));
+    var bounded = Math.max(min, Math.min(max, val));
+    var allowed = Array.isArray(meta.durations) ? meta.durations.map(Number).filter(Number.isFinite) : [];
+    if (!allowed.length) return bounded;
+    return allowed.reduce(function (best, item) {
+      return Math.abs(item - bounded) < Math.abs(best - bounded) ? item : best;
+    }, allowed[0]);
   }
 
   /* 绑定视频时长滑块的 input/change 事件（只绑一次，避免重复） */
@@ -1527,7 +1532,9 @@
     var menu = document.getElementById('durationMenu');
     if (menu) {
       menu.innerHTML = '';
-      for (var d = min; d <= max; d += 5) {
+      var durationOptions = Array.isArray(meta.durations) && meta.durations.length
+        ? meta.durations.slice() : Array.from({ length: max - min + 1 }, function (_, i) { return min + i; });
+      durationOptions.forEach(function (d) {
         var btn = document.createElement('button');
         btn.setAttribute('data-duration', d);
         btn.textContent = d + ' 秒';
@@ -1538,7 +1545,7 @@
           A.persistPrefs();
         });
         menu.appendChild(btn);
-      }
+      });
     }
     /* slider：全局固定范围 1-30 / step=1，当前值夹紧到模型合法范围 */
     var slider = document.getElementById('durationSlider');
@@ -1637,8 +1644,12 @@
       var refsForValidation = A.getCurrentRefs ? A.getCurrentRefs() : [];
       var maxImages = videoMetaForValidation.refLimits && videoMetaForValidation.refLimits.images
         ? videoMetaForValidation.refLimits.images.count : 10;
-      if (state.duration < videoMetaForValidation.minDuration || state.duration > videoMetaForValidation.maxDuration) {
-        A.toast('当前模型仅支持 ' + videoMetaForValidation.minDuration + '-' + videoMetaForValidation.maxDuration + ' 秒', 'error'); return;
+      if (state.duration < videoMetaForValidation.minDuration || state.duration > videoMetaForValidation.maxDuration ||
+          (Array.isArray(videoMetaForValidation.durations) && videoMetaForValidation.durations.length &&
+           videoMetaForValidation.durations.indexOf(Number(state.duration)) < 0)) {
+        var durationHint = videoMetaForValidation.durations && videoMetaForValidation.durations.length
+          ? videoMetaForValidation.durations.join(' / ') : videoMetaForValidation.minDuration + '-' + videoMetaForValidation.maxDuration;
+        A.toast('当前模型时长不受支持，可选：' + durationHint + ' 秒', 'error'); return;
       }
       if (videoMetaForValidation.resolutions.indexOf(state.videoResolution) < 0) {
         A.toast('当前清晰度不受该模型支持，请重新选择', 'error'); return;
