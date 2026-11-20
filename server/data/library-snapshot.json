@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-20T22:49:09+0800",
+  "generatedAt": "2026-11-20T22:52:32+0800",
   "source": "scf-library",
-  "total": 1033,
+  "total": 1036,
   "areas": {
     "paint": 749,
-    "concept": 260,
+    "concept": 263,
     "ref": 24
   },
   "books": [
@@ -2096,6 +2096,72 @@
       "sortNo": 0,
       "createdAt": 1795186143417,
       "updatedAt": 1795186143417,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3jjxu-3acb2f",
+      "title": "摇曳露营 · 动画《ゆるキャン△（摇曳露营△、Yuru Camp△）》与《へやキャン△（室内露营△、Heya Camp△）》",
+      "author": "萌绘图库",
+      "category": "摇曳露营",
+      "tags": [
+        "摇曳露营",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《摇曳露营》；原包《动画《ゆるキャン△（摇曳露营△、Yuru Camp△）》与《へやキャン△（室内露营△、Heya Camp△）》》。第 1-208 页（共 208 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/yuru-camp-heya-camp-a129b468dd43-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/yuru-camp-heya-camp-a129b468dd43-20261120-01.pdf",
+      "pageCount": 208,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795186250418,
+      "updatedAt": 1795186250418,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3kigp-1e44a8",
+      "title": "摇曳露营 · 动画《ゆるキャン△（摇曳露营△、Yuru Camp△）》的设定画集",
+      "author": "萌绘图库",
+      "category": "摇曳露营",
+      "tags": [
+        "摇曳露营",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《摇曳露营》；原包《动画《ゆるキャン△（摇曳露营△、Yuru Camp△）》的设定画集》。第 1-131 页（共 131 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/yuru-camp-0147d22b2fb1-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/yuru-camp-0147d22b2fb1-20261120-01.pdf",
+      "pageCount": 131,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795186295161,
+      "updatedAt": 1795186295161,
+      "pages": []
+    },
+    {
+      "id": "lib-mwp3lm41-1baa57",
+      "title": "摇曳露营 · 动画《摇曳露营》第2季的设定画集，一些内容介绍，插图，设定图",
+      "author": "萌绘图库",
+      "category": "摇曳露营",
+      "tags": [
+        "摇曳露营",
+        "原画资料",
+        "原画集"
+      ],
+      "intro": "来源：本机原画资料《摇曳露营》；原包《动画《摇曳露营》第2季的设定画集，一些内容介绍，插图，设定图》。第 1-163 页（共 163 页）。",
+      "accent": "#7d5a3c",
+      "coverUrl": "https://huimeng-1527498271.cos.ap-guangzhou.myqcloud.com/library/covers/art-7314a79bd1-7835ddfab99b-20261120-01.jpg",
+      "area": "concept",
+      "pdfUrl": "https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api/library/file/library/books/art-7314a79bd1-7835ddfab99b-20261120-01.pdf",
+      "pageCount": 163,
+      "toc": [],
+      "sortNo": 0,
+      "createdAt": 1795186346545,
+      "updatedAt": 1795186346545,
       "pages": []
     },
     {
