@@ -1555,6 +1555,7 @@ router.get('/media-models', wrap(async (req, res) => {
       desc: m.desc || '',
       refHint: '参考上限：图片 ' + m.refLimits.images + ' 张 · 视频 ' +
         (m.refLimits.videos ? m.refLimits.videos + ' 个' : '不支持') + ' · 音频 ' + m.refLimits.audios + ' 个',
+      configured: Boolean(m.apiKey),
       free: m.free,
       refLimits: {
         images: { count: m.refLimits.images, maxBytes: m.refLimits.imageMaxBytes, mime: ['image/jpeg', 'image/png', 'image/webp'] },
