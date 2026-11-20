@@ -613,7 +613,7 @@
         '<p>靠近发光晶体即可收集</p>' +
         '<p>探索原有次元空间</p>';
       dimPage.appendChild(tutorialPanel);
-      scorePanel = el('div', 'dv-game-score', '能量晶体　00 / 04');
+      scorePanel = el('div', 'dv-game-score', '双阶段挑战　/　60 SEC');
       dimPage.appendChild(scorePanel);
     }
     requestAnimationFrame(function () { if (tutorialPanel) tutorialPanel.classList.add('is-visible'); });
@@ -665,15 +665,24 @@
 
   function onGodotMessage(event) {
     if (!gameFrame || event.source !== gameFrame.contentWindow) return;
+    if (event.data === 'hm-godot-ready') {
+      gameFrame.style.opacity = '1';
+      return;
+    }
+    if (event.data === 'hm-godot-landed') {
+      buildTutorialPanel();
+      return;
+    }
     if (event.data === 'hm-godot-welcome') restoreDimverseWelcome();
   }
 
-  function startDimverseGame() {
+  function ensureGodotOverlay() {
     if (gameFrame) return;
-    gameFrame = el('iframe', 'dv-godot-game');
+    gameFrame = el('iframe', 'dv-godot-overlay dv-godot-game');
     gameFrame.title = '次元空间双阶段挑战';
     gameFrame.setAttribute('allow', 'autoplay; fullscreen; gamepad');
     gameFrame.setAttribute('loading', 'eager');
+    gameFrame.style.opacity = '0';
     gameFrame.addEventListener('load', function () {
       try {
         var doc = gameFrame.contentDocument;
@@ -691,8 +700,12 @@
         }
       } catch (e) { console.warn('[Dimverse] transparent Godot shell setup skipped:', e); }
     });
-    gameFrame.src = new URL('dimverse/game/index.html?embed=1', document.baseURI).href;
+    gameFrame.src = new URL('./dimverse/game/index.html', document.baseURI).href + '?embed=1';
     dimPage.appendChild(gameFrame);
+  }
+
+  function startDimverseGame() {
+    ensureGodotOverlay();
   }
 
   function onGameKeyDown(event) {
