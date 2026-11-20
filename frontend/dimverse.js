@@ -670,7 +670,8 @@
 
   function formatGameTime(seconds) {
     var n = Math.max(0, Math.ceil(seconds));
-    return '00:' + String(n).padStart(2, '0');
+    var minutes = Math.floor(n / 60), remainder = n % 60;
+    return String(minutes).padStart(2, '0') + ':' + String(remainder).padStart(2, '0');
   }
 
   function resizeGame() {
