@@ -238,24 +238,44 @@ func _update_maze_player(dt: float) -> void:
         phase_t = 0.0
         game_over_sent = false
 
+func _cell_at(p: Vector2) -> Vector2i:
+    var ox := (W - maze_w * cell_size) * 0.5
+    var oy := (H - maze_h * cell_size) * 0.5
+    return Vector2i(floori((p.x - ox) / cell_size), floori((p.y - oy) / cell_size))
+
+func _next_path_cell(start: Vector2i, goal: Vector2i) -> Vector2i:
+    var queue: Array[Vector2i] = [start]
+    var came_from: Dictionary = {start: start}
+    var found := false
+    var cursor := 0
+    while cursor < queue.size():
+        var current := queue[cursor]
+        cursor += 1
+        if current == goal:
+            found = true
+            break
+        for d in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
+            var n := current + d
+            if n.x < 0 or n.y < 0 or n.x >= maze_w or n.y >= maze_h: continue
+            if maze[n.y][n.x] != 0 or came_from.has(n): continue
+            came_from[n] = current
+            queue.append(n)
+    if not found: return start
+    var step := goal
+    while came_from.get(step, start) != start and step != start:
+        step = came_from[step]
+    if step == start and goal != start:
+        step = goal
+    return step
+
 func _update_ghosts(dt: float) -> void:
     for i in range(ghost_positions.size()):
         var g: Vector2 = ghost_positions[i]
-        var dir := (player - g).normalized()
-        var speed := 78.0 + float(i) * 12.0
-        var candidate := g + dir * speed * dt
-        if _is_open(candidate):
-            ghost_positions[i] = candidate
-        else:
-            # Wall-aware pursuit: probe the four adjacent corridor directions.
-            var best := g
-            var best_dist := g.distance_to(player)
-            for d in [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]:
-                var probe := g + d * speed * dt
-                if _is_open(probe) and probe.distance_to(player) < best_dist:
-                    best = probe
-                    best_dist = probe.distance_to(player)
-            ghost_positions[i] = best
+        var from_cell := _cell_at(g)
+        var to_cell := _cell_at(player)
+        var waypoint := _cell_center(_next_path_cell(from_cell, to_cell))
+        var speed := 82.0 + float(i) * 14.0
+        ghost_positions[i] = g.move_toward(waypoint, speed * dt)
 
 func _draw() -> void:
     if phase == Phase.WAITING: return
