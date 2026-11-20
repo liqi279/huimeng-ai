@@ -585,6 +585,18 @@ function currentRefs() {
   ensureTabSlots();
   return state.tabRefs[state.activePrompt] || [];
 }
+function currentRefMaxCount() {
+  if (state.mode === 'video' && window.HMUI && typeof window.HMUI.getVideoImageLimit === 'function') {
+    return Number(window.HMUI.getVideoImageLimit()) || 0;
+  }
+  return REF_MAX_COUNT;
+}
+function currentRefMaxBytes() {
+  if (state.mode === 'video' && window.HMUI && typeof window.HMUI.getVideoImageMaxBytes === 'function') {
+    return Number(window.HMUI.getVideoImageMaxBytes()) || REF_MAX_BYTES;
+  }
+  return REF_MAX_BYTES;
+}
 function setCurrentRefs(arr) {
   ensureTabSlots();
   state.tabRefs[state.activePrompt] = arr || [];
@@ -2156,12 +2168,12 @@ function renderRef() {
     });
 
     /* "+" 槽位 */
-    if (list.length < REF_MAX_COUNT && !_refSelectMode) {
+    if (list.length < currentRefMaxCount() && !_refSelectMode) {
       var addCell = document.createElement('div');
       addCell.className = 'hm-ref-cell hm-ref-add';
       addCell.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>' +
-        '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
+        '<span>' + list.length + '/' + currentRefMaxCount() + '</span>';
       addCell.addEventListener('click', function (ev) {
         ev.stopPropagation();
         openRefPicker();
@@ -2902,16 +2914,16 @@ function loadImageFile(file) {
 
 async function pickRefFile(file) {
   if (!file) return;
-  if (currentRefs().length >= REF_MAX_COUNT) {
-    toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+  if (currentRefs().length >= currentRefMaxCount()) {
+    toast('当前模型参考图片最多 ' + currentRefMaxCount() + ' 张', 'error');
     return;
   }
   if (!/^image\/(png|jpe?g|webp)$/i.test(file.type || '')) {
     toast('参考图仅支持 PNG / JPG / WebP 格式', 'error');
     return;
   }
-  if (file.size > REF_MAX_BYTES) {
-    toast('参考图不能超过 10MB', 'error');
+  if (file.size > currentRefMaxBytes()) {
+    toast('参考图超过当前模型单文件大小限制', 'error');
     return;
   }
 
@@ -2962,7 +2974,7 @@ async function pickRefFile(file) {
     els.refInput.value = '';
     renderRef();
     const n = arr.length;
-    toast('已添加到当前描述（' + n + '/' + REF_MAX_COUNT + '）· 点击 @' + n + ' 可插入提示词', 'success');
+    toast('已添加到当前描述（' + n + '/' + currentRefMaxCount() + '）· 点击 @' + n + ' 可插入提示词', 'success');
   } catch (err) {
     toast('参考图读取失败，请换一张图片', 'error');
   }
@@ -6848,9 +6860,9 @@ function bindEvents() {
   els.refInput.addEventListener('change', async function (event) {
     var files = Array.from(event.target.files || []);
     if (!files.length) return;
-    var remaining = REF_MAX_COUNT - currentRefs().length;
+    var remaining = currentRefMaxCount() - currentRefs().length;
     if (remaining <= 0) {
-      toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+      toast('当前模型参考图片最多 ' + currentRefMaxCount() + ' 张', 'error');
       els.refInput.value = '';
       return;
     }
@@ -8030,6 +8042,7 @@ window.HMApp = {
   hydrateWorks: hydrateWorks,
   worksLsKey: worksLsKey,
   renderRef: renderRef,
+  currentRefs: currentRefs,
   renderRatios: renderRatios,
   translatePrompt: translatePrompt,
   syncSettingsUI: syncSettingsUI,
