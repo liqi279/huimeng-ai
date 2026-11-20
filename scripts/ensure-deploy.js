@@ -65,6 +65,20 @@ if (dimverseStart >= 0 && !html.includes('./assets/hm-s29-b9fa10c0.js')) {
     html.slice(scriptEnd + '</script>'.length);
   fs.writeFileSync(idx, html, 'utf8');
 }
+/* The deployed HTML has its platform CSS inlined and does not load hm.css.
+ * Add only the new transparent Godot iframe rule to avoid duplicating the
+ * entire platform stylesheet.
+ */
+if (!html.includes('.dv-godot-game')) {
+  const headEnd = html.indexOf('</head>');
+  if (headEnd < 0) {
+    console.error('[publish] deploy/index.html 缺少 head 结束标签');
+    process.exit(1);
+  }
+  const godotStyle = '<style>.dv-godot-game{position:absolute;z-index:4;inset:0;display:block;width:100%;height:100%;border:0;background:transparent;pointer-events:auto;touch-action:none}@media(max-width:640px){.dv-godot-game{inset:0;height:100%}}</style>';
+  html = html.slice(0, headEnd) + godotStyle + html.slice(headEnd);
+  fs.writeFileSync(idx, html, 'utf8');
+}
 const refs = [...html.matchAll(/(?:src|href)="\.\/assets\/([^"?]+)/g)].map((m) => m[1]);
 const miss = refs.filter((f) => !fs.existsSync(path.join(assets, f)));
 if (miss.length) {
@@ -79,7 +93,7 @@ for (const [ok, message] of [
   [bundle.includes('function startDimverseGame()') && bundle.includes("new URL('dimverse/game/index.html?embed=1'"), '生产脚本未接入 Godot 双阶段游戏导出'],
   [bundle.includes('function drawGameDango(ctx, s, now, airHeight)'), '生产脚本未包含团子绘制与弹性动画'],
   [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
-  [deployedCss.includes('.dv-godot-game'), '生产样式未包含透明 Godot 游戏层样式'],
+  [deployedCss.includes('.dv-godot-game') && html.includes('.dv-godot-game'), '生产 HTML/CSS 未包含透明 Godot 游戏层样式'],
 ]) {
   if (!ok) {
     console.error('[publish] ' + message);
