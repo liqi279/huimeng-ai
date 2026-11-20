@@ -166,6 +166,15 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.ok(godotScript.includes('JavaScriptBridge.create_callback(_on_start_from_web)'), 'the page button starts the Godot intro through the browser bridge');
   assert.ok(godotScript.includes('IntroState.TITLE_PARTICLES') && godotScript.includes('IntroState.MASCOT_FALL'), 'Godot owns the particle-to-mascot intro states');
   assert.ok(godotScript.includes('rng.randf_range(350.0, 930.0)') && godotScript.includes('rng.randf_range(335.0, 405.0)'), 'mascot particles rise from the original welcome-title band');
+  assert.ok(godotScript.includes('crystals.size() < 15') && godotScript.includes('rng.randf_range(42.0, W - 42.0)'), 'energy crystals spawn randomly across the full page');
+  assert.ok(godotScript.includes('if score > 20:'), 'the second stage only unlocks after collecting more than twenty crystals');
+  assert.ok(godotScript.includes('func _make_block_burst()') && godotScript.includes('range(180)'), 'the question block bursts into hundreds of particles');
+  assert.ok(godotScript.includes('Phase.MAZE_TRANSITION'), 'the particle burst transitions into the maze scene');
+  assert.ok(godotScript.includes('velocity.y = -1050.0'), 'the question block requires an upward jump from below');
+  assert.ok(godotScript.includes('mascot_scale = 0.22'), 'the dango is scaled down to fit maze corridors');
+  assert.ok(godotScript.includes('cell_size * 0.62'), 'ghost contact uses a tight collision radius');
+  assert.ok(godotScript.includes("postMessage('hm-godot-block'") && godotScript.includes("postMessage('hm-godot-maze'"), 'Godot announces the block and maze stage transitions');
+  assert.ok(source.includes("event.data === 'hm-godot-block'") && source.includes("event.data === 'hm-godot-maze'"), 'the page updates controls for both game stages');
 
   const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
   original.searchParams.set('view', 'dimverse');
