@@ -259,7 +259,8 @@ func _step_mascot(delta: float, allow_input: bool) -> float:
 		mascot_velocity.y += GRAVITY * delta
 	mascot_position += mascot_velocity * delta
 	mascot_position.x = clampf(mascot_position.x, 70.0, size.x - 70.0)
-	mascot_position.y = clampf(mascot_position.y, 90.0, floor_y - DANGO_HALF_HEIGHT)
+	var max_y := size.y - 70.0 if allow_input else floor_y - DANGO_HALF_HEIGHT
+	mascot_position.y = clampf(mascot_position.y, 90.0, max_y)
 	var lean_target := clampf(mascot_velocity.x / MOVE_SPEED, -1.0, 1.0) * 0.105
 	mascot_tilt = lerpf(mascot_tilt, lean_target, 1.0 - exp(-10.0 * delta))
 	return previous_y
@@ -764,7 +765,9 @@ func _draw_mascot(position: Vector2, scale: float) -> void:
 	var air_height := maxf(0.0, floor_y - DANGO_HALF_HEIGHT - position.y)
 	var shadow_scale := clampf(1.0 - air_height / maxf(1.0, size.y), 0.45, 1.0)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	var shadow_y := position.y + 18.0 if state in [GameState.MAZE, GameState.MAZE_TRANSITION] else floor_y - 8.0
+	var shadow_y := floor_y - 8.0
+	if state in [GameState.PLAYING, GameState.CELEBRATING, GameState.BLOCK, GameState.MAZE, GameState.MAZE_TRANSITION]:
+		shadow_y = position.y + 48.0 * scale
 	draw_circle(Vector2(position.x, shadow_y), 42.0 * shadow_scale * scale, Color(0.0, 0.0, 0.0, 0.12))
 	var speed := clampf(mascot_velocity.length() / MOVE_SPEED, 0.0, 1.0)
 	var wobble := sin(world_time * 4.0 + position.x * 0.012) * (1.2 + speed * 2.4)
