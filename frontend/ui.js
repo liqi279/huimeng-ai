@@ -1484,6 +1484,7 @@
         updateRefDropForMode('video');
         renderVideoEstimate();
         renderVideoModels();
+        A.closeAllMenus();
       });
     });
   }
