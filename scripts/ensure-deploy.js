@@ -85,18 +85,18 @@ const deployedCss = fs.readFileSync(deployedStyles, 'utf8');
 for (const [ok, message] of [
   [bundle.includes("el('button', 'dv-start-btn is-pending', '开启')"), '生产脚本未包含等待标题入场完成后显示的开启按钮'],
   [bundle.includes('function startDimverseGame()'), '生产脚本未包含本页团子游戏启动逻辑'],
-  [bundle.includes('function drawGameDango(ctx, s, now, airHeight, scale)'), '生产脚本未包含团子绘制与弹性动画'],
-  [bundle.includes('function spawnRandomCrystal(s)'), '生产脚本未包含随机能量晶体生成'],
-  [bundle.includes('function generateMaze(s)'), '生产脚本未包含第二关随机迷宫生成'],
-  [bundle.includes('function updateMazeGhosts(s, dt, now)'), '生产脚本未包含双幽灵追击逻辑'],
-  [deployedCss.includes('.dv-challenge-signboard'), '生产样式未包含一分钟挑战招牌样式'],
-  [deployedCss.includes('.dv-game-return-vortex'), '生产样式未包含漩涡返回过渡样式'],
+  [bundle.includes('function ensureGodotOverlay()'), '生产脚本未包含 Godot Web 游戏启动层'],
+  [bundle.includes("new URL('./dimverse/game/index.html'"), '生产脚本未指向 Godot Web 导出入口'],
+  [bundle.includes("event.data === 'hm-godot-ready'"), '生产脚本未监听 Godot 就绪消息'],
+  [bundle.includes("event.data === 'hm-godot-landed'"), '生产脚本未监听团子落地消息'],
+  [deployedCss.includes('.dv-godot-overlay'), '生产样式未包含透明 Godot 游戏层'],
+  [deployedCss.includes('background: transparent !important'), '生产样式未保持 Godot 游戏层透明'],
   [deployedCss.includes('.dv-start-btn'), '生产样式未包含开启按钮样式'],
   [deployedCss.includes('.dv-browser-game'), '生产样式未包含 Canvas 游戏层样式'],
-  [html.includes('function spawnRandomCrystal(s)'), 'Pages HTML 未内联最新随机晶体逻辑'],
-  [html.includes('function generateMaze(s)'), 'Pages HTML 未内联最新随机迷宫逻辑'],
-  [html.includes('function updateMazeGhosts(s, dt, now)'), 'Pages HTML 未内联双幽灵追击逻辑'],
-  [html.includes('.dv-challenge-signboard'), 'Pages HTML 未内联挑战招牌样式'],
+  [html.includes('function ensureGodotOverlay()'), 'Pages HTML 未内联 Godot Web 游戏启动逻辑'],
+  [html.includes("new URL('./dimverse/game/index.html'"), 'Pages HTML 未内联 Godot Web 导出入口'],
+  [html.includes("event.data === 'hm-godot-gameover'"), 'Pages HTML 未内联游戏结束回到欢迎页逻辑'],
+  [html.includes('.dv-godot-overlay'), 'Pages HTML 未内联透明 Godot 游戏层样式'],
 ]) {
   if (!ok) {
     console.error('[publish] ' + message);
