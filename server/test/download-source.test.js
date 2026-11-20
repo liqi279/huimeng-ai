@@ -104,9 +104,9 @@ test('download route uses the shared allowlist and validates every redirect hop'
     assert.ok(!code.includes('openGodotDimverse'), 'the route does not replace the original page with a Godot full-screen shell');
   }
   assert.ok(html.includes('function startDimverseGame()'), 'Pages HTML embeds the Dimverse controller');
-  assert.ok(html.includes('function spawnRandomCrystal(s)'), 'Pages HTML embeds the random crystal challenge');
-  assert.ok(html.includes('function generateMaze(s)'), 'Pages HTML embeds the generated maze');
-  assert.ok(html.includes('function updateMazeGhosts(s, dt, now)'), 'Pages HTML embeds both pursuing ghosts');
+  assert.ok(html.includes('function ensureGodotOverlay()'), 'Pages HTML embeds the transparent Godot loader');
+  assert.ok(html.includes("new URL('./dimverse/game/index.html'"), 'Pages HTML points to the Godot Web export');
+  assert.ok(html.includes("event.data === 'hm-godot-gameover'"), 'Pages HTML restores the welcome screen after gameplay');
   const standalone = fs.readFileSync(require.resolve('../../deploy/dimverse/index.html'), 'utf8');
   assert.ok(standalone.includes('<title>次元宇宙 · 绘梦</title>'));
   assert.ok(standalone.includes("searchParams.set('view', 'dimverse')"), 'standalone route returns to the original page with the Dimverse view');
@@ -157,18 +157,24 @@ test('download route uses the shared allowlist and validates every redirect hop'
   assert.equal(deployed, source, 'the production Dimverse bundle must match the canonical controller source');
   assert.ok(source.includes("new URL('./dimverse/game/index.html'"), 'Godot is embedded as a relative overlay resource');
   assert.ok(deployed.includes("new URL('./dimverse/game/index.html'"), 'the production bundle points to the exported Godot game');
-  assert.ok(source.includes("event.data === 'hm-godot-ready'"), 'the Godot loader is hidden until the transparent canvas is ready');
+  assert.ok(source.includes("event.data === 'hm-godot-ready'"), 'the Godot loader listens for its ready signal');
   assert.ok(deployed.includes("event.data === 'hm-godot-ready'"), 'the production bundle listens for the Godot ready signal');
   assert.ok(source.includes("event.data === 'hm-godot-landed'"), 'landing reveals the page-native controls tutorial');
+  assert.ok(source.includes("event.data === 'hm-godot-gameover'"), 'game over restores the original welcome screen');
   assert.ok(sourceStyles.includes('.dv-godot-overlay') && sourceStyles.includes('background: transparent !important'), 'Godot overlay does not paint over the original page');
   assert.ok(deployedStyles.includes('.dv-start-btn'), 'the deployed stylesheet makes the opening button visible');
   assert.ok(deployedStyles.includes('.dv-godot-overlay'), 'the deployed stylesheet configures the transparent game overlay');
   assert.ok(godotProject.includes('viewport/transparent_background=true'), 'Godot viewport is configured with alpha transparency');
-  assert.ok(godotScript.includes('Deliberately no world/background/grid drawing'), 'Godot only draws the mascot/gameplay layer');
+  assert.ok(godotScript.includes('Deliberately no world/background/grid drawing'), 'Godot only draws the gameplay layer over the original page');
   assert.ok(!godotScript.includes('_draw_cyber_world'), 'Godot does not redraw the webpage background');
-  assert.ok(godotScript.includes('JavaScriptBridge.create_callback(_on_start_from_web)'), 'the page button starts the Godot intro through the browser bridge');
-  assert.ok(godotScript.includes('IntroState.TITLE_PARTICLES') && godotScript.includes('IntroState.MASCOT_FALL'), 'Godot owns the particle-to-mascot intro states');
-  assert.ok(godotScript.includes('rng.randf_range(350.0, 930.0)') && godotScript.includes('rng.randf_range(335.0, 405.0)'), 'mascot particles rise from the original welcome-title band');
+  assert.ok(godotScript.includes('JavaScriptBridge.create_callback(_on_start_from_web)'), 'the page starts Godot through the browser bridge');
+  assert.ok(godotScript.includes('GameState.TITLE_PARTICLES') && godotScript.includes('GameState.MASCOT_FALL'), 'Godot owns the particle-to-mascot intro states');
+  assert.ok(godotScript.includes('timer_remaining := 60.0'), 'the crystal challenge has a one-minute countdown');
+  assert.ok(godotScript.includes('score > 20'), 'the confetti and question block unlock after more than twenty crystals');
+  assert.ok(godotScript.includes('func _burst_question_block()'), 'the question block breaks into particles');
+  assert.ok(godotScript.includes('func _generate_maze()'), 'the second level generates a random maze');
+  assert.ok(godotScript.includes('func _update_ghosts(delta: float)'), 'two ghosts continuously pathfind toward the dango');
+  assert.ok(godotScript.includes('func _begin_return(success: bool)'), 'ghost collision triggers the vortex return flow');
 
   const original = new URL('https://liqi279.github.io/huimeng-ai/?hm_v=1795054083561&lang=zh#top');
   original.searchParams.set('view', 'dimverse');
