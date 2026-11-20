@@ -69,7 +69,8 @@ func _process(delta: float) -> void:
             if remaining <= 0.0:
                 phase = Phase.CELEBRATE
                 phase_t = 0.0
-                _make_confetti()
+                if score > 20:
+                    _make_confetti()
         Phase.CELEBRATE:
             _update_confetti(dt)
             if phase_t >= 2.6:
@@ -272,6 +273,8 @@ func _draw() -> void:
 
 func _draw_stage_one() -> void:
     if phase == Phase.INTRO:
+        var intro_sign_y := lerpf(-105.0, 72.0, minf(1.0, phase_t / 0.85))
+        _draw_sign(intro_sign_y)
         _draw_player()
         return
     # Slim center signboard descends, then the 60-second clock begins.
@@ -283,7 +286,10 @@ func _draw_stage_one() -> void:
     elif phase == Phase.CELEBRATE:
         _draw_sign(72.0)
         _draw_hud()
-        _draw_center_text("超能量收集！", "CRYSTAL FEVER  ·  %02d 枚" % score)
+        if score > 20:
+            _draw_center_text("超能量收集！", "CRYSTAL FEVER  ·  %02d 枚" % score)
+        else:
+            _draw_center_text("挑战时间结束", "本次收集 %02d 枚  ·  方块即将出现" % score)
     elif phase == Phase.BLOCK:
         _draw_hud()
         _draw_center_text("向上撞击能量方块", "站到方块正下方，按 W / ↑ 跳起")
