@@ -155,18 +155,13 @@ router.get('/library/books/:id/pdf-url', authOptional, wrap(async (req, res) => 
   });
   assert(url, 503, '对象存储未启用', '请配置 S3_ENDPOINT / S3_BUCKET / 密钥');
 
-  const info = await probeObject(url, '.pdf');
-  if (!info) throw jsonError(502, '文件读取失败', '对象存储不可达');
-  if (info.status === 404) throw jsonError(404, '文件不存在');
-  assert(info.contentLength != null, 502, '文件读取失败', '对象存储返回 ' + info.status);
-
-  /* 签名有效期 1 小时，响应缓存 10 分钟：仍远在有效期内，且减少重复换链 */
+  /* 只签发直链，不在打开阅读器时额外探测 Range 0-0。
+     PDF.js 随后会直接请求所需字节；此前的探测会增加一次对象存储往返，
+     大文件或高延迟网络下会明显拖慢首屏。文件不存在/不可达由 PDF.js 读取错误处理。 */
   res.setHeader('Cache-Control', 'private, max-age=600');
   res.json({
     url,
     expiresIn: PDF_DIRECT_TTL,
-    contentLength: info.contentLength,
-    contentType: info.contentType,
   });
 }));
 
