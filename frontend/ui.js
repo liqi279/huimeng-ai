@@ -1479,8 +1479,15 @@
     menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-vmodel') === state.videoModel);
       btn.type = 'button';
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-vmodel') === state.videoModel ? 'true' : 'false');
+      /* ???????????????????????????????/???? */
+      btn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        window.HMVideoModels.select(btn.getAttribute('data-vmodel'));
+      });
     });
-    /* 视频模型点击统一由 app.js 的 #modelMenu 委托监听器处理；此处只负责渲染和选择逻辑 */
+    /* ??????????????????????????????????? */
     window.HMVideoModels = window.HMVideoModels || {};
     window.HMVideoModels.select = function (selectedId) {
       if (!mediaCatalog.video.some(function (m) { return m.id === selectedId; })) return false;

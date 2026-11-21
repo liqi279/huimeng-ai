@@ -6809,16 +6809,6 @@ function bindEvents() {
 
   if (els.modelMenu) {
     els.modelMenu.addEventListener('click', function (event) {
-      const vBtn = event.target.closest('[data-vmodel]');
-      if (vBtn) {
-        event.preventDefault();
-        event.stopPropagation();
-        /* 视频模型选择统一交给 ui.js，保证状态、清晰度、比例、时长与计费同步 */
-        if (window.HMVideoModels && typeof window.HMVideoModels.select === 'function') {
-          window.HMVideoModels.select(vBtn.dataset.vmodel);
-        }
-        return;
-      }
       const aBtn = event.target.closest('[data-amodel]');
       if (aBtn) {
         state.audioModel = aBtn.dataset.amodel;
