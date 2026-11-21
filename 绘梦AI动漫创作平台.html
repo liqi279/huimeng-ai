@@ -30133,6 +30133,14 @@ function currentModelLabel() {
     const model = findChannelModel(state.channelModel);
     const cfg = providerConfig();
     base = model ? model.name : (cfg.preset ? cfg.preset.name : '免费模型平台');
+  } else if (state.engine === 'gpt-image') {
+    /* GPT Image ????????????????????? */
+    const selectedId = String(state.channelModel || (state.api && state.api.gptModel) || '');
+    const selectedButton = els.modelMenu && Array.from(els.modelMenu.querySelectorAll('[data-engine="gpt-image"][data-model]'))
+      .find(function (btn) { return btn.dataset.model === selectedId; });
+    const catalogModel = findChannelModel(selectedId);
+    base = selectedButton ? selectedButton.textContent.trim()
+      : (catalogModel && catalogModel.name) || selectedId || (ENGINE_META[state.engine] ? ENGINE_META[state.engine].label : 'GPT Image');
   } else {
     base = ENGINE_META[state.engine] ? ENGINE_META[state.engine].label : 'FLUX.1';
   }
