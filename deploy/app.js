@@ -8148,6 +8148,7 @@ window.HMApp = {
   renderRatios: renderRatios,
   translatePrompt: translatePrompt,
   syncSettingsUI: syncSettingsUI,
+  syncEngineUI: syncEngineUI,
   persistPrefs: persistPrefs,
   updateCharCount: updateCharCount,
   currentSize: currentSize,
