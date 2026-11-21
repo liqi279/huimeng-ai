@@ -2619,7 +2619,7 @@ function clearRefImages() {
   renderVideoMediaRefs();
   els.refInput.value = '';
   _refSelectedSet = {};
-  hideRefHover();
+  if (typeof hideRefHover === 'function') hideRefHover();
   closeRefFullscreen();
   renderRef();
 }
