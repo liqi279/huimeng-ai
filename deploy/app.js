@@ -1079,7 +1079,8 @@ const tm = {
   draft: { quick: 'all', start: 0, end: 0 },
   month: new Date(),
   field: 'start',
-  bound: false
+  bound: false,
+  probing: false
 };
 
 function tmPad(n) { return (n < 10 ? '0' : '') + n; }
@@ -7797,7 +7798,7 @@ async function authBoot() {
 /* ===================== 版本更新提示（轻量轮询） ===================== */
 /* 用 HEAD 比对 ETag / Last-Modified / Content-Length，不下载 5MB 整页；
    服务器不支持 HEAD 时退回 Range: bytes=0-0，只读响应头。 */
-var UPDATE_POLL_MS = 60000;    /* 前台轮询间隔（60 秒；原来 2 秒会持续占用带宽/主线程） */
+var UPDATE_POLL_MS = 1000;    /* 前台轮询间隔（60 秒；原来 2 秒会持续占用带宽/主线程） */
 var UPDATE_IDLE_MS = 10000;    /* 10 秒无操作自动消失 */
 var updateState = {
   baselineFp: '',   /* 首次探测到的指纹，作为「已加载版本」基准 */
@@ -7807,7 +7808,8 @@ var updateState = {
   timer: null,
   idleTimer: null,
   wired: false,
-  bound: false
+  bound: false,
+  probing: false
 };
 
 function updateProbeUrl(tag) {
@@ -7824,6 +7826,8 @@ function updateFpOf(res) {
 }
 
 function probeUpdate() {
+  if (updateState.probing || document.hidden) return;
+  updateState.probing = true;
   fetch(updateProbeUrl(), {
     method: 'HEAD',
     cache: 'no-store',
@@ -7833,16 +7837,41 @@ function probeUpdate() {
     if (fp) return fp;
     throw new Error('no-validators');
   }).catch(function () {
-    /* HEAD 被拒或没有校验头：改用 Range 只取首字节 */
     return fetch(updateProbeUrl('&r=1'), {
       cache: 'no-store',
       headers: { 'Range': 'bytes=0-0', 'Cache-Control': 'no-cache, no-store' }
     }).then(function (res) { return updateFpOf(res); }).catch(function () { return ''; });
   }).then(function (fp) {
-    if (fp && !document.hidden) handleFp(fp);
+    if (!fp || document.hidden) return;
+    if (!updateState.baselineFp || fp === updateState.baselineFp || fp === updateState.dismissedFp) {
+      handleFp(fp);
+      return;
+    }
+    /* 入口发生变化后，必须同时确认 SCF 后端和 MySQL 书目可用，才允许提示更新 */
+    var api = 'https://1527498271-1pw3yw7nzz.ap-guangzhou.tencentscf.com/api';
+    return Promise.all([
+      fetch(api + '/health?hm_release=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('backend-not-ready');
+        return r.json();
+      }),
+      fetch(api + '/library/books?hm_release=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('database-not-ready');
+        return r.json();
+      })
+    ]).then(function (results) {
+      var health = results[0] || {};
+      var books = results[1] || {};
+      var rows = Array.isArray(books.items) ? books.items : [];
+      var mysqlReady = books.store && books.store.mode === 'mysql';
+      var backendReady = health.ok === true && health.storage === 'mysql' && health.persistent === true && health.degraded !== true;
+      if (backendReady && mysqlReady && rows.length > 0 && !document.hidden) handleFp(fp);
+    }).catch(function () {
+      /* 后端或数据库尚未完成部署：不显示更新提示，下次 1 秒轮询继续确认 */
+    });
+  }).catch(function () {}).finally(function () {
+    updateState.probing = false;
   });
 }
-
 function handleFp(fp) {
   if (!updateState.baselineFp) {
     updateState.baselineFp = fp;
