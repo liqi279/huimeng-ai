@@ -2938,6 +2938,21 @@ function readRefFileDataUrl(file) {
     reader.readAsDataURL(file);
   });
 }
+/* Canvas.toDataURL 会在主线程同步编码大图；toBlob 将编码交给浏览器异步执行，
+   避免从桌面拖入高分辨率图片时冻结创作界面。 */
+function canvasToRefDataUrl(canvas, quality) {
+  return new Promise(function (resolve, reject) {
+    if (!canvas || typeof canvas.toBlob !== 'function') {
+      try { resolve(canvas.toDataURL('image/jpeg', quality)); }
+      catch (err) { reject(err); }
+      return;
+    }
+    canvas.toBlob(function (blob) {
+      if (!blob) { reject(new Error('参考图编码失败')); return; }
+      readRefFileDataUrl(blob).then(resolve, reject);
+    }, 'image/jpeg', quality);
+  });
+}
 function currentVideoRefPayloadChars() {
   var chars = currentRefs().reduce(function (sum, r) { return sum + String(r && r.dataUrl || '').length; }, 0);
   ['videos', 'audios'].forEach(function (kind) {
@@ -3065,11 +3080,17 @@ async function pickRefFile(file) {
     pCanvas.height = pHeight;
     pCanvas.getContext('2d').drawImage(canvas, 0, 0, pWidth, pHeight);
 
+    /* 三种尺寸并行异步编码，不再连续执行三次同步 toDataURL 阻塞主线程。 */
+    var encoded = await Promise.all([
+      canvasToRefDataUrl(canvas, 0.92),
+      canvasToRefDataUrl(tCanvas, 0.7),
+      canvasToRefDataUrl(pCanvas, 0.86)
+    ]);
     var arr = currentRefs();
     arr.push({
-      dataUrl: canvas.toDataURL('image/jpeg', 0.92),
-      thumb: tCanvas.toDataURL('image/jpeg', 0.7),
-      preview: pCanvas.toDataURL('image/jpeg', 0.86),
+      dataUrl: encoded[0],
+      thumb: encoded[1],
+      preview: encoded[2],
       name: file.name || ('reference_' + (arr.length + 1) + '.jpg'),
       width: width,
       height: height,
