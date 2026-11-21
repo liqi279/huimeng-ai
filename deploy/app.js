@@ -7081,7 +7081,7 @@ function bindEvents() {
   }
   paintRefClearLock(false);
   if (els.refClearBtn) {
-    els.refClearBtn.addEventListener('mouseleave', refClearRelock);
+    /* 解锁后允许用户移动鼠标再点击；不要在离开按钮时提前重新上锁 */
     els.refClearBtn.addEventListener('click', function (ev) {
       ev.stopPropagation();
       if (!currentRefs().length) return;
@@ -7091,7 +7091,7 @@ function bindEvents() {
         paintRefClearLock(true);
         toast('已解锁，再点一次执行全部删除', 'info');
         if (_refClearTimer) clearTimeout(_refClearTimer);
-        _refClearTimer = setTimeout(refClearRelock, 5000);
+        _refClearTimer = setTimeout(refClearRelock, 10000);
         return;
       }
       clearRefImages();
