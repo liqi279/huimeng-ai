@@ -20739,6 +20739,34 @@ body.dv-open .hm-page {
 .cmp-file span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ============ 次元宇宙 · 原网页背景上的透明 Canvas 游戏层 ============ */
+/* Transparent Godot 4 Web overlay: the original page remains the visual world. */
+.dv-godot-overlay {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent !important;
+  pointer-events: auto;
+  touch-action: none;
+  transition: opacity .35s ease;
+}
+
+.dv-godot-game {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  touch-action: none;
+}
+
 .dv-topbar { z-index: 7; }
 .dv-center { z-index: 2; }
 .dv-browser-game {
@@ -20827,3 +20855,67 @@ body.dv-open .hm-page {
   .dv-game-score { top: 72px; left: 10px; }
   .dv-browser-game { inset: 0; height: 100%; }
 }
+
+
+/* 则灵视频模型分组与费用估算 */
+.hm-video-group-label {
+  display: block;
+  margin: 7px 8px 3px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .05em;
+}
+.hm-video-group-per-task {
+  color: #f6bd65;
+}
+.hm-video-group-per-second {
+  color: #67c8ff;
+}
+.hm-chip-grid button .hm-key-pending {
+  background: #7c4a2b;
+  color: #ffddb8;
+}
+.hm-video-estimate {
+  margin: 5px 0 0;
+  padding: 5px 9px;
+  border: 1px solid rgba(94, 196, 238, .18);
+  border-radius: 7px;
+  color: #9edcf3;
+  background: rgba(56, 189, 248, .055);
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+
+/* 则灵参考视频/音频素材标签 */
+.hm-ref-media-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 5px 0 2px;
+}
+.hm-ref-media-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 3px 7px 3px 9px;
+  border: 1px solid rgba(94, 196, 238, .2);
+  border-radius: 6px;
+  color: #a9c7d8;
+  background: rgba(56, 189, 248, .06);
+  font-size: 10px;
+}
+.hm-ref-media-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-ref-media-chip button {
+  padding: 0 2px;
+  color: #b7cbd8;
+  font-size: 15px;
+  line-height: 1;
+}
+.hm-ref-media-chip button:hover { color: #ff9b9b; }

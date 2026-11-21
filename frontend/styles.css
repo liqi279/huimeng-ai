@@ -7229,6 +7229,7 @@ body[data-mode="audio"] .hm-chip-mode .hm-mode-ico[data-ico="audio"] {
 }
 
 .hm-chip-grid button .hm-credits-hover {
+  pointer-events: none;
   position: absolute;
   bottom: calc(100% + 6px);
   left: 50%;

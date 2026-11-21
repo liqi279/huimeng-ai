@@ -605,16 +605,22 @@
   var tutorialPanel = null;
   var scorePanel = null;
 
-  function buildTutorialPanel() {
+  function buildTutorialPanel(stage) {
     if (!tutorialPanel) {
       tutorialPanel = el('aside', 'dv-game-tutorial');
       tutorialPanel.innerHTML = '<strong>次元探索指南 <span>/ CONTROLS</span></strong>' +
-        '<p><b>W A S D</b> / 方向键 / 点按：移动团子</p>' +
-        '<p>靠近发光晶体即可收集</p>' +
-        '<p>探索原有次元空间</p>';
+        '<p><b>W A S D</b> / 方向键：移动团子</p>' +
+        '<p>第一关：60 秒内吞食超过 20 枚随机能量晶体</p>' +
+        '<p>收集完成后，从问号方块下方向上撞击</p>';
       dimPage.appendChild(tutorialPanel);
-      scorePanel = el('div', 'dv-game-score', '能量晶体　00 / 04');
-      dimPage.appendChild(scorePanel);
+    }
+    var paragraphs = tutorialPanel.querySelectorAll('p');
+    if (stage === 'block') {
+      if (paragraphs[1]) paragraphs[1].textContent = '挑战完成！站到问号方块的正下方';
+      if (paragraphs[2]) paragraphs[2].textContent = '按 W / ↑ 向上跳起，撞击方块开启第二关';
+    } else if (stage === 'maze') {
+      if (paragraphs[1]) paragraphs[1].textContent = '第二关：穿过随机生成的迷宫';
+      if (paragraphs[2]) paragraphs[2].textContent = '躲避两名幽灵守卫，抵达漩涡出口';
     }
     requestAnimationFrame(function () { if (tutorialPanel) tutorialPanel.classList.add('is-visible'); });
   }
@@ -635,32 +641,87 @@
     }
   }
 
-  function startDimverseGame() {
-    if (gameState) return;
-    gameCanvas = el('canvas', 'dv-browser-game');
-    gameCanvas.setAttribute('aria-label', '使用方向键或 WASD 移动团子并收集能量晶体');
-    dimPage.appendChild(gameCanvas);
-    gameCtx = gameCanvas.getContext('2d');
-    if (!gameCtx) return;
-    gameCanvas.addEventListener('pointerdown', setGamePointerTarget);
-    gameCanvas.addEventListener('pointermove', function (event) {
-      if (event.buttons || event.pointerType === 'touch') setGamePointerTarget(event);
+  var gameFrame = null;
+
+  function restoreDimverseWelcome() {
+    if (gameFrame) { gameFrame.remove(); gameFrame = null; }
+    if (tutorialPanel) { tutorialPanel.remove(); tutorialPanel = null; }
+    if (scorePanel) { scorePanel.remove(); scorePanel = null; }
+    gameCanvas = null; gameCtx = null; gameState = null; gameRaf = 0;
+    if (!dimPage) return;
+    var center = dimPage.querySelector('.dv-center');
+    if (!center) return;
+    center.innerHTML = '';
+    var title = el('h1', 'dv-title', '欢迎来到次元宇宙');
+    title.setAttribute('data-text', '欢迎来到次元宇宙');
+    title.setAttribute('aria-label', '欢迎来到次元宇宙');
+    prepareTitleCharacters(title);
+    center.appendChild(title);
+    dimStartBtn = el('button', 'dv-start-btn is-ready', '再次开启');
+    dimStartBtn.type = 'button';
+    dimStartBtn.addEventListener('click', function () {
+      if (dimStartBtn.disabled) return;
+      dimStartBtn.disabled = true;
+      dimStartBtn.classList.remove('is-ready');
+      dimStartBtn.classList.add('is-exiting');
+      title.classList.add('dv-title-dissolving');
+      window.setTimeout(function () { if (dimStartBtn && dimStartBtn.isConnected) dimStartBtn.remove(); }, 260);
+      startDimverseGame();
     });
-    var w = window.innerWidth, h = window.innerHeight;
-    gameState = {
-      width: w, height: h, x: w * 0.5, y: -72, vx: 0, vy: 0,
-      floorY: h * 0.61, phase: 'fall', phaseAt: performance.now(),
-      squash: 0, squashV: 0, tilt: 0, blinkUntil: performance.now() + 500,
-      nextBlink: performance.now() + 2400, score: 0,
-      crystals: [
-        { x: w * 0.22, y: h * 0.57, got: false },
-        { x: w * 0.40, y: h * 0.68, got: false },
-        { x: w * 0.72, y: h * 0.59, got: false },
-        { x: w * 0.86, y: h * 0.40, got: false }
-      ]
-    };
-    resizeGame();
-    if (!gameRaf) gameRaf = requestAnimationFrame(gameFrame);
+    center.appendChild(dimStartBtn);
+  }
+
+  function onGodotMessage(event) {
+    if (!gameFrame || event.source !== gameFrame.contentWindow) return;
+    if (event.data === 'hm-godot-ready') {
+      gameFrame.style.opacity = '1';
+      return;
+    }
+    if (event.data === 'hm-godot-landed') {
+      buildTutorialPanel('crystals');
+      return;
+    }
+    if (event.data === 'hm-godot-block') {
+      buildTutorialPanel('block');
+      return;
+    }
+    if (event.data === 'hm-godot-maze') {
+      buildTutorialPanel('maze');
+      return;
+    }
+    if (event.data === 'hm-godot-welcome') restoreDimverseWelcome();
+  }
+
+  function ensureGodotOverlay() {
+    if (gameFrame) return;
+    gameFrame = el('iframe', 'dv-godot-overlay dv-godot-game');
+    gameFrame.title = '次元空间双阶段挑战';
+    gameFrame.setAttribute('allow', 'autoplay; fullscreen; gamepad');
+    gameFrame.setAttribute('loading', 'eager');
+    gameFrame.style.opacity = '0';
+    gameFrame.addEventListener('load', function () {
+      try {
+        var doc = gameFrame.contentDocument;
+        if (doc) {
+          doc.documentElement.style.background = 'transparent';
+          doc.documentElement.style.backgroundColor = 'transparent';
+          if (doc.body) {
+            doc.body.style.background = 'transparent';
+            doc.body.style.backgroundColor = 'transparent';
+            doc.body.style.margin = '0';
+            doc.body.style.overflow = 'hidden';
+          }
+          var canvas = doc.querySelector('canvas');
+          if (canvas) { canvas.style.background = 'transparent'; canvas.style.backgroundColor = 'transparent'; }
+        }
+      } catch (e) { console.warn('[Dimverse] transparent Godot shell setup skipped:', e); }
+    });
+    gameFrame.src = new URL('./dimverse/game/index.html', document.baseURI).href + '?embed=1';
+    dimPage.appendChild(gameFrame);
+  }
+
+  function startDimverseGame() {
+    ensureGodotOverlay();
   }
 
   function onGameKeyDown(event) {
@@ -693,36 +754,66 @@
     ctx.translate(s.x, s.y + Math.sin(now * 0.004) * (s.phase === 'playing' ? 1.5 : 0));
     ctx.rotate(s.tilt);
     ctx.scale(1 + s.squash, 1 - s.squash * 0.7 + breathe);
-    ctx.shadowColor = 'rgba(0,0,0,.32)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 9;
-    var body = ctx.createRadialGradient(-23, -28, 5, 4, 4, 78);
-    body.addColorStop(0, '#fffef2'); body.addColorStop(0.58, '#f6f2d9');
-    body.addColorStop(0.88, '#e6dfc0'); body.addColorStop(1, '#bdb695');
-    ctx.fillStyle = body; ctx.strokeStyle = 'rgba(105,101,75,.72)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.ellipse(0, 0, 70, 52, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    var wobble = Math.sin(now * 0.004 + s.x * 0.012) * (1.2 + speed * 2.4);
+    traceDangoSlime(ctx, wobble);
+    ctx.shadowColor = 'rgba(15,48,70,.2)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 7;
+    var body = ctx.createRadialGradient(-24, -39, 5, 2, -3, 94);
+    body.addColorStop(0, '#effaff'); body.addColorStop(0.42, '#d7edf7');
+    body.addColorStop(0.78, '#bdddeb'); body.addColorStop(1, '#9fbed0');
+    ctx.fillStyle = body; ctx.fill();
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-    ctx.fillStyle = 'rgba(255,255,255,.56)';
-    ctx.beginPath(); ctx.ellipse(-21, -24, 25, 9, -0.24, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.36)';
-    ctx.beginPath(); ctx.ellipse(-40, -10, 7, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); traceDangoSlime(ctx, wobble); ctx.clip();
+    var softLight = ctx.createRadialGradient(-31, -39, 1, -22, -26, 61);
+    softLight.addColorStop(0, 'rgba(255,255,255,.44)');
+    softLight.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = softLight; ctx.fillRect(-74, -64, 148, 122);
+    var underside = ctx.createLinearGradient(0, 8, 0, 52);
+    underside.addColorStop(0, 'rgba(88,129,152,0)');
+    underside.addColorStop(1, 'rgba(88,129,152,.18)');
+    ctx.fillStyle = underside; ctx.fillRect(-72, 0, 144, 56);
+    ctx.restore();
+    ctx.save(); traceDangoSlime(ctx, wobble);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(100,132,151,.72)'; ctx.lineWidth = 4.2; ctx.stroke();
+    ctx.translate(0, -0.7); ctx.strokeStyle = 'rgba(240,250,255,.42)'; ctx.lineWidth = 1.25; ctx.stroke();
+    ctx.restore();
     var lookX = Math.max(-2, Math.min(2, s.vx / 150));
     var lookY = Math.max(-1.5, Math.min(1.5, s.vy / 240));
     var blinking = now < s.blinkUntil;
-    ctx.strokeStyle = '#292923'; ctx.fillStyle = '#292923'; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
-    [-18, 18].forEach(function (eyeX) {
+    ctx.strokeStyle = '#24313b'; ctx.fillStyle = '#24313b'; ctx.lineWidth = 3.7; ctx.lineCap = 'round';
+    [-17, 14].forEach(function (eyeX, i) {
       if (blinking) {
-        ctx.beginPath(); ctx.moveTo(eyeX - 4, -3); ctx.quadraticCurveTo(eyeX, 1, eyeX + 4, -3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(eyeX - 4, -27); ctx.quadraticCurveTo(eyeX, -23, eyeX + 4, -27); ctx.stroke();
       } else {
-        ctx.beginPath(); ctx.ellipse(eyeX + lookX, -5 + lookY, 2.7, 7.2, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(eyeX - 0.6 + lookX, -8 + lookY, 1.1, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#292923';
+        var offset = i ? 2 : -2;
+        ctx.beginPath(); ctx.moveTo(eyeX + lookX, -38 + lookY);
+        ctx.quadraticCurveTo(eyeX + offset + lookX, -32 + lookY, eyeX + 3 + lookX, -25 + lookY); ctx.stroke();
       }
     });
-    ctx.fillStyle = 'rgba(239,135,157,.28)';
-    ctx.beginPath(); ctx.ellipse(-31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.ellipse(31, 8, 8, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    var blush = ctx.createRadialGradient(0, 0, 0, 0, 0, 9);
+    blush.addColorStop(0, 'rgba(244,151,173,.45)'); blush.addColorStop(1, 'rgba(244,151,173,0)');
+    ctx.fillStyle = blush;
+    ctx.beginPath(); ctx.ellipse(-34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.ellipse(34, -9, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(70,105,126,.68)'; ctx.lineWidth = 1.7;
+    ctx.beginPath(); ctx.arc(0, -2, 4, 0.2, Math.PI - 0.2); ctx.stroke();
     if (speed > 0.12) {
-      ctx.strokeStyle = 'rgba(133,89,103,.8)'; ctx.lineWidth = 1.8;
-      ctx.beginPath(); ctx.arc(0, 7, 4, 0.2, Math.PI - 0.2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(100,132,151,.48)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, 3, 4, 0.15, Math.PI - 0.15); ctx.stroke();
     }
     ctx.restore();
+  }
+
+  function traceDangoSlime(ctx, wobble) {
+    ctx.beginPath();
+    ctx.moveTo(-62, 39);
+    ctx.bezierCurveTo(-69, 33, -68, 15, -65, -2);
+    ctx.bezierCurveTo(-62, -27, -48, -48, -29, -53 - wobble * 0.35);
+    ctx.bezierCurveTo(-12, -59 - wobble, 11, -59 + wobble * 0.3, 29, -51);
+    ctx.bezierCurveTo(50, -43, 64, -23, 67, -1);
+    ctx.bezierCurveTo(70, 15, 69, 32, 62, 40);
+    ctx.bezierCurveTo(53, 49, 29, 48 + wobble * 0.15, 10, 48);
+    ctx.bezierCurveTo(-14, 50, -48, 50 - wobble * 0.12, -62, 39);
+    ctx.closePath();
   }
 
   function drawGameCrystal(ctx, crystal, now) {
@@ -824,6 +915,8 @@
 
   function hideDimPage() {
     if (!dimPage) return;
+    /* Stop the embedded WebAssembly game when leaving this route. */
+    if (gameFrame) restoreDimverseWelcome();
     if (dimVortexAnim) { dimVortexAnim.stop(); dimVortexAnim = null; }
     if (!vortexAnim && vortexCanvas) vortexAnim = makeVortex(vortexCanvas, 72);
     dimPage.classList.remove('is-visible');
@@ -900,6 +993,7 @@
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
+    window.addEventListener('message', onGodotMessage);
     window.addEventListener('keydown', onGameKeyDown);
     window.addEventListener('keyup', onGameKeyUp);
     window.addEventListener('blur', function () { gameKeys = Object.create(null); });
@@ -917,3 +1011,4 @@
 
   window.HMDimverse = { enter: enterDimverse, leave: leaveDimverse };
 })();
+

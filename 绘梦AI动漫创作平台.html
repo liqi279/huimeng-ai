@@ -7237,6 +7237,7 @@ body[data-mode="audio"] .hm-chip-mode .hm-mode-ico[data-ico="audio"] {
 }
 
 .hm-chip-grid button .hm-credits-hover {
+  pointer-events: none;
   position: absolute;
   bottom: calc(100% + 6px);
   left: 50%;
@@ -64186,15 +64187,20 @@ window.HMChat = (function () {
     menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-vmodel') === state.videoModel);
       btn.type = 'button';
-      /* 直接绑定按钮，避免依赖外层菜单委托；点击后同步模型及参数 */
-      btn.addEventListener('click', function (event) {
+    });
+    /* 在菜单捕获阶段统一接管点击，避免按钮级 stopPropagation 与 app.js 委托冲突 */
+    if (!menu.__hmVideoSelectBound) {
+      menu.__hmVideoSelectBound = true;
+      menu.addEventListener('click', function (event) {
+        var button = event.target && event.target.closest ? event.target.closest('[data-vmodel]') : null;
+        if (!button || !menu.contains(button)) return;
         event.preventDefault();
         event.stopPropagation();
         if (window.HMVideoModels && typeof window.HMVideoModels.select === 'function') {
-          window.HMVideoModels.select(btn.getAttribute('data-vmodel'));
+          window.HMVideoModels.select(button.getAttribute('data-vmodel'));
         }
-      });
-    });
+      }, true);
+    }
     /* 由 app.js 的 modelMenu 单一委托入口调用，避免按钮与父级重复处理点击 */
     window.HMVideoModels = window.HMVideoModels || {};
     window.HMVideoModels.select = function (selectedId) {
