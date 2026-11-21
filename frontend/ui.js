@@ -1233,6 +1233,12 @@
     if (['image', 'video', 'audio'].indexOf(mode) < 0) return;
     state.mode = mode;
 
+    /* 模式独立维护模型：进入视频时校验视频模型，绝不沿用生图模型的显示状态 */
+    if (mode === 'video' && !mediaCatalog.video.some(function (m) { return m.id === state.videoModel; })) {
+      state.videoModel = mediaCatalog.video.some(function (m) { return m.id === 'minimax_h3-768p'; })
+        ? 'minimax_h3-768p' : (mediaCatalog.video[0] && mediaCatalog.video[0].id);
+    }
+
     document.querySelectorAll('#modeMenu [data-mode]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-mode') === mode);
     });
@@ -1244,6 +1250,13 @@
     if (modeText) modeText.textContent = mode === 'image' ? '生图' : mode === 'video' ? '视频' : '音频';
 
     syncModeUI();
+    /* 同步顶部模型胶囊：按当前模式读取独立模型状态 */
+    var modelPill = document.getElementById('enginePillText');
+    if (modelPill && typeof A.modeModelLabel === 'function') {
+      modelPill.textContent = A.modeModelLabel(mode);
+      var modelButton = document.getElementById('engineModelBtn');
+      if (modelButton) modelButton.title = A.modeModelLabel(mode);
+    }
     persistMode();
   }
 
@@ -1466,6 +1479,14 @@
     menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.getAttribute('data-vmodel') === state.videoModel);
       btn.type = 'button';
+      /* 直接绑定按钮，避免依赖外层菜单委托；点击后同步模型及参数 */
+      btn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (window.HMVideoModels && typeof window.HMVideoModels.select === 'function') {
+          window.HMVideoModels.select(btn.getAttribute('data-vmodel'));
+        }
+      });
     });
     /* 由 app.js 的 modelMenu 单一委托入口调用，避免按钮与父级重复处理点击 */
     window.HMVideoModels = window.HMVideoModels || {};

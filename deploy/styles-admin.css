@@ -1,0 +1,520 @@
+/* =============================================================
+ * 绘梦 AI · 管理台样式（独立 view page —— #view-admin 容器）
+ * 参考 Figma 深色科技风设计稿
+ * ============================================================= */
+
+.hm-admin-page {
+  padding: 20px 24px 40px;
+  height: 100%;
+  overflow-y: auto;
+}
+.hm-admin-page::-webkit-scrollbar { width: 8px; }
+.hm-admin-page::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+/* ============ 顶栏容器 ============ */
+.hm-admin-topbar-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 0 14px; margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ============ Brand ============ */
+.hm-admin-brand { display: flex; align-items: center; gap: 12px; }
+.hm-admin-logo {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #fff;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+}
+.hm-admin-brand h1 { font-size: 15px; font-weight: 600; color: #e2e8f0; margin: 0; letter-spacing: 0.3px; }
+.hm-admin-close {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-left: 6px; padding: 6px 12px; border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8; font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.hm-admin-close svg { width: 13px; height: 13px; }
+.hm-admin-close:hover { color: #e2e8f0; background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); }
+body.hm-light .hm-admin-close { color: #475569; background: #fff; border-color: rgba(15, 23, 42, 0.12); }
+
+/* ============ 顶 Tab ============ */
+.hm-admin-top-tabs { display: flex; gap: 4px; }
+.hm-admin-top-tab {
+  padding: 7px 16px; font-size: 13px; color: #64748b;
+  border-radius: 8px; background: transparent;
+  border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
+}
+.hm-admin-top-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.03); }
+.hm-admin-top-tab.is-active {
+  color: #e2e8f0; background: rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.4);
+}
+
+/* ============ 子 Tab ============ */
+.hm-admin-subtabs-wrap {
+  display: flex; gap: 4px; padding: 0 0 16px;
+  flex-wrap: wrap;
+}
+.hm-admin-tab {
+  padding: 7px 14px; font-size: 13px; color: #64748b;
+  border-radius: 6px; background: transparent;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer; transition: all 0.15s;
+}
+.hm-admin-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.03); }
+.hm-admin-tab.is-active {
+  color: #e2e8f0; background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.hm-admin-loading { padding: 80px; text-align: center; color: #64748b; font-size: 13px; }
+.hm-admin-error { padding: 60px; text-align: center; }
+.hm-admin-error h3 { color: #f87171; margin: 0 0 10px; }
+.hm-admin-placeholder {
+  padding: 80px 20px; text-align: center;
+}
+.hm-admin-ph-ico { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.hm-admin-placeholder h2 { color: #94a3b8; margin: 0 0 8px; font-weight: 500; }
+.hm-admin-placeholder p { color: #475569; margin: 0; }
+
+/* ============ 软件设置 · 快捷键 ============ */
+.hm-hk { padding: 18px 20px 30px; }
+.hm-hk-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.hm-hk-head h2 { margin: 0 0 6px; font-size: 15px; color: #e2e8f0; font-weight: 600; }
+.hm-hk-head p { margin: 0; font-size: 11.5px; line-height: 1.75; color: #64748b; max-width: 620px; }
+.hm-hk-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.hm-hk-btn {
+  padding: 7px 12px; border-radius: 7px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04); color: #cbd5e1; font-size: 11.5px; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.hm-hk-btn:hover { background: rgba(255, 255, 255, 0.08); color: #e2e8f0; }
+.hm-hk-btn.is-primary { border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.16); color: #bae6fd; }
+.hm-hk-btn.is-primary:hover { background: rgba(56, 189, 248, 0.26); }
+.hm-hk-region {
+  border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px;
+  background: rgba(255, 255, 255, 0.015); margin-bottom: 12px; overflow: hidden;
+}
+.hm-hk-region-head {
+  display: flex; align-items: baseline; gap: 10px; padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.025); border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hm-hk-region-head b { font-size: 12px; color: #cbd5e1; font-weight: 600; }
+.hm-hk-region-head span { font-size: 10.5px; color: #64748b; }
+.hm-hk-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid rgba(255, 255, 255, 0.04); }
+.hm-hk-region-head + .hm-hk-row { border-top: 0; }
+.hm-hk-name { flex: 1; font-size: 11.5px; color: #94a3b8; }
+.hm-hk-key {
+  min-width: 150px; padding: 5px 10px; border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(0, 0, 0, 0.28);
+  color: #bae6fd; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px;
+  text-align: center; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease;
+}
+.hm-hk-key:hover { border-color: rgba(56, 189, 248, 0.4); }
+.hm-hk-key.is-rec { border-color: #f59e0b; color: #fbbf24; background: rgba(245, 158, 11, 0.12); }
+.hm-hk-key.is-empty { color: #64748b; }
+.hm-hk-reset {
+  padding: 4px 8px; border-radius: 6px; border: 1px solid transparent;
+  background: transparent; color: #64748b; font-size: 10.5px; cursor: pointer;
+}
+.hm-hk-reset:hover { color: #cbd5e1; border-color: rgba(255, 255, 255, 0.12); }
+.hm-hk-note { margin-top: 10px; font-size: 10.5px; line-height: 1.75; color: #64748b; }
+body.hm-light .hm-hk-region { background: #fff; border-color: rgba(15, 23, 42, 0.1); }
+body.hm-light .hm-hk-region-head { background: #f8fafc; border-bottom-color: rgba(15, 23, 42, 0.08); }
+body.hm-light .hm-hk-head h2 { color: #0f172a; }
+body.hm-light .hm-hk-region-head b { color: #334155; }
+body.hm-light .hm-hk-name { color: #475569; }
+body.hm-light .hm-hk-key { background: #f8fafc; color: #0369a1; border-color: rgba(15, 23, 42, 0.14); }
+
+/* ============ 统计卡 ============ */
+.hm-admin-cards {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 12px; margin-bottom: 16px;
+}
+@media (max-width: 1400px) { .hm-admin-cards { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px)  { .hm-admin-cards { grid-template-columns: repeat(2, 1fr); } }
+
+.hm-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(34,211,238,0.05));
+  border: 1px solid rgba(99,102,241,0.2);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.hm-card:hover { border-color: rgba(99,102,241,0.5); transform: translateY(-1px); }
+.hm-card-ico { font-size: 20px; line-height: 1; }
+.hm-card-body { display: flex; flex-direction: column; }
+.hm-card-body strong { font-size: 18px; font-weight: 600; color: #e2e8f0; letter-spacing: -0.3px; }
+.hm-card-body span { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+/* ============ 面板 ============ */
+.hm-admin-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+}
+@media (max-width: 1200px) { .hm-admin-row { grid-template-columns: 1fr; } }
+
+.hm-admin-panel {
+  background: linear-gradient(180deg, #141c2e, #0f1727);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px; padding: 16px 18px;
+}
+.hm-admin-panel-wide { grid-column: 1 / -1; }
+
+.hm-admin-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.hm-admin-panel-head h3 {
+  font-size: 13px; font-weight: 600; color: #e2e8f0; margin: 0;
+  letter-spacing: 0.3px;
+}
+.hm-admin-panel-head span { font-size: 11px; color: #64748b; }
+
+/* ============ 消耗日志（api_call_logs） ============ */
+.hm-usage-wrap { overflow: auto; border-top: 1px solid rgba(148, 163, 184, 0.14); }
+.hm-usage-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.hm-usage-table th {
+  position: sticky; top: 0; z-index: 1;
+  text-align: left; font-weight: 500; color: #8fa3bd; font-size: 11.5px;
+  padding: 10px 12px; background: #0d1b2a;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16); white-space: nowrap;
+}
+.hm-usage-table td {
+  padding: 12px; vertical-align: top; color: #cbd5e1;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+.hm-usage-table tr:hover td { background: rgba(56, 189, 248, 0.05); }
+.hm-usage-table td b { display: block; color: #e2e8f0; font-weight: 600; }
+.hm-usage-table td small { display: block; color: #7c8fa8; font-size: 11px; margin-top: 3px; }
+.hm-usage-time { color: #9fb3c8; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hm-usage-status { display: inline-block; font-size: 11.5px; font-weight: 600; margin-bottom: 2px; }
+.hm-usage-status.is-ok { color: #34d399; }
+.hm-usage-status.is-fail { color: #fb7185; }
+.hm-usage-job { color: #64748b; word-break: break-all; }
+.hm-usage-err { color: #fda4af; }
+.hm-usage-cost { color: #fbbf24; font-weight: 700; white-space: nowrap; text-align: right; }
+.hm-usage-dim { color: #94a3b8; white-space: nowrap; }
+.hm-admin-empty { padding: 28px 12px; text-align: center; color: #8fa3bd; font-size: 12.5px; }
+
+/* ============ 环形图 ============ */
+.hm-admin-ring-wrap {
+  position: relative; height: 260px;
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+}
+.hm-admin-ring-total {
+  position: absolute; left: 130px; top: 50%; transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none;
+}
+.hm-admin-ring-total span { font-size: 11px; color: #64748b; }
+.hm-admin-ring-total strong {
+  display: block; font-size: 24px; font-weight: 700; color: #22d3ee;
+  margin-top: 4px;
+}
+.hm-admin-ring-legend { list-style: none; margin: 0; padding: 0; }
+.hm-admin-ring-legend li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; font-size: 12px; color: #cbd5e1;
+}
+.hm-admin-ring-legend i {
+  width: 10px; height: 10px; border-radius: 3px;
+}
+.hm-admin-ring-legend b { margin-left: auto; color: #94a3b8; font-weight: 500; }
+
+/* ============ Top 列表 ============ */
+.hm-admin-top-list { list-style: none; margin: 0; padding: 0; }
+.hm-admin-top-list li {
+  display: grid; grid-template-columns: 24px 1fr auto auto;
+  gap: 12px; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 12px;
+}
+.hm-admin-top-list li:last-child { border-bottom: none; }
+.hm-admin-top-list em {
+  font-style: normal; font-weight: 700; color: #6366f1; font-size: 11px;
+}
+.hm-admin-top-name { color: #e2e8f0; font-weight: 500; }
+.hm-admin-top-list li b { color: #22d3ee; font-weight: 600; }
+.hm-admin-top-list li small { color: #64748b; font-size: 11px; }
+
+.hm-admin-share-bar {
+  height: 6px; border-radius: 3px; flex: 1; background: rgba(255,255,255,0.05);
+  overflow: hidden;
+}
+.hm-admin-share-bar i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #6366f1, #22d3ee);
+  border-radius: 3px;
+}
+
+/* ============ 图表 Legend 按钮 ============ */
+.hm-admin-legend-btns { display: flex; gap: 6px; }
+.hm-admin-legend-btn {
+  padding: 3px 10px; font-size: 11px; color: #64748b;
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px; cursor: pointer;
+}
+.hm-admin-legend-btn.is-active { color: #22d3ee; border-color: rgba(34,211,238,0.5); }
+
+/* ============ 消耗排行 ============ */
+.hm-admin-rank-list { display: flex; flex-direction: column; gap: 2px; }
+.hm-admin-rank-row {
+  display: grid;
+  grid-template-columns: 40px 80px 1fr 180px 90px 80px;
+  gap: 12px; align-items: center;
+  padding: 10px 8px; border-radius: 6px;
+  font-size: 12px; color: #cbd5e1;
+}
+.hm-admin-rank-row:hover { background: rgba(255,255,255,0.03); }
+.hm-admin-rank-no { font-size: 18px; font-weight: 700; color: #475569; }
+.hm-admin-rank-row:nth-child(1) .hm-admin-rank-no { color: #f59e0b; }
+.hm-admin-rank-row:nth-child(2) .hm-admin-rank-no { color: #cbd5e1; }
+.hm-admin-rank-row:nth-child(3) .hm-admin-rank-no { color: #d97706; }
+.hm-admin-rank-name { font-weight: 500; color: #e2e8f0; }
+.hm-admin-rank-bar-wrap { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.hm-admin-rank-bar {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+}
+.hm-admin-rank-cost { color: #22d3ee; font-weight: 600; text-align: right; }
+.hm-admin-rank-calls { color: #64748b; font-size: 11px; text-align: right; }
+
+.hm-pill {
+  display: inline-block; padding: 2px 8px; font-size: 10px;
+  border-radius: 3px; background: rgba(99,102,241,0.15);
+  color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3);
+}
+.hm-pill.is-free { background: rgba(34,211,238,0.12); color: #67e8f9; border-color: rgba(34,211,238,0.3); }
+.hm-pill.is-member { background: rgba(245,158,11,0.12); color: #fcd34d; border-color: rgba(245,158,11,0.3); }
+
+/* ============ 日志表 ============ */
+.hm-admin-log-table-wrap { overflow-x: auto; }
+.hm-admin-log-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+  color: #cbd5e1;
+}
+.hm-admin-log-table th, .hm-admin-log-table td {
+  padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  white-space: nowrap;
+}
+.hm-admin-log-table th {
+  font-size: 11px; font-weight: 500; color: #64748b;
+  background: rgba(255,255,255,0.02);
+  position: sticky; top: 0;
+}
+.hm-admin-log-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.hm-td-time { color: #64748b; font-family: "SF Mono", Consolas, monospace; font-size: 11px; }
+.hm-td-code { font-family: "SF Mono", Consolas, monospace; color: #64748b; font-size: 11px; }
+.hm-td-status { font-weight: 600; }
+
+/* ============ 调用日志 · 真实接口筛选 / 分页 ============ */
+.hm-log-toolbar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin: 0 0 14px; padding: 12px;
+  border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.34);
+}
+.hm-log-toolbar label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: #8fa3bd;
+}
+.hm-log-toolbar input,
+.hm-log-toolbar select {
+  height: 30px; padding: 0 9px; border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(0, 0, 0, 0.28); color: #e2e8f0;
+  font-size: 12px; font-family: inherit; color-scheme: dark;
+}
+.hm-log-toolbar input { min-width: 108px; }
+.hm-log-toolbar input::placeholder { color: #5b6b82; }
+.hm-log-btn {
+  height: 30px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.1); color: #cbd5e1;
+  font-size: 12px; font-family: inherit; cursor: pointer;
+}
+.hm-log-btn:hover { border-color: rgba(147, 197, 253, 0.55); color: #fff; }
+.hm-log-btn.is-primary { border-color: rgba(96, 165, 250, 0.55); background: rgba(96, 165, 250, 0.18); color: #dbeafe; }
+.hm-log-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+.hm-log-pager {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 12px 2px 0; font-size: 12px; color: #8fa3bd;
+}
+.hm-log-state {
+  display: inline-flex; align-items: center; padding: 1px 7px;
+  border-radius: 6px; font-size: 11px; font-weight: 600;
+}
+.hm-log-state.is-success { background: rgba(16, 185, 129, 0.14); color: #34d399; }
+.hm-log-state.is-failed { background: rgba(239, 68, 68, 0.14); color: #f87171; }
+.hm-log-err-text {
+  display: block; max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+  color: #f87171; font-size: 10.5px; white-space: nowrap;
+}
+.hm-log-src { margin-left: 6px; font-size: 10.5px; color: #5b6b82; }
+.hm-log-hint { color: #8fa3bd; font-size: 12.5px; }
+.hm-log-err-actions { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+
+/* ============ 消耗日志独立页 ============ */
+.hm-usage-page { padding-bottom: 40px; }
+.hm-usage-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.hm-usage-head h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.02em; }
+.hm-usage-head p { margin: 6px 0 0; font-size: 11.5px; color: #8fa3bd; }
+.hm-usage-head code {
+  padding: 1px 5px; border-radius: 5px; font-size: 10.5px;
+  background: rgba(148, 163, 184, 0.12); color: #b9c7db;
+}
+.hm-usage-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px; margin-bottom: 16px;
+}
+.hm-usage-stat {
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.42);
+}
+.hm-usage-stat span { display: block; font-size: 11px; color: #8fa3bd; margin-bottom: 6px; }
+.hm-usage-stat strong { font-size: 20px; font-weight: 700; color: #e2e8f0; letter-spacing: 0.01em; }
+.hm-usage-stat.is-cost strong { color: #fbbf24; }
+.hm-usage-stat.is-ok strong { color: #34d399; }
+.hm-usage-stat.is-fail strong { color: #f87171; }
+.hm-usage-list {
+  border-radius: 14px; border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.34); overflow: hidden;
+}
+.hm-usage-list .hm-log-pager { padding: 12px 14px; }
+.hm-usage-log-table { width: 100%; border-collapse: collapse; font-size: 12.5px; color: #cbd5e1; }
+.hm-usage-log-table th {
+  padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 500;
+  color: #7c8fa8; background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14); white-space: nowrap;
+}
+.hm-usage-log-table td {
+  padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); white-space: nowrap;
+}
+.hm-usage-log-table tbody tr:hover { background: rgba(56, 189, 248, 0.05); }
+
+/* ============ 账号卡片 ============ */
+.hm-admin-account-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.hm-admin-account-card {
+  background: linear-gradient(180deg, #141c2e, #0f1727);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px; padding: 14px 16px;
+  transition: border-color 0.15s;
+}
+.hm-admin-account-card:hover { border-color: rgba(99,102,241,0.4); }
+
+.hm-admin-account-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.hm-admin-account-avatar {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 600; color: #fff;
+}
+.hm-admin-account-info { display: flex; flex-direction: column; }
+.hm-admin-account-info strong { font-size: 14px; color: #e2e8f0; }
+.hm-admin-account-status {
+  margin-left: auto; font-size: 11px; color: #64748b;
+  display: flex; align-items: center; gap: 5px;
+}
+.hm-admin-account-status i {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.hm-admin-account-status.is-online { color: #4ade80; }
+.hm-admin-account-status.is-online i { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.6); }
+.hm-admin-account-status.is-offline { color: #f87171; }
+.hm-admin-account-status.is-offline i { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.5); }
+
+.hm-admin-account-bars { margin-bottom: 10px; }
+.hm-admin-account-item {
+  display: grid; grid-template-columns: 40px 1fr auto; gap: 8px; align-items: center;
+  font-size: 11px; color: #64748b; margin-bottom: 4px;
+}
+.hm-admin-mini-bar {
+  height: 6px; background: rgba(255,255,255,0.06);
+  border-radius: 3px; overflow: hidden;
+}
+.hm-admin-mini-bar i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #22d3ee, #6366f1);
+  border-radius: 3px;
+}
+.hm-admin-account-item b { color: #94a3b8; font-size: 11px; font-family: "SF Mono", Consolas, monospace; }
+
+.hm-admin-account-meta {
+  display: flex; gap: 12px; font-size: 11px; color: #64748b;
+  padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+/* ============ 项目卡片 ============ */
+.hm-admin-project-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.hm-admin-project-card {
+  background: linear-gradient(180deg, #141c2e, #0f1727);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px; padding: 14px 16px;
+  transition: border-color 0.15s;
+  display: flex; flex-direction: column;
+}
+.hm-admin-project-card:hover { border-color: rgba(99,102,241,0.4); }
+.hm-admin-project-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.hm-admin-project-top strong { font-size: 14px; color: #e2e8f0; }
+.hm-admin-project-members { font-size: 11px; color: #64748b; }
+.hm-admin-project-status { font-size: 12px; margin-bottom: 12px; font-weight: 500; }
+
+.hm-admin-project-budget { margin-bottom: 10px; }
+.hm-admin-project-budget-row {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: #64748b; margin-bottom: 4px;
+}
+.hm-admin-project-budget-row b { color: #94a3b8; font-weight: 500; }
+
+.hm-admin-project-footer {
+  display: flex; gap: 10px; padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  font-size: 11px; color: #64748b; margin-bottom: 10px;
+}
+.hm-admin-project-footer span { cursor: pointer; transition: color 0.15s; }
+.hm-admin-project-footer span:hover { color: #22d3ee; }
+
+.hm-admin-project-notice {
+  font-size: 11px; color: #f59e0b; padding: 6px 10px;
+  background: rgba(245,158,11,0.1); border-radius: 4px;
+  border: 1px solid rgba(245,158,11,0.2);
+}
+
+/* ============ Filter tabs ============ */
+.hm-admin-filter-tabs { display: flex; gap: 4px; }
+.hm-admin-filter-tab {
+  padding: 4px 10px; font-size: 11px; color: #64748b;
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px; cursor: pointer;
+}
+.hm-admin-filter-tab.is-active { color: #e2e8f0; border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.1); }
+
+/* ============ pill 按钮 ============ */
+.hm-pill {
+  padding: 6px 12px; border-radius: 6px; font-size: 12px;
+  background: rgba(255,255,255,0.04); color: #cbd5e1;
+  border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+  transition: all 0.15s;
+}
+.hm-pill:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+.hm-pill.hm-pill-primary {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff; border-color: transparent;
+}
+.hm-pill.hm-pill-primary:hover { filter: brightness(1.1); }

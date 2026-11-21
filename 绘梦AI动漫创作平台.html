@@ -7229,6 +7229,11 @@ body[data-mode="audio"] .hm-chip-mode .hm-mode-ico[data-ico="audio"] {
 /* 模型按钮：悬停显示积分提示（白字浮层） */
 .hm-chip-grid button {
   position: relative;
+  min-height: 30px;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .hm-chip-grid button .hm-credits-hover {
@@ -20759,6 +20764,34 @@ body.dv-open .hm-rail-toggle {
 
 
 /* ============ 次元宇宙 · 原网页背景上的透明 Canvas 游戏层 ============ */
+/* Transparent Godot 4 Web overlay: the original page remains the visual world. */
+.dv-godot-overlay {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent !important;
+  pointer-events: auto;
+  touch-action: none;
+  transition: opacity .35s ease;
+}
+
+.dv-godot-game {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  touch-action: none;
+}
+
 .dv-topbar { z-index: 7; }
 .dv-center { z-index: 2; }
 .dv-browser-game {
@@ -20847,6 +20880,70 @@ body.dv-open .hm-rail-toggle {
   .dv-game-score { top: 72px; left: 10px; }
   .dv-browser-game { inset: 0; height: 100%; }
 }
+
+
+/* 则灵视频模型分组与费用估算 */
+.hm-video-group-label {
+  display: block;
+  margin: 7px 8px 3px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .05em;
+}
+.hm-video-group-per-task {
+  color: #f6bd65;
+}
+.hm-video-group-per-second {
+  color: #67c8ff;
+}
+.hm-chip-grid button .hm-key-pending {
+  background: #7c4a2b;
+  color: #ffddb8;
+}
+.hm-video-estimate {
+  margin: 5px 0 0;
+  padding: 5px 9px;
+  border: 1px solid rgba(94, 196, 238, .18);
+  border-radius: 7px;
+  color: #9edcf3;
+  background: rgba(56, 189, 248, .055);
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+
+/* 则灵参考视频/音频素材标签 */
+.hm-ref-media-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 5px 0 2px;
+}
+.hm-ref-media-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 3px 7px 3px 9px;
+  border: 1px solid rgba(94, 196, 238, .2);
+  border-radius: 6px;
+  color: #a9c7d8;
+  background: rgba(56, 189, 248, .06);
+  font-size: 10px;
+}
+.hm-ref-media-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hm-ref-media-chip button {
+  padding: 0 2px;
+  color: #b7cbd8;
+  font-size: 15px;
+  line-height: 1;
+}
+.hm-ref-media-chip button:hover { color: #ff9b9b; }
 
 </style>
   <style>
@@ -26260,6 +26357,7 @@ body.hm-light .hm-hk-key { background: #f8fafc; color: #0369a1; border-color: rg
       <div class="hm-ref-limits" id="refLimits" hidden>
         <span id="refLimitsText" class="hm-ref-limits-text"></span>
       </div>
+      <div class="hm-ref-media-list" id="refMediaList" hidden aria-live="polite"></div>
 
       <div class="hm-prompt prompt-wrap">
         <textarea id="promptInput" maxlength="1800" placeholder="描述你想生成的画面..."></textarea>
@@ -26384,7 +26482,7 @@ body.hm-light .hm-hk-key { background: #f8fafc; color: #0369a1; border-color: rg
             <div class="hm-menu hm-menu-up hm-ratio-menu" id="ratioPicker" aria-hidden="true"></div>
           </div>
 
-          <div class="hm-menu-wrap hm-av-only">
+          <div class="hm-menu-wrap hm-av-only hm-image-scale-only">
             <button class="hm-chip" id="scaleBtn" aria-haspopup="true" aria-expanded="false">
               <span class="hm-chip-ic" id="scaleChipIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7h5v10H4Zm7 0V4h5v13h-5Zm7 0v-6h5v6h-5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>
               <span id="scaleChipText">1K</span>
@@ -26404,6 +26502,14 @@ body.hm-light .hm-hk-key { background: #f8fafc; color: #0369a1; border-color: rg
           </div>
 
           <div class="hm-menu-wrap hm-video-only" hidden>
+            <button class="hm-chip" id="videoResolutionBtn" aria-haspopup="true" aria-expanded="false">
+              <span id="videoResolutionLabel">480p</span>
+              <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="hm-menu hm-menu-up hm-scale-menu" id="videoResolutionPicker" aria-hidden="true"></div>
+          </div>
+
+          <div class="hm-menu-wrap hm-video-only" hidden>
             <button class="hm-chip" id="durationBtn" aria-haspopup="true" aria-expanded="false">
               <span id="durationChipText">5秒</span>
               <svg class="hm-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -26419,6 +26525,7 @@ body.hm-light .hm-hk-key { background: #f8fafc; color: #0369a1; border-color: rg
             <input type="range" id="durationSlider" min="1" max="30" step="1" value="5" aria-label="视频时长">
             <span class="hm-duration-label" id="durationSliderLabel">5秒</span>
           </div>
+          <div class="hm-video-estimate hm-video-only" id="videoCreditEstimate" aria-live="polite" hidden>预计积分：--</div>
 
           <div class="hm-menu-wrap hm-audio-only" hidden>
             <button class="hm-chip" id="voiceBtn" aria-haspopup="true" aria-expanded="false">
@@ -28690,7 +28797,8 @@ const state = {
   lora: typeof storedPrefs.lora === 'string' ? storedPrefs.lora : '',   // 动漫 LoRA 风格包 ID
   videoModel: typeof storedPrefs.videoModel === 'string' && storedPrefs.videoModel
     ? storedPrefs.videoModel
-    : 'sora-2',
+    : 'minimax_h3-768p',
+  videoResolution: typeof storedPrefs.videoResolution === 'string' ? storedPrefs.videoResolution : '480p',
   audioModel: typeof storedPrefs.audioModel === 'string' && storedPrefs.audioModel
     ? storedPrefs.audioModel
     : 'tts-1',
@@ -28816,6 +28924,18 @@ if (Array.isArray(state.refImages) && state.refImages.length > 0 &&
 function currentRefs() {
   ensureTabSlots();
   return state.tabRefs[state.activePrompt] || [];
+}
+function currentRefMaxCount() {
+  if (state.mode === 'video' && window.HMUI && typeof window.HMUI.getVideoImageLimit === 'function') {
+    return Number(window.HMUI.getVideoImageLimit()) || 0;
+  }
+  return REF_MAX_COUNT;
+}
+function currentRefMaxBytes() {
+  if (state.mode === 'video' && window.HMUI && typeof window.HMUI.getVideoImageMaxBytes === 'function') {
+    return Number(window.HMUI.getVideoImageMaxBytes()) || REF_MAX_BYTES;
+  }
+  return REF_MAX_BYTES;
 }
 function setCurrentRefs(arr) {
   ensureTabSlots();
@@ -30019,7 +30139,7 @@ function currentModelLabel() {
 
 /* 视频 / 音频可选模型 */
 const MEDIA_MODELS = {
-  video: [['sora-2', 'Sora 2'], ['sora-2-pro', 'Sora 2 Pro'], ['veo-3', 'Veo 3']],
+  video: [['minimax_h3-768p', 'MiniMax H3'], ['vidu-q4-nopeak', 'Vidu Q4 NoPeak'], ['sd-2.5-flash', 'Seedance 2.5 Flash'], ['mh-seedance-2.0-mini', 'Seedance 2.0 Mini'], ['mh-seedance-2.0-fast', 'Seedance 2.0 Fast']],
   audio: [['tts-1', 'TTS-1'], ['tts-1-hd', 'TTS-1 HD'], ['gpt-4o-mini-tts', 'GPT-4o mini TTS']]
 };
 
@@ -30159,6 +30279,8 @@ function syncEngineUI() {
 const REF_MAX_BYTES = 10 * 1024 * 1024;
 const REF_MAX_SIDE = 1280;
 const REF_MAX_COUNT = 10;
+const VIDEO_REF_TOTAL_MAX_BYTES = 4 * 1024 * 1024;
+var _videoMediaRefs = { videos: [], audios: [] };
 
 function syncRefNote() {
   if (!els.refNote) return;
@@ -30388,12 +30510,12 @@ function renderRef() {
     });
 
     /* "+" 槽位 */
-    if (list.length < REF_MAX_COUNT && !_refSelectMode) {
+    if (list.length < currentRefMaxCount() && !_refSelectMode) {
       var addCell = document.createElement('div');
       addCell.className = 'hm-ref-cell hm-ref-add';
       addCell.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>' +
-        '<span>' + list.length + '/' + REF_MAX_COUNT + '</span>';
+        '<span>' + list.length + '/' + currentRefMaxCount() + '</span>';
       addCell.addEventListener('click', function (ev) {
         ev.stopPropagation();
         openRefPicker();
@@ -30824,6 +30946,8 @@ function removeRefAt(idx) {
 
 function clearRefImages() {
   setCurrentRefs([]);
+  _videoMediaRefs = { videos: [], audios: [] };
+  renderVideoMediaRefs();
   els.refInput.value = '';
   _refSelectedSet = {};
   hideRefHover();
@@ -31132,18 +31256,110 @@ function loadImageFile(file) {
   });
 }
 
+function getVideoMediaLimit(kind) {
+  var all = window.HMUI && typeof window.HMUI.getVideoRefLimits === 'function' ? window.HMUI.getVideoRefLimits() : {};
+  var item = all && all[kind];
+  return item && typeof item === 'object' ? item : { count: 0, maxBytes: 0 };
+}
+function readRefFileDataUrl(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result || '')); };
+    reader.onerror = function () { reject(new Error('文件读取失败')); };
+    reader.readAsDataURL(file);
+  });
+}
+function currentVideoRefPayloadChars() {
+  var chars = currentRefs().reduce(function (sum, r) { return sum + String(r && r.dataUrl || '').length; }, 0);
+  ['videos', 'audios'].forEach(function (kind) {
+    _videoMediaRefs[kind].forEach(function (r) { chars += String(r.dataUrl || '').length; });
+  });
+  return chars;
+}
+function renderVideoMediaRefs() {
+  var list = document.getElementById('refMediaList');
+  if (!list) return;
+  list.innerHTML = '';
+  var entries = [];
+  _videoMediaRefs.videos.forEach(function (r, i) { entries.push({ kind: 'videos', index: i, label: '视频 · ' + r.name }); });
+  _videoMediaRefs.audios.forEach(function (r, i) { entries.push({ kind: 'audios', index: i, label: '音频 · ' + r.name }); });
+  list.hidden = entries.length === 0;
+  entries.forEach(function (entry) {
+    var chip = document.createElement('span');
+    chip.className = 'hm-ref-media-chip';
+    var label = document.createElement('span');
+    label.textContent = entry.label;
+    var remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.setAttribute('aria-label', '移除' + entry.label);
+    remove.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      _videoMediaRefs[entry.kind].splice(entry.index, 1);
+      renderVideoMediaRefs();
+    });
+    chip.appendChild(label);
+    chip.appendChild(remove);
+    list.appendChild(chip);
+  });
+}
+async function pickVideoMediaFile(file, kind) {
+  var bucket = kind === 'videos' ? 'videos' : 'audios';
+  var mime = String(file.type || '').toLowerCase();
+  var allowed = kind === 'videos'
+    ? /^video\/(mp4|webm|quicktime)$/.test(mime)
+    : /^audio\/(mpeg|mp3|wav|x-wav|ogg|mp4|m4a)$/.test(mime);
+  if (!allowed) { toast(kind === 'videos' ? '参考视频仅支持 MP4 / WebM / MOV' : '参考音频仅支持 MP3 / WAV / OGG / M4A', 'error'); return; }
+  var limit = getVideoMediaLimit(bucket);
+  if (Number(limit.count || 0) <= _videoMediaRefs[bucket].length) {
+    toast('当前模型参考' + (kind === 'videos' ? '视频' : '音频') + '最多 ' + Number(limit.count || 0) + ' 个', 'error');
+    return;
+  }
+  var hardMax = kind === 'videos' ? 3 * 1024 * 1024 : 1536 * 1024;
+  var maxBytes = Math.min(Number(limit.maxBytes || hardMax), hardMax);
+  if (file.size > maxBytes) {
+    toast('该参考文件超过前端安全上传上限 ' + Math.round(maxBytes / 1024 / 1024) + 'MB', 'error');
+    return;
+  }
+  var dataUrl = await readRefFileDataUrl(file);
+  var existingChars = currentVideoRefPayloadChars();
+  if (existingChars + dataUrl.length > VIDEO_REF_TOTAL_MAX_BYTES * 4 / 3) {
+    toast('参考素材总量过大，请减少素材或压缩文件后再上传', 'error');
+    return;
+  }
+  _videoMediaRefs[bucket].push({
+    dataUrl: dataUrl,
+    name: String(file.name || (kind === 'videos' ? 'reference.mp4' : 'reference.mp3')).slice(0, 120),
+    size: file.size,
+    mime: mime
+  });
+  renderVideoMediaRefs();
+  toast('已添加' + (kind === 'videos' ? '参考视频' : '参考音频') + '：' + (file.name || '文件'), 'success');
+}
+async function handleReferenceFiles(files) {
+  var list = Array.from(files || []);
+  for (var i = 0; i < list.length; i++) {
+    var file = list[i];
+    var type = String(file.type || '').toLowerCase();
+    if (/^image\/(png|jpe?g|webp)$/.test(type)) await pickRefFile(file);
+    else if (state.mode === 'video' && /^video\//.test(type)) await pickVideoMediaFile(file, 'videos');
+    else if (state.mode === 'video' && /^audio\//.test(type)) await pickVideoMediaFile(file, 'audios');
+    else toast('当前模式不支持该参考文件类型', 'error');
+  }
+}
+
 async function pickRefFile(file) {
   if (!file) return;
-  if (currentRefs().length >= REF_MAX_COUNT) {
-    toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
+  if (currentRefs().length >= currentRefMaxCount()) {
+    toast('当前模型参考图片最多 ' + currentRefMaxCount() + ' 张', 'error');
     return;
   }
   if (!/^image\/(png|jpe?g|webp)$/i.test(file.type || '')) {
     toast('参考图仅支持 PNG / JPG / WebP 格式', 'error');
     return;
   }
-  if (file.size > REF_MAX_BYTES) {
-    toast('参考图不能超过 10MB', 'error');
+  if (file.size > currentRefMaxBytes()) {
+    toast('参考图超过当前模型单文件大小限制', 'error');
     return;
   }
 
@@ -31194,7 +31410,7 @@ async function pickRefFile(file) {
     els.refInput.value = '';
     renderRef();
     const n = arr.length;
-    toast('已添加到当前描述（' + n + '/' + REF_MAX_COUNT + '）· 点击 @' + n + ' 可插入提示词', 'success');
+    toast('已添加到当前描述（' + n + '/' + currentRefMaxCount() + '）· 点击 @' + n + ' 可插入提示词', 'success');
   } catch (err) {
     toast('参考图读取失败，请换一张图片', 'error');
   }
@@ -31301,6 +31517,13 @@ window.HMRefDrop = {
     }
   }
 };
+window.HMRefDrop.getMediaRefs = function () {
+  return {
+    videos: _videoMediaRefs.videos.map(function (r) { return r.dataUrl; }),
+    audios: _videoMediaRefs.audios.map(function (r) { return r.dataUrl; })
+  };
+};
+window.HMRefDrop.renderMediaRefs = renderVideoMediaRefs;
 
 /* 作品卡（我的作品）作为原生拖拽源：拖拽标识只放作品 id */
 document.addEventListener('dragstart', function (ev) {
@@ -31354,6 +31577,7 @@ function persistPrefs() {
     channelModel: state.channelModel,
     lora: state.lora,
     videoModel: state.videoModel,
+    videoResolution: state.videoResolution,
     audioModel: state.audioModel,
     providerId: state.providerId,
     toonApi: state.toonApi,
@@ -34926,10 +35150,12 @@ function bindEvents() {
     els.modelMenu.addEventListener('click', function (event) {
       const vBtn = event.target.closest('[data-vmodel]');
       if (vBtn) {
-        state.videoModel = vBtn.dataset.vmodel;
-        persistPrefs();
-        syncEngineUI();
-        closeAllMenus();
+        event.preventDefault();
+        event.stopPropagation();
+        /* 视频模型选择统一交给 ui.js，保证状态、清晰度、比例、时长与计费同步 */
+        if (window.HMVideoModels && typeof window.HMVideoModels.select === 'function') {
+          window.HMVideoModels.select(vBtn.dataset.vmodel);
+        }
         return;
       }
       const aBtn = event.target.closest('[data-amodel]');
@@ -35079,15 +35305,7 @@ function bindEvents() {
   els.refInput.addEventListener('change', async function (event) {
     var files = Array.from(event.target.files || []);
     if (!files.length) return;
-    var remaining = REF_MAX_COUNT - currentRefs().length;
-    if (remaining <= 0) {
-      toast('当前描述已达上限，最多 ' + REF_MAX_COUNT + ' 张参考图', 'error');
-      els.refInput.value = '';
-      return;
-    }
-    for (var i = 0; i < Math.min(files.length, remaining); i++) {
-      await pickRefFile(files[i]);
-    }
+    await handleReferenceFiles(files);
     els.refInput.value = '';
   });
 
@@ -35174,21 +35392,7 @@ function bindEvents() {
       }
       return;
     }
-    /* 只保留图片 */
-    var imgs = files.filter(function (f) {
-      return /^image\/(png|jpe?g|webp)$/i.test(f.type || '');
-    });
-    if (!imgs.length) {
-      toast('拖入的文件不是图片，请拖 PNG / JPG / WebP', 'error');
-      return;
-    }
-    var remaining = REF_MAX_COUNT - currentRefs().length;
-    for (var i = 0; i < Math.min(imgs.length, remaining); i++) {
-      await pickRefFile(imgs[i]);
-    }
-    if (imgs.length > remaining) {
-      toast('仅添加了前 ' + remaining + ' 张（已达上限 ' + REF_MAX_COUNT + '）', 'info');
-    }
+    await handleReferenceFiles(files);
   });
 
   /* === 右侧工具条 === */
@@ -36261,6 +36465,8 @@ window.HMApp = {
   hydrateWorks: hydrateWorks,
   worksLsKey: worksLsKey,
   renderRef: renderRef,
+  currentRefs: currentRefs,
+  renderRatios: renderRatios,
   translatePrompt: translatePrompt,
   syncSettingsUI: syncSettingsUI,
   persistPrefs: persistPrefs,
@@ -58476,13 +58682,24 @@ window.HMChat = (function () {
     closeDetail(true);
     toast('正在打开《' + book.title + '》', 'info');
 
+    /* 书架条目已含标题/封面/分类/页数，先用它把详情画出来（点击即出），
+       详情接口返回后只在确有新字段时再静默补一次，避免开书空等 300ms~1.2s。 */
+    state.current = book;
+    renderDetail(book);
+    var opening = animateOpen(card, book);
+
     fetchBook(id).then(function (full) {
-      if (!full) { toast('书籍加载失败', 'error'); return; }
+      if (!full || full === book) return;
+      var changed = (full.pages || []).length !== (book.pages || []).length
+        || (full.toc || []).length !== (book.toc || []).length
+        || full.pdfUrl !== book.pdfUrl
+        || full.coverUrl !== book.coverUrl
+        || full.pageCount !== book.pageCount;
+      if (!changed) return;
       state.current = full;
-      return animateOpen(card, full);
-    }).then(function () {
-      if (!state.current) return;
-      renderDetail(state.current);
+      return opening.then(function () {
+        if (state.current === full) renderDetail(full);
+      });
     }).catch(function (err) {
       toast('打开失败：' + (err && err.message ? err.message : err), 'error');
     });
@@ -58596,7 +58813,9 @@ window.HMChat = (function () {
         enterReader(state.current, Number(btn.getAttribute('data-page')));
       });
     });
-    /* 详情页就预取签名直链：点「继续阅读」时无需再等一次后端握手 */
+    /* 用户浏览详情时就预热 PDF.js 与 Worker，并预取签名直链；
+       点「开始阅读」时不再等待 GitHub Pages 下载大体积 Worker。 */
+    if (book.pdfUrl) warmPdfReader();
     prefetchPdfSignedUrl(book);
   }
 
@@ -58678,45 +58897,69 @@ window.HMChat = (function () {
   function loadPdfJs() {
     if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
     if (pdfJsPromise) return pdfJsPromise;
-    pdfJsPromise = new Promise(function (resolve, reject) {
-      var s = document.createElement('script');
-      s.src = PDFJS_BASE + 'pdf.min.js';
-      s.onload = function () {
-        try {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js';
-        } catch (e) {}
-        resolve(window.pdfjsLib);
-      };
-      s.onerror = function () {
+
+    /* 优先从腾讯云 COS 直连加载 PDF.js；大陆网络下避免 GitHub Pages 大文件下载瓶颈。
+       API 只返回短期签名地址，PDF.js 与 Worker 字节均不经过后端中转。 */
+    function loadFrom(urls) {
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = urls.pdfJsUrl;
+        s.crossOrigin = 'anonymous';
+        s.onload = function () {
+          try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = urls.workerUrl; } catch (e) {}
+          resolve(window.pdfjsLib);
+        };
+        s.onerror = function () {
+          reject(new Error('pdfjs-load-failed：' + s.src));
+        };
+        document.head.appendChild(s);
+      });
+    }
+
+    pdfJsPromise = request('/library/pdfjs-assets', {}, 15000)
+      .then(function (assets) {
+        if (!assets || !assets.pdfJsUrl || !assets.workerUrl) throw new Error('pdfjs-assets-invalid');
+        return loadFrom(assets);
+      })
+      .catch(function (remoteErr) {
+        /* COS 地址暂不可用时保留原静态资源回退，确保离线演示与旧部署兼容。 */
+        console.warn('[library] COS PDF.js 资源不可用，回退静态资源：', remoteErr && remoteErr.message);
+        return loadFrom({
+          pdfJsUrl: PDFJS_BASE + 'pdf.min.js',
+          workerUrl: PDFJS_BASE + 'pdf.worker.min.js'
+        });
+      })
+      .catch(function (err) {
         pdfJsPromise = null;
-        reject(new Error('pdfjs-load-failed：' + s.src));
-      };
-      document.head.appendChild(s);
-    });
+        throw err;
+      });
     return pdfJsPromise;
   }
 
   function resolvePdfOutline(doc, outline) {
-    var out = [];
+    /* 目录节点互不依赖：并行解析目标页，保持原有目录顺序，避免长目录逐项等待 */
     function walk(items, depth) {
-      return items.reduce(function (p, it) {
-        return p.then(function () {
-          var destPromise = it.dest
-            ? doc.getDestination(it.dest).catch(function () { return null; })
-            : Promise.resolve(null);
-          return destPromise.then(function (dest) {
-            var pagePromise = (dest && dest[0])
-              ? doc.getPageIndex(dest[0]).then(function (idx) { return idx + 1; }).catch(function () { return 0; })
-              : Promise.resolve(0);
-            return pagePromise.then(function (page) {
-              out.push({ title: it.title || '未命名', page: page, depth: depth });
-              return (it.items && it.items.length) ? walk(it.items, depth + 1) : null;
-            });
-          });
-        }, function () { return null; });
-      }, Promise.resolve());
+      return Promise.all((items || []).map(function (it) {
+        var destPromise = it.dest
+          ? doc.getDestination(it.dest).catch(function () { return null; })
+          : Promise.resolve(null);
+        return destPromise.then(function (dest) {
+          return (dest && dest[0])
+            ? doc.getPageIndex(dest[0]).then(function (idx) { return idx + 1; }).catch(function () { return 0; })
+            : 0;
+        }).then(function (page) {
+          var current = { title: it.title || '未命名', page: page, depth: depth };
+          return (it.items && it.items.length)
+            ? walk(it.items, depth + 1).then(function (children) { return [current].concat(children); })
+            : [current];
+        }).catch(function () {
+          return [{ title: it.title || '未命名', page: 0, depth: depth }];
+        });
+      })).then(function (groups) {
+        return Array.prototype.concat.apply([], groups);
+      });
     }
-    return walk(outline, 0).then(function () { return out; });
+    return walk(outline, 0);
   }
 
   /* -------- PDF 阅读：pdf.js canvas 自绘；任何失败都只在站内提示，绝不导航直链 -------- */
@@ -58801,18 +59044,31 @@ window.HMChat = (function () {
 
   /* 阅读器预热：空闲时把 pdf.js 主脚本与 worker 拉进浏览器缓存，点击时不再付这一笔 */
   var pdfWarmStarted = false;
+  var pdfWarmPromise = null;
   function warmPdfReader() {
-    if (pdfWarmStarted) return;
+    if (pdfWarmPromise) return pdfWarmPromise;
     pdfWarmStarted = true;
-    var idle = window.requestIdleCallback || function (fn) { return setTimeout(fn, 1200); };
-    idle(function () {
-      loadPdfJs().then(function () {
-        try {
-          /* 只为进 HTTP 缓存；失败无副作用 */
-          fetch(PDFJS_BASE + 'pdf.worker.min.js', { cache: 'force-cache' }).catch(function () {});
-        } catch (e) {}
-      }).catch(function () {});
-    }, { timeout: 3000 });
+    /* 详情页显示时立即并行预热 PDF.js 与 Worker，不再等待 requestIdleCallback；
+       大陆网络下 Worker 约 1MB，延迟到点击阅读才下载会明显拖慢首屏。 */
+    pdfWarmPromise = loadPdfJs().then(function (pdfjs) {
+      var workerUrl = pdfjs && pdfjs.GlobalWorkerOptions && pdfjs.GlobalWorkerOptions.workerSrc;
+      if (!workerUrl) return pdfjs;
+      return fetch(workerUrl, { cache: 'force-cache', mode: 'cors' })
+        .then(function (response) {
+          if (!response || !response.ok) throw new Error('PDF Worker 预热失败');
+          return pdfjs;
+        })
+        .catch(function (err) {
+          /* 预热失败不阻断阅读，pdf.js 仍可自行加载 Worker。 */
+          console.warn('[library] PDF Worker 预热失败：', err && err.message);
+          return pdfjs;
+        });
+    }).catch(function (err) {
+      pdfWarmPromise = null;
+      pdfWarmStarted = false;
+      throw err;
+    });
+    return pdfWarmPromise;
   }
 
   function fetchPdfSignedUrl(book, force) {
@@ -59021,15 +59277,11 @@ window.HMChat = (function () {
     if (state.pdfDoc) return Promise.resolve(state.pdfDoc);
     if (state.pdfDocPromise) return state.pdfDocPromise;
 
-    function streamUrl(url) {
-      var s = String(url || '');
-      var hashAt = s.indexOf('#');
-      var hash = hashAt >= 0 ? s.slice(hashAt) : '';
-      var base = hashAt >= 0 ? s.slice(0, hashAt) : s;
-      return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'stream=1' + hash;
-    }
+    /* SCF 不支持该路由的 Readable 流式回传；兜底必须使用标准文件路由，
+       由它 302 到 COS，浏览器直接按 Range 读取，不能追加 stream=1。 */
 
-    state.pdfDocPromise = loadPdfJs()
+    state.pdfDocPromise = warmPdfReader()
+      .then(function () { return loadPdfJs(); })
       .then(function (pdfjs) {
         pdfPerf.js = performance.now();
         /* 分段读取：只取当前页需要的字节；带真实进度回调
@@ -59042,9 +59294,11 @@ window.HMChat = (function () {
             var task = pdfjs.getDocument({
               url: url,
               disableRange: false,
-              disableStream: false,
-              /* 不后台整卷预取：大 PDF 在慢网下会把带宽抢光，先保证首屏 */
+              /* 对象存储支持 Range：关闭整卷流式下载，只按当前页请求分段 */
+              disableStream: true,
               disableAutoFetch: true,
+              /* 64KB 默认块在高延迟网络下请求次数偏多，增至 512KB 减少往返 */
+              rangeChunkSize: 512 * 1024,
               withCredentials: false
             });
             var settled = false;
@@ -59088,11 +59342,11 @@ window.HMChat = (function () {
         }).catch(function (err) {
           attempts.push('签名直链（' + (err && err.name) + ' / ' + (err && err.message) + '）');
           console.warn('[library] 签名直链失败，改用 stream=1：', err && err.name, err && err.message);
-          var streamed = streamUrl(mediaFile(book.pdfUrl));
-          pdfLoadingText('正在加载 PDF …');
+          var fallbackUrl = mediaFile(book.pdfUrl);
+          pdfLoadingText('正在通过对象存储读取 PDF …');
           kickPdfSlowTimer();
-          return open(streamed).catch(function (err2) {
-            attempts.push('流式 ' + streamed + '（' + (err2 && err2.name) + ' / ' + (err2 && err2.message) + '）');
+          return open(fallbackUrl).catch(function (err2) {
+            attempts.push('对象存储重定向 ' + fallbackUrl + '（' + (err2 && err2.name) + ' / ' + (err2 && err2.message) + '）');
             var e = new Error('已尝试：' + attempts.join('；'));
             e.name = (err2 && err2.name) || (err && err.name) || 'Error';
             throw e;
@@ -63686,6 +63940,12 @@ window.HMChat = (function () {
     if (['image', 'video', 'audio'].indexOf(mode) < 0) return;
     state.mode = mode;
 
+    /* 模式独立维护模型：进入视频时校验视频模型，绝不沿用生图模型的显示状态 */
+    if (mode === 'video' && !mediaCatalog.video.some(function (m) { return m.id === state.videoModel; })) {
+      state.videoModel = mediaCatalog.video.some(function (m) { return m.id === 'minimax_h3-768p'; })
+        ? 'minimax_h3-768p' : (mediaCatalog.video[0] && mediaCatalog.video[0].id);
+    }
+
     document.querySelectorAll('#modeMenu [data-mode]').forEach(function (el) {
       el.classList.toggle('is-active', el.getAttribute('data-mode') === mode);
     });
@@ -63697,6 +63957,13 @@ window.HMChat = (function () {
     if (modeText) modeText.textContent = mode === 'image' ? '生图' : mode === 'video' ? '视频' : '音频';
 
     syncModeUI();
+    /* 同步顶部模型胶囊：按当前模式读取独立模型状态 */
+    var modelPill = document.getElementById('enginePillText');
+    if (modelPill && typeof A.modeModelLabel === 'function') {
+      modelPill.textContent = A.modeModelLabel(mode);
+      var modelButton = document.getElementById('engineModelBtn');
+      if (modelButton) modelButton.title = A.modeModelLabel(mode);
+    }
     persistMode();
   }
 
@@ -63706,6 +63973,9 @@ window.HMChat = (function () {
 
     document.querySelectorAll('.hm-actions-right .hm-av-only').forEach(function (el) {
       el.hidden = mode === 'audio';
+    });
+    document.querySelectorAll('.hm-actions-right .hm-image-scale-only').forEach(function (el) {
+      el.hidden = mode !== 'image';
     });
     document.querySelectorAll('.hm-actions-right .hm-video-only').forEach(function (el) {
       el.hidden = mode !== 'video';
@@ -63734,7 +64004,7 @@ window.HMChat = (function () {
           ? '免费通道 · 无水印 · 生成后可直接下载原图'
           : 'RayinAPI 按量计费 · 生成后可直接下载原图';
       } else if (mode === 'video') {
-        notice.textContent = '视频为异步任务 · 由 Node 后端代理生成（暂无完全免费视频模型）';
+        notice.textContent = '则灵视频通道 · 按次 / 按秒计费 · 失败份额按上游规则退款';
       } else {
         var audioFree = modeFreeFor('audio');
         notice.textContent = audioFree
@@ -63743,6 +64013,13 @@ window.HMChat = (function () {
       }
     }
 
+    if (mode === 'video') {
+      renderDurationControls();
+      renderVideoResolutionControl();
+      renderVideoRatioPicker();
+    } else if (mode === 'image' && typeof A.renderRatios === 'function') {
+      A.renderRatios();
+    }
     syncScaleLabels();
   }
 
@@ -63774,17 +64051,30 @@ window.HMChat = (function () {
     var input = document.getElementById('refInput');
     var limits = document.getElementById('refLimits');
     var limitsText = document.getElementById('refLimitsText');
-
     if (mode === 'video') {
-      var videoMeta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
-      var refHint = videoMeta && videoMeta.refHint ? videoMeta.refHint : '支持图片/视频/音频参考';
-      if (emptyText) emptyText.textContent = '拖入或上传参考主体（图片/视频/音频）';
-      if (hintText) hintText.textContent = refHint;
-      if (input) input.setAttribute('accept', 'image/*,video/*,audio/*');
+      var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+      var ratios = (meta && meta.aspectRatios || []).join(' / ') || '未提供';
+      var resolutions = (meta && meta.resolutions || []).join(' / ') || '未提供';
+      var min = meta && meta.minDuration != null ? meta.minDuration : '?';
+      var max = meta && meta.maxDuration != null ? meta.maxDuration : '?';
+      var images = videoRefCount(meta, 'images');
+      var videos = videoRefCount(meta, 'videos');
+      var audios = videoRefCount(meta, 'audios');
+      if (emptyText) emptyText.textContent = '拖入或上传参考主体（图片 / 视频 / 音频）';
+      if (hintText) hintText.textContent = '时长 ' + min + '-' + max + ' 秒 · 比例 ' + ratios + ' · 清晰度 ' + resolutions;
+      if (input) {
+        var accepted = ['image/png', 'image/jpeg', 'image/webp'];
+        if (videos > 0) accepted.push('video/mp4', 'video/webm', 'video/quicktime');
+        if (audios > 0) accepted.push('audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4');
+        input.setAttribute('accept', accepted.join(','));
+      }
       if (limits && limitsText) {
         limits.hidden = false;
-        limitsText.textContent = '视频参考主体 · 图片 ≤10MB 最多10张 · 视频 ≤50MB 最多3个 · 音频 ≤10MB 最多3个';
+        limitsText.textContent = '参考上限：图片 ' + images + ' 张 · 视频 ' + videos + ' 个 · 音频 ' + audios +
+          ' 个（单文件前端限制：视频 3MB / 音频 1.5MB；参考素材总量不超过 4MB（SCF 请求体限制））' +
+          (meta && meta.configured === false ? ' · 此模型 API Key 尚未配置，暂不能生成。' : '');
       }
+      renderVideoEstimate();
     } else if (mode === 'audio') {
       if (emptyText) emptyText.textContent = '拖入或上传参考音频（可选）';
       if (hintText) hintText.textContent = '音频参考 ≤10MB · 最多 3 个';
@@ -63814,13 +64104,11 @@ window.HMChat = (function () {
   /* ---------------- 免费模型目录（视频 / 音频） ---------------- */
   var mediaCatalog = {
     video: [
-      /* 账号一 — 按次 */
-      { id: 'vidu-q4', name: 'Vidu Q4', minDuration: 4, maxDuration: 16, free: false, resolutions: ['720p', '1080p'], fps: 24, billingType: 'perTask', credits: 31, creditsMin: 19, creditsPerSec: 0, desc: '19-31 积分/次', refHint: '图15 / 视0 / 音3 多参考，支持首尾帧' },
-      { id: 'minimax_h3-768p', name: 'MiniMax H3', minDuration: 5, maxDuration: 15, free: false, resolutions: ['768p', '480p'], fps: 24, billingType: 'perTask', credits: 15, creditsMin: 13, creditsPerSec: 0, desc: '13-15 积分/次', refHint: '图9 / 视0 / 音3 全参模式，原生 768p' },
-      { id: 'sd-2-720p', name: 'Seedance 2 · 9图3音3视', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 35, creditsPerSec: 0, desc: '35 积分/次', refHint: '9图+3音+3视 多模态参考' },
-      { id: 'seedance-2.0-903', name: 'Seedance 2.0 满血', minDuration: 5, maxDuration: 15, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 34, creditsPerSec: 0, desc: '34 积分/次', refHint: 'seedance-2.0-903，9图+0视+3音' },
-      /* 账号二 — 混合 */
-      { id: 'sd2.5-sss', name: 'Seedance 2.5 SSS', minDuration: 5, maxDuration: 30, free: false, resolutions: ['720p'], fps: 24, billingType: 'perTask', credits: 70, creditsPerSec: 0, desc: '70 积分/次', refHint: '图30 / 视10 / 音10 极多参考' },
+      { id: 'minimax_h3-768p', name: 'MiniMax H3', minDuration: 5, maxDuration: 15, resolutions: ['480p', '768p'], resolutionPrices: { '480p': 15, '768p': 17 }, aspectRatios: ['16:9', '9:16', '1:1'], refLimits: { images: { count: 9 }, videos: { count: 0 }, audios: { count: 3 } }, billingType: 'perTask', configured: false, desc: '480p 15 / 768p 17 积分/次', refHint: '图9 / 视0 / 音3' },
+      { id: 'vidu-q4-nopeak', name: 'Vidu Q4', minDuration: 4, maxDuration: 16, resolutions: ['720p', '1080p'], resolutionPrices: { '720p': 16, '1080p': 16 }, aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4'], refLimits: { images: { count: 10 }, videos: { count: 0 }, audios: { count: 3 } }, billingType: 'perTask', configured: false, desc: '16 积分/次', refHint: '图10 / 视0 / 音3' },
+      { id: 'sd-2.5-flash', name: 'SD 2.5 Flash', minDuration: 4, maxDuration: 30, resolutions: ['480p', '720p'], resolutionPrices: { '480p': 1.9, '720p': 2.2 }, aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'], refLimits: { images: { count: 10 }, videos: { count: 5 }, audios: { count: 5 } }, billingType: 'perSecond', configured: false, desc: '480p 1.9 / 720p 2.2 积分/秒', refHint: '图10 / 视5 / 音5' },
+      { id: 'mh-seedance-2.0-mini', name: 'SD 2.0 Mini', minDuration: 5, maxDuration: 15, resolutions: ['480p', '720p'], resolutionPrices: { '480p': 1.1, '720p': 1.4 }, aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4'], refLimits: { images: { count: 9 }, videos: { count: 3 }, audios: { count: 3 } }, billingType: 'perSecond', configured: false, desc: '480p 1.1 / 720p 1.4 积分/秒', refHint: '图9 / 视3 / 音3' },
+      { id: 'mh-seedance-2.0-fast', name: 'SD 2.0 Fast', minDuration: 5, maxDuration: 15, resolutions: ['480p', '720p'], resolutionPrices: { '480p': 1.4, '720p': 1.7 }, aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4'], refLimits: { images: { count: 9 }, videos: { count: 3 }, audios: { count: 3 } }, billingType: 'perSecond', configured: false, desc: '480p 1.4 / 720p 1.7 积分/秒', refHint: '图9 / 视3 / 音3' },
     ],
     audio: {
       models: [
@@ -63829,10 +64117,8 @@ window.HMChat = (function () {
         { id: 'tts-1-hd', name: 'TTS-1 HD', source: 'rayin', free: false },
         { id: 'gpt-4o-mini-tts', name: 'GPT-4o mini TTS', source: 'rayin', free: false },
       ],
-      edgeVoices: null, /* 从后端加载 */
-      refLimits: {
-        audios: { count: 3, maxBytes: 10 * 1024 * 1024 }
-      }
+      edgeVoices: null,
+      refLimits: { audios: { count: 3, maxBytes: 10 * 1024 * 1024 } }
     }
   };
 
@@ -63841,55 +64127,94 @@ window.HMChat = (function () {
     try {
       var data = await api.mediaModels();
       if (!data) return;
-      if (data.video) mediaCatalog.video = data.video;
+      if (Array.isArray(data.video)) {
+        /* 前端目录只允许展示已确认接入的五个则灵模型，忽略后端历史遗留模型 */
+        var allowedVideoIds = ['minimax_h3-768p', 'vidu-q4-nopeak', 'sd-2.5-flash', 'mh-seedance-2.0-mini', 'mh-seedance-2.0-fast'];
+        var serverVideo = data.video.filter(function (m) { return m && allowedVideoIds.indexOf(m.id) >= 0; });
+        if (serverVideo.length) mediaCatalog.video = serverVideo;
+      }
       if (data.audio) mediaCatalog.audio = Object.assign({}, mediaCatalog.audio, data.audio);
+      if (!mediaCatalog.video.some(function (m) { return m.id === state.videoModel; })) {
+        state.videoModel = mediaCatalog.video.some(function (m) { return m.id === 'minimax_h3-768p'; })
+          ? 'minimax_h3-768p' : (mediaCatalog.video[0] && mediaCatalog.video[0].id);
+      }
+      var activeVideo = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+      if (activeVideo && (!activeVideo.resolutions || activeVideo.resolutions.indexOf(state.videoResolution) < 0)) {
+        state.videoResolution = activeVideo.resolutions[0];
+      }
+      A.persistPrefs();
       renderVideoModels();
       renderAudioModels();
       renderDurationControls();
+      if (state.mode === 'video') renderVideoRatioPicker();
+      updateRefDropForMode(state.mode);
       renderVoiceMenu();
     } catch (err) { /* 保持内置兜底 */ }
+  }
+
+  function videoRefCount(meta, key) {
+    var value = meta && meta.refLimits ? meta.refLimits[key] : null;
+    if (value && typeof value === 'object') value = value.count;
+    return value == null ? 0 : Math.max(0, Number(value) || 0);
   }
 
   function renderVideoModels() {
     var menu = document.querySelector('#modelMenu [data-mode-panel="video"]');
     if (!menu) return;
-    menu.innerHTML = '<span class="hm-menu-label">视频模型</span>' +
-      '<div class="hm-chip-grid">' +
-      mediaCatalog.video.map(function (m) {
-        /* 支持积分范围显示（creditsMin / creditsPerSecMin → 最小-最大） */
-        var creditsText;
-        if (m.billingType === 'perSecond') {
-          var psMin = m.creditsPerSecMin;
-          var psMax = m.creditsPerSec || 0;
-          creditsText = psMin != null ? psMin + '-' + psMax + ' 积分 / 秒' : psMax + ' 积分 / 秒';
-        } else {
-          var cMin = m.creditsMin;
-          var cMax = m.credits || 0;
-          creditsText = cMin != null ? cMin + '-' + cMax + ' 积分 / 次' : cMax + ' 积分 / 次';
-        }
-        var badge = m.billingType === 'perSecond'
-          ? '<small class="hm-pay-badge hm-pay-persec">按秒</small>'
-          : '<small class="hm-pay-badge">按次</small>';
-        var tip = m.refHint ? ' ' + m.refHint : '';
-        return '<button data-vmodel="' + m.id + '" title="' + creditsText + tip + '">' +
-          m.name + badge +
-          '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + '</span>' +
-        '</button>';
-      }).join('') +
-      '</div>' +
-      '<p class="hm-menu-note">视频为异步任务 · 由 Node 后端代理生成 · 鼠标悬停查看积分</p>';
-
+    function renderGroup(title, models, perSecond) {
+      if (!models.length) return '';
+      return '<span class="hm-menu-label hm-video-group-label ' + (perSecond ? 'hm-video-group-per-second' : 'hm-video-group-per-task') + '">' + title + '</span>' +
+        '<div class="hm-chip-grid">' + models.map(function (m) {
+          var unit = perSecond ? '积分/秒' : '积分/次';
+          var priceMap = m.resolutionPrices || {};
+          var priceParts = Object.keys(priceMap).map(function (res) { return res + ' ' + priceMap[res] + ' ' + unit; });
+          var creditsText = priceParts.length ? priceParts.join(' · ') : (m.desc || unit);
+          var keyBadge = m.configured === false ? ' · 待配置Key' : '';
+          var tip = m.refHint ? ' ' + m.refHint : '';
+          return '<button type="button" data-vmodel="' + m.id + '" title="' + creditsText + keyBadge + tip + '">' +
+            m.name +
+            '<span class="hm-credits-hover" aria-hidden="true">' + creditsText + keyBadge + '</span>' +
+          '</button>';
+        }).join('') + '</div>';
+    }
+    var perTask = mediaCatalog.video.filter(function (m) { return m.billingType !== 'perSecond'; });
+    var perSecond = mediaCatalog.video.filter(function (m) { return m.billingType === 'perSecond'; });
+    menu.innerHTML = '<span class="hm-menu-label">则灵 AI 视频模型</span>' +
+      renderGroup('按次计费', perTask, false) +
+      renderGroup('按秒计费', perSecond, true) +
+      '<p class="hm-menu-note">悬停查看单价；按秒模型的预计积分会随清晰度和时长更新</p>';
     menu.querySelectorAll('[data-vmodel]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        state.videoModel = btn.getAttribute('data-vmodel');
-        A.persistPrefs();
-        A.syncEngineUI();
-        renderDurationControls();
-        syncScaleLabels();
-        updateRefDropForMode(state.mode);
-        renderVideoModels();
+      btn.classList.toggle('is-active', btn.getAttribute('data-vmodel') === state.videoModel);
+      btn.type = 'button';
+      /* 直接绑定按钮，避免依赖外层菜单委托；点击后同步模型及参数 */
+      btn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (window.HMVideoModels && typeof window.HMVideoModels.select === 'function') {
+          window.HMVideoModels.select(btn.getAttribute('data-vmodel'));
+        }
       });
     });
+    /* 由 app.js 的 modelMenu 单一委托入口调用，避免按钮与父级重复处理点击 */
+    window.HMVideoModels = window.HMVideoModels || {};
+    window.HMVideoModels.select = function (selectedId) {
+      if (!mediaCatalog.video.some(function (m) { return m.id === selectedId; })) return false;
+      state.videoModel = selectedId;
+      var meta = mediaCatalog.video.find(function (m) { return m.id === selectedId; });
+      var resolutions = meta && Array.isArray(meta.resolutions) ? meta.resolutions : [];
+      if (resolutions.indexOf(state.videoResolution) < 0) state.videoResolution = resolutions[0] || '';
+      if (meta && meta.aspectRatios && meta.aspectRatios.indexOf(state.ratio) < 0) state.ratio = meta.aspectRatios[0];
+      A.persistPrefs();
+      A.syncEngineUI();
+      renderDurationControls();
+      renderVideoResolutionControl();
+      renderVideoRatioPicker();
+      updateRefDropForMode('video');
+      renderVideoEstimate();
+      /* syncEngineUI 已同步选中态；避免重新生成整个菜单造成点击后卡顿 */
+      A.closeAllMenus();
+      return true;
+    };
   }
 
   function renderAudioModels() {
@@ -63915,6 +64240,71 @@ window.HMChat = (function () {
     });
   }
 
+  function renderVideoRatioPicker() {
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    var picker = A.els.ratioPicker;
+    if (!picker || !meta) return;
+    var ratios = meta.aspectRatios || ['16:9', '9:16', '1:1'];
+    if (ratios.indexOf(state.ratio) < 0) state.ratio = ratios[0];
+    picker.innerHTML = ratios.map(function (ratio) {
+      var parts = ratio.split(':').map(Number);
+      var w = parts[0] || 1, h = parts[1] || 1;
+      var scale = 21 / Math.max(w, h);
+      var bw = Math.max(9, Math.round(w * scale));
+      var bh = Math.max(9, Math.round(h * scale));
+      return '<button class="ratio-btn' + (ratio === state.ratio ? ' is-active' : '') + '" data-ratio="' + ratio + '" title="' + ratio + '">' +
+        '<span class="ratio-shape" style="width:' + bw + 'px;height:' + bh + 'px"></span>' +
+        '<span class="ratio-name">' + ratio + '</span></button>';
+    }).join('');
+    if (A.els.ratioLabel) A.els.ratioLabel.textContent = state.ratio;
+    A.persistPrefs();
+  }
+
+  function renderVideoResolutionControl() {
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    var picker = document.getElementById('videoResolutionPicker');
+    var label = document.getElementById('videoResolutionLabel');
+    if (!picker || !meta) return;
+    var resolutions = meta.resolutions || [];
+    if (resolutions.indexOf(state.videoResolution) < 0) state.videoResolution = resolutions[0] || '';
+    picker.innerHTML = resolutions.map(function (res) {
+      var price = meta.resolutionPrices && meta.resolutionPrices[res];
+      var unit = meta.billingType === 'perSecond' ? '积分/秒' : '积分/次';
+      var suffix = price == null ? '' : ' · ' + price + ' ' + unit;
+      return '<button data-video-resolution="' + res + '"' +
+        (res === state.videoResolution ? ' class="is-active"' : '') +
+        ' title="' + res + suffix + '">' + res + suffix + '</button>';
+    }).join('');
+    if (label) label.textContent = state.videoResolution || '清晰度';
+    renderVideoEstimate();
+    picker.querySelectorAll('[data-video-resolution]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.videoResolution = btn.getAttribute('data-video-resolution');
+        A.persistPrefs();
+        renderVideoResolutionControl();
+        A.closeAllMenus();
+      });
+    });
+  }
+
+  function renderVideoEstimate() {
+    var el = document.getElementById('videoCreditEstimate');
+    if (!el) return;
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    if (!meta) { el.textContent = ''; return; }
+    var rate = meta.resolutionPrices && meta.resolutionPrices[state.videoResolution];
+    if (rate == null) {
+      el.textContent = '预计积分：价格信息暂不可用';
+      return;
+    }
+    if (meta.billingType === 'perSecond') {
+      var total = Number(rate) * Number(state.duration || meta.minDuration || 1);
+      el.textContent = '预计积分：' + (Math.round(total * 100) / 100) + ' 积分（' + rate + ' × ' + state.duration + ' 秒）';
+    } else {
+      el.textContent = '预计积分：' + rate + ' 积分/次（固定单次计费）';
+    }
+  }
+
   /* 根据当前模型夹紧 duration 到合法范围 */
   function clampDuration(val) {
     var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
@@ -63937,6 +64327,7 @@ window.HMChat = (function () {
       state.duration = val;
       slider.value = val; /* 把滑块位置也拉回合法值 */
       if (label) label.textContent = val + '秒';
+      renderVideoEstimate();
       syncChoiceLabels();
     };
 
@@ -63986,26 +64377,7 @@ window.HMChat = (function () {
       if (label) label.textContent = state.duration + '秒 · 模型支持 ' + min + '-' + max + 's';
     }
 
-    /* 模型支持的分辨率：动态启用/禁用 scale 按钮 */
-    var scalePicker = A.els.scalePicker;
-    if (scalePicker && state.mode === 'video') {
-      var supported = meta.resolutions || ['720p', '1080p'];
-      scalePicker.querySelectorAll('button').forEach(function (el) {
-        var value = el.getAttribute('data-scale');
-        /* 1k→720p, 2k→1080p, 4k→2k */
-        var res = value === '1k' ? '720p' : value === '2k' ? '1080p' : '2k';
-        var ok = supported.indexOf(res) >= 0;
-        el.disabled = !ok;
-        el.style.opacity = ok ? '' : '0.35';
-        el.style.pointerEvents = ok ? '' : 'none';
-        if (!ok && state.scale === value) {
-          /* 当前选中的分辨率不被支持，自动降级 */
-          var fallback = supported.indexOf('1080p') >= 0 ? '2k' : '1k';
-          state.scale = fallback;
-        }
-      });
-      syncScaleLabels();
-    }
+    renderVideoResolutionControl();
 
     syncChoiceLabels();
   }
@@ -64053,6 +64425,18 @@ window.HMChat = (function () {
     syncChoiceLabels();
   }
 
+  function getVideoImageLimit() {
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    var refs = meta && meta.refLimits && meta.refLimits.images;
+    return refs && refs.count != null ? Number(refs.count) : 10;
+  }
+
+  function getVideoImageMaxBytes() {
+    var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+    var refs = meta && meta.refLimits && meta.refLimits.images;
+    return refs && refs.maxBytes ? Number(refs.maxBytes) : 9 * 1024 * 1024;
+  }
+
   /* ---------------- 多模态生成（后端） ---------------- */
   async function runMedia(mode) {
     var text = A.els.promptInput.value.trim();
@@ -64068,22 +64452,61 @@ window.HMChat = (function () {
 
     /* 免费 Edge-TTS 通道不需要 RayinAPI key，付费通道才要 */
     var modelId = mode === 'video' ? state.videoModel : state.audioModel;
-    var modelMeta = null;
-    if (mode === 'audio') {
-      modelMeta = mediaCatalog.audio.models.find(function (m) { return m.id === modelId; });
+    var modelMeta = mode === 'video'
+      ? mediaCatalog.video.find(function (m) { return m.id === modelId; })
+      : mediaCatalog.audio.models.find(function (m) { return m.id === modelId; });
+    if (mode === 'video') {
+      if (!modelMeta) { A.toast('未找到所选视频模型，请刷新模型列表', 'error'); return; }
+      if (modelMeta.configured === false) {
+        A.toast('该模型的则灵 API Key 尚未配置，请先完成服务器密钥配置', 'error');
+        return;
+      }
+      var minDuration = Number(modelMeta.minDuration || 1);
+      var maxDuration = Number(modelMeta.maxDuration || 30);
+      if (!Number.isFinite(Number(state.duration)) || Number(state.duration) < minDuration || Number(state.duration) > maxDuration) {
+        A.toast('视频时长不符合模型要求：' + minDuration + '-' + maxDuration + ' 秒', 'error');
+        return;
+      }
+      if (!(modelMeta.aspectRatios || []).includes(state.ratio)) {
+        A.toast('当前模型不支持 ' + state.ratio + ' 比例，请重新选择', 'error');
+        return;
+      }
+      if (!(modelMeta.resolutions || []).includes(state.videoResolution)) {
+        A.toast('当前模型不支持所选清晰度，请重新选择', 'error');
+        return;
+      }
+      var imageLimit = videoRefCount(modelMeta, 'images');
+      var videoLimit = videoRefCount(modelMeta, 'videos');
+      var audioLimit = videoRefCount(modelMeta, 'audios');
+      var selectedImages = typeof A.currentRefs === 'function' ? A.currentRefs().length : 0;
+      var mediaRefs = window.HMRefDrop && typeof window.HMRefDrop.getMediaRefs === 'function'
+        ? window.HMRefDrop.getMediaRefs() : { videos: [], audios: [] };
+      if (selectedImages > imageLimit) {
+        A.toast('参考图片数量超过当前模型上限：最多 ' + imageLimit + ' 张', 'error');
+        return;
+      }
+      if (mediaRefs.videos.length > videoLimit || mediaRefs.audios.length > audioLimit) {
+        A.toast('参考视频或音频数量超过当前模型上限，请移除超出数量的素材', 'error');
+        return;
+      }
+      var refPayloadChars = videoImageRefs.reduce(function (sum, item) { return sum + String(item || '').length; }, 0);
+      refPayloadChars += mediaRefs.videos.concat(mediaRefs.audios).reduce(function (sum, item) { return sum + String(item || '').length; }, 0);
+      if (refPayloadChars > (4 * 1024 * 1024 * 4 / 3)) {
+        A.toast('参考素材总量超过安全上传上限，请压缩或减少素材', 'error');
+        return;
+      }
     }
     var isFree = mode === 'audio' && modelMeta && modelMeta.free;
-    if (!isFree && !modeFreeFor(mode)) {
+    var videoImageRefs = mode === 'video' && typeof A.currentRefs === 'function'
+      ? A.currentRefs().map(function (r) { return r && r.dataUrl; }).filter(Boolean)
+      : [];
+    if (mode === 'audio' && !isFree && !modeFreeFor(mode)) {
       var hasUserKey = !!String((state.api && state.api.key) || '').trim();
       var hasServerKey = api.hasServerKey();
       if (!hasUserKey && !hasServerKey) {
-        A.toast(mode === 'video'
-          ? '视频生成需要 RayinAPI 密钥（暂无完全免费视频模型可用）'
-          : '请先在「接入设置」填写 RayinAPI 密钥，或切换到 Edge-TTS 免费模型', 'error');
-        if (mode === 'audio') {
-          A.toast('切换到模型菜单 → Edge-TTS（免费）即可免密钥使用', 'info');
-        }
-        if (!isFree) A.openApiModal();
+        A.toast('请先在「接入设置」填写 RayinAPI 密钥，或切换到 Edge-TTS 免费模型', 'error');
+        A.toast('切换到模型菜单 → Edge-TTS（免费）即可免密钥使用', 'info');
+        A.openApiModal();
         return;
       }
     }
@@ -64129,10 +64552,12 @@ window.HMChat = (function () {
           model: state.videoModel,
           prompt: text,
           ratio: state.ratio,
-          resolution: state.scale === '1k' ? '720p' : '1080p',
+          resolution: state.videoResolution || (modelMeta && modelMeta.resolutions && modelMeta.resolutions[0]) || '720p',
           duration: state.duration,
-          seed: state.seed,
-          rayin: state.api
+          refImages: videoImageRefs,
+          refVideos: mediaRefs.videos,
+          refAudios: mediaRefs.audios,
+          seed: state.seed
         }, 200000);
       } else {
         data = await api.generate({
@@ -65222,8 +65647,8 @@ window.HMChat = (function () {
     bindDurationSlider();
 
     await detectBackend();
-    await loadAssets();
-    await loadMediaCatalog();
+    /* 素材库与模型目录互不依赖，并行加载，避免模型列表等待素材请求完成 */
+    await Promise.all([loadAssets(), loadMediaCatalog()]);
 
     /* 导演台初始化 */
     if (window.HMDirector) {
@@ -65257,7 +65682,13 @@ window.HMChat = (function () {
       var expand = document.getElementById('expandPrompt');
       if (expand) expand.click();
     },
-    importAssets: function (files) { return handleFiles(files); }
+    importAssets: function (files) { return handleFiles(files); },
+    getVideoImageLimit: getVideoImageLimit,
+    getVideoImageMaxBytes: getVideoImageMaxBytes,
+    getVideoRefLimits: function () {
+      var meta = mediaCatalog.video.find(function (m) { return m.id === state.videoModel; }) || mediaCatalog.video[0];
+      return meta && meta.refLimits ? meta.refLimits : {};
+    }
   };
 
   init();
@@ -69117,16 +69548,22 @@ window.HMChat = (function () {
   var tutorialPanel = null;
   var scorePanel = null;
 
-  function buildTutorialPanel() {
+  function buildTutorialPanel(stage) {
     if (!tutorialPanel) {
       tutorialPanel = el('aside', 'dv-game-tutorial');
       tutorialPanel.innerHTML = '<strong>次元探索指南 <span>/ CONTROLS</span></strong>' +
-        '<p><b>W A S D</b> / 方向键 / 点按：移动团子</p>' +
-        '<p>靠近发光晶体即可收集</p>' +
-        '<p>探索原有次元空间</p>';
+        '<p><b>W A S D</b> / 方向键：移动团子</p>' +
+        '<p>第一关：60 秒内吞食超过 20 枚随机能量晶体</p>' +
+        '<p>收集完成后，从问号方块下方向上撞击</p>';
       dimPage.appendChild(tutorialPanel);
-      scorePanel = el('div', 'dv-game-score', '能量晶体　00 / 04');
-      dimPage.appendChild(scorePanel);
+    }
+    var paragraphs = tutorialPanel.querySelectorAll('p');
+    if (stage === 'block') {
+      if (paragraphs[1]) paragraphs[1].textContent = '挑战完成！站到问号方块的正下方';
+      if (paragraphs[2]) paragraphs[2].textContent = '按 W / ↑ 向上跳起，撞击方块开启第二关';
+    } else if (stage === 'maze') {
+      if (paragraphs[1]) paragraphs[1].textContent = '第二关：穿过随机生成的迷宫';
+      if (paragraphs[2]) paragraphs[2].textContent = '躲避两名幽灵守卫，抵达漩涡出口';
     }
     requestAnimationFrame(function () { if (tutorialPanel) tutorialPanel.classList.add('is-visible'); });
   }
@@ -69147,32 +69584,87 @@ window.HMChat = (function () {
     }
   }
 
-  function startDimverseGame() {
-    if (gameState) return;
-    gameCanvas = el('canvas', 'dv-browser-game');
-    gameCanvas.setAttribute('aria-label', '使用方向键或 WASD 移动团子并收集能量晶体');
-    dimPage.appendChild(gameCanvas);
-    gameCtx = gameCanvas.getContext('2d');
-    if (!gameCtx) return;
-    gameCanvas.addEventListener('pointerdown', setGamePointerTarget);
-    gameCanvas.addEventListener('pointermove', function (event) {
-      if (event.buttons || event.pointerType === 'touch') setGamePointerTarget(event);
+  var gameFrame = null;
+
+  function restoreDimverseWelcome() {
+    if (gameFrame) { gameFrame.remove(); gameFrame = null; }
+    if (tutorialPanel) { tutorialPanel.remove(); tutorialPanel = null; }
+    if (scorePanel) { scorePanel.remove(); scorePanel = null; }
+    gameCanvas = null; gameCtx = null; gameState = null; gameRaf = 0;
+    if (!dimPage) return;
+    var center = dimPage.querySelector('.dv-center');
+    if (!center) return;
+    center.innerHTML = '';
+    var title = el('h1', 'dv-title', '欢迎来到次元宇宙');
+    title.setAttribute('data-text', '欢迎来到次元宇宙');
+    title.setAttribute('aria-label', '欢迎来到次元宇宙');
+    prepareTitleCharacters(title);
+    center.appendChild(title);
+    dimStartBtn = el('button', 'dv-start-btn is-ready', '再次开启');
+    dimStartBtn.type = 'button';
+    dimStartBtn.addEventListener('click', function () {
+      if (dimStartBtn.disabled) return;
+      dimStartBtn.disabled = true;
+      dimStartBtn.classList.remove('is-ready');
+      dimStartBtn.classList.add('is-exiting');
+      title.classList.add('dv-title-dissolving');
+      window.setTimeout(function () { if (dimStartBtn && dimStartBtn.isConnected) dimStartBtn.remove(); }, 260);
+      startDimverseGame();
     });
-    var w = window.innerWidth, h = window.innerHeight;
-    gameState = {
-      width: w, height: h, x: w * 0.5, y: -72, vx: 0, vy: 0,
-      floorY: h * 0.61, phase: 'fall', phaseAt: performance.now(),
-      squash: 0, squashV: 0, tilt: 0, blinkUntil: performance.now() + 500,
-      nextBlink: performance.now() + 2400, score: 0,
-      crystals: [
-        { x: w * 0.22, y: h * 0.57, got: false },
-        { x: w * 0.40, y: h * 0.68, got: false },
-        { x: w * 0.72, y: h * 0.59, got: false },
-        { x: w * 0.86, y: h * 0.40, got: false }
-      ]
-    };
-    resizeGame();
-    if (!gameRaf) gameRaf = requestAnimationFrame(gameFrame);
+    center.appendChild(dimStartBtn);
+  }
+
+  function onGodotMessage(event) {
+    if (!gameFrame || event.source !== gameFrame.contentWindow) return;
+    if (event.data === 'hm-godot-ready') {
+      gameFrame.style.opacity = '1';
+      return;
+    }
+    if (event.data === 'hm-godot-landed') {
+      buildTutorialPanel('crystals');
+      return;
+    }
+    if (event.data === 'hm-godot-block') {
+      buildTutorialPanel('block');
+      return;
+    }
+    if (event.data === 'hm-godot-maze') {
+      buildTutorialPanel('maze');
+      return;
+    }
+    if (event.data === 'hm-godot-welcome') restoreDimverseWelcome();
+  }
+
+  function ensureGodotOverlay() {
+    if (gameFrame) return;
+    gameFrame = el('iframe', 'dv-godot-overlay dv-godot-game');
+    gameFrame.title = '次元空间双阶段挑战';
+    gameFrame.setAttribute('allow', 'autoplay; fullscreen; gamepad');
+    gameFrame.setAttribute('loading', 'eager');
+    gameFrame.style.opacity = '0';
+    gameFrame.addEventListener('load', function () {
+      try {
+        var doc = gameFrame.contentDocument;
+        if (doc) {
+          doc.documentElement.style.background = 'transparent';
+          doc.documentElement.style.backgroundColor = 'transparent';
+          if (doc.body) {
+            doc.body.style.background = 'transparent';
+            doc.body.style.backgroundColor = 'transparent';
+            doc.body.style.margin = '0';
+            doc.body.style.overflow = 'hidden';
+          }
+          var canvas = doc.querySelector('canvas');
+          if (canvas) { canvas.style.background = 'transparent'; canvas.style.backgroundColor = 'transparent'; }
+        }
+      } catch (e) { console.warn('[Dimverse] transparent Godot shell setup skipped:', e); }
+    });
+    gameFrame.src = new URL('./dimverse/game/index.html', document.baseURI).href + '?embed=1';
+    dimPage.appendChild(gameFrame);
+  }
+
+  function startDimverseGame() {
+    ensureGodotOverlay();
   }
 
   function onGameKeyDown(event) {
@@ -69366,6 +69858,8 @@ window.HMChat = (function () {
 
   function hideDimPage() {
     if (!dimPage) return;
+    /* Stop the embedded WebAssembly game when leaving this route. */
+    if (gameFrame) restoreDimverseWelcome();
     if (dimVortexAnim) { dimVortexAnim.stop(); dimVortexAnim = null; }
     if (!vortexAnim && vortexCanvas) vortexAnim = makeVortex(vortexCanvas, 72);
     dimPage.classList.remove('is-visible');
@@ -69442,6 +69936,7 @@ window.HMChat = (function () {
   /* ---------- 初始化 ---------- */
   function init() {
     buildVortexButton();
+    window.addEventListener('message', onGodotMessage);
     window.addEventListener('keydown', onGameKeyDown);
     window.addEventListener('keyup', onGameKeyUp);
     window.addEventListener('blur', function () { gameKeys = Object.create(null); });
@@ -78744,11 +79239,12 @@ window.HMChat = (function () {
 
   /* bootstrap 单次请求内部再重试 2 次（间隔 1.2s / 3s）；
      401/403 是登录态问题，重试无意义，直接抛给上层。 */
-  function pullBootstrap() {
+  function pullBootstrap(since) {
     var delays = [0, 1200, 3000];
     var attempt = 0;
+    var path = '/user-data/bootstrap' + (Number(since) > 0 ? '?since=' + encodeURIComponent(Number(since)) : '');
     function next() {
-      return request('GET', '/user-data/bootstrap', null, 60000).catch(function (err) {
+      return request('GET', path, null, 30000).catch(function (err) {
         if (err && (err.status === 401 || err.status === 403)) throw err;
         attempt += 1;
         if (attempt >= delays.length) throw err;
@@ -78790,10 +79286,21 @@ window.HMChat = (function () {
         scheduleRetry();
         return;
       }
-      /* 拉取成功：先清掉历史遗留的失败提示，再落地数据（applyBootstrap 自己的告警不受影响） */
+      /* 首屏先落地 200 条，让用户尽快看到作品；其余分页随后逐页补齐。 */
       sync.lastError = '';
       clearRetry();
-      applyBootstrap(boot);
+      var seenCloudIds = Object.create(null);
+      var pageCount = 0;
+      while (boot && typeof boot === 'object') {
+        if (!Array.isArray(boot.works)) throw new Error('云端返回结构异常（works 不是数组）');
+        boot.works.forEach(function (w) { if (w && w.id) seenCloudIds[String(w.id)] = true; });
+        var finalPage = !boot.hasMore;
+        applyBootstrap(boot, seenCloudIds, finalPage);
+        pageCount += 1;
+        if (finalPage) break;
+        if (pageCount >= 30) throw new Error('云端作品超过单次同步上限，已保留已加载作品；稍后继续同步');
+        boot = await pullBootstrap(Number(boot.cursor) || 0);
+      }
       await migrateLocal();
       await flushQueue();
       sync.lastSync = Date.now();
@@ -78813,7 +79320,7 @@ window.HMChat = (function () {
     return !!(w && typeof w === 'object' && (w.id || w.url || w.thumb || w.failed || w.ok === false));
   }
 
-  function applyBootstrap(boot) {
+  function applyBootstrap(boot, seenCloudIds, finalPage) {
     if (!boot || typeof boot !== 'object') return;
     storage = boot.storage || storage;
     usage = boot.usage || usage;
@@ -78857,7 +79364,7 @@ window.HMChat = (function () {
     local.forEach(function (w) { localMap[itemId(w)] = w; });
 
     /* 云端为空：保留本地全部作品并标记待上传，绝不写空 */
-    if (!serverWorks.length) {
+    if (!serverWorks.length && !(seenCloudIds && Object.keys(seenCloudIds).length) && finalPage !== false) {
       if (!local.length) return;
       local.forEach(function (w) { w._pendingUpload = true; });
       runSyncWrite(function () {
@@ -78887,6 +79394,10 @@ window.HMChat = (function () {
     });
     Object.keys(localMap).forEach(function (id) {
       var lw = localMap[id];
+      /* 分页过程中保留已在前页确认过的云端作品，不能误标成待上传 */
+      if (seenCloudIds && seenCloudIds[id]) { merged.push(lw); return; }
+      /* 非末页暂不判定本地独有作品，避免把尚未拉到的云端作品误判为本地新增 */
+      if (finalPage === false) { merged.push(lw); return; }
       var tomb = deletedMap[id];
       if (tomb && workTime(lw) <= tomb) return; /* 其它设备已删除且本地没有更新 */
       merged.push(Object.assign({}, lw, { _pendingUpload: true }));

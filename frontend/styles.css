@@ -7221,6 +7221,11 @@ body[data-mode="audio"] .hm-chip-mode .hm-mode-ico[data-ico="audio"] {
 /* 模型按钮：悬停显示积分提示（白字浮层） */
 .hm-chip-grid button {
   position: relative;
+  min-height: 30px;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .hm-chip-grid button .hm-credits-hover {
